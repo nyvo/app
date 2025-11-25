@@ -1,0 +1,409 @@
+import { useState } from 'react';
+import {
+  Flower2,
+  Menu,
+  Edit3,
+  Search,
+  ChevronLeft,
+  Phone,
+  MoreHorizontal,
+  Paperclip,
+  Smile,
+  Zap,
+  Send,
+  CheckCheck,
+} from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+
+interface Conversation {
+  id: string;
+  name: string;
+  avatar?: string;
+  initials?: string;
+  lastMessage: string;
+  timestamp: string;
+  isOnline?: boolean;
+  unreadCount?: number;
+  isActive?: boolean;
+  isRead?: boolean;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  timestamp: string;
+  isOutgoing: boolean;
+  avatar: string;
+  isRead?: boolean;
+}
+
+const mockConversations: Conversation[] = [
+  {
+    id: '1',
+    name: 'Kari Nordmann',
+    avatar: 'https://i.pravatar.cc/150?u=32',
+    lastMessage: 'Har dere matte jeg kan låne?',
+    timestamp: '10:23',
+    isOnline: true,
+    isActive: true,
+  },
+  {
+    id: '2',
+    name: 'Lars Hansen',
+    avatar: 'https://i.pravatar.cc/150?u=55',
+    lastMessage: 'Takk for timen i går! Det var...',
+    timestamp: '09:45',
+    unreadCount: 1,
+  },
+  {
+    id: '3',
+    name: 'Erik Solberg',
+    avatar: 'https://i.pravatar.cc/150?u=12',
+    lastMessage: 'Den er grei, vi sees på onsdag.',
+    timestamp: 'I går',
+    isRead: true,
+  },
+  {
+    id: '4',
+    name: 'Sofia Berg',
+    avatar: 'https://i.pravatar.cc/150?u=41',
+    lastMessage: 'Kan jeg endre bookingen min?',
+    timestamp: 'Man',
+    isRead: true,
+  },
+  {
+    id: '5',
+    name: 'Anna Nilsen',
+    initials: 'AN',
+    lastMessage: 'Glemte vannflasken min...',
+    timestamp: '20. Okt',
+    isRead: true,
+  },
+];
+
+const mockMessages: Message[] = [
+  {
+    id: '1',
+    content: 'Hei! Jeg har meldt meg på Vinyasa Flow kl 16:00 i dag. Gleder meg! 😊',
+    timestamp: '09:14',
+    isOutgoing: false,
+    avatar: 'https://i.pravatar.cc/150?u=32',
+  },
+  {
+    id: '2',
+    content: 'Hei Kari! Så hyggelig å høre. Velkommen skal du være.',
+    timestamp: '09:30',
+    isOutgoing: true,
+    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+    isRead: true,
+  },
+  {
+    id: '3',
+    content: 'Takk! Bare et lite spørsmål - har dere matte jeg kan låne, eller må jeg ta med egen?',
+    timestamp: '10:23',
+    isOutgoing: false,
+    avatar: 'https://i.pravatar.cc/150?u=32',
+  },
+];
+
+const MessagesPage = () => {
+  const [activeConversation, setActiveConversation] = useState<Conversation>(mockConversations[0]);
+  const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'archive'>('all');
+  const [messageText, setMessageText] = useState('');
+
+  return (
+    <SidebarProvider>
+      <TeacherSidebar />
+
+      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#FDFBF7]">
+        {/* Mobile Header */}
+        <div className="flex md:hidden items-center justify-between p-6 border-b border-[#E7E5E4] bg-[#FDFBF7]/80 backdrop-blur-xl z-30 shrink-0">
+          <div className="flex items-center gap-3">
+            <Flower2 className="h-5 w-5 text-[#354F41]" />
+            <span className="font-geist text-base font-semibold text-[#292524]">ZenStudio</span>
+          </div>
+          <SidebarTrigger>
+            <Menu className="h-6 w-6 text-[#78716C]" />
+          </SidebarTrigger>
+        </div>
+
+        {/* Messages Layout: Split View */}
+        <div className="flex h-full w-full overflow-hidden">
+          {/* Conversation List (Left Panel) */}
+          <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-[#E7E5E4] bg-[#FDFBF7]">
+            {/* List Header */}
+            <div className="p-5 pb-2">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-geist text-xl font-semibold text-[#292524] tracking-tight">Meldinger</h2>
+                <button className="rounded-full p-2 hover:bg-[#F5F5F4] text-[#78716C] transition-colors">
+                  <Edit3 className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Search */}
+              <div className="relative group mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A8A29E] group-focus-within:text-[#292524] transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Søk i meldinger..."
+                  className="h-10 w-full rounded-xl border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm"
+                />
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="flex gap-1 p-1 bg-[#F5F5F4] rounded-lg mb-2">
+                <button
+                  onClick={() => setFilterTab('all')}
+                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                    filterTab === 'all'
+                      ? 'bg-white text-[#292524] shadow-sm'
+                      : 'text-[#78716C] hover:text-[#57534E]'
+                  }`}
+                >
+                  Alle
+                </button>
+                <button
+                  onClick={() => setFilterTab('unread')}
+                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                    filterTab === 'unread'
+                      ? 'bg-white text-[#292524] shadow-sm'
+                      : 'text-[#78716C] hover:text-[#57534E]'
+                  }`}
+                >
+                  Ulest
+                </button>
+                <button
+                  onClick={() => setFilterTab('archive')}
+                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                    filterTab === 'archive'
+                      ? 'bg-white text-[#292524] shadow-sm'
+                      : 'text-[#78716C] hover:text-[#57534E]'
+                  }`}
+                >
+                  Arkiv
+                </button>
+              </div>
+            </div>
+
+            {/* Conversations Scroll Area */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-3 space-y-1">
+              {mockConversations.map((conversation) => (
+                <button
+                  key={conversation.id}
+                  onClick={() => setActiveConversation(conversation)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left group relative ${
+                    conversation.isActive
+                      ? 'bg-white border border-[#E7E5E4] shadow-sm'
+                      : conversation.isRead
+                      ? 'hover:bg-white border border-transparent hover:border-[#E7E5E4] hover:shadow-sm opacity-70 hover:opacity-100'
+                      : 'hover:bg-white border border-transparent hover:border-[#E7E5E4] hover:shadow-sm'
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    {conversation.avatar ? (
+                      <img
+                        src={conversation.avatar}
+                        alt="Avatar"
+                        className={`h-10 w-10 rounded-full object-cover ${
+                          !conversation.isActive && !conversation.unreadCount ? 'opacity-90 group-hover:opacity-100' : ''
+                        }`}
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-[#E7E5E4] flex items-center justify-center text-[#78716C] text-xs font-bold">
+                        {conversation.initials}
+                      </div>
+                    )}
+                    {conversation.isOnline && (
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#10B981]" />
+                    )}
+                    {conversation.unreadCount && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#292524] text-[10px] font-bold text-white border-2 border-[#FDFBF7]">
+                        {conversation.unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span
+                        className={`text-sm font-medium ${
+                          conversation.isRead ? 'text-[#44403C]' : 'text-[#292524]'
+                        }`}
+                      >
+                        {conversation.name}
+                      </span>
+                      <span
+                        className={`text-[10px] ${
+                          conversation.isRead ? 'text-[#A8A29E]' : 'text-[#78716C]'
+                        }`}
+                      >
+                        {conversation.timestamp}
+                      </span>
+                    </div>
+                    <p
+                      className={`text-xs truncate ${
+                        conversation.unreadCount
+                          ? 'text-[#292524] font-medium'
+                          : conversation.isActive
+                          ? 'text-[#57534E] font-medium'
+                          : 'text-[#78716C]'
+                      }`}
+                    >
+                      {conversation.lastMessage}
+                    </p>
+                  </div>
+                  {conversation.unreadCount && (
+                    <div className="h-2 w-2 rounded-full bg-[#3B82F6] shrink-0 mt-2" />
+                  )}
+                  {conversation.isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-[#292524]" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chat View (Main Area) */}
+          <div className="flex-1 flex flex-col h-full bg-[#FDFBF7] relative">
+            {/* Chat Header */}
+            <header className="flex items-center justify-between px-6 py-4 border-b border-[#E7E5E4] bg-[#FDFBF7]/90 backdrop-blur-sm z-10">
+              <div className="flex items-center gap-3">
+                <button className="md:hidden text-[#78716C] hover:text-[#292524] mr-1">
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <div className="relative">
+                  <img
+                    src={activeConversation.avatar || 'https://i.pravatar.cc/150?u=32'}
+                    alt="Avatar"
+                    className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                  />
+                  {activeConversation.isOnline && (
+                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#10B981] border-2 border-white" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-[#292524]">{activeConversation.name}</h3>
+                  {activeConversation.isOnline && (
+                    <p className="text-xs text-[#10B981] font-medium flex items-center gap-1">
+                      Aktiv nå
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2 text-[#A8A29E] hover:text-[#292524] hover:bg-[#F5F5F4] rounded-full transition-colors">
+                  <Phone className="h-4 w-4" />
+                </button>
+                <button className="p-2 text-[#A8A29E] hover:text-[#292524] hover:bg-[#F5F5F4] rounded-full transition-colors">
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+            </header>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
+              {/* Time Separator */}
+              <div className="flex justify-center">
+                <span className="text-[10px] font-medium text-[#A8A29E] bg-[#F5F5F4] px-3 py-1 rounded-full uppercase tracking-wide">
+                  I dag
+                </span>
+              </div>
+
+              {mockMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-end gap-3 max-w-[85%] sm:max-w-[70%] group ${
+                    message.isOutgoing ? 'self-end flex-row-reverse' : 'self-start'
+                  }`}
+                >
+                  <img
+                    src={message.avatar}
+                    alt="Avatar"
+                    className={`h-8 w-8 rounded-full object-cover mb-1 ${
+                      message.isOutgoing
+                        ? 'ring-1 ring-[#E7E5E4]'
+                        : 'opacity-80 group-hover:opacity-100 transition-opacity'
+                    }`}
+                  />
+                  <div className={`flex flex-col gap-1 ${message.isOutgoing ? 'items-end' : ''}`}>
+                    <div
+                      className={`px-4 py-3 rounded-2xl shadow-sm ${
+                        message.isOutgoing
+                          ? 'bg-[#292524] text-[#F5F5F4] rounded-br-sm shadow-md'
+                          : 'bg-white border border-[#E7E5E4] rounded-bl-sm'
+                      }`}
+                    >
+                      <p
+                        className={`text-sm leading-relaxed ${
+                          message.isOutgoing ? 'font-light' : 'text-[#44403C]'
+                        }`}
+                      >
+                        {message.content}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-[10px] text-[#A8A29E] flex items-center gap-1 ${
+                        message.isOutgoing ? 'pr-1' : 'pl-1'
+                      }`}
+                    >
+                      {message.timestamp}
+                      {message.isOutgoing && message.isRead && (
+                        <CheckCheck className="h-3 w-3 text-[#10B981]" />
+                      )}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Area */}
+            <div className="p-6 pt-2 bg-[#FDFBF7]">
+              <div className="flex flex-col gap-2 rounded-2xl border border-[#E7E5E4] bg-white p-2 shadow-sm focus-within:ring-1 focus-within:ring-[#354F41]/20 focus-within:border-[#354F41] transition-all relative">
+                <textarea
+                  rows={1}
+                  placeholder="Skriv en melding..."
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:outline-none custom-scrollbar max-h-32 min-h-[44px]"
+                />
+
+                <div className="flex items-center justify-between px-2 pb-1">
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
+                      title="Legg til fil"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
+                      title="Emoji"
+                    >
+                      <Smile className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
+                      title="Mal"
+                    >
+                      <Zap className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <button className="flex items-center gap-2 rounded-xl bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+                    <span>Send</span>
+                    <Send className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-[#A8A29E] text-center mt-3">
+                Trykk <span className="font-medium text-[#78716C]">Enter</span> for å sende
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </SidebarProvider>
+  );
+};
+
+export default MessagesPage;

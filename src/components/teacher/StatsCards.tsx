@@ -1,0 +1,118 @@
+import { UserCheck, TrendingUp } from 'lucide-react';
+import type { TeacherStats } from '@/types/dashboard';
+
+interface StatsCardsProps {
+  stats: TeacherStats;
+}
+
+export const StatsCards = ({ stats }: StatsCardsProps) => {
+  const isEmpty = stats.activeStudents === 0 && stats.attendanceRate === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
+        {/* Active Students - Empty State */}
+        <div className="relative h-[168px] rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-sm overflow-hidden group">
+          {/* Subtle background decoration */}
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[#F7F5F2] blur-3xl"></div>
+
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F7F5F2] border border-[#E7E5E4] text-[#78716C]">
+                <UserCheck className="h-5 w-5 text-[#A8A29E]" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-[#A8A29E] mb-1">Aktive studenter</span>
+              <span className="font-geist text-sm font-medium text-[#78716C]">
+                Starter etter første økt
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Attendance - Empty State with Mock Chart */}
+        <div className="relative h-[168px] rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-sm overflow-hidden group">
+          {/* Subtle background decoration */}
+          <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-[#F7F5F2] blur-3xl"></div>
+
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[#A8A29E] mb-1">Oppmøte</p>
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-[#A8A29E]" />
+                  <span className="font-geist text-sm font-medium text-[#78716C]">
+                    Din vekstkurve
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mock growth chart skeleton */}
+            <div className="flex h-12 items-end gap-2 mt-2">
+              {[30, 45, 35, 60, 75, 55].map((height, index) => (
+                <div
+                  key={index}
+                  className="w-1/6 rounded-t-sm bg-[#F7F5F2]"
+                  style={{ height: `${height}%` }}
+                  aria-label={`Potential growth day ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <p className="text-[10px] text-[#A8A29E] mt-2">
+              Analyser aktiveres etter din første økt
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
+      <div className="h-[168px] rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-sm ios-ease hover:border-[#D6D3D1] hover:shadow-md flex flex-col justify-between group">
+        <div className="flex items-center justify-between">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F7F5F2] border border-[#E7E5E4] text-[#78716C] group-hover:bg-[#FDFBF7] group-hover:border-[#D6D3D1] transition-colors">
+            <UserCheck className="h-5 w-5 text-[#57534E]" />
+          </div>
+          <span className="text-xs font-medium text-[#A8A29E] uppercase tracking-wide">Denne uken</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm text-[#78716C] font-medium">Aktive studenter</span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-geist text-3xl font-medium tracking-tight text-[#292524] mt-1">
+              {stats.activeStudents}
+            </span>
+            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+12%</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-[168px] rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-sm ios-ease hover:border-[#D6D3D1] hover:shadow-md flex flex-col justify-between group">
+        <div>
+          <p className="text-sm text-[#78716C] font-medium">Oppmøte</p>
+          <div className="flex items-end gap-2 mt-1">
+            <h3 className="font-geist text-3xl font-medium tracking-tight text-[#292524]">
+              {stats.attendanceRate}%
+            </h3>
+            <span className="text-xs text-[#A8A29E] mb-1.5">snitt</span>
+          </div>
+        </div>
+        <div className="flex h-12 items-end gap-2 mt-2">
+          {stats.attendanceData.map((value, index) => (
+            <div
+              key={index}
+              className={`w-1/6 rounded-t-sm ${
+                index === 4 ? 'bg-[#4A6959] shadow-sm' : index === 3 ? 'bg-[#E7E5E4] group-hover:bg-[#D6D3D1]' : 'bg-[#F7F5F2] group-hover:bg-[#E7E5E4]'
+              } transition-colors ${index === 0 ? 'delay-75' : index === 1 ? 'delay-100' : index === 2 ? 'delay-150' : index === 3 ? 'delay-200' : index === 5 ? 'delay-300' : ''}`}
+              style={{ height: `${value}%` }}
+              aria-label={`Day ${index + 1}: ${value}% attendance`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,145 @@
+@import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/mono/index.css');
+@import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/sans/index.css');
+@import "react-day-picker/style.css";
+@import "tailwindcss";
+
+@theme {
+  /* Base Colors - Stone Palette */
+  --color-background: #ffffff;
+  --color-foreground: #1c1917;
+  --color-card: #ffffff;
+  --color-card-foreground: #1c1917;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1c1917;
+
+  /* Brand Colors - Zen Theme */
+  --color-primary: #354f41;
+  --color-primary-foreground: #fafaf9;
+  --color-primary-soft: #547564;
+  --color-primary-light: #6b8a7a;
+  --color-primary-dark: #2a3d34;
+
+  /* Secondary & Accent */
+  --color-secondary: #f5f5f4;
+  --color-secondary-foreground: #1c1917;
+  --color-accent: #f5f5f4;
+  --color-accent-foreground: #1c1917;
+
+  /* Muted & Subtle */
+  --color-muted: #f5f5f4;
+  --color-muted-foreground: #78716c;
+
+  /* UI Elements */
+  --color-border: #e7e5e4;
+  --color-input: #e7e5e4;
+  --color-ring: #d6d3d1;
+  --radius: 1rem;
+
+  /* Feedback Colors */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fafaf9;
+  --color-success: #16a34a;
+  --color-success-foreground: #fafaf9;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #fafaf9;
+
+  /* Course Type Colors */
+  --color-course-private: #fb923c;
+  --color-course-online: #a78bfa;
+  --color-course-yin: #547564;
+  --color-course-meditation: #60a5fa;
+
+  /* Sidebar Colors */
+  --color-sidebar: #F7F5F2;
+  --color-sidebar-foreground: #44403c;
+  --color-sidebar-primary: #1c1917;
+  --color-sidebar-primary-foreground: #fafaf9;
+  --color-sidebar-accent: #ffffff;
+  --color-sidebar-accent-foreground: #292524;
+  --color-sidebar-border: #e7e5e4;
+  --color-sidebar-ring: #3b82f6;
+
+  /* Font Families */
+  --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
+  --font-family-geist: 'Geist Sans', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: #e7e5e4;
+  }
+
+  body {
+    background-color: #fdfbf7;
+    color: #44403c;
+    font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #e7e5e4;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #d6d3d1;
+  }
+}
+
+@layer components {
+  /* Font Utility Classes */
+  .font-geist {
+    font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* iOS-style Easing */
+  .ios-ease {
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  /* Grain Texture Effect */
+  .bg-grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Selection styling */
+  ::selection {
+    background-color: #354f41;
+    color: white;
+  }
+
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Custom scrollbar for chat */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #E7E5E4;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #D6D3D1;
+  }
+}
