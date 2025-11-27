@@ -448,7 +448,7 @@ export const SchedulePage = () => {
                 Rom
               </button>
               <button className="flex items-center gap-2 rounded-lg border border-dashed border-[#D6D3D1] bg-transparent px-3 py-1.5 text-xs font-medium text-[#78716C] hover:border-[#A8A29E] hover:text-[#57534E]">
-                Klassetype
+                Kurstype
               </button>
               <div className="ml-auto hidden md:flex items-center gap-4">
                 <div className="flex items-center gap-1.5">

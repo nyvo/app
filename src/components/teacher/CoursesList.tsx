@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { Course, CourseType } from '@/types/dashboard';
 
@@ -18,13 +19,33 @@ const getCourseColor = (type: CourseType): string => {
 };
 
 export const CoursesList = ({ courses }: CoursesListProps) => {
+  const [timeFilter, setTimeFilter] = useState<'today' | 'week'>('today');
+
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl border border-[#E7E5E4] bg-white p-7 shadow-sm ios-ease hover:border-[#D6D3D1] hover:shadow-md">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-geist text-sm font-semibold text-[#292524]">Dine kurs</h3>
         <div className="flex items-center gap-2">
-          <button className="text-xs font-medium text-[#292524] bg-[#F7F5F2] px-3 py-1.5 rounded-lg hover:bg-[#E7E5E4] transition-colors">I dag</button>
-          <button className="text-xs font-medium text-[#A8A29E] hover:text-[#57534E] px-2 transition-colors">Hele uken</button>
+          <button 
+            onClick={() => setTimeFilter('today')}
+            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+              timeFilter === 'today' 
+                ? 'text-[#292524] bg-[#F7F5F2]' 
+                : 'text-[#A8A29E] hover:text-[#57534E]'
+            }`}
+          >
+            I dag
+          </button>
+          <button 
+            onClick={() => setTimeFilter('week')}
+            className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+              timeFilter === 'week' 
+                ? 'text-[#292524] bg-[#F7F5F2]' 
+                : 'text-[#A8A29E] hover:text-[#57534E]'
+            }`}
+          >
+            Hele uken
+          </button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

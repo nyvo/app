@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Plus, 
@@ -61,9 +62,16 @@ const CourseCard = ({ course }: { course: DetailedCourse }) => {
         ) : (
           getStatusBadge(course.status, course.startDate)
         )}
-        <button className="text-[#A8A29E] hover:text-[#292524] p-1.5 rounded-full hover:bg-[#F5F5F4] transition-colors">
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
+        {isDraft ? (
+          <span className="text-xs font-medium text-[#292524] flex items-center gap-2">
+              <Edit2 className="h-3 w-3" />
+              Fullfør oppsett
+          </span>
+        ) : (
+          <button className="text-[#A8A29E] hover:text-[#292524] p-1.5 rounded-full hover:bg-[#F5F5F4] transition-colors">
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <Link to="/teacher/courses/detail" className="block group-hover:opacity-100 transition-opacity">
@@ -76,7 +84,7 @@ const CourseCard = ({ course }: { course: DetailedCourse }) => {
         <span>{course.location}</span>
       </div>
 
-      <div className={`space-y-3.5 mb-7 ${isDraft ? 'opacity-60' : ''}`}>
+      <div className={`space-y-3.5 ${isDraft ? 'opacity-60' : ''}`}>
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2.5 text-[#44403C]">
             <Calendar className="h-4 w-4 text-[#A8A29E]" />
@@ -93,49 +101,43 @@ const CourseCard = ({ course }: { course: DetailedCourse }) => {
         </div>
       </div>
 
-      <div className={`mt-auto pt-6 border-t ${isDraft ? 'border-[#E7E5E4]/50' : 'border-[#F5F5F4]'}`}>
-        {isDraft ? (
-           <div className="flex items-center justify-center">
-              <span className="text-xs font-medium text-[#292524] flex items-center gap-2">
-                  <Edit2 className="h-3 w-3" />
-                  Fullfør oppsett
-              </span>
-          </div>
-        ) : course.progress !== undefined ? (
-          <>
-             <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[10px] font-medium text-[#78716C] uppercase tracking-wide">
-                  {course.isWorkshop ? 'Fyllingsgrad' : 'Progresjon'}
-                </span>
-                <span className="text-[10px] font-medium text-[#292524]">
-                  {course.isWorkshop ? `${course.progress}%` : `Uke ${course.currentWeek} av ${course.totalWeeks}`}
-                </span>
-            </div>
-            <div className="h-1.5 w-full rounded-full bg-[#F5F5F4] overflow-hidden">
-                <div 
-                  className={`h-full rounded-full ${course.isWorkshop ? 'bg-[#354F41]' : 'bg-[#292524]'}`} 
-                  style={{ width: `${course.progress}%` }}
-                ></div>
-            </div>
-          </>
-        ) : (
-           <div className="flex items-center gap-3">
-              <div className="flex -space-x-2 overflow-hidden">
-                  {[1, 2, 3].map((i) => (
-                     <img key={i} className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover" src={`https://i.pravatar.cc/150?u=${i}`} alt="" />
-                  ))}
-              </div>
-              <span className="text-xs font-medium text-[#78716C]">+{course.participants - 3 > 0 ? course.participants - 3 : 0} påmeldte</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
 
 const CoursesPage = () => {
   const { showEmptyState, toggleEmptyState } = useEmptyState();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
+  
   const courses = showEmptyState ? emptyDetailedCourses : mockDetailedCourses;
+
+  const filteredCourses = useMemo(() => {
+    let result = courses;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(course => 
+        course.title.toLowerCase().includes(query) || 
+        course.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by status tabs
+    // Note: The mock data has specific statuses, we'll map them as best as we can
+    if (activeFilter !== 'all') {
+      if (activeFilter === 'active') {
+        result = result.filter(course => course.status === 'active');
+      } else if (activeFilter === 'upcoming') {
+        result = result.filter(course => course.status === 'upcoming' || course.status === 'draft');
+      } else if (activeFilter === 'completed') {
+        result = result.filter(course => course.status === 'completed');
+      }
+    }
+
+    return result;
+  }, [courses, searchQuery, activeFilter]);
 
   return (
     <SidebarProvider>
@@ -169,10 +171,13 @@ const CoursesPage = () => {
                     {showEmptyState ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     {showEmptyState ? 'Vis data' : 'Vis tomt'}
                   </button>
-                  <button className="flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+                  <Link 
+                    to="/teacher/new-course"
+                    className="flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+                  >
                     <Plus className="h-4 w-4" />
                     <span>Opprett nytt</span>
-                </button>
+                </Link>
                 </div>
             </div>
 
@@ -182,21 +187,35 @@ const CoursesPage = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A8A29E]" />
                     <input 
                       type="text" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Søk etter kurs..." 
                       className="h-10 w-full rounded-full border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm" 
                     />
                 </div>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar p-1">
-                    <button className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-medium text-[#292524] shadow-sm ring-1 ring-[#E7E5E4]">
+                    <button 
+                      onClick={() => setActiveFilter('all')}
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeFilter === 'all' ? 'bg-white text-[#292524] shadow-sm ring-1 ring-[#E7E5E4]' : 'bg-transparent text-[#78716C] hover:bg-[#F5F5F4]'}`}
+                    >
                         Alle
                     </button>
-                    <button className="shrink-0 rounded-full bg-transparent px-4 py-2 text-sm font-medium text-[#78716C] hover:bg-[#F5F5F4] transition-colors">
+                    <button 
+                      onClick={() => setActiveFilter('active')}
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeFilter === 'active' ? 'bg-white text-[#292524] shadow-sm ring-1 ring-[#E7E5E4]' : 'bg-transparent text-[#78716C] hover:bg-[#F5F5F4]'}`}
+                    >
                         Aktive
                     </button>
-                    <button className="shrink-0 rounded-full bg-transparent px-4 py-2 text-sm font-medium text-[#78716C] hover:bg-[#F5F5F4] transition-colors">
+                    <button 
+                      onClick={() => setActiveFilter('upcoming')}
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeFilter === 'upcoming' ? 'bg-white text-[#292524] shadow-sm ring-1 ring-[#E7E5E4]' : 'bg-transparent text-[#78716C] hover:bg-[#F5F5F4]'}`}
+                    >
                         Kommende
                     </button>
-                    <button className="shrink-0 rounded-full bg-transparent px-4 py-2 text-sm font-medium text-[#78716C] hover:bg-[#F5F5F4] transition-colors">
+                    <button 
+                      onClick={() => setActiveFilter('completed')}
+                      className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${activeFilter === 'completed' ? 'bg-white text-[#292524] shadow-sm ring-1 ring-[#E7E5E4]' : 'bg-transparent text-[#78716C] hover:bg-[#F5F5F4]'}`}
+                    >
                         Fullførte
                     </button>
                 </div>
@@ -205,7 +224,7 @@ const CoursesPage = () => {
 
         {/* Scrollable Course Grid */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-            {courses.length === 0 ? (
+            {filteredCourses.length === 0 ? (
                <div className="flex flex-col items-center justify-center h-64 text-center">
                   <div className="h-12 w-12 rounded-full bg-[#F5F5F4] flex items-center justify-center mb-3">
                      <Calendar className="h-6 w-6 text-[#A8A29E]" />
@@ -217,7 +236,7 @@ const CoursesPage = () => {
                     </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
-                  {courses.map((course) => (
+                  {filteredCourses.map((course) => (
                       <CourseCard key={course.id} course={course} />
                   ))}
                     </div>

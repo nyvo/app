@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, ArrowRight, MoreHorizontal, Plus } from 'lucide-react';
 import type { UpcomingClass } from '@/types/dashboard';
 
@@ -94,10 +95,13 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
               {classData.attendees}/{classData.capacity}
             </span>
           </div>
-          <button className="flex items-center gap-2 rounded-full bg-[#FDFBF7] px-6 py-3 text-sm font-semibold text-[#2F453B] shadow-sm hover:bg-white transition-colors">
+          <Link 
+            to="/teacher/courses/detail"
+            className="flex items-center gap-2 rounded-full bg-[#FDFBF7] px-6 py-3 text-sm font-semibold text-[#2F453B] shadow-sm hover:bg-white transition-colors"
+          >
             Gå til kurs
             <ArrowRight className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

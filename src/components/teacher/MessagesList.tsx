@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Message } from '@/types/dashboard';
 
 interface MessagesListProps {
@@ -9,7 +10,7 @@ export const MessagesList = ({ messages }: MessagesListProps) => {
     <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-3xl border border-[#E7E5E4] bg-white p-0 shadow-sm overflow-hidden ios-ease hover:border-[#D6D3D1] hover:shadow-md flex flex-col">
       <div className="flex items-center justify-between p-5 border-b border-[#F5F5F4]">
         <h3 className="font-geist text-sm font-semibold text-[#292524]">Meldinger</h3>
-        <button className="text-xs font-medium text-[#A8A29E] hover:text-[#57534E] transition-colors">Se alle</button>
+        <Link to="/teacher/messages" className="text-xs font-medium text-[#A8A29E] hover:text-[#57534E] transition-colors">Se alle</Link>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {messages.length === 0 ? (

@@ -43,9 +43,10 @@ export const TeacherSidebar = () => {
 
   const isActive = (href: string) => {
     if (href === '/teacher') {
-      return location.pathname === '/teacher' || location.pathname === '/';
+      return location.pathname === '/teacher' || location.pathname === '/teacher/';
     }
-    return location.pathname === href;
+    // Check if the current path starts with the href (e.g. /teacher/courses/detail matches /teacher/courses)
+    return location.pathname.startsWith(href);
   };
 
   return (

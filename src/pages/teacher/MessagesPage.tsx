@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Flower2,
   Menu,
@@ -41,6 +41,7 @@ const MessagesPage = () => {
     conversations.length > 0 ? conversations[0] : null
   );
   const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'archive'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');
   
   // State for new message composition
@@ -48,10 +49,35 @@ const MessagesPage = () => {
   const [newRecipient, setNewRecipient] = useState('');
   const [newMessageBody, setNewMessageBody] = useState('');
 
+  const filteredConversations = useMemo(() => {
+    let result = conversations;
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(c => 
+        c.name.toLowerCase().includes(query) || 
+        c.lastMessage.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by tab
+    if (filterTab === 'unread') {
+      result = result.filter(c => (c.unreadCount || 0) > 0);
+    } else if (filterTab === 'archive') {
+      // Mock archive filter - just filter out unread ones or show nothing if no archive prop
+      // Since we don't have an 'isArchived' prop, we'll just show read messages for now
+      // or return empty if we want to simulate empty archive
+      result = result.filter(c => c.isRead); 
+    }
+
+    return result;
+  }, [conversations, searchQuery, filterTab]);
+
   // Reset active conversation if list becomes empty or non-empty
-  if (conversations.length > 0 && !activeConversation && !isComposing) {
-    setActiveConversation(conversations[0]);
-  } else if (conversations.length === 0 && activeConversation) {
+  if (filteredConversations.length > 0 && !activeConversation && !isComposing) {
+    setActiveConversation(filteredConversations[0]);
+  } else if (filteredConversations.length === 0 && activeConversation) {
     setActiveConversation(null);
   }
 
@@ -118,6 +144,8 @@ const MessagesPage = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A8A29E] group-focus-within:text-[#292524] transition-colors" />
                 <input
                   type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Søk i meldinger..."
                   className="h-10 w-full rounded-full border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm"
                 />
@@ -160,13 +188,13 @@ const MessagesPage = () => {
 
             {/* Conversations Scroll Area */}
             <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-3 space-y-1">
-              {conversations.length === 0 ? (
+              {filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
                   <p className="text-sm font-medium text-[#292524]">Ingen meldinger</p>
-                  <p className="text-xs text-[#78716C] mt-1">Du har ingen aktive samtaler akkurat nå.</p>
+                  <p className="text-xs text-[#78716C] mt-1">Ingen meldinger funnet med valgte filter.</p>
                 </div>
               ) : (
-                conversations.map((conversation) => (
+                filteredConversations.map((conversation) => (
                 <button
                   key={conversation.id}
                   onClick={() => {

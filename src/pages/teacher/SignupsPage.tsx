@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Search,
   Filter,
   ChevronDown,
@@ -162,6 +168,8 @@ export const SignupsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [statusFilter, setStatusFilter] = useState<string>('Alle');
+  const [classFilter, setClassFilter] = useState<string>('Alle');
 
   // Handle sort toggle
   const handleSort = (field: SortField) => {
@@ -184,11 +192,27 @@ export const SignupsPage = () => {
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = data.filter(
+      result = result.filter(
         (signup) =>
           signup.participant.name.toLowerCase().includes(query) ||
           signup.participant.email.toLowerCase().includes(query)
       );
+    }
+
+    // Filter by status
+    if (statusFilter !== 'Alle') {
+      if (statusFilter === 'Påmeldt') {
+        result = result.filter(s => s.status === 'confirmed');
+      } else if (statusFilter === 'Venteliste') {
+        result = result.filter(s => s.status === 'waitlist');
+      } else if (statusFilter === 'Avbestilt') {
+        result = result.filter(s => s.status === 'cancelled');
+      }
+    }
+
+    // Filter by class (simple implementation)
+    if (classFilter !== 'Alle') {
+      result = result.filter(s => s.className === classFilter);
     }
 
     // Then sort if a sort field is selected
@@ -269,19 +293,38 @@ export const SignupsPage = () => {
 
             {/* Filter Dropdowns */}
             <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
-              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
-                <Filter className="h-3.5 w-3.5 text-[#A8A29E]" />
-                Status: Alle
-                <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
-              </button>
-              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
-                Klasse: Alle
-                <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
-              </button>
-              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
-                Dato: Denne uken
-                <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className={`flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all shadow-sm whitespace-nowrap ${statusFilter !== 'Alle' ? 'bg-white text-[#292524] border-[#E7E5E4]' : 'bg-white text-[#57534E] border-[#E7E5E4] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1]'}`}>
+                    <Filter className={`h-3.5 w-3.5 ${statusFilter !== 'Alle' ? 'text-[#292524]' : 'text-[#A8A29E]'}`} />
+                    Status: {statusFilter}
+                    <ChevronDown className={`ml-1 h-3.5 w-3.5 ${statusFilter !== 'Alle' ? 'text-[#292524]' : 'text-[#A8A29E]'}`} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {['Alle', 'Påmeldt', 'Venteliste', 'Avbestilt'].map((status) => (
+                    <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
+                      {status}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className={`flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium transition-all shadow-sm whitespace-nowrap ${classFilter !== 'Alle' ? 'bg-white text-[#292524] border-[#E7E5E4]' : 'bg-white text-[#57534E] border-[#E7E5E4] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1]'}`}>
+                    Kurs: {classFilter}
+                    <ChevronDown className={`ml-1 h-3.5 w-3.5 ${classFilter !== 'Alle' ? 'text-[#292524]' : 'text-[#A8A29E]'}`} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setClassFilter('Alle')}>Alle</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setClassFilter('Vinyasa Flow')}>Vinyasa Flow</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setClassFilter('Yin Yoga')}>Yin Yoga</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setClassFilter('Meditation')}>Meditation</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
             </div>
           </div>
         </header>
@@ -296,7 +339,7 @@ export const SignupsPage = () => {
                     <th className="py-3 px-6 text-xs font-medium uppercase tracking-wider text-[#78716C]">Deltaker</th>
                     <th className="p-0">
                       <SortableHeader
-                        label="Klasse & Tid"
+                        label="Kurs & Tid"
                         field="classDateTime"
                         currentSort={sortField}
                         currentDirection={sortDirection}
