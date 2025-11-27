@@ -8,7 +8,6 @@ import {
   Download,
   Plus,
   Calendar,
-  TrendingUp,
   MoreHorizontal,
   StickyNote,
   XCircle,
@@ -17,109 +16,18 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import type { Signup, SignupStatus, SignupPaymentType } from '@/types/dashboard';
+import { useEmptyState } from '@/context/EmptyStateContext';
+import { mockSignups, emptySignups, type SignupWithTimestamps } from '@/data/mockData';
 
 // Sort types
 type SortField = 'classDateTime' | 'registeredAt' | null;
 type SortDirection = 'asc' | 'desc';
-
-// Extended signup type with sortable timestamps
-interface SignupWithTimestamps extends Signup {
-  classDateTime: Date;
-  registeredAtTimestamp: Date;
-}
-
-// Mock data for signups with timestamps for sorting
-const mockSignups: SignupWithTimestamps[] = [
-  {
-    id: '1',
-    participant: {
-      name: 'Kari Nordmann',
-      email: 'kari.n@gmail.com',
-      avatar: 'https://i.pravatar.cc/150?u=32',
-    },
-    className: 'Vinyasa Flow',
-    classDate: 'Ons 23. Okt',
-    classTime: '16:00',
-    classDateTime: new Date('2024-10-23T16:00:00'),
-    registeredAt: '2 timer siden',
-    registeredAtTimestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    status: 'confirmed',
-    paymentType: 'klippekort',
-    paymentDetails: '2/10',
-  },
-  {
-    id: '2',
-    participant: {
-      name: 'Lars Hansen',
-      email: 'lars.hansen@outlook.com',
-      avatar: 'https://i.pravatar.cc/150?u=55',
-    },
-    className: 'Ashtanga Intro',
-    classDate: 'Tor 24. Okt',
-    classTime: '18:00',
-    classDateTime: new Date('2024-10-24T18:00:00'),
-    registeredAt: 'I går',
-    registeredAtTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    status: 'waitlist',
-    waitlistPosition: 1,
-    paymentType: 'månedskort',
-    note: 'Har en skade i skulderen, trenger tilpasninger.',
-  },
-  {
-    id: '3',
-    participant: {
-      name: 'Ida Johansen',
-      email: 'ida.j@hotmail.com',
-      initials: 'IJ',
-    },
-    className: 'Yin Yoga',
-    classDate: 'Fre 25. Okt',
-    classTime: '09:00',
-    classDateTime: new Date('2024-10-25T09:00:00'),
-    registeredAt: '3 dager siden',
-    registeredAtTimestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    status: 'cancelled',
-    paymentType: 'unpaid',
-  },
-  {
-    id: '4',
-    participant: {
-      name: 'Erik Solberg',
-      email: 'erik.s@gmail.com',
-      avatar: 'https://i.pravatar.cc/150?u=12',
-    },
-    className: 'Vinyasa Flow',
-    classDate: 'Ons 23. Okt',
-    classTime: '16:00',
-    classDateTime: new Date('2024-10-23T16:00:00'),
-    registeredAt: '4 timer siden',
-    registeredAtTimestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    status: 'confirmed',
-    paymentType: 'drop-in',
-    paymentDetails: 'Vipps',
-    note: 'Ny elev, ønsker introduksjon.',
-  },
-  {
-    id: '5',
-    participant: {
-      name: 'Sofia Berg',
-      email: 'sofia.berg@gmail.com',
-      avatar: 'https://i.pravatar.cc/150?u=41',
-    },
-    className: 'Pilates Core',
-    classDate: 'Fre 25. Okt',
-    classTime: '17:00',
-    classDateTime: new Date('2024-10-25T17:00:00'),
-    registeredAt: '1 dag siden',
-    registeredAtTimestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    status: 'confirmed',
-    paymentType: 'halvårskort',
-  },
-];
 
 // Sortable column header component
 const SortableHeader = ({
@@ -240,51 +148,17 @@ const NoteTooltip = ({ note, hasNote }: { note?: string; hasNote: boolean }) => 
 
 // Participant avatar component
 const ParticipantAvatar = ({ participant }: { participant: Signup['participant'] }) => {
-  if (participant.avatar) {
-    return (
-      <img
-        src={participant.avatar}
-        className="h-9 w-9 rounded-full object-cover ring-1 ring-[#E7E5E4]"
-        alt={participant.name}
-      />
-    );
-  }
-
+  // Simplified avatar: Always show initials/generic icon unless specific override
+  // User requested to drop profile photos, so we default to initials
   return (
     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F5F5F4] text-xs font-medium text-[#57534E] ring-1 ring-[#E7E5E4]">
-      {participant.initials}
+      {participant.initials || participant.name.substring(0, 2).toUpperCase()}
     </div>
   );
 };
 
-// Stats card component
-const StatsCard = ({
-  label,
-  value,
-  trend,
-  trendLabel,
-}: {
-  label: string;
-  value: number;
-  trend?: number;
-  trendLabel?: string;
-}) => (
-  <div className="flex flex-col rounded-xl border border-[#E7E5E4] bg-white p-4 shadow-[0_2px_4px_rgba(0,0,0,0.01)]">
-    <span className="text-xs font-medium text-[#78716C] uppercase tracking-wide">{label}</span>
-    <div className="mt-2 flex items-baseline gap-2">
-      <span className="text-2xl font-semibold text-[#292524]">{value}</span>
-      {trend !== undefined ? (
-        <span className="text-xs font-medium text-[#10B981] flex items-center gap-0.5">
-          <TrendingUp className="h-3 w-3" /> +{trend}%
-        </span>
-      ) : trendLabel ? (
-        <span className="text-xs font-medium text-[#78716C]">{trendLabel}</span>
-      ) : null}
-    </div>
-  </div>
-);
-
 export const SignupsPage = () => {
+  const { showEmptyState, toggleEmptyState } = useEmptyState();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -303,12 +177,14 @@ export const SignupsPage = () => {
 
   // Filtered and sorted signups
   const filteredAndSortedSignups = useMemo(() => {
+    const data = showEmptyState ? emptySignups : mockSignups;
+    
     // First filter by search query
-    let result = mockSignups;
+    let result = data;
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = mockSignups.filter(
+      result = data.filter(
         (signup) =>
           signup.participant.name.toLowerCase().includes(query) ||
           signup.participant.email.toLowerCase().includes(query)
@@ -331,7 +207,7 @@ export const SignupsPage = () => {
     }
 
     return result;
-  }, [searchQuery, sortField, sortDirection]);
+  }, [searchQuery, sortField, sortDirection, showEmptyState]);
 
   return (
     <SidebarProvider>
@@ -352,28 +228,31 @@ export const SignupsPage = () => {
         <header className="flex flex-col gap-6 px-8 py-8 shrink-0">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="font-geist text-2xl font-semibold text-[#292524] tracking-tight">Påmeldinger</h1>
+              <h1 className="font-geist text-3xl font-medium tracking-tight text-[#292524]">Påmeldinger</h1>
               <p className="text-sm text-[#78716C] mt-1">Oversikt over studenter og bookinger.</p>
             </div>
             <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm">
+               <button 
+                onClick={toggleEmptyState}
+                className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm"
+                aria-label="Toggle empty state"
+              >
+                {showEmptyState ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                {showEmptyState ? 'Vis data' : 'Vis tomt'}
+              </button>
+              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm">
                 <Download className="h-4 w-4" />
                 Eksporter
               </button>
-              <button className="group flex items-center gap-2 rounded-full bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+              <button className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
                 <Plus className="h-4 w-4" />
                 <span>Manuell booking</span>
               </button>
             </div>
           </div>
 
-          {/* Quick Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatsCard label="Aktive påmeldinger" value={142} trend={12} />
-            <StatsCard label="Venteliste" value={8} trendLabel="Totalt denne uken" />
-            <StatsCard label="Nye studenter" value={24} trend={5} />
-          </div>
-
+          {/* Removed Stats Cards per request */}
+          
           {/* Filters Bar */}
           <div className="flex flex-col md:flex-row gap-3">
             {/* Search */}
@@ -384,22 +263,22 @@ export const SignupsPage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Søk etter navn eller e-post..."
-                className="h-10 w-full rounded-lg border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm hover:border-[#D6D3D1]"
+                className="h-10 w-full rounded-full border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm hover:border-[#D6D3D1]"
               />
             </div>
 
             {/* Filter Dropdowns */}
             <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
-              <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
+              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
                 <Filter className="h-3.5 w-3.5 text-[#A8A29E]" />
                 Status: Alle
                 <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
               </button>
-              <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
+              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
                 Klasse: Alle
                 <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
               </button>
-              <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
+              <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-3.5 py-2 text-sm font-medium text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] transition-all shadow-sm whitespace-nowrap">
                 Dato: Denne uken
                 <ChevronDown className="ml-1 h-3.5 w-3.5 text-[#A8A29E]" />
               </button>
@@ -447,7 +326,7 @@ export const SignupsPage = () => {
                           <Search className="h-8 w-8 text-[#D6D3D1]" />
                           <p className="text-sm font-medium text-[#292524]">Ingen resultater</p>
                           <p className="text-xs text-[#78716C]">
-                            Prøv å søke etter et annet navn eller e-post
+                             {showEmptyState ? 'Det er ingen påmeldinger å vise.' : 'Prøv å søke etter et annet navn eller e-post'}
                           </p>
                         </div>
                       </td>

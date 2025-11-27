@@ -2,115 +2,72 @@ import { useState } from 'react';
 import {
   Flower2,
   Menu,
-  Edit3,
   Search,
   ChevronLeft,
-  Phone,
   MoreHorizontal,
   Paperclip,
   Smile,
-  Zap,
   Send,
   CheckCheck,
+  Eye,
+  EyeOff,
+  Plus,
+  X,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-
-interface Conversation {
-  id: string;
-  name: string;
-  avatar?: string;
-  initials?: string;
-  lastMessage: string;
-  timestamp: string;
-  isOnline?: boolean;
-  unreadCount?: number;
-  isActive?: boolean;
-  isRead?: boolean;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  timestamp: string;
-  isOutgoing: boolean;
-  avatar: string;
-  isRead?: boolean;
-}
-
-const mockConversations: Conversation[] = [
-  {
-    id: '1',
-    name: 'Kari Nordmann',
-    avatar: 'https://i.pravatar.cc/150?u=32',
-    lastMessage: 'Har dere matte jeg kan låne?',
-    timestamp: '10:23',
-    isOnline: true,
-    isActive: true,
-  },
-  {
-    id: '2',
-    name: 'Lars Hansen',
-    avatar: 'https://i.pravatar.cc/150?u=55',
-    lastMessage: 'Takk for timen i går! Det var...',
-    timestamp: '09:45',
-    unreadCount: 1,
-  },
-  {
-    id: '3',
-    name: 'Erik Solberg',
-    avatar: 'https://i.pravatar.cc/150?u=12',
-    lastMessage: 'Den er grei, vi sees på onsdag.',
-    timestamp: 'I går',
-    isRead: true,
-  },
-  {
-    id: '4',
-    name: 'Sofia Berg',
-    avatar: 'https://i.pravatar.cc/150?u=41',
-    lastMessage: 'Kan jeg endre bookingen min?',
-    timestamp: 'Man',
-    isRead: true,
-  },
-  {
-    id: '5',
-    name: 'Anna Nilsen',
-    initials: 'AN',
-    lastMessage: 'Glemte vannflasken min...',
-    timestamp: '20. Okt',
-    isRead: true,
-  },
-];
-
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    content: 'Hei! Jeg har meldt meg på Vinyasa Flow kl 16:00 i dag. Gleder meg! 😊',
-    timestamp: '09:14',
-    isOutgoing: false,
-    avatar: 'https://i.pravatar.cc/150?u=32',
-  },
-  {
-    id: '2',
-    content: 'Hei Kari! Så hyggelig å høre. Velkommen skal du være.',
-    timestamp: '09:30',
-    isOutgoing: true,
-    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-    isRead: true,
-  },
-  {
-    id: '3',
-    content: 'Takk! Bare et lite spørsmål - har dere matte jeg kan låne, eller må jeg ta med egen?',
-    timestamp: '10:23',
-    isOutgoing: false,
-    avatar: 'https://i.pravatar.cc/150?u=32',
-  },
-];
+import { useEmptyState } from '@/context/EmptyStateContext';
+import { 
+  mockConversations, 
+  mockMessages, 
+  emptyConversations, 
+  emptyMessages,
+  type Conversation 
+} from '@/data/mockData';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const MessagesPage = () => {
-  const [activeConversation, setActiveConversation] = useState<Conversation>(mockConversations[0]);
+  const { showEmptyState, toggleEmptyState } = useEmptyState();
+  
+  const conversations = showEmptyState ? emptyConversations : mockConversations;
+  const messages = showEmptyState ? emptyMessages : mockMessages;
+
+  const [activeConversation, setActiveConversation] = useState<Conversation | null>(
+    conversations.length > 0 ? conversations[0] : null
+  );
   const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'archive'>('all');
   const [messageText, setMessageText] = useState('');
+  
+  // State for new message composition
+  const [isComposing, setIsComposing] = useState(false);
+  const [newRecipient, setNewRecipient] = useState('');
+  const [newMessageBody, setNewMessageBody] = useState('');
+
+  // Reset active conversation if list becomes empty or non-empty
+  if (conversations.length > 0 && !activeConversation && !isComposing) {
+    setActiveConversation(conversations[0]);
+  } else if (conversations.length === 0 && activeConversation) {
+    setActiveConversation(null);
+  }
+
+  const handleStartNewMessage = () => {
+    setIsComposing(true);
+    setActiveConversation(null);
+  };
+
+  const handleCancelComposition = () => {
+    setIsComposing(false);
+    setNewRecipient('');
+    setNewMessageBody('');
+    if (conversations.length > 0) {
+      setActiveConversation(conversations[0]);
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -135,10 +92,25 @@ const MessagesPage = () => {
             {/* List Header */}
             <div className="p-5 pb-2">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-xl font-semibold text-[#292524] tracking-tight">Meldinger</h2>
-                <button className="rounded-full p-2 hover:bg-[#F5F5F4] text-[#78716C] transition-colors">
-                  <Edit3 className="h-4 w-4" />
-                </button>
+                <h2 className="font-geist text-3xl font-medium tracking-tight text-[#292524]">Meldinger</h2>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={toggleEmptyState}
+                    className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F5F4] hover:scale-[1.02] active:scale-[0.98] ios-ease"
+                    title={showEmptyState ? "Show Data" : "Show Empty State"}
+                  >
+                    {showEmptyState ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    <span className="hidden xl:inline">{showEmptyState ? 'Vis data' : 'Vis tomt'}</span>
+                  </button>
+                  <button 
+                    onClick={handleStartNewMessage}
+                    className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease ring-offset-2 focus:ring-2 ring-[#292524]"
+                  >
+                    <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                    <span className="hidden lg:inline">Ny melding</span>
+                    <span className="lg:hidden">Ny</span>
+                  </button>
+                </div>
               </div>
 
               {/* Search */}
@@ -147,15 +119,15 @@ const MessagesPage = () => {
                 <input
                   type="text"
                   placeholder="Søk i meldinger..."
-                  className="h-10 w-full rounded-xl border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm"
+                  className="h-10 w-full rounded-full border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:outline-none focus:ring-1 focus:ring-[#A8A29E] transition-all shadow-sm"
                 />
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex gap-1 p-1 bg-[#F5F5F4] rounded-lg mb-2">
+              <div className="flex gap-1 p-1 bg-[#F5F5F4] rounded-full mb-2">
                 <button
                   onClick={() => setFilterTab('all')}
-                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                  className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-all ${
                     filterTab === 'all'
                       ? 'bg-white text-[#292524] shadow-sm'
                       : 'text-[#78716C] hover:text-[#57534E]'
@@ -165,7 +137,7 @@ const MessagesPage = () => {
                 </button>
                 <button
                   onClick={() => setFilterTab('unread')}
-                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                  className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-all ${
                     filterTab === 'unread'
                       ? 'bg-white text-[#292524] shadow-sm'
                       : 'text-[#78716C] hover:text-[#57534E]'
@@ -175,7 +147,7 @@ const MessagesPage = () => {
                 </button>
                 <button
                   onClick={() => setFilterTab('archive')}
-                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition-all ${
+                  className={`flex-1 rounded-full py-1.5 text-xs font-medium transition-all ${
                     filterTab === 'archive'
                       ? 'bg-white text-[#292524] shadow-sm'
                       : 'text-[#78716C] hover:text-[#57534E]'
@@ -188,12 +160,21 @@ const MessagesPage = () => {
 
             {/* Conversations Scroll Area */}
             <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-3 space-y-1">
-              {mockConversations.map((conversation) => (
+              {conversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
+                  <p className="text-sm font-medium text-[#292524]">Ingen meldinger</p>
+                  <p className="text-xs text-[#78716C] mt-1">Du har ingen aktive samtaler akkurat nå.</p>
+                </div>
+              ) : (
+                conversations.map((conversation) => (
                 <button
                   key={conversation.id}
-                  onClick={() => setActiveConversation(conversation)}
+                  onClick={() => {
+                    setActiveConversation(conversation);
+                    setIsComposing(false);
+                  }}
                   className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left group relative ${
-                    conversation.isActive
+                    activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border border-[#E7E5E4] shadow-sm'
                       : conversation.isRead
                       ? 'hover:bg-white border border-transparent hover:border-[#E7E5E4] hover:shadow-sm opacity-70 hover:opacity-100'
@@ -206,16 +187,13 @@ const MessagesPage = () => {
                         src={conversation.avatar}
                         alt="Avatar"
                         className={`h-10 w-10 rounded-full object-cover ${
-                          !conversation.isActive && !conversation.unreadCount ? 'opacity-90 group-hover:opacity-100' : ''
+                          activeConversation?.id !== conversation.id && !conversation.unreadCount ? 'opacity-90 group-hover:opacity-100' : ''
                         }`}
                       />
                     ) : (
                       <div className="h-10 w-10 rounded-full bg-[#E7E5E4] flex items-center justify-center text-[#78716C] text-xs font-bold">
                         {conversation.initials}
                       </div>
-                    )}
-                    {conversation.isOnline && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#10B981]" />
                     )}
                     {conversation.unreadCount && (
                       <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#292524] text-[10px] font-bold text-white border-2 border-[#FDFBF7]">
@@ -244,7 +222,7 @@ const MessagesPage = () => {
                       className={`text-xs truncate ${
                         conversation.unreadCount
                           ? 'text-[#292524] font-medium'
-                          : conversation.isActive
+                          : activeConversation?.id === conversation.id
                           ? 'text-[#57534E] font-medium'
                           : 'text-[#78716C]'
                       }`}
@@ -255,53 +233,172 @@ const MessagesPage = () => {
                   {conversation.unreadCount && (
                     <div className="h-2 w-2 rounded-full bg-[#3B82F6] shrink-0 mt-2" />
                   )}
-                  {conversation.isActive && (
+                  {activeConversation?.id === conversation.id && !isComposing && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-[#292524]" />
                   )}
                 </button>
-              ))}
+              )))}
             </div>
           </div>
 
           {/* Chat View (Main Area) */}
           <div className="flex-1 flex flex-col h-full bg-[#FDFBF7] relative">
-            {/* Chat Header */}
+            
+            {/* Composing New Message View */}
+            {isComposing ? (
+              <div className="flex-1 flex flex-col h-full bg-[#FDFBF7]">
+                 <header className="flex items-center justify-between px-6 py-4 border-b border-[#E7E5E4] bg-[#FDFBF7]/90 backdrop-blur-sm z-10">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={handleCancelComposition}
+                        className="md:hidden text-[#78716C] hover:text-[#292524] mr-1"
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </button>
+                      <h3 className="text-sm font-semibold text-[#292524]">Ny melding</h3>
+                    </div>
+                    <button 
+                      onClick={handleCancelComposition}
+                      className="p-2 text-[#A8A29E] hover:text-[#292524] hover:bg-[#F5F5F4] rounded-full transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                </header>
+
+                <div className="p-6 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-[#78716C] ml-1">Til:</label>
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#A8A29E]" />
+                        <input
+                          type="text"
+                          value={newRecipient}
+                          onChange={(e) => setNewRecipient(e.target.value)}
+                          placeholder="Søk etter navn eller e-post..."
+                          autoFocus
+                          className="h-11 w-full rounded-xl border border-[#E7E5E4] bg-white pl-10 pr-4 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#354F41] focus:outline-none focus:ring-1 focus:ring-[#354F41]/20 transition-all shadow-sm"
+                        />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-xs font-medium text-[#78716C] ml-1">Melding:</label>
+                    <div className="rounded-2xl border border-[#E7E5E4] bg-white p-3 shadow-sm focus-within:ring-1 focus-within:ring-[#354F41]/20 focus-within:border-[#354F41] transition-all">
+                        <textarea
+                          rows={8}
+                          value={newMessageBody}
+                          onChange={(e) => setNewMessageBody(e.target.value)}
+                          placeholder="Skriv din melding her..."
+                          className="w-full resize-none bg-transparent px-1 py-1 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:outline-none custom-scrollbar"
+                        />
+                        <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#F5F5F4]">
+                           <div className="flex items-center gap-1">
+                              <button className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors">
+                                <Paperclip className="h-4 w-4" />
+                              </button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors">
+                                    <Smile className="h-4 w-4" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="w-64 p-2">
+                                  <div className="grid grid-cols-6 gap-1">
+                                    {['😊', '🙏', '👋', '🧘', '✨', '💚', '🌸', '💪', '🙌', '🌞', '🍵', '🤸'].map(emoji => (
+                                      <button
+                                        key={emoji}
+                                        onClick={() => setNewMessageBody(prev => prev + emoji)}
+                                        className="text-xl p-1 hover:bg-[#F5F5F4] rounded transition-colors"
+                                      >
+                                        {emoji}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                           </div>
+                           <button 
+                              className="flex items-center gap-2 rounded-xl bg-[#292524] px-6 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+                            >
+                              <span>Send</span>
+                              <Send className="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Regular Chat Header */}
             <header className="flex items-center justify-between px-6 py-4 border-b border-[#E7E5E4] bg-[#FDFBF7]/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button className="md:hidden text-[#78716C] hover:text-[#292524] mr-1">
                   <ChevronLeft className="h-6 w-6" />
                 </button>
+                    
+                    {activeConversation ? (
+                      <>
                 <div className="relative">
+                          {activeConversation.avatar ? (
                   <img
-                    src={activeConversation.avatar || 'https://i.pravatar.cc/150?u=32'}
+                              src={activeConversation.avatar}
                     alt="Avatar"
                     className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
                   />
-                  {activeConversation.isOnline && (
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#10B981] border-2 border-white" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-[#E7E5E4] flex items-center justify-center text-[#78716C] text-xs font-bold ring-2 ring-white shadow-sm">
+                              {activeConversation.initials}
+                            </div>
                   )}
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-[#292524]">{activeConversation.name}</h3>
-                  {activeConversation.isOnline && (
-                    <p className="text-xs text-[#10B981] font-medium flex items-center gap-1">
-                      Aktiv nå
-                    </p>
-                  )}
-                </div>
+                          {/* Removed "Online" status for email/inbox style feel */}
+                          <p className="text-xs text-[#78716C]">
+                            {activeConversation.id === '1' ? 'Ny henvendelse' : 'Tidligere student'}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="h-10 w-32 bg-gray-100 rounded animate-pulse"></div>
+                    )}
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 text-[#A8A29E] hover:text-[#292524] hover:bg-[#F5F5F4] rounded-full transition-colors">
-                  <Phone className="h-4 w-4" />
-                </button>
+                    {/* Removed Phone and Zap icons */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                 <button className="p-2 text-[#A8A29E] hover:text-[#292524] hover:bg-[#F5F5F4] rounded-full transition-colors">
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem className="cursor-pointer text-[#57534E] focus:text-[#292524] focus:bg-[#F5F5F4]">
+                           Marker som ulest
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer text-[#57534E] focus:text-[#292524] focus:bg-[#F5F5F4]">
+                           Arkiver samtale
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
+                           Slett samtale
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
               </div>
             </header>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
+                  {!activeConversation ? (
+                    <div className="flex flex-col items-center justify-center h-full text-[#A8A29E]">
+                        <p>Velg en samtale for å lese</p>
+                    </div>
+                  ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-[#A8A29E]">
+                        <p>Ingen meldinger i denne samtalen ennå</p>
+                      </div>
+                  ) : (
+                    <>
               {/* Time Separator */}
               <div className="flex justify-center">
                 <span className="text-[10px] font-medium text-[#A8A29E] bg-[#F5F5F4] px-3 py-1 rounded-full uppercase tracking-wide">
@@ -309,22 +406,30 @@ const MessagesPage = () => {
                 </span>
               </div>
 
-              {mockMessages.map((message) => (
+                      {messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex items-end gap-3 max-w-[85%] sm:max-w-[70%] group ${
                     message.isOutgoing ? 'self-end flex-row-reverse' : 'self-start'
                   }`}
                 >
+                          {message.isOutgoing ? (
+                            // No avatar for self, or teacher avatar
+                            <div className="h-8 w-8 rounded-full bg-[#292524] flex items-center justify-center text-[#F5F5F4] text-[10px] font-bold mb-1">
+                                Du
+                            </div>
+                          ) : message.avatar ? (
                   <img
                     src={message.avatar}
                     alt="Avatar"
-                    className={`h-8 w-8 rounded-full object-cover mb-1 ${
-                      message.isOutgoing
-                        ? 'ring-1 ring-[#E7E5E4]'
-                        : 'opacity-80 group-hover:opacity-100 transition-opacity'
-                    }`}
-                  />
+                              className="h-8 w-8 rounded-full object-cover mb-1 opacity-80 group-hover:opacity-100 transition-opacity"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-[#E7E5E4] flex items-center justify-center text-[#78716C] text-[10px] font-bold mb-1">
+                              {activeConversation.initials}
+                            </div>
+                          )}
+
                   <div className={`flex flex-col gap-1 ${message.isOutgoing ? 'items-end' : ''}`}>
                     <div
                       className={`px-4 py-3 rounded-2xl shadow-sm ${
@@ -354,6 +459,8 @@ const MessagesPage = () => {
                   </div>
                 </div>
               ))}
+                    </>
+                  )}
             </div>
 
             {/* Input Area */}
@@ -364,32 +471,45 @@ const MessagesPage = () => {
                   placeholder="Skriv en melding..."
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
+                      disabled={!activeConversation}
                   className="w-full resize-none bg-transparent px-3 py-2 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:outline-none custom-scrollbar max-h-32 min-h-[44px]"
                 />
 
-                <div className="flex items-center justify-between px-2 pb-1">
-                  <div className="flex items-center gap-1">
-                    <button
-                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
-                      title="Legg til fil"
-                    >
-                      <Paperclip className="h-4 w-4" />
-                    </button>
-                    <button
-                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
-                      title="Emoji"
-                    >
-                      <Smile className="h-4 w-4" />
-                    </button>
-                    <button
-                      className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
-                      title="Mal"
-                    >
-                      <Zap className="h-4 w-4" />
-                    </button>
-                  </div>
+                    <div className="flex items-center justify-between px-2 pb-1">
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors"
+                          title="Legg til fil"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-2 text-[#A8A29E] hover:text-[#57534E] hover:bg-[#F5F5F4] rounded-lg transition-colors">
+                              <Smile className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-64 p-2">
+                            <div className="grid grid-cols-6 gap-1">
+                              {['😊', '🙏', '👋', '🧘', '✨', '💚', '🌸', '💪', '🙌', '🌞', '🍵', '🤸'].map(emoji => (
+                                <button
+                                  key={emoji}
+                                  onClick={() => setMessageText(prev => prev + emoji)}
+                                  className="text-xl p-1 hover:bg-[#F5F5F4] rounded transition-colors"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        {/* Removed Zap (Templates) button */}
+                      </div>
 
-                  <button className="flex items-center gap-2 rounded-xl bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+                      <button 
+                        disabled={!activeConversation}
+                        className="flex items-center gap-2 rounded-xl bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
                     <span>Send</span>
                     <Send className="h-3.5 w-3.5" />
                   </button>
@@ -399,6 +519,8 @@ const MessagesPage = () => {
                 Trykk <span className="font-medium text-[#78716C]">Enter</span> for å sende
               </p>
             </div>
+              </>
+            )}
           </div>
         </div>
       </main>

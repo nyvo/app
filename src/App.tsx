@@ -7,6 +7,8 @@ import NewCoursePage from './pages/teacher/NewCoursePage';
 import CoursesPage from './pages/teacher/CoursesPage';
 import CourseDetailPage from './pages/teacher/CourseDetailPage';
 
+import TeacherProfilePage from './pages/teacher/TeacherProfilePage';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -19,6 +21,7 @@ const App = () => {
         <Route path="/teacher/signups" element={<SignupsPage />} />
         <Route path="/teacher/messages" element={<MessagesPage />} />
         <Route path="/teacher/new-course" element={<NewCoursePage />} />
+        <Route path="/teacher/profile" element={<TeacherProfilePage />} />
       </Routes>
     </BrowserRouter>
   );

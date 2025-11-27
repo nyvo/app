@@ -15,7 +15,8 @@ import {
   Clock,
   CalendarIcon,
   Check,
-  Info
+  Info,
+  ChevronUp
 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
@@ -46,6 +47,9 @@ const courseWeeks = [
   { id: 'week-3', weekNum: '03', title: 'Vinyasa Flow', status: 'active', date: '17. Oktober (I morgen)', time: '18:00 - 19:15', instructor: 'Elena Fisher' },
   { id: 'week-4', weekNum: '04', title: 'Vinyasa Flow', status: 'upcoming', date: '24. Oktober', time: '18:00 - 19:15' },
   { id: 'week-5', weekNum: '05', title: 'Vinyasa Flow', status: 'upcoming', date: '31. Oktober', time: '18:00 - 19:15' },
+  { id: 'week-6', weekNum: '06', title: 'Vinyasa Flow', status: 'upcoming', date: '7. November', time: '18:00 - 19:15' },
+  { id: 'week-7', weekNum: '07', title: 'Vinyasa Flow', status: 'upcoming', date: '14. November', time: '18:00 - 19:15' },
+  { id: 'week-8', weekNum: '08', title: 'Vinyasa Flow', status: 'upcoming', date: '21. November', time: '18:00 - 19:15' },
 ];
 
 // Generate time slots from 06:00 to 23:00 (every 15 minutes)
@@ -69,6 +73,7 @@ const CourseDetailPage = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [openTimePopovers, setOpenTimePopovers] = useState<Record<string, boolean>>({});
+  const [visibleWeeks, setVisibleWeeks] = useState(3);
 
   const handleTimeSelect = (weekId: string, _time: string) => {
     // In a real app, update the state here
@@ -77,6 +82,14 @@ const CourseDetailPage = () => {
 
   const toggleTimePopover = (weekId: string, isOpen: boolean) => {
     setOpenTimePopovers(prev => ({ ...prev, [weekId]: isOpen }));
+  };
+
+  const handleShowMore = () => {
+    if (visibleWeeks >= courseWeeks.length) {
+        setVisibleWeeks(3); // Reset to default
+    } else {
+        setVisibleWeeks(prev => Math.min(prev + 3, courseWeeks.length));
+    }
   };
 
   return (
@@ -98,7 +111,7 @@ const CourseDetailPage = () => {
                                 <span className="text-[#292524]">Vinyasa Flow: Nybegynner</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <h1 className="font-geist text-2xl font-semibold text-[#292524] tracking-tight">Vinyasa Flow: Nybegynner</h1>
+                                <h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-[#292524]">Vinyasa Flow: Nybegynner</h1>
                                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F4EA] px-2.5 py-0.5 text-[11px] font-medium text-[#137435] border border-[#137435]/10">
                                     <span className="h-1.5 w-1.5 rounded-full bg-[#137435]"></span>
                                     Aktiv
@@ -107,11 +120,11 @@ const CourseDetailPage = () => {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3 py-2 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4] ios-ease transition-colors">
+                            <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-4 py-2 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4] ios-ease transition-colors">
                                 <Share className="h-3.5 w-3.5" />
-                                Del
+                                Del kurs
                             </button>
-                            <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3 py-2 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4] ios-ease transition-colors">
+                            <button className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-4 py-2 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4] ios-ease transition-colors">
                                 <ExternalLink className="h-3.5 w-3.5" />
                                 Vis side
                             </button>
@@ -223,7 +236,7 @@ const CourseDetailPage = () => {
                             <div className="absolute left-[27px] top-4 bottom-4 w-[1px] bg-[#E7E5E4] -z-10"></div>
 
                             <Accordion type="single" collapsible className="space-y-3" value={expandedItem} onValueChange={setExpandedItem}>
-                                {courseWeeks.map((week) => (
+                                {courseWeeks.slice(0, visibleWeeks).map((week) => (
                                     <AccordionItem 
                                         key={week.id} 
                                         value={week.id} 
@@ -371,10 +384,22 @@ const CourseDetailPage = () => {
                                 ))}
                             </Accordion>
 
-                            {/* Placeholder for remaining weeks */}
-                            <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#D6D3D1] py-3 text-xs font-medium text-[#78716C] hover:bg-white hover:text-[#292524] transition-colors mt-3">
-                                <ChevronDown className="h-3.5 w-3.5" />
-                                Vis 3 uker til
+                            {/* Show More Button */}
+                            <button 
+                                onClick={handleShowMore}
+                                className="flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-[#D6D3D1] py-3 text-xs font-medium text-[#78716C] hover:bg-white hover:text-[#292524] transition-colors mt-3"
+                            >
+                                {visibleWeeks >= courseWeeks.length ? (
+                                    <>
+                                        <ChevronUp className="h-3.5 w-3.5" />
+                                        Vis mindre
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="h-3.5 w-3.5" />
+                                        Vis {Math.min(3, courseWeeks.length - visibleWeeks)} uker til
+                                    </>
+                                )}
                             </button>
 
                         </div>
@@ -526,7 +551,7 @@ const CourseDetailPage = () => {
                                         <Input 
                                           type="text" 
                                           defaultValue="Vinyasa Flow: Nybegynner" 
-                                          className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm bg-white" 
+                                          className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm !bg-white" 
                                         />
                                     </div>
                                     
@@ -536,7 +561,7 @@ const CourseDetailPage = () => {
                                             <Input 
                                               type="text" 
                                               defaultValue="Sal A - Hovedstudio" 
-                                              className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm bg-white" 
+                                              className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm !bg-white" 
                                             />
                                         </div>
                                         <div>
@@ -544,7 +569,7 @@ const CourseDetailPage = () => {
                                             <Input 
                                               type="number" 
                                               defaultValue="15" 
-                                              className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm bg-white" 
+                                              className="w-full rounded-xl border-0 py-2.5 px-3 text-black shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-sm !bg-white" 
                                             />
                                         </div>
                                     </div>

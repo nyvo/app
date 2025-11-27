@@ -1,143 +1,26 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Flower2, Menu, Eye, EyeOff } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
-import { StatsCards } from '@/components/teacher/StatsCards';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
-import type { UpcomingClass, Message, Course, TeacherStats, Registration } from '@/types/dashboard';
-
-const mockUpcomingClass: UpcomingClass = {
-  id: '1',
-  title: 'Vinyasa Flow: Morgenflyt',
-  type: 'course-series',
-  startTime: '08:00',
-  endTime: '09:15',
-  date: 'Ons, 24. Okt',
-  location: 'Studio A',
-  attendees: 18,
-  capacity: 20,
-  startsIn: 'Starter om 30 min',
-};
-
-const mockStats: TeacherStats = {
-  activeStudents: 142,
-  attendanceRate: 85,
-  attendanceData: [40, 60, 50, 80, 90, 30],
-};
-
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    sender: { name: 'Sarah Jensen', avatar: 'https://i.pravatar.cc/150?u=4' },
-    content: 'Gleder meg til timen! 🙏',
-    timestamp: '2m',
-    isOnline: true,
-  },
-  {
-    id: '2',
-    sender: { name: 'Marc Olsen', avatar: 'https://i.pravatar.cc/150?u=5' },
-    content: 'Kan jeg ta med en gjest?',
-    timestamp: '1t',
-  },
-  {
-    id: '3',
-    sender: { name: 'Lara Croft', avatar: 'https://i.pravatar.cc/150?u=8' },
-    content: 'Må dessverre avbestille.',
-    timestamp: '3t',
-  },
-];
-
-const mockCourses: Course[] = [
-  {
-    id: '1',
-    title: 'Privattime',
-    subtitle: 'med Michael T. • Studio B',
-    time: '14:00',
-    type: 'private',
-  },
-  {
-    id: '2',
-    title: 'Kveldsstretch',
-    subtitle: 'Online • Zoom',
-    time: '17:30',
-    type: 'online',
-  },
-  {
-    id: '3',
-    title: 'Yin Yoga',
-    subtitle: 'Rolig flyt • Studio A',
-    time: '19:00',
-    type: 'yin',
-  },
-  {
-    id: '4',
-    title: 'Meditasjon',
-    subtitle: 'Mindfulness • Studio C',
-    time: '20:15',
-    type: 'meditation',
-  },
-];
-
-const mockRegistrations: Registration[] = [
-  {
-    id: '1',
-    participant: { name: 'Emma Larsen', email: 'emma.larsen@gmail.com', avatar: 'https://i.pravatar.cc/150?u=10' },
-    course: 'Vinyasa Flow',
-    courseTime: 'Ons 23. Okt, 16:00',
-    courseType: 'vinyasa',
-    registeredAt: '5m',
-    status: 'confirmed',
-  },
-  {
-    id: '2',
-    participant: { name: 'Jonas Berg', email: 'jonas.berg@outlook.com', avatar: 'https://i.pravatar.cc/150?u=11' },
-    course: 'Yin Yoga',
-    courseTime: 'Tor 24. Okt, 18:00',
-    courseType: 'yin',
-    registeredAt: '23m',
-    status: 'waitlist',
-  },
-  {
-    id: '3',
-    participant: { name: 'Maja Holm', email: 'maja.holm@gmail.com', avatar: 'https://i.pravatar.cc/150?u=12' },
-    course: 'Privattime',
-    courseTime: 'Fre 25. Okt, 09:00',
-    courseType: 'private',
-    registeredAt: '1t',
-    status: 'confirmed',
-  },
-  {
-    id: '4',
-    participant: { name: 'Anders Nilsen', email: 'anders.n@hotmail.com', initials: 'AN' },
-    course: 'Meditasjon',
-    courseTime: 'Lør 26. Okt, 10:00',
-    courseType: 'meditation',
-    registeredAt: '2t',
-    status: 'cancelled',
-  },
-];
-
-const emptyStats: TeacherStats = {
-  activeStudents: 0,
-  attendanceRate: 0,
-  attendanceData: [0, 0, 0, 0, 0, 0],
-};
-
-const emptyMessages: Message[] = [];
-const emptyCourses: Course[] = [];
-const emptyRegistrations: Registration[] = [];
+import { useEmptyState } from '@/context/EmptyStateContext';
+import { 
+  mockUpcomingClass, 
+  mockDashboardMessages, 
+  mockDashboardCourses, 
+  mockRegistrations,
+  emptyDashboardMessages,
+  emptyDashboardCourses,
+  emptyRegistrations
+} from '@/data/mockData';
 
 const TeacherDashboard = () => {
-  const [showEmptyState, setShowEmptyState] = useState(false);
+  const { showEmptyState, toggleEmptyState } = useEmptyState();
 
-  const handleToggleEmptyState = () => {
-    setShowEmptyState(!showEmptyState);
-  };
   return (
     <SidebarProvider>
       <TeacherSidebar />
@@ -163,7 +46,7 @@ const TeacherDashboard = () => {
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={handleToggleEmptyState}
+                  onClick={toggleEmptyState}
                   className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F5F4] hover:scale-[1.02] active:scale-[0.98] ios-ease"
                   aria-label="Toggle empty state"
                 >
@@ -182,9 +65,9 @@ const TeacherDashboard = () => {
 
             <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
               <UpcomingClassCard classData={showEmptyState ? null : mockUpcomingClass} />
-              <StatsCards stats={showEmptyState ? emptyStats : mockStats} />
-              <MessagesList messages={showEmptyState ? emptyMessages : mockMessages} />
-              <CoursesList courses={showEmptyState ? emptyCourses : mockCourses} />
+              {/* Removed StatsCards as requested */}
+              <MessagesList messages={showEmptyState ? emptyDashboardMessages : mockDashboardMessages} />
+              <CoursesList courses={showEmptyState ? emptyDashboardCourses : mockDashboardCourses} />
               <RegistrationsList registrations={showEmptyState ? emptyRegistrations : mockRegistrations} />
             </div>
           </div>

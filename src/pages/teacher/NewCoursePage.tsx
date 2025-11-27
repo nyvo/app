@@ -120,7 +120,7 @@ const NewCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="font-geist text-2xl font-semibold text-[#292524] tracking-tight">
+            <h1 className="font-geist text-3xl font-medium text-[#292524] tracking-tight">
               Opprett nytt kurs
             </h1>
             <p className="text-sm text-[#78716C] mt-1">
@@ -450,14 +450,14 @@ const NewCoursePage = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="text-sm font-medium text-[#78716C] hover:text-[#292524] px-4 py-2 rounded-lg hover:bg-[#F5F5F4] transition-colors"
+              className="text-sm font-medium text-[#78716C] hover:text-[#292524] px-6 py-2.5 rounded-full hover:bg-[#F5F5F4] transition-colors"
             >
               Avbryt
             </button>
             <button
               type="button"
               onClick={handlePublish}
-              className="flex items-center gap-2 rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+              className="flex items-center gap-2 rounded-full bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
             >
               <span>Publiser kurs</span>
               <ArrowRight className="h-4 w-4" />
