@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import SchedulePage from './pages/teacher/SchedulePage';
@@ -6,6 +7,8 @@ import MessagesPage from './pages/teacher/MessagesPage';
 import NewCoursePage from './pages/teacher/NewCoursePage';
 import CoursesPage from './pages/teacher/CoursesPage';
 import CourseDetailPage from './pages/teacher/CourseDetailPage';
+import PublicCoursesPage from './pages/public/PublicCoursesPage';
+import PublicCourseDetailPage from './pages/public/PublicCourseDetailPage';
 
 import TeacherProfilePage from './pages/teacher/TeacherProfilePage';
 
@@ -22,6 +25,10 @@ const App = () => {
         <Route path="/teacher/messages" element={<MessagesPage />} />
         <Route path="/teacher/new-course" element={<NewCoursePage />} />
         <Route path="/teacher/profile" element={<TeacherProfilePage />} />
+        
+        {/* Public Routes */}
+        <Route path="/courses" element={<PublicCoursesPage />} />
+        <Route path="/courses/detail" element={<PublicCourseDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

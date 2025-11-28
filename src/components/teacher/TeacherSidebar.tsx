@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { 
   Flower2, 
-  LayoutGrid, 
-  Users, 
+  Home, 
+  UserPlus, 
   MessageCircle, 
-  Layers, 
+  Calendar, 
   ChevronUp, 
   Settings, 
   HelpCircle, 
@@ -29,10 +29,10 @@ import {
 } from "@/components/ui/popover"
 
 const navigationItems = [
-  { icon: LayoutGrid, label: 'Oversikt', href: '/teacher' },
-  { icon: Layers, label: 'Kurs', href: '/teacher/courses' },
+  { icon: Home, label: 'Hjem', href: '/teacher' },
+  { icon: Calendar, label: 'Kurs', href: '/teacher/courses' },
   // { icon: Calendar, label: 'Timeplan', href: '/teacher/schedule' }, // Removed for MVP
-  { icon: Users, label: 'Påmeldinger', href: '/teacher/signups' },
+  { icon: UserPlus, label: 'Påmeldinger', href: '/teacher/signups' },
   // { icon: BarChart2, label: 'Statistikk', href: '/teacher/stats' }, // Removed for MVP
   { icon: MessageCircle, label: 'Meldinger', href: '/teacher/messages', badge: 4 },
 ];
