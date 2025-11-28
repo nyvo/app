@@ -80,12 +80,15 @@ const PublicCoursesPage = () => {
                 </div>
 
                 {/* Guest Checkout Banner */}
-                <div className="animate-slide-down mb-8 relative overflow-hidden rounded-2xl bg-[#354F41] p-6 shadow-lg md:p-8">
+                <div className="animate-slide-down mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#57534E] to-[#1c1917] p-6 shadow-lg md:p-8">
+                    {/* Grain Effect */}
+                    <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay pointer-events-none"></div>
+                    
                     {/* Subtle Background Effect */}
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-[#F5F5F4]/10 blur-2xl"></div>
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-[#F5F5F4]/5 blur-2xl"></div>
                     <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-20 w-20 rounded-full bg-[#F5F5F4]/5 blur-xl"></div>
                     
-                    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6 z-10">
                         <div className="space-y-2 max-w-lg">
                             <h3 className="font-geist text-xl font-semibold text-[#F5F5F4]">
                                 Logg inn for en enklere booking
@@ -99,14 +102,14 @@ const PublicCoursesPage = () => {
                              {/* Log in Button */}
                              <Button 
                                 variant="outline" 
-                                className="bg-transparent border-[#F5F5F4]/30 text-[#F5F5F4] hover:bg-[#F5F5F4]/10 hover:text-white hover:border-[#F5F5F4]/50 border backdrop-blur-sm"
+                                className="bg-transparent border-[#F5F5F4]/20 text-[#F5F5F4] hover:bg-[#F5F5F4]/10 hover:text-white hover:border-[#F5F5F4]/40 border backdrop-blur-sm"
                             >
                                 Logg inn
                             </Button>
                             
                             {/* Register Button */}
                             <Button 
-                                className="bg-[#FDFBF7] text-[#354F41] hover:bg-white border-none shadow-lg shadow-[#292524]/10"
+                                className="bg-[#FDFBF7] text-[#292524] hover:bg-white border-none shadow-lg shadow-[#1c1917]/20"
                             >
                                 Registrer deg
                             </Button>
@@ -114,7 +117,7 @@ const PublicCoursesPage = () => {
                     </div>
                     
                     {/* Close Button */}
-                    <button className="absolute top-4 right-4 text-[#E7E5E4]/60 hover:text-[#F5F5F4] transition-colors">
+                    <button className="absolute top-4 right-4 text-[#E7E5E4]/40 hover:text-[#F5F5F4] transition-colors z-20">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
