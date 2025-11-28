@@ -128,6 +128,12 @@ const PublicCoursesPage = () => {
 
                     {/* Item 1: High Availability, Featured */}
                     <div className="group relative flex flex-col gap-5 rounded-3xl border border-[#E7E5E4] bg-white p-5 shadow-sm transition-all hover:border-[#A8A29E] hover:shadow-md md:flex-row md:items-center md:justify-between">
+                        {/* Calendar Box */}
+                        <div className="hidden md:flex flex-col items-center justify-center w-16 h-16 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4] shrink-0">
+                            <span className="text-[10px] font-semibold text-[#78716C] uppercase tracking-wide">Sep</span>
+                            <span className="text-xl font-bold text-[#292524] leading-none mt-0.5">24</span>
+                        </div>
+                        
                         {/* Left: Main Info */}
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between md:justify-start md:gap-4">
@@ -152,13 +158,9 @@ const PublicCoursesPage = () => {
                                 </div>
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
-                                    <Calendar className="h-4 w-4 text-[#A8A29E]" />
-                                    Lør, 24. Sep • 09:00
-                                </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <User className="h-4 w-4 text-[#A8A29E]" />
-                                    Elena Fisher
+                                    <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
+                                    <span className="md:hidden">Lør, 24. Sep • </span>
+                                    09:00
                                 </div>
                             </div>
                         </div>
@@ -169,14 +171,11 @@ const PublicCoursesPage = () => {
                                 <div className="text-xl font-semibold text-[#292524]">250 kr</div>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-[#166534]">
                                     <span className="h-1.5 w-1.5 rounded-full bg-[#166534]"></span>
-                                    Ledige plasser
+                                    15 plasser igjen
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">
-                                    Mer info
-                                </a>
                                 <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
                                     Book plass
                                 </Link>
@@ -186,6 +185,12 @@ const PublicCoursesPage = () => {
 
                     {/* Item 2: Few Spots Left (Urgency) */}
                     <div className="group relative flex flex-col gap-5 rounded-3xl border border-[#E7E5E4] bg-white p-5 shadow-sm transition-all hover:border-[#A8A29E] hover:shadow-md md:flex-row md:items-center md:justify-between">
+                        {/* Calendar Box */}
+                        <div className="hidden md:flex flex-col items-center justify-center w-16 h-16 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4] shrink-0">
+                            <span className="text-[10px] font-semibold text-[#78716C] uppercase tracking-wide">Sep</span>
+                            <span className="text-xl font-bold text-[#292524] leading-none mt-0.5">25</span>
+                        </div>
+
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between md:justify-start md:gap-4">
                                 <h3 className="font-geist text-lg font-semibold text-[#292524] group-hover:text-[#354F41] transition-colors">
@@ -207,13 +212,9 @@ const PublicCoursesPage = () => {
                                 </div>
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
-                                    <Calendar className="h-4 w-4 text-[#A8A29E]" />
-                                    Søn, 25. Sep • 18:00
-                                </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <User className="h-4 w-4 text-[#A8A29E]" />
-                                    Marcus O.
+                                    <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
+                                    <span className="md:hidden">Søn, 25. Sep • </span>
+                                    18:00
                                 </div>
                             </div>
                         </div>
@@ -228,9 +229,6 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">
-                                    Mer info
-                                </a>
                                 <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
                                     Book plass
                                 </Link>
@@ -240,13 +238,19 @@ const PublicCoursesPage = () => {
 
                     {/* Item 3: Full (Disabled/Waitlist) */}
                     <div className="group relative flex flex-col gap-5 rounded-3xl border border-[#E7E5E4] bg-[#F7F5F2]/50 p-5 opacity-90 transition-all md:flex-row md:items-center md:justify-between">
+                        {/* Calendar Box */}
+                        <div className="hidden md:flex flex-col items-center justify-center w-16 h-16 bg-[#F5F5F4]/50 rounded-xl border border-[#E7E5E4] shrink-0">
+                            <span className="text-[10px] font-semibold text-[#A8A29E] uppercase tracking-wide">Sep</span>
+                            <span className="text-xl font-bold text-[#A8A29E] leading-none mt-0.5">27</span>
+                        </div>
+
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between md:justify-start md:gap-4">
                                 <h3 className="font-geist text-lg font-medium text-[#78716C] line-through decoration-[#A8A29E]">
                                     Power Vinyasa Level 2
                                 </h3>
                                 <span className="inline-flex items-center rounded-full bg-[#E7E5E4] px-2.5 py-0.5 text-xs font-medium text-[#57534E] md:hidden">
-                                    Fulltegnet
+                                    Fullt kurs
                                 </span>
                             </div>
                             
@@ -261,8 +265,9 @@ const PublicCoursesPage = () => {
                                 </div>
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
-                                    <Calendar className="h-4 w-4" />
-                                    Tir, 27. Sep • 17:30
+                                    <Calendar className="h-4 w-4 md:hidden" />
+                                    <span className="md:hidden">Tir, 27. Sep • </span>
+                                    17:30
                                 </div>
                             </div>
                         </div>
@@ -271,7 +276,7 @@ const PublicCoursesPage = () => {
                             <div className="hidden text-right md:block">
                                 <div className="text-xl font-medium text-[#A8A29E]">250 kr</div>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-[#78716C]">
-                                    Fulltegnet
+                                    Fullt kurs
                                 </span>
                             </div>
                             
@@ -285,6 +290,12 @@ const PublicCoursesPage = () => {
 
                     {/* Item 4: Course Series (Different Layout Variation) */}
                     <div className="group relative flex flex-col gap-5 rounded-3xl border border-[#E7E5E4] bg-white p-5 shadow-sm transition-all hover:border-[#A8A29E] hover:shadow-md md:flex-row md:items-center md:justify-between">
+                        {/* Calendar Box */}
+                        <div className="hidden md:flex flex-col items-center justify-center w-16 h-16 bg-[#F5F5F4] rounded-xl border border-[#E7E5E4] shrink-0">
+                            <span className="text-[10px] font-semibold text-[#78716C] uppercase tracking-wide">Okt</span>
+                            <span className="text-xl font-bold text-[#292524] leading-none mt-0.5">01</span>
+                        </div>
+
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-3">
                                  <h3 className="font-geist text-lg font-semibold text-[#292524] group-hover:text-[#354F41] transition-colors">
@@ -310,13 +321,9 @@ const PublicCoursesPage = () => {
                                 </div>
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
-                                    <CalendarRange className="h-4 w-4 text-[#A8A29E]" />
-                                    Oppstart 1. Okt • Torsdager
-                                </div>
-                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <User className="h-4 w-4 text-[#A8A29E]" />
-                                    Elena Fisher
+                                    <CalendarRange className="h-4 w-4 text-[#A8A29E] md:hidden" />
+                                    <span className="md:hidden">Oppstart 1. Okt • </span>
+                                    Torsdager
                                 </div>
                             </div>
                         </div>
@@ -326,17 +333,14 @@ const PublicCoursesPage = () => {
                                 <div className="text-xl font-semibold text-[#292524]">2400 kr</div>
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-[#166534]">
                                     <span className="h-1.5 w-1.5 rounded-full bg-[#166534]"></span>
-                                    Ledige plasser
+                                    15 plasser igjen
                                 </span>
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">
-                                    Se datoer
-                                </a>
-                                <button className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none">
+                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
                                     Book plass
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -358,4 +362,3 @@ const PublicCoursesPage = () => {
 };
 
 export default PublicCoursesPage;
-

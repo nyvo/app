@@ -243,19 +243,19 @@ const PublicCourseDetailPage = () => {
                               {/* Title Block */}
                               <div>
                                   <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524]">
-                                      Attendee Information
+                                      Deltakerinformasjon
                                   </h1>
                                   <p className="mt-2 text-[#78716C]">
-                                      Please fill in the details for the <span className="font-medium text-[#292524]">{attendeeCount} spots</span> you selected.
+                                      Vennligst fyll inn detaljer for de <span className="font-medium text-[#292524]">{attendeeCount} plassene</span> du har valgt.
                                   </p>
                               </div>
 
                               {/* Attendee 1 (Main Contact) */}
                               <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm">
                                   <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                      <h2 className="font-geist text-lg font-semibold text-[#292524]">Attendee 1</h2>
+                                      <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker 1</h2>
                                       <span className="rounded-full bg-[#F5F5F4] px-2.5 py-0.5 text-xs font-medium text-[#57534E] border border-[#E7E5E4]">
-                                          Main Contact
+                                          Hovedkontakt
                                       </span>
                                   </div>
 
@@ -263,27 +263,27 @@ const PublicCourseDetailPage = () => {
                                       {/* Name Fields */}
                                       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                           <div className="space-y-1.5">
-                                              <label className="text-xs font-medium text-[#57534E]">First name</label>
-                                              <input type="text" placeholder="Jane" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <label className="text-xs font-medium text-[#57534E]">Fornavn</label>
+                                              <input type="text" placeholder="Ola" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                           </div>
                                           <div className="space-y-1.5">
-                                              <label className="text-xs font-medium text-[#57534E]">Last name</label>
-                                              <input type="text" placeholder="Cooper" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <label className="text-xs font-medium text-[#57534E]">Etternavn</label>
+                                              <input type="text" placeholder="Nordmann" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                           </div>
                                       </div>
 
                                       {/* Contact Fields */}
                                       <div className="space-y-1.5">
-                                          <label className="text-xs font-medium text-[#57534E]">Email address</label>
+                                          <label className="text-xs font-medium text-[#57534E]">E-postadresse</label>
                                           <div className="relative">
                                               <Mail className="absolute left-3 top-3 h-4 w-4 text-[#A8A29E]" />
-                                              <input type="email" placeholder="jane@example.com" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <input type="email" placeholder="ola@eksempel.no" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                           </div>
-                                          <p className="text-[11px] text-[#A8A29E]">Booking confirmation will be sent here.</p>
+                                          <p className="text-[11px] text-[#A8A29E]">Ordrebekreftelse sendes hit.</p>
                                       </div>
 
                                       <div className="space-y-1.5">
-                                          <label className="text-xs font-medium text-[#57534E]">Phone number <span className="text-[#A8A29E] font-normal">(Optional)</span></label>
+                                          <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
                                           <input type="tel" placeholder="+47 000 00 000" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                       </div>
                                   </div>
@@ -293,10 +293,10 @@ const PublicCourseDetailPage = () => {
                               {attendeeCount > 1 && (
                                 <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm opacity-90 hover:opacity-100 transition-opacity">
                                     <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                        <h2 className="font-geist text-lg font-semibold text-[#292524]">Attendee 2</h2>
+                                        <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker 2</h2>
                                         <div className="flex items-center gap-2">
                                             <button className="text-xs font-medium text-[#78716C] hover:text-[#292524] underline underline-offset-2">
-                                                Copy from main contact
+                                                Kopier fra hovedkontakt
                                             </button>
                                         </div>
                                     </div>
@@ -304,18 +304,18 @@ const PublicCourseDetailPage = () => {
                                     <div className="space-y-5">
                                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">First name</label>
+                                                <label className="text-xs font-medium text-[#57534E]">Fornavn</label>
                                                 <input type="text" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">Last name</label>
+                                                <label className="text-xs font-medium text-[#57534E]">Etternavn</label>
                                                 <input type="text" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                             </div>
                                         </div>
 
                                         {/* Optional note for teacher */}
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-[#57534E]">Notes for teacher <span className="text-[#A8A29E] font-normal">(Injuries, pregnancy, etc.)</span></label>
+                                            <label className="text-xs font-medium text-[#57534E]">Melding til instruktør <span className="text-[#A8A29E] font-normal">(Skader, graviditet, etc.)</span></label>
                                             <textarea rows={2} className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50"></textarea>
                                         </div>
                                     </div>
@@ -324,10 +324,10 @@ const PublicCourseDetailPage = () => {
 
                               {/* Desktop Actions */}
                               <div className="hidden lg:flex items-center justify-between pt-4">
-                                  <button onClick={handlePrevStep} className="text-sm font-medium text-[#78716C] hover:text-[#292524]">Cancel</button>
+                                  <button onClick={handlePrevStep} className="text-sm font-medium text-[#78716C] hover:text-[#292524]">Avbryt</button>
                                   <button className="group relative overflow-hidden rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-md hover:bg-[#354F41] hover:shadow-lg transition-all ios-ease active:scale-[0.98]">
                                       <span className="relative z-10 flex items-center gap-2">
-                                          Continue to Payment
+                                          Gå til betaling
                                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                       </span>
                                   </button>
@@ -356,7 +356,7 @@ const PublicCourseDetailPage = () => {
                                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#166534]"></span>
                                             </span>
-                                            God plass
+                                            15 plasser igjen
                                         </span>
                                     </div>
 
