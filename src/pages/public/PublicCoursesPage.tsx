@@ -77,13 +77,7 @@ const PublicCoursesPage = () => {
                         <p className="text-[#78716C] md:text-lg">Finn roen med våre høstkurs. Drop-in og semesterkort tilgjengelig.</p>
                     </div>
                     
-                    {/* Simple Avatar Stack for Social Proof (Optional touch) */}
-                    <div className="hidden md:flex -space-x-2">
-                        <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#FDFBF7]" src="https://i.pravatar.cc/150?u=1" alt="" />
-                        <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#FDFBF7]" src="https://i.pravatar.cc/150?u=2" alt="" />
-                        <img className="inline-block h-8 w-8 rounded-full ring-2 ring-[#FDFBF7]" src="https://i.pravatar.cc/150?u=3" alt="" />
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F4] ring-2 ring-[#FDFBF7] text-[10px] font-medium text-[#78716C]">+12</div>
-                    </div>
+                    {/* Simple Avatar Stack for Social Proof (Optional touch) - REMOVED */}
                 </div>
 
                 {/* Guest Checkout Banner */}
@@ -159,8 +153,9 @@ const PublicCoursesPage = () => {
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
-                                    <span className="md:hidden">Lør, 24. Sep • </span>
-                                    09:00
+                                    <span className="md:hidden">Lør, 24. Sep </span>
+                                    <span className="hidden md:inline">Lørdag </span>
+                                    Kl 09:00
                                 </div>
                             </div>
                         </div>
@@ -177,7 +172,7 @@ const PublicCoursesPage = () => {
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
-                                    Book plass
+                                    Påmelding
                                 </Link>
                             </div>
                         </div>
@@ -213,8 +208,9 @@ const PublicCoursesPage = () => {
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
-                                    <span className="md:hidden">Søn, 25. Sep • </span>
-                                    18:00
+                                    <span className="md:hidden">Søn, 25. Sep </span>
+                                    <span className="hidden md:inline">Søndag </span>
+                                    Kl 18:00
                                 </div>
                             </div>
                         </div>
@@ -230,7 +226,7 @@ const PublicCoursesPage = () => {
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
-                                    Book plass
+                                    Påmelding
                                 </Link>
                             </div>
                         </div>
@@ -265,9 +261,10 @@ const PublicCoursesPage = () => {
                                 </div>
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
-                                    <Calendar className="h-4 w-4 md:hidden" />
-                                    <span className="md:hidden">Tir, 27. Sep • </span>
-                                    17:30
+                                    <Calendar className="h-4 w-4" />
+                                    <span className="md:hidden">Tir, 27. Sep </span>
+                                    <span className="hidden md:inline">Tirsdag </span>
+                                    Kl 17:30
                                 </div>
                             </div>
                         </div>
@@ -322,7 +319,7 @@ const PublicCoursesPage = () => {
                                 <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <CalendarRange className="h-4 w-4 text-[#A8A29E] md:hidden" />
-                                    <span className="md:hidden">Oppstart 1. Okt • </span>
+                                    <span className="md:hidden">Oppstart 1. Okt </span>
                                     Torsdager
                                 </div>
                             </div>
@@ -339,7 +336,7 @@ const PublicCoursesPage = () => {
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
                                 <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
-                                    Book plass
+                                    Påmelding
                                 </Link>
                             </div>
                         </div>

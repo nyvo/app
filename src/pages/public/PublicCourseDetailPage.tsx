@@ -10,23 +10,19 @@ import {
   Dumbbell, 
   Info, 
   ChevronDown, 
-  Minus, 
-  Plus, 
   ArrowRight, 
   ShieldCheck, 
   Zap, 
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
   Flower2,
   Mail,
-  User
+  Check
 } from 'lucide-react';
 
 const PublicCourseDetailPage = () => {
   const [step, setStep] = useState(1);
-  const [attendeeCount, setAttendeeCount] = useState(1);
-
+  
   const handleNextStep = () => {
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -46,6 +42,14 @@ const PublicCourseDetailPage = () => {
         }
         .input-focus {
             transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        /* Custom checkbox styling */
+        .checkbox-wrapper:checked + div {
+            background-color: #292524;
+            border-color: #292524;
+        }
+        .checkbox-wrapper:checked + div svg {
+            display: block;
         }
       `}</style>
       
@@ -71,11 +75,11 @@ const PublicCourseDetailPage = () => {
                 ) : (
                   /* Simple Progress Indicator (Desktop) */
                   <div className="hidden md:flex items-center gap-2 text-sm font-medium">
-                      <span className="text-[#A8A29E]">Course</span>
+                      <span className="text-[#A8A29E]">Kurs</span>
                       <ChevronRight className="h-4 w-4 text-[#E7E5E4]" />
-                      <span className="text-[#292524]">Details</span>
+                      <span className="text-[#292524]">Detaljer</span>
                       <ChevronRight className="h-4 w-4 text-[#E7E5E4]" />
-                      <span className="text-[#A8A29E]">Payment</span>
+                      <span className="text-[#A8A29E]">Betaling</span>
                   </div>
                 )}
             </div>
@@ -95,7 +99,7 @@ const PublicCourseDetailPage = () => {
                     ) : (
                       <button onClick={handlePrevStep} className="inline-flex items-center gap-1 text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors group">
                           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                          Back to course details
+                          Tilbake til kursdetaljer
                       </button>
                     )}
                 </div>
@@ -246,17 +250,14 @@ const PublicCourseDetailPage = () => {
                                       Deltakerinformasjon
                                   </h1>
                                   <p className="mt-2 text-[#78716C]">
-                                      Vennligst fyll inn detaljer for de <span className="font-medium text-[#292524]">{attendeeCount} plassene</span> du har valgt.
+                                      Vennligst fyll inn dine detaljer.
                                   </p>
                               </div>
 
                               {/* Attendee 1 (Main Contact) */}
                               <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm">
                                   <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                      <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker 1</h2>
-                                      <span className="rounded-full bg-[#F5F5F4] px-2.5 py-0.5 text-xs font-medium text-[#57534E] border border-[#E7E5E4]">
-                                          Hovedkontakt
-                                      </span>
+                                      <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker</h2>
                                   </div>
 
                                   <div className="space-y-5">
@@ -286,41 +287,30 @@ const PublicCourseDetailPage = () => {
                                           <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
                                           <input type="tel" placeholder="+47 000 00 000" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
                                       </div>
+
+                                      <div className="space-y-1.5">
+                                          <label className="text-xs font-medium text-[#57534E]">Kommentar til instruktør <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
+                                          <textarea 
+                                            placeholder="Skriv en beskjed..." 
+                                            rows={3}
+                                            className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50 resize-none"
+                                          />
+                                      </div>
                                   </div>
                               </div>
 
-                              {/* Attendee 2 (Conditionally Rendered based on attendeeCount > 1) */}
-                              {attendeeCount > 1 && (
-                                <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm opacity-90 hover:opacity-100 transition-opacity">
-                                    <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                        <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker 2</h2>
-                                        <div className="flex items-center gap-2">
-                                            <button className="text-xs font-medium text-[#78716C] hover:text-[#292524] underline underline-offset-2">
-                                                Kopier fra hovedkontakt
-                                            </button>
-                                        </div>
+                              {/* Terms Checkbox */}
+                              <div className="flex items-start gap-3 px-1">
+                                <label className="relative flex items-center justify-center cursor-pointer p-1">
+                                    <input type="checkbox" className="checkbox-wrapper peer sr-only" />
+                                    <div className="h-5 w-5 rounded border border-[#D6D3D1] bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E]">
+                                        <Check className="hidden h-3.5 w-3.5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                     </div>
-
-                                    <div className="space-y-5">
-                                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">Fornavn</label>
-                                                <input type="text" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">Etternavn</label>
-                                                <input type="text" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
-                                            </div>
-                                        </div>
-
-                                        {/* Optional note for teacher */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-[#57534E]">Melding til instruktør <span className="text-[#A8A29E] font-normal">(Skader, graviditet, etc.)</span></label>
-                                            <textarea rows={2} className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                              )}
+                                </label>
+                                <p className="text-sm text-[#78716C] pt-0.5 leading-relaxed">
+                                    Jeg godtar <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkårene</a> for påmelding og bekrefter at jeg er i stand til å delta på timen.
+                                </p>
+                              </div>
 
                               {/* Desktop Actions */}
                               <div className="hidden lg:flex items-center justify-between pt-4">
@@ -375,29 +365,9 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="mb-6 flex items-center justify-between border-b border-[#F5F5F4] pb-6">
-                                        <span className="text-sm font-medium text-[#292524]">Antall plasser</span>
-                                        <div className="flex items-center gap-3 rounded-lg border border-[#E7E5E4] bg-white p-1">
-                                            <button 
-                                              onClick={() => setAttendeeCount(Math.max(1, attendeeCount - 1))}
-                                              disabled={attendeeCount <= 1}
-                                              className="flex h-7 w-7 items-center justify-center rounded bg-[#F5F5F4] text-[#78716C] hover:bg-[#E7E5E4] transition-colors disabled:opacity-50"
-                                            >
-                                                <Minus className="h-3.5 w-3.5" />
-                                            </button>
-                                            <span className="w-4 text-center text-sm font-medium text-[#292524]">{attendeeCount}</span>
-                                            <button 
-                                              onClick={() => setAttendeeCount(attendeeCount + 1)}
-                                              className="flex h-7 w-7 items-center justify-center rounded bg-[#F5F5F4] text-[#292524] hover:bg-[#E7E5E4] transition-colors"
-                                            >
-                                                <Plus className="h-3.5 w-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <button onClick={handleNextStep} className="group relative w-full overflow-hidden rounded-xl bg-[#292524] px-4 py-3.5 text-center text-sm font-medium text-[#F5F5F4] shadow-md hover:bg-[#354F41] hover:shadow-lg transition-all ios-ease active:scale-[0.98]">
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            Book plass som gjest
+                                            Påmelding
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                         </span>
                                     </button>
@@ -409,7 +379,7 @@ const PublicCourseDetailPage = () => {
                                 ) : (
                                   /* Step 2 Summary */
                                   <>
-                                    <h3 className="mb-4 font-geist text-lg font-semibold text-[#292524]">Booking Summary</h3>
+                                    <h3 className="mb-4 font-geist text-lg font-semibold text-[#292524]">Sammendrag</h3>
                                     
                                     <div className="flex gap-4 border-b border-[#F5F5F4] pb-5">
                                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F5F5F4]">
@@ -417,28 +387,28 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                         <div>
                                             <h4 className="font-medium text-[#292524] leading-tight">Morning Flow & Coffee</h4>
-                                            <p className="mt-1 text-xs text-[#78716C]">Lør, 24. Sep • 09:00</p>
+                                            <p className="mt-1 text-xs text-[#78716C]">Lør, 24. Sep Kl 09:00</p>
                                             <p className="text-xs text-[#78716C]">Majorstuen Studio</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 py-5">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">{attendeeCount} x Guest pass</span>
-                                            <span className="font-medium text-[#292524]">{250 * attendeeCount} kr</span>
+                                            <span className="text-[#78716C]">1 x Deltaker</span>
+                                            <span className="font-medium text-[#292524]">250 kr</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Service fee</span>
+                                            <span className="text-[#78716C]">Servicegebyr</span>
                                             <span className="font-medium text-[#292524]">0 kr</span>
                                         </div>
                                     </div>
 
                                     <div className="border-t border-[#F5F5F4] pt-4">
                                         <div className="flex items-center justify-between">
-                                            <span className="font-medium text-[#292524]">Total to pay</span>
-                                            <span className="font-geist text-xl font-bold text-[#292524] tracking-tight">{250 * attendeeCount} kr</span>
+                                            <span className="font-medium text-[#292524]">Totalt å betale</span>
+                                            <span className="font-geist text-xl font-bold text-[#292524] tracking-tight">250 kr</span>
                                         </div>
-                                        <p className="mt-1 text-right text-[11px] text-[#A8A29E]">Included taxes</p>
+                                        <p className="mt-1 text-right text-[11px] text-[#A8A29E]">Inkludert mva</p>
                                     </div>
                                   </>
                                 )}
@@ -449,9 +419,9 @@ const PublicCourseDetailPage = () => {
                                 <div className="flex gap-3">
                                     <ShieldCheck className="h-5 w-5 shrink-0 text-[#354F41]" />
                                     <div className="space-y-1">
-                                        <p className="text-xs font-medium text-[#292524]">Secure Booking</p>
+                                        <p className="text-xs font-medium text-[#292524]">Trygg betaling</p>
                                         <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                            Your spots are reserved for 10:00 minutes while you complete your purchase.
+                                            Din plass holdes av i 10:00 minutter mens du fullfører kjøpet.
                                         </p>
                                     </div>
                                 </div>
@@ -469,7 +439,7 @@ const PublicCourseDetailPage = () => {
                   <>
                     <div className="flex flex-col">
                         <span className="text-xs text-[#78716C]">Total pris</span>
-                        <span className="font-geist text-xl font-semibold text-[#292524]">{250 * attendeeCount} kr</span>
+                        <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
                     <button onClick={handleNextStep} className="rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg hover:bg-[#354F41] active:scale-95 transition-transform ios-ease">
                         Book nå
@@ -479,13 +449,12 @@ const PublicCourseDetailPage = () => {
                   <>
                     <div className="flex flex-col">
                         <span className="text-xs text-[#78716C] flex items-center gap-1">
-                            Total ({attendeeCount} guests)
-                            <ChevronUp className="h-3 w-3" />
+                            Total
                         </span>
-                        <span className="font-geist text-xl font-semibold text-[#292524]">{250 * attendeeCount} kr</span>
+                        <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
                     <button className="rounded-xl bg-[#292524] px-6 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg hover:bg-[#354F41] active:scale-95 transition-transform ios-ease flex items-center gap-2">
-                        Payment
+                        Betaling
                         <ArrowRight className="h-4 w-4" />
                     </button>
                   </>
