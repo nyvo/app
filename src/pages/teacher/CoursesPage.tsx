@@ -10,13 +10,13 @@ import {
   Edit2, 
   Flower2, 
   Menu, 
-  CalendarClock, 
   Eye, 
   EyeOff 
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { useEmptyState } from '@/context/EmptyStateContext';
+import { Button } from '@/components/ui/button';
 import { mockDetailedCourses, emptyDetailedCourses, type DetailedCourse } from '@/data/mockData';
 
 // Helper to get status styles
@@ -189,13 +189,15 @@ const CoursesPage = () => {
                     {showEmptyState ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     {showEmptyState ? 'Vis data' : 'Vis tomt'}
                   </button>
-                  <Link 
-                    to="/teacher/new-course"
-                    className="flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+                  <Button
+                    asChild
+                    className="gap-2"
                   >
-                    <Plus className="h-4 w-4" />
-                    <span>Opprett nytt</span>
-                </Link>
+                    <Link to="/teacher/new-course">
+                      <Plus className="h-4 w-4" />
+                      <span>Opprett nytt</span>
+                    </Link>
+                  </Button>
                 </div>
             </div>
 

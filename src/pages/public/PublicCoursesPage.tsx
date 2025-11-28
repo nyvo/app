@@ -12,6 +12,7 @@ import {
   Flower2, // Using Flower2 as a substitute for the lotus icon
   ArrowRight
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const PublicCoursesPage = () => {
   return (
@@ -171,9 +172,15 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
-                                    Påmelding
-                                </Link>
+                                <Button 
+                                    asChild
+                                    className="w-full md:w-auto"
+                                    size="pill"
+                                >
+                                    <Link to="/courses/detail">
+                                        Påmelding
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -225,9 +232,15 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
-                                    Påmelding
-                                </Link>
+                                <Button 
+                                    asChild
+                                    className="w-full md:w-auto"
+                                    size="pill"
+                                >
+                                    <Link to="/courses/detail">
+                                        Påmelding
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -335,9 +348,15 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
-                                    Påmelding
-                                </Link>
+                                <Button 
+                                    asChild
+                                    className="w-full md:w-auto"
+                                    size="pill"
+                                >
+                                    <Link to="/courses/detail">
+                                        Påmelding
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
                     </div>

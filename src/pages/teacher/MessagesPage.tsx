@@ -17,6 +17,7 @@ import {
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { useEmptyState } from '@/context/EmptyStateContext';
+import { Button } from '@/components/ui/button';
 import { 
   mockConversations, 
   mockMessages, 
@@ -128,14 +129,21 @@ const MessagesPage = () => {
                     {showEmptyState ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     <span className="hidden xl:inline">{showEmptyState ? 'Vis data' : 'Vis tomt'}</span>
                   </button>
-                  <button 
+                  <Button 
                     onClick={handleStartNewMessage}
-                    className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease ring-offset-2 focus:ring-2 ring-[#292524]"
+                    className="hidden lg:inline-flex gap-2"
                   >
                     <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
                     <span className="hidden lg:inline">Ny melding</span>
                     <span className="lg:hidden">Ny</span>
-                  </button>
+                  </Button>
+                  <Button 
+                    onClick={handleStartNewMessage}
+                    size="icon"
+                    className="lg:hidden h-8 w-8 rounded-full"
+                  >
+                    <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                  </Button>
                 </div>
               </div>
 
@@ -345,12 +353,12 @@ const MessagesPage = () => {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                            </div>
-                           <button 
-                              className="flex items-center gap-2 rounded-xl bg-[#292524] px-6 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+                           <Button 
+                              className="gap-2"
                             >
                               <span>Send</span>
                               <Send className="h-3.5 w-3.5" />
-                            </button>
+                            </Button>
                         </div>
                     </div>
                   </div>
@@ -534,13 +542,13 @@ const MessagesPage = () => {
                         {/* Removed Zap (Templates) button */}
                       </div>
 
-                      <button 
+                      <Button 
                         disabled={!activeConversation}
-                        className="flex items-center gap-2 rounded-xl bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-md shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="gap-2"
                       >
                     <span>Send</span>
                     <Send className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
               <p className="text-[10px] text-[#A8A29E] text-center mt-3">

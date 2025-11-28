@@ -19,6 +19,7 @@ import {
   Mail,
   Check
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const PublicCourseDetailPage = () => {
   const [step, setStep] = useState(1);
@@ -315,12 +316,12 @@ const PublicCourseDetailPage = () => {
                               {/* Desktop Actions */}
                               <div className="hidden lg:flex items-center justify-between pt-4">
                                   <button onClick={handlePrevStep} className="text-sm font-medium text-[#78716C] hover:text-[#292524]">Avbryt</button>
-                                  <button className="group relative overflow-hidden rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-md ios-ease active:scale-[0.98] transition-all hover:shadow-lg hover:scale-[1.02]">
+                                  <Button className="rounded-xl px-8 py-3" size="pill">
                                       <span className="relative z-10 flex items-center gap-2">
                                           Gå til betaling
                                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                       </span>
-                                  </button>
+                                  </Button>
                               </div>
                           </motion.div>
                         )}
@@ -365,12 +366,16 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                     </div>
 
-                                    <button onClick={handleNextStep} className="group relative w-full overflow-hidden rounded-xl bg-[#292524] px-4 py-3.5 text-center text-sm font-medium text-[#F5F5F4] shadow-md ios-ease active:scale-[0.98] transition-all hover:shadow-lg hover:scale-[1.02]">
+                                    <Button 
+                                        onClick={handleNextStep} 
+                                        size="pill"
+                                        className="w-full rounded-xl"
+                                    >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
                                             Påmelding
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                         </span>
-                                    </button>
+                                    </Button>
                                     
                                     <p className="mt-4 text-center text-xs text-[#A8A29E]">
                                         Du kan opprette bruker etter betaling for å lagre kvittering.
@@ -441,9 +446,9 @@ const PublicCourseDetailPage = () => {
                         <span className="text-xs text-[#78716C]">Total pris</span>
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
-                                    <button onClick={handleNextStep} className="rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg ios-ease active:scale-95 transition-transform hover:bg-[#292524]">
+                                    <Button onClick={handleNextStep} className="rounded-xl px-8 py-3 shadow-lg" size="pill">
                                         Book nå
-                                    </button>
+                                    </Button>
                   </>
                 ) : (
                   <>
@@ -453,10 +458,10 @@ const PublicCourseDetailPage = () => {
                         </span>
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
-                    <button className="rounded-xl bg-[#292524] px-6 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg ios-ease active:scale-95 transition-transform flex items-center gap-2 hover:bg-[#292524]">
+                    <Button className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2" size="pill">
                         Betaling
                         <ArrowRight className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </>
                 )}
             </div>

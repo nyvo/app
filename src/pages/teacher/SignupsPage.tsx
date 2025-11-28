@@ -29,6 +29,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import type { Signup, SignupStatus, SignupPaymentType } from '@/types/dashboard';
 import { useEmptyState } from '@/context/EmptyStateContext';
+import { Button } from '@/components/ui/button';
 import { mockSignups, emptySignups, type SignupWithTimestamps } from '@/data/mockData';
 
 // Sort types
@@ -268,10 +269,10 @@ export const SignupsPage = () => {
                 <Download className="h-4 w-4" />
                 Eksporter
               </button>
-              <button className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+              <Button className="gap-2">
                 <Plus className="h-4 w-4" />
                 <span>Manuell booking</span>
-              </button>
+              </Button>
             </div>
           </div>
 

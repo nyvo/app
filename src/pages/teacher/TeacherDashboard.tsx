@@ -8,6 +8,7 @@ import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { useEmptyState } from '@/context/EmptyStateContext';
+import { Button } from '@/components/ui/button';
 import { 
   mockUpcomingClass, 
   mockDashboardMessages, 
@@ -53,13 +54,15 @@ const TeacherDashboard = () => {
                   {showEmptyState ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                   {showEmptyState ? 'Vis data' : 'Vis tomt'}
                 </button>
-                <Link
-                  to="/teacher/new-course"
-                  className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease ring-offset-2 focus:ring-1 focus:ring-[#354F41]/20"
+                <Button
+                  asChild
+                  className="group"
                 >
-                  <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
-                  Nytt kurs
-                </Link>
+                  <Link to="/teacher/new-course">
+                    <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                    Nytt kurs
+                  </Link>
+                </Button>
               </div>
             </header>
 

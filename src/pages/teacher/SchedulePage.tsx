@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { Button } from '@/components/ui/button';
 
 // Types
 interface ScheduleEvent {
@@ -391,31 +392,37 @@ export const SchedulePage = () => {
                 <h1 className="font-geist text-xl font-medium text-[#292524]">Timeplan</h1>
                 <div className="h-4 w-px bg-[#E7E5E4]"></div>
                 <div className="flex items-center gap-2 text-sm font-medium text-[#78716C]">
-                  <button
-                    onClick={goToPreviousWeek}
-                    className="rounded-lg p-1.5 hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="text-[#292524] min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
-                  <button
-                    onClick={goToNextWeek}
-                    className="rounded-lg p-1.5 hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToPreviousWeek}
+                  className="rounded-lg hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-[#292524] min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={goToNextWeek}
+                  className="rounded-lg hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
                 </div>
-                <button
+                <Button
                   onClick={goToCurrentWeek}
-                  className={`hidden md:block ml-2 rounded-md border border-[#E7E5E4] bg-white px-2.5 py-1 text-xs font-medium transition-colors ${
+                  variant="outline"
+                  size="sm"
+                  className={`hidden md:flex ml-2 h-7 ${
                     weekOffset === 0
-                      ? 'text-[#A8A29E] cursor-default'
-                      : 'text-[#57534E] hover:border-[#D6D3D1] hover:text-[#292524]'
+                      ? 'text-[#A8A29E] cursor-default hover:border-[#E7E5E4] hover:text-[#A8A29E] hover:shadow-none'
+                      : 'text-[#57534E]'
                   }`}
                   disabled={weekOffset === 0}
                 >
                   I dag
-                </button>
+                </Button>
               </div>
 
               <div className="flex items-center gap-3">
@@ -428,13 +435,15 @@ export const SchedulePage = () => {
 
                 <div className="h-4 w-px bg-[#E7E5E4] hidden md:block"></div>
 
-                <Link
-                  to="/teacher/new-course"
-                  className="group flex items-center gap-2 rounded-full bg-[#292524] px-4 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease"
+                <Button
+                  asChild
+                  className="gap-2"
                 >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nytt kurs</span>
-                </Link>
+                  <Link to="/teacher/new-course">
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Nytt kurs</span>
+                  </Link>
+                </Button>
               </div>
             </div>
 
