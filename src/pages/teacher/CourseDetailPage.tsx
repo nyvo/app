@@ -374,7 +374,7 @@ const CourseDetailPage = () => {
                                                     >
                                                         Avbryt
                                                     </button>
-                                                    <button className="rounded-lg bg-[#292524] px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#44403C] transition-colors">
+                                                    <button className="rounded-lg bg-[#292524] px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#292524] transition-colors">
                                                         Lagre endringer
                                                     </button>
                                                 </div>
@@ -418,16 +418,16 @@ const CourseDetailPage = () => {
                                   className="w-full rounded-xl border-0 py-2 pl-9 pr-3 text-[#292524] shadow-sm ring-1 ring-inset ring-[#E7E5E4] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#354F41]/20 focus-visible:border-[#354F41] text-xs bg-white" 
                                 />
                             </div>
-                            <div className="flex gap-2">
-                                <button className="flex items-center gap-2 rounded-lg bg-white border border-[#E7E5E4] px-3 py-2 text-xs font-medium text-[#292524] shadow-sm hover:bg-[#F5F5F4] transition-colors">
-                                    <Download className="h-3.5 w-3.5 text-[#78716C]" />
-                                    Eksporter
-                                </button>
-                                <button className="flex items-center gap-2 rounded-lg bg-[#292524] px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#44403C] transition-colors">
-                                    <Mail className="h-3.5 w-3.5" />
-                                    Send e-post til alle
-                                </button>
-                            </div>
+                                <div className="flex gap-2">
+                                    <button className="flex items-center gap-2 rounded-lg bg-white border border-[#E7E5E4] px-3 py-2 text-xs font-medium text-[#292524] shadow-sm hover:bg-[#F5F5F4] transition-colors">
+                                        <Download className="h-3.5 w-3.5 text-[#78716C]" />
+                                        Eksporter
+                                    </button>
+                                    <button className="flex items-center gap-2 rounded-lg bg-[#292524] px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#292524] transition-colors">
+                                        <Mail className="h-3.5 w-3.5" />
+                                        Send e-post til alle
+                                    </button>
+                                </div>
                         </div>
 
                         <div className="rounded-xl border border-[#E7E5E4] bg-white shadow-sm overflow-hidden">
@@ -584,7 +584,7 @@ const CourseDetailPage = () => {
                                     </div>
 
                                     <div className="flex justify-end pt-2">
-                                        <button className="rounded-xl bg-[#292524] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#44403C] ios-ease transition-transform active:scale-95">
+                                        <button className="rounded-xl bg-[#292524] px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-[#292524] ios-ease transition-transform active:scale-95">
                                             Lagre endringer
                                         </button>
                                     </div>

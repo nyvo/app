@@ -457,7 +457,7 @@ const NewCoursePage = () => {
             <button
               type="button"
               onClick={handlePublish}
-              className="flex items-center gap-2 rounded-full bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all"
+              className="flex items-center gap-2 rounded-full bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#292524] ios-ease transition-all active:scale-[0.98]"
             >
               <span>Publiser kurs</span>
               <ArrowRight className="h-4 w-4" />

@@ -319,7 +319,7 @@ const TeacherProfilePage = () => {
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-[#E7E5E4] md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
                 <button className="rounded-full px-6 py-2.5 text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors hidden md:block">Avbryt</button>
-                <button className="flex-1 md:flex-none justify-center rounded-full bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease">
+                <button className="flex-1 md:flex-none justify-center rounded-full bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#292524] hover:scale-[1.02] active:scale-[0.98] ios-ease">
                     Lagre endringer
                 </button>
             </div>
