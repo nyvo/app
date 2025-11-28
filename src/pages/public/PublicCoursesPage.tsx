@@ -1,12 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  UserCheck, 
   X, 
   Calendar, 
   SlidersHorizontal, 
   MapPin, 
-  User, 
   Flame, 
   CalendarRange,
   Flower2, // Using Flower2 as a substitute for the lotus icon
@@ -82,17 +80,41 @@ const PublicCoursesPage = () => {
                 </div>
 
                 {/* Guest Checkout Banner */}
-                <div className="animate-slide-down mb-8 flex items-start gap-4 rounded-2xl border border-[#E7E5E4] bg-white p-5 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F7F5F2] text-[#354F41]">
-                        <UserCheck className="h-5 w-5" />
+                <div className="animate-slide-down mb-8 relative overflow-hidden rounded-2xl bg-[#354F41] p-6 shadow-lg md:p-8">
+                    {/* Subtle Background Effect */}
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-[#F5F5F4]/10 blur-2xl"></div>
+                    <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-20 w-20 rounded-full bg-[#F5F5F4]/5 blur-xl"></div>
+                    
+                    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <div className="space-y-2 max-w-lg">
+                            <h3 className="font-geist text-xl font-semibold text-[#F5F5F4]">
+                                Logg inn for en enklere booking
+                            </h3>
+                            <p className="text-[#E7E5E4] leading-relaxed text-sm md:text-base">
+                                Ikke medlem enda? <span className="text-white font-medium border-b border-white/30 pb-0.5">Registrer deg gratis</span> for å holde oversikt over kursene dine.
+                            </p>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+                             {/* Log in Button */}
+                             <Button 
+                                variant="outline" 
+                                className="bg-transparent border-[#F5F5F4]/30 text-[#F5F5F4] hover:bg-[#F5F5F4]/10 hover:text-white hover:border-[#F5F5F4]/50 border backdrop-blur-sm"
+                            >
+                                Logg inn
+                            </Button>
+                            
+                            {/* Register Button */}
+                            <Button 
+                                className="bg-[#FDFBF7] text-[#354F41] hover:bg-white border-none shadow-lg shadow-[#292524]/10"
+                            >
+                                Registrer deg
+                            </Button>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                        <h3 className="font-medium text-[#292524]">Bestill raskt som gjest</h3>
-                        <p className="text-sm text-[#78716C] mt-1 leading-relaxed">
-                            Du trenger ikke en konto for å booke timer. <a href="#" className="text-[#354F41] underline underline-offset-2 hover:text-[#2A3F34]">Opprett konto frivillig</a> senere for å se historikk.
-                        </p>
-                    </div>
-                    <button className="text-[#A8A29E] hover:text-[#292524] transition-colors">
+                    
+                    {/* Close Button */}
+                    <button className="absolute top-4 right-4 text-[#E7E5E4]/60 hover:text-[#F5F5F4] transition-colors">
                         <X className="h-4 w-4" />
                     </button>
                 </div>
