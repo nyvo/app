@@ -394,7 +394,7 @@ const PublicCourseDetailPage = () => {
 
                                     <div className="space-y-3 py-5">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">1 x Deltaker</span>
+                                            <span className="text-[#78716C]">Kursavgift</span>
                                             <span className="font-medium text-[#292524]">250 kr</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
