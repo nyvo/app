@@ -46,12 +46,12 @@ const PublicCoursesPage = () => {
                     <span className="font-geist text-lg font-semibold text-[#292524] tracking-tight">ZenStudio</span>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                    <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">Logg inn</a>
-                    <a href="#" className="rounded-full bg-[#292524] px-5 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
-                        Registrer deg
-                    </a>
-                </div>
+                    <div className="flex items-center gap-4">
+                        <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">Logg inn</a>
+                        <a href="#" className="rounded-full bg-[#292524] px-5 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 ios-ease transition-all active:scale-[0.98] hover:scale-[1.02]">
+                            Registrer deg
+                        </a>
+                    </div>
             </div>
         </header>
 
@@ -171,7 +171,7 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
+                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
                                     Påmelding
                                 </Link>
                             </div>
@@ -225,7 +225,7 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
+                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
                                     Påmelding
                                 </Link>
                             </div>
@@ -335,7 +335,7 @@ const PublicCoursesPage = () => {
                             </div>
                             
                             <div className="flex items-center gap-3 w-full md:w-auto">
-                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm hover:bg-[#354F41] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all md:flex-none text-center">
+                                <Link to="/courses/detail" className="flex-1 whitespace-nowrap rounded-xl bg-[#292524] px-6 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-sm ios-ease transition-all md:flex-none text-center hover:scale-[1.02] active:scale-[0.98]">
                                     Påmelding
                                 </Link>
                             </div>

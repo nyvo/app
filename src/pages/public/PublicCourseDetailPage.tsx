@@ -68,7 +68,7 @@ const PublicCourseDetailPage = () => {
                 {step === 1 ? (
                   <div className="flex items-center gap-4">
                       <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">Logg inn</a>
-                      <a href="#" className="rounded-full bg-[#292524] px-5 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:scale-[1.02] active:scale-[0.98] ios-ease transition-all">
+                      <a href="#" className="rounded-full bg-[#292524] px-5 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 ios-ease transition-all active:scale-[0.98] hover:scale-[1.02]">
                           Registrer deg
                       </a>
                   </div>
@@ -315,7 +315,7 @@ const PublicCourseDetailPage = () => {
                               {/* Desktop Actions */}
                               <div className="hidden lg:flex items-center justify-between pt-4">
                                   <button onClick={handlePrevStep} className="text-sm font-medium text-[#78716C] hover:text-[#292524]">Avbryt</button>
-                                  <button className="group relative overflow-hidden rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-md hover:bg-[#354F41] hover:shadow-lg transition-all ios-ease active:scale-[0.98]">
+                                  <button className="group relative overflow-hidden rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-md ios-ease active:scale-[0.98] transition-all hover:shadow-lg hover:scale-[1.02]">
                                       <span className="relative z-10 flex items-center gap-2">
                                           Gå til betaling
                                           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -365,7 +365,7 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                     </div>
 
-                                    <button onClick={handleNextStep} className="group relative w-full overflow-hidden rounded-xl bg-[#292524] px-4 py-3.5 text-center text-sm font-medium text-[#F5F5F4] shadow-md hover:bg-[#354F41] hover:shadow-lg transition-all ios-ease active:scale-[0.98]">
+                                    <button onClick={handleNextStep} className="group relative w-full overflow-hidden rounded-xl bg-[#292524] px-4 py-3.5 text-center text-sm font-medium text-[#F5F5F4] shadow-md ios-ease active:scale-[0.98] transition-all hover:shadow-lg hover:scale-[1.02]">
                                         <span className="relative z-10 flex items-center justify-center gap-2">
                                             Påmelding
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -441,9 +441,9 @@ const PublicCourseDetailPage = () => {
                         <span className="text-xs text-[#78716C]">Total pris</span>
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
-                    <button onClick={handleNextStep} className="rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg hover:bg-[#354F41] active:scale-95 transition-transform ios-ease">
-                        Book nå
-                    </button>
+                                    <button onClick={handleNextStep} className="rounded-xl bg-[#292524] px-8 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg ios-ease active:scale-95 transition-transform hover:bg-[#292524]">
+                                        Book nå
+                                    </button>
                   </>
                 ) : (
                   <>
@@ -453,7 +453,7 @@ const PublicCourseDetailPage = () => {
                         </span>
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
-                    <button className="rounded-xl bg-[#292524] px-6 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg hover:bg-[#354F41] active:scale-95 transition-transform ios-ease flex items-center gap-2">
+                    <button className="rounded-xl bg-[#292524] px-6 py-3 text-sm font-medium text-[#F5F5F4] shadow-lg ios-ease active:scale-95 transition-transform flex items-center gap-2 hover:bg-[#292524]">
                         Betaling
                         <ArrowRight className="h-4 w-4" />
                     </button>
