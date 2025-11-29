@@ -24,6 +24,31 @@ import { Button } from '@/components/ui/button';
 const PublicCourseDetailPage = () => {
   const [step, setStep] = useState(1);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    message: '',
+    termsAccepted: false
+  });
+
+  const isFormValid = Boolean(
+    formData.firstName.trim() && 
+    formData.lastName.trim() && 
+    formData.email.trim() && 
+    formData.termsAccepted
+  );
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
   // Format seconds to MM:SS
   const formatTime = (seconds: number) => {
@@ -275,11 +300,25 @@ const PublicCourseDetailPage = () => {
                                       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                           <div className="space-y-1.5">
                                               <label className="text-xs font-medium text-[#57534E]">Fornavn</label>
-                                              <input type="text" placeholder="Ola" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <input 
+                                                type="text" 
+                                                name="firstName"
+                                                value={formData.firstName}
+                                                onChange={handleInputChange}
+                                                placeholder="Ola" 
+                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                              />
                                           </div>
                                           <div className="space-y-1.5">
                                               <label className="text-xs font-medium text-[#57534E]">Etternavn</label>
-                                              <input type="text" placeholder="Nordmann" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <input 
+                                                type="text" 
+                                                name="lastName"
+                                                value={formData.lastName}
+                                                onChange={handleInputChange}
+                                                placeholder="Nordmann" 
+                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                              />
                                           </div>
                                       </div>
 
@@ -288,19 +327,36 @@ const PublicCourseDetailPage = () => {
                                           <label className="text-xs font-medium text-[#57534E]">E-postadresse</label>
                                           <div className="relative">
                                               <Mail className="absolute left-3 top-3 h-4 w-4 text-[#A8A29E]" />
-                                              <input type="email" placeholder="ola@eksempel.no" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                              <input 
+                                                type="email" 
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                placeholder="ola@eksempel.no" 
+                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                              />
                                           </div>
                                           <p className="text-[11px] text-[#A8A29E]">Ordrebekreftelse sendes hit.</p>
                                       </div>
 
                                       <div className="space-y-1.5">
                                           <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
-                                          <input type="tel" placeholder="+47 000 00 000" className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" />
+                                          <input 
+                                            type="tel" 
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleInputChange}
+                                            placeholder="+47 000 00 000" 
+                                            className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                          />
                                       </div>
 
                                       <div className="space-y-1.5">
                                           <label className="text-xs font-medium text-[#57534E]">Kommentar til instruktør <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
                                           <textarea 
+                                            name="message"
+                                            value={formData.message}
+                                            onChange={handleInputChange}
                                             placeholder="Skriv en beskjed..." 
                                             rows={3}
                                             className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50 resize-none"
@@ -312,7 +368,14 @@ const PublicCourseDetailPage = () => {
                               {/* Terms Checkbox */}
                               <div className="flex items-start gap-3 px-1">
                                 <label className="relative flex items-center justify-center cursor-pointer p-0.5">
-                                    <input type="checkbox" required className="checkbox-wrapper peer sr-only" />
+                                    <input 
+                                        type="checkbox" 
+                                        name="termsAccepted"
+                                        checked={formData.termsAccepted}
+                                        onChange={handleInputChange}
+                                        required 
+                                        className="checkbox-wrapper peer sr-only" 
+                                    />
                                     <div className="h-4 w-4 rounded-[4px] border border-[#D6D3D1] bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E]">
                                         <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                     </div>
@@ -451,7 +514,11 @@ const PublicCourseDetailPage = () => {
 
                                     {/* Final Action Button */}
                                     <div className="mt-6">
-                                        <Button size="pill" className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                        <Button 
+                                            size="pill" 
+                                            disabled={!isFormValid}
+                                            className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 Gå til betaling
                                                 <ArrowRight className="h-4 w-4" />
@@ -488,7 +555,11 @@ const PublicCourseDetailPage = () => {
                         </span>
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
-                    <Button className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2" size="pill">
+                    <Button 
+                        className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                        size="pill"
+                        disabled={!isFormValid}
+                    >
                         Betaling
                         <ArrowRight className="h-4 w-4" />
                     </Button>
