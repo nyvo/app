@@ -228,6 +228,14 @@ const PublicCourseDetailPage = () => {
                               </div>
 
                               {/* Policies (Removed) */}
+                              <div className="border-t border-[#E7E5E4] pt-8 mt-8">
+                                  <p className="text-xs font-medium text-[#78716C] mb-3 text-center">Vi aksepterer</p>
+                                  <div className="flex items-center justify-center gap-4 opacity-70 grayscale hover:grayscale-0 transition-all duration-300">
+                                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-6 w-auto" />
+                                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto" />
+                                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b2/Vipps_logo_rgb.png" alt="Vipps" className="h-6 w-auto object-contain" />
+                                  </div>
+                              </div>
                           </motion.div>
                         ) : (
                           /* STEP 2: GUEST DETAILS */
