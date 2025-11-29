@@ -32,13 +32,37 @@ const PublicCourseDetailPage = () => {
     message: '',
     termsAccepted: false
   });
+  
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
 
-  const isFormValid = Boolean(
-    formData.firstName.trim() && 
-    formData.lastName.trim() && 
-    formData.email.trim() && 
-    formData.termsAccepted
-  );
+  const validateForm = () => {
+    const newErrors: Record<string, boolean> = {};
+    let isValid = true;
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = true;
+      isValid = false;
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = true;
+      isValid = false;
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = true;
+      isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+       // Basic email regex
+       newErrors.email = true;
+       isValid = false;
+    }
+    if (!formData.termsAccepted) {
+      newErrors.termsAccepted = true;
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -48,6 +72,14 @@ const PublicCourseDetailPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Clear error when user starts typing/fixing
+    if (errors[name]) {
+        setErrors(prev => ({
+            ...prev,
+            [name]: false
+        }));
+    }
   };
 
   // Format seconds to MM:SS
@@ -59,7 +91,16 @@ const PublicCourseDetailPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    
+    if (!validateForm()) {
+        // Find first error and focus
+        const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+        if (firstErrorField) {
+            firstErrorField.focus();
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
     
     // Handle successful submission (mock)
     console.log('Form submitted:', formData);
@@ -102,6 +143,14 @@ const PublicCourseDetailPage = () => {
         }
         .checkbox-wrapper:checked + div svg {
             display: block;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
       `}</style>
       
@@ -288,114 +337,149 @@ const PublicCourseDetailPage = () => {
                             transition={{ duration: 0.3, ease: "easeInOut" }}
                             className="space-y-8"
                           >
-                              {/* Title Block */}
-                              <div>
-                                  <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524]">
-                                      Deltakerinformasjon
-                                  </h1>
-                                  <p className="mt-2 text-[#78716C]">
-                                      Vennligst fyll inn dine detaljer.
-                                  </p>
-                              </div>
+                              <form id="booking-form" onSubmit={handleSubmit} className="space-y-8" noValidate>
+                                {/* Title Block */}
+                                <div>
+                                    <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524]">
+                                        Deltakerinformasjon
+                                    </h1>
+                                    <p className="mt-2 text-[#78716C]">
+                                        Vennligst fyll inn dine detaljer. Felter merket med <span className="text-red-500">*</span> er påkrevde.
+                                    </p>
+                                </div>
 
-                              {/* Attendee 1 (Main Contact) */}
-                              <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm">
-                                  <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                      <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker</h2>
-                                  </div>
-
-                                  <div className="space-y-5">
-                                      {/* Name Fields */}
-                                      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                          <div className="space-y-1.5">
-                                              <label className="text-xs font-medium text-[#57534E]">Fornavn</label>
-                                              <input 
-                                                type="text" 
-                                                name="firstName"
-                                                value={formData.firstName}
-                                                onChange={handleInputChange}
-                                                placeholder="Ola" 
-                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
-                                              />
-                                          </div>
-                                          <div className="space-y-1.5">
-                                              <label className="text-xs font-medium text-[#57534E]">Etternavn</label>
-                                              <input 
-                                                type="text" 
-                                                name="lastName"
-                                                value={formData.lastName}
-                                                onChange={handleInputChange}
-                                                placeholder="Nordmann" 
-                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
-                                              />
-                                          </div>
-                                      </div>
-
-                                      {/* Contact Fields */}
-                                      <div className="space-y-1.5">
-                                          <label className="text-xs font-medium text-[#57534E]">E-postadresse</label>
-                                          <div className="relative">
-                                              <Mail className="absolute left-3 top-3 h-4 w-4 text-[#A8A29E]" />
-                                              <input 
-                                                type="email" 
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                placeholder="ola@eksempel.no" 
-                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
-                                              />
-                                          </div>
-                                          <p className="text-[11px] text-[#A8A29E]">Ordrebekreftelse sendes hit.</p>
-                                      </div>
-
-                                      <div className="space-y-1.5">
-                                          <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
-                                          <input 
-                                            type="tel" 
-                                            name="phone"
-                                            value={formData.phone}
-                                            onChange={handleInputChange}
-                                            placeholder="+47 000 00 000" 
-                                            className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
-                                          />
-                                      </div>
-
-                                      <div className="space-y-1.5">
-                                          <label className="text-xs font-medium text-[#57534E]">Kommentar til instruktør <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
-                                          <textarea 
-                                            name="message"
-                                            value={formData.message}
-                                            onChange={handleInputChange}
-                                            placeholder="Skriv en beskjed..." 
-                                            rows={3}
-                                            className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50 resize-none"
-                                          />
-                                      </div>
-                                  </div>
-                              </div>
-
-                              {/* Terms Checkbox */}
-                              <div className="flex items-start gap-3 px-1">
-                                <label className="relative flex items-center justify-center cursor-pointer p-0.5">
-                                    <input 
-                                        type="checkbox" 
-                                        name="termsAccepted"
-                                        checked={formData.termsAccepted}
-                                        onChange={handleInputChange}
-                                        required 
-                                        className="checkbox-wrapper peer sr-only" 
-                                    />
-                                    <div className="h-4 w-4 rounded-[4px] border border-[#D6D3D1] bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E]">
-                                        <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
+                                {/* Attendee 1 (Main Contact) */}
+                                <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm">
+                                    <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
+                                        <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker</h2>
                                     </div>
-                                </label>
-                                <p className="text-xs text-[#78716C] leading-relaxed">
-                                    Jeg godtar våre <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkår for påmelding</a>. <span className="text-red-500">*</span>
-                                </p>
-                              </div>
 
-                              {/* Desktop Actions (Cancel only) */}
-                              {/* Removed Cancel button as requested */}
+                                    <div className="space-y-5">
+                                        {/* Name Fields */}
+                                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-medium text-[#57534E]">
+                                                    Fornavn <span className="text-red-500">*</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="firstName"
+                                                    value={formData.firstName}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Ola" 
+                                                    aria-invalid={errors.firstName}
+                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.firstName 
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
+                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    }`}
+                                                />
+                                                {errors.firstName && (
+                                                    <p className="text-[11px] text-red-500 font-medium">Fornavn er påkrevd</p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-medium text-[#57534E]">
+                                                    Etternavn <span className="text-red-500">*</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    name="lastName"
+                                                    value={formData.lastName}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Nordmann" 
+                                                    aria-invalid={errors.lastName}
+                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.lastName 
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
+                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    }`}
+                                                />
+                                                {errors.lastName && (
+                                                    <p className="text-[11px] text-red-500 font-medium">Etternavn er påkrevd</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Contact Fields */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-[#57534E]">
+                                                E-postadresse <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <Mail className={`absolute left-3 top-3 h-4 w-4 ${errors.email ? 'text-red-400' : 'text-[#A8A29E]'}`} />
+                                                <input 
+                                                    type="email" 
+                                                    name="email"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    placeholder="ola@eksempel.no" 
+                                                    aria-invalid={errors.email}
+                                                    className={`input-focus block w-full rounded-lg border pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.email 
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
+                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    }`}
+                                                />
+                                            </div>
+                                            {errors.email ? (
+                                                <p className="text-[11px] text-red-500 font-medium">Gyldig e-postadresse er påkrevd</p>
+                                            ) : (
+                                                <p className="text-[11px] text-[#A8A29E]">Ordrebekreftelse sendes hit.</p>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
+                                            <input 
+                                                type="tel" 
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleInputChange}
+                                                placeholder="+47 000 00 000" 
+                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-[#57534E]">Kommentar til instruktør <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
+                                            <textarea 
+                                                name="message"
+                                                value={formData.message}
+                                                onChange={handleInputChange}
+                                                placeholder="Skriv en beskjed..." 
+                                                rows={3}
+                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50 resize-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Terms Checkbox */}
+                                <div className="flex items-start gap-3 px-1">
+                                    <label className="relative flex items-center justify-center cursor-pointer p-0.5">
+                                        <input 
+                                            type="checkbox" 
+                                            name="termsAccepted"
+                                            checked={formData.termsAccepted}
+                                            onChange={handleInputChange}
+                                            required 
+                                            className="checkbox-wrapper peer sr-only" 
+                                        />
+                                        <div className={`h-4 w-4 rounded-[4px] border bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E] ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-[#D6D3D1]'}`}>
+                                            <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
+                                        </div>
+                                    </label>
+                                    <div className="flex flex-col">
+                                        <p className="text-xs text-[#78716C] leading-relaxed">
+                                            Jeg godtar våre <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkår for påmelding</a>. <span className="text-red-500">*</span>
+                                        </p>
+                                        {errors.termsAccepted && (
+                                            <p className="text-[11px] text-red-500 font-medium mt-1">Du må godta vilkårene</p>
+                                        )}
+                                    </div>
+                                </div>
+                              </form>
                           </motion.div>
                         )}
                       </AnimatePresence>
