@@ -67,7 +67,7 @@ const PublicCoursesPage = () => {
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                                 </span>
-                                Booking åpen
+                                Åpent for booking
                             </span>
                         </div>
                         <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524] mb-2">
