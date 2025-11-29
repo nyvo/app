@@ -431,9 +431,9 @@ const PublicCourseDetailPage = () => {
                                 <div className="flex gap-3">
                                     <ShieldCheck className="h-5 w-5 shrink-0 text-[#354F41]" />
                                     <div className="space-y-1">
-                                        <p className="text-xs font-medium text-[#292524]">Betalingsinformasjon</p>
+                                        <p className="text-xs font-medium text-[#292524]">Sikker betaling</p>
                                         <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                            Sikker betaling med kort eller Vipps.
+                                            Vi støtter Visa, Mastercard og Vipps som betaling.
                                         </p>
                                     </div>
                                 </div>
