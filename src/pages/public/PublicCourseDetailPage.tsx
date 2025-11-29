@@ -227,13 +227,7 @@ const PublicCourseDetailPage = () => {
                                   </div>
                               </div>
 
-                              {/* Policies */}
-                              <div className="border-t border-[#E7E5E4] pt-4">
-                                  <button className="flex w-full items-center justify-between py-2 text-left text-sm font-medium text-[#78716C] hover:text-[#292524]">
-                                      <span>Avbestillingsregler</span>
-                                      <ChevronDown className="h-4 w-4" />
-                                  </button>
-                              </div>
+                              {/* Policies (Removed) */}
                           </motion.div>
                         ) : (
                           /* STEP 2: GUEST DETAILS */
