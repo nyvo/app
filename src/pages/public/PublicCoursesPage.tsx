@@ -366,13 +366,6 @@ const PublicCoursesPage = () => {
 
                 </div>
                 
-                {/* Footer Text */}
-                <div className="mt-12 text-center">
-                    <p className="text-sm text-[#A8A29E]">
-                        Leter du etter noe annet? <a href="#" className="text-[#354F41] underline underline-offset-2">Se hele timeplanen</a> eller <a href="#" className="text-[#354F41] underline underline-offset-2">kontakt oss</a>.
-                    </p>
-                </div>
-
             </div>
         </main>
       </div>
