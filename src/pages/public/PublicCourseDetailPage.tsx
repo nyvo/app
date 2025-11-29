@@ -140,12 +140,12 @@ const PublicCourseDetailPage = () => {
                                           <Calendar className="h-4 w-4 text-[#A8A29E]" />
                                           <span>Lør, 24. Sep</span>
                                       </div>
-                                      <div className="hidden sm:block h-1 w-1 rounded-full bg-[#D6D3D1]"></div>
+                                      <div className="hidden sm:block h-3 w-px bg-[#E7E5E4]"></div>
                                       <div className="flex items-center gap-2">
                                           <Clock className="h-4 w-4 text-[#A8A29E]" />
                                           <span>09:00 - 10:15 (75 min)</span>
                                       </div>
-                                      <div className="hidden sm:block h-1 w-1 rounded-full bg-[#D6D3D1]"></div>
+                                      <div className="hidden sm:block h-3 w-px bg-[#E7E5E4]"></div>
                                       <div className="flex items-center gap-2">
                                           <MapPin className="h-4 w-4 text-[#A8A29E]" />
                                           <span>Majorstuen Studio</span>
