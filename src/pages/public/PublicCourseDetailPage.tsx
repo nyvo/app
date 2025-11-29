@@ -303,13 +303,13 @@ const PublicCourseDetailPage = () => {
                               {/* Terms Checkbox */}
                               <div className="flex items-start gap-3 px-1">
                                 <label className="relative flex items-center justify-center cursor-pointer p-0.5">
-                                    <input type="checkbox" className="checkbox-wrapper peer sr-only" />
-                                    <div className="h-4 w-4 rounded border border-[#D6D3D1] bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E]">
+                                    <input type="checkbox" required className="checkbox-wrapper peer sr-only" />
+                                    <div className="h-4 w-4 rounded-[4px] border border-[#D6D3D1] bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E]">
                                         <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                     </div>
                                 </label>
                                 <p className="text-xs text-[#78716C] leading-relaxed">
-                                    Jeg godtar <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkårene</a> for påmelding og bekrefter at jeg er i stand til å delta på timen.
+                                    Jeg godtar <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkårene</a> for påmelding og bekrefter at jeg er i stand til å delta på timen. <span className="text-red-500">*</span>
                                 </p>
                               </div>
 
