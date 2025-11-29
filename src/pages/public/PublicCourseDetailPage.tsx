@@ -228,9 +228,9 @@ const PublicCourseDetailPage = () => {
                               </div>
 
                               {/* Payment Badges */}
-                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8 flex flex-col sm:flex-row items-start sm:items-center justify-start gap-4">
+                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8 flex flex-col sm:flex-row items-start sm:items-center justify-start gap-6">
                                   <p className="text-xs font-medium text-[#78716C]">Vi aksepterer</p>
-                                  <div className="flex items-center gap-2 opacity-90">
+                                  <div className="flex items-center gap-3 opacity-90">
                                       <img src="/badges/visa badge.svg" alt="Visa" className="h-8 w-auto" />
                                       <img src="/badges/mastercard badge.svg" alt="Mastercard" className="h-8 w-auto" />
                                       <img src="/badges/vipps badge.svg" alt="Vipps" className="h-8 w-auto" />
