@@ -229,9 +229,9 @@ const PublicCourseDetailPage = () => {
 
                               {/* Payment Badges */}
                               <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8 flex items-center justify-start gap-3 opacity-90">
-                                  <img src="/badges/vipps badge.svg" alt="Vipps" className="h-7 w-auto" />
-                                  <img src="/badges/visa badge.svg" alt="Visa" className="h-5 w-auto" />
-                                  <img src="/badges/mastercard badge.svg" alt="Mastercard" className="h-5 w-auto" />
+                                  <img src="/badges/vipps.svg" alt="Vipps" className="h-6 w-auto" />
+                                  <img src="/badges/visa.svg" alt="Visa" className="h-6 w-auto" />
+                                  <img src="/badges/mastercard.svg" alt="Mastercard" className="h-6 w-auto" />
                               </div>
                           </motion.div>
                         ) : (
