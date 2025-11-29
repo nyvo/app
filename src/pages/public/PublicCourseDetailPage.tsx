@@ -413,14 +413,27 @@ const PublicCourseDetailPage = () => {
                                 )}
                             </div>
 
-                            {/* Trust Badge / Reassurance */}
-                            <div className="rounded-xl border border-[#E7E5E4] bg-[#FDFBF7] p-4">
+                            {/* Reservation Info */}
+                            <div className="rounded-xl border border-[#E7E5E4] bg-[#FDFBF7] p-4 mb-4">
+                                <div className="flex gap-3">
+                                    <Clock className="h-5 w-5 shrink-0 text-[#354F41]" />
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-medium text-[#292524]">Vi reserverer plassen din</p>
+                                        <p className="text-[11px] text-[#78716C] leading-relaxed">
+                                            Fullfør bestillingen din innen <span className="font-medium text-[#292524]">10:00</span> minutter for å sikre plassen din.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Payment Info */}
+                            <div className="rounded-xl border border-[#E7E5E4] bg-white p-4">
                                 <div className="flex gap-3">
                                     <ShieldCheck className="h-5 w-5 shrink-0 text-[#354F41]" />
                                     <div className="space-y-1">
-                                        <p className="text-xs font-medium text-[#292524]">Trygg betaling</p>
+                                        <p className="text-xs font-medium text-[#292524]">Betalingsinformasjon</p>
                                         <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                            Din plass holdes av i 10:00 minutter mens du fullfører kjøpet.
+                                            Sikker betaling med kort eller Vipps.
                                         </p>
                                     </div>
                                 </div>
