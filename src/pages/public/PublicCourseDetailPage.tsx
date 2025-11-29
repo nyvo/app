@@ -372,7 +372,7 @@ const PublicCourseDetailPage = () => {
                                     </Button>
                                     
                                     <p className="mt-4 text-center text-xs text-[#A8A29E]">
-                                        Logg inn eller registrer deg for å lagre denne bestillingen i din kursoversikt
+                                        <a href="#" className="underline underline-offset-2 hover:text-[#292524] transition-colors">Logg inn</a> eller <a href="#" className="underline underline-offset-2 hover:text-[#292524] transition-colors">registrer deg</a> for å lagre denne bestillingen i din kursoversikt
                                     </p>
                                   </>
                                 ) : (
