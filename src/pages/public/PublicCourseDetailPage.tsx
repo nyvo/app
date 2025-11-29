@@ -23,6 +23,23 @@ import { Button } from '@/components/ui/button';
 
 const PublicCourseDetailPage = () => {
   const [step, setStep] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  React.useEffect(() => {
+    if (step === 2 && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [step, timeLeft]);
   
   const handleNextStep = () => {
     setStep(2);
@@ -206,7 +223,7 @@ const PublicCourseDetailPage = () => {
                               </div>
 
                               {/* Location Block */}
-                              <div>
+                              <div className="mb-12">
                                   <h2 className="mb-3 font-geist text-lg font-semibold text-[#292524]">Sted & Oppmøte</h2>
                                   <div className="overflow-hidden rounded-2xl border border-[#E7E5E4] bg-white shadow-sm">
                                       <div className="flex flex-col md:flex-row">
@@ -224,16 +241,6 @@ const PublicCourseDetailPage = () => {
                                               </div>
                                           </div>
                                       </div>
-                                  </div>
-                              </div>
-
-                              {/* Payment Badges */}
-                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8">
-                                  <p className="text-xs text-[#A8A29E] mb-3">Sikker betaling med</p>
-                                  <div className="flex items-center gap-4 opacity-90">
-                                      <img src="/badges/vipps.svg" alt="Vipps" className="h-7 w-auto" />
-                                      <img src="/badges/visa.svg" alt="Visa" className="h-4 w-auto" />
-                                      <img src="/badges/mastercard.svg" alt="Mastercard" className="h-7 w-auto" />
                                   </div>
                               </div>
                           </motion.div>
@@ -311,30 +318,12 @@ const PublicCourseDetailPage = () => {
                                     </div>
                                 </label>
                                 <p className="text-xs text-[#78716C] leading-relaxed">
-                                    Jeg godtar <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkårene</a> for påmelding og bekrefter at jeg er i stand til å delta på timen. <span className="text-red-500">*</span>
+                                    Jeg godtar våre <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkår for påmelding</a>. <span className="text-red-500">*</span>
                                 </p>
                               </div>
 
-                              {/* Payment Badges */}
-                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8">
-                                  <p className="text-xs text-[#A8A29E] mb-3">Sikker betaling med</p>
-                                  <div className="flex items-center gap-4 opacity-90">
-                                      <img src="/badges/vipps.svg" alt="Vipps" className="h-7 w-auto" />
-                                      <img src="/badges/visa.svg" alt="Visa" className="h-4 w-auto" />
-                                      <img src="/badges/mastercard.svg" alt="Mastercard" className="h-7 w-auto" />
-                                  </div>
-                              </div>
-
-                              {/* Desktop Actions */}
-                              <div className="hidden lg:flex items-center justify-between pt-4">
-                                  <button onClick={handlePrevStep} className="text-sm font-medium text-[#78716C] hover:text-[#292524]">Avbryt</button>
-                                  <Button className="rounded-xl px-8 py-3" size="pill">
-                                      <span className="relative z-10 flex items-center gap-2">
-                                          Gå til betaling
-                                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                      </span>
-                                  </Button>
-                              </div>
+                              {/* Desktop Actions (Cancel only) */}
+                              {/* Removed Cancel button as requested */}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -396,6 +385,7 @@ const PublicCourseDetailPage = () => {
                                 ) : (
                                   /* Step 2 Summary */
                                   <>
+                                    {/* Content without nested card wrapper */}
                                     <h3 className="mb-4 font-geist text-lg font-semibold text-[#292524]">Sammendrag</h3>
                                     
                                     <div className="flex gap-4 border-b border-[#F5F5F4] pb-5">
@@ -420,41 +410,56 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-[#F5F5F4] pt-4">
+                                    <div className="border-t border-[#F5F5F4] pt-4 pb-6">
                                         <div className="flex items-center justify-between">
                                             <span className="font-medium text-[#292524]">Totalt å betale</span>
                                             <span className="font-geist text-xl font-bold text-[#292524] tracking-tight">250 kr</span>
                                         </div>
-                                        <p className="mt-1 text-right text-[11px] text-[#A8A29E]">Inkludert mva</p>
+                                    </div>
+
+                                    {/* Unified Reservation & Payment Section */}
+                                    <div className="rounded-xl bg-[#FDFBF7] border border-[#E7E5E4] p-4">
+                                        {/* Reservation Note */}
+                                        <div className="flex gap-3 mb-4 border-b border-[#E7E5E4]/60 pb-4">
+                                            <Clock className="h-4 w-4 shrink-0 text-[#354F41] mt-0.5" />
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs font-medium text-[#292524]">Vi reserverer plassen din</p>
+                                                <p className="text-[11px] text-[#78716C] leading-relaxed">
+                                                    Fullfør innen <span className="font-medium text-[#292524]">{formatTime(timeLeft)}</span> minutter.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Secure Payment */}
+                                        <div>
+                                            <div className="flex gap-3 mb-2">
+                                                <ShieldCheck className="h-4 w-4 shrink-0 text-[#354F41] mt-0.5" />
+                                                <div className="space-y-0.5">
+                                                    <p className="text-xs font-medium text-[#292524]">Sikker betaling</p>
+                                                    <p className="text-[11px] text-[#78716C] leading-relaxed">
+                                                        Vi aksepterer Vipps, Visa og Mastercard.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 pl-7 opacity-90">
+                                                <img src="/badges/vipps.svg" alt="Vipps" className="h-5 w-auto" />
+                                                <img src="/badges/visa.svg" alt="Visa" className="h-3 w-auto" />
+                                                <img src="/badges/mastercard.svg" alt="Mastercard" className="h-5 w-auto" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Final Action Button */}
+                                    <div className="mt-6">
+                                        <Button size="pill" className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                Gå til betaling
+                                                <ArrowRight className="h-4 w-4" />
+                                            </span>
+                                        </Button>
                                     </div>
                                   </>
                                 )}
-                            </div>
-
-                            {/* Reservation Info */}
-                            <div className="rounded-xl border border-[#E7E5E4] bg-[#FDFBF7] p-4 mb-4">
-                                <div className="flex gap-3">
-                                    <Clock className="h-5 w-5 shrink-0 text-[#354F41]" />
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-medium text-[#292524]">Vi reserverer plassen din</p>
-                                        <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                            Fullfør bestillingen din innen <span className="font-medium text-[#292524]">10:00</span> minutter for å sikre plassen din.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Payment Info */}
-                            <div className="rounded-xl border border-[#E7E5E4] bg-white p-4">
-                                <div className="flex gap-3">
-                                    <ShieldCheck className="h-5 w-5 shrink-0 text-[#354F41]" />
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-medium text-[#292524]">Sikker betaling</p>
-                                        <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                            Vi støtter Visa, Mastercard og Vipps som betaling.
-                                        </p>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
