@@ -228,10 +228,13 @@ const PublicCourseDetailPage = () => {
                               </div>
 
                               {/* Payment Badges */}
-                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8 flex items-center justify-start gap-3 opacity-90">
-                                  <img src="/badges/vipps.svg" alt="Vipps" className="h-6 w-auto" />
-                                  <img src="/badges/visa.svg" alt="Visa" className="h-6 w-auto" />
-                                  <img src="/badges/mastercard.svg" alt="Mastercard" className="h-6 w-auto" />
+                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8">
+                                  <p className="text-xs text-[#A8A29E] mb-3">Sikker betaling med</p>
+                                  <div className="flex items-center gap-4 opacity-90">
+                                      <img src="/badges/vipps.svg" alt="Vipps" className="h-7 w-auto" />
+                                      <img src="/badges/visa.svg" alt="Visa" className="h-4 w-auto" />
+                                      <img src="/badges/mastercard.svg" alt="Mastercard" className="h-7 w-auto" />
+                                  </div>
                               </div>
                           </motion.div>
                         ) : (
@@ -310,6 +313,16 @@ const PublicCourseDetailPage = () => {
                                 <p className="text-xs text-[#78716C] leading-relaxed">
                                     Jeg godtar <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkårene</a> for påmelding og bekrefter at jeg er i stand til å delta på timen. <span className="text-red-500">*</span>
                                 </p>
+                              </div>
+
+                              {/* Payment Badges */}
+                              <div className="border-t border-[#E7E5E4] pt-8 mt-8 pb-8">
+                                  <p className="text-xs text-[#A8A29E] mb-3">Sikker betaling med</p>
+                                  <div className="flex items-center gap-4 opacity-90">
+                                      <img src="/badges/vipps.svg" alt="Vipps" className="h-7 w-auto" />
+                                      <img src="/badges/visa.svg" alt="Visa" className="h-4 w-auto" />
+                                      <img src="/badges/mastercard.svg" alt="Mastercard" className="h-7 w-auto" />
+                                  </div>
                               </div>
 
                               {/* Desktop Actions */}
