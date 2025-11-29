@@ -372,7 +372,7 @@ const PublicCourseDetailPage = () => {
                                     </Button>
                                     
                                     <p className="mt-4 text-center text-xs text-[#A8A29E]">
-                                        Du kan opprette bruker etter betaling for å lagre kvittering.
+                                        Logg inn eller registrer deg for å lagre denne bestillingen i din kursoversikt
                                     </p>
                                   </>
                                 ) : (
