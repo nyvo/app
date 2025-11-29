@@ -227,19 +227,13 @@ const PublicCourseDetailPage = () => {
                                   </div>
                               </div>
 
-                              {/* Policies (Removed) */}
+                              {/* Payment Badges */}
                               <div className="border-t border-[#E7E5E4] pt-8 mt-8">
                                   <p className="text-xs font-medium text-[#78716C] mb-3 text-center">Vi aksepterer</p>
                                   <div className="flex items-center justify-center gap-2 opacity-90">
-                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" className="h-full w-auto object-contain" />
-                                      </div>
-                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="Mastercard" className="h-full w-auto object-contain" />
-                                      </div>
-                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Vipps_logo.svg" alt="Vipps" className="h-full w-auto object-contain" />
-                                      </div>
+                                      <img src="/badges/visa badge.svg" alt="Visa" className="h-8 w-auto" />
+                                      <img src="/badges/mastercard badge.svg" alt="Mastercard" className="h-8 w-auto" />
+                                      <img src="/badges/vipps badge.svg" alt="Vipps" className="h-8 w-auto" />
                                   </div>
                               </div>
                           </motion.div>
