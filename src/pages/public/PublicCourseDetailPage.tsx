@@ -57,6 +57,15 @@ const PublicCourseDetailPage = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+    
+    // Handle successful submission (mock)
+    console.log('Form submitted:', formData);
+    // Navigate to success page or show confirmation
+  };
+
   React.useEffect(() => {
     if (step === 2 && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -516,8 +525,9 @@ const PublicCourseDetailPage = () => {
                                     <div className="mt-6">
                                         <Button 
                                             size="pill" 
-                                            disabled={!isFormValid}
-                                            className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            type="submit"
+                                            form="booking-form"
+                                            className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all"
                                         >
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 Gå til betaling
@@ -556,9 +566,10 @@ const PublicCourseDetailPage = () => {
                         <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
                     </div>
                     <Button 
-                        className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2" 
                         size="pill"
-                        disabled={!isFormValid}
+                        type="submit"
+                        form="booking-form"
                     >
                         Betaling
                         <ArrowRight className="h-4 w-4" />
