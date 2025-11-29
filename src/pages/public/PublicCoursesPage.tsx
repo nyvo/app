@@ -79,47 +79,25 @@ const PublicCoursesPage = () => {
                     {/* Simple Avatar Stack for Social Proof (Optional touch) - REMOVED */}
                 </div>
 
-                {/* Guest Checkout Banner */}
-                <div className="animate-slide-down mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-[#F5F5F4] p-6 shadow-sm border border-[#E7E5E4]/80 md:p-8">
-                    {/* Grain Effect (Subtle) */}
-                    <div className="absolute inset-0 bg-grain opacity-[0.03] pointer-events-none"></div>
+                {/* Login Reminder / Soft Notification */}
+                <div className="animate-slide-down mb-8 relative overflow-hidden rounded-3xl border border-[#E7E5E4]/60 bg-gradient-to-br from-[#FDFBF7] via-[#FDFBF7] to-[#F5F5F4] p-5 shadow-sm">
+                    {/* Subtle Grain */}
+                    <div className="absolute inset-0 bg-grain opacity-[0.02] pointer-events-none"></div>
                     
-                    {/* Soft Background Decor */}
-                    <div className="absolute top-0 right-0 -mt-8 -mr-8 h-32 w-32 rounded-full bg-[#E7E5E4]/30 blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-24 w-24 rounded-full bg-[#E7E5E4]/40 blur-2xl"></div>
-                    
-                    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6 z-10">
-                        <div className="space-y-2 max-w-lg">
-                            <h3 className="font-geist text-xl font-semibold text-[#292524]">
+                    <div className="relative flex items-start gap-4 z-10">
+                        <div className="flex-1 space-y-1">
+                            <h3 className="font-geist text-base font-semibold text-[#292524]">
                                 Logg inn for en enklere booking
                             </h3>
-                            <p className="text-[#78716C] leading-relaxed text-sm md:text-base">
-                                Ikke medlem enda? <span className="text-[#354F41] font-medium border-b border-[#354F41]/20 pb-0.5 hover:border-[#354F41]/50 transition-colors cursor-pointer">Registrer deg gratis</span> for å holde oversikt over kursene dine.
+                            <p className="text-[#78716C] text-sm leading-relaxed">
+                                Har du allerede en konto? <button className="font-medium text-[#354F41] hover:text-[#2A3F34] hover:underline decoration-[#354F41]/30 underline-offset-2 transition-colors">Logg inn</button>. Ny her? <button className="font-medium text-[#354F41] hover:text-[#2A3F34] hover:underline decoration-[#354F41]/30 underline-offset-2 transition-colors">Registrer deg gratis</button> for å holde oversikt over kursene dine.
                             </p>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-                             {/* Log in Button */}
-                             <Button 
-                                variant="outline" 
-                                className="bg-white border-[#E7E5E4] text-[#57534E] hover:bg-[#F5F5F4] hover:text-[#292524] hover:border-[#D6D3D1] shadow-sm"
-                            >
-                                Logg inn
-                            </Button>
-                            
-                            {/* Register Button */}
-                            <Button 
-                                className="bg-[#292524] text-[#F5F5F4] hover:bg-[#354F41] shadow-md shadow-[#292524]/5 border-none"
-                            >
-                                Registrer deg
-                            </Button>
-                        </div>
+                        <button className="shrink-0 text-[#A8A29E] hover:text-[#292524] transition-colors pt-0.5">
+                            <X className="h-4 w-4" />
+                        </button>
                     </div>
-                    
-                    {/* Close Button */}
-                    <button className="absolute top-4 right-4 text-[#A8A29E] hover:text-[#292524] transition-colors z-20">
-                        <X className="h-4 w-4" />
-                    </button>
                 </div>
 
                 {/* Filters */}
