@@ -230,10 +230,16 @@ const PublicCourseDetailPage = () => {
                               {/* Policies (Removed) */}
                               <div className="border-t border-[#E7E5E4] pt-8 mt-8">
                                   <p className="text-xs font-medium text-[#78716C] mb-3 text-center">Vi aksepterer</p>
-                                  <div className="flex items-center justify-center gap-4 opacity-70 grayscale hover:grayscale-0 transition-all duration-300">
-                                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-6 w-auto" />
-                                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto" />
-                                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b2/Vipps_logo_rgb.png" alt="Vipps" className="h-6 w-auto object-contain" />
+                                  <div className="flex items-center justify-center gap-2 opacity-90">
+                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" alt="Visa" className="h-full w-auto object-contain" />
+                                      </div>
+                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="Mastercard" className="h-full w-auto object-contain" />
+                                      </div>
+                                      <div className="flex h-8 w-12 items-center justify-center rounded border border-[#E7E5E4] bg-white p-1 shadow-sm">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Vipps_logo.svg" alt="Vipps" className="h-full w-auto object-contain" />
+                                      </div>
                                   </div>
                               </div>
                           </motion.div>
