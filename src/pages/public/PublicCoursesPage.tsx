@@ -154,7 +154,7 @@ const PublicCoursesPage = () => {
                                     <MapPin className="h-4 w-4 text-[#A8A29E]" />
                                     Majorstuen Studio
                                 </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
+                                <div className="hidden h-3 w-px bg-[#E7E5E4] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
                                     <span className="md:hidden">Lør, 24. Sep </span>
@@ -215,7 +215,7 @@ const PublicCoursesPage = () => {
                                     <MapPin className="h-4 w-4 text-[#A8A29E]" />
                                     Grünerløkka
                                 </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
+                                <div className="hidden h-3 w-px bg-[#E7E5E4] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4 text-[#A8A29E] md:hidden" />
                                     <span className="md:hidden">Søn, 25. Sep </span>
@@ -275,7 +275,7 @@ const PublicCoursesPage = () => {
                                     <MapPin className="h-4 w-4" />
                                     Majorstuen Studio
                                 </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
+                                <div className="hidden h-3 w-px bg-[#E7E5E4] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <Calendar className="h-4 w-4" />
                                     <span className="md:hidden">Tir, 27. Sep </span>
@@ -332,7 +332,7 @@ const PublicCoursesPage = () => {
                                     <MapPin className="h-4 w-4 text-[#A8A29E]" />
                                     Majorstuen Studio
                                 </div>
-                                <div className="hidden h-1 w-1 rounded-full bg-[#D6D3D1] md:block"></div>
+                                <div className="hidden h-3 w-px bg-[#E7E5E4] md:block"></div>
                                 <div className="flex items-center gap-1.5">
                                     <CalendarRange className="h-4 w-4 text-[#A8A29E] md:hidden" />
                                     <span className="md:hidden">Oppstart 1. Okt </span>
