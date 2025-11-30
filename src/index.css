@@ -50,18 +50,63 @@
   --color-course-meditation: #60a5fa;
 
   /* Sidebar Colors */
-  --color-sidebar: #F7F5F2;
+  --color-sidebar: #fbf9f6;
   --color-sidebar-foreground: #44403c;
   --color-sidebar-primary: #1c1917;
   --color-sidebar-primary-foreground: #fafaf9;
   --color-sidebar-accent: #ffffff;
   --color-sidebar-accent-foreground: #292524;
-  --color-sidebar-border: #e7e5e4;
+  --color-sidebar-border: #ebe8e4;
   --color-sidebar-ring: #3b82f6;
+
+  /* Text Colors - Stone Palette */
+  --color-text-primary: #292524;
+  --color-text-secondary: #57534e;
+  --color-text-tertiary: #a8a29e;
+
+  /* Surface/Background Variations */
+  --color-surface: #fdfbf7;
+  --color-surface-elevated: #f5f5f4;
+
+  /* Brand Dark Variations */
+  --color-primary-darker: #2a3d34;
+  --color-primary-accent: #4a6959;
+
+  /* Status: Confirmed */
+  --color-status-confirmed-bg: #ecfdf5;
+  --color-status-confirmed-border: #d1fae5;
+  --color-status-confirmed-text: #059669;
+
+  /* Status: Waitlist */
+  --color-status-waitlist-bg: #fffbeb;
+  --color-status-waitlist-border: #fef3c7;
+  --color-status-waitlist-text: #b45309;
+
+  /* Status: Cancelled */
+  --color-status-cancelled-bg: #f3f4f6;
+  --color-status-cancelled-border: #e5e7eb;
+  --color-status-cancelled-text: #4b5563;
+
+  /* Status: Error */
+  --color-status-error-bg: #fef2f2;
+  --color-status-error-border: #fecaca;
+  --color-status-error-text: #991b1b;
 
   /* Font Families */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
   --font-family-geist: 'Geist Sans', system-ui, -apple-system, sans-serif;
+
+  /* Custom Font Sizes */
+  --text-xxs: 10px;
+  --text-xxs--line-height: 14px;
+
+  /* Custom Shadows - Lighter, more subtle */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.02);
+  --shadow: 0 2px 8px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-xl: 0 12px 32px rgba(0,0,0,0.08);
 }
 
 @layer base {
@@ -70,8 +115,8 @@
   }
 
   body {
-    background-color: #fdfbf7;
-    color: #44403c;
+    background-color: var(--color-surface);
+    color: var(--color-sidebar-foreground);
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

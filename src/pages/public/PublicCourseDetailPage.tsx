@@ -15,7 +15,7 @@ import {
   Zap, 
   ChevronLeft,
   ChevronRight,
-  Flower2,
+  Leaf,
   Mail,
   Check
 } from 'lucide-react';
@@ -130,7 +130,7 @@ const PublicCourseDetailPage = () => {
     <>
       <style>{`
         .bg-pattern-dot {
-            background-image: radial-gradient(#D6D3D1 1px, transparent 1px);
+            background-image: radial-gradient(var(--color-ring) 1px, transparent 1px);
             background-size: 20px 20px;
         }
         .input-focus {
@@ -138,8 +138,8 @@ const PublicCourseDetailPage = () => {
         }
         /* Custom checkbox styling */
         .checkbox-wrapper:checked + div {
-            background-color: #292524;
-            border-color: #292524;
+            background-color: var(--color-text-primary);
+            border-color: var(--color-text-primary);
         }
         .checkbox-wrapper:checked + div svg {
             display: block;
@@ -154,33 +154,33 @@ const PublicCourseDetailPage = () => {
         }
       `}</style>
       
-      <div className="min-h-screen w-full bg-[#FDFBF7] text-[#44403C] selection:bg-[#354F41] selection:text-[#F5F5F4] overflow-x-hidden pb-32 lg:pb-0 font-geist">
+      <div className="min-h-screen w-full bg-surface text-sidebar-foreground selection:bg-primary selection:text-surface-elevated overflow-x-hidden pb-32 lg:pb-0 font-geist">
 
         {/* Public Header */}
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-[#E7E5E4]/80 bg-[#FDFBF7]/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-3 cursor-pointer">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-[#E7E5E4] text-[#354F41]">
-                        <Flower2 className="h-5 w-5" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+                        <Leaf className="h-5 w-5" />
                     </div>
-                    <span className="font-geist text-lg font-semibold text-[#292524] tracking-tight">ZenStudio</span>
+                    <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
                 </div>
-                
+
                 {step === 1 ? (
                   <div className="flex items-center gap-4">
-                      <a href="#" className="hidden text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors md:block">Logg inn</a>
-                      <a href="#" className="rounded-full bg-[#292524] px-5 py-2 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 ios-ease transition-all active:scale-[0.98] hover:scale-[1.02]">
-                          Registrer deg
-                      </a>
+                      <a href="#" className="hidden text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors md:block">Logg inn</a>
+                      <Button asChild size="compact">
+                          <Link to="/student/register">Registrer deg</Link>
+                      </Button>
                   </div>
                 ) : (
                   /* Simple Progress Indicator (Desktop) */
                   <div className="hidden md:flex items-center gap-2 text-sm font-medium">
-                      <span className="text-[#A8A29E]">Kurs</span>
-                      <ChevronRight className="h-4 w-4 text-[#E7E5E4]" />
-                      <span className="text-[#292524]">Detaljer</span>
-                      <ChevronRight className="h-4 w-4 text-[#E7E5E4]" />
-                      <span className="text-[#A8A29E]">Betaling</span>
+                      <span className="text-text-tertiary">Kurs</span>
+                      <ChevronRight className="h-4 w-4 text-border" />
+                      <span className="text-text-primary">Detaljer</span>
+                      <ChevronRight className="h-4 w-4 text-border" />
+                      <span className="text-text-tertiary">Betaling</span>
                   </div>
                 )}
             </div>
@@ -193,12 +193,12 @@ const PublicCourseDetailPage = () => {
                 {/* Breadcrumb / Back Navigation */}
                 <div className="mb-6">
                     {step === 1 ? (
-                      <Link to="/courses" className="inline-flex items-center gap-1 text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors group">
+                      <Link to="/courses" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group">
                           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                           Tilbake til timeplan
                       </Link>
                     ) : (
-                      <button onClick={handlePrevStep} className="inline-flex items-center gap-1 text-sm font-medium text-[#78716C] hover:text-[#292524] transition-colors group">
+                      <button onClick={handlePrevStep} className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group">
                           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                           Tilbake til kursdetaljer
                       </button>
@@ -222,48 +222,48 @@ const PublicCourseDetailPage = () => {
                           >
                               {/* Header Section */}
                               <div className="space-y-4">
-                                  <div className="flex flex-wrap items-center gap-3">
-                                      <span className="inline-flex items-center rounded-full bg-[#F5F5F4] px-2.5 py-0.5 text-xs font-medium text-[#57534E] border border-[#E7E5E4]">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                      <span className="inline-flex items-center rounded-full bg-surface-elevated px-2 py-0.5 text-xxs font-medium text-text-secondary border border-border">
                                           Vinyasa
                                       </span>
-                                      <span className="inline-flex items-center rounded-full bg-[#F5F5F4] px-2.5 py-0.5 text-xs font-medium text-[#57534E] border border-[#E7E5E4]">
+                                      <span className="inline-flex items-center rounded-full bg-surface-elevated px-2 py-0.5 text-xxs font-medium text-text-secondary border border-border">
                                           Nivå 1-2
                                       </span>
                                   </div>
-                                  <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524]">
+                                  <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-text-primary">
                                       Morning Flow & Coffee
                                   </h1>
-                                  
+
                                   {/* Metadata Row */}
-                                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-[#78716C] border-b border-[#E7E5E4] pb-6">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground border-b border-border pb-6">
                                       <div className="flex items-center gap-2">
-                                          <Calendar className="h-4 w-4 text-[#A8A29E]" />
+                                          <Calendar className="h-4 w-4 text-text-tertiary" />
                                           <span>Lør, 24. Sep</span>
                                       </div>
-                                      <div className="hidden sm:block h-3 w-px bg-[#E7E5E4]"></div>
+                                      <div className="hidden sm:block h-3 w-px bg-border"></div>
                                       <div className="flex items-center gap-2">
-                                          <Clock className="h-4 w-4 text-[#A8A29E]" />
+                                          <Clock className="h-4 w-4 text-text-tertiary" />
                                           <span>09:00 - 10:15 (75 min)</span>
                                       </div>
-                                      <div className="hidden sm:block h-3 w-px bg-[#E7E5E4]"></div>
+                                      <div className="hidden sm:block h-3 w-px bg-border"></div>
                                       <div className="flex items-center gap-2">
-                                          <MapPin className="h-4 w-4 text-[#A8A29E]" />
+                                          <MapPin className="h-4 w-4 text-text-tertiary" />
                                           <span>Majorstuen Studio</span>
                                       </div>
                                   </div>
                               </div>
 
                               {/* Hero Image */}
-                              <div className="relative overflow-hidden rounded-3xl border border-[#E7E5E4] bg-[#F5F5F4] shadow-sm">
-                                  <div className="aspect-[16/7] w-full bg-gradient-to-br from-[#E7E5E4] to-[#F5F5F4] relative">
+                              <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-elevated shadow-sm">
+                                  <div className="aspect-[16/7] w-full bg-gradient-to-br from-border to-surface-elevated relative">
                                       <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop" alt="Yoga studio ambiance" className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-multiply" />
                                   </div>
                               </div>
 
                               {/* Description Block */}
                               <div className="space-y-4">
-                                  <h2 className="font-geist text-lg font-semibold text-[#292524]">Om timen</h2>
-                                  <div className="prose prose-stone prose-sm max-w-none text-[#78716C] leading-relaxed">
+                                  <h2 className="font-geist text-lg font-semibold text-text-primary">Om timen</h2>
+                                  <div className="prose prose-stone prose-sm max-w-none text-muted-foreground leading-relaxed">
                                       <p>
                                           Start helgen med en energigivende Vinyasa Flow som vekker kroppen og klargjør sinnet. Denne timen fokuserer på pust, bevegelse og balanse. Vi beveger oss gjennom dynamiske sekvenser før vi roer ned med dype strekk.
                                       </p>
@@ -271,17 +271,17 @@ const PublicCourseDetailPage = () => {
                                           Etter timen inviterer vi til en kopp nybrygget kaffe eller te i resepsjonen – en perfekt mulighet til å slå av en prat med andre deltakere eller bare nyte roen.
                                       </p>
                                   </div>
-                                  
+
                                   <div className="flex flex-wrap gap-2 pt-2">
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-[#F5F5F4] px-3 py-1.5 text-xs text-[#57534E]">
+                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
                                           <Waves className="h-3.5 w-3.5" />
                                           Dusj tilgjengelig
                                       </div>
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-[#F5F5F4] px-3 py-1.5 text-xs text-[#57534E]">
+                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
                                           <Coffee className="h-3.5 w-3.5" />
                                           Kaffe inkludert
                                       </div>
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-[#F5F5F4] px-3 py-1.5 text-xs text-[#57534E]">
+                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
                                           <Dumbbell className="h-3.5 w-3.5" />
                                           Matte til utleie
                                       </div>
@@ -289,16 +289,16 @@ const PublicCourseDetailPage = () => {
                               </div>
 
                               {/* Teacher Section */}
-                              <div className="rounded-2xl border border-[#E7E5E4] bg-white p-5 shadow-sm">
-                                  <h3 className="mb-4 text-sm font-medium text-[#A8A29E] uppercase tracking-wider">Instruktør</h3>
+                              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+                                  <h3 className="mb-4 text-xxs font-medium text-text-tertiary uppercase tracking-wider">Instruktør</h3>
                                   <div className="flex items-start gap-4">
-                                      <img src="https://i.pravatar.cc/150?u=1" alt="Elena Fisher" className="h-14 w-14 rounded-full border border-[#F5F5F4] object-cover shadow-sm" />
+                                      <img src="https://i.pravatar.cc/150?u=1" alt="Elena Fisher" className="h-14 w-14 rounded-full border border-surface-elevated object-cover shadow-sm" />
                                       <div className="flex-1">
                                           <div className="flex items-center justify-between">
-                                              <h4 className="font-geist text-base font-semibold text-[#292524]">Elena Fisher</h4>
-                                              <a href="#" className="text-xs font-medium text-[#354F41] hover:underline">Se profil</a>
+                                              <h4 className="font-geist text-base font-semibold text-text-primary">Elena Fisher</h4>
+                                              <a href="#" className="text-xs font-medium text-primary hover:underline">Se profil</a>
                                           </div>
-                                          <p className="mt-1 text-sm text-[#78716C] leading-normal">
+                                          <p className="mt-1 text-sm text-muted-foreground leading-normal">
                                               Elena er kjent for sine kreative sekvenser og varme tilstedeværelse. Hun har undervist i over 5 år og spesialiserer seg på Vinyasa og Yin Yoga.
                                           </p>
                                       </div>
@@ -307,18 +307,18 @@ const PublicCourseDetailPage = () => {
 
                               {/* Location Block */}
                               <div className="mb-12">
-                                  <h2 className="mb-3 font-geist text-lg font-semibold text-[#292524]">Sted & Oppmøte</h2>
-                                  <div className="overflow-hidden rounded-2xl border border-[#E7E5E4] bg-white shadow-sm">
+                                  <h2 className="mb-3 font-geist text-lg font-semibold text-text-primary">Sted & Oppmøte</h2>
+                                  <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
                                       <div className="flex flex-col md:flex-row">
-                                          <div className="bg-pattern-dot flex h-32 w-full items-center justify-center bg-[#F7F5F2] md:h-auto md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-[#E7E5E4]">
-                                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#292524] text-white shadow-lg">
+                                          <div className="bg-pattern-dot flex h-32 w-full items-center justify-center bg-surface md:h-auto md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-border">
+                                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-text-primary text-white shadow-lg">
                                                   <MapPin className="h-5 w-5" />
                                               </div>
                                           </div>
                                           <div className="p-5">
-                                              <h4 className="font-medium text-[#292524]">Majorstuen Studio</h4>
-                                              <p className="text-sm text-[#78716C]">Kirkeveien 64, 0368 Oslo</p>
-                                              <div className="mt-3 flex items-start gap-2 text-xs text-[#A8A29E]">
+                                              <h4 className="font-medium text-text-primary">Majorstuen Studio</h4>
+                                              <p className="text-sm text-muted-foreground">Kirkeveien 64, 0368 Oslo</p>
+                                              <div className="mt-3 flex items-start gap-2 text-xs text-text-tertiary">
                                                   <Info className="h-4 w-4 shrink-0 mt-0.5" />
                                                   <p>Inngang fra bakgården. Døren åpner 15 minutter før timen starter.</p>
                                               </div>
@@ -340,116 +340,116 @@ const PublicCourseDetailPage = () => {
                               <form id="booking-form" onSubmit={handleSubmit} className="space-y-8" noValidate>
                                 {/* Title Block */}
                                 <div>
-                                    <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-[#292524]">
+                                    <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-text-primary">
                                         Deltakerinformasjon
                                     </h1>
-                                    <p className="mt-2 text-[#78716C]">
+                                    <p className="mt-2 text-muted-foreground">
                                         Vennligst fyll inn dine detaljer. Felter merket med <span className="text-red-500">*</span> er påkrevde.
                                     </p>
                                 </div>
 
                                 {/* Attendee 1 (Main Contact) */}
-                                <div className="rounded-2xl border border-[#E7E5E4] bg-white p-6 shadow-sm">
-                                    <div className="mb-5 flex items-center justify-between border-b border-[#F5F5F4] pb-4">
-                                        <h2 className="font-geist text-lg font-semibold text-[#292524]">Deltaker</h2>
+                                <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+                                    <div className="mb-5 flex items-center justify-between border-b border-surface-elevated pb-4">
+                                        <h2 className="font-geist text-lg font-semibold text-text-primary">Deltaker</h2>
                                     </div>
 
                                     <div className="space-y-5">
                                         {/* Name Fields */}
                                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">
+                                                <label className="text-xs font-medium text-text-secondary">
                                                     Fornavn <span className="text-red-500">*</span>
                                                 </label>
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     name="firstName"
                                                     value={formData.firstName}
                                                     onChange={handleInputChange}
-                                                    placeholder="Ola" 
+                                                    placeholder="Ola"
                                                     aria-invalid={errors.firstName}
-                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.firstName 
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
-                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.firstName
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
+                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
                                                     }`}
                                                 />
                                                 {errors.firstName && (
-                                                    <p className="text-[11px] text-red-500 font-medium">Fornavn er påkrevd</p>
+                                                    <p className="text-xs text-red-500 font-medium">Fornavn er påkrevd</p>
                                                 )}
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-[#57534E]">
+                                                <label className="text-xs font-medium text-text-secondary">
                                                     Etternavn <span className="text-red-500">*</span>
                                                 </label>
-                                                <input 
-                                                    type="text" 
+                                                <input
+                                                    type="text"
                                                     name="lastName"
                                                     value={formData.lastName}
                                                     onChange={handleInputChange}
-                                                    placeholder="Nordmann" 
+                                                    placeholder="Nordmann"
                                                     aria-invalid={errors.lastName}
-                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.lastName 
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
-                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.lastName
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
+                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
                                                     }`}
                                                 />
                                                 {errors.lastName && (
-                                                    <p className="text-[11px] text-red-500 font-medium">Etternavn er påkrevd</p>
+                                                    <p className="text-xs text-red-500 font-medium">Etternavn er påkrevd</p>
                                                 )}
                                             </div>
                                         </div>
 
                                         {/* Contact Fields */}
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-[#57534E]">
+                                            <label className="text-xs font-medium text-text-secondary">
                                                 E-postadresse <span className="text-red-500">*</span>
                                             </label>
                                             <div className="relative">
-                                                <Mail className={`absolute left-3 top-3 h-4 w-4 ${errors.email ? 'text-red-400' : 'text-[#A8A29E]'}`} />
-                                                <input 
-                                                    type="email" 
+                                                <Mail className={`absolute left-3 top-3 h-4 w-4 ${errors.email ? 'text-red-400' : 'text-text-tertiary'}`} />
+                                                <input
+                                                    type="email"
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleInputChange}
-                                                    placeholder="ola@eksempel.no" 
+                                                    placeholder="ola@eksempel.no"
                                                     aria-invalid={errors.email}
-                                                    className={`input-focus block w-full rounded-lg border pl-10 pr-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.email 
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' 
-                                                        : 'border-[#E7E5E4] bg-[#FDFBF7]/50 focus:border-[#A8A29E] focus:ring-[#E7E5E4]/50'
+                                                    className={`input-focus block w-full rounded-lg border pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
+                                                        errors.email
+                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
+                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
                                                     }`}
                                                 />
                                             </div>
                                             {errors.email ? (
-                                                <p className="text-[11px] text-red-500 font-medium">Gyldig e-postadresse er påkrevd</p>
+                                                <p className="text-xs text-red-500 font-medium">Gyldig e-postadresse er påkrevd</p>
                                             ) : (
-                                                <p className="text-[11px] text-[#A8A29E]">Ordrebekreftelse sendes hit.</p>
+                                                <p className="text-xs text-text-tertiary">Ordrebekreftelse sendes hit.</p>
                                             )}
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-[#57534E]">Telefonnummer <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
-                                            <input 
-                                                type="tel" 
+                                            <label className="text-xs font-medium text-text-secondary">Telefonnummer <span className="text-text-tertiary font-normal">(Valgfritt)</span></label>
+                                            <input
+                                                type="tel"
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
-                                                placeholder="+47 000 00 000" 
-                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50" 
+                                                placeholder="+47 000 00 000"
+                                                className="input-focus block w-full rounded-lg border border-border bg-surface/50 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
                                             />
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-[#57534E]">Kommentar til instruktør <span className="text-[#A8A29E] font-normal">(Valgfritt)</span></label>
-                                            <textarea 
+                                            <label className="text-xs font-medium text-text-secondary">Kommentar til instruktør <span className="text-text-tertiary font-normal">(Valgfritt)</span></label>
+                                            <textarea
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
-                                                placeholder="Skriv en beskjed..." 
+                                                placeholder="Skriv en beskjed..."
                                                 rows={3}
-                                                className="input-focus block w-full rounded-lg border border-[#E7E5E4] bg-[#FDFBF7]/50 px-3 py-2.5 text-sm text-[#292524] placeholder:text-[#A8A29E] focus:border-[#A8A29E] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#E7E5E4]/50 resize-none"
+                                                className="input-focus block w-full rounded-lg border border-border bg-surface/50 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50 resize-none"
                                             />
                                         </div>
                                     </div>
@@ -458,24 +458,24 @@ const PublicCourseDetailPage = () => {
                                 {/* Terms Checkbox */}
                                 <div className="flex items-start gap-3 px-1">
                                     <label className="relative flex items-center justify-center cursor-pointer p-0.5">
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             name="termsAccepted"
                                             checked={formData.termsAccepted}
                                             onChange={handleInputChange}
-                                            required 
-                                            className="checkbox-wrapper peer sr-only" 
+                                            required
+                                            className="checkbox-wrapper peer sr-only"
                                         />
-                                        <div className={`h-4 w-4 rounded-[4px] border bg-white transition-all peer-focus:ring-2 peer-focus:ring-[#E7E5E4] hover:border-[#A8A29E] ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-[#D6D3D1]'}`}>
+                                        <div className={`h-4 w-4 rounded-[4px] border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-ring'}`}>
                                             <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                         </div>
                                     </label>
                                     <div className="flex flex-col">
-                                        <p className="text-xs text-[#78716C] leading-relaxed">
-                                            Jeg godtar våre <a href="#" className="text-[#292524] underline underline-offset-2 hover:text-[#354F41]">vilkår for påmelding</a>. <span className="text-red-500">*</span>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            Jeg godtar våre <a href="#" className="text-text-primary underline underline-offset-2 hover:text-primary">vilkår for påmelding</a>. <span className="text-red-500">*</span>
                                         </p>
                                         {errors.termsAccepted && (
-                                            <p className="text-[11px] text-red-500 font-medium mt-1">Du må godta vilkårene</p>
+                                            <p className="text-xs text-red-500 font-medium mt-1">Du må godta vilkårene</p>
                                         )}
                                     </div>
                                 </div>
@@ -488,100 +488,100 @@ const PublicCourseDetailPage = () => {
                     {/* Right Column: Sticky Booking Action */}
                     <div className="relative hidden lg:block">
                         <div className="sticky top-28 space-y-4">
-                            
+
                             {/* Main Booking Card */}
-                            <div className="rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-xl shadow-[#292524]/5">
-                                
+                            <div className="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-text-primary/5">
+
                                 {step === 1 ? (
                                   <>
                                     <div className="mb-6 flex items-start justify-between">
                                         <div>
-                                            <div className="text-3xl font-semibold text-[#292524] tracking-tight">250 kr</div>
-                                            <div className="text-xs text-[#A8A29E] mt-1">per person</div>
+                                            <div className="text-3xl font-semibold text-text-primary tracking-tight">250 kr</div>
+                                            <div className="text-xs text-text-tertiary mt-1">per person</div>
                                         </div>
-                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F0FDF4] px-2.5 py-1 text-xs font-medium text-[#166534]">
-                                            <span className="relative flex h-2 w-2">
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-status-confirmed-bg px-2 py-0.5 text-xxs font-medium text-status-confirmed-text">
+                                            <span className="relative flex h-1.5 w-1.5">
                                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#166534]"></span>
+                                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-confirmed-text"></span>
                                             </span>
                                             15 plasser igjen
                                         </span>
                                     </div>
 
-                                    <div className="mb-6 space-y-3 rounded-xl bg-[#FDFBF7] p-4 border border-[#E7E5E4]/50">
+                                    <div className="mb-6 space-y-3 rounded-xl bg-surface p-4 border border-border/50">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Dato</span>
-                                            <span className="font-medium text-[#292524]">Lør, 24. Sep</span>
+                                            <span className="text-muted-foreground">Dato</span>
+                                            <span className="font-medium text-text-primary">Lør, 24. Sep</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Tid</span>
-                                            <span className="font-medium text-[#292524]">09:00 - 10:15</span>
+                                            <span className="text-muted-foreground">Tid</span>
+                                            <span className="font-medium text-text-primary">09:00 - 10:15</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Sted</span>
-                                            <span className="font-medium text-[#292524]">Majorstuen</span>
+                                            <span className="text-muted-foreground">Sted</span>
+                                            <span className="font-medium text-text-primary">Majorstuen</span>
                                         </div>
                                     </div>
 
-                                    <Button 
-                                        onClick={handleNextStep} 
-                                        size="pill"
-                                        className="w-full rounded-xl"
+                                    <Button
+                                        onClick={handleNextStep}
+                                        size="compact"
+                                        className="w-full"
                                     >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
                                             Påmelding
                                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                                         </span>
                                     </Button>
-                                    
-                                    <p className="mt-4 text-center text-xs text-[#A8A29E]">
-                                        <a href="#" className="underline underline-offset-2 hover:text-[#292524] transition-colors">Logg inn</a> eller <a href="#" className="underline underline-offset-2 hover:text-[#292524] transition-colors">registrer deg</a> for å lagre denne bestillingen i din kursoversikt
+
+                                    <p className="mt-4 text-center text-xs text-text-tertiary">
+                                        <a href="#" className="underline underline-offset-2 hover:text-text-primary transition-colors">Logg inn</a> eller <a href="#" className="underline underline-offset-2 hover:text-text-primary transition-colors">registrer deg</a> for å lagre denne bestillingen i din kursoversikt
                                     </p>
                                   </>
                                 ) : (
                                   /* Step 2 Summary */
                                   <>
                                     {/* Content without nested card wrapper */}
-                                    <h3 className="mb-4 font-geist text-lg font-semibold text-[#292524]">Sammendrag</h3>
-                                    
-                                    <div className="flex gap-4 border-b border-[#F5F5F4] pb-5">
-                                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#F5F5F4]">
+                                    <h3 className="mb-4 font-geist text-lg font-semibold text-text-primary">Sammendrag</h3>
+
+                                    <div className="flex gap-4 border-b border-surface-elevated pb-5">
+                                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-elevated">
                                             <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=200&auto=format&fit=crop" className="h-full w-full object-cover mix-blend-multiply opacity-90" alt="Course thumbnail" />
                                         </div>
                                         <div>
-                                            <h4 className="font-medium text-[#292524] leading-tight">Morning Flow & Coffee</h4>
-                                            <p className="mt-1 text-xs text-[#78716C]">Lør, 24. Sep Kl 09:00</p>
-                                            <p className="text-xs text-[#78716C]">Majorstuen Studio</p>
+                                            <h4 className="font-medium text-text-primary leading-tight">Morning Flow & Coffee</h4>
+                                            <p className="mt-1 text-xs text-muted-foreground">Lør, 24. Sep Kl 09:00</p>
+                                            <p className="text-xs text-muted-foreground">Majorstuen Studio</p>
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 py-5">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Kursavgift</span>
-                                            <span className="font-medium text-[#292524]">250 kr</span>
+                                            <span className="text-muted-foreground">Kursavgift</span>
+                                            <span className="font-medium text-text-primary">250 kr</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#78716C]">Servicegebyr</span>
-                                            <span className="font-medium text-[#292524]">0 kr</span>
+                                            <span className="text-muted-foreground">Servicegebyr</span>
+                                            <span className="font-medium text-text-primary">0 kr</span>
                                         </div>
                                     </div>
 
-                                    <div className="border-t border-[#F5F5F4] pt-4 pb-6">
+                                    <div className="border-t border-surface-elevated pt-4 pb-6">
                                         <div className="flex items-center justify-between">
-                                            <span className="font-medium text-[#292524]">Totalt å betale</span>
-                                            <span className="font-geist text-xl font-bold text-[#292524] tracking-tight">250 kr</span>
+                                            <span className="font-medium text-text-primary">Totalt å betale</span>
+                                            <span className="font-geist text-xl font-bold text-text-primary tracking-tight">250 kr</span>
                                         </div>
                                     </div>
 
                                     {/* Unified Reservation & Payment Section */}
-                                    <div className="rounded-xl bg-[#FDFBF7] border border-[#E7E5E4] p-4">
+                                    <div className="rounded-xl bg-surface border border-border p-4">
                                         {/* Reservation Note */}
-                                        <div className="flex gap-3 mb-4 border-b border-[#E7E5E4]/60 pb-4">
-                                            <Clock className="h-4 w-4 shrink-0 text-[#354F41] mt-0.5" />
+                                        <div className="flex gap-3 mb-4 border-b border-border/60 pb-4">
+                                            <Clock className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                                             <div className="space-y-0.5">
-                                                <p className="text-xs font-medium text-[#292524]">Vi reserverer plassen din</p>
-                                                <p className="text-[11px] text-[#78716C] leading-relaxed">
-                                                    Fullfør innen <span className="font-medium text-[#292524]">{formatTime(timeLeft)}</span> minutter.
+                                                <p className="text-xs font-medium text-text-primary">Vi reserverer plassen din</p>
+                                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                                    Fullfør innen <span className="font-medium text-text-primary">{formatTime(timeLeft)}</span> minutter.
                                                 </p>
                                             </div>
                                         </div>
@@ -589,10 +589,10 @@ const PublicCourseDetailPage = () => {
                                         {/* Secure Payment */}
                                         <div>
                                             <div className="flex gap-3 mb-2">
-                                                <ShieldCheck className="h-4 w-4 shrink-0 text-[#354F41] mt-0.5" />
+                                                <ShieldCheck className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                                                 <div className="space-y-0.5">
-                                                    <p className="text-xs font-medium text-[#292524]">Sikker betaling</p>
-                                                    <p className="text-[11px] text-[#78716C] leading-relaxed">
+                                                    <p className="text-xs font-medium text-text-primary">Sikker betaling</p>
+                                                    <p className="text-xs text-muted-foreground leading-relaxed">
                                                         Vi aksepterer Vipps, Visa og Mastercard.
                                                     </p>
                                                 </div>
@@ -607,11 +607,11 @@ const PublicCourseDetailPage = () => {
 
                                     {/* Final Action Button */}
                                     <div className="mt-6">
-                                        <Button 
-                                            size="pill" 
+                                        <Button
+                                            size="compact"
                                             type="submit"
                                             form="booking-form"
-                                            className="w-full rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                            className="w-full shadow-lg hover:shadow-xl transition-all"
                                         >
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 Gå til betaling
@@ -629,29 +629,29 @@ const PublicCourseDetailPage = () => {
         </main>
 
         {/* Mobile Sticky Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E7E5E4] bg-white/80 backdrop-blur-xl lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white/80 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-lg items-center justify-between p-4">
                 {step === 1 ? (
                   <>
                     <div className="flex flex-col">
-                        <span className="text-xs text-[#78716C]">Total pris</span>
-                        <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
+                        <span className="text-xs text-muted-foreground">Total pris</span>
+                        <span className="font-geist text-xl font-semibold text-text-primary">250 kr</span>
                     </div>
-                                    <Button onClick={handleNextStep} className="rounded-xl px-8 py-3 shadow-lg" size="pill">
+                                    <Button onClick={handleNextStep} className="shadow-lg" size="compact">
                                         Book nå
                                     </Button>
                   </>
                 ) : (
                   <>
                     <div className="flex flex-col">
-                        <span className="text-xs text-[#78716C] flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                             Total
                         </span>
-                        <span className="font-geist text-xl font-semibold text-[#292524]">250 kr</span>
+                        <span className="font-geist text-xl font-semibold text-text-primary">250 kr</span>
                     </div>
-                    <Button 
-                        className="rounded-xl px-6 py-3 shadow-lg flex items-center gap-2" 
-                        size="pill"
+                    <Button
+                        className="shadow-lg flex items-center gap-2"
+                        size="compact"
                         type="submit"
                         form="booking-form"
                     >

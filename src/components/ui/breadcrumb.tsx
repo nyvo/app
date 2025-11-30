@@ -19,7 +19,7 @@ const BreadcrumbList = React.forwardRef<
   <ol
     ref={ref}
     className={cn(
-      "flex flex-wrap items-center gap-2 break-words text-xs text-[#78716C]",
+      "flex flex-wrap items-center gap-2 break-words text-xs text-muted-foreground",
       className
     )}
     {...props}
@@ -50,7 +50,7 @@ const BreadcrumbLink = React.forwardRef<
   return (
     <Comp
       ref={ref}
-      className={cn("transition-colors hover:text-[#292524]", className)}
+      className={cn("transition-colors hover:text-text-primary", className)}
       {...props}
     />
   )
@@ -66,7 +66,7 @@ const BreadcrumbPage = React.forwardRef<
     role="link"
     aria-disabled="true"
     aria-current="page"
-    className={cn("font-medium text-[#292524]", className)}
+    className={cn("font-medium text-text-primary", className)}
     {...props}
   />
 ))
@@ -80,7 +80,7 @@ const BreadcrumbSeparator = ({
   <li
     role="presentation"
     aria-hidden="true"
-    className={cn("[&>svg]:w-3 [&>svg]:h-3 text-[#A8A29E]", className)}
+    className={cn("[&>svg]:w-3 [&>svg]:h-3 text-text-tertiary", className)}
     {...props}
   >
     {children ?? <ChevronRight />}

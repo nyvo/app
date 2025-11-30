@@ -9,8 +9,10 @@ import CoursesPage from './pages/teacher/CoursesPage';
 import CourseDetailPage from './pages/teacher/CourseDetailPage';
 import PublicCoursesPage from './pages/public/PublicCoursesPage';
 import PublicCourseDetailPage from './pages/public/PublicCourseDetailPage';
-
 import TeacherProfilePage from './pages/teacher/TeacherProfilePage';
+import StudentLoginPage from './pages/student/StudentLoginPage';
+import StudentRegisterPage from './pages/student/StudentRegisterPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 const App = () => {
   return (
@@ -29,6 +31,13 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/courses" element={<PublicCoursesPage />} />
         <Route path="/courses/detail" element={<PublicCourseDetailPage />} />
+
+        {/* Student Routes */}
+        <Route path="/student/login" element={<StudentLoginPage />} />
+        <Route path="/student/register" element={<StudentRegisterPage />} />
+
+        {/* 404 Catch-all */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

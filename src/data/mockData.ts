@@ -32,10 +32,13 @@ export interface MessageDetail {
 }
 
 // --- Types for Courses Page ---
+export type CourseType = 'kursrekke' | 'arrangement';
+
 export interface DetailedCourse {
   id: string;
   title: string;
   type: 'private' | 'online' | 'yin' | 'meditation' | 'vinyasa' | 'course-series';
+  courseType: CourseType;
   status: 'active' | 'upcoming' | 'completed' | 'draft';
   location: string;
   timeSchedule: string;
@@ -47,7 +50,6 @@ export interface DetailedCourse {
   currentWeek?: number;
   totalWeeks?: number;
   startDate?: string; // e.g. "Starts in 5 days"
-  isWorkshop?: boolean;
   attendeeAvatars?: string[];
 }
 
@@ -339,6 +341,7 @@ export const mockDetailedCourses: DetailedCourse[] = [
     id: '1',
     title: 'Vinyasa Flow: Nybegynner',
     type: 'vinyasa',
+    courseType: 'kursrekke',
     status: 'active',
     location: 'Sal A - Hovedstudio',
     timeSchedule: 'Tirsdager, 18:00',
@@ -346,15 +349,16 @@ export const mockDetailedCourses: DetailedCourse[] = [
     participants: 12,
     maxParticipants: 15,
     price: '2400 NOK',
-    progress: 37, // ~3/8
+    progress: 37,
     currentWeek: 3,
     totalWeeks: 8,
-    attendeeAvatars: ['', '', ''] // Placeholders
+    attendeeAvatars: ['', '', '']
   },
   {
     id: '2',
     title: 'Barsel Yoga & Baby',
     type: 'course-series',
+    courseType: 'kursrekke',
     status: 'upcoming',
     location: 'Sal B - Lillesalen',
     timeSchedule: 'Torsdager, 10:30',
@@ -369,6 +373,7 @@ export const mockDetailedCourses: DetailedCourse[] = [
     id: '3',
     title: 'Pust & Avspenning',
     type: 'meditation',
+    courseType: 'arrangement',
     status: 'upcoming',
     location: 'Sal A - Hovedstudio',
     timeSchedule: 'Lør 24. Okt, 12:00',
@@ -376,20 +381,21 @@ export const mockDetailedCourses: DetailedCourse[] = [
     participants: 22,
     maxParticipants: 25,
     price: '650 NOK',
-    progress: 88, // Fullness
-    isWorkshop: true,
+    startDate: 'Starter om 3 dager',
   },
   {
     id: '4',
-    title: 'Intro til Meditasjon',
-    type: 'meditation',
-    status: 'draft',
-    location: 'Ikke satt',
-    timeSchedule: 'Planlagt: Nov 2023',
-    duration: '4 uker',
-    participants: 0,
+    title: 'Yin Yoga Kveldskurs',
+    type: 'yin',
+    courseType: 'kursrekke',
+    status: 'completed',
+    location: 'Sal A - Hovedstudio',
+    timeSchedule: 'Mandager, 19:00',
+    duration: '6 uker',
+    participants: 14,
     maxParticipants: 15,
-    price: '-',
+    price: '1800 NOK',
+    attendeeAvatars: ['', '', '']
   }
 ];
 

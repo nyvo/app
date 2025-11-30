@@ -4,6 +4,12 @@ import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2 } from 'lu
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
+import {
+  getOsloTime,
+  getWeekNumber,
+  getMondayOfWeek,
+  generateWeekDays,
+} from '@/utils/dateUtils';
 
 // Types
 interface ScheduleEvent {
@@ -19,46 +25,6 @@ interface ScheduleEvent {
   status?: 'completed' | 'upcoming' | 'active';
   attendees?: number;
 }
-
-// Helper to get Oslo time
-const getOsloTime = () => {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Oslo' }));
-};
-
-// Helper to get week number
-const getWeekNumber = (date: Date) => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-};
-
-// Helper to get the Monday of a given week
-const getMondayOfWeek = (date: Date) => {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(d.setDate(diff));
-};
-
-// Day name abbreviations in Norwegian
-const dayNames = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
-
-// Generate week days based on a start date (Monday)
-const generateWeekDays = (monday: Date, today: Date) => {
-  return dayNames.map((name, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
-    return {
-      name,
-      date: date.getDate(),
-      fullDate: new Date(date),
-      isToday: date.toDateString() === today.toDateString(),
-      isWeekend: index >= 5,
-    };
-  });
-};
 
 const timeSlots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
 
@@ -174,7 +140,7 @@ const getEventStyle = (startTime: string, endTime: string) => {
   };
 };
 
-// Event type colors
+// Event type colors - intentionally hardcoded for distinct event type identification
 const getEventColors = (type: ScheduleEvent['type']) => {
   const colors = {
     vinyasa: {
@@ -253,16 +219,16 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
 
   return (
     <div
-      className={`absolute left-1 right-1 rounded-lg ${colors.bg} border ${colors.border} border-l-4 ${colors.accent} p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-[#354F41] ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-lg ${colors.bg} border ${colors.border} border-l-4 ${colors.accent} p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={style}
     >
       <div className="flex justify-between items-start">
-        <span className={`text-[10px] font-bold ${colors.time}`}>
+        <span className={`text-xxs font-bold ${colors.time}`}>
           {event.startTime} - {event.endTime}
         </span>
         {isCompleted && <CheckCircle2 className={`h-3 w-3 ${colors.time}`} />}
         {isActive && (
-          <span className="inline-flex items-center rounded-full bg-[#059669] px-1.5 py-0.5 text-[8px] font-medium text-white">
+          <span className="inline-flex items-center rounded-full bg-success px-1.5 py-0.5 text-[8px] font-medium text-white">
             Start
           </span>
         )}
@@ -271,7 +237,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         )}
       </div>
       <p className={`text-xs font-semibold ${colors.title} mt-1 truncate`}>{event.title}</p>
-      <p className={`text-[10px] ${colors.subtitle} mt-0.5`}>{event.location}</p>
+      <p className={`text-xxs ${colors.subtitle} mt-0.5`}>{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center gap-1.5">
           {event.attendees ? (
@@ -280,18 +246,18 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
                 <img src="https://i.pravatar.cc/150?u=1" className="h-4 w-4 rounded-full ring-1 ring-white" alt="" />
                 <img src="https://i.pravatar.cc/150?u=2" className="h-4 w-4 rounded-full ring-1 ring-white" alt="" />
               </div>
-              <span className={`text-[10px] ${colors.subtitle}`}>+{event.attendees}</span>
+              <span className={`text-xxs ${colors.subtitle}`}>+{event.attendees}</span>
             </>
           ) : (
             <>
               {event.instructorAvatar ? (
                 <img src={event.instructorAvatar} className={`h-4 w-4 rounded-full ring-1 ${colors.ring}`} alt="" />
               ) : (
-                <div className={`flex h-4 w-4 items-center justify-center rounded-full bg-[#354F41] text-[6px] font-medium text-white ring-1 ${colors.ring}`}>
+                <div className={`flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[6px] font-medium text-white ring-1 ${colors.ring}`}>
                   {event.instructorInitials}
                 </div>
               )}
-              <span className={`text-[10px] ${colors.subtitle}`}>{event.instructor}</span>
+              <span className={`text-xxs ${colors.subtitle}`}>{event.instructor}</span>
             </>
           )}
         </div>
@@ -305,11 +271,11 @@ const DayColumn = ({ dayIndex, isToday, isWeekend }: { dayIndex: number; isToday
   const dayEvents = events[dayIndex] || [];
 
   return (
-    <div className={`relative border-r border-[#F5F5F4] ${isToday ? 'bg-[#FDFBF7]/30' : ''} ${isWeekend ? 'bg-[#FAFAFA]' : ''}`}>
+    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface/30' : ''} ${isWeekend ? 'bg-[#FAFAFA]' : ''}`}>
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {timeSlots.map((_, i) => (
-          <div key={i} className="h-[100px] border-b border-[#F5F5F4]" />
+          <div key={i} className="h-[100px] border-b border-surface-elevated" />
         ))}
       </div>
 
@@ -384,28 +350,30 @@ export const SchedulePage = () => {
   return (
     <SidebarProvider>
       <TeacherSidebar />
-      <main className="flex-1 flex flex-col overflow-hidden bg-[#FDFBF7] h-screen">
+      <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
           {/* Schedule Toolbar */}
-          <header className="flex flex-col gap-4 border-b border-[#E7E5E4] bg-[#FDFBF7] px-6 py-5 shrink-0 z-20">
+          <header className="flex flex-col gap-4 border-b border-border bg-surface px-6 py-5 shrink-0 z-20">
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
-                <h1 className="font-geist text-xl font-medium text-[#292524]">Timeplan</h1>
-                <div className="h-4 w-px bg-[#E7E5E4]"></div>
-                <div className="flex items-center gap-2 text-sm font-medium text-[#78716C]">
+                <h1 className="font-geist text-xl font-medium text-text-primary">Timeplan</h1>
+                <div className="h-4 w-px bg-border"></div>
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={goToPreviousWeek}
-                  className="rounded-lg hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
+                  className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                  aria-label="Forrige uke"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-[#292524] min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
+                <span className="text-text-primary min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={goToNextWeek}
-                  className="rounded-lg hover:bg-[#F5F5F4] hover:text-[#292524] transition-colors"
+                  className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                  aria-label="Neste uke"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -416,8 +384,8 @@ export const SchedulePage = () => {
                   size="sm"
                   className={`hidden md:flex ml-2 h-7 ${
                     weekOffset === 0
-                      ? 'text-[#A8A29E] cursor-default hover:border-[#E7E5E4] hover:text-[#A8A29E] hover:shadow-none'
-                      : 'text-[#57534E]'
+                      ? 'text-text-tertiary cursor-default hover:border-border hover:text-text-tertiary hover:shadow-none'
+                      : 'text-text-secondary'
                   }`}
                   disabled={weekOffset === 0}
                 >
@@ -427,20 +395,21 @@ export const SchedulePage = () => {
 
               <div className="flex items-center gap-3">
                 {/* View Toggle */}
-                <div className="hidden md:flex items-center rounded-lg border border-[#E7E5E4] bg-white p-0.5 shadow-sm">
-                  <button className="rounded-md px-3 py-1 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4]">Dag</button>
-                  <button className="rounded-md bg-[#F5F5F4] px-3 py-1 text-xs font-medium text-[#292524] shadow-sm ring-1 ring-black/5">Uke</button>
-                  <button className="rounded-md px-3 py-1 text-xs font-medium text-[#292524] hover:bg-[#F5F5F4]">Måned</button>
+                <div className="hidden md:flex items-center rounded-lg border border-border bg-white p-0.5 shadow-sm">
+                  <button className="rounded-md px-3 py-1 text-xs font-medium text-text-primary hover:bg-surface-elevated">Dag</button>
+                  <button className="rounded-md bg-surface-elevated px-3 py-1 text-xs font-medium text-text-primary shadow-sm ring-1 ring-black/5">Uke</button>
+                  <button className="rounded-md px-3 py-1 text-xs font-medium text-text-primary hover:bg-surface-elevated">Måned</button>
                 </div>
 
-                <div className="h-4 w-px bg-[#E7E5E4] hidden md:block"></div>
+                <div className="h-4 w-px bg-border hidden md:block"></div>
 
                 <Button
                   asChild
+                  size="compact"
                   className="gap-2"
                 >
                   <Link to="/teacher/new-course">
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Nytt kurs</span>
                   </Link>
                 </Button>
@@ -449,28 +418,28 @@ export const SchedulePage = () => {
 
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <button className="flex items-center gap-2 rounded-lg border border-[#E7E5E4] bg-white px-3 py-1.5 text-xs font-medium text-[#292524] shadow-sm hover:border-[#D6D3D1]">
-                <Filter className="h-3.5 w-3.5 text-[#78716C]" />
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease">
+                <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
-              <button className="flex items-center gap-2 rounded-lg border border-dashed border-[#D6D3D1] bg-transparent px-3 py-1.5 text-xs font-medium text-[#78716C] hover:border-[#A8A29E] hover:text-[#57534E]">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease">
                 Rom
               </button>
-              <button className="flex items-center gap-2 rounded-lg border border-dashed border-[#D6D3D1] bg-transparent px-3 py-1.5 text-xs font-medium text-[#78716C] hover:border-[#A8A29E] hover:text-[#57534E]">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease">
                 Kurstype
               </button>
               <div className="ml-auto hidden md:flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-sm bg-[#D1FAE5] border border-[#A7F3D0]"></div>
-                  <span className="text-xs text-[#78716C]">Vinyasa</span>
+                  <span className="text-xs text-muted-foreground">Vinyasa</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-sm bg-[#E0F2FE] border border-[#BAE6FD]"></div>
-                  <span className="text-xs text-[#78716C]">Yin</span>
+                  <span className="text-xs text-muted-foreground">Yin</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-sm bg-[#FEF3C7] border border-[#FDE68A]"></div>
-                  <span className="text-xs text-[#78716C]">Core</span>
+                  <span className="text-xs text-muted-foreground">Core</span>
                 </div>
               </div>
             </div>
@@ -480,26 +449,26 @@ export const SchedulePage = () => {
           <div className="flex-1 overflow-auto bg-white relative flex flex-col">
 
             {/* Sticky Header (Days) */}
-            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-[#E7E5E4] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
               {/* Corner */}
-              <div className="border-r border-[#E7E5E4] p-3 bg-[#FDFBF7]"></div>
+              <div className="border-r border-border p-3 bg-surface"></div>
 
               {/* Days Headers */}
               {weekDays.map((day) => (
                 <div
                   key={day.name}
-                  className={`group flex flex-col items-center justify-center gap-0.5 border-r border-[#F5F5F4] py-3 ${day.isToday ? 'bg-[#FDFBF7]/50' : ''} ${day.isWeekend ? 'bg-[#FAFAFA]' : ''}`}
+                  className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-[#FAFAFA]' : ''}`}
                 >
-                  <span className={`text-[11px] font-medium uppercase tracking-wide ${day.isToday ? 'font-bold text-[#354F41]' : 'text-[#A8A29E] group-hover:text-[#78716C]'}`}>
+                  <span className={`text-[11px] font-medium uppercase tracking-wide ${day.isToday ? 'font-bold text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
                     {day.name}
                   </span>
                   <span
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
                       day.isToday
-                        ? 'bg-[#354F41] text-[#F5F5F4] font-bold shadow-md shadow-[#354F41]/20'
+                        ? 'bg-primary text-surface-elevated font-bold shadow-md shadow-primary/20'
                         : day.isWeekend
-                        ? 'text-[#A8A29E] group-hover:bg-[#F5F5F4]'
-                        : 'text-[#57534E] group-hover:bg-[#F5F5F4]'
+                        ? 'text-text-tertiary group-hover:bg-surface-elevated'
+                        : 'text-text-secondary group-hover:bg-surface-elevated'
                     }`}
                   >
                     {day.date}
@@ -517,16 +486,16 @@ export const SchedulePage = () => {
                   className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
                   style={{ top: `${currentTimePosition}px` }}
                 >
-                  <div className="w-[60px] text-right pr-2 text-[10px] font-bold text-red-500">{currentTimeString}</div>
+                  <div className="w-[60px] text-right pr-2 text-xxs font-bold text-red-500">{currentTimeString}</div>
                   <div className="h-px flex-1 bg-red-500 opacity-50"></div>
                   <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500"></div>
                 </div>
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-[#E7E5E4] bg-[#FDFBF7] text-[11px] font-medium text-[#A8A29E]">
+              <div className="flex flex-col border-r border-border bg-surface text-[11px] font-medium text-text-tertiary">
                 {timeSlots.map((time) => (
-                  <div key={time} className="h-[100px] border-b border-[#E7E5E4]/50 px-2 py-1">
+                  <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
                     {time}
                   </div>
                 ))}

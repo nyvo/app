@@ -1,145 +1,282 @@
-# ZenStudio Design System
+# Ease Design System
 
-## Color Palette
+> **Important**: Always use design tokens (semantic class names) instead of hardcoded hex values. This ensures consistency and makes theme updates easier.
 
-### Exact Hex Codes
-All colors should use these specific hex codes for consistency:
+---
 
-#### Primary Text
-- **Darkest**: `#292524` (headings, primary text)
-- **Dark**: `#44403C` (body text, default)
-- **Medium**: `#57534E` (hover states)
-- **Muted**: `#78716C` (secondary text)
-- **Subtle**: `#A8A29E` (tertiary text, timestamps)
+## Quick Reference: Design Tokens
 
-#### Borders & Backgrounds
-- **Border Light**: `#F5F5F4` (very subtle borders)
-- **Border Default**: `#E7E5E4` (default borders)
-- **Border Hover**: `#D6D3D1` (hover borders)
-- **Background Soft**: `#F7F5F2` (soft backgrounds)
-- **Background Page**: `#FDFBF7` (page background)
+### Text Colors
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `text-text-primary` | #292524 | Headings, primary text, dark emphasis |
+| `text-text-secondary` | #57534E | Body text, secondary content |
+| `text-sidebar-foreground` | #44403C | Labels, form labels, sidebar text |
+| `text-muted-foreground` | #78716C | Muted text, descriptions |
+| `text-text-tertiary` | #A8A29E | Tertiary text, timestamps, placeholders |
+| `text-primary` | #354F41 | Brand accent text |
 
-#### Brand Colors
-- **Primary Green**: `#354F41` (brand primary)
-- **Primary Dark**: `#2F453B` (dark backgrounds)
-- **Primary Soft**: `#4A6959` (accents, active elements)
+### Background Colors
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `bg-surface` | #FDFBF7 | Page background |
+| `bg-surface-elevated` | #F5F5F4 | Cards, elevated surfaces |
+| `bg-white` | #FFFFFF | Card backgrounds |
+| `bg-primary` | #354F41 | Brand primary background |
+| `bg-primary-dark` | #2A3D34 | Dark brand background |
+| `bg-primary-accent` | #4A6959 | Active/accent elements |
 
-#### Course Type Colors (with rings)
-- **Private**: `bg-orange-300` with `ring-2 ring-orange-100`
-- **Online**: `bg-purple-300` with `ring-2 ring-purple-100`
-- **Yin**: `bg-[#4A6959]` with `ring-2 ring-[#4A6959]/20`
-- **Meditation**: `bg-blue-300` with `ring-2 ring-blue-100`
+### Border Colors
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `border-border` | #E7E5E4 | Default borders |
+| `ring-ring` | #D6D3D1 | Focus rings, hover borders |
+| `border-ring` | #D6D3D1 | Hover state borders |
+
+### Status Colors
+| Status | Background | Border | Text |
+|--------|------------|--------|------|
+| Confirmed | `bg-status-confirmed-bg` | `border-status-confirmed-border` | `text-status-confirmed-text` |
+| Waitlist | `bg-status-waitlist-bg` | `border-status-waitlist-border` | `text-status-waitlist-text` |
+| Cancelled | `bg-status-cancelled-bg` | `border-status-cancelled-border` | `text-status-cancelled-text` |
+| Error | `bg-status-error-bg` | `border-status-error-border` | `text-status-error-text` |
+
+### Feedback Colors
+| Token | Usage |
+|-------|-------|
+| `bg-success` / `text-success` | Success states (#16A34A) |
+| `bg-warning` / `text-warning` | Warning states (#F59E0B) |
+| `bg-destructive` / `text-destructive` | Error/destructive (#EF4444) |
+
+---
 
 ## Typography Scale
 
+### Font Sizes
+| Class | Size | Usage |
+|-------|------|-------|
+| `text-xxs` | 10px | Tiny labels, timestamps, badges |
+| `text-xs` | 12px | Small text, captions, metadata |
+| `text-sm` | 14px | Body text, default |
+| `text-base` | 16px | Base size |
+| `text-lg` | 18px | Section headers |
+| `text-xl` | 20px | Page subtitles |
+| `text-2xl` | 24px | Large headings |
+| `text-3xl` | 30px | Page titles |
+| `text-4xl` | 36px | Hero titles |
+
+### Font Weights
+| Class | Weight | Usage |
+|-------|--------|-------|
+| `font-normal` | 400 | Body text |
+| `font-medium` | 500 | Most text, titles, emphasis |
+| `font-semibold` | 600 | Buttons, card headers |
+| `font-bold` | 700 | Strong emphasis, badge labels |
+
+### Font Family
+- **Primary**: Geist Sans (loaded via CDN)
+- **Class**: `font-geist` adds tighter letter-spacing (-0.02em)
+- **Usage**: Apply `font-geist` to page titles and hero sections
+
+---
+
+## Typography Hierarchy
+
 ### Page Headers
 ```tsx
-// Main page title with "Oversikt" label above
-<p className="text-xs font-semibold uppercase tracking-wider text-[#A8A29E] mb-2">Oversikt</p>
-<h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-[#292524]">
+<p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
+  Oversikt
+</p>
+<h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-text-primary">
   God morgen, Elena
 </h1>
 ```
 
-### Card Titles
-- **Large Card Title**: `text-3xl md:text-4xl font-medium tracking-tight` (hero card with line break)
-- **Card Stats**: `text-3xl font-medium tracking-tight`
-- **Card Section Headers**: `text-sm font-semibold`
+### Section Headers
+```tsx
+<h2 className="text-lg font-semibold text-text-primary">
+  Section Title
+</h2>
+```
+
+### Card Headers
+```tsx
+<h3 className="text-sm font-semibold text-text-primary">
+  Card Title
+</h3>
+```
 
 ### Body Text
-- **Primary**: `text-sm font-medium` (standard body text)
-- **Secondary**: `text-xs font-medium` (secondary info)
-- **Tiny**: `text-[10px] font-medium` (timestamps, small labels)
+```tsx
+<p className="text-sm text-text-secondary">
+  Regular body text content.
+</p>
+```
 
-### Font Weights
-- **Bold**: `font-bold` (badge labels - uppercase)
-- **Semibold**: `font-semibold` (buttons, card headers)
-- **Medium**: `font-medium` (most text, titles)
-- **Normal**: `font-normal` (body text when needed)
-- **Light**: `font-light` (separators)
+### Muted/Secondary Text
+```tsx
+<span className="text-xs text-muted-foreground">
+  Secondary information
+</span>
+```
+
+### Tiny Labels
+```tsx
+<span className="text-xxs font-medium text-text-tertiary uppercase tracking-wide">
+  Label
+</span>
+```
+
+---
 
 ## Components
 
 ### Buttons
 
-#### Primary Button (Dark)
-```tsx
-className="group flex items-center gap-2 rounded-full bg-[#292524] px-5 py-2.5 text-sm font-medium text-[#F5F5F4] shadow-lg shadow-[#292524]/10 hover:bg-[#44403C] hover:shadow-[#292524]/20 hover:scale-[1.02] active:scale-[0.98] ios-ease ring-offset-2 focus:ring-2 ring-[#292524]"
-```
-- Text: `text-sm font-medium`
-- Padding: `px-5 py-2.5`
-- Icon: `h-4 w-4` with `transition-transform group-hover:rotate-90`
+> **Note:** Action buttons use `rounded-lg` for a refined look. Only pills, badges, and segmented controls use `rounded-full`. Form buttons (in modals/pages) may use `rounded-xl`.
 
-#### Secondary Button (Light)
+#### Primary Button (Dark) - Compact
 ```tsx
-className="flex items-center gap-2 rounded-full border border-[#E7E5E4] bg-white px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F5F4] hover:scale-[1.02] active:scale-[0.98] ios-ease"
-```
-- Text: `text-xs font-medium`
-- Padding: `px-4 py-2`
-
-#### Tab Button (Active)
-```tsx
-className="text-xs font-medium text-[#292524] bg-[#F7F5F2] px-3 py-1.5 rounded-lg hover:bg-[#E7E5E4] transition-colors"
+className="flex items-center gap-2 rounded-lg bg-text-primary border border-text-primary px-3 py-2 text-xs font-medium text-white shadow-md shadow-text-primary/10 hover:bg-sidebar-foreground hover:border-sidebar-foreground ios-ease"
 ```
 
-#### Tab Button (Inactive)
+#### Primary Button (Dark) - Standard
 ```tsx
-className="text-xs font-medium text-[#A8A29E] hover:text-[#57534E] px-2 transition-colors"
+className="flex items-center gap-2 rounded-xl bg-text-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-sidebar-foreground ios-ease active:scale-[0.98]"
+```
+
+#### Secondary/Outline Button - Compact (Soft hover)
+```tsx
+className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease"
+```
+
+#### Secondary/Outline Button - Standard (Invert hover)
+```tsx
+className="flex items-center gap-2 rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-medium text-text-primary shadow-sm hover:bg-text-primary hover:text-white hover:border-text-primary ios-ease active:scale-[0.98]"
+```
+
+#### Ghost Button
+```tsx
+className="rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary ios-ease"
+```
+
+#### Filter/Tab Pill (inside container)
+```tsx
+className="flex-1 rounded-full py-1.5 text-xs font-medium transition-all bg-white text-text-primary shadow-sm"
+```
+
+#### Filter Dropdown Button
+```tsx
+className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm whitespace-nowrap hover:bg-surface-elevated hover:text-text-primary ios-ease"
+```
+
+#### Icon Sizes in Buttons
+| Button Size | Icon Size |
+|-------------|-----------|
+| Compact (text-xs) | `h-3.5 w-3.5` |
+| Standard (text-sm) | `h-4 w-4` |
+
+#### Button Component Variants
+The `<Button>` component supports these variants and sizes:
+
+**Variants:**
+- `default` - Dark primary button
+- `outline` - Light with invert hover
+- `outline-soft` - Light with soft hover (text-text-secondary)
+- `secondary` - Elevated background
+- `ghost` - No background, hover reveals
+- `destructive` - Red danger button
+- `link` - Text only with underline on hover
+
+**Sizes:**
+- `default` - Standard (h-10, px-5, text-sm)
+- `compact` - Refined smaller (h-10, px-3, text-xs, rounded-lg)
+- `sm` - Small (h-9, px-4, text-xs)
+- `lg` - Large (h-12, px-6)
+- `pill` - Pill shape
+- `icon` / `icon-sm` - Icon-only buttons
+
+**Usage:**
+```tsx
+<Button variant="outline-soft" size="compact">
+  <Download className="h-3.5 w-3.5" />
+  Eksporter
+</Button>
 ```
 
 ### Cards
 
 #### Standard Card
 ```tsx
-className="rounded-3xl border border-[#E7E5E4] bg-white p-6 shadow-sm ios-ease hover:border-[#D6D3D1] hover:shadow-md"
+className="rounded-3xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md"
 ```
-- Height: `h-[168px]` for stats cards, `h-[360px]` for tall cards
-- Padding: `p-6` (standard), `p-7` (courses list), `p-9` (hero card)
 
 #### Hero Card (Dark with Gradient)
 ```tsx
-className="group relative h-[360px] rounded-3xl bg-[#2F453B] text-[#F5F5F4] shadow-lg shadow-[#354F41]/10 ios-ease hover:shadow-xl hover:shadow-[#354F41]/20 hover:scale-[1.005] cursor-pointer border border-[#354F41]"
+className="relative rounded-3xl bg-primary text-primary-foreground shadow-lg shadow-primary/10 ios-ease hover:shadow-xl hover:shadow-primary/20"
 ```
-- Background gradient: `bg-gradient-to-br from-[#354F41] to-[#2F453B]`
-- Grain overlay: `bg-grain opacity-[0.2] mix-blend-overlay`
-- Glow effect: `h-80 w-80 rounded-full bg-[#F5F5F4]/10 blur-3xl`
+- Use grain overlay: `bg-grain opacity-[0.2] mix-blend-overlay`
+- Glow effect: `h-80 w-80 rounded-full bg-white/10 blur-3xl`
+
+### Form Inputs
+
+#### Text Input
+```tsx
+className="block w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border placeholder:text-text-tertiary focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-white ios-ease"
+```
+
+#### Search Input
+```tsx
+className="h-10 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:outline-none focus:ring-1 focus:ring-text-tertiary ios-ease shadow-sm hover:border-ring"
+```
+
+#### Segmented Filter Container
+```tsx
+// Container
+className="flex gap-1 p-1 bg-surface-elevated rounded-xl"
+// Individual tabs
+className="flex-1 rounded-lg py-1.5 text-xs font-medium ios-ease bg-white text-text-primary shadow-sm"
+```
+
+#### Input with Error
+```tsx
+className="... ring-red-500 focus:ring-red-500/20"
+```
 
 ### Badges
 
-#### Primary Badge (Uppercase)
+#### Status Badge
 ```tsx
-className="rounded-full bg-[#FDFBF7] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#2F453B] shadow-sm"
+// Use the StatusBadge component from @/components/ui/status-badge
+<SignupStatusBadge status="confirmed" />
+<SignupStatusBadge status="waitlist" waitlistPosition={3} />
+<SignupStatusBadge status="cancelled" />
 ```
 
-#### Secondary Badge
+#### Course Status Badge
 ```tsx
-className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur-md border border-white/10 text-[#F5F5F4]"
+<CourseStatusBadge status="active" />
+<CourseStatusBadge status="upcoming" />
+<CourseStatusBadge status="draft" />
+<CourseStatusBadge status="completed" />
+```
+
+#### Custom Badge
+```tsx
+className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary shadow-sm"
 ```
 
 ### List Items
 
 #### Message Item
 ```tsx
-<div className="group flex items-center gap-3.5 p-3 rounded-2xl hover:bg-[#F7F5F2] cursor-pointer transition-colors">
-  <img className="h-10 w-10 rounded-full object-cover border border-[#E7E5E4] group-hover:border-[#D6D3D1]" />
+<div className="group flex items-center gap-3.5 p-3 rounded-2xl hover:bg-surface cursor-pointer transition-colors">
+  <img className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-ring" />
   <div>
-    <p className="text-sm font-medium text-[#292524]">Name</p>
-    <p className="text-xs text-[#78716C] group-hover:text-[#57534E]">Content</p>
+    <p className="text-sm font-medium text-text-primary">Name</p>
+    <p className="text-xs text-muted-foreground group-hover:text-text-secondary">Content</p>
   </div>
-  <span className="text-[10px] font-medium text-[#A8A29E] group-hover:text-[#78716C]">2m</span>
-</div>
-```
-
-#### Course Item
-```tsx
-<div className="flex items-center group p-1 rounded-xl transition-colors">
-  <div className="w-14 text-sm font-medium text-[#A8A29E] group-hover:text-[#78716C]">14:00</div>
-  <div className="flex-1 rounded-xl border border-[#F5F5F4] bg-[#FDFBF7]/50 p-3.5 hover:bg-white hover:border-[#D6D3D1] hover:shadow-sm cursor-pointer group/card">
-    <div className="flex items-center gap-3.5">
-      <div className="h-2 w-2 rounded-full bg-orange-300 ring-2 ring-orange-100"></div>
-      <span className="text-sm font-medium text-[#292524] group-hover/card:text-black">Title</span>
-    </div>
-  </div>
+  <span className="text-xxs font-medium text-text-tertiary group-hover:text-muted-foreground">2m</span>
 </div>
 ```
 
@@ -147,39 +284,75 @@ className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur-
 
 #### Online Badge
 ```tsx
-className="h-2.5 w-2.5 rounded-full bg-[#4A6959] ring-2 ring-white"
+className="h-2.5 w-2.5 rounded-full bg-primary-accent ring-2 ring-white"
 ```
 
 #### Pulsing Indicator
 ```tsx
-className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"
+className="h-1.5 w-1.5 rounded-full bg-success animate-pulse"
 ```
 
-## Empty States
+### Tables
 
-### Design Principles
-1. **No dashed borders** - Use solid `border-[#E7E5E4]`
-2. **Gradient backgrounds** - `bg-gradient-to-br from-white to-stone-50/50`
-3. **Soft blur decorations** - Positioned absolutely with `blur-2xl` or `blur-3xl`
-4. **Typography consistency**:
-   - Title: `text-2xl font-medium tracking-tight text-stone-900`
-   - Description: `text-sm text-stone-600`
-   - Small text: `text-xs text-stone-500`
-
-### Empty State Pattern
+#### Table Container
 ```tsx
-<div className="relative rounded-3xl border border-stone-100 bg-gradient-to-br from-white to-stone-50/50 p-6 shadow-sm overflow-hidden">
-  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-2xl"></div>
-  <div className="relative z-10">
-    <h2 className="text-2xl font-medium tracking-tight text-stone-900 mb-2">
-      Klar til å planlegge din første time?
-    </h2>
-    <p className="text-sm text-stone-600">
-      Opprett en yogaøkt og bygg din timeplan.
-    </p>
+className="h-full rounded-xl border border-border bg-white shadow-sm overflow-hidden flex flex-col"
+```
+
+#### Table Header Row
+```tsx
+className="flex items-center border-b border-border bg-surface/50 px-6 py-3"
+```
+
+#### Table Header Text
+```tsx
+className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground"
+```
+
+#### Sortable Header
+```tsx
+className="flex items-center gap-1.5 group text-xxs font-semibold uppercase tracking-wide text-muted-foreground hover:text-text-primary transition-colors"
+```
+
+#### Table Row
+```tsx
+className="group hover:bg-secondary transition-colors"
+```
+
+#### Table Cell
+```tsx
+className="py-4 px-6"
+```
+
+#### Pagination Footer
+```tsx
+className="border-t border-border bg-surface/50 px-6 py-3 flex items-center justify-between"
+```
+
+#### Pagination Text
+```tsx
+className="text-xxs text-muted-foreground"
+// Numbers highlighted with:
+<span className="font-medium text-text-primary">0-10</span>
+```
+
+#### Pagination Buttons
+```tsx
+className="rounded-lg border border-border bg-white p-1.5 text-text-tertiary hover:border-ring hover:text-text-primary disabled:opacity-50 transition-all"
+```
+
+#### Table Empty State
+```tsx
+<div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white">
+  <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
+    <Search className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
   </div>
+  <h3 className="font-geist text-sm font-medium text-text-primary">Ingen resultater</h3>
+  <p className="mt-1 text-xs text-muted-foreground">Prøv å søke etter et annet navn</p>
 </div>
 ```
+
+---
 
 ## Spacing
 
@@ -197,44 +370,115 @@ className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"
 - **Small cards**: `p-6`
 - **Large cards**: `p-7` to `p-9`
 - **List items**: `p-3`
-- **Buttons**: `px-4 py-2` (small), `px-5 py-2.5` (medium), `px-6 py-3` (large)
+- **Buttons**: `px-3 py-2` (compact), `px-5 py-2.5` (standard), `px-6 py-3` (large)
+- **Table cells**: `py-4 px-6`
+- **Table header/footer**: `px-6 py-3`
+
+---
 
 ## Animations & Transitions
 
 ### iOS-style Easing
-```css
-.ios-ease {
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-}
+```tsx
+className="ios-ease"
+// Equivalent to: transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1)
 ```
 
 ### Hover Effects
-- **Scale up**: `hover:scale-[1.02]` (buttons)
-- **Scale down**: `active:scale-[0.98]` (active state)
-- **Tiny scale**: `hover:scale-[1.005]` (cards)
-- **Translate**: `hover:translate-x-1` (arrows), `group-hover/card:translate-x-0.5` (chevrons)
+| Effect | Class |
+|--------|-------|
+| Button scale | `hover:scale-[1.02] active:scale-[0.98]` |
+| Card scale | `hover:scale-[1.005]` |
+| Arrow translate | `hover:translate-x-1` |
+| Chevron | `group-hover:translate-x-0.5` |
 
-### Staggered Delays
-For bar charts:
-```tsx
-className="delay-75" // First bar
-className="delay-100" // Second bar
-className="delay-150" // Third bar
-// etc.
-```
+---
 
 ## Icons
 
 ### Icon Sizes
-- **Tiny**: `h-3.5 w-3.5` (button icons)
-- **Small**: `h-4 w-4` (standard icons)
-- **Medium**: `h-5 w-5` (card icons, nav icons)
-- **Large**: `h-6 w-6` (mobile menu)
-- **Card avatar**: `h-10 w-10` (message avatars)
+| Size | Class | Usage |
+|------|-------|-------|
+| Tiny | `h-3.5 w-3.5` | Button icons |
+| Small | `h-4 w-4` | Standard icons |
+| Medium | `h-5 w-5` | Card icons, nav icons |
+| Large | `h-6 w-6` | Mobile menu |
+| Avatar | `h-10 w-10` | Message avatars |
 
 ### Icon Colors
-- **Muted**: `text-[#A8A29E]` with `group-hover:text-[#78716C]`
-- **Light**: `text-[#D6D3D1]` with `group-hover:text-[#A8A29E]`
+```tsx
+// Muted with hover
+className="text-text-tertiary group-hover:text-muted-foreground"
+
+// Light with hover
+className="text-ring group-hover:text-text-tertiary"
+```
+
+---
+
+## Empty States
+
+### Design Principles
+1. Use solid `border-border` (no dashed borders)
+2. Gradient backgrounds: `bg-gradient-to-br from-white to-surface-elevated/50`
+3. Soft blur decorations with `blur-2xl` or `blur-3xl`
+
+### Pattern
+```tsx
+<div className="relative rounded-3xl border border-border bg-gradient-to-br from-white to-surface-elevated/50 p-6 shadow-sm overflow-hidden">
+  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-2xl"></div>
+  <div className="relative z-10">
+    <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+      Klar til å planlegge din første time?
+    </h2>
+    <p className="text-sm text-text-secondary">
+      Opprett en yogaøkt og bygg din timeplan.
+    </p>
+  </div>
+</div>
+```
+
+---
+
+## Special Effects
+
+### Grain Texture
+```tsx
+className="bg-grain opacity-[0.2] mix-blend-overlay"
+```
+Used on dark cards for texture.
+
+### Glass Morphism
+```tsx
+className="backdrop-blur-md bg-white/10 border border-white/10"
+```
+Used for badges on dark backgrounds.
+
+---
+
+## Course Type Colors
+
+For schedule events and course type indicators:
+
+| Type | Color Token |
+|------|-------------|
+| Private | `bg-course-private` (#FB923C) |
+| Online | `bg-course-online` (#A78BFA) |
+| Yin | `bg-course-yin` (#547564) |
+| Meditation | `bg-course-meditation` (#60A5FA) |
+
+---
+
+## Norwegian Language Patterns
+
+Standard UI text:
+- **Buttons**: "Opprett", "Start time", "Se alle", "Hele uken", "I dag"
+- **Labels**: "Neste time", "Kursrekke", "Denne uken", "Påmeldte"
+- **Headers**: "Oversikt", "Meldinger", "Dine kurs", "Aktive studenter", "Oppmøte"
+- **Empty states**: "Ingen planlagte kurs", "Ingen meldinger"
+- **Greetings**: "God morgen", "God dag", "God kveld"
+
+---
 
 ## Grid Layout
 
@@ -249,6 +493,8 @@ className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4"
 - **Messages**: `col-span-1 md:col-span-3 lg:col-span-1`
 - **Courses list**: `col-span-1 md:col-span-3 lg:col-span-4`
 
+---
+
 ## Responsive Design
 
 ### Container Padding
@@ -257,30 +503,39 @@ className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4"
 
 ### Typography Responsive
 - Use one step only: `text-3xl md:text-4xl`
-- Avoid responsive sizing in empty states
-- Keep consistent sizing for better alignment
+- Keep consistent sizing in empty states
 
-## Special Effects
+---
 
-### Grain Texture
-```css
-.bg-grain {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
-}
+## Token → Hex Reference (for design tools)
+
+When importing designs, map these hex values to tokens:
+
 ```
-- Used at `opacity-[0.2]` with `mix-blend-overlay` on dark cards
+Text:
+#292524 → text-text-primary
+#44403C → text-sidebar-foreground
+#57534E → text-text-secondary
+#78716C → text-muted-foreground
+#A8A29E → text-text-tertiary
 
-### Glass Morphism
-```tsx
-className="backdrop-blur-md bg-white/10 border border-white/10"
+Backgrounds:
+#FDFBF7 → bg-surface
+#F5F5F4 → bg-surface-elevated
+#FFFFFF → bg-white
+
+Borders:
+#E7E5E4 → border-border
+#D6D3D1 → ring-ring / border-ring
+
+Brand:
+#354F41 → bg-primary / text-primary
+#2A3D34 → bg-primary-dark
+#4A6959 → bg-primary-accent
+#547564 → bg-primary-soft
+
+Feedback:
+#16A34A → bg-success / text-success
+#F59E0B → bg-warning / text-warning
+#EF4444 → bg-destructive / text-destructive
 ```
-- Used for secondary badges on dark backgrounds
-
-## Norwegian Language
-
-Standard UI text patterns:
-- **Buttons**: "Opprett", "Start time", "Se alle", "Hele uken", "I dag"
-- **Labels**: "Neste time", "Kursrekke", "Denne uken", "Påmeldte"
-- **Headers**: "Oversikt", "Meldinger", "Dine kurs", "Aktive studenter", "Oppmøte"
-- **Empty states**: "Ingen planlagte kurs", "Ingen meldinger"
-- **Greetings**: "God morgen", "God dag", "God kveld"
