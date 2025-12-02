@@ -145,7 +145,7 @@ const StudentRegisterPage = () => {
             {/* Vipps Button */}
             <Button
               type="button"
-              className="w-full rounded-xl bg-[#FF5B24] px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#E84E1B] hover:shadow-md ios-ease active:scale-[0.98]"
+              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-vipps-hover hover:shadow-md ios-ease active:scale-[0.98]"
             >
               Registrer med
               <img

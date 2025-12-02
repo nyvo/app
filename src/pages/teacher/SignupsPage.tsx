@@ -403,11 +403,11 @@ export const SignupsPage = () => {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #E7E5E4;
+          background: var(--color-border);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #D6D3D1;
+          background: var(--color-ring);
         }
       `}</style>
       <EmptyStateToggle />

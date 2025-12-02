@@ -45,9 +45,25 @@
 
   /* Course Type Colors */
   --color-course-private: #fb923c;
+  --color-course-private-ring: #fed7aa;
   --color-course-online: #a78bfa;
+  --color-course-online-ring: #ddd6fe;
   --color-course-yin: #547564;
+  --color-course-yin-ring: rgba(84, 117, 100, 0.2);
   --color-course-meditation: #60a5fa;
+  --color-course-meditation-ring: #bfdbfe;
+  --color-course-vinyasa: #34d399;
+  --color-course-vinyasa-ring: #a7f3d0;
+  --color-course-series: #2dd4bf;
+  --color-course-series-ring: #99f6e4;
+
+  /* Third-party Brand Colors */
+  --color-vipps: #ff5b24;
+  --color-vipps-hover: #e84e1b;
+
+  /* Growth/Positive Indicator */
+  --color-growth-bg: #f0fdf4;
+  --color-growth-text: #15803d;
 
   /* Sidebar Colors */
   --color-sidebar: #fbf9f6;

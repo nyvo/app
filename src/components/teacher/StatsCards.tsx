@@ -85,7 +85,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
             <span className="font-geist text-3xl font-medium tracking-tight text-text-primary mt-1">
               {stats.activeStudents}
             </span>
-            <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+12%</span>
+            <span className="text-xs font-medium text-growth-text bg-growth-bg px-1.5 py-0.5 rounded">+12%</span>
           </div>
         </div>
       </div>

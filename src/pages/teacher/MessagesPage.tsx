@@ -248,7 +248,7 @@ const MessagesPage = () => {
                     </p>
                   </div>
                   {conversation.unreadCount && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0 mt-2" />
+                    <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
                   )}
                   {activeConversation?.id === conversation.id && !isComposing && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-text-primary" />
@@ -471,7 +471,7 @@ const MessagesPage = () => {
                     >
                       {message.timestamp}
                       {message.isOutgoing && message.isRead && (
-                        <CheckCheck className="h-3 w-3 text-emerald-500" />
+                        <CheckCheck className="h-3 w-3 text-status-confirmed-text" />
                       )}
                     </span>
                   </div>

@@ -121,8 +121,8 @@ export const TeacherSidebar = () => {
                 Hjelp & Support
               </button>
               <div className="my-1 border-t border-secondary"></div>
-              <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors">
-                <LogOut className="h-3.5 w-3.5 text-rose-500" />
+              <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-status-error-bg transition-colors">
+                <LogOut className="h-3.5 w-3.5 text-destructive" />
                 Logg ut
               </button>
             </div>

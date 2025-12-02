@@ -64,8 +64,8 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
         </div>
 
         <div>
-          <p className="text-emerald-100/90 text-sm font-medium mb-2 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <p className="text-status-confirmed-bg text-sm font-medium mb-2 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-status-confirmed-text animate-pulse"></span>
             {classData.startsIn}
           </p>
           <h2 className="font-geist text-3xl md:text-4xl font-medium tracking-tight mb-5 text-surface leading-tight">

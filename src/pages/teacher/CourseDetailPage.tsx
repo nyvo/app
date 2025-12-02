@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { nb } from 'date-fns/locale';
 import {
@@ -17,7 +17,6 @@ import {
   BarChart2,
   Clock,
   Mail,
-  TrendingUp,
   Crown,
   Ticket,
   CreditCard,
@@ -70,6 +69,10 @@ const CourseDetailPage = () => {
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [openTimePopovers, setOpenTimePopovers] = useState<Record<string, boolean>>({});
   const [visibleWeeks, setVisibleWeeks] = useState(3);
+  const [settingsTime, setSettingsTime] = useState('09:00');
+  const [isSettingsTimeOpen, setIsSettingsTimeOpen] = useState(false);
+  const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
+  const kursplanRef = useRef<HTMLDivElement>(null);
 
   // Find the course by ID from mock data
   const courseData = mockDetailedCourses.find(c => c.id === id);
@@ -121,18 +124,56 @@ const CourseDetailPage = () => {
 
   const [maxParticipants, setMaxParticipants] = useState(course.capacity);
 
-  // Determine if this is a multi-day course (kursrekke with multiple weeks)
-  const isMultiDayCourse = courseData.courseType === 'kursrekke' && (courseData.totalWeeks || 0) > 1;
+  // Parse number of days from duration for enkeltkurs (e.g., "3 dager" -> 3)
+  const parseDaysFromDuration = (duration: string): number => {
+    const match = duration.match(/(\d+)\s*dag/i);
+    return match ? parseInt(match[1], 10) : 0;
+  };
 
-  // Generate course weeks based on totalWeeks
-  const generatedCourseWeeks = isMultiDayCourse && courseData.totalWeeks
-    ? Array.from({ length: courseData.totalWeeks }, (_, i) => ({
-        id: `week-${i + 1}`,
+  // Determine if this is a multi-session course
+  const isKursrekke = courseData.courseType === 'kursrekke' && (courseData.totalWeeks || 0) > 1;
+  const isMultiDayEnkeltkurs = courseData.courseType === 'enkeltkurs' && parseDaysFromDuration(courseData.duration) > 1;
+  const isMultiDayCourse = isKursrekke || isMultiDayEnkeltkurs;
+
+  // Get the number of sessions and label
+  const sessionCount = isKursrekke
+    ? (courseData.totalWeeks || 0)
+    : parseDaysFromDuration(courseData.duration);
+  const sessionLabel = isKursrekke ? 'Uke' : 'Dag';
+  const sessionLabelPlural = isKursrekke ? 'uker' : 'dager';
+
+  // Helper to format session date
+  const formatSessionDate = (sessionIndex: number): string => {
+    // Use a base date (today or could be from course data in real implementation)
+    const baseDate = new Date();
+    const newDate = new Date(baseDate);
+
+    if (isKursrekke) {
+      // For weekly courses, add 7 days per week
+      newDate.setDate(baseDate.getDate() + (sessionIndex * 7));
+    } else {
+      // For multi-day courses, add 1 day per session
+      newDate.setDate(baseDate.getDate() + sessionIndex);
+    }
+
+    return formatDateNorwegian(newDate);
+  };
+
+  // Extract time from timeSchedule (e.g., "Tirsdager, 18:00" -> "18:00")
+  const extractTimeFromSchedule = (schedule: string): string => {
+    const timeMatch = schedule.match(/(\d{1,2}:\d{2})/);
+    return timeMatch ? timeMatch[1] : '09:00';
+  };
+
+  // Generate course sessions (weeks or days)
+  const generatedCourseWeeks = isMultiDayCourse && sessionCount > 0
+    ? Array.from({ length: sessionCount }, (_, i) => ({
+        id: `session-${i + 1}`,
         weekNum: String(i + 1).padStart(2, '0'),
         title: courseData.title,
         status: i < (courseData.currentWeek || 0) - 1 ? 'completed' : i === (courseData.currentWeek || 1) - 1 ? 'active' : 'upcoming',
-        date: `Uke ${i + 1}`,
-        time: courseData.timeSchedule.split(', ')[1] || '18:00'
+        date: formatSessionDate(i),
+        time: extractTimeFromSchedule(courseData.timeSchedule)
       }))
     : [];
 
@@ -149,6 +190,29 @@ const CourseDetailPage = () => {
       setVisibleWeeks(3);
     } else {
       setVisibleWeeks(prev => Math.min(prev + 3, generatedCourseWeeks.length));
+    }
+  };
+
+  const handleEditTime = () => {
+    if (isMultiDayCourse && generatedCourseWeeks.length > 0) {
+      // Find the next upcoming or active week
+      const nextWeek = generatedCourseWeeks.find(w => w.status === 'active' || w.status === 'upcoming');
+      if (nextWeek) {
+        // Make sure it's visible
+        const weekIndex = generatedCourseWeeks.findIndex(w => w.id === nextWeek.id);
+        if (weekIndex >= visibleWeeks) {
+          setVisibleWeeks(weekIndex + 1);
+        }
+        // Open the accordion
+        setExpandedItem(nextWeek.id);
+        // Scroll to kursplan section smoothly
+        setTimeout(() => {
+          kursplanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    } else {
+      // Single course - go to settings tab
+      setActiveTab('settings');
     }
   };
 
@@ -293,7 +357,7 @@ const CourseDetailPage = () => {
                       <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
                     </div>
                     <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-[10px] font-semibold tracking-wide">
-                      {spotsLeft} plasser igjen
+                      {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
                     </span>
                   </div>
 
@@ -376,7 +440,7 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* 6. Admin Actions Card */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between col-span-1 h-full lg:h-auto lg:row-span-1">
+                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between col-span-1 row-span-2">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wide">Administrasjon</h3>
@@ -393,33 +457,19 @@ const CourseDetailPage = () => {
                       <Mail className="h-3 w-3" />
                       Send melding
                     </Button>
-                    <Button variant="outline-soft" size="compact" className="w-full justify-center">
+                    <Button variant="outline-soft" size="compact" className="w-full justify-center" onClick={handleEditTime}>
                       <Clock className="h-3 w-3" />
                       Endre time
                     </Button>
                   </div>
                 </div>
 
-                {/* 7. Revenue/Stats Card */}
-                <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-5 shadow-sm flex flex-col justify-between col-span-1 h-full hidden lg:flex">
-                  <div className="flex items-start justify-between">
-                    <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
-                      <TrendingUp className="h-4 w-4" />
-                    </div>
-                    <span className="text-[10px] font-medium text-white/60 bg-white/10 px-1.5 py-0.5 rounded">Denne måneden</span>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-medium text-white/70 uppercase tracking-wider">Omsetning</span>
-                    <p className="text-lg font-semibold text-white mt-0.5">{course.estimatedRevenue.toLocaleString('nb-NO')} NOK</p>
-                  </div>
-                </div>
-
                 {/* Course Plan - Only show for multi-day courses */}
                 {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
-                  <div className="col-span-full mt-2">
+                  <div ref={kursplanRef} className="col-span-full mt-2">
                     <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
                       <div className="mb-6">
-                        <h2 className="text-base font-semibold text-text-primary">Kursplan ({generatedCourseWeeks.length} uker)</h2>
+                        <h2 className="text-base font-semibold text-text-primary">Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})</h2>
                       </div>
 
                       <div className="relative">
@@ -445,7 +495,7 @@ const CourseDetailPage = () => {
                                   ? 'bg-primary text-white shadow-sm'
                                   : 'border border-border bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
                               }`}>
-                                <span className={`text-xxs font-medium uppercase ${week.status === 'active' ? 'opacity-80' : ''}`}>Uke</span>
+                                <span className={`text-xxs font-medium uppercase ${week.status === 'active' ? 'opacity-80' : ''}`}>{sessionLabel}</span>
                                 <span className="font-geist text-lg font-semibold">{week.weekNum}</span>
                               </div>
 
@@ -462,9 +512,9 @@ const CourseDetailPage = () => {
                                   )}
                                 </div>
                                 <div className={`flex items-center gap-3 text-xs ${week.status === 'completed' ? 'text-text-tertiary' : 'text-muted-foreground'}`}>
-                                  <span className={week.status === 'active' ? 'font-medium text-text-primary' : ''}>{week.date}</span>
-                                  <span className={`w-1 h-1 rounded-full ${week.status === 'completed' ? 'bg-ring' : 'bg-text-tertiary'}`}></span>
                                   <span>{week.time}</span>
+                                  <span className={`w-1 h-1 rounded-full ${week.status === 'completed' ? 'bg-ring' : 'bg-text-tertiary'}`}></span>
+                                  <span>{week.date}</span>
                                 </div>
                               </div>
 
@@ -568,22 +618,24 @@ const CourseDetailPage = () => {
                         ))}
                       </Accordion>
 
-                        <button
-                          onClick={handleShowMore}
-                          className="flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-ring py-3 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors mt-3"
-                        >
-                          {visibleWeeks >= generatedCourseWeeks.length ? (
-                            <>
-                              <ChevronUp className="h-3.5 w-3.5" />
-                              Vis mindre
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="h-3.5 w-3.5" />
-                              Vis {Math.min(3, generatedCourseWeeks.length - visibleWeeks)} uker til
-                            </>
-                          )}
-                        </button>
+                        {generatedCourseWeeks.length > 3 && (
+                          <button
+                            onClick={handleShowMore}
+                            className="flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-ring py-3 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors mt-3"
+                          >
+                            {visibleWeeks >= generatedCourseWeeks.length ? (
+                              <>
+                                <ChevronUp className="h-3.5 w-3.5" />
+                                Vis mindre
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-3.5 w-3.5" />
+                                Vis {Math.min(3, generatedCourseWeeks.length - visibleWeeks)} {sessionLabelPlural} til
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -746,30 +798,6 @@ const CourseDetailPage = () => {
                           defaultValue={course.description}
                         />
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Instruktør</label>
-                          <div className="relative">
-                            <select className="w-full h-11 pl-3 pr-8 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring appearance-none">
-                              <option>{course.instructor.name}</option>
-                              <option>Sarah Johnson</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary pointer-events-none" />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Kategori</label>
-                          <div className="relative">
-                            <select className="w-full h-11 pl-3 pr-8 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring appearance-none">
-                              <option>Yoga</option>
-                              <option>Pilates</option>
-                              <option>Styrke</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary pointer-events-none" />
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -781,20 +809,62 @@ const CourseDetailPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div>
                         <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Dato</label>
-                        <div className="relative">
-                          <Input type="text" defaultValue="24.10.2023" className="pl-9" />
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
+                            >
+                              <span>{settingsDate ? formatDateNorwegian(settingsDate) : 'Velg dato'}</span>
+                              <CalendarIcon className="h-4 w-4 text-text-tertiary" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="p-0" showOverlay>
+                            <CalendarComponent
+                              mode="single"
+                              selected={settingsDate}
+                              onSelect={setSettingsDate}
+                              locale={nb}
+                              className="rounded-md border"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Start</label>
-                          <Input type="text" defaultValue="09:00" className="text-center" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Slutt</label>
-                          <Input type="text" defaultValue="10:00" className="text-center" />
-                        </div>
+                      <div>
+                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Tidspunkt</label>
+                        <Popover open={isSettingsTimeOpen} onOpenChange={setIsSettingsTimeOpen}>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
+                            >
+                              <span>{settingsTime || 'Velg tid'}</span>
+                              <Clock className="h-4 w-4 text-text-tertiary" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                            <div className="flex flex-col gap-0.5">
+                              {timeSlots.map((time) => (
+                                <button
+                                  key={time}
+                                  type="button"
+                                  onClick={() => {
+                                    setSettingsTime(time);
+                                    setIsSettingsTimeOpen(false);
+                                  }}
+                                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                    settingsTime === time
+                                      ? 'bg-text-primary text-white'
+                                      : 'text-sidebar-foreground hover:bg-surface-elevated'
+                                  }`}
+                                >
+                                  <span>{time}</span>
+                                  {settingsTime === time && <Check className="h-4 w-4" />}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
 

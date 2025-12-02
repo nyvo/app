@@ -343,7 +343,7 @@ const PublicCourseDetailPage = () => {
                                         Deltakerinformasjon
                                     </h1>
                                     <p className="mt-2 text-muted-foreground">
-                                        Vennligst fyll inn dine detaljer. Felter merket med <span className="text-red-500">*</span> er påkrevde.
+                                        Vennligst fyll inn dine detaljer. Felter merket med <span className="text-status-error-text">*</span> er påkrevde.
                                     </p>
                                 </div>
 
@@ -358,7 +358,7 @@ const PublicCourseDetailPage = () => {
                                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                             <div>
                                                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                                                    Fornavn <span className="text-red-500">*</span>
+                                                    Fornavn <span className="text-status-error-text">*</span>
                                                 </label>
                                                 <Input
                                                     type="text"
@@ -367,15 +367,15 @@ const PublicCourseDetailPage = () => {
                                                     onChange={handleInputChange}
                                                     placeholder="Ola"
                                                     aria-invalid={errors.firstName}
-                                                    className={errors.firstName ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}
+                                                    className={errors.firstName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.firstName && (
-                                                    <p className="text-xs text-red-500 font-medium mt-1.5">Fornavn er påkrevd</p>
+                                                    <p className="text-xs text-status-error-text font-medium mt-1.5">Fornavn er påkrevd</p>
                                                 )}
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                                                    Etternavn <span className="text-red-500">*</span>
+                                                    Etternavn <span className="text-status-error-text">*</span>
                                                 </label>
                                                 <Input
                                                     type="text"
@@ -384,10 +384,10 @@ const PublicCourseDetailPage = () => {
                                                     onChange={handleInputChange}
                                                     placeholder="Nordmann"
                                                     aria-invalid={errors.lastName}
-                                                    className={errors.lastName ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}
+                                                    className={errors.lastName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.lastName && (
-                                                    <p className="text-xs text-red-500 font-medium mt-1.5">Etternavn er påkrevd</p>
+                                                    <p className="text-xs text-status-error-text font-medium mt-1.5">Etternavn er påkrevd</p>
                                                 )}
                                             </div>
                                         </div>
@@ -395,10 +395,10 @@ const PublicCourseDetailPage = () => {
                                         {/* Contact Fields */}
                                         <div>
                                             <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                                                E-postadresse <span className="text-red-500">*</span>
+                                                E-postadresse <span className="text-status-error-text">*</span>
                                             </label>
                                             <div className="relative group">
-                                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${errors.email ? 'text-red-400' : 'text-text-tertiary'}`} />
+                                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'}`} />
                                                 <Input
                                                     type="email"
                                                     name="email"
@@ -406,11 +406,11 @@ const PublicCourseDetailPage = () => {
                                                     onChange={handleInputChange}
                                                     placeholder="ola@eksempel.no"
                                                     aria-invalid={errors.email}
-                                                    className={`pl-10 ${errors.email ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}`}
+                                                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}`}
                                                 />
                                             </div>
                                             {errors.email ? (
-                                                <p className="text-xs text-red-500 font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
+                                                <p className="text-xs text-status-error-text font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
                                             ) : (
                                                 <p className="text-xs text-text-tertiary mt-1.5">Ordrebekreftelse sendes hit.</p>
                                             )}
@@ -452,16 +452,16 @@ const PublicCourseDetailPage = () => {
                                             required
                                             className="checkbox-wrapper peer sr-only"
                                         />
-                                        <div className={`h-4 w-4 rounded-sm border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-ring'}`}>
+                                        <div className={`h-4 w-4 rounded-sm border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-status-error-text ring-1 ring-status-error-text' : 'border-ring'}`}>
                                             <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                         </div>
                                     </label>
                                     <div className="flex flex-col">
                                         <p className="text-xs text-muted-foreground leading-relaxed">
-                                            Jeg godtar våre <a href="#" className="text-text-primary underline underline-offset-2 hover:text-primary">vilkår for påmelding</a>. <span className="text-red-500">*</span>
+                                            Jeg godtar våre <a href="#" className="text-text-primary underline underline-offset-2 hover:text-primary">vilkår for påmelding</a>. <span className="text-status-error-text">*</span>
                                         </p>
                                         {errors.termsAccepted && (
-                                            <p className="text-xs text-red-500 font-medium mt-1">Du må godta vilkårene</p>
+                                            <p className="text-xs text-status-error-text font-medium mt-1">Du må godta vilkårene</p>
                                         )}
                                     </div>
                                 </div>
@@ -487,7 +487,7 @@ const PublicCourseDetailPage = () => {
                                         </div>
                                         <span className="inline-flex items-center gap-1 rounded-full bg-status-confirmed-bg px-2 py-0.5 text-xxs font-medium text-status-confirmed-text">
                                             <span className="relative flex h-1.5 w-1.5">
-                                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75"></span>
                                               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-confirmed-text"></span>
                                             </span>
                                             15 plasser igjen

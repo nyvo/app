@@ -8,14 +8,14 @@ interface CoursesListProps {
 
 const getCourseColor = (type: CourseType): string => {
   const colors: Record<CourseType, string> = {
-    private: 'bg-orange-300 ring-2 ring-orange-100',
-    online: 'bg-purple-300 ring-2 ring-purple-100',
-    yin: 'bg-primary-accent ring-2 ring-primary-accent/20',
-    meditation: 'bg-blue-300 ring-2 ring-blue-100',
-    vinyasa: 'bg-emerald-300 ring-2 ring-emerald-100',
-    'course-series': 'bg-teal-300 ring-2 ring-teal-100',
+    private: 'bg-course-private ring-2 ring-course-private-ring',
+    online: 'bg-course-online ring-2 ring-course-online-ring',
+    yin: 'bg-course-yin ring-2 ring-course-yin-ring',
+    meditation: 'bg-course-meditation ring-2 ring-course-meditation-ring',
+    vinyasa: 'bg-course-vinyasa ring-2 ring-course-vinyasa-ring',
+    'course-series': 'bg-course-series ring-2 ring-course-series-ring',
   };
-  return colors[type] || 'bg-stone-300';
+  return colors[type] || 'bg-muted';
 };
 
 export const CoursesList = ({ courses }: CoursesListProps) => {

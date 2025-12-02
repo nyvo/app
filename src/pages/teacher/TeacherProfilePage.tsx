@@ -272,7 +272,7 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                      <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-geist text-base font-semibold text-text-primary">Passord &amp; Sikkerhet</h3>
+                            <h3 className="font-geist text-base font-semibold text-text-primary">Passord & Sikkerhet</h3>
                         </div>
 
                         <div className="space-y-4">
@@ -305,11 +305,11 @@ const TeacherProfilePage = () => {
                      </div>
 
                      {/* Logout Danger Zone */}
-                     <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-6 shadow-sm">
+                     <div className="rounded-2xl border border-status-error-border bg-status-error-bg p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-semibold text-rose-700">Logg ut av alle enheter</h3>
-                                <p className="text-xs text-rose-600/80 mt-1">Dette vil logge deg ut fra mobil, tablet og desktop.</p>
+                                <h3 className="text-sm font-semibold text-status-error-text">Logg ut av alle enheter</h3>
+                                <p className="text-xs text-status-error-text/80 mt-1">Dette vil logge deg ut fra mobil, tablet og desktop.</p>
                             </div>
                             <Button variant="destructive" size="compact">
                                 Logg ut
