@@ -13,6 +13,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 
 type Tab = 'profile' | 'notifications' | 'security';
@@ -112,7 +113,7 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
                     {/* Avatar Section */}
-                    <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
                                 <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar shadow-md">
@@ -126,15 +127,15 @@ const TeacherProfilePage = () => {
                                 <h3 className="font-geist text-lg font-medium text-text-primary">Profilbilde</h3>
                                 <p className="text-sm text-muted-foreground mt-1 mb-4">Dette bildet vil være synlig for studentene dine i timeplanen.</p>
                                 <div className="flex items-center justify-center md:justify-start gap-3">
-                                    <button className="h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease">Slett bilde</button>
-                                    <button className="h-10 rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground ios-ease">Last opp nytt</button>
+                                    <Button variant="ghost" size="compact">Slett bilde</Button>
+                                    <Button size="compact">Last opp nytt</Button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Personal Info Form */}
-                    <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Personlig Informasjon</h3>
                             {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
@@ -142,52 +143,52 @@ const TeacherProfilePage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* First Name */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Fornavn</label>
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Fornavn</label>
                                 <input
                                     type="text"
                                     value={firstName}
                                     onChange={(e) => setFirstName(e.target.value)}
-                                    className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                                    className="w-full h-11 rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
                                 />
                             </div>
 
                             {/* Last Name */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Etternavn</label>
+                            <div>
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Etternavn</label>
                                 <input
                                     type="text"
                                     value={lastName}
                                     onChange={(e) => setLastName(e.target.value)}
-                                    className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                                    className="w-full h-11 rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
                                 />
                             </div>
 
                             {/* Email */}
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">E-postadresse</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">E-postadresse</label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3.5 top-3 h-4 w-4 text-text-tertiary" />
+                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full rounded-xl border border-border bg-surface pl-10 pr-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                                        className="w-full h-11 rounded-xl border border-border bg-input-bg pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
                                     />
                                 </div>
-                                <p className="text-xs text-text-tertiary mt-1">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                                <p className="text-xs text-text-tertiary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             </div>
 
                             {/* Bio */}
-                            <div className="space-y-2 md:col-span-2">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">Om deg (Bio)</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Om deg (Bio)</label>
                                 <textarea
                                     rows={4}
                                     value={bio}
                                     onChange={(e) => setBio(e.target.value)}
-                                    className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
+                                    className="w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease resize-none"
                                 />
-                                <div className="flex justify-between text-xs text-text-tertiary">
+                                <div className="flex justify-between text-xs text-text-tertiary mt-1.5">
                                     <span>Vises på din offentlige instruktørprofil.</span>
                                     <span>{bio.length}/500</span>
                                 </div>
@@ -200,7 +201,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
@@ -269,7 +270,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                     <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Passord &amp; Sikkerhet</h3>
                         </div>
@@ -304,15 +305,15 @@ const TeacherProfilePage = () => {
                      </div>
 
                      {/* Logout Danger Zone */}
-                     <div className="rounded-3xl border border-rose-100 bg-rose-50/50 p-6 shadow-sm">
+                     <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-6 shadow-sm">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-semibold text-rose-700">Logg ut av alle enheter</h3>
                                 <p className="text-xs text-rose-600/80 mt-1">Dette vil logge deg ut fra mobil, tablet og desktop.</p>
                             </div>
-                            <button className="h-10 rounded-lg bg-white border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 ios-ease">
+                            <Button variant="destructive" size="compact">
                                 Logg ut
-                            </button>
+                            </Button>
                         </div>
                      </div>
                 </div>
@@ -320,10 +321,10 @@ const TeacherProfilePage = () => {
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
-                <button className="h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease hidden md:block">Avbryt</button>
-                <button className="flex-1 md:flex-none justify-center h-10 rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground ios-ease">
+                <Button variant="ghost" size="compact" className="hidden md:inline-flex">Avbryt</Button>
+                <Button size="compact" className="flex-1 md:flex-none justify-center">
                     Lagre endringer
-                </button>
+                </Button>
             </div>
 
         </div>

@@ -8,7 +8,8 @@ import {
   Flame,
   CalendarRange,
   Leaf,
-  ArrowRight
+  ArrowRight,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -319,7 +320,8 @@ const PublicCoursesPage = () => {
                                  <h3 className="font-geist text-lg font-semibold text-text-primary group-hover:text-primary transition-colors">
                                     Nybegynnerkurs: 8 Uker
                                 </h3>
-                                <span className="hidden md:inline-flex items-center rounded-md bg-surface-elevated px-2 py-0.5 text-xxs uppercase font-bold tracking-wide text-text-secondary">
+                                <span className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-primary/30 px-2.5 py-1 text-xs font-medium text-primary">
+                                    <Layers className="h-3 w-3" />
                                     Kursrekke
                                 </span>
                             </div>

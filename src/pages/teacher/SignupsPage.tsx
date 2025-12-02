@@ -274,7 +274,7 @@ export const SignupsPage = () => {
 
         {/* Table Container */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
-          <div className="h-full rounded-xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
+          <div className="h-full rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
             {/* Empty State or Table */}
             {filteredAndSortedSignups.length === 0 ? (
               <>

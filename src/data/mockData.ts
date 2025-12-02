@@ -32,7 +32,14 @@ export interface MessageDetail {
 }
 
 // --- Types for Courses Page ---
-export type CourseType = 'kursrekke' | 'arrangement';
+export type CourseType = 'kursrekke' | 'enkeltkurs';
+
+export interface Instructor {
+  name: string;
+  avatar?: string;
+  rating: number;
+  classesCount: number;
+}
 
 export interface DetailedCourse {
   id: string;
@@ -51,6 +58,9 @@ export interface DetailedCourse {
   totalWeeks?: number;
   startDate?: string; // e.g. "Starts in 5 days"
   attendeeAvatars?: string[];
+  description?: string;
+  instructor?: Instructor;
+  level?: string; // e.g. "Alle", "Nybegynner", "Viderekommen"
 }
 
 // --- Types for Signups Page ---
@@ -335,6 +345,14 @@ export const mockSignups: SignupWithTimestamps[] = [
   },
 ];
 
+// Default instructor for courses
+const defaultInstructor: Instructor = {
+  name: 'Kristoffer Nyvold',
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+  rating: 4.9,
+  classesCount: 128,
+};
+
 // Courses Page Data (Refactored from hardcoded JSX)
 export const mockDetailedCourses: DetailedCourse[] = [
   {
@@ -352,7 +370,10 @@ export const mockDetailedCourses: DetailedCourse[] = [
     progress: 37,
     currentWeek: 3,
     totalWeeks: 8,
-    attendeeAvatars: ['', '', '']
+    attendeeAvatars: ['', '', ''],
+    description: 'Denne Vinyasa-timen er designet for å gi deg en energisk start på dagen. Vi fokuserer på å synkronisere pust med bevegelse i en kontinuerlig flyt. Timen begynner med rolige pusteøvelser (Pranayama) før vi beveger oss gjennom dynamiske sekvenser som styrker kjernemuskulaturen og øker fleksibiliteten.\n\nPasser for de som ønsker å bygge varme og få energien til å flyte for resten av dagen.',
+    instructor: defaultInstructor,
+    level: 'Nybegynner',
   },
   {
     id: '2',
@@ -367,13 +388,17 @@ export const mockDetailedCourses: DetailedCourse[] = [
     maxParticipants: 10,
     price: '1800 NOK',
     startDate: 'Starter om 5 dager',
-    attendeeAvatars: ['', '', '']
+    attendeeAvatars: ['', '', ''],
+    totalWeeks: 6,
+    description: 'Et rolig og trygt kurs for nybakte mødre og deres babyer. Vi fokuserer på å gjenoppbygge styrke i bekkenbunnen og magemuskulaturen, samtidig som vi skaper en fin stund sammen med babyen.\n\nInkluderer enkle øvelser du kan gjøre hjemme mellom timene.',
+    instructor: defaultInstructor,
+    level: 'Alle',
   },
   {
     id: '3',
     title: 'Pust & Avspenning',
     type: 'meditation',
-    courseType: 'arrangement',
+    courseType: 'enkeltkurs',
     status: 'upcoming',
     location: 'Sal A - Hovedstudio',
     timeSchedule: 'Lør 24. Okt, 12:00',
@@ -382,6 +407,26 @@ export const mockDetailedCourses: DetailedCourse[] = [
     maxParticipants: 25,
     price: '650 NOK',
     startDate: 'Starter om 3 dager',
+    description: 'En workshop dedikert til pusteøvelser og dyp avspenning. Lær teknikker for å redusere stress og øke tilstedeværelse i hverdagen. Perfekt for deg som ønsker å finne mer ro.',
+    instructor: defaultInstructor,
+    level: 'Alle',
+  },
+  {
+    id: '5',
+    title: 'Yoga Retreat Helg',
+    type: 'course-series',
+    courseType: 'enkeltkurs',
+    status: 'active',
+    location: 'Fjordgården Retreat',
+    timeSchedule: 'Fre-Søn, 15-17. Nov',
+    duration: '3 dager',
+    participants: 18,
+    maxParticipants: 20,
+    price: '4500 NOK',
+    progress: 33,
+    description: 'Tre dager med yoga, meditasjon og naturopplevelser ved fjorden. Inkluderer alle måltider, overnatting og guidede turer. En unik mulighet til å koble av og lade batteriene.',
+    instructor: defaultInstructor,
+    level: 'Alle',
   },
   {
     id: '4',
@@ -395,7 +440,11 @@ export const mockDetailedCourses: DetailedCourse[] = [
     participants: 14,
     maxParticipants: 15,
     price: '1800 NOK',
-    attendeeAvatars: ['', '', '']
+    attendeeAvatars: ['', '', ''],
+    totalWeeks: 6,
+    description: 'Et rolig kveldskurs med fokus på dype strekkøvelser og avspenning. Yin yoga er perfekt for å løse opp spenninger og forberede kroppen for en god natts søvn.',
+    instructor: defaultInstructor,
+    level: 'Alle',
   }
 ];
 

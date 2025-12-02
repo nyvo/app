@@ -5,7 +5,7 @@ export const DashboardEmptyState = () => {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       {/* Hero Card: Onboarding (Span 7) */}
-      <div className="lg:col-span-7 relative overflow-hidden rounded-[2rem] border border-border bg-white p-8 shadow-sm group">
+      <div className="lg:col-span-7 relative overflow-hidden rounded-3xl border border-border bg-white p-8 shadow-sm group">
         {/* Abstract Watermark */}
         <div className="absolute -right-10 -top-10 h-64 w-64 opacity-[0.03] rotate-12 pointer-events-none">
           <Sprout className="h-full w-full text-text-primary" />
@@ -97,7 +97,7 @@ export const DashboardEmptyState = () => {
 
         {/* Empty State Container */}
         <div className="px-2 pb-2">
-          <div className="flex flex-col items-center justify-center rounded-[1.5rem] bg-surface py-16 px-4 border border-border/50 border-dashed">
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-surface py-16 px-4 border border-border/50 border-dashed">
             <div className="mb-4 h-12 w-12 flex items-center justify-center rounded-full bg-white border border-border shadow-sm">
               <CalendarPlus className="h-5 w-5 text-muted-foreground" />
             </div>

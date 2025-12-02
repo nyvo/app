@@ -16,6 +16,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { useEmptyState } from '@/context/EmptyStateContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import {
@@ -284,22 +285,22 @@ const MessagesPage = () => {
                 <div className="p-6 space-y-6">
                   <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground ml-1">Til:</label>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-                        <input
+                    <div className="relative group">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+                        <Input
                           type="text"
                           value={newRecipient}
                           onChange={(e) => setNewRecipient(e.target.value)}
                           placeholder="Søk etter navn eller e-post..."
                           autoFocus
-                          className="h-11 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
+                          className="pl-10"
                         />
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <label className="text-xs font-medium text-muted-foreground ml-1">Melding:</label>
-                    <div className="rounded-2xl border border-border bg-white p-3 shadow-sm focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+                    <div className="rounded-2xl border border-border bg-white p-3 shadow-sm focus-within:ring-4 focus-within:ring-border/30 focus-within:border-ring transition-all">
                         <textarea
                           rows={8}
                           value={newMessageBody}
@@ -482,7 +483,7 @@ const MessagesPage = () => {
 
             {/* Input Area */}
             <div className="p-6 pt-2 bg-surface">
-              <div className="flex flex-col gap-2 rounded-2xl border border-border bg-white p-2 shadow-sm focus-within:ring-1 focus-within:ring-primary/20 focus-within:border-primary transition-all relative">
+              <div className="flex flex-col gap-2 rounded-2xl border border-border bg-white p-2 shadow-sm focus-within:ring-4 focus-within:ring-border/30 focus-within:border-ring transition-all relative">
                 <textarea
                   rows={1}
                   placeholder="Skriv en melding..."

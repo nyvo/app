@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,7 +38,6 @@ interface FormErrors {
   startDate?: string;
   startTime?: string;
   duration?: string;
-  weeks?: string;
   location?: string;
   price?: string;
 }
@@ -49,7 +49,10 @@ const NewCoursePage = () => {
   const [startTime, setStartTime] = useState('');
   const [isTimeOpen, setIsTimeOpen] = useState(false);
   const [duration, setDuration] = useState('60');
-  const [weeks, setWeeks] = useState('8');
+  const [weeks, setWeeks] = useState('1');
+  const [isWeeksOpen, setIsWeeksOpen] = useState(false);
+  const [eventDays, setEventDays] = useState('1');
+  const [isDaysOpen, setIsDaysOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -71,10 +74,6 @@ const NewCoursePage = () => {
       errs.duration = 'Varighet må være større enn 0';
     }
 
-    if (courseType === 'series' && (!weeks || parseInt(weeks) <= 0)) {
-      errs.weeks = 'Antall uker må være større enn 0';
-    }
-
     if (!location.trim()) {
       errs.location = 'Sted er påkrevd';
     }
@@ -84,7 +83,7 @@ const NewCoursePage = () => {
     }
 
     return errs;
-  }, [startDate, startTime, duration, weeks, location, price, courseType]);
+  }, [startDate, startTime, duration, location, price]);
 
   const isFormValid = Object.keys(errors).length === 0;
 
@@ -112,7 +111,8 @@ const NewCoursePage = () => {
       startDate,
       startTime,
       duration,
-      weeks,
+      weeks: courseType === 'series' ? weeks : undefined,
+      eventDays: courseType === 'single' ? eventDays : undefined,
       location,
       price,
     });
@@ -164,19 +164,21 @@ const NewCoursePage = () => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
           <div className="mx-auto max-w-3xl w-full space-y-8 pb-12">
             {/* Step 1: Course Type Selection */}
-            <section className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-4">
-                1. Velg type
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
+              <div className="px-6 pt-5 pb-4">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                  1. Velg type
+                </h2>
+              </div>
+              <div className="px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Option A: Kursrekke */}
                 <button
                   type="button"
                   onClick={() => setCourseType('series')}
-                  className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all ${
+                  className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all ${
                     courseType === 'series'
-                      ? 'bg-surface border-2 border-text-primary shadow-sm'
-                      : 'border border-border bg-surface/50 hover:bg-surface hover:border-ring opacity-70 hover:opacity-100'
+                      ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
+                      : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -217,10 +219,10 @@ const NewCoursePage = () => {
                 <button
                   type="button"
                   onClick={() => setCourseType('single')}
-                  className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all ${
+                  className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all ${
                     courseType === 'single'
-                      ? 'bg-surface border-2 border-text-primary shadow-sm'
-                      : 'border border-border bg-surface/50 hover:bg-surface hover:border-ring opacity-70 hover:opacity-100'
+                      ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
+                      : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -260,16 +262,18 @@ const NewCoursePage = () => {
             </section>
 
             {/* Step 2: Course Details */}
-            <section className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm space-y-6">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-                2. Detaljer
-              </h2>
-
+            <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
+              <div className="px-6 pt-5 pb-4">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                  2. Detaljer
+                </h2>
+              </div>
+              <div className="px-6 pb-6 space-y-6">
               {/* Grid for Logistics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Start Date - Calendar Picker */}
-                <div className="group space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <div className="group">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
                     {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-red-500">*</span>
                   </label>
                   <Popover>
@@ -277,7 +281,7 @@ const NewCoursePage = () => {
                       <button
                         type="button"
                         onBlur={() => handleBlur('startDate')}
-                        className={`flex items-center justify-between w-full rounded-xl border py-2.5 px-4 text-text-primary text-sm bg-surface transition-all text-left focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                        className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                           showError('startDate') ? 'border-red-500' : 'border-border'
                         }`}
                       >
@@ -309,8 +313,8 @@ const NewCoursePage = () => {
                 </div>
 
                 {/* Start Time - Custom Dropdown */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
                     Tidspunkt <span className="text-red-500">*</span>
                   </label>
                   <Popover open={isTimeOpen} onOpenChange={setIsTimeOpen}>
@@ -318,7 +322,7 @@ const NewCoursePage = () => {
                       <button
                         type="button"
                         onBlur={() => handleBlur('startTime')}
-                        className={`flex items-center justify-between w-full rounded-xl border py-2.5 px-4 text-text-primary text-sm bg-surface transition-all text-left focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                        className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                           showError('startTime') ? 'border-red-500' : 'border-border'
                         }`}
                       >
@@ -364,8 +368,8 @@ const NewCoursePage = () => {
                 </div>
 
                 {/* Duration - Text Input */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
                     Varighet (minutter) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -375,7 +379,7 @@ const NewCoursePage = () => {
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
                       onBlur={() => handleBlur('duration')}
-                      className={`w-full rounded-xl border py-2.5 pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-surface transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                      className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                         showError('duration') ? 'border-red-500' : 'border-border'
                       }`}
                     />
@@ -391,45 +395,103 @@ const NewCoursePage = () => {
                   )}
                 </div>
 
-                {/* Number of Weeks - Text Input (only for series) */}
-                <div className={`space-y-2 ${courseType === 'single' ? 'opacity-50' : ''}`}>
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-                    Antall uker {courseType === 'series' && <span className="text-red-500">*</span>}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="8"
-                      value={courseType === 'single' ? '1' : weeks}
-                      onChange={(e) => setWeeks(e.target.value)}
-                      onBlur={() => handleBlur('weeks')}
-                      disabled={courseType === 'single'}
-                      className={`w-full rounded-xl border py-2.5 pl-4 pr-14 text-sm transition-all ${
-                        courseType === 'single'
-                          ? 'bg-surface-elevated text-text-tertiary border-border cursor-not-allowed'
-                          : showError('weeks')
-                          ? 'bg-surface text-text-primary border-red-500 placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
-                          : 'bg-surface text-text-primary border-border placeholder-text-tertiary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
-                      }`}
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className={`text-xs font-medium ${courseType === 'single' ? 'text-text-tertiary' : showError('weeks') ? 'text-red-500' : 'text-muted-foreground'}`}>{courseType === 'single' ? 'uke' : 'uker'}</span>
-                    </div>
+                {/* Number of Weeks (series) or Days (single) */}
+                {courseType === 'series' ? (
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                      Antall uker
+                    </label>
+                    <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                        >
+                          <span className="text-text-primary">
+                            {weeks}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">{parseInt(weeks) === 1 ? 'uke' : 'uker'}</span>
+                            <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isWeeksOpen ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                        <div className="flex flex-col gap-0.5">
+                          {Array.from({ length: 16 }, (_, i) => i + 1).map((week) => (
+                            <button
+                              key={week}
+                              type="button"
+                              onClick={() => {
+                                setWeeks(week.toString());
+                                setIsWeeksOpen(false);
+                              }}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                weeks === week.toString()
+                                  ? 'bg-text-primary text-white'
+                                  : 'text-sidebar-foreground hover:bg-surface-elevated'
+                              }`}
+                            >
+                              <span>{week} {week === 1 ? 'uke' : 'uker'}</span>
+                              {weeks === week.toString() && <Check className="h-4 w-4" />}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  {courseType === 'series' && showError('weeks') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.weeks}
-                    </p>
-                  )}
-                </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                      Antall dager
+                    </label>
+                    <Popover open={isDaysOpen} onOpenChange={setIsDaysOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                        >
+                          <span className="text-text-primary">
+                            {eventDays}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">{parseInt(eventDays) === 1 ? 'dag' : 'dager'}</span>
+                            <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isDaysOpen ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                        <div className="flex flex-col gap-0.5">
+                          {Array.from({ length: 10 }, (_, i) => i + 1).map((day) => (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => {
+                                setEventDays(day.toString());
+                                setIsDaysOpen(false);
+                              }}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                eventDays === day.toString()
+                                  ? 'bg-text-primary text-white'
+                                  : 'text-sidebar-foreground hover:bg-surface-elevated'
+                              }`}
+                            >
+                              <span>{day} {day === 1 ? 'dag' : 'dager'}</span>
+                              {eventDays === day.toString() && <Check className="h-4 w-4" />}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
               </div>
 
               {/* Grid for Location & Price */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Location */}
-                <div className="sm:col-span-2 md:col-span-1 space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <div className="sm:col-span-2 md:col-span-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
                     Sted / Lokale <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -439,11 +501,11 @@ const NewCoursePage = () => {
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       onBlur={() => handleBlur('location')}
-                      className={`w-full rounded-xl border py-2.5 pl-10 pr-4 text-text-primary placeholder-text-tertiary text-sm bg-surface transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                      className={`w-full h-11 rounded-xl border pl-10 pr-4 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                         showError('location') ? 'border-red-500' : 'border-border'
                       }`}
                     />
-                    <MapPin className={`absolute left-3.5 top-3 h-4 w-4 ${showError('location') ? 'text-red-500' : 'text-text-tertiary'}`} />
+                    <MapPin className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-red-500' : 'text-text-tertiary'}`} />
                   </div>
                   {showError('location') && (
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
@@ -454,8 +516,8 @@ const NewCoursePage = () => {
                 </div>
 
                 {/* Price */}
-                <div className="sm:col-span-2 md:col-span-1 space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+                <div className="sm:col-span-2 md:col-span-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
                     Totalpris <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -465,7 +527,7 @@ const NewCoursePage = () => {
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       onBlur={() => handleBlur('price')}
-                      className={`w-full rounded-xl border py-2.5 pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-surface transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary ${
+                      className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                         showError('price') ? 'border-red-500' : 'border-border'
                       }`}
                     />
@@ -480,6 +542,7 @@ const NewCoursePage = () => {
                     </p>
                   )}
                 </div>
+              </div>
               </div>
             </section>
 
@@ -532,7 +595,7 @@ const NewCoursePage = () => {
         </div>
 
         {/* Bottom Actions Bar */}
-        <div className="p-6 border-t border-border bg-surface z-10">
+        <div className="p-6 border-t border-border bg-white/80 backdrop-blur-md z-10">
           <div className="max-w-3xl mx-auto flex flex-col gap-3">
             {submitAttempted && !isFormValid && (
               <div className="flex items-center justify-center gap-2 text-sm text-red-500">
@@ -541,26 +604,21 @@ const NewCoursePage = () => {
               </div>
             )}
             <div className="flex items-center justify-between">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="compact"
                 onClick={handleCancel}
-                className="h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease"
               >
                 Avbryt
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="compact"
                 onClick={handlePublish}
                 disabled={submitAttempted && !isFormValid}
-                className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium shadow-sm ios-ease ${
-                  submitAttempted && !isFormValid
-                    ? 'bg-text-tertiary text-white cursor-not-allowed'
-                    : 'bg-text-primary text-white hover:bg-sidebar-foreground'
-                }`}
               >
                 <span>Publiser kurs</span>
                 <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>

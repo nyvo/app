@@ -21,7 +21,7 @@ const App = () => {
         <Route path="/" element={<Navigate to="/teacher" replace />} />
         <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/teacher/courses" element={<CoursesPage />} />
-        <Route path="/teacher/courses/detail" element={<CourseDetailPage />} />
+        <Route path="/teacher/courses/:id" element={<CourseDetailPage />} />
         <Route path="/teacher/schedule" element={<SchedulePage />} />
         <Route path="/teacher/signups" element={<SignupsPage />} />
         <Route path="/teacher/messages" element={<MessagesPage />} />

@@ -6,7 +6,8 @@ import {
   MapPin,
   Users,
   Leaf,
-  Menu
+  Menu,
+  Calendar
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
@@ -21,14 +22,14 @@ import { mockDetailedCourses, emptyDetailedCourses, type DetailedCourse } from '
 
 const courseTypeLabels: Record<string, string> = {
   kursrekke: 'Kursrekke',
-  arrangement: 'Arrangement',
+  enkeltkurs: 'Enkeltkurs',
 };
 
 const CourseRow = ({ course }: { course: DetailedCourse }) => {
   return (
     <div className="group flex items-center p-4 border-b border-surface-elevated hover:bg-secondary transition-colors cursor-pointer">
       {/* Course & Location - flex-[2] */}
-      <Link to="/teacher/courses/detail" className="flex items-center gap-4 flex-[2] min-w-0 pr-4">
+      <Link to={`/teacher/courses/${course.id}`} className="flex items-center gap-4 flex-[2] min-w-0 pr-4">
         <div className="min-w-0">
           <h3 className="text-sm font-medium truncate text-text-primary group-hover:text-primary transition-colors">
             {course.title}
@@ -197,7 +198,7 @@ const CoursesPage = () => {
             {showEmptyState ? (
               <CoursesEmptyState />
             ) : filteredCourses.length === 0 ? (
-               <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-xl bg-white">
+               <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-2xl bg-white">
                   <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
                      <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                   </div>
@@ -207,7 +208,7 @@ const CoursesPage = () => {
                   </p>
                </div>
             ) : (
-              <div className="h-full rounded-xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
+              <div className="h-full rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
                   <div className="overflow-auto flex-1 custom-scrollbar">
                     {/* Table Header */}
                     <div className="flex items-center px-4 py-3 border-b border-border bg-surface/50 sticky top-0">

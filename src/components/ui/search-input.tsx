@@ -18,7 +18,7 @@ export const SearchInput = ({
 }: SearchInputProps) => {
   return (
     <div className={cn('relative group', className)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
       <input
         type="text"
         value={value}

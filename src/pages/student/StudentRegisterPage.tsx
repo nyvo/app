@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Mail, Lock, CheckCircle2, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const StudentRegisterPage = () => {
   const [fullName, setFullName] = useState('');
@@ -49,73 +50,73 @@ const StudentRegisterPage = () => {
             {/* Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>
               {/* Full Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Fullt navn
                 </label>
                 <div className="relative group">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary" />
-                  <input
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Input
                     type="text"
                     placeholder="Ola Nordmann"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="input-focus block w-full rounded-xl border border-border bg-surface/50 pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
+                    className="pl-10"
                   />
                 </div>
               </div>
 
               {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   E-postadresse
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary" />
-                  <input
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Input
                     type="email"
                     placeholder="navn@eksempel.no"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="input-focus block w-full rounded-xl border border-border bg-surface/50 pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
+                    className="pl-10"
                   />
                 </div>
               </div>
 
               {/* Password */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Passord
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary" />
-                  <input
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Input
                     type="password"
                     placeholder="••••••••"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input-focus block w-full rounded-xl border border-border bg-surface/50 pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
+                    className="pl-10"
                   />
                 </div>
               </div>
 
               {/* Confirm Password */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-text-secondary">
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Bekreft passord
                 </label>
                 <div className="relative group">
-                  <CheckCircle2 className="absolute left-3 top-3 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary" />
-                  <input
+                  <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Input
                     type="password"
                     placeholder="••••••••"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="input-focus block w-full rounded-xl border border-border bg-surface/50 pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
+                    className="pl-10"
                   />
                 </div>
               </div>

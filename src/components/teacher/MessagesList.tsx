@@ -30,7 +30,7 @@ export const MessagesList = ({ messages }: MessagesListProps) => {
           messages.map((message) => (
           <div
             key={message.id}
-            className="group flex items-center gap-3.5 p-3 rounded-2xl hover:bg-surface-elevated cursor-pointer transition-colors"
+            className="group flex items-center gap-3.5 p-3 rounded-3xl hover:bg-surface-elevated cursor-pointer transition-colors"
           >
             <div className="relative flex-shrink-0">
               {message.sender.avatar ? (

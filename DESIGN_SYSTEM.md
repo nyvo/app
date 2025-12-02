@@ -34,12 +34,12 @@
 | `border-ring` | #D6D3D1 | Hover state borders |
 
 ### Status Colors
-| Status | Background | Border | Text |
-|--------|------------|--------|------|
-| Confirmed | `bg-status-confirmed-bg` | `border-status-confirmed-border` | `text-status-confirmed-text` |
-| Waitlist | `bg-status-waitlist-bg` | `border-status-waitlist-border` | `text-status-waitlist-text` |
-| Cancelled | `bg-status-cancelled-bg` | `border-status-cancelled-border` | `text-status-cancelled-text` |
-| Error | `bg-status-error-bg` | `border-status-error-border` | `text-status-error-text` |
+| Status | Background | Border | Text | Hex Values |
+|--------|------------|--------|------|------------|
+| Confirmed | `bg-status-confirmed-bg` | `border-status-confirmed-border` | `text-status-confirmed-text` | green-50/100/700 |
+| Waitlist | `bg-status-waitlist-bg` | `border-status-waitlist-border` | `text-status-waitlist-text` | orange-50/100/700 |
+| Cancelled | `bg-status-cancelled-bg` | `border-status-cancelled-border` | `text-status-cancelled-text` | gray-100/200/600 |
+| Error | `bg-status-error-bg` | `border-status-error-border` | `text-status-error-text` | red-50/100/600 |
 
 ### Feedback Colors
 | Token | Usage |
@@ -204,12 +204,65 @@ The `<Button>` component supports these variants and sizes:
 </Button>
 ```
 
+#### When to Use `<Button>` vs Native `<button>`
+
+> **IMPORTANT:** Always use the shadcn `<Button>` component from `@/components/ui/button` for action buttons. Use native `<button>` only for UI controls like tabs, filters, and list items.
+
+| Button Type | Use | Examples |
+|-------------|-----|----------|
+| **Primary actions** | `<Button>` | "Opprett kurs", "Lagre", "Send", "Publiser" |
+| **Secondary actions** | `<Button variant="outline-soft">` | "Del kurs", "Vis side", "Eksporter" |
+| **Cancel/dismiss** | `<Button variant="ghost">` | "Avbryt" |
+| **Destructive actions** | `<Button variant="destructive">` | "Slett kurs", "Logg ut" |
+| **Tab/filter navigation** | Native `<button>` | Status tabs, view toggles, filter pills |
+| **Icon-only triggers** | Native `<button>` | Close, more-menu, pagination arrows |
+| **List items/cards** | Native `<button>` | Conversation rows, clickable cards |
+| **Selection cards** | Native `<button>` | Radio-style form selections |
+| **Form triggers** | Native `<button>` | Date picker, time selector, dropdown triggers |
+| **Toggle switches** | Native `<button>` | On/off toggles, notification settings |
+
+**Examples:**
+```tsx
+// Action buttons - use <Button>
+<Button size="compact">Lagre endringer</Button>
+<Button variant="outline-soft" size="compact">
+  <Share className="h-3.5 w-3.5" />
+  Del kurs
+</Button>
+<Button variant="ghost" size="compact">Avbryt</Button>
+<Button variant="destructive" size="compact">Slett kurs</Button>
+
+// UI controls - use native <button>
+<button onClick={() => setActiveTab('weeks')} className="tab-btn ...">
+  Timeplan
+</button>
+<button className="rounded-lg border ..." aria-label="Neste side">
+  <ChevronRight className="h-4 w-4" />
+</button>
+```
+
 ### Cards
 
 #### Standard Card
 ```tsx
-className="rounded-3xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md"
+className="rounded-2xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md"
 ```
+> Use `rounded-3xl` for dashboard cards (stats, messages, courses list, registrations). Use `rounded-2xl` for form section cards and table/detail pages. Use `rounded-xl` for selection cards and nested interactive elements.
+
+#### Form Section Card (with header separation)
+```tsx
+<section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
+  <div className="px-6 pt-6 pb-2">
+    <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
+      Section Header
+    </h2>
+  </div>
+  <div className="p-6 space-y-6">
+    {/* Form content */}
+  </div>
+</section>
+```
+> Use `p-1` on outer card with inner wrappers for header (`px-6 pt-6 pb-2`) and content (`p-6`) for better visual separation.
 
 #### Hero Card (Dark with Gradient)
 ```tsx
@@ -220,15 +273,58 @@ className="relative rounded-3xl bg-primary text-primary-foreground shadow-lg sha
 
 ### Form Inputs
 
+> **IMPORTANT:** Always use the shadcn `<Input>` component from `@/components/ui/input` instead of native `<input>` elements. For search fields, use `<SearchInput>` from `@/components/ui/search-input`. These components have all design system styles built-in, ensuring consistency across the app.
+
+#### Form Field Labels
+```tsx
+className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5"
+```
+> **Standard form labels** use uppercase with `text-muted-foreground` (#78716C). Always include `block` and `mb-1.5` for reliable spacing.
+
+#### Form Section Card Header (for grouped form sections)
+```tsx
+className="text-xs font-semibold uppercase tracking-wider text-text-tertiary"
+```
+> Use `text-text-tertiary` for section headers like "Generell Informasjon" or step indicators like "1. Velg type". These sit above the form fields.
+
 #### Text Input
 ```tsx
-className="block w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border placeholder:text-text-tertiary focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-white ios-ease"
+import { Input } from '@/components/ui/input';
+
+// Basic usage - styles are built-in
+<Input type="text" placeholder="Enter text..." />
+
+// With leading icon
+<div className="relative group">
+  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+  <Input type="email" placeholder="email@example.com" className="pl-10" />
+</div>
 ```
+> **Always use `<Input>` component.** Standard height is `h-11` (44px). For inputs with icons, wrap in `relative group` div and add `pl-10` to Input. The component includes all design system styles: `bg-input-bg`, `focus:bg-white`, `focus:border-ring focus:ring-4 focus:ring-border/30`, and `hover:border-ring`.
+
+#### Selection Card (Radio-style)
+```tsx
+// Selected state
+className="bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm rounded-xl p-5"
+
+// Unselected state
+className="border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100 rounded-xl p-5"
+```
+> Use `ring-2 ring-text-secondary` for a softer selection indicator instead of thick borders. Use `rounded-xl` for selection cards inside form sections.
 
 #### Search Input
 ```tsx
-className="h-10 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:outline-none focus:ring-1 focus:ring-text-tertiary ios-ease shadow-sm hover:border-ring"
+import { SearchInput } from '@/components/ui/search-input';
+
+// Basic usage - icon and styles are built-in
+<SearchInput
+  value={searchQuery}
+  onChange={setSearchQuery}
+  placeholder="Søk..."
+  aria-label="Søk"
+/>
 ```
+> **Always use `<SearchInput>` component for search fields.** It includes the search icon and all styling. Height is `h-10`. The component is controlled via `value` and `onChange` props.
 
 #### Segmented Filter Container
 ```tsx
@@ -454,6 +550,27 @@ className="backdrop-blur-md bg-white/10 border border-white/10"
 ```
 Used for badges on dark backgrounds.
 
+### Frosted Glass Footer
+```tsx
+className="p-6 border-t border-border bg-white/80 backdrop-blur-md z-10"
+```
+Used for sticky action bars at the bottom of forms/pages.
+
+---
+
+## Sidebar Navigation
+
+### Active Nav Item
+```tsx
+className="bg-white border border-sidebar-border text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+```
+
+### Inactive Nav Item
+```tsx
+className="text-muted-foreground border border-transparent hover:bg-sidebar-border/50 hover:text-text-secondary ios-ease"
+```
+> Use `hover:bg-sidebar-border/50` for a subtle, semi-transparent hover effect instead of solid white.
+
 ---
 
 ## Course Type Colors
@@ -523,6 +640,7 @@ Backgrounds:
 #FDFBF7 → bg-surface
 #F5F5F4 → bg-surface-elevated
 #FFFFFF → bg-white
+rgba(251,249,246,0.3) → bg-input-bg
 
 Borders:
 #E7E5E4 → border-border
@@ -538,4 +656,10 @@ Feedback:
 #16A34A → bg-success / text-success
 #F59E0B → bg-warning / text-warning
 #EF4444 → bg-destructive / text-destructive
+
+Status Colors:
+Confirmed (green): #f0fdf4 bg, #dcfce7 border, #15803d text
+Waitlist (orange): #fff7ed bg, #ffedd5 border, #c2410c text
+Cancelled (gray): #f3f4f6 bg, #e5e7eb border, #4b5563 text
+Error (red): #fef2f2 bg, #fee2e2 border, #dc2626 text
 ```

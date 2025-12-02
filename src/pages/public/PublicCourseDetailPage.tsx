@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Waves, 
-  Coffee, 
-  Dumbbell, 
-  Info, 
-  ChevronDown, 
-  ArrowRight, 
-  ShieldCheck, 
-  Zap, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Waves,
+  Coffee,
+  Dumbbell,
+  Info,
+  ArrowRight,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Leaf,
@@ -20,6 +18,7 @@ import {
   Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 const PublicCourseDetailPage = () => {
   const [step, setStep] = useState(1);
@@ -357,99 +356,86 @@ const PublicCourseDetailPage = () => {
                                     <div className="space-y-5">
                                         {/* Name Fields */}
                                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-text-secondary">
+                                            <div>
+                                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                                                     Fornavn <span className="text-red-500">*</span>
                                                 </label>
-                                                <input
+                                                <Input
                                                     type="text"
                                                     name="firstName"
                                                     value={formData.firstName}
                                                     onChange={handleInputChange}
                                                     placeholder="Ola"
                                                     aria-invalid={errors.firstName}
-                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.firstName
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
-                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
-                                                    }`}
+                                                    className={errors.firstName ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}
                                                 />
                                                 {errors.firstName && (
-                                                    <p className="text-xs text-red-500 font-medium">Fornavn er påkrevd</p>
+                                                    <p className="text-xs text-red-500 font-medium mt-1.5">Fornavn er påkrevd</p>
                                                 )}
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-medium text-text-secondary">
+                                            <div>
+                                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                                                     Etternavn <span className="text-red-500">*</span>
                                                 </label>
-                                                <input
+                                                <Input
                                                     type="text"
                                                     name="lastName"
                                                     value={formData.lastName}
                                                     onChange={handleInputChange}
                                                     placeholder="Nordmann"
                                                     aria-invalid={errors.lastName}
-                                                    className={`input-focus block w-full rounded-lg border px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.lastName
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
-                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
-                                                    }`}
+                                                    className={errors.lastName ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}
                                                 />
                                                 {errors.lastName && (
-                                                    <p className="text-xs text-red-500 font-medium">Etternavn er påkrevd</p>
+                                                    <p className="text-xs text-red-500 font-medium mt-1.5">Etternavn er påkrevd</p>
                                                 )}
                                             </div>
                                         </div>
 
                                         {/* Contact Fields */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-text-secondary">
+                                        <div>
+                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">
                                                 E-postadresse <span className="text-red-500">*</span>
                                             </label>
-                                            <div className="relative">
-                                                <Mail className={`absolute left-3 top-3 h-4 w-4 ${errors.email ? 'text-red-400' : 'text-text-tertiary'}`} />
-                                                <input
+                                            <div className="relative group">
+                                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${errors.email ? 'text-red-400' : 'text-text-tertiary'}`} />
+                                                <Input
                                                     type="email"
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleInputChange}
                                                     placeholder="ola@eksempel.no"
                                                     aria-invalid={errors.email}
-                                                    className={`input-focus block w-full rounded-lg border pl-10 pr-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus:ring-4 ${
-                                                        errors.email
-                                                        ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake'
-                                                        : 'border-border bg-surface/50 focus:border-text-tertiary focus:ring-border/50'
-                                                    }`}
+                                                    className={`pl-10 ${errors.email ? 'border-red-500 bg-red-50/50 focus:border-red-500 focus:ring-red-500/20 animate-shake' : ''}`}
                                                 />
                                             </div>
                                             {errors.email ? (
-                                                <p className="text-xs text-red-500 font-medium">Gyldig e-postadresse er påkrevd</p>
+                                                <p className="text-xs text-red-500 font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
                                             ) : (
-                                                <p className="text-xs text-text-tertiary">Ordrebekreftelse sendes hit.</p>
+                                                <p className="text-xs text-text-tertiary mt-1.5">Ordrebekreftelse sendes hit.</p>
                                             )}
                                         </div>
 
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-text-secondary">Telefonnummer <span className="text-text-tertiary font-normal">(Valgfritt)</span></label>
-                                            <input
+                                        <div>
+                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Telefonnummer <span className="text-text-tertiary">(Valgfritt)</span></label>
+                                            <Input
                                                 type="tel"
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
                                                 placeholder="+47 000 00 000"
-                                                className="input-focus block w-full rounded-lg border border-border bg-surface/50 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50"
                                             />
                                         </div>
 
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-medium text-text-secondary">Kommentar til instruktør <span className="text-text-tertiary font-normal">(Valgfritt)</span></label>
+                                        <div>
+                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Kommentar til instruktør <span className="text-text-tertiary">(Valgfritt)</span></label>
                                             <textarea
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
                                                 placeholder="Skriv en beskjed..."
                                                 rows={3}
-                                                className="input-focus block w-full rounded-lg border border-border bg-surface/50 px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-text-tertiary focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/50 resize-none"
+                                                className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none"
                                             />
                                         </div>
                                     </div>
@@ -466,7 +452,7 @@ const PublicCourseDetailPage = () => {
                                             required
                                             className="checkbox-wrapper peer sr-only"
                                         />
-                                        <div className={`h-4 w-4 rounded-[4px] border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-ring'}`}>
+                                        <div className={`h-4 w-4 rounded-sm border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-red-500 ring-1 ring-red-500' : 'border-ring'}`}>
                                             <Check className="hidden h-3 w-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
                                         </div>
                                     </label>

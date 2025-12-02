@@ -74,7 +74,7 @@ export const TeacherSidebar = () => {
                       className={
                         active
                           ? 'bg-white border border-sidebar-border text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.02)] hover:bg-white hover:text-text-primary'
-                          : 'text-muted-foreground border border-transparent hover:bg-white hover:border-sidebar-border hover:text-text-secondary ios-ease'
+                          : 'text-muted-foreground border border-transparent hover:bg-sidebar-border/50 hover:text-text-secondary ios-ease'
                       }
                     >
                       <Link to={item.href} className="flex items-center gap-3">
