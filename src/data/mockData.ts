@@ -348,7 +348,7 @@ export const mockSignups: SignupWithTimestamps[] = [
 // Default instructor for courses
 const defaultInstructor: Instructor = {
   name: 'Kristoffer Nyvold',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+  avatar: '',
   rating: 4.9,
   classesCount: 128,
 };

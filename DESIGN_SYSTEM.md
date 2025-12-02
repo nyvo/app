@@ -44,8 +44,8 @@
 ### Feedback Colors
 | Token | Usage |
 |-------|-------|
-| `bg-success` / `text-success` | Success states (#16A34A) |
-| `bg-warning` / `text-warning` | Warning states (#F59E0B) |
+| `bg-success` / `text-success` | Success states (#22C55E) |
+| `bg-warning` / `text-warning` | Warning states (#F97316) |
 | `bg-destructive` / `text-destructive` | Error/destructive (#EF4444) |
 
 ---
@@ -653,8 +653,8 @@ Brand:
 #547564 → bg-primary-soft
 
 Feedback:
-#16A34A → bg-success / text-success
-#F59E0B → bg-warning / text-warning
+#22C55E → bg-success / text-success
+#F97316 → bg-warning / text-warning
 #EF4444 → bg-destructive / text-destructive
 
 Status Colors:
