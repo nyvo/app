@@ -7,9 +7,61 @@ import { Input } from '@/components/ui/input';
 const StudentLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, boolean> = {};
+    let isValid = true;
+
+    if (!email.trim()) {
+      newErrors.email = true;
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = true;
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      newErrors.password = true;
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    // Validate on blur
+    if (field === 'email' && email.trim() && !validateEmail(email)) {
+      setErrors(prev => ({ ...prev, email: true }));
+    }
+  };
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: false }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({ email: true, password: true });
+
+    if (!validateForm()) {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+      if (firstErrorField) {
+        firstErrorField.focus();
+      }
+      return;
+    }
+
     // Handle login logic
     console.log({ email, password });
   };
@@ -50,37 +102,47 @@ const StudentLoginPage = () => {
               {/* Email */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  E-postadresse
+                  E-postadresse <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.email ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="email"
                     placeholder="navn@eksempel.no"
-                    required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                    onBlur={() => handleBlur('email')}
+                    aria-invalid={errors.email}
+                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
                   />
                 </div>
+                {errors.email && touched.email && (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">
+                    {!email.trim() ? 'E-postadresse er påkrevd' : 'Ugyldig e-postadresse'}
+                  </p>
+                )}
               </div>
 
               {/* Password */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Passord
+                  Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.password ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
+                    onBlur={() => handleBlur('password')}
+                    aria-invalid={errors.password}
+                    className={`pl-10 ${errors.password ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
                   />
                 </div>
+                {errors.password && touched.password && (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">Passord er påkrevd</p>
+                )}
                 {/* Forgot Password Link */}
                 <div className="flex justify-end pt-1">
                   <Link

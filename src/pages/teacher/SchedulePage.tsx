@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
+import { useEmptyState } from '@/context/EmptyStateContext';
 import {
   getOsloTime,
   getWeekNumber,
@@ -267,9 +268,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
 };
 
 // Day Column Component
-const DayColumn = ({ dayIndex, isToday, isWeekend }: { dayIndex: number; isToday: boolean; isWeekend: boolean }) => {
-  const dayEvents = events[dayIndex] || [];
-
+const DayColumn = ({ isToday, isWeekend, events: dayEvents }: { dayIndex: number; isToday: boolean; isWeekend: boolean; events: ScheduleEvent[] }) => {
   return (
     <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface/30' : ''} ${isWeekend ? 'bg-[#FAFAFA]' : ''}`}>
       {/* Background grid lines */}
@@ -287,7 +286,15 @@ const DayColumn = ({ dayIndex, isToday, isWeekend }: { dayIndex: number; isToday
   );
 };
 
+// Empty events for empty state demo
+const emptyEvents: Record<number, ScheduleEvent[]> = {};
+
 export const SchedulePage = () => {
+  const { showEmptyState } = useEmptyState();
+
+  // Use empty or populated events based on empty state toggle
+  const currentEvents = showEmptyState ? emptyEvents : events;
+
   // Initialize with current Oslo time
   const [currentTime, setCurrentTime] = useState(getOsloTime);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, +1 = next week
@@ -448,6 +455,29 @@ export const SchedulePage = () => {
           {/* Schedule Grid Container */}
           <div className="flex-1 overflow-auto bg-white relative flex flex-col">
 
+            {/* Empty State Overlay */}
+            {showEmptyState && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <div className="text-center max-w-sm mx-auto p-8">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated border border-border">
+                    <CalendarDays className="h-8 w-8 text-text-tertiary" />
+                  </div>
+                  <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
+                    Ingen timer denne uken
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Det er ingen planlagte timer denne uken. Opprett et nytt kurs for å komme i gang.
+                  </p>
+                  <Button asChild size="compact" className="gap-2">
+                    <Link to="/teacher/new-course">
+                      <Plus className="h-3.5 w-3.5" />
+                      Opprett nytt kurs
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Sticky Header (Days) */}
             <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
               {/* Corner */}
@@ -508,6 +538,7 @@ export const SchedulePage = () => {
                   dayIndex={index}
                   isToday={day.isToday}
                   isWeekend={day.isWeekend}
+                  events={currentEvents[index] || []}
                 />
               ))}
             </div>

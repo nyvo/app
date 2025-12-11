@@ -9,9 +9,98 @@ const StudentRegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (!fullName.trim()) {
+      newErrors.fullName = 'Fullt navn er påkrevd';
+      isValid = false;
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'E-postadresse er påkrevd';
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Ugyldig e-postadresse';
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Passord er påkrevd';
+      isValid = false;
+    } else if (password.length < 8) {
+      newErrors.password = 'Passord må være minst 8 tegn';
+      isValid = false;
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Bekreft passord er påkrevd';
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passordene stemmer ikke overens';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    const newErrors = { ...errors };
+
+    if (field === 'email' && email.trim() && !validateEmail(email)) {
+      newErrors.email = 'Ugyldig e-postadresse';
+    } else if (field === 'email' && validateEmail(email)) {
+      delete newErrors.email;
+    }
+
+    if (field === 'confirmPassword' && confirmPassword.trim() && password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passordene stemmer ikke overens';
+    } else if (field === 'confirmPassword' && password === confirmPassword && confirmPassword.trim()) {
+      delete newErrors.confirmPassword;
+    }
+
+    if (field === 'password' && password.trim() && password.length < 8) {
+      newErrors.password = 'Passord må være minst 8 tegn';
+    } else if (field === 'password' && password.length >= 8) {
+      delete newErrors.password;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({ fullName: true, email: true, password: true, confirmPassword: true });
+
+    if (!validateForm()) {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+      if (firstErrorField) {
+        firstErrorField.focus();
+      }
+      return;
+    }
+
     // Handle registration logic
     console.log({ fullName, email, password, confirmPassword });
   };
@@ -52,73 +141,91 @@ const StudentRegisterPage = () => {
               {/* Full Name */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Fullt navn
+                  Fullt navn <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.fullName ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="text"
                     placeholder="Ola Nordmann"
-                    required
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setFullName(e.target.value); clearError('fullName'); }}
+                    onBlur={() => handleBlur('fullName')}
+                    aria-invalid={!!errors.fullName}
+                    className={`pl-10 ${errors.fullName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
                   />
                 </div>
+                {errors.fullName && touched.fullName && (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.fullName}</p>
+                )}
               </div>
 
               {/* Email */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  E-postadresse
+                  E-postadresse <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.email ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="email"
                     placeholder="navn@eksempel.no"
-                    required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                    onBlur={() => handleBlur('email')}
+                    aria-invalid={!!errors.email}
+                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
                   />
                 </div>
+                {errors.email && touched.email && (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.email}</p>
+                )}
               </div>
 
               {/* Password */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Passord
+                  Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.password ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
+                    onBlur={() => handleBlur('password')}
+                    aria-invalid={!!errors.password}
+                    className={`pl-10 ${errors.password ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
                   />
                 </div>
+                {errors.password && touched.password ? (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.password}</p>
+                ) : (
+                  <p className="text-xs text-text-tertiary mt-1.5">Minst 8 tegn</p>
+                )}
               </div>
 
               {/* Confirm Password */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Bekreft passord
+                  Bekreft passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
-                  <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary transition-colors group-focus-within:text-text-primary pointer-events-none" />
+                  <CheckCircle2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.confirmPassword ? 'text-status-error-text' : confirmPassword && password === confirmPassword ? 'text-status-confirmed-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    required
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10"
+                    onChange={(e) => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
+                    onBlur={() => handleBlur('confirmPassword')}
+                    aria-invalid={!!errors.confirmPassword}
+                    className={`pl-10 ${errors.confirmPassword ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : confirmPassword && password === confirmPassword ? 'border-status-confirmed-text bg-status-confirmed-bg' : ''}`}
                   />
                 </div>
+                {errors.confirmPassword && touched.confirmPassword && (
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.confirmPassword}</p>
+                )}
               </div>
 
               {/* Main Action */}
