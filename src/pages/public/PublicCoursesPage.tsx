@@ -7,11 +7,16 @@ import {
   Flame,
   CalendarRange,
   Leaf,
-  Layers
+  Layers,
+  SearchX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useEmptyState } from '@/context/EmptyStateContext';
+import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 
 const PublicCoursesPage = () => {
+  const { showEmptyState } = useEmptyState();
+
   return (
     <>
       <style>{`
@@ -123,6 +128,24 @@ const PublicCoursesPage = () => {
                 {/* Course List Stack */}
                 <div className="space-y-4">
 
+                    {/* Empty State */}
+                    {showEmptyState ? (
+                      <div className="rounded-3xl border border-border bg-white p-12 shadow-sm text-center">
+                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated border border-border">
+                          <SearchX className="h-8 w-8 text-text-tertiary" />
+                        </div>
+                        <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
+                          Ingen kurs funnet
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                          Det er ingen kurs som matcher dine filtre. Prøv å justere søkekriteriene eller fjern filtrene.
+                        </p>
+                        <Button variant="outline-soft" size="compact">
+                          Fjern alle filtre
+                        </Button>
+                      </div>
+                    ) : (
+                    <>
                     {/* Item 1: High Availability, Featured */}
                     <div className="group relative flex flex-col gap-5 rounded-3xl border border-border bg-white p-5 shadow-sm transition-all hover:border-text-tertiary hover:shadow-md md:flex-row md:items-center md:justify-between">
                         {/* Calendar Box */}
@@ -368,11 +391,14 @@ const PublicCoursesPage = () => {
                             </div>
                         </div>
                     </div>
+                    </>
+                    )}
 
                 </div>
-                
+
             </div>
         </main>
+        <EmptyStateToggle />
       </div>
     </>
   );

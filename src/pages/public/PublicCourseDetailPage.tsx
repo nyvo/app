@@ -33,6 +33,41 @@ const PublicCourseDetailPage = () => {
   });
   
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    const newErrors = { ...errors };
+
+    if (field === 'firstName' && !formData.firstName.trim()) {
+      newErrors.firstName = true;
+    } else if (field === 'firstName') {
+      delete newErrors.firstName;
+    }
+
+    if (field === 'lastName' && !formData.lastName.trim()) {
+      newErrors.lastName = true;
+    } else if (field === 'lastName') {
+      delete newErrors.lastName;
+    }
+
+    if (field === 'email') {
+      if (!formData.email.trim()) {
+        newErrors.email = true;
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = true;
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    setErrors(newErrors);
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, boolean> = {};
@@ -49,10 +84,9 @@ const PublicCourseDetailPage = () => {
     if (!formData.email.trim()) {
       newErrors.email = true;
       isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-       // Basic email regex
-       newErrors.email = true;
-       isValid = false;
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = true;
+      isValid = false;
     }
     if (!formData.termsAccepted) {
       newErrors.termsAccepted = true;
@@ -90,7 +124,10 @@ const PublicCourseDetailPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Mark all fields as touched on submit
+    setTouched({ firstName: true, lastName: true, email: true, termsAccepted: true });
+
     if (!validateForm()) {
         // Find first error and focus
         const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
@@ -100,7 +137,7 @@ const PublicCourseDetailPage = () => {
         }
         return;
     }
-    
+
     // Handle successful submission (mock)
     console.log('Form submitted:', formData);
     // Navigate to success page or show confirmation
@@ -365,11 +402,12 @@ const PublicCourseDetailPage = () => {
                                                     name="firstName"
                                                     value={formData.firstName}
                                                     onChange={handleInputChange}
+                                                    onBlur={() => handleBlur('firstName')}
                                                     placeholder="Ola"
-                                                    aria-invalid={errors.firstName}
+                                                    aria-invalid={!!errors.firstName}
                                                     className={errors.firstName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
-                                                {errors.firstName && (
+                                                {errors.firstName && touched.firstName && (
                                                     <p className="text-xs text-status-error-text font-medium mt-1.5">Fornavn er påkrevd</p>
                                                 )}
                                             </div>
@@ -382,11 +420,12 @@ const PublicCourseDetailPage = () => {
                                                     name="lastName"
                                                     value={formData.lastName}
                                                     onChange={handleInputChange}
+                                                    onBlur={() => handleBlur('lastName')}
                                                     placeholder="Nordmann"
-                                                    aria-invalid={errors.lastName}
+                                                    aria-invalid={!!errors.lastName}
                                                     className={errors.lastName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
-                                                {errors.lastName && (
+                                                {errors.lastName && touched.lastName && (
                                                     <p className="text-xs text-status-error-text font-medium mt-1.5">Etternavn er påkrevd</p>
                                                 )}
                                             </div>
@@ -404,12 +443,13 @@ const PublicCourseDetailPage = () => {
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleInputChange}
+                                                    onBlur={() => handleBlur('email')}
                                                     placeholder="ola@eksempel.no"
-                                                    aria-invalid={errors.email}
+                                                    aria-invalid={!!errors.email}
                                                     className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}`}
                                                 />
                                             </div>
-                                            {errors.email ? (
+                                            {errors.email && touched.email ? (
                                                 <p className="text-xs text-status-error-text font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
                                             ) : (
                                                 <p className="text-xs text-text-tertiary mt-1.5">Ordrebekreftelse sendes hit.</p>
