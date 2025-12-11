@@ -8,7 +8,7 @@ import {
   CalendarRange,
   Leaf,
   Layers,
-  SearchX
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEmptyState } from '@/context/EmptyStateContext';
@@ -131,18 +131,15 @@ const PublicCoursesPage = () => {
                     {/* Empty State */}
                     {showEmptyState ? (
                       <div className="rounded-3xl border border-border bg-white p-12 shadow-sm text-center">
-                        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated border border-border">
-                          <SearchX className="h-8 w-8 text-text-tertiary" />
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                          <Sparkles className="h-7 w-7 text-primary" />
                         </div>
                         <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
-                          Ingen kurs funnet
+                          Ingen aktive kurs
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                          Det er ingen kurs som matcher dine filtre. Prøv å justere søkekriteriene eller fjern filtrene.
+                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                          Vi jobber med nye kurs. Kom tilbake snart for å finne din neste yogaopplevelse!
                         </p>
-                        <Button variant="outline-soft" size="compact">
-                          Fjern alle filtre
-                        </Button>
                       </div>
                     ) : (
                     <>
