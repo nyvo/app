@@ -8,7 +8,7 @@ import {
   CalendarRange,
   Leaf,
   Layers,
-  Sparkles
+  Sun
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEmptyState } from '@/context/EmptyStateContext';
@@ -104,7 +104,8 @@ const PublicCoursesPage = () => {
                     </div>
                 </div>
 
-                {/* Filters */}
+                {/* Filters - hidden when empty state */}
+                {!showEmptyState && (
                 <div className="sticky top-20 z-40 mb-6 flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 bg-surface/95 backdrop-blur-sm py-2 -mx-2 px-2 md:mx-0 md:px-0 scrollbar-hide">
                     <Button size="compact" className="shrink-0">
                         Alle kurs
@@ -124,6 +125,7 @@ const PublicCoursesPage = () => {
                         <span className="hidden sm:inline">Flere filtre</span>
                     </Button>
                 </div>
+                )}
 
                 {/* Course List Stack */}
                 <div className="space-y-4">
@@ -131,8 +133,8 @@ const PublicCoursesPage = () => {
                     {/* Empty State */}
                     {showEmptyState ? (
                       <div className="rounded-3xl border border-border bg-white p-12 shadow-sm text-center">
-                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-                          <Sparkles className="h-7 w-7 text-primary" />
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50">
+                          <Sun className="h-7 w-7 text-amber-500" />
                         </div>
                         <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
                           Ingen aktive kurs
