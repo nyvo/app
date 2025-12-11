@@ -5,6 +5,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
 import { useEmptyState } from '@/context/EmptyStateContext';
+import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import {
   getOsloTime,
   getWeekNumber,
@@ -544,6 +545,7 @@ export const SchedulePage = () => {
             </div>
           </div>
         </main>
+      <EmptyStateToggle />
     </SidebarProvider>
   );
 };

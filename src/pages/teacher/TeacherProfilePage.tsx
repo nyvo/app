@@ -26,6 +26,111 @@ const TeacherProfilePage = () => {
   const [email, setEmail] = useState('kristoffer@ease.no');
   const [bio, setBio] = useState('Sertifisert Vinyasa og Yin Yoga instruktør med over 10 års erfaring. Jeg fokuserer på pust, bevegelse og mindfulness i hver time.');
 
+  // Validation state
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    let isValid = true;
+
+    if (!firstName.trim()) {
+      newErrors.firstName = 'Fornavn er påkrevd';
+      isValid = false;
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Etternavn er påkrevd';
+      isValid = false;
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'E-postadresse er påkrevd';
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Ugyldig e-postadresse';
+      isValid = false;
+    }
+
+    if (bio.length > 500) {
+      newErrors.bio = 'Bio kan ikke være mer enn 500 tegn';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    const newErrors = { ...errors };
+
+    if (field === 'firstName' && !firstName.trim()) {
+      newErrors.firstName = 'Fornavn er påkrevd';
+    } else if (field === 'firstName') {
+      delete newErrors.firstName;
+    }
+
+    if (field === 'lastName' && !lastName.trim()) {
+      newErrors.lastName = 'Etternavn er påkrevd';
+    } else if (field === 'lastName') {
+      delete newErrors.lastName;
+    }
+
+    if (field === 'email') {
+      if (!email.trim()) {
+        newErrors.email = 'E-postadresse er påkrevd';
+      } else if (!validateEmail(email)) {
+        newErrors.email = 'Ugyldig e-postadresse';
+      } else {
+        delete newErrors.email;
+      }
+    }
+
+    if (field === 'bio' && bio.length > 500) {
+      newErrors.bio = 'Bio kan ikke være mer enn 500 tegn';
+    } else if (field === 'bio') {
+      delete newErrors.bio;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSave = () => {
+    setTouched({ firstName: true, lastName: true, email: true, bio: true });
+
+    if (!validateForm()) {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
+      if (firstErrorField) {
+        firstErrorField.focus();
+      }
+      return;
+    }
+
+    setIsSaving(true);
+    // Simulate save
+    setTimeout(() => {
+      setIsSaving(false);
+      // Show success feedback here
+    }, 1000);
+  };
+
   // State for notification toggles
   const [notifications, setNotifications] = useState({
     newSignups: true,
@@ -142,39 +247,73 @@ const TeacherProfilePage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* First Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Fornavn</label>
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                  Fornavn <span className="text-status-error-text">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={firstName}
-                                    onChange={(e) => setFirstName(e.target.value)}
-                                    className="w-full h-11 rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
+                                    onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
+                                    onBlur={() => handleBlur('firstName')}
+                                    aria-invalid={!!errors.firstName}
+                                    className={`w-full h-11 rounded-xl border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                      errors.firstName
+                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
+                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                    }`}
                                 />
+                                {errors.firstName && touched.firstName && (
+                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.firstName}</p>
+                                )}
                             </div>
 
                             {/* Last Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Etternavn</label>
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                  Etternavn <span className="text-status-error-text">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     value={lastName}
-                                    onChange={(e) => setLastName(e.target.value)}
-                                    className="w-full h-11 rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
+                                    onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
+                                    onBlur={() => handleBlur('lastName')}
+                                    aria-invalid={!!errors.lastName}
+                                    className={`w-full h-11 rounded-xl border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                      errors.lastName
+                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
+                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                    }`}
                                 />
+                                {errors.lastName && touched.lastName && (
+                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.lastName}</p>
+                                )}
                             </div>
 
                             {/* Email */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">E-postadresse</label>
+                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                  E-postadresse <span className="text-status-error-text">*</span>
+                                </label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
+                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'}`} />
                                     <input
                                         type="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full h-11 rounded-xl border border-border bg-input-bg pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease"
+                                        onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                                        onBlur={() => handleBlur('email')}
+                                        aria-invalid={!!errors.email}
+                                        className={`w-full h-11 rounded-xl border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                          errors.email
+                                            ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
+                                            : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                        }`}
                                     />
                                 </div>
-                                <p className="text-xs text-text-tertiary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                                {errors.email && touched.email ? (
+                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.email}</p>
+                                ) : (
+                                  <p className="text-xs text-text-tertiary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                                )}
                             </div>
 
                             {/* Bio */}
@@ -183,12 +322,22 @@ const TeacherProfilePage = () => {
                                 <textarea
                                     rows={4}
                                     value={bio}
-                                    onChange={(e) => setBio(e.target.value)}
-                                    className="w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ios-ease resize-none"
+                                    onChange={(e) => { setBio(e.target.value); clearError('bio'); }}
+                                    onBlur={() => handleBlur('bio')}
+                                    aria-invalid={!!errors.bio}
+                                    className={`w-full rounded-xl border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease resize-none ${
+                                      errors.bio
+                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
+                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                    }`}
                                 />
-                                <div className="flex justify-between text-xs text-text-tertiary mt-1.5">
-                                    <span>Vises på din offentlige instruktørprofil.</span>
-                                    <span>{bio.length}/500</span>
+                                <div className="flex justify-between text-xs mt-1.5">
+                                    {errors.bio && touched.bio ? (
+                                      <span className="text-status-error-text font-medium">{errors.bio}</span>
+                                    ) : (
+                                      <span className="text-text-tertiary">Vises på din offentlige instruktørprofil.</span>
+                                    )}
+                                    <span className={bio.length > 500 ? 'text-status-error-text font-medium' : 'text-text-tertiary'}>{bio.length}/500</span>
                                 </div>
                             </div>
                         </div>
@@ -318,12 +467,19 @@ const TeacherProfilePage = () => {
             )}
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
-            <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
-                <Button variant="ghost" size="compact" className="hidden md:inline-flex">Avbryt</Button>
-                <Button size="compact" className="flex-1 md:flex-none justify-center">
-                    Lagre endringer
-                </Button>
-            </div>
+            {activeTab === 'profile' && (
+              <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
+                  <Button variant="ghost" size="compact" className="hidden md:inline-flex">Avbryt</Button>
+                  <Button
+                    size="compact"
+                    className="flex-1 md:flex-none justify-center"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                      {isSaving ? 'Lagrer...' : 'Lagre endringer'}
+                  </Button>
+              </div>
+            )}
 
         </div>
       </main>
