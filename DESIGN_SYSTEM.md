@@ -6,7 +6,23 @@
 
 ## Quick Reference: Design Tokens
 
-### Text Colors
+### Gray Scale (Neutral UI)
+Use these for general UI elements, backgrounds, borders, and text when you need neutral colors.
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `bg-gray-50` / `text-gray-50` | #F9FAFB | Lightest backgrounds, hover states |
+| `bg-gray-100` / `text-gray-100` | #F3F4F6 | Subtle backgrounds, dividers |
+| `bg-gray-200` / `border-gray-200` | #E5E7EB | Borders, input borders |
+| `bg-gray-300` / `border-gray-300` | #D1D5DB | Disabled states, subtle borders |
+| `text-gray-400` | #9CA3AF | Icons, placeholder text |
+| `text-gray-500` | #6B7280 | Secondary text, inactive tabs |
+| `text-gray-600` | #4B5563 | Body text, hover icon states |
+| `text-gray-700` | #374151 | Primary text, button text |
+| `bg-gray-800` | #1F2937 | Dark backgrounds, gradients |
+| `bg-gray-900` / `text-gray-900` | #111827 | Darkest text, dark buttons |
+
+### Text Colors (Semantic)
 | Token | Hex | Usage |
 |-------|-----|-------|
 | `text-text-primary` | #292524 | Headings, primary text, dark emphasis |
@@ -32,6 +48,8 @@
 | `border-border` | #E7E5E4 | Default borders |
 | `ring-ring` | #D6D3D1 | Focus rings, hover borders |
 | `border-ring` | #D6D3D1 | Hover state borders |
+| `border-gray-200` | #E5E7EB | Alternative neutral border |
+| `border-gray-100` | #F3F4F6 | Very subtle dividers |
 
 ### Status Colors
 | Status | Background | Border | Text | Hex Values |
@@ -40,6 +58,7 @@
 | Waitlist | `bg-status-waitlist-bg` | `border-status-waitlist-border` | `text-status-waitlist-text` | orange-50/100/700 |
 | Cancelled | `bg-status-cancelled-bg` | `border-status-cancelled-border` | `text-status-cancelled-text` | gray-100/200/600 |
 | Error | `bg-status-error-bg` | `border-status-error-border` | `text-status-error-text` | red-50/100/600 |
+| Info | `bg-status-info-bg` | `border-status-info-border` | `text-status-info-text` | blue-50/100/700 |
 
 ### Feedback Colors
 | Token | Usage |
@@ -47,6 +66,19 @@
 | `bg-success` / `text-success` | Success states (#22C55E) |
 | `bg-warning` / `text-warning` | Warning states (#F97316) |
 | `bg-destructive` / `text-destructive` | Error/destructive (#EF4444) |
+
+### Shadows
+| Token | Value | Usage |
+|-------|-------|-------|
+| `shadow-xs` | `0 1px 2px rgba(0,0,0,0.02)` | Very subtle, minimal elevation |
+| `shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Buttons, small elements |
+| `shadow` | `0 1px 3px rgba(0,0,0,0.05)` | Default shadow |
+| `shadow-md` | `0 4px 6px rgba(0,0,0,0.05)` | Cards, dropdowns |
+| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.05)` | Modals, popovers |
+| `shadow-xl` | `0 20px 25px rgba(0,0,0,0.08)` | Large overlays |
+| `shadow-card` | `0 1px 2px rgba(0,0,0,0.02)` | Card-specific, very subtle |
+
+> **Note:** Shadows are intentionally subtle for a clean, modern look. Use `shadow-[0_1px_2px_rgba(0,0,0,0.02)]` for inline custom card shadows.
 
 ---
 
@@ -474,11 +506,30 @@ className="rounded-lg border border-border bg-white p-1.5 text-text-tertiary hov
 
 ## Animations & Transitions
 
-### iOS-style Easing
+### Transition Utilities
+
+| Class | Timing | Easing | Usage |
+|-------|--------|--------|-------|
+| `ios-ease` | 0.3s | `cubic-bezier(0.25, 1, 0.5, 1)` | Smooth, fluid animations (cards, modals) |
+| `smooth-transition` | 0.2s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Snappy UI interactions (buttons, hovers) |
+| `transition-colors` | 0.15s | ease | Color changes only |
+| `transition-all` | 0.15s | ease | All properties (Tailwind default) |
+
 ```tsx
+// iOS-style - slower, more fluid (for larger elements)
 className="ios-ease"
-// Equivalent to: transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1)
+
+// Smooth transition - faster, snappier (for UI elements)
+className="smooth-transition"
+
+// Tailwind default
+className="transition-colors"
 ```
+
+> **When to use which:**
+> - `smooth-transition` - Buttons, table rows, list items, hover states
+> - `ios-ease` - Cards, modals, page transitions, larger movements
+> - `transition-colors` - Simple color changes without size/position
 
 ### Hover Effects
 | Effect | Class |
@@ -629,7 +680,19 @@ className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4"
 When importing designs, map these hex values to tokens:
 
 ```
-Text:
+Gray Scale (Neutral UI):
+#F9FAFB → bg-gray-50 / text-gray-50
+#F3F4F6 → bg-gray-100 / text-gray-100
+#E5E7EB → bg-gray-200 / border-gray-200
+#D1D5DB → bg-gray-300 / border-gray-300
+#9CA3AF → text-gray-400
+#6B7280 → text-gray-500
+#4B5563 → text-gray-600
+#374151 → text-gray-700
+#1F2937 → bg-gray-800
+#111827 → bg-gray-900 / text-gray-900
+
+Text (Semantic):
 #292524 → text-text-primary
 #44403C → text-sidebar-foreground
 #57534E → text-text-secondary
@@ -662,4 +725,13 @@ Confirmed (green): #f0fdf4 bg, #dcfce7 border, #15803d text
 Waitlist (orange): #fff7ed bg, #ffedd5 border, #c2410c text
 Cancelled (gray): #f3f4f6 bg, #e5e7eb border, #4b5563 text
 Error (red): #fef2f2 bg, #fee2e2 border, #dc2626 text
+Info (blue): #eff6ff bg, #dbeafe border, #1d4ed8 text
+
+Shadows:
+shadow-xs: 0 1px 2px rgba(0,0,0,0.02)
+shadow-sm: 0 1px 2px rgba(0,0,0,0.05)
+shadow: 0 1px 3px rgba(0,0,0,0.05)
+shadow-md: 0 4px 6px rgba(0,0,0,0.05)
+shadow-lg: 0 10px 15px rgba(0,0,0,0.05)
+shadow-card: 0 1px 2px rgba(0,0,0,0.02)
 ```
