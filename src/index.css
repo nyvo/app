@@ -4,7 +4,24 @@
 @import "tailwindcss";
 
 @theme {
-  /* Base Colors - Stone Palette */
+  /* ============================================
+     EASE DESIGN SYSTEM - Core Tokens
+     ============================================ */
+
+  /* Gray Scale - Neutral UI Palette
+     Use for backgrounds, borders, text, and UI elements */
+  --color-gray-50: #F9FAFB;   /* Lightest backgrounds, hover states */
+  --color-gray-100: #F3F4F6;  /* Subtle backgrounds, dividers */
+  --color-gray-200: #E5E7EB;  /* Borders, input borders */
+  --color-gray-300: #D1D5DB;  /* Disabled states, subtle borders */
+  --color-gray-400: #9CA3AF;  /* Icons, placeholder text */
+  --color-gray-500: #6B7280;  /* Secondary text, inactive tabs */
+  --color-gray-600: #4B5563;  /* Body text, hover icons */
+  --color-gray-700: #374151;  /* Primary text, button text */
+  --color-gray-800: #1F2937;  /* Dark backgrounds, gradients */
+  --color-gray-900: #111827;  /* Darkest text, dark buttons */
+
+  /* Base Colors - Stone Palette (legacy, kept for compatibility) */
   --color-background: #ffffff;
   --color-foreground: #1c1917;
   --color-card: #ffffff;
@@ -109,6 +126,11 @@
   --color-status-error-border: #fee2e2;
   --color-status-error-text: #dc2626;
 
+  /* Status: Info (blue-50/100/700) - for check-ins, info badges */
+  --color-status-info-bg: #eff6ff;
+  --color-status-info-border: #dbeafe;
+  --color-status-info-text: #1d4ed8;
+
   /* Font Families */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
   --font-family-geist: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -117,13 +139,17 @@
   --text-xxs: 10px;
   --text-xxs--line-height: 14px;
 
-  /* Custom Shadows - Lighter, more subtle */
+  /* Custom Shadows - Subtle, refined shadows
+     Based on the new design system for cleaner UI */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.02);
-  --shadow: 0 2px 8px rgba(0,0,0,0.03);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.04);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.06);
-  --shadow-xl: 0 12px 32px rgba(0,0,0,0.08);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.05);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.08);
+
+  /* Card-specific shadow - very subtle for cards */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 @layer base {
@@ -165,9 +191,16 @@
     letter-spacing: -0.02em;
   }
 
-  /* iOS-style Easing */
+  /* Transition Utilities */
+
+  /* iOS-style Easing - slightly slower, more fluid */
   .ios-ease {
     transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  /* Smooth Transition - faster, snappier for UI elements */
+  .smooth-transition {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* Grain Texture Effect */
