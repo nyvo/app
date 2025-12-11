@@ -24,14 +24,13 @@ import {
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { ParticipantAvatar } from '@/components/ui/participant-avatar';
-import type { Signup, SignupPaymentType } from '@/types/dashboard';
+import type { SignupPaymentType } from '@/types/dashboard';
 import { useEmptyState } from '@/context/EmptyStateContext';
 import { SearchInput } from '@/components/ui/search-input';
-import { Button } from '@/components/ui/button';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
-import { mockSignups, emptySignups, type SignupWithTimestamps } from '@/data/mockData';
+import { mockSignups, emptySignups } from '@/data/mockData';
 
 // Sort types
 type SortField = 'classDateTime' | 'registeredAt' | null;

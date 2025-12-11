@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import SchedulePage from './pages/teacher/SchedulePage';

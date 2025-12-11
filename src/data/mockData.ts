@@ -1,11 +1,10 @@
-import type { 
-  UpcomingClass, 
-  TeacherStats, 
-  Message as DashboardMessage, 
-  Course, 
-  Registration, 
-  Signup,
-  SignupStatus
+import type {
+  UpcomingClass,
+  TeacherStats,
+  Message as DashboardMessage,
+  Course,
+  Registration,
+  Signup
 } from '@/types/dashboard';
 
 // --- Types for Messages Page (originally local) ---

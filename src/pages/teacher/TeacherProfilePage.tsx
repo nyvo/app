@@ -9,8 +9,7 @@ import {
   SmartphoneNfc,
   ChevronRight,
   Leaf,
-  Menu,
-  Smartphone
+  Menu
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,6 @@ type Tab = 'profile' | 'notifications' | 'security';
 
 const TeacherProfilePage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // For mobile menu if needed
 
   // State for form fields (example)
   const [firstName, setFirstName] = useState('Kristoffer');
