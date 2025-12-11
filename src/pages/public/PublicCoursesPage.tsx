@@ -65,6 +65,7 @@ const PublicCoursesPage = () => {
                 {/* Hero / Studio Info */}
                 <div className="mb-10 text-center md:text-left md:flex md:items-end md:justify-between">
                     <div>
+                        {!showEmptyState && (
                         <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                                 <span className="relative flex h-1.5 w-1.5">
@@ -74,6 +75,7 @@ const PublicCoursesPage = () => {
                                 Åpent for booking
                             </span>
                         </div>
+                        )}
                         <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-2">
                             Kommende Kurs
                         </h1>
