@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { nb } from 'date-fns/locale';
 import { formatDateNorwegian } from '@/utils/dateUtils';
@@ -14,6 +14,7 @@ import {
   CalendarIcon,
   ChevronDown,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -29,22 +30,29 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { TIME_SLOTS_DEFAULT } from '@/utils/timeSlots';
+import { useAuth } from '@/contexts/AuthContext';
+import { createCourse, fetchCourseStyles } from '@/services/courses';
+import type { CourseStyle, CourseType as DBCourseType } from '@/types/database';
 
 type CourseType = 'series' | 'single';
 
 const timeSlots = TIME_SLOTS_DEFAULT;
 
 interface FormErrors {
+  title?: string;
   startDate?: string;
   startTime?: string;
   duration?: string;
   location?: string;
   price?: string;
+  capacity?: string;
 }
 
 const NewCoursePage = () => {
   const navigate = useNavigate();
+  const { currentOrganization } = useAuth();
   const [courseType, setCourseType] = useState<CourseType>('series');
+  const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [isTimeOpen, setIsTimeOpen] = useState(false);
@@ -55,12 +63,38 @@ const NewCoursePage = () => {
   const [isDaysOpen, setIsDaysOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [description, setDescription] = useState('');
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Style selection
+  const [styles, setStyles] = useState<CourseStyle[]>([]);
+  const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const [isStyleOpen, setIsStyleOpen] = useState(false);
+
+  // Submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fetch styles on mount
+  useEffect(() => {
+    async function loadStyles() {
+      const { data } = await fetchCourseStyles();
+      if (data) {
+        setStyles(data);
+      }
+    }
+    loadStyles();
+  }, []);
 
   // Validation logic
   const errors = useMemo<FormErrors>(() => {
     const errs: FormErrors = {};
+
+    if (!title.trim()) {
+      errs.title = 'Tittel er påkrevd';
+    }
 
     if (!startDate) {
       errs.startDate = 'Dato er påkrevd';
@@ -82,8 +116,12 @@ const NewCoursePage = () => {
       errs.price = 'Pris er påkrevd';
     }
 
+    if (!capacity || parseInt(capacity) <= 0) {
+      errs.capacity = 'Antall plasser er påkrevd';
+    }
+
     return errs;
-  }, [startDate, startTime, duration, location, price]);
+  }, [title, startDate, startTime, duration, location, price, capacity]);
 
   const isFormValid = Object.keys(errors).length === 0;
 
@@ -99,24 +137,60 @@ const NewCoursePage = () => {
     navigate('/teacher/schedule');
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     setSubmitAttempted(true);
+    setSubmitError(null);
 
     if (!isFormValid) {
       return;
     }
 
-    console.log({
-      courseType,
-      startDate,
-      startTime,
-      duration,
-      weeks: courseType === 'series' ? weeks : undefined,
-      eventDays: courseType === 'single' ? eventDays : undefined,
-      location,
-      price,
-    });
-    navigate('/teacher/schedule');
+    if (!currentOrganization?.id) {
+      setSubmitError('Ingen organisasjon valgt');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Map form courseType to database course_type
+      const dbCourseType: DBCourseType = courseType === 'series' ? 'course-series' : 'event';
+
+      // Format time schedule (day + time)
+      const dayName = startDate ? new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(startDate) : '';
+      const timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${startTime}`;
+
+      const courseData = {
+        organization_id: currentOrganization.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        course_type: dbCourseType,
+        start_date: startDate?.toISOString().split('T')[0],
+        time_schedule: timeSchedule,
+        duration: parseInt(duration),
+        total_weeks: courseType === 'series' ? parseInt(weeks) : null,
+        location: location.trim(),
+        price: parseInt(price),
+        max_participants: parseInt(capacity),
+        status: 'upcoming' as const,
+        style_id: selectedStyleId,
+      };
+
+      const { error } = await createCourse(courseData);
+
+      if (error) {
+        setSubmitError(error.message || 'Kunne ikke opprette kurset');
+        return;
+      }
+
+      // Navigate to courses list on success
+      navigate('/teacher/courses');
+    } catch (err) {
+      setSubmitError('En feil oppstod');
+      console.error('Error creating course:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -151,7 +225,7 @@ const NewCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="font-geist text-3xl font-medium text-text-primary tracking-tight">
+            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
               Opprett nytt kurs
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -166,9 +240,8 @@ const NewCoursePage = () => {
             {/* Step 1: Course Type Selection */}
             <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
               <div className="px-6 pt-5 pb-4">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-                  1. Velg type
-                </h2>
+                <h2 className="text-base font-semibold text-text-primary">Velg type</h2>
+                <p className="text-xs text-muted-foreground mt-1">Velg om du vil opprette en kursrekke eller enkeltkurs.</p>
               </div>
               <div className="px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Option A: Kursrekke */}
@@ -264,16 +337,122 @@ const NewCoursePage = () => {
             {/* Step 2: Course Details */}
             <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
               <div className="px-6 pt-5 pb-4">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-                  2. Detaljer
-                </h2>
+                <h2 className="text-base font-semibold text-text-primary">Detaljer</h2>
+                <p className="text-xs text-muted-foreground mt-1">Angi navn, stil, tidspunkt, varighet og sted for kurset.</p>
               </div>
               <div className="px-6 pb-6 space-y-6">
+              {/* Title and Style */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Title */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Tittel <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="F.eks. Morgenyoga for nybegynnere"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    onBlur={() => handleBlur('title')}
+                    className={`w-full h-11 rounded-xl border px-4 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                      showError('title') ? 'border-destructive' : 'border-border'
+                    }`}
+                  />
+                  {showError('title') && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.title}
+                    </p>
+                  )}
+                </div>
+
+                {/* Style Selection */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Yogastil
+                  </label>
+                  <Popover open={isStyleOpen} onOpenChange={setIsStyleOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                      >
+                        <span className={selectedStyleId ? 'text-text-primary' : 'text-text-tertiary'}>
+                          {selectedStyleId
+                            ? styles.find(s => s.id === selectedStyleId)?.name || 'Velg stil'
+                            : 'Velg stil (valgfritt)'}
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isStyleOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-[300px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedStyleId(null);
+                            setIsStyleOpen(false);
+                          }}
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                            !selectedStyleId
+                              ? 'bg-text-primary text-white'
+                              : 'text-sidebar-foreground hover:bg-surface-elevated'
+                          }`}
+                        >
+                          <span>Ingen (velg senere)</span>
+                          {!selectedStyleId && <Check className="h-4 w-4" />}
+                        </button>
+                        {styles.map((style) => (
+                          <button
+                            key={style.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedStyleId(style.id);
+                              setIsStyleOpen(false);
+                            }}
+                            className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                              selectedStyleId === style.id
+                                ? 'bg-text-primary text-white'
+                                : 'text-sidebar-foreground hover:bg-surface-elevated'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {style.color && (
+                                <span
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: style.color }}
+                                />
+                              )}
+                              <span>{style.name}</span>
+                            </div>
+                            {selectedStyleId === style.id && <Check className="h-4 w-4" />}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Description */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Beskrivelse
+                  </label>
+                  <textarea
+                    placeholder="Beskriv kurset kort..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-xl border border-border px-4 py-3 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring resize-none"
+                  />
+                </div>
+              </div>
+
               {/* Grid for Logistics */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Start Date - Calendar Picker */}
                 <div className="group">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                     {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-red-500">*</span>
                   </label>
                   <Popover>
@@ -282,7 +461,7 @@ const NewCoursePage = () => {
                         type="button"
                         onBlur={() => handleBlur('startDate')}
                         className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                          showError('startDate') ? 'border-red-500' : 'border-border'
+                          showError('startDate') ? 'border-destructive' : 'border-border'
                         }`}
                       >
                         <span className={startDate ? 'text-text-primary' : 'text-text-tertiary'}>
@@ -314,7 +493,7 @@ const NewCoursePage = () => {
 
                 {/* Start Time - Custom Dropdown */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                     Tidspunkt <span className="text-red-500">*</span>
                   </label>
                   <Popover open={isTimeOpen} onOpenChange={setIsTimeOpen}>
@@ -323,7 +502,7 @@ const NewCoursePage = () => {
                         type="button"
                         onBlur={() => handleBlur('startTime')}
                         className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                          showError('startTime') ? 'border-red-500' : 'border-border'
+                          showError('startTime') ? 'border-destructive' : 'border-border'
                         }`}
                       >
                         <span className={startTime ? 'text-text-primary' : 'text-text-tertiary'}>
@@ -369,7 +548,7 @@ const NewCoursePage = () => {
 
                 {/* Duration - Text Input */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                     Varighet (minutter) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -380,7 +559,7 @@ const NewCoursePage = () => {
                       onChange={(e) => setDuration(e.target.value)}
                       onBlur={() => handleBlur('duration')}
                       className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('duration') ? 'border-red-500' : 'border-border'
+                        showError('duration') ? 'border-destructive' : 'border-border'
                       }`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -398,7 +577,7 @@ const NewCoursePage = () => {
                 {/* Number of Weeks (series) or Days (single) */}
                 {courseType === 'series' ? (
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                    <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                       Antall uker
                     </label>
                     <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
@@ -442,7 +621,7 @@ const NewCoursePage = () => {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                    <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                       Antall dager
                     </label>
                     <Popover open={isDaysOpen} onOpenChange={setIsDaysOpen}>
@@ -491,7 +670,7 @@ const NewCoursePage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* Location */}
                 <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                     Sted / Lokale <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -502,7 +681,7 @@ const NewCoursePage = () => {
                       onChange={(e) => setLocation(e.target.value)}
                       onBlur={() => handleBlur('location')}
                       className={`w-full h-11 rounded-xl border pl-10 pr-4 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('location') ? 'border-red-500' : 'border-border'
+                        showError('location') ? 'border-destructive' : 'border-border'
                       }`}
                     />
                     <MapPin className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-red-500' : 'text-text-tertiary'}`} />
@@ -517,7 +696,7 @@ const NewCoursePage = () => {
 
                 {/* Price */}
                 <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                     Totalpris <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -528,7 +707,7 @@ const NewCoursePage = () => {
                       onChange={(e) => setPrice(e.target.value)}
                       onBlur={() => handleBlur('price')}
                       className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('price') ? 'border-red-500' : 'border-border'
+                        showError('price') ? 'border-destructive' : 'border-border'
                       }`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -539,6 +718,35 @@ const NewCoursePage = () => {
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-3 w-3" />
                       {errors.price}
+                    </p>
+                  )}
+                </div>
+
+                {/* Capacity */}
+                <div className="sm:col-span-2 md:col-span-1">
+                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Antall plasser <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="0"
+                      min="1"
+                      value={capacity}
+                      onChange={(e) => setCapacity(e.target.value)}
+                      onBlur={() => handleBlur('capacity')}
+                      className={`w-full h-11 rounded-xl border pl-4 pr-16 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                        showError('capacity') ? 'border-destructive' : 'border-border'
+                      }`}
+                    />
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span className={`text-xs font-medium ${showError('capacity') ? 'text-red-500' : 'text-muted-foreground'}`}>plasser</span>
+                    </div>
+                  </div>
+                  {showError('capacity') && (
+                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.capacity}
                     </p>
                   )}
                 </div>
@@ -556,7 +764,7 @@ const NewCoursePage = () => {
 
               <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
                 <div className="flex items-start gap-3 mb-5">
-                  <div className="p-2 bg-[#F7F5F2] rounded-lg text-muted-foreground">
+                  <div className="p-2 bg-gray-100 rounded-lg text-muted-foreground">
                     <UserCheck className="h-4 w-4" />
                   </div>
                   <div>
@@ -603,21 +811,37 @@ const NewCoursePage = () => {
                 <span>Vennligst fyll ut alle påkrevde felt</span>
               </div>
             )}
+            {submitError && (
+              <div className="flex items-center justify-center gap-2 text-sm text-red-500">
+                <AlertCircle className="h-4 w-4" />
+                <span>{submitError}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <Button
                 variant="ghost"
                 size="compact"
                 onClick={handleCancel}
+                disabled={isSubmitting}
               >
                 Avbryt
               </Button>
               <Button
                 size="compact"
                 onClick={handlePublish}
-                disabled={submitAttempted && !isFormValid}
+                disabled={isSubmitting || (submitAttempted && !isFormValid)}
               >
-                <span>Publiser kurs</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Oppretter...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Publiser kurs</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </>
+                )}
               </Button>
             </div>
           </div>
