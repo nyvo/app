@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Plus,
   MoreHorizontal,
@@ -7,18 +8,23 @@ import {
   Users,
   Leaf,
   Menu,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { CourseStatus } from '@/components/ui/status-badge';
-import { useEmptyState } from '@/context/EmptyStateContext';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
+import { useEmptyState } from '@/contexts/EmptyStateContext';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
-import { mockDetailedCourses, emptyDetailedCourses, type DetailedCourse } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchCourses, type CourseWithStyle } from '@/services/courses';
+import { supabase } from '@/lib/supabase';
+import type { DetailedCourse } from '@/data/mockData';
 
 const courseTypeLabels: Record<string, string> = {
   kursrekke: 'Kursrekke',
@@ -61,7 +67,7 @@ const CourseRow = ({ course }: { course: DetailedCourse }) => {
       <div className="hidden md:block flex-1 min-w-0 pr-4">
         <div className="flex flex-col">
           <span className="text-xs font-medium text-text-primary">{course.timeSchedule.split(' ')[0]}</span>
-          <span className="text-[11px] text-muted-foreground">{course.timeSchedule.split(' ').slice(1).join(' ')}</span>
+          <span className="text-xxs text-muted-foreground">{course.timeSchedule.split(' ').slice(1).join(' ')}</span>
         </div>
       </div>
 
@@ -82,7 +88,7 @@ const CourseRow = ({ course }: { course: DetailedCourse }) => {
 
       {/* Actions Column - w-12 fixed */}
       <div className="w-12 flex justify-end">
-        <button className="text-text-tertiary hover:text-text-primary p-1.5 rounded-full hover:bg-surface-elevated transition-colors" aria-label="Flere handlinger">
+        <button className="text-text-tertiary hover:text-text-primary p-1.5 rounded-full hover:bg-surface-elevated transition-colors cursor-pointer" aria-label="Flere handlinger">
           <MoreHorizontal className="h-4 w-4" />
         </button>
       </div>
@@ -90,12 +96,119 @@ const CourseRow = ({ course }: { course: DetailedCourse }) => {
   );
 };
 
+// Helper to map database course to DetailedCourse format
+function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number): DetailedCourse {
+  // Map course_type to courseType
+  const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
+    'course-series': 'kursrekke',
+    'event': 'enkeltkurs',
+    'online': 'enkeltkurs',
+  };
+
+  // Map style normalized_name to type, or use course_type as fallback
+  const styleType = course.style?.normalized_name || course.course_type;
+
+  // Format duration
+  const formatDuration = () => {
+    if (course.total_weeks) return `${course.total_weeks} uker`;
+    if (course.duration) return `${course.duration} min`;
+    return '';
+  };
+
+  // Format price
+  const formatPrice = () => {
+    if (!course.price) return 'Gratis';
+    return `${course.price.toLocaleString('nb-NO')} NOK`;
+  };
+
+  // Calculate progress for active courses
+  const progress = course.total_weeks && course.current_week
+    ? Math.round((course.current_week / course.total_weeks) * 100)
+    : undefined;
+
+  return {
+    id: course.id,
+    title: course.title,
+    type: styleType as DetailedCourse['type'],
+    courseType: courseTypeMap[course.course_type] || 'enkeltkurs',
+    status: course.status,
+    location: course.location || 'Ikke angitt',
+    timeSchedule: course.time_schedule || '',
+    duration: formatDuration(),
+    participants: signupsCount,
+    maxParticipants: course.max_participants || 0,
+    price: formatPrice(),
+    progress,
+    currentWeek: course.current_week || undefined,
+    totalWeeks: course.total_weeks || undefined,
+    description: course.description || undefined,
+    level: course.level ? course.level.charAt(0).toUpperCase() + course.level.slice(1) : undefined,
+  };
+}
+
 const CoursesPage = () => {
   const { showEmptyState } = useEmptyState();
+  const { currentOrganization } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
-  
-  const courses = showEmptyState ? emptyDetailedCourses : mockDetailedCourses;
+  const [courses, setCourses] = useState<DetailedCourse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch courses from Supabase
+  useEffect(() => {
+    async function loadCourses() {
+      if (!currentOrganization?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const { data: coursesData, error: fetchError } = await fetchCourses(currentOrganization.id);
+
+        if (fetchError) {
+          setError('Kunne ikke hente kurs');
+          return;
+        }
+
+        if (!coursesData || coursesData.length === 0) {
+          setCourses([]);
+          return;
+        }
+
+        // Fetch signups count for each course
+        const courseIds = coursesData.map(c => c.id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: signupsData } = await (supabase
+          .from('signups') as any)
+          .select('course_id')
+          .in('course_id', courseIds)
+          .eq('status', 'confirmed');
+
+        // Count signups per course
+        const signupsCounts: Record<string, number> = {};
+        (signupsData as { course_id: string }[] | null)?.forEach(s => {
+          signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1;
+        });
+
+        // Map to DetailedCourse format
+        const mappedCourses = coursesData.map(course =>
+          mapCourseToDetailedCourse(course, signupsCounts[course.id] || 0)
+        );
+
+        setCourses(mappedCourses);
+      } catch {
+        setError('En feil oppstod');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadCourses();
+  }, [currentOrganization?.id]);
 
   const filteredCourses = useMemo(() => {
     let result = courses;
@@ -103,8 +216,8 @@ const CoursesPage = () => {
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(course => 
-        course.title.toLowerCase().includes(query) || 
+      result = result.filter(course =>
+        course.title.toLowerCase().includes(query) ||
         course.location.toLowerCase().includes(query)
       );
     }
@@ -116,6 +229,9 @@ const CoursesPage = () => {
 
     return result;
   }, [courses, searchQuery, activeFilter]);
+
+  // Show empty state if no courses after loading (or dev toggle active)
+  const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
     <SidebarProvider>
@@ -134,13 +250,19 @@ const CoursesPage = () => {
         </div>
 
         {/* Header Area & Controls */}
-        <div className="flex flex-col gap-6 px-8 py-8 bg-surface shrink-0">
+        <motion.div
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+          className="flex flex-col gap-6 px-8 py-8 bg-surface shrink-0"
+        >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine Kurs</h1>
                     <p className="text-sm text-muted-foreground mt-1">Administrer dine aktive kursrekker, workshops og arrangementer.</p>
                 </div>
-                {!showEmptyState && (
+                {!showCoursesEmptyState && (
                   <div className="flex items-center gap-3">
                     <Button asChild size="compact" className="gap-2">
                       <Link to="/teacher/new-course">
@@ -167,35 +289,49 @@ const CoursesPage = () => {
                 <div className="flex gap-2 overflow-x-auto py-1 no-scrollbar">
                     <button
                       onClick={() => setActiveFilter('all')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease ${activeFilter === 'all' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
+                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'all' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
                     >
                         Alle
                     </button>
                     <button
                       onClick={() => setActiveFilter('active')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease ${activeFilter === 'active' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
+                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'active' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
                     >
                         Aktive
                     </button>
                     <button
                       onClick={() => setActiveFilter('upcoming')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease ${activeFilter === 'upcoming' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
+                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'upcoming' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
                     >
                         Kommende
                     </button>
                     <button
                       onClick={() => setActiveFilter('completed')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease ${activeFilter === 'completed' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
+                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'completed' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
                     >
                         Fullførte
                     </button>
                 </div>
             </div>
-        </div>
+        </motion.div>
 
         {/* Course List / Empty State */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
-            {showEmptyState ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-2xl bg-white">
+                <p className="text-sm text-destructive">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-2 text-sm text-text-secondary hover:text-text-primary underline"
+                >
+                  Prøv igjen
+                </button>
+              </div>
+            ) : showCoursesEmptyState ? (
               <CoursesEmptyState />
             ) : filteredCourses.length === 0 ? (
                <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-2xl bg-white">

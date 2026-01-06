@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,32 +10,74 @@ import {
   Search,
   Filter,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Plus,
   Calendar,
-  MoreHorizontal,
-  StickyNote,
   Leaf,
   Menu,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Loader2
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
+import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
 import { ParticipantAvatar } from '@/components/ui/participant-avatar';
-import type { SignupPaymentType } from '@/types/dashboard';
-import { useEmptyState } from '@/context/EmptyStateContext';
 import { SearchInput } from '@/components/ui/search-input';
-import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
-import { mockSignups, emptySignups } from '@/data/mockData';
+import { NotePopover } from '@/components/ui/note-popover';
+import { fetchAllSignups, type SignupWithDetails } from '@/services/signups';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Sort types
 type SortField = 'classDateTime' | 'registeredAt' | null;
 type SortDirection = 'asc' | 'desc';
+
+// Display type for table rows
+interface SignupDisplay {
+  id: string;
+  participantName: string;
+  participantEmail: string;
+  className: string;
+  classDate: string;
+  classTime: string;
+  classDateTime: Date;
+  registeredAt: string;
+  registeredAtDate: Date;
+  status: SignupStatus;
+  paymentStatus: PaymentStatus;
+  note?: string;
+}
+
+// Format date for display
+function formatDate(dateString: string | null): string {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+  return `${date.getDate()}. ${months[date.getMonth()]}`;
+}
+
+// Format time from time_schedule
+function extractTime(timeSchedule: string | null): string {
+  if (!timeSchedule) return '';
+  const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
+  return match ? match[1] : '';
+}
+
+// Format relative date
+function formatRelativeDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'I dag';
+  if (diffDays === 1) return 'I går';
+  if (diffDays < 7) return `${diffDays} dager siden`;
+
+  const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+  return `${date.getDate()}. ${months[date.getMonth()]}`;
+}
 
 // Sortable column header component
 const SortableHeader = ({
@@ -73,56 +116,70 @@ const SortableHeader = ({
   );
 };
 
-
-// Payment badge component
-const PaymentBadge = ({ paymentType, paymentDetails }: { paymentType: SignupPaymentType; paymentDetails?: string }) => {
-  if (paymentType === 'unpaid') {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-status-error-border bg-status-error-bg px-2 py-0.5 text-xs font-medium text-status-error-text">
-        Ikke betalt
-      </span>
-    );
-  }
-
-  const labels: Record<SignupPaymentType, string> = {
-    klippekort: `Klippekort${paymentDetails ? ` (${paymentDetails})` : ''}`,
-    månedskort: 'Månedskort',
-    'drop-in': `Drop-in${paymentDetails ? ` (${paymentDetails})` : ''}`,
-    halvårskort: 'Halvårskort',
-    unpaid: 'Ikke betalt',
-  };
-
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-text-secondary">
-      {labels[paymentType]}
-    </span>
-  );
-};
-
-// Note tooltip component
-const NoteTooltip = ({ note, hasNote }: { note?: string; hasNote: boolean }) => {
-  if (!hasNote) return null;
-
-  return (
-    <div className="group/note relative inline-flex">
-      <StickyNote className={`h-4 w-4 cursor-help ${note ? 'text-warning' : 'text-text-tertiary group-hover:text-warning'} transition-colors`} />
-      {note && (
-        <div className="absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-48 rounded-lg bg-text-primary p-2 text-[10px] text-surface-elevated shadow-lg opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all z-20">
-          {note}
-        </div>
-      )}
-    </div>
-  );
-};
-
-
 export const SignupsPage = () => {
-  const { showEmptyState } = useEmptyState();
+  const { currentOrganization } = useAuth();
+  const [signups, setSignups] = useState<SignupWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [statusFilter, setStatusFilter] = useState<string>('Alle');
   const [classFilter, setClassFilter] = useState<string>('Alle');
+
+  // Fetch signups from database
+  useEffect(() => {
+    async function loadSignups() {
+      if (!currentOrganization?.id) return;
+
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await fetchAllSignups(currentOrganization.id);
+
+      if (fetchError) {
+        setError('Kunne ikke laste påmeldinger');
+        setLoading(false);
+        return;
+      }
+
+      setSignups(data || []);
+      setLoading(false);
+    }
+
+    loadSignups();
+  }, [currentOrganization?.id]);
+
+  // Transform signups to display format
+  const displaySignups: SignupDisplay[] = useMemo(() => {
+    return signups.map(signup => {
+      const courseTitle = signup.course?.title || 'Ukjent kurs';
+      const courseDate = signup.course?.start_date || null;
+      const courseTime = extractTime(signup.course?.time_schedule || null);
+
+      return {
+        id: signup.id,
+        participantName: signup.participant_name || signup.profile?.name || 'Ukjent',
+        participantEmail: signup.participant_email || signup.profile?.email || '',
+        className: courseTitle,
+        classDate: formatDate(courseDate),
+        classTime: courseTime,
+        classDateTime: courseDate ? new Date(courseDate) : new Date(),
+        registeredAt: formatRelativeDate(signup.created_at),
+        registeredAtDate: new Date(signup.created_at),
+        status: signup.status as SignupStatus,
+        paymentStatus: signup.payment_status as PaymentStatus,
+        note: signup.note || undefined
+      };
+    });
+  }, [signups]);
+
+  // Get unique class names for filter dropdown
+  const uniqueClassNames = useMemo(() => {
+    const names = new Set(displaySignups.map(s => s.className));
+    return Array.from(names).sort();
+  }, [displaySignups]);
 
   // Handle sort toggle
   const handleSort = (field: SortField) => {
@@ -138,17 +195,15 @@ export const SignupsPage = () => {
 
   // Filtered and sorted signups
   const filteredAndSortedSignups = useMemo(() => {
-    const data = showEmptyState ? emptySignups : mockSignups;
-    
-    // First filter by search query
-    let result = data;
+    let result = displaySignups;
 
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(
         (signup) =>
-          signup.participant.name.toLowerCase().includes(query) ||
-          signup.participant.email.toLowerCase().includes(query)
+          signup.participantName.toLowerCase().includes(query) ||
+          signup.participantEmail.toLowerCase().includes(query)
       );
     }
 
@@ -163,12 +218,12 @@ export const SignupsPage = () => {
       }
     }
 
-    // Filter by class (simple implementation)
+    // Filter by class
     if (classFilter !== 'Alle') {
       result = result.filter(s => s.className === classFilter);
     }
 
-    // Then sort if a sort field is selected
+    // Sort if a sort field is selected
     if (sortField) {
       result = [...result].sort((a, b) => {
         let comparison = 0;
@@ -176,7 +231,7 @@ export const SignupsPage = () => {
         if (sortField === 'classDateTime') {
           comparison = a.classDateTime.getTime() - b.classDateTime.getTime();
         } else if (sortField === 'registeredAt') {
-          comparison = a.registeredAtTimestamp.getTime() - b.registeredAtTimestamp.getTime();
+          comparison = a.registeredAtDate.getTime() - b.registeredAtDate.getTime();
         }
 
         return sortDirection === 'asc' ? comparison : -comparison;
@@ -184,7 +239,7 @@ export const SignupsPage = () => {
     }
 
     return result;
-  }, [searchQuery, sortField, sortDirection, showEmptyState]);
+  }, [displaySignups, searchQuery, sortField, sortDirection, statusFilter, classFilter]);
 
   return (
     <SidebarProvider>
@@ -202,25 +257,19 @@ export const SignupsPage = () => {
         </div>
 
         {/* Header Toolbar */}
-        <header className="flex flex-col gap-6 px-8 py-8 shrink-0">
+        <motion.header
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+          className="flex flex-col gap-6 px-8 py-8 shrink-0"
+        >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
               <p className="text-sm text-muted-foreground mt-1">Oversikt over studenter og bookinger.</p>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary hover:bg-surface-elevated hover:text-text-primary ios-ease shadow-sm">
-                <Download className="h-3.5 w-3.5" />
-                Eksporter
-              </button>
-              <button className="flex items-center gap-2 rounded-lg bg-text-primary border border-text-primary px-3 py-2 text-xs font-medium text-white hover:bg-sidebar-foreground hover:border-sidebar-foreground shadow-md shadow-text-primary/10 ios-ease">
-                <Plus className="h-3.5 w-3.5" />
-                Manuell booking
-              </button>
-            </div>
           </div>
-
-          {/* Removed Stats Cards per request */}
 
           {/* Filters Bar */}
           <div className="flex flex-col md:flex-row gap-3">
@@ -237,7 +286,7 @@ export const SignupsPage = () => {
             <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease shadow-sm whitespace-nowrap ${statusFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
+                  <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease shadow-sm whitespace-nowrap cursor-pointer ${statusFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
                     <Filter className="h-3.5 w-3.5" />
                     Status: {statusFilter}
                     <ChevronDown className="ml-1 h-3.5 w-3.5" />
@@ -254,28 +303,46 @@ export const SignupsPage = () => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease shadow-sm whitespace-nowrap ${classFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
+                  <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease shadow-sm whitespace-nowrap cursor-pointer ${classFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
                     Kurs: {classFilter}
                     <ChevronDown className="ml-1 h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => setClassFilter('Alle')}>Alle</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setClassFilter('Vinyasa Flow')}>Vinyasa Flow</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setClassFilter('Yin Yoga')}>Yin Yoga</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setClassFilter('Meditation')}>Meditation</DropdownMenuItem>
+                  {uniqueClassNames.map((className) => (
+                    <DropdownMenuItem key={className} onClick={() => setClassFilter(className)}>
+                      {className}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </div>
           </div>
-        </header>
+        </motion.header>
 
         {/* Table Container */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
           <div className="h-full rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
-            {/* Empty State or Table */}
-            {filteredAndSortedSignups.length === 0 ? (
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white">
+                <Loader2 className="h-8 w-8 animate-spin text-text-tertiary mb-4" />
+                <p className="text-sm text-muted-foreground">Laster påmeldinger...</p>
+              </div>
+            ) : error ? (
+              /* Error State */
+              <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white">
+                <p className="text-sm text-destructive">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-4 text-xs text-primary hover:underline"
+                >
+                  Prøv igjen
+                </button>
+              </div>
+            ) : filteredAndSortedSignups.length === 0 ? (
+              /* Empty State or No Results */
               <>
                 {/* Table Header for empty state */}
                 <div className="border-b border-border bg-surface/50 px-6 py-3">
@@ -293,13 +360,18 @@ export const SignupsPage = () => {
                   <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
                     <Search className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                   </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary">Ingen resultater</h3>
+                  <h3 className="font-geist text-sm font-medium text-text-primary">
+                    {displaySignups.length === 0 ? 'Ingen påmeldinger ennå' : 'Ingen resultater'}
+                  </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {showEmptyState ? 'Det er ingen påmeldinger å vise.' : 'Prøv å søke etter et annet navn eller e-post'}
+                    {displaySignups.length === 0
+                      ? 'Påmeldinger vil vises her når studenter melder seg på kurs.'
+                      : 'Prøv å søke etter et annet navn eller e-post'}
                   </p>
                 </div>
               </>
             ) : (
+              /* Table with Data */
               <div className="overflow-auto flex-1 custom-scrollbar">
                 <table className="w-full text-left border-collapse">
                   <thead className="sticky top-0 bg-surface/50 border-b border-border">
@@ -326,7 +398,6 @@ export const SignupsPage = () => {
                       <th className="py-3 px-6 text-xxs font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Status</th>
                       <th className="py-3 px-6 text-xxs font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Betaling</th>
                       <th className="py-3 px-6 text-xxs font-semibold uppercase tracking-wide text-muted-foreground text-center" style={{ width: '8%' }}>Notat</th>
-                      <th className="py-3 px-4" style={{ width: '8%' }}></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-elevated bg-white">
@@ -334,10 +405,13 @@ export const SignupsPage = () => {
                     <tr key={signup.id} className="group hover:bg-secondary transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
-                          <ParticipantAvatar participant={signup.participant} showPhoto={false} />
+                          <ParticipantAvatar
+                            participant={{ name: signup.participantName, email: signup.participantEmail }}
+                            showPhoto={false}
+                          />
                           <div>
-                            <p className="text-sm font-medium text-text-primary">{signup.participant.name}</p>
-                            <p className="text-xs text-muted-foreground">{signup.participant.email}</p>
+                            <p className="text-sm font-medium text-text-primary">{signup.participantName}</p>
+                            <p className="text-xs text-muted-foreground">{signup.participantEmail}</p>
                           </div>
                         </div>
                       </td>
@@ -346,7 +420,9 @@ export const SignupsPage = () => {
                           <span className="text-sm font-medium text-text-primary">{signup.className}</span>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <Calendar className="h-3 w-3 text-text-tertiary" />
-                            <span className="text-xs text-muted-foreground">{signup.classDate}, {signup.classTime}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {signup.classDate}{signup.classTime && `, ${signup.classTime}`}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -354,18 +430,13 @@ export const SignupsPage = () => {
                         <span className="text-sm text-text-secondary">{signup.registeredAt}</span>
                       </td>
                       <td className="py-4 px-6">
-                        <StatusBadge status={signup.status} waitlistPosition={signup.waitlistPosition} />
+                        <StatusBadge status={signup.status} />
                       </td>
                       <td className="py-4 px-6">
-                        <PaymentBadge paymentType={signup.paymentType} paymentDetails={signup.paymentDetails} />
+                        <PaymentBadge status={signup.paymentStatus} />
                       </td>
                       <td className="py-4 px-6 text-center">
-                        <NoteTooltip note={signup.note} hasNote={!!signup.note} />
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <button className="rounded-lg p-2 text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-surface-elevated hover:text-text-primary transition-all" aria-label="Flere handlinger">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
+                        <NotePopover note={signup.note} />
                       </td>
                     </tr>
                     ))}
@@ -374,20 +445,12 @@ export const SignupsPage = () => {
               </div>
             )}
 
-            {/* Pagination Footer */}
-            <div className="border-t border-border bg-surface/50 px-6 py-3 flex items-center justify-between">
+            {/* Results Footer */}
+            <div className="border-t border-border bg-surface/50 px-6 py-3">
               <span className="text-xxs text-muted-foreground">
-                Viser <span className="font-medium text-text-primary">{filteredAndSortedSignups.length > 0 ? '1' : '0'}-{filteredAndSortedSignups.length}</span> av <span className="font-medium text-text-primary">{filteredAndSortedSignups.length}</span> resultater
+                Viser <span className="font-medium text-text-primary">{filteredAndSortedSignups.length}</span> av <span className="font-medium text-text-primary">{displaySignups.length}</span> resultater
                 {searchQuery && <span className="ml-1">(filtrert)</span>}
               </span>
-              <div className="flex items-center gap-2">
-                <button className="rounded-lg border border-border bg-white p-1.5 text-text-tertiary hover:border-ring hover:text-text-primary disabled:opacity-50 transition-all">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button className="rounded-lg border border-border bg-white p-1.5 text-text-primary hover:border-ring transition-all">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -409,7 +472,6 @@ export const SignupsPage = () => {
           background: var(--color-ring);
         }
       `}</style>
-      <EmptyStateToggle />
     </SidebarProvider>
   );
 };

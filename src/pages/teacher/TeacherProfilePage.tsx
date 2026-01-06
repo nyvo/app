@@ -1,30 +1,48 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   User,
   Bell,
   Shield,
-  Camera,
   Mail,
-  Key,
-  SmartphoneNfc,
-  ChevronRight,
   Leaf,
-  Menu
+  Menu,
+  MapPin
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateOrganization } from '@/services/organizations';
+import { toast } from 'sonner';
 
 type Tab = 'profile' | 'notifications' | 'security';
 
 const TeacherProfilePage = () => {
+  const { profile, currentOrganization, refreshOrganizations } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
-  // State for form fields (example)
-  const [firstName, setFirstName] = useState('Kristoffer');
-  const [lastName, setLastName] = useState('Nyvold');
-  const [email, setEmail] = useState('kristoffer@ease.no');
-  const [bio, setBio] = useState('Sertifisert Vinyasa og Yin Yoga instruktør med over 10 års erfaring. Jeg fokuserer på pust, bevegelse og mindfulness i hver time.');
+  // State for form fields - initialized from auth context
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [studioDescription, setStudioDescription] = useState('');
+  const [city, setCity] = useState('');
+
+  // Load data from auth context on mount
+  useEffect(() => {
+    if (profile) {
+      const nameParts = profile.name?.split(' ') || [];
+      setFirstName(nameParts[0] || '');
+      setLastName(nameParts.slice(1).join(' ') || '');
+      setEmail(profile.email || '');
+    }
+    if (currentOrganization) {
+      setStudioDescription(currentOrganization.description || '');
+      setCity(currentOrganization.city || '');
+    }
+  }, [profile, currentOrganization]);
 
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,8 +75,8 @@ const TeacherProfilePage = () => {
       isValid = false;
     }
 
-    if (bio.length > 500) {
-      newErrors.bio = 'Bio kan ikke være mer enn 500 tegn';
+    if (studioDescription.length > 500) {
+      newErrors.studioDescription = 'Beskrivelse kan ikke være mer enn 500 tegn';
       isValid = false;
     }
 
@@ -93,10 +111,10 @@ const TeacherProfilePage = () => {
       }
     }
 
-    if (field === 'bio' && bio.length > 500) {
-      newErrors.bio = 'Bio kan ikke være mer enn 500 tegn';
-    } else if (field === 'bio') {
-      delete newErrors.bio;
+    if (field === 'studioDescription' && studioDescription.length > 500) {
+      newErrors.studioDescription = 'Beskrivelse kan ikke være mer enn 500 tegn';
+    } else if (field === 'studioDescription') {
+      delete newErrors.studioDescription;
     }
 
     setErrors(newErrors);
@@ -112,8 +130,8 @@ const TeacherProfilePage = () => {
     }
   };
 
-  const handleSave = () => {
-    setTouched({ firstName: true, lastName: true, email: true, bio: true });
+  const handleSave = async () => {
+    setTouched({ firstName: true, lastName: true, email: true, studioDescription: true, city: true });
 
     if (!validateForm()) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
@@ -123,12 +141,30 @@ const TeacherProfilePage = () => {
       return;
     }
 
+    if (!currentOrganization) {
+      toast.error('Kunne ikke finne organisasjonen');
+      return;
+    }
+
     setIsSaving(true);
-    // Simulate save
-    setTimeout(() => {
+
+    // Save organization data (description, city)
+    const { error: orgError } = await updateOrganization(currentOrganization.id, {
+      description: studioDescription || null,
+      city: city || null,
+    });
+
+    if (orgError) {
+      toast.error('Kunne ikke lagre endringene');
       setIsSaving(false);
-      // Show success feedback here
-    }, 1000);
+      return;
+    }
+
+    // Refresh organization data in context
+    await refreshOrganizations();
+
+    toast.success('Endringene ble lagret');
+    setIsSaving(false);
   };
 
   // State for notification toggles
@@ -162,7 +198,13 @@ const TeacherProfilePage = () => {
           </SidebarTrigger>
         </div>
 
-        <div className="mx-auto max-w-4xl p-6 lg:p-12 pb-24 w-full">
+        <motion.div
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+          className="mx-auto max-w-4xl p-6 lg:p-12 pb-24 w-full"
+        >
 
             {/* Header Section */}
             <header className="mb-8">
@@ -177,7 +219,7 @@ const TeacherProfilePage = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => switchTab('profile')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'profile'
                             ? 'border border-border bg-white text-text-primary shadow-sm'
                             : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -188,7 +230,7 @@ const TeacherProfilePage = () => {
                     </button>
                     <button
                         onClick={() => switchTab('notifications')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'notifications'
                             ? 'border border-border bg-white text-text-primary shadow-sm'
                             : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -199,7 +241,7 @@ const TeacherProfilePage = () => {
                     </button>
                     <button
                         onClick={() => switchTab('security')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'security'
                             ? 'border border-border bg-white text-text-primary shadow-sm'
                             : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -220,19 +262,12 @@ const TeacherProfilePage = () => {
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
                                 <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar shadow-md">
-                                  KN
+                                  {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
                                 </div>
-                                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-text-primary text-white shadow-lg ring-2 ring-white hover:bg-sidebar-foreground hover:scale-110 transition-all">
-                                    <Camera className="h-4 w-4" />
-                                </button>
                             </div>
                             <div className="flex-1 text-center md:text-left">
                                 <h3 className="font-geist text-lg font-medium text-text-primary">Profilbilde</h3>
-                                <p className="text-sm text-muted-foreground mt-1 mb-4">Dette bildet vil være synlig for studentene dine i timeplanen.</p>
-                                <div className="flex items-center justify-center md:justify-start gap-3">
-                                    <Button variant="ghost" size="compact">Slett bilde</Button>
-                                    <Button size="compact">Last opp nytt</Button>
-                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">Profilbildeopplasting kommer snart.</p>
                             </div>
                         </div>
                     </div>
@@ -247,7 +282,7 @@ const TeacherProfilePage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* First Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                   Fornavn <span className="text-status-error-text">*</span>
                                 </label>
                                 <input
@@ -269,7 +304,7 @@ const TeacherProfilePage = () => {
 
                             {/* Last Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                   Etternavn <span className="text-status-error-text">*</span>
                                 </label>
                                 <input
@@ -291,7 +326,7 @@ const TeacherProfilePage = () => {
 
                             {/* Email */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                   E-postadresse <span className="text-status-error-text">*</span>
                                 </label>
                                 <div className="relative">
@@ -316,28 +351,45 @@ const TeacherProfilePage = () => {
                                 )}
                             </div>
 
-                            {/* Bio */}
+                            {/* City */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-secondary mb-1.5">Om deg (Bio)</label>
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">By / Sted</label>
+                                <div className="relative">
+                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
+                                    <input
+                                        type="text"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        placeholder="F.eks. Oslo"
+                                        className="w-full h-11 rounded-xl border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring"
+                                    />
+                                </div>
+                                <p className="text-xs text-text-tertiary mt-1.5">Vises på din offentlige studioside.</p>
+                            </div>
+
+                            {/* Studio Description */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Om studioet</label>
                                 <textarea
                                     rows={4}
-                                    value={bio}
-                                    onChange={(e) => { setBio(e.target.value); clearError('bio'); }}
-                                    onBlur={() => handleBlur('bio')}
-                                    aria-invalid={!!errors.bio}
+                                    value={studioDescription}
+                                    onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
+                                    onBlur={() => handleBlur('studioDescription')}
+                                    placeholder="Fortell litt om studioet ditt..."
+                                    aria-invalid={!!errors.studioDescription}
                                     className={`w-full rounded-xl border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease resize-none ${
-                                      errors.bio
+                                      errors.studioDescription
                                         ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
                                         : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
                                     }`}
                                 />
                                 <div className="flex justify-between text-xs mt-1.5">
-                                    {errors.bio && touched.bio ? (
-                                      <span className="text-status-error-text font-medium">{errors.bio}</span>
+                                    {errors.studioDescription && touched.studioDescription ? (
+                                      <span className="text-status-error-text font-medium">{errors.studioDescription}</span>
                                     ) : (
-                                      <span className="text-text-tertiary">Vises på din offentlige instruktørprofil.</span>
+                                      <span className="text-text-tertiary">Vises på din offentlige studioside.</span>
                                     )}
-                                    <span className={bio.length > 500 ? 'text-status-error-text font-medium' : 'text-text-tertiary'}>{bio.length}/500</span>
+                                    <span className={studioDescription.length > 500 ? 'text-status-error-text font-medium' : 'text-text-tertiary'}>{studioDescription.length}/500</span>
                                 </div>
                             </div>
                         </div>
@@ -364,7 +416,7 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('newSignups')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-primary' : 'bg-border'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-gray-900' : 'bg-gray-200'}`}
                                 >
                                     <span className="sr-only">Nye påmeldinger</span>
                                     <span
@@ -382,7 +434,7 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('cancellations')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-primary' : 'bg-border'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-gray-900' : 'bg-gray-200'}`}
                                 >
                                     <span className="sr-only">Avbestillinger</span>
                                     <span
@@ -400,7 +452,7 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('marketing')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-primary' : 'bg-border'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-gray-900' : 'bg-gray-200'}`}
                                 >
                                     <span className="sr-only">Markedsføring</span>
                                     <span
@@ -422,45 +474,14 @@ const TeacherProfilePage = () => {
                             <h3 className="font-geist text-base font-semibold text-text-primary">Passord & Sikkerhet</h3>
                         </div>
 
-                        <div className="space-y-4">
-                            <button className="flex w-full items-center justify-between rounded-xl bg-surface p-4 text-left transition-colors hover:bg-sidebar">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-border">
-                                        <Key className="h-5 w-5 text-text-secondary" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-text-primary">Endre passord</p>
-                                        <p className="text-xs text-muted-foreground">Sist endret for 3 måneder siden</p>
-                                    </div>
-                                </div>
-                                <ChevronRight className="h-4 w-4 text-text-tertiary" />
-                            </button>
-
-                            <button className="flex w-full items-center justify-between rounded-xl bg-surface p-4 text-left transition-colors hover:bg-sidebar">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-border">
-                                        <SmartphoneNfc className="h-5 w-5 text-text-secondary" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-text-primary">To-faktor autentisering</p>
-                                        <p className="text-xs text-muted-foreground">Anbefalt for økt sikkerhet</p>
-                                    </div>
-                                </div>
-                                <span className="rounded-full bg-border px-2 py-1 text-[10px] font-semibold text-text-secondary">Deaktivert</span>
-                            </button>
-                        </div>
-                     </div>
-
-                     {/* Logout Danger Zone */}
-                     <div className="rounded-2xl border border-status-error-border bg-status-error-bg p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-sm font-semibold text-status-error-text">Logg ut av alle enheter</h3>
-                                <p className="text-xs text-status-error-text/80 mt-1">Dette vil logge deg ut fra mobil, tablet og desktop.</p>
-                            </div>
-                            <Button variant="destructive" size="compact">
-                                Logg ut
-                            </Button>
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated border border-border mb-4">
+                            <Shield className="h-6 w-6 text-text-tertiary" />
+                          </div>
+                          <p className="text-sm font-medium text-text-primary mb-1">Sikkerhetsinnstillinger kommer snart</p>
+                          <p className="text-xs text-muted-foreground max-w-[280px]">
+                            Passordendring og to-faktor autentisering vil være tilgjengelig i en fremtidig oppdatering.
+                          </p>
                         </div>
                      </div>
                 </div>
@@ -481,7 +502,7 @@ const TeacherProfilePage = () => {
               </div>
             )}
 
-        </div>
+        </motion.div>
       </main>
     </SidebarProvider>
   );

@@ -29,12 +29,12 @@
   --color-popover: #ffffff;
   --color-popover-foreground: #1c1917;
 
-  /* Brand Colors - Zen Theme */
-  --color-primary: #354f41;
-  --color-primary-foreground: #fafaf9;
-  --color-primary-soft: #547564;
-  --color-primary-light: #6b8a7a;
-  --color-primary-dark: #2a3d34;
+  /* Brand Colors - Dark Gray Theme */
+  --color-primary: #111827;
+  --color-primary-foreground: #F9FAFB;
+  --color-primary-soft: #374151;
+  --color-primary-light: #4B5563;
+  --color-primary-dark: #030712;
 
   /* Secondary & Accent */
   --color-secondary: #f5f5f4;
@@ -42,14 +42,14 @@
   --color-accent: #f5f5f4;
   --color-accent-foreground: #1c1917;
 
-  /* Muted & Subtle */
-  --color-muted: #f5f5f4;
-  --color-muted-foreground: #78716c;
+  /* Muted & Subtle - Now using Gray scale */
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
 
-  /* UI Elements */
-  --color-border: #e7e5e4;
-  --color-input: #e7e5e4;
-  --color-ring: #d6d3d1;
+  /* UI Elements - Now using Gray scale */
+  --color-border: #E5E7EB;
+  --color-input: #E5E7EB;
+  --color-ring: #D1D5DB;
   --radius: 1rem;
 
   /* Feedback Colors */
@@ -82,29 +82,29 @@
   --color-growth-bg: #f0fdf4;
   --color-growth-text: #15803d;
 
-  /* Sidebar Colors */
-  --color-sidebar: #fbf9f6;
-  --color-sidebar-foreground: #44403c;
-  --color-sidebar-primary: #1c1917;
-  --color-sidebar-primary-foreground: #fafaf9;
-  --color-sidebar-accent: #ffffff;
-  --color-sidebar-accent-foreground: #292524;
-  --color-sidebar-border: #ebe8e4;
+  /* Sidebar Colors - White background with Gray scale accents */
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #374151;
+  --color-sidebar-primary: #111827;
+  --color-sidebar-primary-foreground: #F9FAFB;
+  --color-sidebar-accent: #F9FAFB;
+  --color-sidebar-accent-foreground: #111827;
+  --color-sidebar-border: #E5E7EB;
   --color-sidebar-ring: #3b82f6;
 
-  /* Text Colors - Stone Palette */
-  --color-text-primary: #292524;
-  --color-text-secondary: #57534e;
-  --color-text-tertiary: #a8a29e;
+  /* Text Colors - Now using Gray scale */
+  --color-text-primary: #111827;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #9CA3AF;
 
-  /* Surface/Background Variations */
-  --color-surface: #fdfbf7;
-  --color-surface-elevated: #f5f5f4;
-  --color-input-bg: rgba(251, 249, 246, 0.3);
+  /* Surface/Background Variations - Now using Gray scale */
+  --color-surface: #F9FAFB;
+  --color-surface-elevated: #F3F4F6;
+  --color-input-bg: rgba(249, 250, 251, 0.3);
 
   /* Brand Dark Variations */
-  --color-primary-darker: #2a3d34;
-  --color-primary-accent: #4a6959;
+  --color-primary-darker: #030712;
+  --color-primary-accent: #1F2937;
 
   /* Status: Confirmed (green-50/100/700) */
   --color-status-confirmed-bg: #f0fdf4;
@@ -150,11 +150,14 @@
 
   /* Card-specific shadow - very subtle for cards */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.02);
+
+  /* Dark Card Gradient - for stat cards and dark UI elements */
+  --gradient-dark-card: linear-gradient(to bottom right, var(--color-gray-800), var(--color-gray-900));
 }
 
 @layer base {
   * {
-    border-color: #e7e5e4;
+    border-color: #E5E7EB;
   }
 
   body {
@@ -165,9 +168,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - Minimal, elegant design */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -175,12 +179,40 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #e7e5e4;
+    background-color: #D1D5DB;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #d6d3d1;
+    background-color: #9CA3AF;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
+  }
+
+  /* Override browser autofill styles (Chrome, Safari, Edge) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #111827 !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 }
 
@@ -210,8 +242,8 @@
 
   /* Selection styling */
   ::selection {
-    background-color: #354f41;
-    color: white;
+    background-color: #D1D5DB;
+    color: #111827;
   }
 
   /* Hide scrollbar utility */
@@ -223,18 +255,19 @@
     scrollbar-width: none;
   }
 
-  /* Custom scrollbar for chat */
+  /* Custom scrollbar for containers - inherits global minimal style */
   .custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
+    height: 4px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #E7E5E4;
-    border-radius: 10px;
+    background: #D1D5DB;
+    border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #D6D3D1;
+    background: #9CA3AF;
   }
 }

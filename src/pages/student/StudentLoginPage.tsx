@@ -1,14 +1,46 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, Leaf } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Leaf, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { linkGuestBookingsToUser } from '@/services/studentSignups';
 
 const StudentLoginPage = () => {
+  const navigate = useNavigate();
+  const { signIn, user, profile, userType } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Redirect already-authenticated users to their appropriate dashboard
+  useEffect(() => {
+    if (user && userType) {
+      if (userType === 'student') {
+        navigate('/student/dashboard', { replace: true });
+      } else if (userType === 'teacher') {
+        navigate('/teacher', { replace: true });
+      }
+    }
+  }, [user, userType, navigate]);
+
+  // Link guest bookings after user logs in
+  useEffect(() => {
+    async function linkBookings() {
+      if (!user?.id || !profile?.email) return;
+
+      try {
+        await linkGuestBookingsToUser(user.id, profile.email);
+      } catch {
+        // Silent fail - guest booking linking is not critical
+      }
+    }
+
+    linkBookings();
+  }, [user?.id, profile?.email]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -50,9 +82,10 @@ const StudentLoginPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched({ email: true, password: true });
+    setLoginError(null);
 
     if (!validateForm()) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
@@ -62,8 +95,23 @@ const StudentLoginPage = () => {
       return;
     }
 
-    // Handle login logic
-    console.log({ email, password });
+    setIsLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        setLoginError('Ugyldig e-postadresse eller passord');
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - clear loading state and let useEffect handle navigation
+      setIsLoading(false);
+    } catch {
+      setLoginError('En feil oppstod. Prøv igjen.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -86,7 +134,7 @@ const StudentLoginPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Login Card */}
-          <div className="rounded-3xl border border-border bg-white p-8 shadow-xl shadow-text-primary/5">
+          <div className="rounded-3xl border border-border bg-white p-8 shadow-xl shadow-gray-900/5">
             {/* Title */}
             <div className="text-center mb-8">
               <h1 className="font-geist text-2xl font-semibold text-text-primary tracking-tight">
@@ -99,9 +147,16 @@ const StudentLoginPage = () => {
 
             {/* Form */}
             <form className="space-y-5" onSubmit={handleSubmit}>
+              {/* Login Error */}
+              {loginError && (
+                <div className="rounded-xl bg-status-error-bg border border-status-error-text/20 p-3">
+                  <p className="text-xs text-status-error-text font-medium">{loginError}</p>
+                </div>
+              )}
+
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   E-postadresse <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -125,7 +180,7 @@ const StudentLoginPage = () => {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -157,9 +212,17 @@ const StudentLoginPage = () => {
               {/* Main Action */}
               <Button
                 type="submit"
-                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98]"
+                disabled={isLoading}
+                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Logg inn
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Logger inn...
+                  </>
+                ) : (
+                  'Logg inn'
+                )}
               </Button>
             </form>
 

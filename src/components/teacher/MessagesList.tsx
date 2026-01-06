@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MessageCircle } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import type { Message } from '@/types/dashboard';
 
 interface MessagesListProps {
@@ -9,22 +9,18 @@ interface MessagesListProps {
 export const MessagesList = ({ messages }: MessagesListProps) => {
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-3xl border border-border bg-white p-0 shadow-sm overflow-hidden ios-ease hover:border-ring hover:shadow-md flex flex-col">
-      <div className="flex items-center justify-between p-5 border-b border-secondary">
+      <div className="flex items-center justify-between p-5 border-b border-border">
         <h3 className="font-geist text-sm font-semibold text-text-primary">Meldinger</h3>
         <Link to="/teacher/messages" className="text-xs font-medium text-text-tertiary hover:text-text-secondary transition-colors">Se alle</Link>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1 flex flex-col">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-6">
-            <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
-              <MessageCircle className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
+          <div className="flex-1 flex flex-col items-center justify-center text-center mx-1 my-1 border border-dashed border-border rounded-xl bg-surface/50">
+            <div className="w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center mb-3 shadow-sm">
+              <MessageSquare className="w-4 h-4 text-text-tertiary" />
             </div>
-            <h4 className="font-geist text-sm font-medium text-text-primary mb-1">
-              Ingen meldinger
-            </h4>
-            <p className="text-xs text-muted-foreground max-w-[200px]">
-              Du har ingen nye meldinger
-            </p>
+            <p className="text-sm font-medium text-text-primary">Alt oppdatert</p>
+            <p className="text-xs text-text-tertiary mt-1">Ingen nye henvendelser fra elever.</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -43,9 +39,6 @@ export const MessagesList = ({ messages }: MessagesListProps) => {
                 <div className="h-10 w-10 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-xs font-medium border border-border group-hover:border-ring">
                   {message.sender.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
-              )}
-              {message.isOnline && (
-                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-primary-accent ring-2 ring-white"></span>
               )}
             </div>
             <div className="flex-1 min-w-0">

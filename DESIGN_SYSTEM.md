@@ -25,29 +25,27 @@ Use these for general UI elements, backgrounds, borders, and text when you need 
 ### Text Colors (Semantic)
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `text-text-primary` | #292524 | Headings, primary text, dark emphasis |
-| `text-text-secondary` | #57534E | Body text, secondary content |
-| `text-sidebar-foreground` | #44403C | Labels, form labels, sidebar text |
-| `text-muted-foreground` | #78716C | Muted text, descriptions |
-| `text-text-tertiary` | #A8A29E | Tertiary text, timestamps, placeholders |
-| `text-primary` | #354F41 | Brand accent text |
+| `text-text-primary` | #111827 | Headings, primary text, dark emphasis |
+| `text-text-secondary` | #4B5563 | Body text, secondary content |
+| `text-sidebar-foreground` | #374151 | Labels, form labels, sidebar text |
+| `text-muted-foreground` | #6B7280 | Muted text, descriptions |
+| `text-text-tertiary` | #9CA3AF | Tertiary text, timestamps, placeholders |
 
 ### Background Colors
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `bg-surface` | #FDFBF7 | Page background |
-| `bg-surface-elevated` | #F5F5F4 | Cards, elevated surfaces |
+| `bg-surface` | #F9FAFB | Page background (gray-50) |
+| `bg-surface-elevated` | #F3F4F6 | Cards, elevated surfaces (gray-100) |
 | `bg-white` | #FFFFFF | Card backgrounds |
-| `bg-primary` | #354F41 | Brand primary background |
-| `bg-primary-dark` | #2A3D34 | Dark brand background |
-| `bg-primary-accent` | #4A6959 | Active/accent elements |
+| `bg-gray-800` | #1F2937 | Dark backgrounds, hero cards |
+| `bg-gray-900` | #111827 | Darkest backgrounds, primary buttons |
 
 ### Border Colors
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `border-border` | #E7E5E4 | Default borders |
-| `ring-ring` | #D6D3D1 | Focus rings, hover borders |
-| `border-ring` | #D6D3D1 | Hover state borders |
+| `border-border` | #E5E7EB | Default borders (gray-200) |
+| `ring-ring` | #D1D5DB | Focus rings, hover borders (gray-300) |
+| `border-ring` | #D1D5DB | Hover state borders (gray-300) |
 | `border-gray-200` | #E5E7EB | Alternative neutral border |
 | `border-gray-100` | #F3F4F6 | Very subtle dividers |
 
@@ -79,6 +77,60 @@ Use these for general UI elements, backgrounds, borders, and text when you need 
 | `shadow-card` | `0 1px 2px rgba(0,0,0,0.02)` | Card-specific, very subtle |
 
 > **Note:** Shadows are intentionally subtle for a clean, modern look. Use `shadow-[0_1px_2px_rgba(0,0,0,0.02)]` for inline custom card shadows.
+
+### Border Radius
+| Token | Size | Usage |
+|-------|------|-------|
+| `rounded-full` | 9999px | Avatars, badges, pills, status dots |
+| `rounded-3xl` | 24px | Dashboard cards, hero sections |
+| `rounded-2xl` | 16px | Form section cards, detail pages |
+| `rounded-xl` | 12px | Selection cards, nested elements |
+| `rounded-lg` | 8px | Compact buttons, inputs, small cards |
+| `rounded-md` | 6px | Icon buttons, small elements |
+
+### Dark Card Gradient
+For dark stat cards and hero elements:
+```tsx
+className="bg-gradient-to-br from-gray-800 to-gray-900"
+// Or use the CSS variable:
+background: var(--gradient-dark-card);
+```
+
+---
+
+## Color Palette
+
+The design system uses the **Gray Scale** - a cool, neutral palette for a clean, professional look.
+
+### Semantic Tokens (Preferred)
+Use these semantic tokens for consistency:
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `text-text-primary` | #111827 (gray-900) | Headings, primary text |
+| `text-text-secondary` | #4B5563 (gray-600) | Body text, secondary content |
+| `text-muted-foreground` | #6B7280 (gray-500) | Muted text, descriptions |
+| `text-text-tertiary` | #9CA3AF (gray-400) | Placeholders, timestamps |
+| `bg-surface` | #F9FAFB (gray-50) | Page backgrounds |
+| `bg-surface-elevated` | #F3F4F6 (gray-100) | Cards, elevated surfaces |
+| `border-border` | #E5E7EB (gray-200) | Borders, dividers |
+| `border-ring` / `ring-ring` | #D1D5DB (gray-300) | Focus rings, hover borders |
+
+### Direct Gray Scale
+You can also use the gray scale directly:
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `gray-50` | #F9FAFB | Lightest backgrounds |
+| `gray-100` | #F3F4F6 | Subtle backgrounds |
+| `gray-200` | #E5E7EB | Borders |
+| `gray-300` | #D1D5DB | Disabled states |
+| `gray-400` | #9CA3AF | Icons, placeholders |
+| `gray-500` | #6B7280 | Secondary text |
+| `gray-600` | #4B5563 | Body text |
+| `gray-700` | #374151 | Primary text |
+| `gray-800` | #1F2937 | Dark backgrounds |
+| `gray-900` | #111827 | Darkest text |
 
 ---
 
@@ -298,7 +350,7 @@ className="rounded-2xl border border-border bg-white p-6 shadow-sm ios-ease hove
 
 #### Hero Card (Dark with Gradient)
 ```tsx
-className="relative rounded-3xl bg-primary text-primary-foreground shadow-lg shadow-primary/10 ios-ease hover:shadow-xl hover:shadow-primary/20"
+className="relative rounded-3xl bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-lg shadow-gray-900/10 ios-ease hover:shadow-xl hover:shadow-gray-900/20"
 ```
 - Use grain overlay: `bg-grain opacity-[0.2] mix-blend-overlay`
 - Glow effect: `h-80 w-80 rounded-full bg-white/10 blur-3xl`
@@ -391,7 +443,7 @@ className="... ring-red-500 focus:ring-red-500/20"
 
 #### Custom Badge
 ```tsx
-className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary shadow-sm"
+className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wide text-text-primary shadow-sm"
 ```
 
 ### List Items
@@ -412,7 +464,7 @@ className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase trackin
 
 #### Online Badge
 ```tsx
-className="h-2.5 w-2.5 rounded-full bg-primary-accent ring-2 ring-white"
+className="h-2.5 w-2.5 rounded-full bg-success ring-2 ring-white"
 ```
 
 #### Pulsing Indicator
@@ -573,7 +625,7 @@ className="text-ring group-hover:text-text-tertiary"
 ### Pattern
 ```tsx
 <div className="relative rounded-3xl border border-border bg-gradient-to-br from-white to-surface-elevated/50 p-6 shadow-sm overflow-hidden">
-  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-2xl"></div>
+  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gray-200/50 blur-2xl"></div>
   <div className="relative z-10">
     <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
       Klar til å planlegge din første time?
@@ -693,27 +745,21 @@ Gray Scale (Neutral UI):
 #111827 → bg-gray-900 / text-gray-900
 
 Text (Semantic):
-#292524 → text-text-primary
-#44403C → text-sidebar-foreground
-#57534E → text-text-secondary
-#78716C → text-muted-foreground
-#A8A29E → text-text-tertiary
+#111827 → text-text-primary (gray-900)
+#374151 → text-sidebar-foreground (gray-700)
+#4B5563 → text-text-secondary (gray-600)
+#6B7280 → text-muted-foreground (gray-500)
+#9CA3AF → text-text-tertiary (gray-400)
 
 Backgrounds:
-#FDFBF7 → bg-surface
-#F5F5F4 → bg-surface-elevated
+#F9FAFB → bg-surface (gray-50)
+#F3F4F6 → bg-surface-elevated (gray-100)
 #FFFFFF → bg-white
-rgba(251,249,246,0.3) → bg-input-bg
+rgba(249,250,251,0.3) → bg-input-bg
 
 Borders:
-#E7E5E4 → border-border
-#D6D3D1 → ring-ring / border-ring
-
-Brand:
-#354F41 → bg-primary / text-primary
-#2A3D34 → bg-primary-dark
-#4A6959 → bg-primary-accent
-#547564 → bg-primary-soft
+#E5E7EB → border-border (gray-200)
+#D1D5DB → ring-ring / border-ring (gray-300)
 
 Feedback:
 #22C55E → bg-success / text-success

@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays, Loader2 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
-import { useEmptyState } from '@/context/EmptyStateContext';
+import { useEmptyState } from '@/contexts/EmptyStateContext';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import {
   getOsloTime,
@@ -12,10 +14,15 @@ import {
   getMondayOfWeek,
   generateWeekDays,
 } from '@/utils/dateUtils';
+import { useAuth } from '@/contexts/AuthContext';
+import { fetchCourses, fetchCourseSessions, type CourseWithStyle } from '@/services/courses';
+import { supabase } from '@/lib/supabase';
+import type { CourseSession } from '@/types/database';
 
 // Types
 interface ScheduleEvent {
   id: string;
+  courseId: string; // For navigation to course detail
   title: string;
   startTime: string;
   endTime: string;
@@ -23,109 +30,37 @@ interface ScheduleEvent {
   instructor: string;
   instructorAvatar?: string;
   instructorInitials?: string;
-  type: 'vinyasa' | 'yin' | 'core' | 'private' | 'online' | 'restore' | 'flow';
+  styleColor?: string | null; // Color from database (course_styles.color)
   status?: 'completed' | 'upcoming' | 'active';
-  attendees?: number;
+  signups: number;
+  maxCapacity: number | null;
 }
 
 const timeSlots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
 
-const events: Record<number, ScheduleEvent[]> = {
-  0: [ // Monday
-    {
-      id: '1',
-      title: 'Morning Flow',
-      startTime: '08:00',
-      endTime: '09:15',
-      location: 'Studio A',
-      instructor: 'Kristoffer',
-      instructorInitials: 'KN',
-      type: 'vinyasa',
-    },
-    {
-      id: '2',
-      title: 'Pilates Core',
-      startTime: '17:30',
-      endTime: '18:30',
-      location: 'Studio B',
-      instructor: 'Marcus',
-      instructorAvatar: 'https://i.pravatar.cc/150?u=2',
-      type: 'yin',
-    },
-  ],
-  1: [ // Tuesday
-    {
-      id: '3',
-      title: 'Lunsj Yoga',
-      startTime: '12:00',
-      endTime: '13:00',
-      location: 'Studio A',
-      instructor: 'Sarah',
-      instructorAvatar: 'https://i.pravatar.cc/150?u=3',
-      type: 'core',
-    },
-  ],
-  2: [ // Wednesday (Today)
-    {
-      id: '4',
-      title: 'Morgenpust',
-      startTime: '07:30',
-      endTime: '08:30',
-      location: 'Online',
-      instructor: 'Kristoffer',
-      instructorInitials: 'KN',
-      type: 'online',
-      status: 'completed',
-    },
-    {
-      id: '5',
-      title: 'Ashtanga Intro',
-      startTime: '16:00',
-      endTime: '17:15',
-      location: 'Studio C',
-      instructor: 'Kristoffer',
-      instructorInitials: 'KN',
-      type: 'vinyasa',
-      status: 'active',
-    },
-  ],
-  3: [ // Thursday
-    {
-      id: '6',
-      title: 'Privattime',
-      startTime: '09:00',
-      endTime: '10:00',
-      location: 'Studio B',
-      instructor: 'Meg',
-      instructorInitials: 'KN',
-      type: 'private',
-    },
-  ],
-  4: [ // Friday
-    {
-      id: '7',
-      title: 'Weekend Flow',
-      startTime: '15:00',
-      endTime: '16:30',
-      location: 'Studio A',
-      instructor: 'Kristoffer',
-      instructorInitials: 'KN',
-      type: 'flow',
-      attendees: 15,
-    },
-  ],
-  6: [ // Sunday
-    {
-      id: '8',
-      title: 'Sunday Restore',
-      startTime: '10:00',
-      endTime: '11:30',
-      location: 'Studio A',
-      instructor: 'Kristoffer',
-      instructorInitials: 'KN',
-      type: 'restore',
-    },
-  ],
+// Default gray color for events without a style color
+const DEFAULT_EVENT_COLOR = '#6B7280'; // gray-500 from design system
+
+// Calculate end time from start time and duration
+const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+  const [hours, mins] = startTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + mins + durationMinutes;
+  const endHours = Math.floor(totalMinutes / 60);
+  const endMins = totalMinutes % 60;
+  return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+};
+
+// Get initials from name
+const getInitials = (name: string | null | undefined): string => {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+};
+
+// Format time to HH:MM (remove seconds if present)
+const formatTime = (time: string): string => {
+  // Handle both HH:MM and HH:MM:SS formats
+  const parts = time.split(':');
+  return `${parts[0]}:${parts[1]}`;
 };
 
 // Helper to calculate position and height
@@ -142,136 +77,78 @@ const getEventStyle = (startTime: string, endTime: string) => {
   };
 };
 
-// Event type colors - intentionally hardcoded for distinct event type identification
-const getEventColors = (type: ScheduleEvent['type']) => {
-  const colors = {
-    vinyasa: {
-      bg: 'bg-[#ECFDF5]',
-      border: 'border-[#D1FAE5]',
-      accent: 'border-l-[#10B981]',
-      time: 'text-[#059669]',
-      title: 'text-[#064E3B]',
-      subtitle: 'text-[#065F46]',
-      ring: 'ring-[#10B981]/20',
-    },
-    yin: {
-      bg: 'bg-[#F0F9FF]',
-      border: 'border-[#BAE6FD]',
-      accent: 'border-l-[#38BDF8]',
-      time: 'text-[#0284C7]',
-      title: 'text-[#0C4A6E]',
-      subtitle: 'text-[#0369A1]',
-      ring: 'ring-[#38BDF8]/20',
-    },
-    core: {
-      bg: 'bg-[#FFFBEB]',
-      border: 'border-[#FDE68A]',
-      accent: 'border-l-[#F59E0B]',
-      time: 'text-[#B45309]',
-      title: 'text-[#78350F]',
-      subtitle: 'text-[#92400E]',
-      ring: 'ring-[#F59E0B]/20',
-    },
-    private: {
-      bg: 'bg-[#EEF2FF]',
-      border: 'border-[#C7D2FE]',
-      accent: 'border-l-[#6366F1]',
-      time: 'text-[#4338CA]',
-      title: 'text-[#312E81]',
-      subtitle: 'text-[#3730A3]',
-      ring: 'ring-[#6366F1]/20',
-    },
-    online: {
-      bg: 'bg-[#F3F4F6]',
-      border: 'border-[#E5E7EB]',
-      accent: 'border-l-[#6B7280]',
-      time: 'text-[#374151]',
-      title: 'text-[#1F2937]',
-      subtitle: 'text-[#4B5563]',
-      ring: 'ring-[#6B7280]/20',
-    },
-    restore: {
-      bg: 'bg-[#F0FDFA]',
-      border: 'border-[#CCFBF1]',
-      accent: 'border-l-[#14B8A6]',
-      time: 'text-[#0F766E]',
-      title: 'text-[#115E59]',
-      subtitle: 'text-[#134E4A]',
-      ring: 'ring-[#14B8A6]/20',
-    },
-    flow: {
-      bg: 'bg-[#FDF2F8]',
-      border: 'border-[#FBCFE8]',
-      accent: 'border-l-[#EC4899]',
-      time: 'text-[#BE185D]',
-      title: 'text-[#831843]',
-      subtitle: 'text-[#9D174D]',
-      ring: 'ring-[#EC4899]/20',
-    },
+// Generate color styles from a base color (uses database color or default gray)
+// Returns inline styles for dynamic coloring based on course_styles.color
+const getEventColorStyles = (baseColor: string | null | undefined) => {
+  const color = baseColor || DEFAULT_EVENT_COLOR;
+  return {
+    // Inline styles for dynamic colors
+    accentBorderColor: color,
+    // We use neutral Tailwind classes for consistent look, accent color only on left border
   };
-  return colors[type] || colors.vinyasa;
 };
 
 // Event Card Component
+// Uses database color for left accent border, neutral design system colors for everything else
 const EventCard = ({ event }: { event: ScheduleEvent }) => {
-  const style = getEventStyle(event.startTime, event.endTime);
-  const colors = getEventColors(event.type);
+  const positionStyle = getEventStyle(event.startTime, event.endTime);
+  const { accentBorderColor } = getEventColorStyles(event.styleColor);
   const isCompleted = event.status === 'completed';
   const isActive = event.status === 'active';
 
   return (
-    <div
-      className={`absolute left-1 right-1 rounded-lg ${colors.bg} border ${colors.border} border-l-4 ${colors.accent} p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-      style={style}
+    <Link
+      to={`/teacher/courses/${event.courseId}`}
+      className={`absolute left-1 right-1 rounded-lg bg-white border border-border border-l-4 p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      style={{
+        ...positionStyle,
+        borderLeftColor: accentBorderColor,
+      }}
     >
       <div className="flex justify-between items-start">
-        <span className={`text-xxs font-bold ${colors.time}`}>
-          {event.startTime} - {event.endTime}
+        <span className="text-xxs font-bold text-text-secondary">
+          {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
-        {isCompleted && <CheckCircle2 className={`h-3 w-3 ${colors.time}`} />}
+        {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
         {isActive && (
           <span className="inline-flex items-center rounded-full bg-success px-1.5 py-0.5 text-[8px] font-medium text-white">
             Start
           </span>
         )}
         {!isCompleted && !isActive && (
-          <Users className={`h-3 w-3 ${colors.time} opacity-0 group-hover:opacity-100 transition-opacity`} />
+          <Users className="h-3 w-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
-      <p className={`text-xs font-semibold ${colors.title} mt-1 truncate`}>{event.title}</p>
-      <p className={`text-xxs ${colors.subtitle} mt-0.5`}>{event.location}</p>
+      <p className="text-xs font-semibold text-text-primary mt-1 truncate">{event.title}</p>
+      <p className="text-xxs text-muted-foreground mt-0.5">{event.location}</p>
       {!isCompleted && (
-        <div className="mt-2 flex items-center gap-1.5">
-          {event.attendees ? (
-            <>
-              <div className="flex -space-x-1">
-                <img src="https://i.pravatar.cc/150?u=1" className="h-4 w-4 rounded-full ring-1 ring-white" alt="" />
-                <img src="https://i.pravatar.cc/150?u=2" className="h-4 w-4 rounded-full ring-1 ring-white" alt="" />
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            {event.instructorAvatar ? (
+              <img src={event.instructorAvatar} className="h-4 w-4 rounded-full ring-1 ring-border" alt="" />
+            ) : (
+              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-text-secondary text-[6px] font-medium text-white ring-1 ring-border">
+                {event.instructorInitials}
               </div>
-              <span className={`text-xxs ${colors.subtitle}`}>+{event.attendees}</span>
-            </>
-          ) : (
-            <>
-              {event.instructorAvatar ? (
-                <img src={event.instructorAvatar} className={`h-4 w-4 rounded-full ring-1 ${colors.ring}`} alt="" />
-              ) : (
-                <div className={`flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[6px] font-medium text-white ring-1 ${colors.ring}`}>
-                  {event.instructorInitials}
-                </div>
-              )}
-              <span className={`text-xxs ${colors.subtitle}`}>{event.instructor}</span>
-            </>
-          )}
+            )}
+            <span className="text-xxs text-muted-foreground">{event.instructor}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="h-3 w-3 text-text-tertiary" />
+            <span className="text-xxs text-muted-foreground">
+              {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
+            </span>
+          </div>
         </div>
       )}
-    </div>
+    </Link>
   );
 };
 
 // Day Column Component
 const DayColumn = ({ isToday, isWeekend, events: dayEvents }: { dayIndex: number; isToday: boolean; isWeekend: boolean; events: ScheduleEvent[] }) => {
   return (
-    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface/30' : ''} ${isWeekend ? 'bg-[#FAFAFA]' : ''}`}>
+    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface/30' : ''} ${isWeekend ? 'bg-surface' : ''}`}>
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {timeSlots.map((_, i) => (
@@ -287,14 +164,21 @@ const DayColumn = ({ isToday, isWeekend, events: dayEvents }: { dayIndex: number
   );
 };
 
-// Empty events for empty state demo
-const emptyEvents: Record<number, ScheduleEvent[]> = {};
+// Session with course data for transformation
+interface SessionWithCourse extends CourseSession {
+  course: CourseWithStyle;
+}
 
 export const SchedulePage = () => {
   const { showEmptyState } = useEmptyState();
+  const { currentOrganization, profile } = useAuth();
 
-  // Use empty or populated events based on empty state toggle
-  const currentEvents = showEmptyState ? emptyEvents : events;
+  // Data fetching state
+  const [courses, setCourses] = useState<CourseWithStyle[]>([]);
+  const [sessions, setSessions] = useState<SessionWithCourse[]>([]);
+  const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({}); // courseId -> count
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize with current Oslo time
   const [currentTime, setCurrentTime] = useState(getOsloTime);
@@ -316,6 +200,151 @@ export const SchedulePage = () => {
     monday.setDate(monday.getDate() + (weekOffset * 7));
     return monday;
   }, [weekOffset]);
+
+  // Calculate Sunday of the displayed week (for filtering)
+  const displayedSunday = useMemo(() => {
+    const sunday = new Date(displayedMonday);
+    sunday.setDate(displayedMonday.getDate() + 6);
+    return sunday;
+  }, [displayedMonday]);
+
+  // Fetch courses and sessions from database
+  const loadScheduleData = useCallback(async () => {
+    if (!currentOrganization) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Fetch all courses for the organization
+      const { data: coursesData, error: coursesError } = await fetchCourses(currentOrganization.id);
+
+      if (coursesError) {
+        throw coursesError;
+      }
+
+      const fetchedCourses = coursesData || [];
+      setCourses(fetchedCourses);
+
+      // Fetch sessions for each course
+      const allSessions: SessionWithCourse[] = [];
+
+      for (const course of fetchedCourses) {
+        const { data: sessionsData, error: sessionsError } = await fetchCourseSessions(course.id);
+
+        if (sessionsError) {
+          continue;
+        }
+
+        if (sessionsData) {
+          // Attach course data to each session
+          const sessionsWithCourse = sessionsData.map(session => ({
+            ...session,
+            course
+          }));
+          allSessions.push(...sessionsWithCourse);
+        }
+      }
+
+      setSessions(allSessions);
+
+      // Fetch signups counts for all courses
+      const courseIds = fetchedCourses.map(c => c.id);
+      if (courseIds.length > 0) {
+        const { data: signupsData } = await supabase
+          .from('signups')
+          .select('course_id')
+          .in('course_id', courseIds)
+          .eq('status', 'confirmed');
+
+        // Count signups per course
+        const counts: Record<string, number> = {};
+        if (signupsData) {
+          for (const signup of signupsData) {
+            counts[signup.course_id] = (counts[signup.course_id] || 0) + 1;
+          }
+        }
+        setSignupsCounts(counts);
+      }
+    } catch {
+      setError('Kunne ikke laste timeplan. Prøv igjen senere.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentOrganization]);
+
+  // Load data on mount and when organization changes
+  useEffect(() => {
+    loadScheduleData();
+  }, [loadScheduleData]);
+
+  // Filter sessions to current week and transform to events
+  const currentEvents = useMemo(() => {
+    // Format dates for comparison (YYYY-MM-DD)
+    const mondayStr = displayedMonday.toISOString().split('T')[0];
+    const sundayStr = displayedSunday.toISOString().split('T')[0];
+
+    // Group sessions by day index (0 = Monday, 6 = Sunday)
+    const eventsByDay: Record<number, ScheduleEvent[]> = {};
+
+    for (const session of sessions) {
+      const sessionDate = session.session_date;
+
+      // Check if session is within the displayed week
+      if (sessionDate < mondayStr || sessionDate > sundayStr) {
+        continue;
+      }
+
+      // Calculate day index (0 = Monday)
+      // Parse date parts directly to avoid timezone issues
+      const [year, month, day] = sessionDate.split('-').map(Number);
+      const sessionDateObj = new Date(year, month - 1, day); // month is 0-indexed
+      const dayOfWeek = sessionDateObj.getDay();
+      // Convert Sunday (0) to 6, Monday (1) to 0, etc.
+      const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+      // Calculate end time from duration
+      const duration = session.course.duration || 60;
+      const endTime = session.end_time || calculateEndTime(session.start_time, duration);
+
+      // Determine session status
+      const now = getOsloTime();
+      const sessionDateTime = new Date(`${sessionDate}T${session.start_time}`);
+      const sessionEndDateTime = new Date(`${sessionDate}T${endTime}`);
+
+      let status: 'completed' | 'upcoming' | 'active' | undefined;
+      if (now > sessionEndDateTime) {
+        status = 'completed';
+      } else if (now >= sessionDateTime && now <= sessionEndDateTime) {
+        status = 'active';
+      } else {
+        status = 'upcoming';
+      }
+
+      // Transform to ScheduleEvent
+      const event: ScheduleEvent = {
+        id: session.id,
+        courseId: session.course.id,
+        title: session.course.title,
+        startTime: session.start_time,
+        endTime: endTime,
+        location: session.course.location || 'Ikke angitt',
+        instructor: profile?.name || 'Instruktør',
+        instructorInitials: getInitials(profile?.name),
+        styleColor: session.course.style?.color, // Use database color, fallback handled in getEventColorStyles
+        status: status,
+        signups: signupsCounts[session.course.id] || 0,
+        maxCapacity: session.course.max_participants,
+      };
+
+      if (!eventsByDay[dayIndex]) {
+        eventsByDay[dayIndex] = [];
+      }
+      eventsByDay[dayIndex].push(event);
+    }
+
+    return eventsByDay;
+  }, [sessions, displayedMonday, displayedSunday, profile, signupsCounts]);
 
   // Generate week days for the displayed week
   const weekDays = useMemo(() => {
@@ -350,6 +379,30 @@ export const SchedulePage = () => {
     return weekOffset === 0 && hours >= 7 && hours < 24;
   }, [currentTime, weekOffset]);
 
+  // Check if there are any events in the current week
+  const hasEventsThisWeek = useMemo(() => {
+    return Object.values(currentEvents).some(dayEvents => dayEvents.length > 0);
+  }, [currentEvents]);
+
+  // Get unique styles from active courses for the legend
+  const activeStyles = useMemo(() => {
+    const stylesMap = new Map<string, { name: string; color: string }>();
+
+    for (const course of courses) {
+      if (course.style?.name && course.style?.color) {
+        // Use style name as key to avoid duplicates
+        if (!stylesMap.has(course.style.name)) {
+          stylesMap.set(course.style.name, {
+            name: course.style.name,
+            color: course.style.color
+          });
+        }
+      }
+    }
+
+    return Array.from(stylesMap.values());
+  }, [courses]);
+
   // Navigation handlers
   const goToPreviousWeek = () => setWeekOffset(prev => prev - 1);
   const goToNextWeek = () => setWeekOffset(prev => prev + 1);
@@ -360,10 +413,16 @@ export const SchedulePage = () => {
       <TeacherSidebar />
       <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
           {/* Schedule Toolbar */}
-          <header className="flex flex-col gap-4 border-b border-border bg-surface px-6 py-5 shrink-0 z-20">
+          <motion.header
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            transition={pageTransition}
+            className="flex flex-col gap-4 border-b border-border bg-surface px-6 py-5 shrink-0 z-20"
+          >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
-                <h1 className="font-geist text-xl font-medium text-text-primary">Timeplan</h1>
+                <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Timeplan</h1>
                 <div className="h-4 w-px bg-border"></div>
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Button
@@ -386,31 +445,19 @@ export const SchedulePage = () => {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 </div>
+{weekOffset !== 0 && (
                 <Button
                   onClick={goToCurrentWeek}
                   variant="outline"
                   size="sm"
-                  className={`hidden md:flex ml-2 h-7 ${
-                    weekOffset === 0
-                      ? 'text-text-tertiary cursor-default hover:border-border hover:text-text-tertiary hover:shadow-none'
-                      : 'text-text-secondary'
-                  }`}
-                  disabled={weekOffset === 0}
+                  className="hidden md:flex ml-2 h-7 text-text-secondary"
                 >
-                  I dag
+                  Gå til i dag
                 </Button>
+                )}
               </div>
 
               <div className="flex items-center gap-3">
-                {/* View Toggle */}
-                <div className="hidden md:flex items-center rounded-lg border border-border bg-white p-0.5 shadow-sm">
-                  <button className="rounded-md px-3 py-1 text-xs font-medium text-text-primary hover:bg-surface-elevated">Dag</button>
-                  <button className="rounded-md bg-surface-elevated px-3 py-1 text-xs font-medium text-text-primary shadow-sm ring-1 ring-black/5">Uke</button>
-                  <button className="rounded-md px-3 py-1 text-xs font-medium text-text-primary hover:bg-surface-elevated">Måned</button>
-                </div>
-
-                <div className="h-4 w-px bg-border hidden md:block"></div>
-
                 <Button
                   asChild
                   size="compact"
@@ -426,40 +473,73 @@ export const SchedulePage = () => {
 
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease cursor-pointer">
                 <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Rom
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Kurstype
               </button>
-              <div className="ml-auto hidden md:flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-sm bg-[#D1FAE5] border border-[#A7F3D0]"></div>
-                  <span className="text-xs text-muted-foreground">Vinyasa</span>
+              {/* Dynamic style legend - only shows styles from active courses */}
+              {activeStyles.length > 0 && (
+                <div className="ml-auto hidden md:flex items-center gap-4">
+                  {activeStyles.map((style) => (
+                    <div key={style.name} className="flex items-center gap-1.5">
+                      <div
+                        className="h-2.5 w-2.5 rounded-sm border"
+                        style={{
+                          backgroundColor: `${style.color}20`,
+                          borderColor: `${style.color}40`
+                        }}
+                      />
+                      <span className="text-xs text-muted-foreground">{style.name}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-sm bg-[#E0F2FE] border border-[#BAE6FD]"></div>
-                  <span className="text-xs text-muted-foreground">Yin</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-sm bg-[#FEF3C7] border border-[#FDE68A]"></div>
-                  <span className="text-xs text-muted-foreground">Core</span>
-                </div>
-              </div>
+              )}
             </div>
-          </header>
+          </motion.header>
 
           {/* Schedule Grid Container */}
-          <div className="flex-1 overflow-auto bg-white relative flex flex-col">
+          <div className={`flex-1 bg-white relative flex flex-col ${!isLoading && !error && (showEmptyState || !hasEventsThisWeek) ? 'overflow-hidden' : 'overflow-auto'}`}>
 
-            {/* Empty State Overlay */}
-            {showEmptyState && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+            {/* Loading State Overlay */}
+            {isLoading && (
+              <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">Laster timeplan...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State Overlay */}
+            {error && !isLoading && (
+              <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
                 <div className="text-center max-w-sm mx-auto p-8">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
+                    <CalendarDays className="h-8 w-8 text-destructive" />
+                  </div>
+                  <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
+                    Noe gikk galt
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {error}
+                  </p>
+                  <Button onClick={loadScheduleData} size="compact" className="gap-2">
+                    Prøv igjen
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
+            {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-900/5">
+                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl shadow-lg border border-border">
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated border border-border">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
@@ -467,7 +547,9 @@ export const SchedulePage = () => {
                     Ingen timer denne uken
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Det er ingen planlagte timer denne uken. Opprett et nytt kurs for å komme i gang.
+                    {courses.length === 0
+                      ? 'Du har ingen kurs ennå. Opprett et nytt kurs for å komme i gang.'
+                      : 'Det er ingen planlagte timer denne uken. Naviger til en annen uke eller opprett et nytt kurs.'}
                   </p>
                   <Button asChild size="compact" className="gap-2">
                     <Link to="/teacher/new-course">
@@ -488,15 +570,15 @@ export const SchedulePage = () => {
               {weekDays.map((day) => (
                 <div
                   key={day.name}
-                  className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-[#FAFAFA]' : ''}`}
+                  className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                 >
-                  <span className={`text-[11px] font-medium uppercase tracking-wide ${day.isToday ? 'font-bold text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
+                  <span className={`text-xxs font-medium uppercase tracking-wide ${day.isToday ? 'font-bold text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
                     {day.name}
                   </span>
                   <span
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
                       day.isToday
-                        ? 'bg-primary text-surface-elevated font-bold shadow-md shadow-primary/20'
+                        ? 'bg-text-primary text-white font-bold shadow-md shadow-text-primary/20'
                         : day.isWeekend
                         ? 'text-text-tertiary group-hover:bg-surface-elevated'
                         : 'text-text-secondary group-hover:bg-surface-elevated'
@@ -524,7 +606,7 @@ export const SchedulePage = () => {
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-border bg-surface text-[11px] font-medium text-text-tertiary">
+              <div className="flex flex-col border-r border-border bg-surface text-xxs font-medium text-text-tertiary">
                 {timeSlots.map((time) => (
                   <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
                     {time}

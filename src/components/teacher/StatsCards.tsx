@@ -105,7 +105,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
             <div
               key={index}
               className={`w-1/6 rounded-t-sm ${
-                index === 4 ? 'bg-primary-accent shadow-sm' : index === 3 ? 'bg-border group-hover:bg-ring' : 'bg-surface-elevated group-hover:bg-border'
+                index === 4 ? 'bg-text-primary shadow-sm' : index === 3 ? 'bg-ring group-hover:bg-text-tertiary' : 'bg-surface-elevated group-hover:bg-border'
               } transition-colors ${index === 0 ? 'delay-75' : index === 1 ? 'delay-100' : index === 2 ? 'delay-150' : index === 3 ? 'delay-200' : index === 5 ? 'delay-300' : ''}`}
               style={{ height: `${value}%` }}
               aria-label={`Day ${index + 1}: ${value}% attendance`}

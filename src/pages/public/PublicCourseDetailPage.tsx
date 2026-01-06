@@ -1,28 +1,162 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   Clock,
   MapPin,
-  Waves,
-  Coffee,
-  Dumbbell,
   Info,
   ArrowRight,
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
   Leaf,
-  Mail,
-  Check
+  Check,
+  Loader2,
+  CheckCircle2,
+  Layers,
+  User,
+  LogOut,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { fetchCourseSessions } from '@/services/courses';
+import { checkCourseAvailability } from '@/services/signups';
+import { checkIfAlreadySignedUp } from '@/services/studentSignups';
+import { createCheckoutSession } from '@/services/checkout';
+import type { CourseSession } from '@/types/database';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+// Helper to format date for display
+function formatCourseDate(dateString: string | null): { month: string; day: string; dayName: string; fullDate: string; shortDate: string } {
+  if (!dateString) {
+    return { month: '—', day: '—', dayName: '', fullDate: 'Dato ikke satt', shortDate: '—' };
+  }
+
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+  const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
+  const shortDays = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'];
+
+  return {
+    month: months[date.getMonth()],
+    day: String(date.getDate()).padStart(2, '0'),
+    dayName: days[date.getDay()],
+    fullDate: `${days[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`,
+    shortDate: `${shortDays[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`
+  };
+}
+
+// Extract time from time_schedule (e.g., "Mandager, 18:00" -> "18:00")
+function extractTime(timeSchedule: string | null): string {
+  if (!timeSchedule) return '';
+  const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
+  return match ? match[1] : '';
+}
+
+// Format duration display (always in minutes)
+function formatDuration(duration: number | null): string {
+  if (!duration) return '';
+  return `${duration} min`;
+}
+
+// Map level to display text
+function getLevelDisplay(level: string | null): string {
+  switch (level) {
+    case 'nybegynner': return 'Nybegynner';
+    case 'viderekommen': return 'Viderekommen';
+    case 'alle': return 'Middels';
+    default: return '';
+  }
+}
+
+// Format time to HH:MM (strip seconds if present, e.g., "07:15:00" -> "07:15")
+function formatTime(time: string): string {
+  const parts = time.split(':');
+  return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
+}
+
+// Format time range for session (e.g., "07:15 - 08:15")
+function formatTimeRange(startTime: string, endTime: string | null, duration: number | null): string {
+  const formattedStart = formatTime(startTime);
+  if (endTime) {
+    return `${formattedStart} - ${formatTime(endTime)}`;
+  }
+  if (duration && startTime) {
+    // Calculate end time from start time + duration
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const endMinutes = hours * 60 + minutes + duration;
+    const endHours = Math.floor(endMinutes / 60) % 24;
+    const endMins = endMinutes % 60;
+    return `${formattedStart} - ${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+  }
+  return formattedStart;
+}
+
+// Get schedule description based on session pattern
+function getScheduleDescription(sessions: CourseSession[], _isSeries: boolean): string {
+  if (sessions.length === 0) return '';
+
+  // Get unique weekdays (0-6)
+  const weekdays = sessions.map(s => new Date(s.session_date).getDay());
+  const uniqueWeekdays = [...new Set(weekdays)];
+
+  // All sessions on same weekday
+  if (uniqueWeekdays.length === 1) {
+    const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' })
+      .format(new Date(sessions[0].session_date)).toLowerCase();
+    return `Hver ${dayName}`;
+  }
+
+  // Multiple different weekdays - show date range
+  const firstDate = new Date(sessions[0].session_date);
+  const lastDate = new Date(sessions[sessions.length - 1].session_date);
+
+  const firstDay = firstDate.getDate();
+  const lastDay = lastDate.getDate();
+
+  // Check if same month
+  if (firstDate.getMonth() === lastDate.getMonth()) {
+    const month = new Intl.DateTimeFormat('nb-NO', { month: 'long' })
+      .format(lastDate).toLowerCase();
+    return `${firstDay}. - ${lastDay}. ${month}`;
+  }
+
+  // Different months
+  const firstMonth = new Intl.DateTimeFormat('nb-NO', { month: 'short' })
+    .format(firstDate).replace('.', '');
+  const lastMonth = new Intl.DateTimeFormat('nb-NO', { month: 'short' })
+    .format(lastDate).replace('.', '');
+  return `${firstDay}. ${firstMonth} - ${lastDay}. ${lastMonth}`;
+}
 
 const PublicCourseDetailPage = () => {
+  const { slug, courseId } = useParams<{ slug: string; courseId: string }>();
+  const { user, userType, profile, signOut } = useAuth();
+
+  // Data fetching state
+  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
+  const [sessions, setSessions] = useState<CourseSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isAlreadySignedUp, setIsAlreadySignedUp] = useState(false);
+  const [signupStatus, setSignupStatus] = useState<string | null>(null);
+
+  // Booking flow state
   const [step, setStep] = useState(1);
+  const [bookingSuccess, _setBookingSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -31,9 +165,77 @@ const PublicCourseDetailPage = () => {
     message: '',
     termsAccepted: false
   });
-  
+
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Pre-fill form data for authenticated students
+  useEffect(() => {
+    if (user && userType === 'student' && profile) {
+      const nameParts = profile.name?.split(' ') || [];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      setFormData(prev => ({
+        ...prev,
+        firstName,
+        lastName,
+        email: profile.email || ''
+      }));
+    }
+  }, [user, userType, profile]);
+
+  // Fetch course data and sessions
+  useEffect(() => {
+    async function loadCourseAndSessions() {
+      if (!courseId) {
+        setFetchError('Kurs ikke funnet');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setFetchError(null);
+
+      // Fetch course data
+      const { data, error } = await fetchPublicCourseById(courseId);
+
+      if (error) {
+        setFetchError('Kunne ikke laste kurs');
+        setLoading(false);
+        return;
+      }
+
+      if (!data) {
+        setFetchError('Kurset finnes ikke eller er ikke tilgjengelig');
+        setLoading(false);
+        return;
+      }
+
+      setCourse(data);
+
+      // Fetch sessions for the course
+      const { data: sessionsData, error: sessionsError } = await fetchCourseSessions(courseId);
+      if (!sessionsError && sessionsData) {
+        setSessions(sessionsData);
+      }
+
+      // Check if student is already signed up
+      if (user && profile?.email) {
+        const { isSignedUp, signupStatus: status } = await checkIfAlreadySignedUp(
+          courseId,
+          user.id,
+          profile.email
+        );
+        setIsAlreadySignedUp(isSignedUp);
+        setSignupStatus(status);
+      }
+
+      setLoading(false);
+    }
+
+    loadCourseAndSessions();
+  }, [courseId, user, profile?.email]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -73,21 +275,28 @@ const PublicCourseDetailPage = () => {
     const newErrors: Record<string, boolean> = {};
     let isValid = true;
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = true;
-      isValid = false;
+    // For authenticated students, name and email are pre-filled from profile
+    // For guests, validate all fields
+    const isAuthStudent = user && userType === 'student';
+
+    if (!isAuthStudent) {
+      if (!formData.firstName.trim()) {
+        newErrors.firstName = true;
+        isValid = false;
+      }
+      if (!formData.lastName.trim()) {
+        newErrors.lastName = true;
+        isValid = false;
+      }
+      if (!formData.email.trim()) {
+        newErrors.email = true;
+        isValid = false;
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = true;
+        isValid = false;
+      }
     }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = true;
-      isValid = false;
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = true;
-      isValid = false;
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = true;
-      isValid = false;
-    }
+
     if (!formData.termsAccepted) {
       newErrors.termsAccepted = true;
       isValid = false;
@@ -100,7 +309,7 @@ const PublicCourseDetailPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
-    
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -122,7 +331,7 @@ const PublicCourseDetailPage = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Mark all fields as touched on submit
@@ -138,20 +347,62 @@ const PublicCourseDetailPage = () => {
         return;
     }
 
-    // Handle successful submission (mock)
-    console.log('Form submitted:', formData);
-    // Navigate to success page or show confirmation
+    if (!course || !courseId || !slug) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    // 1. Check availability
+    const { available, error: availError } = await checkCourseAvailability(courseId);
+
+    if (availError) {
+      setSubmitError('Kunne ikke sjekke tilgjengelighet. Prøv igjen.');
+      setSubmitting(false);
+      return;
+    }
+
+    if (available <= 0) {
+      setSubmitError('Beklager, kurset er fullt. Prøv et annet kurs.');
+      setSubmitting(false);
+      return;
+    }
+
+    // 2. Create Stripe checkout session
+    const currentUrl = window.location.origin;
+    const { data: checkoutData, error: checkoutError } = await createCheckoutSession({
+      courseId,
+      organizationSlug: slug,
+      customerEmail: formData.email,
+      customerName: `${formData.firstName} ${formData.lastName}`.trim(),
+      customerPhone: formData.phone || undefined,
+      successUrl: `${currentUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${currentUrl}/studio/${slug}/${courseId}?cancelled=true`,
+    });
+
+    if (checkoutError || !checkoutData) {
+      setSubmitError(checkoutError || 'Kunne ikke starte betalingen. Prøv igjen.');
+      setSubmitting(false);
+      return;
+    }
+
+    // 3. Redirect to Stripe Checkout
+    if (checkoutData.url) {
+      window.location.href = checkoutData.url;
+    } else {
+      setSubmitError('Kunne ikke omdirigere til betaling. Prøv igjen.');
+      setSubmitting(false);
+    }
   };
 
-  React.useEffect(() => {
-    if (step === 2 && timeLeft > 0) {
+  useEffect(() => {
+    if (step === 2 && timeLeft > 0 && !bookingSuccess) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [step, timeLeft]);
-  
+  }, [step, timeLeft, bookingSuccess]);
+
   const handleNextStep = () => {
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -161,6 +412,155 @@ const PublicCourseDetailPage = () => {
     setStep(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Laster kurs...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (fetchError || !course) {
+    const backUrl = slug ? `/studio/${slug}` : '/';
+    return (
+      <div className="min-h-screen w-full bg-surface font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <Link to={backUrl} className="flex items-center gap-3 cursor-pointer">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+            </Link>
+          </div>
+        </header>
+        <main className="pt-24 px-4 sm:px-6">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-3xl border border-destructive/30 bg-white p-12 shadow-sm text-center">
+              <p className="text-sm text-destructive mb-4">{fetchError || 'Kurset ble ikke funnet'}</p>
+              <Button asChild variant="outline" size="compact">
+                <Link to={backUrl}>
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Tilbake til kurs
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Success state after booking
+  if (bookingSuccess) {
+    const dateInfo = formatCourseDate(course.start_date);
+    const time = extractTime(course.time_schedule);
+    const studioUrl = slug ? `/studio/${slug}` : '/';
+
+    return (
+      <div className="min-h-screen w-full bg-surface font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+            </Link>
+          </div>
+        </header>
+        <main className="pt-24 px-4 sm:px-6 pb-24">
+          <div className="mx-auto max-w-lg text-center">
+            <div className="rounded-3xl border border-border bg-white p-8 md:p-12 shadow-sm">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
+                <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
+              </div>
+              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
+                Påmelding bekreftet!
+              </h1>
+              <p className="text-muted-foreground mb-8">
+                Du er nå påmeldt <span className="font-medium text-text-primary">{course.title}</span>.
+                {(user && userType === 'student' && profile?.email) ? (
+                  <> En bekreftelse er sendt til {profile.email}.</>
+                ) : (
+                  <> En bekreftelse er sendt til {formData.email}.</>
+                )}
+              </p>
+
+              <div className="rounded-xl bg-surface border border-border p-4 mb-8 text-left">
+                <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-3">Kursdetaljer</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Dato</span>
+                    <span className="font-medium text-text-primary">{dateInfo.fullDate}</span>
+                  </div>
+                  {time && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tid</span>
+                      <span className="font-medium text-text-primary">Kl {time}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Sted</span>
+                    <span className="font-medium text-text-primary">{course.location || 'Ikke angitt'}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-border pt-2 mt-2">
+                    <span className="text-muted-foreground">Betalt</span>
+                    <span className="font-semibold text-text-primary">{course.price || 0} kr</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {user && userType === 'student' ? (
+                  <>
+                    <Button asChild className="w-full" size="compact">
+                      <Link to="/student/dashboard">Se dine påmeldinger</Link>
+                    </Button>
+                    <Button asChild variant="outline-soft" className="w-full" size="compact">
+                      <Link to={studioUrl}>Se flere kurs</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild className="w-full" size="compact">
+                      <Link to={studioUrl}>Se flere kurs</Link>
+                    </Button>
+                    <p className="text-xs text-text-tertiary">
+                      <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary">
+                        Logg inn
+                      </Link>{' '}
+                      eller{' '}
+                      <Link to="/student/register" className="underline underline-offset-2 hover:text-text-primary">
+                        registrer deg
+                      </Link>{' '}
+                      for å se dine påmeldinger
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Main course detail / booking flow
+  const dateInfo = formatCourseDate(course.start_date);
+  const time = extractTime(course.time_schedule);
+  const durationDisplay = formatDuration(course.duration);
+  const levelDisplay = getLevelDisplay(course.level);
+  const isFull = course.spots_available === 0;
+  const isFewSpots = course.spots_available > 0 && course.spots_available <= 3;
+  const isSeries = course.course_type === 'course-series';
+  const studioUrl = slug ? `/studio/${slug}` : '/';
 
   return (
     <>
@@ -189,26 +589,46 @@ const PublicCourseDetailPage = () => {
             animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
       `}</style>
-      
-      <div className="min-h-screen w-full bg-surface text-sidebar-foreground selection:bg-primary selection:text-surface-elevated overflow-x-hidden pb-32 lg:pb-0 font-geist">
+
+      <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden pb-32 lg:pb-0 font-geist">
 
         {/* Public Header */}
         <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-3 cursor-pointer">
+                <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
                         <Leaf className="h-5 w-5" />
                     </div>
                     <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
-                </div>
+                </Link>
 
                 {step === 1 ? (
-                  <div className="flex items-center gap-4">
-                      <a href="#" className="hidden text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors md:block">Logg inn</a>
-                      <Button asChild size="compact">
-                          <Link to="/student/register">Registrer deg</Link>
-                      </Button>
-                  </div>
+                  user && userType === 'student' ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline-soft" size="compact" className="gap-2">
+                          <User className="h-3.5 w-3.5" />
+                          {profile?.name?.split(' ')[0] || 'Min profil'}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem asChild>
+                          <Link to="/student/dashboard" className="flex items-center gap-2">
+                            <BookOpen className="h-4 w-4" />
+                            Mine påmeldinger
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 text-status-error-text">
+                          <LogOut className="h-4 w-4" />
+                          Logg ut
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Button asChild size="compact">
+                      <Link to="/student/login">Logg inn</Link>
+                    </Button>
+                  )
                 ) : (
                   /* Simple Progress Indicator (Desktop) */
                   <div className="hidden md:flex items-center gap-2 text-sm font-medium">
@@ -225,16 +645,16 @@ const PublicCourseDetailPage = () => {
         {/* Main Content */}
         <main className="pt-24 px-4 sm:px-6">
             <div className="mx-auto max-w-5xl">
-                
+
                 {/* Breadcrumb / Back Navigation */}
                 <div className="mb-6">
                     {step === 1 ? (
-                      <Link to="/courses" className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group">
+                      <Link to={studioUrl} className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group">
                           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                           Tilbake til timeplan
                       </Link>
                     ) : (
-                      <button onClick={handlePrevStep} className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group">
+                      <button onClick={handlePrevStep} className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-text-primary transition-colors group cursor-pointer">
                           <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
                           Tilbake til kursdetaljer
                       </button>
@@ -242,7 +662,7 @@ const PublicCourseDetailPage = () => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px]">
-                    
+
                     {/* Left Column with AnimatePresence */}
                     <div className="relative">
                       <AnimatePresence mode="wait">
@@ -258,110 +678,149 @@ const PublicCourseDetailPage = () => {
                           >
                               {/* Header Section */}
                               <div className="space-y-4">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                      <span className="inline-flex items-center rounded-full bg-surface-elevated px-2 py-0.5 text-xxs font-medium text-text-secondary border border-border">
-                                          Vinyasa
-                                      </span>
-                                      <span className="inline-flex items-center rounded-full bg-surface-elevated px-2 py-0.5 text-xxs font-medium text-text-secondary border border-border">
-                                          Nivå 1-2
-                                      </span>
-                                  </div>
                                   <h1 className="font-geist text-3xl md:text-4xl font-semibold tracking-tight text-text-primary">
-                                      Morning Flow & Coffee
+                                      {course.title}
                                   </h1>
 
                                   {/* Metadata Row */}
                                   <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground border-b border-border pb-6">
                                       <div className="flex items-center gap-2">
                                           <Calendar className="h-4 w-4 text-text-tertiary" />
-                                          <span>Lør, 24. Sep</span>
+                                          <span>{dateInfo.fullDate}</span>
                                       </div>
-                                      <div className="hidden sm:block h-3 w-px bg-border"></div>
-                                      <div className="flex items-center gap-2">
-                                          <Clock className="h-4 w-4 text-text-tertiary" />
-                                          <span>09:00 - 10:15 (75 min)</span>
-                                      </div>
-                                      <div className="hidden sm:block h-3 w-px bg-border"></div>
-                                      <div className="flex items-center gap-2">
-                                          <MapPin className="h-4 w-4 text-text-tertiary" />
-                                          <span>Majorstuen Studio</span>
-                                      </div>
+                                      {time && (
+                                        <>
+                                          <div className="hidden sm:block h-3 w-px bg-border"></div>
+                                          <div className="flex items-center gap-2">
+                                              <Clock className="h-4 w-4 text-text-tertiary" />
+                                              <span>Kl {time}{durationDisplay && ` (${durationDisplay})`}</span>
+                                          </div>
+                                        </>
+                                      )}
+                                      {course.location && (
+                                        <>
+                                          <div className="hidden sm:block h-3 w-px bg-border"></div>
+                                          <div className="flex items-center gap-2">
+                                              <MapPin className="h-4 w-4 text-text-tertiary" />
+                                              <span>{course.location}</span>
+                                          </div>
+                                        </>
+                                      )}
                                   </div>
                               </div>
 
                               {/* Hero Image */}
-                              <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-elevated shadow-sm">
-                                  <div className="aspect-[16/7] w-full bg-gradient-to-br from-border to-surface-elevated relative">
-                                      <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=2000&auto=format&fit=crop" alt="Yoga studio ambiance" className="absolute inset-0 h-full w-full object-cover opacity-90 mix-blend-multiply" />
-                                  </div>
-                              </div>
+                              {course.image_url && (
+                                <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-elevated shadow-sm">
+                                    <div className="aspect-[16/7] w-full bg-gradient-to-br from-border to-surface-elevated relative">
+                                        <img src={course.image_url} alt={course.title} className="absolute inset-0 h-full w-full object-cover opacity-90" />
+                                    </div>
+                                </div>
+                              )}
 
                               {/* Description Block */}
                               <div className="space-y-4">
-                                  <h2 className="font-geist text-lg font-semibold text-text-primary">Om timen</h2>
-                                  <div className="prose prose-stone prose-sm max-w-none text-muted-foreground leading-relaxed">
-                                      <p>
-                                          Start helgen med en energigivende Vinyasa Flow som vekker kroppen og klargjør sinnet. Denne timen fokuserer på pust, bevegelse og balanse. Vi beveger oss gjennom dynamiske sekvenser før vi roer ned med dype strekk.
-                                      </p>
-                                      <p>
-                                          Etter timen inviterer vi til en kopp nybrygget kaffe eller te i resepsjonen – en perfekt mulighet til å slå av en prat med andre deltakere eller bare nyte roen.
-                                      </p>
-                                  </div>
-
-                                  <div className="flex flex-wrap gap-2 pt-2">
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
-                                          <Waves className="h-3.5 w-3.5" />
-                                          Dusj tilgjengelig
-                                      </div>
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
-                                          <Coffee className="h-3.5 w-3.5" />
-                                          Kaffe inkludert
-                                      </div>
-                                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-elevated px-3 py-1.5 text-xs text-text-secondary">
-                                          <Dumbbell className="h-3.5 w-3.5" />
-                                          Matte til utleie
-                                      </div>
-                                  </div>
-                              </div>
-
-                              {/* Teacher Section */}
-                              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-                                  <h3 className="mb-4 text-xxs font-medium text-text-tertiary uppercase tracking-wider">Instruktør</h3>
-                                  <div className="flex items-start gap-4">
-                                      <img src="https://i.pravatar.cc/150?u=1" alt="Elena Fisher" className="h-14 w-14 rounded-full border border-surface-elevated object-cover shadow-sm" />
-                                      <div className="flex-1">
-                                          <div className="flex items-center justify-between">
-                                              <h4 className="font-geist text-base font-semibold text-text-primary">Elena Fisher</h4>
-                                              <a href="#" className="text-xs font-medium text-primary hover:underline">Se profil</a>
-                                          </div>
-                                          <p className="mt-1 text-sm text-muted-foreground leading-normal">
-                                              Elena er kjent for sine kreative sekvenser og varme tilstedeværelse. Hun har undervist i over 5 år og spesialiserer seg på Vinyasa og Yin Yoga.
-                                          </p>
-                                      </div>
+                                  <h2 className="font-geist text-lg font-semibold text-text-primary">Om kurset</h2>
+                                  {course.description && (
+                                    <div className="prose prose-gray prose-sm max-w-none text-muted-foreground leading-relaxed">
+                                        <p>{course.description}</p>
+                                    </div>
+                                  )}
+                                  {/* Course tags */}
+                                  <div className="flex flex-wrap items-center gap-2">
+                                      {course.style && (
+                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary border border-border">
+                                            {course.style.name}
+                                        </span>
+                                      )}
+                                      {levelDisplay && (
+                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary border border-border">
+                                            Nivå: {levelDisplay}
+                                        </span>
+                                      )}
+                                      {isSeries && (
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
+                                          <Layers className="h-3 w-3" />
+                                          Kursrekke
+                                        </span>
+                                      )}
                                   </div>
                               </div>
+
+                              {/* Program Overview - Show if multiple sessions */}
+                              {sessions.length > 1 && (
+                                <div className="space-y-4">
+                                    <h2 className="font-geist text-lg font-semibold text-text-primary">
+                                      Program oversikt
+                                      <span className="text-muted-foreground font-normal ml-2">
+                                        ({sessions.length} {isSeries ? 'uker' : 'dager'})
+                                      </span>
+                                    </h2>
+                                    <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden p-5 space-y-4">
+                                        {/* Schedule header */}
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground mb-0.5">
+                                                  {getScheduleDescription(sessions, isSeries)}
+                                                </p>
+                                                <p className="text-sm font-medium text-text-primary">
+                                                  Kl {formatTimeRange(sessions[0]?.start_time || '', sessions[0]?.end_time || null, course.duration)}
+                                                </p>
+                                            </div>
+                                            <Clock className="h-4 w-4 text-text-tertiary" />
+                                        </div>
+
+                                        {/* Date chips */}
+                                        <div>
+                                            <p className="text-xs font-medium text-muted-foreground mb-2">Datoer</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {sessions.map((session) => {
+                                                  const sessionDate = new Date(session.session_date);
+                                                  const day = sessionDate.getDate();
+                                                  const month = new Intl.DateTimeFormat('nb-NO', { month: 'short' }).format(sessionDate);
+                                                  const isCompleted = session.status === 'completed';
+
+                                                  return (
+                                                    <span
+                                                      key={session.id}
+                                                      className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                                        isCompleted
+                                                          ? 'bg-surface-elevated/50 text-text-tertiary border-border line-through'
+                                                          : 'bg-surface-elevated text-text-primary border-border hover:border-ring'
+                                                      }`}
+                                                    >
+                                                      {day}. {month.charAt(0).toUpperCase() + month.slice(1).replace('.', '')}
+                                                    </span>
+                                                  );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                              )}
 
                               {/* Location Block */}
-                              <div className="mb-12">
-                                  <h2 className="mb-3 font-geist text-lg font-semibold text-text-primary">Sted & Oppmøte</h2>
-                                  <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
-                                      <div className="flex flex-col md:flex-row">
-                                          <div className="bg-pattern-dot flex h-32 w-full items-center justify-center bg-surface md:h-auto md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-border">
-                                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-text-primary text-white shadow-lg">
-                                                  <MapPin className="h-5 w-5" />
-                                              </div>
-                                          </div>
-                                          <div className="p-5">
-                                              <h4 className="font-medium text-text-primary">Majorstuen Studio</h4>
-                                              <p className="text-sm text-muted-foreground">Kirkeveien 64, 0368 Oslo</p>
-                                              <div className="mt-3 flex items-start gap-2 text-xs text-text-tertiary">
-                                                  <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                                                  <p>Inngang fra bakgården. Døren åpner 15 minutter før timen starter.</p>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              </div>
+                              {course.location && (
+                                <div className="mb-12">
+                                    <h2 className="mb-3 font-geist text-lg font-semibold text-text-primary">Sted & Oppmøte</h2>
+                                    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+                                        <div className="flex flex-col md:flex-row">
+                                            <div className="bg-pattern-dot flex h-32 w-full items-center justify-center bg-surface md:h-auto md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-border">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-text-primary text-white shadow-lg">
+                                                    <MapPin className="h-5 w-5" />
+                                                </div>
+                                            </div>
+                                            <div className="p-5">
+                                                <h4 className="font-medium text-text-primary">{course.location}</h4>
+                                                <div className="mt-3 flex items-start gap-2 text-xs text-text-tertiary">
+                                                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                                                    <p>Døren åpner 15 minutter før kurset starter.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                              )}
                           </motion.div>
                         ) : (
                           /* STEP 2: GUEST DETAILS */
@@ -384,6 +843,13 @@ const PublicCourseDetailPage = () => {
                                     </p>
                                 </div>
 
+                                {/* Error message */}
+                                {submitError && (
+                                  <div className="rounded-xl border border-destructive/30 bg-status-error-bg p-4">
+                                    <p className="text-sm text-status-error-text">{submitError}</p>
+                                  </div>
+                                )}
+
                                 {/* Attendee 1 (Main Contact) */}
                                 <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
                                     <div className="mb-5 flex items-center justify-between border-b border-surface-elevated pb-4">
@@ -394,7 +860,7 @@ const PublicCourseDetailPage = () => {
                                         {/* Name Fields */}
                                         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                             <div>
-                                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                                     Fornavn <span className="text-status-error-text">*</span>
                                                 </label>
                                                 <Input
@@ -405,6 +871,7 @@ const PublicCourseDetailPage = () => {
                                                     onBlur={() => handleBlur('firstName')}
                                                     placeholder="Ola"
                                                     aria-invalid={!!errors.firstName}
+                                                    disabled={submitting}
                                                     className={errors.firstName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.firstName && touched.firstName && (
@@ -412,7 +879,7 @@ const PublicCourseDetailPage = () => {
                                                 )}
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                                     Etternavn <span className="text-status-error-text">*</span>
                                                 </label>
                                                 <Input
@@ -423,6 +890,7 @@ const PublicCourseDetailPage = () => {
                                                     onBlur={() => handleBlur('lastName')}
                                                     placeholder="Nordmann"
                                                     aria-invalid={!!errors.lastName}
+                                                    disabled={submitting}
                                                     className={errors.lastName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.lastName && touched.lastName && (
@@ -433,22 +901,20 @@ const PublicCourseDetailPage = () => {
 
                                         {/* Contact Fields */}
                                         <div>
-                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                                                 E-postadresse <span className="text-status-error-text">*</span>
                                             </label>
-                                            <div className="relative group">
-                                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'}`} />
-                                                <Input
-                                                    type="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleInputChange}
-                                                    onBlur={() => handleBlur('email')}
-                                                    placeholder="ola@eksempel.no"
-                                                    aria-invalid={!!errors.email}
-                                                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}`}
-                                                />
-                                            </div>
+                                            <Input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                onBlur={() => handleBlur('email')}
+                                                placeholder="ola@eksempel.no"
+                                                aria-invalid={!!errors.email}
+                                                disabled={submitting}
+                                                className={errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
+                                            />
                                             {errors.email && touched.email ? (
                                                 <p className="text-xs text-status-error-text font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
                                             ) : (
@@ -457,25 +923,27 @@ const PublicCourseDetailPage = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Telefonnummer <span className="text-text-tertiary">(Valgfritt)</span></label>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Telefonnummer <span className="text-text-tertiary">(Valgfritt)</span></label>
                                             <Input
                                                 type="tel"
                                                 name="phone"
                                                 value={formData.phone}
                                                 onChange={handleInputChange}
                                                 placeholder="+47 000 00 000"
+                                                disabled={submitting}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Kommentar til instruktør <span className="text-text-tertiary">(Valgfritt)</span></label>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Kommentar til instruktør <span className="text-text-tertiary">(Valgfritt)</span></label>
                                             <textarea
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
                                                 placeholder="Skriv en beskjed..."
                                                 rows={3}
-                                                className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none"
+                                                disabled={submitting}
+                                                className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none disabled:opacity-50"
                                             />
                                         </div>
                                     </div>
@@ -490,6 +958,7 @@ const PublicCourseDetailPage = () => {
                                             checked={formData.termsAccepted}
                                             onChange={handleInputChange}
                                             required
+                                            disabled={submitting}
                                             className="checkbox-wrapper peer sr-only"
                                         />
                                         <div className={`h-4 w-4 rounded-sm border bg-white transition-all peer-focus:ring-2 peer-focus:ring-border hover:border-text-tertiary ${errors.termsAccepted ? 'border-status-error-text ring-1 ring-status-error-text' : 'border-ring'}`}>
@@ -498,7 +967,7 @@ const PublicCourseDetailPage = () => {
                                     </label>
                                     <div className="flex flex-col">
                                         <p className="text-xs text-muted-foreground leading-relaxed">
-                                            Jeg godtar våre <a href="#" className="text-text-primary underline underline-offset-2 hover:text-primary">vilkår for påmelding</a>. <span className="text-status-error-text">*</span>
+                                            Jeg godtar <Link to="/terms" target="_blank" className="text-text-primary underline underline-offset-2 hover:text-primary">vilkår for påmelding</Link>. <span className="text-status-error-text">*</span>
                                         </p>
                                         {errors.termsAccepted && (
                                             <p className="text-xs text-status-error-text font-medium mt-1">Du må godta vilkårene</p>
@@ -516,53 +985,86 @@ const PublicCourseDetailPage = () => {
                         <div className="sticky top-28 space-y-4">
 
                             {/* Main Booking Card */}
-                            <div className="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-text-primary/5">
+                            <div className="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-gray-900/5">
 
                                 {step === 1 ? (
                                   <>
                                     <div className="mb-6 flex items-start justify-between">
                                         <div>
-                                            <div className="text-3xl font-semibold text-text-primary tracking-tight">250 kr</div>
+                                            <div className="text-3xl font-semibold text-text-primary tracking-tight">{course.price || 0} kr</div>
                                             <div className="text-xs text-text-tertiary mt-1">per person</div>
                                         </div>
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-status-confirmed-bg px-2 py-0.5 text-xxs font-medium text-status-confirmed-text">
-                                            <span className="relative flex h-1.5 w-1.5">
-                                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75"></span>
-                                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-confirmed-text"></span>
-                                            </span>
-                                            15 plasser igjen
-                                        </span>
+                                        {isFull ? (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-border px-2 py-0.5 text-xxs font-medium text-text-secondary">
+                                            Fullt
+                                          </span>
+                                        ) : isFewSpots ? (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-status-waitlist-bg px-2 py-0.5 text-xxs font-medium text-status-waitlist-text">
+                                            {course.spots_available} {course.spots_available === 1 ? 'plass' : 'plasser'} igjen
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-status-confirmed-bg px-2 py-0.5 text-xxs font-medium text-status-confirmed-text">
+                                              <span className="relative flex h-1.5 w-1.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-confirmed-text"></span>
+                                              </span>
+                                              {course.spots_available} plasser igjen
+                                          </span>
+                                        )}
                                     </div>
 
                                     <div className="mb-6 space-y-3 rounded-xl bg-surface p-4 border border-border/50">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">Dato</span>
-                                            <span className="font-medium text-text-primary">Lør, 24. Sep</span>
+                                            <span className="font-medium text-text-primary">{dateInfo.shortDate}</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Tid</span>
-                                            <span className="font-medium text-text-primary">09:00 - 10:15</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-muted-foreground">Sted</span>
-                                            <span className="font-medium text-text-primary">Majorstuen</span>
-                                        </div>
+                                        {time && (
+                                          <div className="flex items-center justify-between text-sm">
+                                              <span className="text-muted-foreground">Tid</span>
+                                              <span className="font-medium text-text-primary">Kl {time}</span>
+                                          </div>
+                                        )}
+                                        {course.location && (
+                                          <div className="flex items-center justify-between text-sm">
+                                              <span className="text-muted-foreground">Sted</span>
+                                              <span className="font-medium text-text-primary">{course.location}</span>
+                                          </div>
+                                        )}
                                     </div>
+
+                                    {isAlreadySignedUp && (
+                                      <div className="mb-4 rounded-xl bg-status-confirmed-bg border border-status-confirmed-border p-4 flex items-center gap-3">
+                                        <CheckCircle2 className="w-5 h-5 text-status-confirmed-text" />
+                                        <div>
+                                          <p className="text-sm font-medium text-status-confirmed-text">
+                                            {signupStatus === 'confirmed' ? 'Du er påmeldt' : 'På venteliste'}
+                                          </p>
+                                          <p className="text-xs text-status-confirmed-text/70">
+                                            {signupStatus === 'confirmed'
+                                              ? 'Se dine påmeldinger i dashbordet'
+                                              : 'Du vil bli varslet hvis det blir ledig plass'}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
 
                                     <Button
                                         onClick={handleNextStep}
                                         size="compact"
                                         className="w-full"
+                                        disabled={isFull || isAlreadySignedUp}
                                     >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            Påmelding
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            {isAlreadySignedUp ? 'Allerede påmeldt' : isFull ? 'Kurset er fullt' : 'Påmelding'}
+                                            {!isFull && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                                         </span>
                                     </Button>
 
-                                    <p className="mt-4 text-center text-xs text-text-tertiary">
-                                        <a href="#" className="underline underline-offset-2 hover:text-text-primary transition-colors">Logg inn</a> eller <a href="#" className="underline underline-offset-2 hover:text-text-primary transition-colors">registrer deg</a> for å lagre denne bestillingen i din kursoversikt
-                                    </p>
+                                    {!(user && userType === 'student') && (
+                                      <p className="mt-4 text-center text-xs text-text-tertiary">
+                                          <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary transition-colors">Logg inn</Link> eller <Link to="/student/register" className="underline underline-offset-2 hover:text-text-primary transition-colors">registrer deg</Link> for å lagre denne bestillingen i din kursoversikt
+                                      </p>
+                                    )}
                                   </>
                                 ) : (
                                   /* Step 2 Summary */
@@ -571,20 +1073,22 @@ const PublicCourseDetailPage = () => {
                                     <h3 className="mb-4 font-geist text-lg font-semibold text-text-primary">Sammendrag</h3>
 
                                     <div className="flex gap-4 border-b border-surface-elevated pb-5">
-                                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-elevated">
-                                            <img src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?q=80&w=200&auto=format&fit=crop" className="h-full w-full object-cover mix-blend-multiply opacity-90" alt="Course thumbnail" />
-                                        </div>
+                                        {course.image_url && (
+                                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-elevated">
+                                              <img src={course.image_url} className="h-full w-full object-cover" alt={course.title} />
+                                          </div>
+                                        )}
                                         <div>
-                                            <h4 className="font-medium text-text-primary leading-tight">Morning Flow & Coffee</h4>
-                                            <p className="mt-1 text-xs text-muted-foreground">Lør, 24. Sep Kl 09:00</p>
-                                            <p className="text-xs text-muted-foreground">Majorstuen Studio</p>
+                                            <h4 className="font-medium text-text-primary leading-tight">{course.title}</h4>
+                                            <p className="mt-1 text-xs text-muted-foreground">{dateInfo.shortDate} {time && `Kl ${time}`}</p>
+                                            {course.location && <p className="text-xs text-muted-foreground">{course.location}</p>}
                                         </div>
                                     </div>
 
                                     <div className="space-y-3 py-5">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">Kursavgift</span>
-                                            <span className="font-medium text-text-primary">250 kr</span>
+                                            <span className="font-medium text-text-primary">{course.price || 0} kr</span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">Servicegebyr</span>
@@ -595,7 +1099,7 @@ const PublicCourseDetailPage = () => {
                                     <div className="border-t border-surface-elevated pt-4 pb-6">
                                         <div className="flex items-center justify-between">
                                             <span className="font-medium text-text-primary">Totalt å betale</span>
-                                            <span className="font-geist text-xl font-bold text-text-primary tracking-tight">250 kr</span>
+                                            <span className="font-geist text-xl font-bold text-text-primary tracking-tight">{course.price || 0} kr</span>
                                         </div>
                                     </div>
 
@@ -638,11 +1142,19 @@ const PublicCourseDetailPage = () => {
                                             type="submit"
                                             form="booking-form"
                                             className="w-full shadow-lg hover:shadow-xl transition-all"
+                                            disabled={submitting}
                                         >
-                                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                                Gå til betaling
-                                                <ArrowRight className="h-4 w-4" />
-                                            </span>
+                                            {submitting ? (
+                                              <span className="relative z-10 flex items-center justify-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Behandler...
+                                              </span>
+                                            ) : (
+                                              <span className="relative z-10 flex items-center justify-center gap-2">
+                                                  Fullfør påmelding
+                                                  <ArrowRight className="h-4 w-4" />
+                                              </span>
+                                            )}
                                         </Button>
                                     </div>
                                   </>
@@ -661,11 +1173,16 @@ const PublicCourseDetailPage = () => {
                   <>
                     <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground">Total pris</span>
-                        <span className="font-geist text-xl font-semibold text-text-primary">250 kr</span>
+                        <span className="font-geist text-xl font-semibold text-text-primary">{course.price || 0} kr</span>
                     </div>
-                                    <Button onClick={handleNextStep} className="shadow-lg" size="compact">
-                                        Book nå
-                                    </Button>
+                    <Button onClick={handleNextStep} className="shadow-lg" size="compact" disabled={isFull || isAlreadySignedUp}>
+                        {isAlreadySignedUp ? (
+                          <span className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Påmeldt
+                          </span>
+                        ) : isFull ? 'Fullt' : 'Book nå'}
+                    </Button>
                   </>
                 ) : (
                   <>
@@ -673,16 +1190,26 @@ const PublicCourseDetailPage = () => {
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                             Total
                         </span>
-                        <span className="font-geist text-xl font-semibold text-text-primary">250 kr</span>
+                        <span className="font-geist text-xl font-semibold text-text-primary">{course.price || 0} kr</span>
                     </div>
                     <Button
                         className="shadow-lg flex items-center gap-2"
                         size="compact"
                         type="submit"
                         form="booking-form"
+                        disabled={submitting}
                     >
-                        Betaling
-                        <ArrowRight className="h-4 w-4" />
+                        {submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Behandler
+                          </>
+                        ) : (
+                          <>
+                            Fullfør
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
                     </Button>
                   </>
                 )}

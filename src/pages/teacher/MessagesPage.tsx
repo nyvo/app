@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Leaf,
   Menu,
@@ -13,19 +14,12 @@ import {
   X,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { useEmptyState } from '@/context/EmptyStateContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
-import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
-import {
-  mockConversations,
-  mockMessages,
-  emptyConversations,
-  emptyMessages,
-  type Conversation
-} from '@/data/mockData';
+import type { Conversation } from '@/data/mockData';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,10 +28,21 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 const MessagesPage = () => {
-  const { showEmptyState } = useEmptyState();
+  // Use empty arrays - no mock data
+  const baseConversations: Conversation[] = [];
+  const messages: any[] = [];
 
-  const conversations = showEmptyState ? emptyConversations : mockConversations;
-  const messages = showEmptyState ? emptyMessages : mockMessages;
+  // Track read status locally (in real app this would be in backend/state management)
+  const [readConversationIds, setReadConversationIds] = useState<Set<string>>(new Set());
+
+  // Derive conversations with updated read status
+  const conversations = useMemo(() => {
+    return baseConversations.map(conv => ({
+      ...conv,
+      isRead: readConversationIds.has(conv.id),
+      unreadCount: readConversationIds.has(conv.id) ? undefined : conv.unreadCount,
+    }));
+  }, [baseConversations, readConversationIds]);
 
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(
     conversations.length > 0 ? conversations[0] : null
@@ -50,6 +55,14 @@ const MessagesPage = () => {
   const [isComposing, setIsComposing] = useState(false);
   const [newRecipient, setNewRecipient] = useState('');
   const [newMessageBody, setNewMessageBody] = useState('');
+
+  // Mark conversation as read when selected
+  const handleSelectConversation = (conversation: Conversation) => {
+    setActiveConversation(conversation);
+    setIsComposing(false);
+    // Mark as read
+    setReadConversationIds(prev => new Set([...prev, conversation.id]));
+  };
 
   const filteredConversations = useMemo(() => {
     let result = conversations;
@@ -75,6 +88,12 @@ const MessagesPage = () => {
 
     return result;
   }, [conversations, searchQuery, filterTab]);
+
+  // Filter messages by active conversation
+  const conversationMessages = useMemo(() => {
+    if (!activeConversation) return [];
+    return messages.filter(m => m.conversationId === activeConversation.id);
+  }, [messages, activeConversation]);
 
   // Reset active conversation if list becomes empty or non-empty
   if (filteredConversations.length > 0 && !activeConversation && !isComposing) {
@@ -114,13 +133,19 @@ const MessagesPage = () => {
         </div>
 
         {/* Messages Layout: Split View */}
-        <div className="flex h-full w-full overflow-hidden">
+        <motion.div
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+          className="flex h-full w-full overflow-hidden"
+        >
           {/* Conversation List (Left Panel) */}
           <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-border bg-surface">
             {/* List Header */}
             <div className="p-5 pb-2">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-xl font-medium tracking-tight text-text-primary">Meldinger</h2>
+                <h2 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Meldinger</h2>
                 <Button
                   onClick={handleStartNewMessage}
                   size="compact"
@@ -144,7 +169,7 @@ const MessagesPage = () => {
               <div className="flex items-center gap-2 mb-2">
                 <button
                   onClick={() => setFilterTab('all')}
-                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                     filterTab === 'all'
                       ? 'border border-border bg-white text-text-primary shadow-sm'
                       : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -154,7 +179,7 @@ const MessagesPage = () => {
                 </button>
                 <button
                   onClick={() => setFilterTab('unread')}
-                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                     filterTab === 'unread'
                       ? 'border border-border bg-white text-text-primary shadow-sm'
                       : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -164,7 +189,7 @@ const MessagesPage = () => {
                 </button>
                 <button
                   onClick={() => setFilterTab('archive')}
-                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease ${
+                  className={`h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                     filterTab === 'archive'
                       ? 'border border-border bg-white text-text-primary shadow-sm'
                       : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
@@ -186,10 +211,7 @@ const MessagesPage = () => {
                 filteredConversations.map((conversation) => (
                 <button
                   key={conversation.id}
-                  onClick={() => {
-                    setActiveConversation(conversation);
-                    setIsComposing(false);
-                  }}
+                  onClick={() => handleSelectConversation(conversation)}
                   className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left group relative ${
                     activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border border-border shadow-sm'
@@ -248,7 +270,7 @@ const MessagesPage = () => {
                     </p>
                   </div>
                   {conversation.unreadCount && (
-                    <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
+                    <div className="h-2 w-2 rounded-full bg-gray-900 shrink-0 mt-2" />
                   )}
                   {activeConversation?.id === conversation.id && !isComposing && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-text-primary" />
@@ -268,7 +290,7 @@ const MessagesPage = () => {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
-                        className="md:hidden text-muted-foreground hover:text-text-primary mr-1"
+                        className="md:hidden text-muted-foreground hover:text-text-primary mr-1 cursor-pointer"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
@@ -276,7 +298,7 @@ const MessagesPage = () => {
                     </div>
                     <button
                       onClick={handleCancelComposition}
-                      className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors"
+                      className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -310,12 +332,12 @@ const MessagesPage = () => {
                         />
                         <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-elevated">
                            <div className="flex items-center gap-1">
-                              <button className="p-2 text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated rounded-lg transition-colors">
+                              <button className="p-2 text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer">
                                 <Paperclip className="h-4 w-4" />
                               </button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="p-2 text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated rounded-lg transition-colors">
+                                  <button className="p-2 text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer">
                                     <Smile className="h-4 w-4" />
                                   </button>
                                 </DropdownMenuTrigger>
@@ -386,7 +408,7 @@ const MessagesPage = () => {
                     {/* Removed Phone and Zap icons */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                <button className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors" aria-label="Flere handlinger">
+                <button className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer" aria-label="Flere handlinger">
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
                       </DropdownMenuTrigger>
@@ -411,7 +433,7 @@ const MessagesPage = () => {
                     <div className="flex flex-col items-center justify-center h-full text-text-tertiary">
                         <p>Velg en samtale for å lese</p>
                     </div>
-                  ) : messages.length === 0 ? (
+                  ) : conversationMessages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-text-tertiary">
                         <p>Ingen meldinger i denne samtalen ennå</p>
                       </div>
@@ -424,7 +446,7 @@ const MessagesPage = () => {
                 </span>
               </div>
 
-                      {messages.map((message) => (
+                      {conversationMessages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex items-end gap-3 max-w-[85%] sm:max-w-[70%] group ${
@@ -542,9 +564,8 @@ const MessagesPage = () => {
               </>
             )}
           </div>
-        </div>
+        </motion.div>
       </main>
-      <EmptyStateToggle />
     </SidebarProvider>
   );
 };

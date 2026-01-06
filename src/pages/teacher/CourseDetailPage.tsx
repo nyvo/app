@@ -1,12 +1,13 @@
-import { useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { nb } from 'date-fns/locale';
+import { tabVariants, tabTransition, fadeVariants, fadeTransition } from '@/lib/motion';
 import {
   ChevronRight,
   Calendar,
   MapPin,
   Users,
-  Share2,
   ExternalLink,
   Filter,
   Plus,
@@ -17,22 +18,24 @@ import {
   BarChart2,
   Clock,
   Mail,
-  Crown,
-  Ticket,
-  CreditCard,
   CheckCircle2,
   Settings2,
   Minus,
   CalendarIcon,
   Check,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
-import { mockDetailedCourses } from '@/data/mockData';
+import { fetchCourseById, updateCourse, deleteCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
+import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
+import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
+import { ImageUpload } from '@/components/ui/image-upload';
+import type { CourseSession } from '@/types/database';
 import {
   Accordion,
   AccordionContent,
@@ -41,31 +44,76 @@ import {
 } from "@/components/ui/accordion";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TIME_SLOTS_DEFAULT } from '@/utils/timeSlots';
 import { formatDateNorwegian } from '@/utils/dateUtils';
+import { ParticipantAvatar } from '@/components/ui/participant-avatar';
+import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
+import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
+import { NotePopover } from '@/components/ui/note-popover';
+import { ShareCoursePopover } from '@/components/ui/share-course-popover';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Tab = 'overview' | 'participants' | 'settings';
 
-// Mock participants data
-const participants = [
-  { id: '1', name: 'Anna Hansen', email: 'anna@example.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Annie', status: 'paid', membership: 'premium', checkedIn: null },
-  { id: '2', name: 'Marcus Berg', email: 'marcus@example.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus', status: 'pending', membership: 'klippekort', checkedIn: '08:45' },
-  { id: '3', name: 'Julia Olsen', email: 'julia@example.com', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Julia', status: 'paid', membership: 'dropin', checkedIn: null },
-];
-
 const timeSlots = TIME_SLOTS_DEFAULT;
+
+// Helper to map database course to component format
+function mapCourseToComponentFormat(courseData: CourseWithStyle & { signups_count: number }) {
+  const priceNumber = courseData.price || 0;
+  const estimatedRevenue = priceNumber * courseData.signups_count;
+  const descriptionParts = courseData.description?.split('\n\n') || [''];
+
+  // Format duration
+  const formatDuration = () => {
+    if (courseData.total_weeks) return `${courseData.total_weeks} uker`;
+    if (courseData.duration) return `${courseData.duration} min`;
+    return '';
+  };
+
+  // Map course_type to courseType
+  const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
+    'course-series': 'kursrekke',
+    'event': 'enkeltkurs',
+    'online': 'enkeltkurs',
+  };
+
+  return {
+    title: courseData.title,
+    status: courseData.status,
+    date: courseData.time_schedule || '',
+    location: courseData.location || 'Ikke angitt',
+    enrolled: courseData.signups_count,
+    capacity: courseData.max_participants || 0,
+    price: priceNumber,
+    estimatedRevenue: estimatedRevenue,
+    description: descriptionParts[0] || '',
+    description2: descriptionParts[1] || '',
+    level: (() => {
+      switch (courseData.level) {
+        case 'nybegynner': return 'Nybegynner';
+        case 'viderekommen': return 'Viderekommen';
+        case 'alle': return 'Middels';
+        default: return 'Middels';
+      }
+    })(),
+    duration: formatDuration(),
+    courseType: courseTypeMap[courseData.course_type] || 'enkeltkurs',
+    totalWeeks: courseData.total_weeks || 0,
+    currentWeek: courseData.current_week || 0,
+    timeSchedule: courseData.time_schedule || '',
+    imageUrl: courseData.image_url || null
+  };
+}
 
 const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { currentOrganization } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
+  const [statusFilter, setStatusFilter] = useState<SignupStatus | 'all'>('all');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
+  const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [openTimePopovers, setOpenTimePopovers] = useState<Record<string, boolean>>({});
   const [visibleWeeks, setVisibleWeeks] = useState(3);
@@ -74,110 +122,358 @@ const CourseDetailPage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const kursplanRef = useRef<HTMLDivElement>(null);
 
-  // Find the course by ID from mock data
-  const courseData = mockDetailedCourses.find(c => c.id === id);
+  // State for fetched course data
+  const [courseData, setCourseData] = useState<ReturnType<typeof mapCourseToComponentFormat> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [maxParticipants, setMaxParticipants] = useState(0);
 
-  // Fallback if course not found
-  if (!courseData) {
+  // Settings form state
+  const [settingsTitle, setSettingsTitle] = useState('');
+  const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
+  const [settingsImageFile, setSettingsImageFile] = useState<File | null>(null);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Delete state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Sessions state (for Kursplan)
+  const [sessions, setSessions] = useState<CourseSession[]>([]);
+  const [_sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionEdits, setSessionEdits] = useState<Record<string, { date?: Date; time?: string }>>({});
+  const [savingSessionId, setSavingSessionId] = useState<string | null>(null);
+
+  // Participants state (for Deltakere tab)
+  const [participants, setParticipants] = useState<SignupWithProfile[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
+
+  // Fetch course data from Supabase
+  useEffect(() => {
+    async function loadCourse() {
+      if (!id) {
+        setError('Ugyldig kurs-ID');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: fetchError } = await fetchCourseById(id);
+
+        if (fetchError || !data) {
+          setError('Kurset ble ikke funnet');
+          return;
+        }
+
+        const mappedCourse = mapCourseToComponentFormat(data);
+        setCourseData(mappedCourse);
+        setMaxParticipants(mappedCourse.capacity);
+
+        // Initialize settings form state
+        setSettingsTitle(mappedCourse.title);
+        setSettingsDescription(mappedCourse.description || '');
+        setSettingsImageUrl(mappedCourse.imageUrl);
+
+        // Parse time from time_schedule (e.g., "Tirsdager, 18:00" -> "18:00")
+        const timeMatch = mappedCourse.timeSchedule.match(/(\d{1,2}:\d{2})/);
+        if (timeMatch) {
+          setSettingsTime(timeMatch[1]);
+        }
+      } catch {
+        setError('En feil oppstod');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadCourse();
+  }, [id]);
+
+  // Fetch sessions when course is loaded
+  useEffect(() => {
+    async function loadSessions() {
+      if (!id || !courseData) return;
+
+      // Fetch sessions for both course series AND multi-day events
+      setSessionsLoading(true);
+      try {
+        const { data: sessionsData } = await fetchCourseSessions(id);
+        if (sessionsData) {
+          setSessions(sessionsData);
+        }
+      } catch {
+        // Silent fail for sessions
+      } finally {
+        setSessionsLoading(false);
+      }
+    }
+
+    loadSessions();
+  }, [id, courseData]);
+
+  // Fetch participants when course is loaded
+  useEffect(() => {
+    async function loadParticipants() {
+      if (!id) return;
+
+      setParticipantsLoading(true);
+      try {
+        const { data: participantsData, error } = await fetchSignupsByCourseWithProfiles(id);
+        if (error) {
+          return;
+        }
+        if (participantsData) {
+          setParticipants(participantsData);
+        }
+      } catch {
+        // Silent fail for participants
+      } finally {
+        setParticipantsLoading(false);
+      }
+    }
+
+    loadParticipants();
+  }, [id]);
+
+  // Handle save individual session
+  const handleSaveSession = async (sessionId: string) => {
+    const edits = sessionEdits[sessionId];
+    if (!edits) return;
+
+    setSavingSessionId(sessionId);
+
+    try {
+      const updateData: { session_date?: string; start_time?: string } = {};
+
+      if (edits.date) {
+        updateData.session_date = edits.date.toISOString().split('T')[0];
+      }
+      if (edits.time) {
+        updateData.start_time = edits.time;
+      }
+
+      const { data, error } = await updateCourseSession(sessionId, updateData);
+
+      if (error) {
+        return;
+      }
+
+      // Update local sessions state
+      if (data) {
+        setSessions(prev => prev.map(s => s.id === sessionId ? data : s));
+      }
+
+      // Clear edits for this session
+      setSessionEdits(prev => {
+        const newEdits = { ...prev };
+        delete newEdits[sessionId];
+        return newEdits;
+      });
+
+      // Close accordion
+      setExpandedItem(undefined);
+    } catch {
+      // Silent fail for session save
+    } finally {
+      setSavingSessionId(null);
+    }
+  };
+
+  // Handle save settings
+  const handleSaveSettings = async () => {
+    if (!id) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      let newImageUrl = settingsImageUrl;
+
+      // Delete old image if marked for deletion
+      if (imageToDelete) {
+        await deleteCourseImage(imageToDelete);
+        setImageToDelete(null);
+      }
+
+      // Upload new image if provided
+      if (settingsImageFile) {
+        const { url, error: uploadError } = await uploadCourseImage(id, settingsImageFile);
+        if (uploadError) {
+          setSaveError(uploadError.message);
+          setIsSaving(false);
+          return;
+        }
+        newImageUrl = url;
+        setSettingsImageFile(null);
+      }
+
+      // Build time_schedule from settingsDate and settingsTime
+      let timeSchedule: string | undefined;
+      if (settingsDate && settingsTime) {
+        const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(settingsDate);
+        timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${settingsTime}`;
+      }
+
+      const updateData = {
+        title: settingsTitle.trim(),
+        description: settingsDescription.trim() || null,
+        max_participants: maxParticipants,
+        time_schedule: timeSchedule,
+        image_url: newImageUrl,
+      };
+
+      const { error: updateError } = await updateCourse(id, updateData);
+
+      if (updateError) {
+        setSaveError(updateError.message || 'Kunne ikke lagre endringer');
+        return;
+      }
+
+      // If time changed, update all course sessions with the new time
+      if (settingsTime && sessions.length > 0) {
+        const oldTime = sessions[0]?.start_time;
+        if (oldTime && oldTime !== settingsTime) {
+          // Update all sessions with the new time
+          const updatePromises = sessions.map(session =>
+            updateCourseSession(session.id, { start_time: settingsTime })
+          );
+          await Promise.all(updatePromises);
+
+          // Refresh sessions to show updated times
+          const updatedSessions = await fetchCourseSessions(id);
+          if (updatedSessions.data) {
+            setSessions(updatedSessions.data);
+          }
+        }
+      }
+
+      // Update local state to reflect changes
+      setCourseData(prev => prev ? {
+        ...prev,
+        title: settingsTitle.trim(),
+        description: settingsDescription.trim(),
+        capacity: maxParticipants,
+        timeSchedule: timeSchedule || prev.timeSchedule,
+        imageUrl: newImageUrl,
+      } : null);
+      setSettingsImageUrl(newImageUrl);
+
+      setSaveSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch {
+      setSaveError('En feil oppstod');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle delete course
+  const handleDeleteCourse = async () => {
+    if (!id) return;
+
+    setIsDeleting(true);
+
+    try {
+      const { error: deleteError } = await deleteCourse(id);
+
+      if (deleteError) {
+        setSaveError(deleteError.message || 'Kunne ikke slette kurset');
+        setShowDeleteConfirm(false);
+        return;
+      }
+
+      // Navigate to courses list on success
+      navigate('/teacher/courses');
+    } catch {
+      setSaveError('En feil oppstod ved sletting');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SidebarProvider>
+        <TeacherSidebar />
+        <main className="flex-1 flex items-center justify-center h-screen bg-surface">
+          <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
+        </main>
+      </SidebarProvider>
+    );
+  }
+
+  // Error or not found state
+  if (error || !courseData) {
     return (
       <SidebarProvider>
         <TeacherSidebar />
         <main className="flex-1 flex items-center justify-center h-screen bg-surface">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-text-primary mb-2">Kurs ikke funnet</h1>
-            <p className="text-muted-foreground">Kurset med ID "{id}" finnes ikke.</p>
+            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight mb-2">Kurs ikke funnet</h1>
+            <p className="text-muted-foreground">{error || `Kurset med ID "${id}" finnes ikke.`}</p>
           </div>
         </main>
       </SidebarProvider>
     );
   }
 
-  // Parse price from string (e.g., "2400 NOK" -> 2400)
-  const priceNumber = parseInt(courseData.price.replace(/[^0-9]/g, '')) || 0;
-  const estimatedRevenue = priceNumber * courseData.participants;
+  // Alias for easier access
+  const course = courseData;
 
-  // Split description into paragraphs
-  const descriptionParts = courseData.description?.split('\n\n') || [''];
+  // Determine if this is a multi-session course based on actual sessions from DB
+  const isKursrekke = courseData.courseType === 'kursrekke';
+  const isMultiDayEnkeltkurs = courseData.courseType === 'enkeltkurs' && sessions.length > 1;
+  const isMultiDayCourse = (isKursrekke && sessions.length > 1) || isMultiDayEnkeltkurs;
 
-  // Map course data to component format
-  const course = {
-    title: courseData.title,
-    status: courseData.status,
-    date: courseData.timeSchedule,
-    location: courseData.location,
-    enrolled: courseData.participants,
-    capacity: courseData.maxParticipants,
-    price: priceNumber,
-    estimatedRevenue: estimatedRevenue,
-    description: descriptionParts[0] || '',
-    description2: descriptionParts[1] || '',
-    level: courseData.level || 'Alle',
-    duration: courseData.duration,
-    instructor: {
-      name: courseData.instructor?.name || 'Ukjent instruktør',
-      avatar: courseData.instructor?.avatar || '',
-      role: 'Instruktør',
-      rating: courseData.instructor?.rating || 0,
-      classes: courseData.instructor?.classesCount || 0
-    }
-  };
-
-  const [maxParticipants, setMaxParticipants] = useState(course.capacity);
-
-  // Parse number of days from duration for enkeltkurs (e.g., "3 dager" -> 3)
-  const parseDaysFromDuration = (duration: string): number => {
-    const match = duration.match(/(\d+)\s*dag/i);
-    return match ? parseInt(match[1], 10) : 0;
-  };
-
-  // Determine if this is a multi-session course
-  const isKursrekke = courseData.courseType === 'kursrekke' && (courseData.totalWeeks || 0) > 1;
-  const isMultiDayEnkeltkurs = courseData.courseType === 'enkeltkurs' && parseDaysFromDuration(courseData.duration) > 1;
-  const isMultiDayCourse = isKursrekke || isMultiDayEnkeltkurs;
-
-  // Get the number of sessions and label
-  const sessionCount = isKursrekke
-    ? (courseData.totalWeeks || 0)
-    : parseDaysFromDuration(courseData.duration);
+  // Get session label
   const sessionLabel = isKursrekke ? 'Uke' : 'Dag';
   const sessionLabelPlural = isKursrekke ? 'uker' : 'dager';
 
-  // Helper to format session date
-  const formatSessionDate = (sessionIndex: number): string => {
-    // Use a base date (today or could be from course data in real implementation)
-    const baseDate = new Date();
-    const newDate = new Date(baseDate);
+  // Find the first upcoming session index (to mark as "next")
+  const firstUpcomingIndex = sessions.findIndex(s => s.status === 'upcoming');
 
-    if (isKursrekke) {
-      // For weekly courses, add 7 days per week
-      newDate.setDate(baseDate.getDate() + (sessionIndex * 7));
-    } else {
-      // For multi-day courses, add 1 day per session
-      newDate.setDate(baseDate.getDate() + sessionIndex);
-    }
-
-    return formatDateNorwegian(newDate);
+  // Format time to HH:MM (strip seconds if present)
+  const formatTime = (time: string): string => {
+    const parts = time.split(':');
+    return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
   };
 
-  // Extract time from timeSchedule (e.g., "Tirsdager, 18:00" -> "18:00")
-  const extractTimeFromSchedule = (schedule: string): string => {
-    const timeMatch = schedule.match(/(\d{1,2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '09:00';
-  };
-
-  // Generate course sessions (weeks or days)
-  const generatedCourseWeeks = isMultiDayCourse && sessionCount > 0
-    ? Array.from({ length: sessionCount }, (_, i) => ({
-        id: `session-${i + 1}`,
-        weekNum: String(i + 1).padStart(2, '0'),
+  // Map sessions from database to display format
+  const generatedCourseWeeks = isMultiDayCourse
+    ? sessions.map((session, index) => ({
+        id: session.id,
+        weekNum: String(session.session_number).padStart(2, '0'),
         title: courseData.title,
-        status: i < (courseData.currentWeek || 0) - 1 ? 'completed' : i === (courseData.currentWeek || 1) - 1 ? 'active' : 'upcoming',
-        date: formatSessionDate(i),
-        time: extractTimeFromSchedule(courseData.timeSchedule)
+        status: session.status,
+        isNext: index === firstUpcomingIndex, // First upcoming session is "next"
+        date: formatDateNorwegian(new Date(session.session_date)),
+        time: formatTime(session.start_time),
+        // Store original data for editing
+        originalDate: session.session_date,
+        originalTime: formatTime(session.start_time),
       }))
     : [];
 
-  const handleTimeSelect = (weekId: string, _time: string) => {
+  // Check if we have real sessions from DB
+  const hasRealSessions = sessions.length > 0;
+
+  const handleTimeSelect = (weekId: string, time: string) => {
+    // Update session edits
+    setSessionEdits(prev => ({
+      ...prev,
+      [weekId]: { ...prev[weekId], time }
+    }));
     setOpenTimePopovers(prev => ({ ...prev, [weekId]: false }));
   };
 
@@ -195,8 +491,8 @@ const CourseDetailPage = () => {
 
   const handleEditTime = () => {
     if (isMultiDayCourse && generatedCourseWeeks.length > 0) {
-      // Find the next upcoming or active week
-      const nextWeek = generatedCourseWeeks.find(w => w.status === 'active' || w.status === 'upcoming');
+      // Find the next upcoming week (marked with isNext)
+      const nextWeek = generatedCourseWeeks.find(w => w.isNext);
       if (nextWeek) {
         // Make sure it's visible
         const weekIndex = generatedCourseWeeks.findIndex(w => w.id === nextWeek.id);
@@ -218,6 +514,33 @@ const CourseDetailPage = () => {
 
   const spotsLeft = course.capacity - course.enrolled;
 
+  // Map participants from database to display format
+  const displayParticipants = participants.map(signup => ({
+    id: signup.id,
+    name: signup.participant_name || signup.profile?.name || 'Ukjent',
+    email: signup.participant_email || signup.profile?.email || '',
+    status: signup.status as SignupStatus,
+    paymentStatus: signup.payment_status as PaymentStatus,
+    notes: signup.note || undefined
+  }));
+
+  // Filter participants based on search and filters
+  const filteredParticipants = displayParticipants.filter((p) => {
+    const matchesSearch = searchQuery === '' ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+    const matchesPayment = paymentFilter === 'all' || p.paymentStatus === paymentFilter;
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
+
+  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (paymentFilter !== 'all' ? 1 : 0);
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setPaymentFilter('all');
+  };
+
   return (
     <SidebarProvider>
       <TeacherSidebar />
@@ -234,28 +557,28 @@ const CourseDetailPage = () => {
             </nav>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold text-text-primary tracking-tight">{course.title}</h1>
+              <div className="flex items-baseline gap-3">
+                <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">{course.title}</h1>
                 {course.status === 'active' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>
                     Aktiv
                   </span>
                 )}
                 {course.status === 'upcoming' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-warning mr-1.5"></span>
                     Kommende
                   </span>
                 )}
                 {course.status === 'completed' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-elevated text-muted-foreground border border-border">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground border border-border translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
                     Fullført
                   </span>
                 )}
                 {course.status === 'draft' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface-elevated text-muted-foreground border border-border">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground border border-border translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
                     Utkast
                   </span>
@@ -263,11 +586,16 @@ const CourseDetailPage = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button variant="outline-soft" size="compact">
-                  <Share2 className="h-3.5 w-3.5" />
-                  Del kurs
-                </Button>
-                <Button variant="outline-soft" size="compact">
+                <ShareCoursePopover
+                  courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
+                  courseTitle={courseData?.title}
+                />
+                <Button
+                  variant="outline-soft"
+                  size="compact"
+                  onClick={() => currentOrganization?.slug && window.open(`/studio/${currentOrganization.slug}/${id}`, '_blank')}
+                  disabled={!currentOrganization?.slug}
+                >
                   <ExternalLink className="h-3.5 w-3.5" />
                   Vis side
                 </Button>
@@ -278,7 +606,7 @@ const CourseDetailPage = () => {
             <div className="flex gap-6 mt-8 -mb-5 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'overview' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
@@ -289,7 +617,7 @@ const CourseDetailPage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('participants')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'participants' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
@@ -300,7 +628,7 @@ const CourseDetailPage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('settings')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'settings' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
@@ -316,20 +644,29 @@ const CourseDetailPage = () => {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto pb-10">
+            <AnimatePresence mode="wait">
 
             {/* TAB 1: OVERSIKT (Overview) */}
             {activeTab === 'overview' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 auto-rows-min">
+              <motion.div
+                key="overview"
+                variants={tabVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={tabTransition}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 auto-rows-min"
+              >
 
                 {/* 1. Date Card */}
                 <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1">
                   <div className="flex items-start justify-between">
-                    <div className="h-8 w-8 rounded-lg bg-sidebar flex items-center justify-center text-sidebar-foreground">
+                    <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
                       <Calendar className="h-4 w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Dato</span>
+                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Dato</span>
                     <p className="text-sm font-semibold text-text-primary mt-0.5">{course.date}</p>
                   </div>
                 </div>
@@ -337,12 +674,12 @@ const CourseDetailPage = () => {
                 {/* 2. Location Card */}
                 <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1">
                   <div className="flex items-start justify-between">
-                    <div className="h-8 w-8 rounded-lg bg-sidebar flex items-center justify-center text-sidebar-foreground">
+                    <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
                       <MapPin className="h-4 w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Sted</span>
+                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Sted</span>
                     <p className="text-sm font-semibold text-text-primary mt-0.5">{course.location}</p>
                   </div>
                 </div>
@@ -351,12 +688,12 @@ const CourseDetailPage = () => {
                 <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-sidebar flex items-center justify-center text-sidebar-foreground">
+                      <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
                         <Users className="h-4 w-4" />
                       </div>
-                      <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
+                      <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
                     </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-[10px] font-semibold tracking-wide">
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-xxs font-semibold tracking-wide">
                       {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
                     </span>
                   </div>
@@ -368,7 +705,7 @@ const CourseDetailPage = () => {
                     </div>
                     <div className="h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary rounded-full"
+                        className="h-full bg-text-primary rounded-full"
                         style={{ width: `${(course.enrolled / course.capacity) * 100}%` }}
                       ></div>
                     </div>
@@ -376,86 +713,68 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* 4. About the Class (Large 2x2) */}
-                <div className="bg-white rounded-xl border border-border p-6 shadow-sm flex flex-col col-span-1 md:col-span-2 row-span-2">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold text-text-primary">Om timen</h3>
-                    <button className="text-text-tertiary hover:text-text-primary">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-text-secondary leading-relaxed mb-4">
-                      {course.description}
-                    </p>
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                      {course.description2}
-                    </p>
-                  </div>
+                <div className="bg-white rounded-xl border border-border shadow-sm flex flex-col col-span-1 md:col-span-2 row-span-2 overflow-hidden">
+                  {/* Course Image */}
+                  {course.imageUrl && (
+                    <div className="w-full h-40 overflow-hidden">
+                      <img
+                        src={course.imageUrl}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="p-6 flex flex-col flex-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base font-semibold text-text-primary">Om timen</h3>
+                      <button className="text-text-tertiary hover:text-text-primary cursor-pointer">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-text-secondary leading-relaxed mb-4">
+                        {course.description}
+                      </p>
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        {course.description2}
+                      </p>
+                    </div>
 
                   <div className="mt-6 pt-6 border-t border-border flex gap-3 flex-wrap">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
-                      <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
-                      Nivå: {course.level}
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
-                      <Clock className="h-3.5 w-3.5 text-text-tertiary" />
-                      Varighet: {course.duration} min
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. Instructor Card (Tall) */}
-                <div className="bg-white rounded-xl border border-border p-6 shadow-sm flex flex-col items-center text-center justify-center col-span-1 row-span-2">
-                  <div className="relative mb-4">
-                    <div className="h-20 w-20 rounded-full bg-surface-elevated p-1 border border-border">
-                      {course.instructor.avatar ? (
-                        <img src={course.instructor.avatar} alt="Instructor" className="h-full w-full rounded-full object-cover" />
-                      ) : (
-                        <div className="h-full w-full rounded-full bg-sidebar flex items-center justify-center text-text-secondary text-xl font-medium">
-                          {course.instructor.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-white border border-border flex items-center justify-center shadow-sm">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary fill-primary/10" />
-                    </div>
-                  </div>
-                  <h3 className="text-sm font-semibold text-text-primary">{course.instructor.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-6">{course.instructor.role}</p>
-
-                  <a href="#" className="w-full py-2 px-4 rounded-lg border border-border text-xs font-medium text-text-secondary hover:bg-sidebar hover:text-text-primary ios-ease text-center">
-                    Se profil
-                  </a>
-
-                  <div className="mt-6 w-full pt-6 border-t border-border grid grid-cols-2 divide-x divide-border">
-                    <div>
-                      <span className="block text-[10px] font-medium text-text-tertiary uppercase">Vurdering</span>
-                      <span className="block text-sm font-semibold text-text-primary mt-1">{course.instructor.rating}</span>
-                    </div>
-                    <div>
-                      <span className="block text-[10px] font-medium text-text-tertiary uppercase">Timer</span>
-                      <span className="block text-sm font-semibold text-text-primary mt-1">{course.instructor.classes}</span>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
+                        <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
+                        Nivå: {course.level}
+                      </div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
+                        <Clock className="h-3.5 w-3.5 text-text-tertiary" />
+                        Varighet: {course.duration}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 6. Admin Actions Card */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between col-span-1 row-span-2">
+                {/* Admin Actions Card */}
+                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between col-span-2 row-span-2">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wide">Administrasjon</h3>
                       <Settings2 className="h-4 w-4 text-text-tertiary" />
                     </div>
                     <div className="mb-5">
-                      <span className="text-[10px] text-muted-foreground font-medium">Pris (Drop-in)</span>
+                      <span className="text-xxs text-muted-foreground font-medium">Pris</span>
                       <p className="text-xl font-semibold text-text-primary tracking-tight">{course.price} NOK</p>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Button variant="outline-soft" size="compact" className="w-full justify-center">
+                    <Button
+                      variant="outline-soft"
+                      size="compact"
+                      className="w-full justify-center"
+                      disabled={course.enrolled === 0}
+                    >
                       <Mail className="h-3 w-3" />
-                      Send melding
+                      Send melding til deltakere
                     </Button>
                     <Button variant="outline-soft" size="compact" className="w-full justify-center" onClick={handleEditTime}>
                       <Clock className="h-3 w-3" />
@@ -482,7 +801,7 @@ const CourseDetailPage = () => {
                             key={week.id}
                             value={week.id}
                             className={`group rounded-xl border transition-all hover:shadow-sm ${
-                              week.status === 'active'
+                              week.isNext
                                 ? 'border-primary/30 bg-white shadow-sm ring-1 ring-primary/10'
                                 : week.status === 'upcoming'
                                 ? 'border-border bg-white/50 hover:bg-white hover:border-ring'
@@ -491,11 +810,11 @@ const CourseDetailPage = () => {
                           >
                             <div className="flex items-center px-4 cursor-pointer" onClick={() => setExpandedItem(expandedItem === week.id ? undefined : week.id)}>
                               <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg mr-4 ${
-                                week.status === 'active'
-                                  ? 'bg-primary text-white shadow-sm'
+                                week.isNext
+                                  ? 'bg-gray-900 text-white shadow-sm'
                                   : 'border border-border bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
                               }`}>
-                                <span className={`text-xxs font-medium uppercase ${week.status === 'active' ? 'opacity-80' : ''}`}>{sessionLabel}</span>
+                                <span className={`text-xxs font-medium uppercase ${week.isNext ? 'opacity-80' : ''}`}>{sessionLabel}</span>
                                 <span className="font-geist text-lg font-semibold">{week.weekNum}</span>
                               </div>
 
@@ -507,7 +826,7 @@ const CourseDetailPage = () => {
                                   {week.status === 'completed' && (
                                     <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 text-xxs font-medium text-muted-foreground">Fullført</span>
                                   )}
-                                  {week.status === 'active' && (
+                                  {week.isNext && (
                                     <span className="rounded-md bg-status-confirmed-bg px-1.5 py-0.5 text-xxs font-medium text-status-confirmed-text animate-pulse">Neste time</span>
                                   )}
                                 </div>
@@ -538,15 +857,26 @@ const CourseDetailPage = () => {
                                           type="button"
                                           className="flex items-center justify-between w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all text-left"
                                         >
-                                          <span>{formatDateNorwegian(new Date())}</span>
+                                          <span>
+                                            {sessionEdits[week.id]?.date
+                                              ? formatDateNorwegian(sessionEdits[week.id].date!)
+                                              : week.date}
+                                          </span>
                                           <CalendarIcon className="h-4 w-4 text-text-tertiary" />
                                         </button>
                                       </PopoverTrigger>
                                       <PopoverContent align="start" className="p-0" showOverlay>
                                         <CalendarComponent
                                           mode="single"
-                                          selected={startDate}
-                                          onSelect={setStartDate}
+                                          selected={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : new Date())}
+                                          onSelect={(date) => {
+                                            if (date) {
+                                              setSessionEdits(prev => ({
+                                                ...prev,
+                                                [week.id]: { ...prev[week.id], date }
+                                              }));
+                                            }
+                                          }}
                                           locale={nb}
                                           className="rounded-md border"
                                         />
@@ -565,7 +895,7 @@ const CourseDetailPage = () => {
                                           className="flex items-center justify-between w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all text-left"
                                         >
                                           <span className="text-text-primary">
-                                            {week.time.split(' - ')[0]}
+                                            {sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
                                           </span>
                                           <div className="flex items-center gap-2">
                                             <Clock className="h-4 w-4 text-text-tertiary" />
@@ -575,21 +905,24 @@ const CourseDetailPage = () => {
                                       </PopoverTrigger>
                                       <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
                                         <div className="flex flex-col gap-0.5">
-                                          {timeSlots.map((time) => (
+                                          {timeSlots.map((time) => {
+                                            const currentTime = sessionEdits[week.id]?.time || week.time;
+                                            return (
                                             <button
                                               key={time}
                                               type="button"
                                               onClick={() => handleTimeSelect(week.id, time)}
                                               className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                week.time.startsWith(time)
+                                                currentTime.startsWith(time)
                                                   ? 'bg-text-primary text-white'
                                                   : 'text-sidebar-foreground hover:bg-surface-elevated'
                                               }`}
                                             >
                                               <span>{time}</span>
-                                              {week.time.startsWith(time) && <Check className="h-4 w-4" />}
+                                              {currentTime.startsWith(time) && <Check className="h-4 w-4" />}
                                             </button>
-                                          ))}
+                                            );
+                                          })}
                                         </div>
                                       </PopoverContent>
                                     </Popover>
@@ -603,13 +936,33 @@ const CourseDetailPage = () => {
 
                                 <div className="flex justify-end gap-2 pt-2">
                                   <button
-                                    onClick={() => setExpandedItem(undefined)}
+                                    onClick={() => {
+                                      // Clear edits for this session and close
+                                      setSessionEdits(prev => {
+                                        const newEdits = { ...prev };
+                                        delete newEdits[week.id];
+                                        return newEdits;
+                                      });
+                                      setExpandedItem(undefined);
+                                    }}
                                     className="text-xs font-medium text-muted-foreground hover:text-text-primary px-3 py-2 rounded-lg hover:bg-surface-elevated transition-colors"
+                                    disabled={savingSessionId === week.id}
                                   >
                                     Avbryt
                                   </button>
-                                  <button className="rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground transition-colors">
-                                    Lagre endringer
+                                  <button
+                                    onClick={() => handleSaveSession(week.id)}
+                                    disabled={savingSessionId === week.id || !hasRealSessions || !sessionEdits[week.id]}
+                                    className="rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                  >
+                                    {savingSessionId === week.id ? (
+                                      <>
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        Lagrer...
+                                      </>
+                                    ) : (
+                                      'Lagre endringer'
+                                    )}
                                   </button>
                                 </div>
                               </div>
@@ -640,12 +993,20 @@ const CourseDetailPage = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {/* TAB 2: DELTAKERE (Participants) */}
             {activeTab === 'participants' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 flex flex-col gap-4">
+              <motion.div
+                key="participants"
+                variants={tabVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={tabTransition}
+                className="flex flex-col gap-4"
+              >
 
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
@@ -658,10 +1019,95 @@ const CourseDetailPage = () => {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline-soft" size="compact">
-                      <Filter className="h-4 w-4" />
-                      Filter
-                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline-soft" size="compact" className="relative">
+                          <Filter className="h-3.5 w-3.5" />
+                          Filter
+                          {activeFiltersCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-text-primary text-xxs font-medium text-white flex items-center justify-center shadow-sm">
+                              {activeFiltersCount}
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-64 p-0 rounded-xl shadow-lg border border-border">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                          <span className="text-sm font-medium text-text-primary">Filter</span>
+                          {activeFiltersCount > 0 && (
+                            <button
+                              onClick={clearFilters}
+                              className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
+                            >
+                              Nullstill
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4 space-y-5">
+                          {/* Status Section */}
+                          <div>
+                            <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
+                              Status
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {([
+                                { value: 'all', label: 'Alle' },
+                                { value: 'confirmed', label: 'Påmeldt' },
+                                { value: 'waitlist', label: 'Venteliste' },
+                                { value: 'cancelled', label: 'Avbestilt' },
+                              ] as const).map((option) => (
+                                <button
+                                  key={option.value}
+                                  onClick={() => setStatusFilter(option.value)}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                    statusFilter === option.value
+                                      ? 'bg-gray-900 text-white shadow-sm'
+                                      : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
+                                  }`}
+                                >
+                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                                    statusFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
+                                  }`} />
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Payment Section */}
+                          <div>
+                            <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
+                              Betaling
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {([
+                                { value: 'all', label: 'Alle' },
+                                { value: 'paid', label: 'Betalt' },
+                                { value: 'pending', label: 'Venter' },
+                              ] as const).map((option) => (
+                                <button
+                                  key={option.value}
+                                  onClick={() => setPaymentFilter(option.value)}
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                    paymentFilter === option.value
+                                      ? 'bg-gray-900 text-white shadow-sm'
+                                      : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
+                                  }`}
+                                >
+                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                                    paymentFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
+                                  }`} />
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <Button size="compact">
                       <Plus className="h-4 w-4" />
                       Legg til deltaker
@@ -675,108 +1121,95 @@ const CourseDetailPage = () => {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-border bg-surface/50">
-                          <th className="py-3 px-6 text-xs font-medium text-muted-foreground uppercase tracking-wider w-10">
-                            <input type="checkbox" className="h-4 w-4 border-border rounded focus:ring-text-primary text-text-primary cursor-pointer" />
-                          </th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wider">Navn</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wider">Medlemskap</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wider text-right">Innsjekk</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wider text-right">Handling</th>
+                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
+                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Betalt</th>
+                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Notater</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {participants.map((participant) => (
-                          <tr key={participant.id} className="group hover:bg-surface/50 ios-ease">
-                            <td className="py-4 px-6">
-                              <input type="checkbox" className="h-4 w-4 border-border rounded focus:ring-text-primary text-text-primary cursor-pointer" />
-                            </td>
-                            <td className="py-4 px-6">
-                              <div className="flex items-center gap-3">
-                                <img src={participant.avatar} className="h-8 w-8 rounded-full bg-surface-elevated border border-border" alt="" />
-                                <div>
-                                  <p className="text-sm font-medium text-text-primary">{participant.name}</p>
-                                  <p className="text-xs text-muted-foreground">{participant.email}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-6">
-                              {participant.status === 'paid' ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border">
-                                  Betalt
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-surface-elevated text-muted-foreground border border-border">
-                                  Venter
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-4 px-6">
-                              {participant.membership === 'premium' && (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-                                  <Crown className="h-3.5 w-3.5 text-warning" />
-                                  Premium
-                                </span>
-                              )}
-                              {participant.membership === 'klippekort' && (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-                                  <Ticket className="h-3.5 w-3.5 text-primary" />
-                                  Klippekort (2 igjen)
-                                </span>
-                              )}
-                              {participant.membership === 'dropin' && (
-                                <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-                                  <CreditCard className="h-3.5 w-3.5 text-text-tertiary" />
-                                  Drop-in
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              {participant.checkedIn ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                  {participant.checkedIn}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-text-tertiary italic">Ikke innsjekket</span>
-                              )}
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="p-1.5 hover:bg-surface-elevated rounded-md text-text-tertiary hover:text-text-primary ios-ease">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>Se profil</DropdownMenuItem>
-                                  <DropdownMenuItem>Send melding</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-destructive">Fjern deltaker</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                        {participantsLoading ? (
+                          <tr>
+                            <td colSpan={4} className="py-12 text-center">
+                              <Loader2 className="h-6 w-6 animate-spin text-text-tertiary mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground">Laster deltakere...</p>
                             </td>
                           </tr>
-                        ))}
+                        ) : filteredParticipants.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-12 text-center">
+                              <p className="text-sm text-muted-foreground">Ingen deltakere funnet</p>
+                              {activeFiltersCount > 0 && (
+                                <button
+                                  onClick={clearFilters}
+                                  className="mt-2 text-xs text-primary hover:underline"
+                                >
+                                  Nullstill filter
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredParticipants.map((participant) => (
+                            <tr key={participant.id} className="group hover:bg-secondary transition-colors">
+                              {/* Navn */}
+                              <td className="py-4 px-6">
+                                <div className="flex items-center gap-3">
+                                  <ParticipantAvatar participant={participant} size="sm" showPhoto={false} />
+                                  <div>
+                                    <p className="text-sm font-medium text-text-primary">{participant.name}</p>
+                                    <p className="text-xs text-muted-foreground">{participant.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              {/* Status (attendance) */}
+                              <td className="py-4 px-6">
+                                <StatusBadge status={participant.status} />
+                              </td>
+                              {/* Betalt (payment) */}
+                              <td className="py-4 px-6">
+                                <PaymentBadge status={participant.paymentStatus} />
+                              </td>
+                              {/* Notater */}
+                              <td className="py-4 px-6 text-right">
+                                {participant.notes ? (
+                                  <NotePopover note={participant.notes} />
+                                ) : (
+                                  <span className="text-text-tertiary">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-6 py-4 border-t border-border flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">Viser {participants.length} av {course.enrolled} deltakere</span>
-                    <div className="flex gap-2">
-                      <button className="p-1.5 rounded-md border border-border hover:bg-surface-elevated text-text-tertiary disabled:opacity-50 transition-all" disabled>
+                  <div className="px-6 py-3 border-t border-border bg-surface/50 flex items-center justify-between">
+                    <span className="text-xxs text-muted-foreground">Viser <span className="font-medium text-text-primary">{filteredParticipants.length}</span> av <span className="font-medium text-text-primary">{displayParticipants.length}</span> deltakere</span>
+                    <div className="flex items-center gap-2">
+                      <button className="p-1.5 rounded-lg border border-border bg-white hover:border-ring hover:text-text-primary text-text-tertiary disabled:opacity-50 transition-all" disabled>
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <button className="p-1.5 rounded-md border border-border hover:bg-surface-elevated text-text-primary">
+                      <button className="p-1.5 rounded-lg border border-border bg-white hover:border-ring text-text-primary transition-all">
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* TAB 3: INNSTILLINGER (Settings) */}
             {activeTab === 'settings' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-3xl mx-auto">
+              <motion.div
+                key="settings"
+                variants={tabVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={tabTransition}
+                className="max-w-3xl mx-auto"
+              >
 
                 <div className="space-y-6">
                   {/* General Settings */}
@@ -787,7 +1220,11 @@ const CourseDetailPage = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Navn på kurs</label>
-                        <Input type="text" defaultValue={course.title} />
+                        <Input
+                          type="text"
+                          value={settingsTitle}
+                          onChange={(e) => setSettingsTitle(e.target.value)}
+                        />
                       </div>
 
                       <div>
@@ -795,8 +1232,37 @@ const CourseDetailPage = () => {
                         <textarea
                           rows={4}
                           className="w-full p-3 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring resize-none"
-                          defaultValue={course.description}
+                          value={settingsDescription}
+                          onChange={(e) => setSettingsDescription(e.target.value)}
                         />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Kursbilde</label>
+                        <div className="aspect-video">
+                          <ImageUpload
+                            value={settingsImageUrl}
+                            onChange={(file) => {
+                              setSettingsImageFile(file);
+                              if (!file && settingsImageUrl) {
+                                // User wants to remove the image
+                                setImageToDelete(settingsImageUrl);
+                                setSettingsImageUrl(null);
+                              }
+                            }}
+                            onRemove={() => {
+                              if (settingsImageUrl) {
+                                setImageToDelete(settingsImageUrl);
+                                setSettingsImageUrl(null);
+                              }
+                            }}
+                            disabled={isSaving}
+                            className="h-full"
+                          />
+                        </div>
+                        <p className="mt-1.5 text-xs text-muted-foreground">
+                          Valgfritt. Et bilde som representerer kurset.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -878,14 +1344,14 @@ const CourseDetailPage = () => {
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setMaxParticipants(Math.max(1, maxParticipants - 1))}
-                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary"
+                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary cursor-pointer"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="w-8 text-center text-sm font-semibold text-text-primary">{maxParticipants}</span>
                         <button
                           onClick={() => setMaxParticipants(maxParticipants + 1)}
-                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary"
+                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary cursor-pointer"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -894,24 +1360,143 @@ const CourseDetailPage = () => {
                   </div>
 
                   {/* Danger Zone */}
-                  <div className="rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-semibold text-status-error-text">Avlys eller slett kurs</h3>
-                      <p className="text-xs text-status-error-text/80 mt-1">Dette vil varsle alle påmeldte deltakere og refundere betalinger.</p>
+                  <div className="rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      {/* Left side: Text content */}
+                      <AnimatePresence mode="wait">
+                        {!showDeleteConfirm ? (
+                          <motion.div
+                            key="initial-text"
+                            variants={fadeVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={fadeTransition}
+                          >
+                            <h3 className="text-sm font-semibold text-status-error-text">Avlys eller slett kurs</h3>
+                            <p className="text-xs text-status-error-text/80 mt-1">Dette vil varsle alle påmeldte deltakere og refundere betalinger.</p>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="confirm-text"
+                            variants={fadeVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={fadeTransition}
+                          >
+                            <h3 className="text-sm font-semibold text-status-error-text">Er du sikker?</h3>
+                            <p className="text-xs text-status-error-text/80 mt-1">
+                              Dette vil permanent slette kurset. Handlingen kan ikke angres.
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Right side: Buttons */}
+                      <AnimatePresence mode="wait">
+                        {!showDeleteConfirm ? (
+                          <motion.div
+                            key="initial-btn"
+                            variants={fadeVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={fadeTransition}
+                            className="flex items-center gap-3 shrink-0"
+                          >
+                            <Button
+                              variant="outline-soft"
+                              size="compact"
+                              className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap"
+                              onClick={() => setShowDeleteConfirm(true)}
+                            >
+                              Slett kurs
+                            </Button>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="confirm-btn"
+                            variants={fadeVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={fadeTransition}
+                            className="flex items-center gap-3 shrink-0"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="compact"
+                              onClick={() => setShowDeleteConfirm(false)}
+                              disabled={isDeleting}
+                            >
+                              Avbryt
+                            </Button>
+                            <Button
+                              variant="outline-soft"
+                              size="compact"
+                              className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap"
+                              onClick={handleDeleteCourse}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  Sletter...
+                                </>
+                              ) : (
+                                'Ja, slett'
+                              )}
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    <Button variant="outline-soft" size="compact" className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap">
-                      Slett kurs
-                    </Button>
                   </div>
+
+                  {/* Save feedback */}
+                  {saveError && (
+                    <div className="flex items-center gap-2 text-sm text-status-error-text bg-status-error-bg/30 border border-status-error-border rounded-lg px-4 py-3">
+                      <Info className="h-4 w-4 shrink-0" />
+                      {saveError}
+                    </div>
+                  )}
+                  {saveSuccess && (
+                    <div className="flex items-center gap-2 text-sm text-status-success-text bg-status-success-bg border border-status-success-border rounded-lg px-4 py-3">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" />
+                      Endringene ble lagret
+                    </div>
+                  )}
 
                   <div className="flex justify-end gap-3 pt-4">
-                    <Button variant="ghost" size="compact">Avbryt</Button>
-                    <Button size="compact">Lagre endringer</Button>
+                    <Button
+                      variant="ghost"
+                      size="compact"
+                      onClick={() => setActiveTab('overview')}
+                      disabled={isSaving}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button
+                      size="compact"
+                      onClick={handleSaveSettings}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Lagrer...
+                        </>
+                      ) : (
+                        'Lagre endringer'
+                      )}
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
+            </AnimatePresence>
           </div>
         </div>
       </main>

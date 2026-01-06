@@ -1,16 +1,48 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { User, Mail, Lock, CheckCircle2, Leaf } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, Mail, Lock, CheckCircle2, Leaf, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { linkGuestBookingsToUser } from '@/services/studentSignups';
 
 const StudentRegisterPage = () => {
+  const navigate = useNavigate();
+  const { signUp, user, userType } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+
+  // Redirect already-authenticated users to their appropriate dashboard
+  useEffect(() => {
+    if (user && userType) {
+      if (userType === 'student') {
+        navigate('/student/dashboard', { replace: true });
+      } else if (userType === 'teacher') {
+        navigate('/teacher', { replace: true });
+      }
+    }
+  }, [user, userType, navigate]);
+
+  // Link guest bookings after user is created
+  useEffect(() => {
+    async function linkBookings() {
+      if (!user?.id || !email) return;
+
+      try {
+        await linkGuestBookingsToUser(user.id, email);
+      } catch {
+        // Silent fail - guest booking linking is not critical
+      }
+    }
+
+    linkBookings();
+  }, [user?.id, email]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -89,9 +121,10 @@ const StudentRegisterPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched({ fullName: true, email: true, password: true, confirmPassword: true });
+    setRegisterError(null);
 
     if (!validateForm()) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
@@ -101,8 +134,26 @@ const StudentRegisterPage = () => {
       return;
     }
 
-    // Handle registration logic
-    console.log({ fullName, email, password, confirmPassword });
+    setIsLoading(true);
+
+    try {
+      const { error } = await signUp(email, password, fullName);
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setRegisterError('Denne e-postadressen er allerede registrert');
+        } else {
+          setRegisterError('Kunne ikke opprette konto. Prøv igjen.');
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // Navigation will happen automatically via useEffect when userType is set
+    } catch (err) {
+      setRegisterError('En feil oppstod. Prøv igjen.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -125,7 +176,7 @@ const StudentRegisterPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Registration Card */}
-          <div className="rounded-3xl border border-border bg-white p-8 shadow-xl shadow-text-primary/5">
+          <div className="rounded-3xl border border-border bg-white p-8 shadow-xl shadow-gray-900/5">
             {/* Title */}
             <div className="text-center mb-8">
               <h1 className="font-geist text-2xl font-semibold text-text-primary tracking-tight">
@@ -138,9 +189,16 @@ const StudentRegisterPage = () => {
 
             {/* Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>
+              {/* Registration Error */}
+              {registerError && (
+                <div className="rounded-xl bg-status-error-bg border border-status-error-text/20 p-3">
+                  <p className="text-xs text-status-error-text font-medium">{registerError}</p>
+                </div>
+              )}
+
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Fullt navn <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -162,7 +220,7 @@ const StudentRegisterPage = () => {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   E-postadresse <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -184,7 +242,7 @@ const StudentRegisterPage = () => {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -208,7 +266,7 @@ const StudentRegisterPage = () => {
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                   Bekreft passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -231,9 +289,17 @@ const StudentRegisterPage = () => {
               {/* Main Action */}
               <Button
                 type="submit"
-                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98] mt-2"
+                disabled={isLoading}
+                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                Opprett konto
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Registrerer...
+                  </>
+                ) : (
+                  'Opprett konto'
+                )}
               </Button>
             </form>
 

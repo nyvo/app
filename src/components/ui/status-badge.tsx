@@ -10,23 +10,23 @@ interface StatusConfig {
   bg: string;
   text: string;
   dot: string;
-  label: string | ((pos?: number) => string);
+  label: string;
   icon?: 'x-circle';
 }
 
 const statusConfig: Record<BadgeStatus, StatusConfig> = {
-  // Signup statuses
+  // Signup statuses - Administrative colors (Blue/Amber)
   confirmed: {
-    bg: 'bg-status-confirmed-bg',
-    text: 'text-status-confirmed-text',
-    dot: 'bg-status-confirmed-text',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    dot: 'bg-blue-500',
     label: 'Påmeldt',
   },
   waitlist: {
-    bg: 'bg-status-waitlist-bg',
-    text: 'text-status-waitlist-text',
-    dot: 'bg-warning',
-    label: (pos?: number) => `Venteliste #${pos || 1}`,
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    dot: 'bg-amber-500',
+    label: 'Venteliste',
   },
   cancelled: {
     bg: 'bg-status-cancelled-bg',
@@ -35,7 +35,7 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     label: 'Avbestilt',
     icon: 'x-circle',
   },
-  // Course statuses
+  // Course statuses - Keep original feedback colors
   active: {
     bg: 'bg-status-confirmed-bg',
     text: 'text-status-confirmed-text',
@@ -60,7 +60,6 @@ interface StatusBadgeProps {
   status: BadgeStatus;
   size?: 'sm' | 'md';
   customLabel?: string;
-  waitlistPosition?: number;
   className?: string;
 }
 
@@ -68,11 +67,10 @@ export function StatusBadge({
   status,
   size = 'md',
   customLabel,
-  waitlistPosition,
   className
 }: StatusBadgeProps) {
   const config = statusConfig[status];
-  const label = customLabel || (typeof config.label === 'function' ? config.label(waitlistPosition) : config.label);
+  const label = customLabel || config.label;
 
   const sizeClasses = size === 'sm'
     ? 'px-2 py-0.5 text-xxs'

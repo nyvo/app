@@ -1,44 +1,78 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import SchedulePage from './pages/teacher/SchedulePage';
-import SignupsPage from './pages/teacher/SignupsPage';
-import MessagesPage from './pages/teacher/MessagesPage';
-import NewCoursePage from './pages/teacher/NewCoursePage';
-import CoursesPage from './pages/teacher/CoursesPage';
-import CourseDetailPage from './pages/teacher/CourseDetailPage';
-import PublicCoursesPage from './pages/public/PublicCoursesPage';
-import PublicCourseDetailPage from './pages/public/PublicCourseDetailPage';
-import TeacherProfilePage from './pages/teacher/TeacherProfilePage';
-import StudentLoginPage from './pages/student/StudentLoginPage';
-import StudentRegisterPage from './pages/student/StudentRegisterPage';
-import NotFoundPage from './pages/NotFoundPage';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { PageLoader } from './components/PageLoader';
+
+// Lazy load all route components for code splitting
+const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
+const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
+const SignupsPage = lazy(() => import('./pages/teacher/SignupsPage'));
+const MessagesPage = lazy(() => import('./pages/teacher/MessagesPage'));
+const NewCoursePage = lazy(() => import('./pages/teacher/NewCoursePage'));
+const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
+const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
+const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
+
+const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
+const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
+const LandingPage = lazy(() => import('./pages/public/LandingPage'));
+const SignupPage = lazy(() => import('./pages/public/SignupPage'));
+const LoginPage = lazy(() => import('./pages/public/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
+const TermsPage = lazy(() => import('./pages/public/TermsPage'));
+const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
+
+const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
+const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
+const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard'));
+const MyBookingsPage = lazy(() => import('./pages/student/MyBookingsPage'));
+
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/teacher" replace />} />
-        <Route path="/teacher" element={<TeacherDashboard />} />
-        <Route path="/teacher/courses" element={<CoursesPage />} />
-        <Route path="/teacher/courses/:id" element={<CourseDetailPage />} />
-        <Route path="/teacher/schedule" element={<SchedulePage />} />
-        <Route path="/teacher/signups" element={<SignupsPage />} />
-        <Route path="/teacher/messages" element={<MessagesPage />} />
-        <Route path="/teacher/new-course" element={<NewCoursePage />} />
-        <Route path="/teacher/profile" element={<TeacherProfilePage />} />
-        
-        {/* Public Routes */}
-        <Route path="/courses" element={<PublicCoursesPage />} />
-        <Route path="/courses/detail" element={<PublicCourseDetailPage />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Toaster position="top-right" richColors />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            {/* Studio/Organization Public Routes */}
+            <Route path="/studio/:slug" element={<PublicCoursesPage />} />
+            <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
 
-        {/* Student Routes */}
-        <Route path="/student/login" element={<StudentLoginPage />} />
-        <Route path="/student/register" element={<StudentRegisterPage />} />
+            {/* Teacher Routes (Protected) */}
+            <Route path="/teacher" element={<ProtectedRoute requiredUserType="teacher"><TeacherDashboard /></ProtectedRoute>} />
+            <Route path="/teacher/courses" element={<ProtectedRoute requiredUserType="teacher"><CoursesPage /></ProtectedRoute>} />
+            <Route path="/teacher/courses/:id" element={<ProtectedRoute requiredUserType="teacher"><CourseDetailPage /></ProtectedRoute>} />
+            <Route path="/teacher/schedule" element={<ProtectedRoute requiredUserType="teacher"><SchedulePage /></ProtectedRoute>} />
+            <Route path="/teacher/signups" element={<ProtectedRoute requiredUserType="teacher"><SignupsPage /></ProtectedRoute>} />
+            <Route path="/teacher/messages" element={<ProtectedRoute requiredUserType="teacher"><MessagesPage /></ProtectedRoute>} />
+            <Route path="/teacher/new-course" element={<ProtectedRoute requiredUserType="teacher"><NewCoursePage /></ProtectedRoute>} />
+            <Route path="/teacher/profile" element={<ProtectedRoute requiredUserType="teacher"><TeacherProfilePage /></ProtectedRoute>} />
 
-        {/* 404 Catch-all */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Student Routes */}
+            <Route path="/student/login" element={<StudentLoginPage />} />
+            <Route path="/student/register" element={<StudentRegisterPage />} />
+            <Route path="/student/dashboard" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/student/bookings" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><MyBookingsPage /></ProtectedRoute>} />
+
+            {/* 404 Catch-all */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 

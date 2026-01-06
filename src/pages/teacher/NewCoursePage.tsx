@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { nb } from 'date-fns/locale';
+import { addDays, format } from 'date-fns';
 import { formatDateNorwegian } from '@/utils/dateUtils';
 import {
   Leaf,
@@ -13,25 +14,23 @@ import {
   ArrowRight,
   CalendarIcon,
   ChevronDown,
+  ChevronRight,
   AlertCircle,
   Loader2,
+  Users,
+  CalendarClock,
+  X,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { TIME_SLOTS_DEFAULT } from '@/utils/timeSlots';
 import { useAuth } from '@/contexts/AuthContext';
-import { createCourse, fetchCourseStyles } from '@/services/courses';
+import { createCourse, updateCourse, fetchCourseStyles, type SessionTimeOverride } from '@/services/courses';
+import { uploadCourseImage } from '@/services/storage';
+import { ImageUpload } from '@/components/ui/image-upload';
 import type { CourseStyle, CourseType as DBCourseType } from '@/types/database';
 
 type CourseType = 'series' | 'single';
@@ -61,10 +60,13 @@ const NewCoursePage = () => {
   const [isWeeksOpen, setIsWeeksOpen] = useState(false);
   const [eventDays, setEventDays] = useState('1');
   const [isDaysOpen, setIsDaysOpen] = useState(false);
+  // Session times for multi-day events (index 0 is always primary from startTime)
+  const [sessionTimes, setSessionTimes] = useState<Record<number, string>>({});
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
   const [capacity, setCapacity] = useState('');
   const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -72,6 +74,9 @@ const NewCoursePage = () => {
   const [styles, setStyles] = useState<CourseStyle[]>([]);
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [isStyleOpen, setIsStyleOpen] = useState(false);
+
+  // Difficulty level
+  const [level, setLevel] = useState<'alle' | 'nybegynner' | 'viderekommen'>('nybegynner');
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,36 +93,56 @@ const NewCoursePage = () => {
     loadStyles();
   }, []);
 
-  // Validation logic
+  // Refs for scroll-to-error
+  const titleRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLButtonElement>(null);
+  const startTimeRef = useRef<HTMLButtonElement>(null);
+  const durationRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLInputElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
+  const capacityRef = useRef<HTMLInputElement>(null);
+
+  // Field refs map for scroll-to-error
+  const fieldRefs: Record<keyof FormErrors, React.RefObject<HTMLInputElement | HTMLButtonElement | null>> = {
+    title: titleRef,
+    startDate: startDateRef,
+    startTime: startTimeRef,
+    duration: durationRef,
+    location: locationRef,
+    price: priceRef,
+    capacity: capacityRef,
+  };
+
+  // Validation logic with actionable Norwegian error messages
   const errors = useMemo<FormErrors>(() => {
     const errs: FormErrors = {};
 
     if (!title.trim()) {
-      errs.title = 'Tittel er påkrevd';
+      errs.title = 'Skriv inn en tittel.';
     }
 
     if (!startDate) {
-      errs.startDate = 'Dato er påkrevd';
+      errs.startDate = 'Velg en startdato.';
     }
 
     if (!startTime) {
-      errs.startTime = 'Tidspunkt er påkrevd';
+      errs.startTime = 'Velg et tidspunkt.';
     }
 
     if (!duration || parseInt(duration) <= 0) {
-      errs.duration = 'Varighet må være større enn 0';
+      errs.duration = 'Angi varighet (minst 1 minutt).';
     }
 
     if (!location.trim()) {
-      errs.location = 'Sted er påkrevd';
+      errs.location = 'Skriv inn et sted.';
     }
 
-    if (!price || parseInt(price) < 0) {
-      errs.price = 'Pris er påkrevd';
+    if (price === '' || parseInt(price) < 0) {
+      errs.price = 'Angi en pris (minst 0 NOK).';
     }
 
-    if (!capacity || parseInt(capacity) <= 0) {
-      errs.capacity = 'Antall plasser er påkrevd';
+    if (!capacity || parseInt(capacity) < 1) {
+      errs.capacity = 'Angi antall plasser (minst 1).';
     }
 
     return errs;
@@ -133,6 +158,41 @@ const NewCoursePage = () => {
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
+  // Generate session dates for multi-day events
+  const sessionDates = useMemo(() => {
+    if (!startDate || courseType !== 'single') return [];
+    const numDays = parseInt(eventDays);
+    if (numDays <= 1) return [];
+
+    return Array.from({ length: numDays }, (_, i) => {
+      const date = addDays(startDate, i);
+      return {
+        dayNumber: i + 1,
+        date,
+        formattedDate: format(date, 'EEE, d. MMM', { locale: nb }),
+        time: i === 0 ? startTime : (sessionTimes[i] || startTime),
+        isPrimary: i === 0,
+      };
+    });
+  }, [startDate, eventDays, courseType, startTime, sessionTimes]);
+
+  // Update session time for a specific day
+  const updateSessionTime = (dayIndex: number, time: string) => {
+    setSessionTimes(prev => ({
+      ...prev,
+      [dayIndex]: time,
+    }));
+  };
+
+  // Reset session time to primary time
+  const resetSessionTime = (dayIndex: number) => {
+    setSessionTimes(prev => {
+      const newTimes = { ...prev };
+      delete newTimes[dayIndex];
+      return newTimes;
+    });
+  };
+
   const handleCancel = () => {
     navigate('/teacher/schedule');
   };
@@ -142,6 +202,14 @@ const NewCoursePage = () => {
     setSubmitError(null);
 
     if (!isFormValid) {
+      // Scroll to first invalid field and focus it
+      const firstErrorField = (Object.keys(errors) as (keyof FormErrors)[])[0];
+      if (firstErrorField && fieldRefs[firstErrorField]?.current) {
+        fieldRefs[firstErrorField].current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          fieldRefs[firstErrorField].current?.focus();
+        }, 300);
+      }
       return;
     }
 
@@ -157,15 +225,22 @@ const NewCoursePage = () => {
       const dbCourseType: DBCourseType = courseType === 'series' ? 'course-series' : 'event';
 
       // Format time schedule (day + time)
+      // For course series (recurring weekly): use plural form "Onsdager, 18:00" (same day each week)
+      // For events (single or multi-day): use singular form "Onsdag, 18:00" (starting day only)
       const dayName = startDate ? new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(startDate) : '';
-      const timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${startTime}`;
+      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      const timeSchedule = courseType === 'series'
+        ? `${capitalizedDay}er, ${startTime}`
+        : `${capitalizedDay}, ${startTime}`;
 
       const courseData = {
         organization_id: currentOrganization.id,
         title: title.trim(),
         description: description.trim() || null,
         course_type: dbCourseType,
-        start_date: startDate?.toISOString().split('T')[0],
+        start_date: startDate
+          ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`
+          : undefined,
         time_schedule: timeSchedule,
         duration: parseInt(duration),
         total_weeks: courseType === 'series' ? parseInt(weeks) : null,
@@ -174,20 +249,45 @@ const NewCoursePage = () => {
         max_participants: parseInt(capacity),
         status: 'upcoming' as const,
         style_id: selectedStyleId,
+        level: level,
       };
 
-      const { error } = await createCourse(courseData);
+      // Build session time overrides for multi-day events
+      const sessionTimeOverrides: SessionTimeOverride[] = Object.entries(sessionTimes).map(
+        ([dayIndex, time]) => ({
+          dayIndex: parseInt(dayIndex),
+          time,
+        })
+      );
 
-      if (error) {
-        setSubmitError(error.message || 'Kunne ikke opprette kurset');
+      const { data: createdCourse, error } = await createCourse(courseData, {
+        eventDays: courseType === 'single' ? parseInt(eventDays) : undefined,
+        sessionTimeOverrides: sessionTimeOverrides.length > 0 ? sessionTimeOverrides : undefined,
+      });
+
+      if (error || !createdCourse) {
+        setSubmitError(error?.message || 'Kunne ikke opprette kurset');
         return;
       }
 
-      // Navigate to courses list on success
-      navigate('/teacher/courses');
-    } catch (err) {
+      // Upload image if one was selected
+      if (imageFile) {
+        const { url: imageUrl, error: uploadError } = await uploadCourseImage(
+          createdCourse.id,
+          imageFile
+        );
+
+        if (!uploadError && imageUrl) {
+          // Update course with image URL
+          await updateCourse(createdCourse.id, { image_url: imageUrl });
+        }
+        // If image upload fails, course is still created - just continue
+      }
+
+      // Navigate to course detail page on success
+      navigate(`/teacher/courses/${createdCourse.id}`);
+    } catch {
       setSubmitError('En feil oppstod');
-      console.error('Error creating course:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -209,265 +309,348 @@ const NewCoursePage = () => {
           </SidebarTrigger>
         </div>
 
-        {/* Header Area */}
-        <div className="px-8 py-6 border-b border-border bg-surface">
-          <div className="mx-auto max-w-3xl w-full">
-            <Breadcrumb className="mb-2">
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/teacher/schedule">Timeplan</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Nytt kurs</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
-              Opprett nytt kurs
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Sett opp et nytt kurs eller workshop i timeplanen.
-            </p>
+        {/* Header / Breadcrumbs - Sticky */}
+        <header className="bg-white border-b border-border sticky top-0 z-10 shrink-0">
+          <div className="max-w-3xl mx-auto px-6 py-4">
+            <nav className="flex items-center text-xs text-muted-foreground mb-2 space-x-2">
+              <Link to="/teacher/schedule" className="hover:text-text-primary cursor-pointer transition-colors">
+                Timeplan
+              </Link>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-text-primary font-medium">Nytt kurs</span>
+            </nav>
+            <div className="flex justify-between items-end">
+              <div>
+                <h1 className="text-2xl font-semibold text-text-primary tracking-tight">
+                  Opprett nytt kurs
+                </h1>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Sett opp et nytt kurs eller workshop i timeplanen.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
+        </header>
 
         {/* Scrollable Form Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-          <div className="mx-auto max-w-3xl w-full space-y-8 pb-12">
-            {/* Step 1: Course Type Selection */}
-            <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
-              <div className="px-6 pt-5 pb-4">
-                <h2 className="text-base font-semibold text-text-primary">Velg type</h2>
-                <p className="text-xs text-muted-foreground mt-1">Velg om du vil opprette en kursrekke eller enkeltkurs.</p>
-              </div>
-              <div className="px-6 pb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Option A: Kursrekke */}
-                <button
-                  type="button"
-                  onClick={() => setCourseType('series')}
-                  className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all ${
-                    courseType === 'series'
-                      ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
-                      : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div
-                      className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                        courseType === 'series'
-                          ? 'bg-surface-elevated text-text-primary'
-                          : 'bg-white border border-border text-muted-foreground'
-                      }`}
-                    >
-                      <Layers className="h-5 w-5" />
-                    </div>
-                    <div
-                      className={`h-5 w-5 rounded-full flex items-center justify-center ${
-                        courseType === 'series'
-                          ? 'bg-text-primary text-white'
-                          : 'border border-border bg-white'
-                      }`}
-                    >
-                      {courseType === 'series' && <Check className="h-3 w-3" />}
-                    </div>
-                  </div>
-                  <div>
-                    <h3
-                      className={`text-base font-semibold ${
-                        courseType === 'series' ? 'text-text-primary' : 'text-sidebar-foreground'
-                      }`}
-                    >
-                      Kursrekke
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      For kurs som går over flere uker med faste deltakere.
-                    </p>
-                  </div>
-                </button>
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="max-w-3xl mx-auto px-6 py-10 space-y-12 pb-32">
 
-                {/* Option B: Enkeltkurs */}
-                <button
-                  type="button"
-                  onClick={() => setCourseType('single')}
-                  className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all ${
-                    courseType === 'single'
-                      ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
-                      : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div
-                      className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                        courseType === 'single'
-                          ? 'bg-surface-elevated text-text-primary'
-                          : 'bg-white border border-border text-muted-foreground'
-                      }`}
-                    >
-                      <CalendarDays className="h-5 w-5" />
-                    </div>
-                    <div
-                      className={`h-5 w-5 rounded-full flex items-center justify-center ${
-                        courseType === 'single'
-                          ? 'bg-text-primary text-white'
-                          : 'border border-border bg-white'
-                      }`}
-                    >
-                      {courseType === 'single' && <Check className="h-3 w-3" />}
-                    </div>
-                  </div>
-                  <div>
-                    <h3
-                      className={`text-base font-semibold ${
-                        courseType === 'single' ? 'text-text-primary' : 'text-sidebar-foreground'
-                      }`}
-                    >
-                      Enkeltkurs
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Drop-in timer, workshops eller engangsarrangementer.
-                    </p>
-                  </div>
-                </button>
+            {/* Section 1: Course Type Selection */}
+            <section>
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-text-primary">Velg type</h2>
+                <p className="text-sm text-muted-foreground">Velg om du vil opprette en kursrekke eller enkeltkurs.</p>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Option A: Kursrekke */}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={courseType === 'series'}
+                    onClick={() => setCourseType('series')}
+                    className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
+                      courseType === 'series'
+                        ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
+                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div
+                        className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                          courseType === 'series'
+                            ? 'bg-surface-elevated text-text-primary'
+                            : 'bg-white border border-border text-muted-foreground'
+                        }`}
+                      >
+                        <Layers className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div
+                        className={`h-5 w-5 rounded-full flex items-center justify-center ${
+                          courseType === 'series'
+                            ? 'bg-text-primary text-white'
+                            : 'border border-border bg-white'
+                        }`}
+                      >
+                        {courseType === 'series' && <Check className="h-3 w-3" aria-hidden="true" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h3
+                        className={`text-base font-semibold ${
+                          courseType === 'series' ? 'text-text-primary' : 'text-sidebar-foreground'
+                        }`}
+                      >
+                        Kursrekke
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Best for kurs over flere uker med faste deltakere.
+                      </p>
+                    </div>
+                    {courseType === 'series' && <span className="sr-only">Valgt</span>}
+                  </button>
+
+                  {/* Option B: Enkeltkurs */}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={courseType === 'single'}
+                    onClick={() => setCourseType('single')}
+                    className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
+                      courseType === 'single'
+                        ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
+                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div
+                        className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                          courseType === 'single'
+                            ? 'bg-surface-elevated text-text-primary'
+                            : 'bg-white border border-border text-muted-foreground'
+                        }`}
+                      >
+                        <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div
+                        className={`h-5 w-5 rounded-full flex items-center justify-center ${
+                          courseType === 'single'
+                            ? 'bg-text-primary text-white'
+                            : 'border border-border bg-white'
+                        }`}
+                      >
+                        {courseType === 'single' && <Check className="h-3 w-3" aria-hidden="true" />}
+                      </div>
+                    </div>
+                    <div>
+                      <h3
+                        className={`text-base font-semibold ${
+                          courseType === 'single' ? 'text-text-primary' : 'text-sidebar-foreground'
+                        }`}
+                      >
+                        Enkeltkurs
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Best for drop-in, workshop eller engangsarrangement.
+                      </p>
+                    </div>
+                    {courseType === 'single' && <span className="sr-only">Valgt</span>}
+                  </button>
+                </div>
             </section>
 
-            {/* Step 2: Course Details */}
-            <section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
-              <div className="px-6 pt-5 pb-4">
-                <h2 className="text-base font-semibold text-text-primary">Detaljer</h2>
-                <p className="text-xs text-muted-foreground mt-1">Angi navn, stil, tidspunkt, varighet og sted for kurset.</p>
+            {/* Section 2: Details */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-text-primary">Detaljer</h2>
+                <p className="text-sm text-muted-foreground">Angi informasjon om kurset.</p>
               </div>
-              <div className="px-6 pb-6 space-y-6">
-              {/* Title and Style */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Title */}
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Tittel <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="F.eks. Morgenyoga for nybegynnere"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={() => handleBlur('title')}
-                    className={`w-full h-11 rounded-xl border px-4 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                      showError('title') ? 'border-destructive' : 'border-border'
-                    }`}
-                  />
-                  {showError('title') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.title}
-                    </p>
-                  )}
-                </div>
 
-                {/* Style Selection */}
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Yogastil
-                  </label>
-                  <Popover open={isStyleOpen} onOpenChange={setIsStyleOpen}>
-                    <PopoverTrigger asChild>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                {/* Left Column: Title, Style, Description */}
+                <div className="md:col-span-7 space-y-5">
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="course-title" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Tittel <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      ref={titleRef}
+                      id="course-title"
+                      type="text"
+                      placeholder="F.eks. Morgenyoga"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      onBlur={() => handleBlur('title')}
+                      aria-describedby={showError('title') ? 'title-error' : undefined}
+                      aria-invalid={showError('title') ? 'true' : undefined}
+                      aria-required="true"
+                      className={`w-full h-10 rounded-xl border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                        showError('title') ? 'border-destructive' : 'border-border'
+                      }`}
+                    />
+                    {showError('title') && (
+                      <p id="title-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                        {errors.title}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Difficulty Level */}
+                  <div>
+                    <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Nivå
+                    </label>
+                    <div className="flex items-center gap-1 p-1 bg-surface-elevated rounded-lg">
                       <button
                         type="button"
-                        className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                        onClick={() => setLevel('nybegynner')}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
+                          level === 'nybegynner'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-text-primary'
+                        }`}
                       >
-                        <span className={selectedStyleId ? 'text-text-primary' : 'text-text-tertiary'}>
-                          {selectedStyleId
-                            ? styles.find(s => s.id === selectedStyleId)?.name || 'Velg stil'
-                            : 'Velg stil (valgfritt)'}
-                        </span>
-                        <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isStyleOpen ? 'rotate-180' : ''}`} />
+                        Nybegynner
                       </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-[300px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
-                      <div className="flex flex-col gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setLevel('alle')}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
+                          level === 'alle'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-text-primary'
+                        }`}
+                      >
+                        Middels
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLevel('viderekommen')}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
+                          level === 'viderekommen'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-text-primary'
+                        }`}
+                      >
+                        Viderekommen
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Style Selection */}
+                  <div>
+                    <label htmlFor="course-style" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Kategori
+                      <span className="ml-2 text-xxs font-normal text-muted-foreground">(Valgfritt)</span>
+                    </label>
+                    <Popover open={isStyleOpen} onOpenChange={setIsStyleOpen}>
+                      <PopoverTrigger asChild>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedStyleId(null);
-                            setIsStyleOpen(false);
-                          }}
-                          className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                            !selectedStyleId
-                              ? 'bg-text-primary text-white'
-                              : 'text-sidebar-foreground hover:bg-surface-elevated'
-                          }`}
+                          className="flex items-center justify-between w-full h-10 rounded-xl border border-border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
                         >
-                          <span>Ingen (velg senere)</span>
-                          {!selectedStyleId && <Check className="h-4 w-4" />}
+                          <span className={selectedStyleId ? 'text-text-primary' : 'text-text-tertiary'}>
+                            {selectedStyleId
+                              ? styles.find(s => s.id === selectedStyleId)?.name || 'Velg stil'
+                              : 'Velg stil (valgfritt)'}
+                          </span>
+                          <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isStyleOpen ? 'rotate-180' : ''}`} />
                         </button>
-                        {styles.map((style) => (
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-[280px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                        <div className="flex flex-col gap-0.5">
                           <button
-                            key={style.id}
                             type="button"
                             onClick={() => {
-                              setSelectedStyleId(style.id);
+                              setSelectedStyleId(null);
                               setIsStyleOpen(false);
                             }}
                             className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                              selectedStyleId === style.id
+                              !selectedStyleId
                                 ? 'bg-text-primary text-white'
                                 : 'text-sidebar-foreground hover:bg-surface-elevated'
                             }`}
                           >
-                            <div className="flex items-center gap-2">
-                              {style.color && (
-                                <span
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: style.color }}
-                                />
-                              )}
-                              <span>{style.name}</span>
-                            </div>
-                            {selectedStyleId === style.id && <Check className="h-4 w-4" />}
+                            <span>Ingen (velg senere)</span>
+                            {!selectedStyleId && <Check className="h-4 w-4" />}
                           </button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                          {styles.map((style) => (
+                            <button
+                              key={style.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedStyleId(style.id);
+                                setIsStyleOpen(false);
+                              }}
+                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                selectedStyleId === style.id
+                                  ? 'bg-text-primary text-white'
+                                  : 'text-sidebar-foreground hover:bg-surface-elevated'
+                              }`}
+                            >
+                              <span>{style.name}</span>
+                              {selectedStyleId === style.id && <Check className="h-4 w-4" />}
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Description */}
+                  <div className="relative">
+                    <label htmlFor="course-description" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Beskrivelse
+                      <span className="ml-2 text-xxs font-normal text-muted-foreground">(Valgfritt)</span>
+                    </label>
+                    <textarea
+                      id="course-description"
+                      placeholder="Beskriv kurset..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      maxLength={600}
+                      className="min-h-[120px] w-full rounded-xl border border-border px-3 py-2.5 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring resize-none"
+                    />
+                    <div className="flex justify-end mt-1.5">
+                      <p className={`text-xs ${description.length > 500 ? (description.length > 600 ? 'text-destructive' : 'text-warning') : 'text-text-tertiary'}`}>
+                        {description.length}/600
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Description */}
-                <div className="sm:col-span-2">
+                {/* Right Column: Image Upload */}
+                <div className="md:col-span-5 flex flex-col">
                   <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Beskrivelse
+                    Kursbilde
+                    <span className="ml-2 text-xxs font-normal text-muted-foreground">(Valgfritt)</span>
                   </label>
-                  <textarea
-                    placeholder="Beskriv kurset kort..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-xl border border-border px-4 py-3 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring resize-none"
-                  />
+                  <div className="flex-1">
+                    <ImageUpload
+                      value={null}
+                      onChange={setImageFile}
+                      disabled={isSubmitting}
+                      className="h-full"
+                    />
+                  </div>
                 </div>
               </div>
+            </section>
 
-              {/* Grid for Logistics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* Start Date - Calendar Picker */}
-                <div className="group">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-red-500">*</span>
+            {/* Section 3: Time & Location */}
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-text-primary">Tid & Sted</h2>
+                <p className="text-sm text-muted-foreground">Når og hvor skal dette foregå?</p>
+              </div>
+
+              {/* Row 1: Date, Time, Duration, Weeks/Days */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-5">
+                {/* Start Date */}
+                <div className="col-span-1">
+                  <label htmlFor="start-date" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-destructive">*</span>
                   </label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
+                        ref={startDateRef}
+                        id="start-date"
                         type="button"
                         onBlur={() => handleBlur('startDate')}
-                        className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                        aria-describedby={showError('startDate') ? 'startDate-error' : undefined}
+                        aria-invalid={showError('startDate') ? 'true' : undefined}
+                        aria-required="true"
+                        className={`flex items-center justify-between w-full h-10 rounded-xl border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                           showError('startDate') ? 'border-destructive' : 'border-border'
                         }`}
                       >
-                        <span className={startDate ? 'text-text-primary' : 'text-text-tertiary'}>
+                        <span className={`truncate ${startDate ? 'text-text-primary' : 'text-text-tertiary'}`}>
                           {startDate ? formatDateNorwegian(startDate) : 'Velg dato'}
                         </span>
-                        <CalendarIcon className={`h-4 w-4 ${showError('startDate') ? 'text-red-500' : 'text-text-tertiary'}`} />
+                        <CalendarIcon className={`h-4 w-4 shrink-0 ${showError('startDate') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent align="start" className="p-0" showOverlay>
@@ -484,37 +667,39 @@ const NewCoursePage = () => {
                     </PopoverContent>
                   </Popover>
                   {showError('startDate') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
+                    <p id="startDate-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <AlertCircle className="h-3 w-3" aria-hidden="true" />
                       {errors.startDate}
                     </p>
                   )}
                 </div>
 
-                {/* Start Time - Custom Dropdown */}
-                <div>
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Tidspunkt <span className="text-red-500">*</span>
+                {/* Time */}
+                <div className="col-span-1">
+                  <label htmlFor="start-time" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Starttid <span className="text-destructive">*</span>
                   </label>
                   <Popover open={isTimeOpen} onOpenChange={setIsTimeOpen}>
                     <PopoverTrigger asChild>
                       <button
+                        ref={startTimeRef}
+                        id="start-time"
                         type="button"
                         onBlur={() => handleBlur('startTime')}
-                        className={`flex items-center justify-between w-full h-11 rounded-xl border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                        aria-describedby={showError('startTime') ? 'startTime-error' : undefined}
+                        aria-invalid={showError('startTime') ? 'true' : undefined}
+                        aria-required="true"
+                        className={`flex items-center justify-between w-full h-10 rounded-xl border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                           showError('startTime') ? 'border-destructive' : 'border-border'
                         }`}
                       >
                         <span className={startTime ? 'text-text-primary' : 'text-text-tertiary'}>
-                          {startTime || 'Velg tid'}
+                          {startTime || 'Velg'}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <Clock className={`h-4 w-4 ${showError('startTime') ? 'text-red-500' : 'text-text-tertiary'}`} />
-                          <ChevronDown className={`h-4 w-4 ${showError('startTime') ? 'text-red-500' : 'text-text-tertiary'} transition-transform ${isTimeOpen ? 'rotate-180' : ''}`} />
-                        </div>
+                        <Clock className={`h-4 w-4 shrink-0 ${showError('startTime') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                    <PopoverContent align="start" className="w-[160px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
                       <div className="flex flex-col gap-0.5">
                         {timeSlots.map((time) => (
                           <button
@@ -539,63 +724,63 @@ const NewCoursePage = () => {
                     </PopoverContent>
                   </Popover>
                   {showError('startTime') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
+                    <p id="startTime-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <AlertCircle className="h-3 w-3" aria-hidden="true" />
                       {errors.startTime}
                     </p>
                   )}
                 </div>
 
-                {/* Duration - Text Input */}
-                <div>
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Varighet (minutter) <span className="text-red-500">*</span>
+                {/* Duration */}
+                <div className="col-span-1">
+                  <label htmlFor="duration" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Varighet <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <input
+                      ref={durationRef}
+                      id="duration"
                       type="number"
                       placeholder="60"
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
                       onBlur={() => handleBlur('duration')}
-                      className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                      aria-describedby={showError('duration') ? 'duration-error' : undefined}
+                      aria-invalid={showError('duration') ? 'true' : undefined}
+                      aria-required="true"
+                      className={`w-full h-10 rounded-xl border pl-3 pr-12 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                         showError('duration') ? 'border-destructive' : 'border-border'
                       }`}
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className={`text-xs font-medium ${showError('duration') ? 'text-red-500' : 'text-muted-foreground'}`}>min</span>
+                      <span className={`text-xs ${showError('duration') ? 'text-destructive' : 'text-muted-foreground'}`}>min</span>
                     </div>
                   </div>
                   {showError('duration') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
+                    <p id="duration-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <AlertCircle className="h-3 w-3" aria-hidden="true" />
                       {errors.duration}
                     </p>
                   )}
                 </div>
 
-                {/* Number of Weeks (series) or Days (single) */}
+                {/* Weeks/Days */}
                 {courseType === 'series' ? (
-                  <div>
+                  <div className="col-span-1">
                     <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                      Antall uker
+                      Uker
                     </label>
                     <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                          className="flex items-center justify-between w-full h-10 rounded-xl border border-border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
                         >
-                          <span className="text-text-primary">
-                            {weeks}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-muted-foreground">{parseInt(weeks) === 1 ? 'uke' : 'uker'}</span>
-                            <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isWeeksOpen ? 'rotate-180' : ''}`} />
-                          </div>
+                          <span className="text-text-primary">{weeks}</span>
+                          <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isWeeksOpen ? 'rotate-180' : ''}`} />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                      <PopoverContent align="start" className="w-[140px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
                         <div className="flex flex-col gap-0.5">
                           {Array.from({ length: 16 }, (_, i) => i + 1).map((week) => (
                             <button
@@ -611,7 +796,7 @@ const NewCoursePage = () => {
                                   : 'text-sidebar-foreground hover:bg-surface-elevated'
                               }`}
                             >
-                              <span>{week} {week === 1 ? 'uke' : 'uker'}</span>
+                              <span>{week}</span>
                               {weeks === week.toString() && <Check className="h-4 w-4" />}
                             </button>
                           ))}
@@ -620,26 +805,21 @@ const NewCoursePage = () => {
                     </Popover>
                   </div>
                 ) : (
-                  <div>
+                  <div className="col-span-1">
                     <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                      Antall dager
+                      Dager
                     </label>
                     <Popover open={isDaysOpen} onOpenChange={setIsDaysOpen}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="flex items-center justify-between w-full h-11 rounded-xl border border-border px-4 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
+                          className="flex items-center justify-between w-full h-10 rounded-xl border border-border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring"
                         >
-                          <span className="text-text-primary">
-                            {eventDays}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-muted-foreground">{parseInt(eventDays) === 1 ? 'dag' : 'dager'}</span>
-                            <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isDaysOpen ? 'rotate-180' : ''}`} />
-                          </div>
+                          <span className="text-text-primary">{eventDays}</span>
+                          <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isDaysOpen ? 'rotate-180' : ''}`} />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                      <PopoverContent align="start" className="w-[140px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
                         <div className="flex flex-col gap-0.5">
                           {Array.from({ length: 10 }, (_, i) => i + 1).map((day) => (
                             <button
@@ -655,7 +835,7 @@ const NewCoursePage = () => {
                                   : 'text-sidebar-foreground hover:bg-surface-elevated'
                               }`}
                             >
-                              <span>{day} {day === 1 ? 'dag' : 'dager'}</span>
+                              <span>{day}</span>
                               {eventDays === day.toString() && <Check className="h-4 w-4" />}
                             </button>
                           ))}
@@ -666,158 +846,249 @@ const NewCoursePage = () => {
                 )}
               </div>
 
-              {/* Grid for Location & Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Session Schedule Panel - Shows when single course has 2+ days */}
+              {courseType === 'single' && parseInt(eventDays) >= 2 && startDate && startTime && (
+                <div className="bg-surface border border-border rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300 mb-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <CalendarClock className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Øktplan
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {sessionDates.map((session, index) => (
+                      <div
+                        key={session.dayNumber}
+                        className={`flex items-center gap-4 p-3 rounded-lg ${
+                          session.isPrimary
+                            ? 'bg-white/50 border border-transparent text-text-tertiary'
+                            : 'bg-white border border-border shadow-sm hover:border-ring transition-colors'
+                        }`}
+                      >
+                        {/* Day label */}
+                        <div className="w-14 flex flex-col">
+                          <span className={`text-xxs font-bold uppercase tracking-wider ${
+                            session.isPrimary ? 'opacity-70' : 'text-text-primary'
+                          }`}>
+                            Dag {session.dayNumber}
+                          </span>
+                        </div>
+
+                        {/* Date */}
+                        <div className={`flex-1 text-sm font-medium capitalize ${
+                          session.isPrimary ? 'text-text-tertiary' : 'text-text-primary'
+                        }`}>
+                          {session.formattedDate}
+                        </div>
+
+                        {/* Time input or display */}
+                        {session.isPrimary ? (
+                          <div className="w-28 text-right text-sm">
+                            {session.time}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={`w-28 h-8 px-2 text-sm text-center font-medium rounded-lg border transition-all cursor-pointer ${
+                                    sessionTimes[index]
+                                      ? 'bg-white border-warning/30 ring-1 ring-warning/20 text-text-primary'
+                                      : 'bg-surface border-border text-text-primary hover:border-ring'
+                                  }`}
+                                >
+                                  {session.time}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-[160px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                                <div className="flex flex-col gap-0.5">
+                                  {timeSlots.map((time) => (
+                                    <button
+                                      key={time}
+                                      type="button"
+                                      onClick={() => {
+                                        if (time === startTime) {
+                                          resetSessionTime(index);
+                                        } else {
+                                          updateSessionTime(index, time);
+                                        }
+                                      }}
+                                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                        session.time === time
+                                          ? 'bg-text-primary text-white'
+                                          : 'text-sidebar-foreground hover:bg-surface-elevated'
+                                      }`}
+                                    >
+                                      <span>{time}</span>
+                                      {session.time === time && <Check className="h-4 w-4" />}
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        )}
+
+                        {/* Primary label or reset button */}
+                        <div className="w-16 text-right">
+                          {session.isPrimary ? (
+                            <span className="text-xs text-text-tertiary opacity-70">Primær</span>
+                          ) : sessionTimes[index] ? (
+                            <button
+                              type="button"
+                              onClick={() => resetSessionTime(index)}
+                              className="text-text-tertiary hover:text-destructive p-1 rounded-md transition-colors"
+                              title="Tilbakestill til primær tid"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Row 2: Location, Price, Capacity - with border separator */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-surface-elevated pt-5">
                 {/* Location */}
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Sted / Lokale <span className="text-red-500">*</span>
+                <div>
+                  <label htmlFor="location" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                    Sted / Lokale <span className="text-destructive">*</span>
                   </label>
                   <div className="relative">
                     <input
+                      ref={locationRef}
+                      id="location"
                       type="text"
-                      placeholder="Skriv inn sted"
+                      placeholder="F.eks. Studio Oslo"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       onBlur={() => handleBlur('location')}
-                      className={`w-full h-11 rounded-xl border pl-10 pr-4 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                      aria-describedby={showError('location') ? 'location-error' : undefined}
+                      aria-invalid={showError('location') ? 'true' : undefined}
+                      aria-required="true"
+                      className={`w-full h-10 rounded-xl border pl-9 pr-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
                         showError('location') ? 'border-destructive' : 'border-border'
                       }`}
                     />
-                    <MapPin className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-red-500' : 'text-text-tertiary'}`} />
+                    <MapPin className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
                   </div>
                   {showError('location') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
+                    <p id="location-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <AlertCircle className="h-3 w-3" aria-hidden="true" />
                       {errors.location}
                     </p>
                   )}
                 </div>
 
-                {/* Price */}
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Totalpris <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      onBlur={() => handleBlur('price')}
-                      className={`w-full h-11 rounded-xl border pl-4 pr-12 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('price') ? 'border-destructive' : 'border-border'
-                      }`}
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className={`text-xs font-medium ${showError('price') ? 'text-red-500' : 'text-muted-foreground'}`}>NOK</span>
+                {/* Price and Capacity side by side */}
+                <div className="grid grid-cols-2 gap-5">
+                  {/* Price */}
+                  <div>
+                    <label htmlFor="price" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Pris <span className="text-destructive">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        ref={priceRef}
+                        id="price"
+                        type="number"
+                        placeholder="0"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        onBlur={() => handleBlur('price')}
+                        aria-describedby={showError('price') ? 'price-error' : undefined}
+                        aria-invalid={showError('price') ? 'true' : undefined}
+                        aria-required="true"
+                        className={`w-full h-10 rounded-xl border pl-3 pr-12 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                          showError('price') ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>NOK</span>
+                      </div>
                     </div>
+                    {showError('price') && (
+                      <p id="price-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                        {errors.price}
+                      </p>
+                    )}
                   </div>
-                  {showError('price') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.price}
-                    </p>
-                  )}
-                </div>
 
-                {/* Capacity */}
-                <div className="sm:col-span-2 md:col-span-1">
-                  <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                    Antall plasser <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      placeholder="0"
-                      min="1"
-                      value={capacity}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      onBlur={() => handleBlur('capacity')}
-                      className={`w-full h-11 rounded-xl border pl-4 pr-16 text-text-primary placeholder-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('capacity') ? 'border-destructive' : 'border-border'
-                      }`}
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <span className={`text-xs font-medium ${showError('capacity') ? 'text-red-500' : 'text-muted-foreground'}`}>plasser</span>
+                  {/* Capacity */}
+                  <div>
+                    <label htmlFor="capacity" className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                      Plasser <span className="text-destructive">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        ref={capacityRef}
+                        id="capacity"
+                        type="number"
+                        placeholder="0"
+                        min="1"
+                        value={capacity}
+                        onChange={(e) => setCapacity(e.target.value)}
+                        onBlur={() => handleBlur('capacity')}
+                        aria-describedby={showError('capacity') ? 'capacity-error' : undefined}
+                        aria-invalid={showError('capacity') ? 'true' : undefined}
+                        aria-required="true"
+                        className={`w-full h-10 rounded-xl border pl-9 pr-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
+                          showError('capacity') ? 'border-destructive' : 'border-border'
+                        }`}
+                      />
+                      <Users className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('capacity') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
                     </div>
+                    {showError('capacity') && (
+                      <p id="capacity-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                        {errors.capacity}
+                      </p>
+                    )}
                   </div>
-                  {showError('capacity') && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.capacity}
-                    </p>
-                  )}
                 </div>
-              </div>
               </div>
             </section>
 
-            {/* Step 3: Participant Info - Hidden for now */}
-            {/* <section>
-              <div className="flex items-center justify-between pt-4 border-t border-border mb-4">
-                <h2 className="text-sm font-medium text-sidebar-foreground uppercase tracking-wide">
-                  3. Deltakerinformasjon
-                </h2>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-                <div className="flex items-start gap-3 mb-5">
-                  <div className="p-2 bg-gray-100 rounded-lg text-muted-foreground">
-                    <UserCheck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-text-primary">Påkrevde felt</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Følgende informasjon må fylles ut av deltakeren ved påmelding.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8">
-                  {requiredFields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className={`flex items-center justify-between py-2 ${
-                        index < requiredFields.length - 2
-                          ? 'border-b border-surface-elevated sm:border-0'
-                          : ''
-                      }`}
-                    >
-                      <span className="text-sm text-sidebar-foreground">{field.label}</span>
-                      <div className="flex items-center gap-2 opacity-60 cursor-not-allowed">
-                        <span className="text-xxs font-medium text-muted-foreground uppercase">
-                          Påkrevd
-                        </span>
-                        <div className="relative inline-flex h-5 w-9 items-center rounded-full bg-text-primary">
-                          <span className="translate-x-4 inline-block h-3.5 w-3.5 transform rounded-full bg-white transition" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section> */}
           </div>
         </div>
 
-        {/* Bottom Actions Bar */}
-        <div className="p-6 border-t border-border bg-white/80 backdrop-blur-md z-10">
+        {/* Sticky Footer */}
+        <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-border py-4 px-6 z-50">
           <div className="max-w-3xl mx-auto flex flex-col gap-3">
+            {/* Error summary - only show after submit attempt */}
             {submitAttempted && !isFormValid && (
-              <div className="flex items-center justify-center gap-2 text-sm text-red-500">
-                <AlertCircle className="h-4 w-4" />
-                <span>Vennligst fyll ut alle påkrevde felt</span>
+              <div
+                className="bg-destructive/10 border border-destructive/20 rounded-lg p-3"
+                role="alert"
+                aria-live="polite"
+              >
+                <p className="text-sm text-destructive flex items-center justify-center gap-2">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  Fyll ut de markerte feltene for å publisere kurset.
+                </p>
               </div>
             )}
             {submitError && (
-              <div className="flex items-center justify-center gap-2 text-sm text-red-500">
-                <AlertCircle className="h-4 w-4" />
-                <span>{submitError}</span>
+              <div
+                className="bg-destructive/10 border border-destructive/20 rounded-lg p-3"
+                role="alert"
+                aria-live="polite"
+              >
+                <p className="text-sm text-destructive flex items-center justify-center gap-2">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  {submitError}
+                </p>
               </div>
             )}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-end space-x-4">
               <Button
                 variant="ghost"
                 size="compact"
@@ -829,23 +1100,24 @@ const NewCoursePage = () => {
               <Button
                 size="compact"
                 onClick={handlePublish}
-                disabled={isSubmitting || (submitAttempted && !isFormValid)}
+                disabled={isSubmitting}
+                aria-describedby={isSubmitting ? 'submit-status' : undefined}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Oppretter...</span>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    <span id="submit-status">Oppretter...</span>
                   </>
                 ) : (
                   <>
                     <span>Publiser kurs</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </>
                 )}
               </Button>
             </div>
           </div>
-        </div>
+        </footer>
       </main>
     </SidebarProvider>
   );

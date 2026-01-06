@@ -13,10 +13,10 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "placeholder:text-text-tertiary",
         "focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white",
         "hover:border-ring ios-ease",
+        // Autofill styles - override browser's blue/yellow background
+        "autofill:bg-white autofill:shadow-[inset_0_0_0px_1000px_white]",
         // File input styles
         "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
-        // Selection styles
-        "selection:bg-primary selection:text-primary-foreground",
         // Disabled state
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         // Error state

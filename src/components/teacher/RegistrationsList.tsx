@@ -1,4 +1,4 @@
-import { Calendar, Users } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ParticipantAvatar } from '@/components/ui/participant-avatar';
@@ -11,7 +11,7 @@ interface RegistrationsListProps {
 export const RegistrationsList = ({ registrations }: RegistrationsListProps) => {
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl border border-border bg-white p-0 shadow-sm overflow-hidden ios-ease hover:border-ring hover:shadow-md">
-      <div className="flex items-center justify-between p-5 px-7 border-b border-secondary">
+      <div className="flex items-center justify-between p-5 px-7 border-b border-border">
         <h3 className="font-geist text-sm font-semibold text-text-primary">Påmeldinger</h3>
         <Link
           to="/teacher/signups"
@@ -22,15 +22,18 @@ export const RegistrationsList = ({ registrations }: RegistrationsListProps) => 
       </div>
 
       {registrations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
-            <Users className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
+        <div className="flex flex-col items-center justify-center py-8">
+          {/* Stacked avatars placeholder */}
+          <div className="flex items-center -space-x-2 mb-3 opacity-40 grayscale">
+            <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
+            <div className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white"></div>
+            <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
           </div>
-          <p className="text-sm font-medium text-text-primary mb-1">Ingen påmeldinger</p>
-          <p className="text-xs text-muted-foreground">Du har ingen nye påmeldinger</p>
+          <p className="text-sm font-medium text-text-primary">Ingen påmeldinger ennå</p>
+          <p className="text-xs text-text-tertiary mt-1">Påmeldinger vil vises her når du publiserer et kurs.</p>
         </div>
       ) : (
-        <div className="divide-y divide-secondary">
+        <div className="divide-y divide-border">
           {registrations.map((registration) => (
             <div
               key={registration.id}
@@ -47,7 +50,7 @@ export const RegistrationsList = ({ registrations }: RegistrationsListProps) => 
                   <p className="text-sm font-medium text-text-primary truncate">
                     {registration.participant.name}
                   </p>
-                  <span className="text-[10px] font-medium text-text-tertiary group-hover:text-muted-foreground flex-shrink-0">
+                  <span className="text-xxs font-medium text-text-tertiary group-hover:text-muted-foreground flex-shrink-0">
                     {registration.registeredAt}
                   </span>
                 </div>
