@@ -26,6 +26,7 @@ import { fetchCourseSessions } from '@/services/courses';
 import { checkCourseAvailability } from '@/services/signups';
 import { checkIfAlreadySignedUp } from '@/services/studentSignups';
 import { createCheckoutSession } from '@/services/checkout';
+import { toast } from 'sonner';
 import type { CourseSession } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -237,6 +238,17 @@ const PublicCourseDetailPage = () => {
     loadCourseAndSessions();
   }, [courseId, user, profile?.email]);
 
+  // Handle cancelled payment return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('cancelled') === 'true') {
+      toast.info('Betalingen ble avbrutt', {
+        description: 'Du kan prøve på nytt når du er klar.',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
@@ -357,12 +369,14 @@ const PublicCourseDetailPage = () => {
 
     if (availError) {
       setSubmitError('Kunne ikke sjekke tilgjengelighet. Prøv igjen.');
+      toast.error('Kunne ikke sjekke tilgjengelighet');
       setSubmitting(false);
       return;
     }
 
     if (available <= 0) {
       setSubmitError('Beklager, kurset er fullt. Prøv et annet kurs.');
+      toast.error('Kurset er fullt');
       setSubmitting(false);
       return;
     }
@@ -381,6 +395,7 @@ const PublicCourseDetailPage = () => {
 
     if (checkoutError || !checkoutData) {
       setSubmitError(checkoutError || 'Kunne ikke starte betalingen. Prøv igjen.');
+      toast.error('Kunne ikke starte betaling');
       setSubmitting(false);
       return;
     }

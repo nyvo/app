@@ -223,6 +223,7 @@ export interface Database {
           note: string | null
           payment_status: PaymentStatus
           stripe_payment_intent_id: string | null
+          stripe_checkout_session_id: string | null
           amount_paid: number | null
           registered_at: string
           created_at: string
@@ -244,6 +245,7 @@ export interface Database {
           note?: string | null
           payment_status?: PaymentStatus
           stripe_payment_intent_id?: string | null
+          stripe_checkout_session_id?: string | null
           amount_paid?: number | null
           registered_at?: string
           created_at?: string
@@ -265,6 +267,7 @@ export interface Database {
           note?: string | null
           payment_status?: PaymentStatus
           stripe_payment_intent_id?: string | null
+          stripe_checkout_session_id?: string | null
           amount_paid?: number | null
           registered_at?: string
           created_at?: string
