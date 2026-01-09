@@ -167,6 +167,14 @@ export async function createCourse(
       const sessions: CourseSessionInsert[] = []
       const baseDate = new Date(courseData.start_date)
 
+      // Calculate and set end_date for multi-day events
+      const endDate = new Date(baseDate)
+      endDate.setDate(baseDate.getDate() + eventDays - 1)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('courses') as any)
+        .update({ end_date: endDate.toISOString().split('T')[0] })
+        .eq('id', course.id)
+
       for (let i = 0; i < eventDays; i++) {
         const sessionDate = new Date(baseDate)
         sessionDate.setDate(baseDate.getDate() + i)

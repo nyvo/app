@@ -15,6 +15,7 @@ export interface PublicCourseWithDetails {
   max_participants: number | null
   price: number | null
   start_date: string | null
+  end_date: string | null
   image_url: string | null
   style: CourseStyle | null
   organization_id: string
@@ -57,6 +58,7 @@ export async function fetchPublicCourses(
       max_participants,
       price,
       start_date,
+      end_date,
       image_url,
       organization_id,
       style:course_styles(id, name, normalized_name, color),
@@ -132,6 +134,7 @@ export async function fetchPublicCourses(
       max_participants: course.max_participants,
       price: course.price,
       start_date: course.start_date,
+      end_date: course.end_date,
       image_url: course.image_url,
       organization_id: course.organization_id,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,7 +145,21 @@ export async function fetchPublicCourses(
     }
   })
 
-  return { data: publicCourses, error: null, count: count || undefined }
+  // Filter out past courses
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const activeCourses = publicCourses.filter(course => {
+    const relevantDateStr = course.end_date || course.start_date
+    if (!relevantDateStr) return true // No date = show course
+
+    const relevantDate = new Date(relevantDateStr)
+    relevantDate.setHours(23, 59, 59, 999) // End of day
+
+    return relevantDate >= today
+  })
+
+  return { data: activeCourses, error: null, count: count || undefined }
 }
 
 // Fetch a single course by ID for public detail page
@@ -164,6 +181,7 @@ export async function fetchPublicCourseById(
       max_participants,
       price,
       start_date,
+      end_date,
       image_url,
       organization_id,
       style:course_styles(id, name, normalized_name, color),
@@ -209,6 +227,7 @@ export async function fetchPublicCourseById(
     max_participants: course.max_participants,
     price: course.price,
     start_date: course.start_date,
+    end_date: course.end_date,
     image_url: course.image_url,
     organization_id: course.organization_id,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

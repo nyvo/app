@@ -58,7 +58,8 @@ function extractDayName(timeSchedule: string | null): string {
   const dayMatch = timeSchedule.match(/^(\w+)/);
   if (!dayMatch) return '';
   const day = dayMatch[1].toLowerCase();
-  const dayMap: Record<string, string> = {
+  // Map plural forms to singular, fallback capitalizes any format
+  const pluralToSingular: Record<string, string> = {
     'mandager': 'Mandag',
     'tirsdager': 'Tirsdag',
     'onsdager': 'Onsdag',
@@ -67,7 +68,54 @@ function extractDayName(timeSchedule: string | null): string {
     'lørdager': 'Lørdag',
     'søndager': 'Søndag',
   };
-  return dayMap[day] || day;
+  return pluralToSingular[day] || day.charAt(0).toUpperCase() + day.slice(1);
+}
+
+// Format date range for multi-day events (e.g., "15. - 17. januar")
+function formatDateRange(startDate: string | null, endDate: string | null): string | null {
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+  const end = endDate ? new Date(endDate) : null;
+
+  // If no end date or same as start, return null (use day name instead)
+  if (!end || start.getTime() === end.getTime()) return null;
+
+  const startDay = start.getDate();
+  const endDay = end.getDate();
+  const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni',
+                  'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+
+  // Same month
+  if (start.getMonth() === end.getMonth()) {
+    return `${startDay}. - ${endDay}. ${months[start.getMonth()]}`;
+  }
+
+  // Different months
+  const startMonth = months[start.getMonth()].slice(0, 3);
+  const endMonth = months[end.getMonth()].slice(0, 3);
+  return `${startDay}. ${startMonth} - ${endDay}. ${endMonth}`;
+}
+
+// Check if a course is currently ongoing (started but not ended)
+function isOngoingCourse(startDate: string | null, endDate: string | null): boolean {
+  if (!startDate) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  if (start > today) return false; // Not started yet
+
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    return end >= today; // Ongoing if end date is today or future
+  }
+
+  return true; // No end date = ongoing if started
 }
 
 const PublicCoursesPage = () => {
@@ -349,6 +397,7 @@ const PublicCoursesPage = () => {
                   const isFewSpots = course.spots_available > 0 && course.spots_available <= 3;
                   const isSeries = course.course_type === 'course-series';
                   const isSignedUp = signedUpCourseIds.has(course.id);
+                  const isOngoing = isOngoingCourse(course.start_date, course.end_date);
 
                   return (
                     <div
@@ -393,6 +442,12 @@ const PublicCoursesPage = () => {
                                   Kursrekke
                                 </span>
                               )}
+                              {isOngoing && (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-status-confirmed-border bg-status-confirmed-bg px-2 py-0.5 text-xs font-medium text-status-confirmed-text">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-status-confirmed-text animate-pulse"></span>
+                                  Pågående
+                                </span>
+                              )}
                               {isSignedUp && (
                                 <span className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
                                   <CheckCircle2 className="h-3 w-3" />
@@ -409,7 +464,7 @@ const PublicCoursesPage = () => {
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <Clock className="h-4 w-4 text-text-tertiary" />
-                                <span>{dayName || dateInfo.dayName} {time}</span>
+                                <span>{formatDateRange(course.start_date, course.end_date) || (dayName || dateInfo.dayName) || 'Tid ikke satt'}{time && ` ${time}`}</span>
                               </div>
                             </div>
                           </div>
