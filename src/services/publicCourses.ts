@@ -1,6 +1,13 @@
 import { supabase } from '@/lib/supabase'
 import type { CourseStyle, CourseType, CourseStatus, CourseLevel } from '@/types/database'
 
+// Next session info for ongoing courses
+export interface NextSessionInfo {
+  session_date: string
+  session_number: number
+  total_sessions: number
+}
+
 // Public course with computed fields for display
 export interface PublicCourseWithDetails {
   id: string
@@ -24,6 +31,7 @@ export interface PublicCourseWithDetails {
     name: string
     slug: string
   } | null
+  next_session: NextSessionInfo | null
 }
 
 export interface PublicCoursesFilters {
@@ -142,8 +150,49 @@ export async function fetchPublicCourses(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       organization: course.organization as any,
       spots_available: spotsAvailable,
+      next_session: null, // Will be populated below for ongoing courses
     }
   })
+
+  // Fetch next sessions for all courses (we'll filter to ongoing ones after)
+  const todayStr = new Date().toISOString().split('T')[0]
+  const { data: upcomingSessions } = await supabase
+    .from('course_sessions')
+    .select('course_id, session_date, session_number')
+    .in('course_id', courseIds)
+    .gte('session_date', todayStr)
+    .eq('status', 'upcoming')
+    .order('session_date', { ascending: true })
+
+  // Get total session counts per course
+  const { data: sessionCounts } = await supabase
+    .from('course_sessions')
+    .select('course_id')
+    .in('course_id', courseIds) as { data: { course_id: string }[] | null }
+
+  // Build session count map
+  const totalSessionsMap: Record<string, number> = {}
+  for (const s of sessionCounts || []) {
+    totalSessionsMap[s.course_id] = (totalSessionsMap[s.course_id] || 0) + 1
+  }
+
+  // Build next session map (first upcoming session per course)
+  const nextSessionMap: Record<string, NextSessionInfo> = {}
+  const sessionsTyped = upcomingSessions as { course_id: string; session_date: string; session_number: number }[] | null
+  for (const session of sessionsTyped || []) {
+    if (!nextSessionMap[session.course_id]) {
+      nextSessionMap[session.course_id] = {
+        session_date: session.session_date,
+        session_number: session.session_number,
+        total_sessions: totalSessionsMap[session.course_id] || 1,
+      }
+    }
+  }
+
+  // Attach next_session to courses
+  for (const course of publicCourses) {
+    course.next_session = nextSessionMap[course.id] || null
+  }
 
   // Filter out past courses
   const today = new Date()
@@ -235,6 +284,7 @@ export async function fetchPublicCourseById(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     organization: course.organization as any,
     spots_available: spotsAvailable,
+    next_session: null, // Detail page fetches sessions separately
   }
 
   return { data: publicCourse, error: null }

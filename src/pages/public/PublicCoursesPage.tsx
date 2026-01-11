@@ -390,7 +390,9 @@ const PublicCoursesPage = () => {
               {/* Course List */}
               <div className="flex flex-col gap-5">
                 {filteredCourses.map((course) => {
-                  const dateInfo = formatCourseDate(course.start_date);
+                  // For ongoing courses with sessions, use next session date; otherwise use start_date
+                  const displayDate = (course.next_session?.session_date) || course.start_date;
+                  const dateInfo = formatCourseDate(displayDate);
                   const time = extractTime(course.time_schedule);
                   const dayName = extractDayName(course.time_schedule);
                   const isFull = course.spots_available === 0;
@@ -398,6 +400,7 @@ const PublicCoursesPage = () => {
                   const isSeries = course.course_type === 'course-series';
                   const isSignedUp = signedUpCourseIds.has(course.id);
                   const isOngoing = isOngoingCourse(course.start_date, course.end_date);
+                  const hasWeekProgress = course.next_session && course.next_session.total_sessions > 1;
 
                   return (
                     <div
@@ -446,6 +449,11 @@ const PublicCoursesPage = () => {
                                 <span className="inline-flex items-center gap-1 rounded-md border border-status-confirmed-border bg-status-confirmed-bg px-2 py-0.5 text-xs font-medium text-status-confirmed-text">
                                   <span className="h-1.5 w-1.5 rounded-full bg-status-confirmed-text animate-pulse"></span>
                                   Pågående
+                                </span>
+                              )}
+                              {hasWeekProgress && (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                  Uke {course.next_session!.session_number} av {course.next_session!.total_sessions}
                                 </span>
                               )}
                               {isSignedUp && (
