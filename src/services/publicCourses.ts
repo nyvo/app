@@ -41,6 +41,7 @@ export interface PublicCoursesFilters {
   organizationSlug?: string
   limit?: number
   offset?: number
+  includePast?: boolean // If true, returns only past courses (archive)
 }
 
 // Fetch all published courses (status != 'draft') for public viewing
@@ -194,21 +195,22 @@ export async function fetchPublicCourses(
     course.next_session = nextSessionMap[course.id] || null
   }
 
-  // Filter out past courses
+  // Filter courses by past/active status
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const activeCourses = publicCourses.filter(course => {
+  const filteredCourses = publicCourses.filter(course => {
     const relevantDateStr = course.end_date || course.start_date
-    if (!relevantDateStr) return true // No date = show course
+    if (!relevantDateStr) return !filters?.includePast // No date = show in active, not in archive
 
     const relevantDate = new Date(relevantDateStr)
     relevantDate.setHours(23, 59, 59, 999) // End of day
 
-    return relevantDate >= today
+    const isPast = relevantDate < today
+    return filters?.includePast ? isPast : !isPast
   })
 
-  return { data: activeCourses, error: null, count: count || undefined }
+  return { data: filteredCourses, error: null, count: count || undefined }
 }
 
 // Fetch a single course by ID for public detail page

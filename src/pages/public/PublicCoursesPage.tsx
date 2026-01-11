@@ -123,13 +123,18 @@ const PublicCoursesPage = () => {
   const { user, userType, profile, signOut } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
+  const [archivedCourses, setArchivedCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [signedUpCourseIds, setSignedUpCourseIds] = useState<Set<string>>(new Set());
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
 
-  // Extract unique styles from courses
-  const availableStyles = courses
+  // Select course list based on tab
+  const displayedCourses = showArchive ? archivedCourses : courses;
+
+  // Extract unique styles from displayed courses
+  const availableStyles = displayedCourses
     .map(course => course.style)
     .filter((style): style is NonNullable<typeof style> => style !== null && style !== undefined)
     .filter((style, index, self) => self.findIndex(s => s.id === style.id) === index)
@@ -137,8 +142,8 @@ const PublicCoursesPage = () => {
 
   // Filter courses by selected style
   const filteredCourses = selectedStyle
-    ? courses.filter(course => course.style?.id === selectedStyle)
-    : courses;
+    ? displayedCourses.filter(course => course.style?.id === selectedStyle)
+    : displayedCourses;
 
   useEffect(() => {
     async function loadData() {
@@ -162,18 +167,20 @@ const PublicCoursesPage = () => {
 
       setOrganization(orgData);
 
-      // Fetch courses for this organization
-      const { data: coursesData, error: coursesError } = await fetchPublicCourses({
-        organizationSlug: slug
-      });
+      // Fetch active and archived courses for this organization
+      const [activeResult, archivedResult] = await Promise.all([
+        fetchPublicCourses({ organizationSlug: slug }),
+        fetchPublicCourses({ organizationSlug: slug, includePast: true })
+      ]);
 
-      if (coursesError) {
+      if (activeResult.error) {
         setError('Kunne ikke laste kurs');
         setLoading(false);
         return;
       }
 
-      setCourses(coursesData || []);
+      setCourses(activeResult.data || []);
+      setArchivedCourses(archivedResult.data || []);
 
       // Load student's signups if authenticated
       if (user && profile?.email) {
@@ -341,10 +348,31 @@ const PublicCoursesPage = () => {
                 </div>
               </div>
 
-              {/* Filters & Headline */}
+              {/* Tabs & Filters */}
               <div className="mb-8 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-                <div>
-                  <h2 className="text-xl font-semibold tracking-tight text-text-primary">Kommende Kurs</h2>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => { setShowArchive(false); setSelectedStyle(null); }}
+                    className={`text-xl font-semibold tracking-tight transition-colors ${
+                      !showArchive ? 'text-text-primary' : 'text-muted-foreground hover:text-text-secondary'
+                    }`}
+                  >
+                    Kommende Kurs
+                    {courses.length > 0 && (
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">({courses.length})</span>
+                    )}
+                  </button>
+                  {archivedCourses.length > 0 && (
+                    <button
+                      onClick={() => { setShowArchive(true); setSelectedStyle(null); }}
+                      className={`text-xl font-semibold tracking-tight transition-colors ${
+                        showArchive ? 'text-text-primary' : 'text-muted-foreground hover:text-text-secondary'
+                      }`}
+                    >
+                      Arkiv
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">({archivedCourses.length})</span>
+                    </button>
+                  )}
                 </div>
 
                 {!isEmpty && availableStyles.length > 0 && (
@@ -379,10 +407,13 @@ const PublicCoursesPage = () => {
                     <Sun className="h-7 w-7 text-amber-500" />
                   </div>
                   <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
-                    Ingen aktive kurs
+                    {showArchive ? 'Ingen tidligere kurs' : 'Ingen aktive kurs'}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    {organization.name} jobber med nye kurs. Kom tilbake snart!
+                    {showArchive
+                      ? 'Det finnes ingen avsluttede kurs ennå.'
+                      : `${organization.name} jobber med nye kurs. Kom tilbake snart!`
+                    }
                   </p>
                 </div>
               )}
