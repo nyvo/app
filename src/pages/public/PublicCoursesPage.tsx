@@ -431,7 +431,7 @@ const PublicCoursesPage = () => {
                   const isSeries = course.course_type === 'course-series';
                   const isSignedUp = signedUpCourseIds.has(course.id);
                   const isOngoing = isOngoingCourse(course.start_date, course.end_date);
-                  const hasWeekProgress = isOngoing && course.next_session && course.next_session.total_sessions > 1;
+                  const hasWeekProgress = !showArchive && isOngoing && course.next_session && course.next_session.total_sessions > 1;
 
                   return (
                     <div
