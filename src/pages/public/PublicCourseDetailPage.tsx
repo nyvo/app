@@ -26,6 +26,7 @@ import { fetchCourseSessions } from '@/services/courses';
 import { checkCourseAvailability } from '@/services/signups';
 import { checkIfAlreadySignedUp } from '@/services/studentSignups';
 import { createCheckoutSession } from '@/services/checkout';
+import { joinWaitlist } from '@/services/waitlist';
 import { toast } from 'sonner';
 import type { CourseSession } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
@@ -157,6 +158,11 @@ const PublicCourseDetailPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+
+  // Waitlist state
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -428,6 +434,105 @@ const PublicCourseDetailPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle joining waitlist (free, no payment)
+  const handleJoinWaitlist = async () => {
+    if (!course || !courseId || !slug) return;
+
+    // For waitlist, we need basic info - use step 2 form or pre-filled data
+    // If user is authenticated student, use their profile
+    const isAuthStudent = user && userType === 'student';
+
+    if (!isAuthStudent) {
+      // For guests, go to step 2 to collect info, but we'll handle it differently
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // For authenticated students, join directly
+    setJoiningWaitlist(true);
+
+    const { data, error } = await joinWaitlist({
+      courseId,
+      organizationId: course.organization_id,
+      customerEmail: profile?.email || '',
+      customerName: profile?.name || '',
+      customerPhone: profile?.phone || undefined
+    });
+
+    if (error) {
+      toast.error(error);
+      setJoiningWaitlist(false);
+      return;
+    }
+
+    if (data) {
+      setWaitlistSuccess(true);
+      setWaitlistPosition(data.waitlist_position);
+      toast.success(`Du er nå #${data.waitlist_position} på ventelisten!`);
+    }
+
+    setJoiningWaitlist(false);
+  };
+
+  // Handle waitlist submission from form (for guests)
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!course || !courseId) return;
+
+    // Validate form
+    setTouched({ firstName: true, lastName: true, email: true, termsAccepted: true });
+
+    const newErrors: Record<string, boolean> = {};
+    let isValid = true;
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = true;
+      isValid = false;
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = true;
+      isValid = false;
+    }
+    if (!formData.email.trim() || !validateEmail(formData.email)) {
+      newErrors.email = true;
+      isValid = false;
+    }
+    if (!formData.termsAccepted) {
+      newErrors.termsAccepted = true;
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+
+    if (!isValid) return;
+
+    setJoiningWaitlist(true);
+
+    const { data, error } = await joinWaitlist({
+      courseId,
+      organizationId: course.organization_id,
+      customerEmail: formData.email,
+      customerName: `${formData.firstName} ${formData.lastName}`.trim(),
+      customerPhone: formData.phone || undefined
+    });
+
+    if (error) {
+      toast.error(error);
+      setJoiningWaitlist(false);
+      return;
+    }
+
+    if (data) {
+      setWaitlistSuccess(true);
+      setWaitlistPosition(data.waitlist_position);
+      toast.success(`Du er nå #${data.waitlist_position} på ventelisten!`);
+    }
+
+    setJoiningWaitlist(false);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -530,6 +635,92 @@ const PublicCourseDetailPage = () => {
                     <span className="font-semibold text-text-primary">{course.price || 0} kr</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                {user && userType === 'student' ? (
+                  <>
+                    <Button asChild className="w-full" size="compact">
+                      <Link to="/student/dashboard">Se dine påmeldinger</Link>
+                    </Button>
+                    <Button asChild variant="outline-soft" className="w-full" size="compact">
+                      <Link to={studioUrl}>Se flere kurs</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild className="w-full" size="compact">
+                      <Link to={studioUrl}>Se flere kurs</Link>
+                    </Button>
+                    <p className="text-xs text-text-tertiary">
+                      <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary">
+                        Logg inn
+                      </Link>{' '}
+                      eller{' '}
+                      <Link to="/student/register" className="underline underline-offset-2 hover:text-text-primary">
+                        registrer deg
+                      </Link>{' '}
+                      for å se dine påmeldinger
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Waitlist success state
+  if (waitlistSuccess) {
+    const studioUrl = slug ? `/studio/${slug}` : '/';
+    const customerEmail = (user && userType === 'student' && profile?.email) ? profile.email : formData.email;
+
+    return (
+      <div className="min-h-screen w-full bg-surface font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+            </Link>
+          </div>
+        </header>
+        <main className="pt-24 px-4 sm:px-6 pb-24">
+          <div className="mx-auto max-w-lg text-center">
+            <div className="rounded-3xl border border-border bg-white p-8 md:p-12 shadow-sm">
+              {/* Position badge */}
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+                <span className="text-3xl font-bold text-amber-800">#{waitlistPosition}</span>
+              </div>
+
+              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
+                Du er på ventelisten!
+              </h1>
+              <p className="text-muted-foreground mb-8">
+                Du er nå på plass <span className="font-semibold text-amber-700">#{waitlistPosition}</span> på ventelisten for{' '}
+                <span className="font-medium text-text-primary">{course.title}</span>.
+              </p>
+
+              <div className="rounded-xl bg-green-50 border border-green-200 p-4 mb-8 text-left">
+                <h3 className="text-sm font-medium text-green-800 mb-2">Hva skjer nå?</h3>
+                <ul className="text-sm text-green-700 space-y-2">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>Vi sender deg en e-post til <strong>{customerEmail}</strong> når en plass blir ledig.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>Du har da 24 timer på å bekrefte og betale for plassen.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>Ingen betaling kreves før en plass blir tilgjengelig.</span>
+                  </li>
+                </ul>
               </div>
 
               <div className="space-y-3">
@@ -1063,17 +1254,41 @@ const PublicCourseDetailPage = () => {
                                       </div>
                                     )}
 
-                                    <Button
+                                    {isFull && !isAlreadySignedUp ? (
+                                      <Button
+                                        onClick={handleJoinWaitlist}
+                                        size="compact"
+                                        className="w-full"
+                                        variant="outline"
+                                        disabled={joiningWaitlist}
+                                      >
+                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                          {joiningWaitlist ? (
+                                            <>
+                                              <Loader2 className="h-4 w-4 animate-spin" />
+                                              Melder på...
+                                            </>
+                                          ) : (
+                                            <>
+                                              Meld deg på venteliste
+                                              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            </>
+                                          )}
+                                        </span>
+                                      </Button>
+                                    ) : (
+                                      <Button
                                         onClick={handleNextStep}
                                         size="compact"
                                         className="w-full"
-                                        disabled={isFull || isAlreadySignedUp}
-                                    >
+                                        disabled={isAlreadySignedUp}
+                                      >
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            {isAlreadySignedUp ? 'Allerede påmeldt' : isFull ? 'Kurset er fullt' : 'Påmelding'}
-                                            {!isFull && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                                          {isAlreadySignedUp ? 'Allerede påmeldt' : 'Påmelding'}
+                                          {!isAlreadySignedUp && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                                         </span>
-                                    </Button>
+                                      </Button>
+                                    )}
 
                                     {!(user && userType === 'student') && (
                                       <p className="mt-4 text-center text-xs text-text-tertiary">
@@ -1081,8 +1296,67 @@ const PublicCourseDetailPage = () => {
                                       </p>
                                     )}
                                   </>
+                                ) : isFull ? (
+                                  /* Step 2 for Waitlist */
+                                  <>
+                                    <h3 className="mb-4 font-geist text-lg font-semibold text-text-primary">Venteliste</h3>
+
+                                    <div className="flex gap-4 border-b border-surface-elevated pb-5">
+                                        {course.image_url && (
+                                          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-elevated">
+                                              <img src={course.image_url} className="h-full w-full object-cover" alt={course.title} />
+                                          </div>
+                                        )}
+                                        <div>
+                                            <h4 className="font-medium text-text-primary leading-tight">{course.title}</h4>
+                                            <p className="mt-1 text-xs text-muted-foreground">{dateInfo.shortDate} {time && `Kl ${time}`}</p>
+                                            {course.location && <p className="text-xs text-muted-foreground">{course.location}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 my-5">
+                                        <p className="text-sm font-medium text-amber-800 mb-2">Kurset er fullt</p>
+                                        <p className="text-xs text-amber-700 leading-relaxed">
+                                          Meld deg på ventelisten, så varsler vi deg med en gang en plass blir ledig. Du vil da ha 24 timer på å bekrefte og betale.
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-xl bg-surface border border-border p-4">
+                                        <div className="flex gap-3">
+                                            <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs font-medium text-text-primary">Ingen betaling nå</p>
+                                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                                    Du betaler kun {course.price || 0} kr når en plass blir tilgjengelig og du bekrefter den.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Waitlist Action Button */}
+                                    <div className="mt-6">
+                                        <Button
+                                            size="compact"
+                                            onClick={handleWaitlistSubmit}
+                                            className="w-full shadow-lg hover:shadow-xl transition-all"
+                                            disabled={joiningWaitlist}
+                                        >
+                                            {joiningWaitlist ? (
+                                              <span className="relative z-10 flex items-center justify-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Melder på venteliste...
+                                              </span>
+                                            ) : (
+                                              <span className="relative z-10 flex items-center justify-center gap-2">
+                                                  Meld meg på ventelisten
+                                                  <ArrowRight className="h-4 w-4" />
+                                              </span>
+                                            )}
+                                        </Button>
+                                    </div>
+                                  </>
                                 ) : (
-                                  /* Step 2 Summary */
+                                  /* Step 2 Summary - Normal Booking */
                                   <>
                                     {/* Content without nested card wrapper */}
                                     <h3 className="mb-4 font-geist text-lg font-semibold text-text-primary">Sammendrag</h3>
@@ -1190,16 +1464,69 @@ const PublicCourseDetailPage = () => {
                         <span className="text-xs text-muted-foreground">Total pris</span>
                         <span className="font-geist text-xl font-semibold text-text-primary">{course.price || 0} kr</span>
                     </div>
-                    <Button onClick={handleNextStep} className="shadow-lg" size="compact" disabled={isFull || isAlreadySignedUp}>
+                    {isFull && !isAlreadySignedUp ? (
+                      <Button
+                        onClick={handleJoinWaitlist}
+                        variant="outline"
+                        className="shadow-lg"
+                        size="compact"
+                        disabled={joiningWaitlist}
+                      >
+                        {joiningWaitlist ? (
+                          <span className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Melder på...
+                          </span>
+                        ) : (
+                          'Venteliste'
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleNextStep}
+                        className="shadow-lg"
+                        size="compact"
+                        disabled={isAlreadySignedUp}
+                      >
                         {isAlreadySignedUp ? (
                           <span className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4" />
                             Påmeldt
                           </span>
-                        ) : isFull ? 'Fullt' : 'Book nå'}
+                        ) : (
+                          'Book nå'
+                        )}
+                      </Button>
+                    )}
+                  </>
+                ) : isFull ? (
+                  /* Step 2 Mobile - Waitlist */
+                  <>
+                    <div className="flex flex-col">
+                        <span className="text-xs text-muted-foreground">Venteliste</span>
+                        <span className="font-geist text-sm font-medium text-amber-700">Ingen betaling nå</span>
+                    </div>
+                    <Button
+                        className="shadow-lg flex items-center gap-2"
+                        size="compact"
+                        onClick={handleWaitlistSubmit}
+                        disabled={joiningWaitlist}
+                    >
+                        {joiningWaitlist ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Melder på...
+                          </>
+                        ) : (
+                          <>
+                            Meld på
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
                     </Button>
                   </>
                 ) : (
+                  /* Step 2 Mobile - Normal Booking */
                   <>
                     <div className="flex flex-col">
                         <span className="text-xs text-muted-foreground flex items-center gap-1">

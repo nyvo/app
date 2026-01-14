@@ -46,13 +46,127 @@ Deno.serve(async (req: Request) => {
         const customerPhone = metadata.customer_phone
         const isDropIn = metadata.is_drop_in === 'true'
         const sessionId = metadata.session_id
+        // Waitlist claim metadata
+        const isWaitlistClaim = metadata.is_waitlist_claim === 'true'
+        const claimToken = metadata.claim_token
+        const signupIdToClaim = metadata.signup_id
 
         if (!courseId || !organizationId || !customerEmail) {
           console.error('Missing required metadata in checkout session')
           return new Response('Missing metadata', { status: 400 })
         }
 
-        // Check if signup already exists (idempotency)
+        // Handle waitlist claim differently
+        if (isWaitlistClaim && signupIdToClaim) {
+          // Validate claim token and update existing signup
+          const { data: existingSignup, error: signupFetchError } = await supabase
+            .from('signups')
+            .select('id, offer_claim_token, offer_status, offer_expires_at')
+            .eq('id', signupIdToClaim)
+            .single()
+
+          if (signupFetchError || !existingSignup) {
+            console.error('Waitlist signup not found:', signupIdToClaim)
+            return new Response('Signup not found', { status: 400 })
+          }
+
+          // Verify claim token
+          if (existingSignup.offer_claim_token !== claimToken) {
+            console.error('Invalid claim token')
+            return new Response('Invalid claim token', { status: 400 })
+          }
+
+          // Check if already claimed
+          if (existingSignup.offer_status === 'claimed') {
+            console.log('Spot already claimed')
+            return new Response('OK', { status: 200 })
+          }
+
+          // Check if expired
+          if (existingSignup.offer_expires_at && new Date(existingSignup.offer_expires_at) < new Date()) {
+            console.error('Offer has expired')
+            return new Response('Offer expired', { status: 400 })
+          }
+
+          // Update the existing signup to confirmed
+          const { error: updateError } = await supabase
+            .from('signups')
+            .update({
+              status: 'confirmed',
+              offer_status: 'claimed',
+              payment_status: 'paid',
+              waitlist_position: null,
+              stripe_checkout_session_id: session.id,
+              stripe_payment_intent_id: session.payment_intent as string,
+              amount_paid: session.amount_total ? session.amount_total / 100 : null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', signupIdToClaim)
+
+          if (updateError) {
+            console.error('Error updating waitlist signup:', updateError)
+            return new Response('Error updating signup', { status: 500 })
+          }
+
+          console.log(`Waitlist claim successful for signup ${signupIdToClaim}`)
+
+          // Send confirmation email
+          try {
+            const { data: course } = await supabase
+              .from('courses')
+              .select('title, location, time_schedule, start_date')
+              .eq('id', courseId)
+              .single()
+
+            const { data: org } = await supabase
+              .from('organizations')
+              .select('name')
+              .eq('id', organizationId)
+              .single()
+
+            const formatDate = (dateStr: string | null): string => {
+              if (!dateStr) return ''
+              const date = new Date(dateStr)
+              return date.toLocaleDateString('nb-NO', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })
+            }
+
+            const extractTime = (schedule: string | null): string => {
+              if (!schedule) return ''
+              const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
+              return timeMatch ? timeMatch[1] : ''
+            }
+
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                to: customerEmail,
+                template: 'signup-confirmation',
+                templateData: {
+                  courseName: course?.title || 'Kurs',
+                  courseDate: formatDate(course?.start_date),
+                  courseTime: extractTime(course?.time_schedule),
+                  location: course?.location || '',
+                  organizationName: org?.name || 'Ease'
+                }
+              })
+            })
+          } catch (emailError) {
+            console.error('Error sending confirmation email:', emailError)
+          }
+
+          return new Response('OK', { status: 200 })
+        }
+
+        // Check if signup already exists (idempotency for regular signups)
         const { data: existingSignup } = await supabase
           .from('signups')
           .select('id')
@@ -64,10 +178,10 @@ Deno.serve(async (req: Request) => {
           return new Response('OK', { status: 200 })
         }
 
-        // Get course to determine signup status
+        // Get course details for signup status and confirmation email
         const { data: course } = await supabase
           .from('courses')
-          .select('max_participants')
+          .select('title, max_participants, location, time_schedule, start_date')
           .eq('id', courseId)
           .single()
 
@@ -129,6 +243,70 @@ Deno.serve(async (req: Request) => {
         }
 
         console.log(`Signup created for ${customerEmail} - Course: ${courseId}`)
+
+        // Send confirmation email (non-blocking)
+        try {
+          // Get organization name for email
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', organizationId)
+            .single()
+
+          // Format date for email
+          const formatDate = (dateStr: string | null): string => {
+            if (!dateStr) return ''
+            const date = new Date(dateStr)
+            return date.toLocaleDateString('nb-NO', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })
+          }
+
+          // Extract time from time_schedule (e.g., "Tirsdager, 18:00" -> "18:00")
+          const extractTime = (schedule: string | null): string => {
+            if (!schedule) return ''
+            const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
+            return timeMatch ? timeMatch[1] : ''
+          }
+
+          // Use class date if drop-in, otherwise course start date
+          const emailDate = isDropIn && classDate ? classDate : course?.start_date
+          const emailTime = isDropIn && classTime ? classTime : extractTime(course?.time_schedule)
+
+          // Call send-email edge function
+          const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`
+            },
+            body: JSON.stringify({
+              to: customerEmail,
+              template: 'signup-confirmation',
+              templateData: {
+                courseName: course?.title || 'Kurs',
+                courseDate: formatDate(emailDate),
+                courseTime: emailTime,
+                location: course?.location || '',
+                organizationName: org?.name || 'Ease'
+              }
+            })
+          })
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text()
+            console.error('Failed to send confirmation email:', errorText)
+          } else {
+            console.log(`Confirmation email sent to ${customerEmail}`)
+          }
+        } catch (emailError) {
+          // Don't fail the webhook if email fails
+          console.error('Error sending confirmation email:', emailError)
+        }
+
         break
       }
 

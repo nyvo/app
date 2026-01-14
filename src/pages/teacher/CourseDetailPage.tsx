@@ -24,15 +24,19 @@ import {
   CalendarIcon,
   Check,
   Info,
-  Loader2
+  Loader2,
+  ArrowUpCircle,
+  Trash2,
+  Send
 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
-import { fetchCourseById, updateCourse, deleteCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
+import { fetchCourseById, updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
+import { fetchCourseWaitlist, promoteFromWaitlist, removeFromWaitlist, type WaitlistSignup } from '@/services/waitlist';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { CourseSession } from '@/types/database';
@@ -152,6 +156,12 @@ const CourseDetailPage = () => {
   const [participants, setParticipants] = useState<SignupWithProfile[]>([]);
   const [participantsLoading, setParticipantsLoading] = useState(false);
 
+  // Waitlist state
+  const [waitlist, setWaitlist] = useState<WaitlistSignup[]>([]);
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [promotingId, setPromotingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
   // Fetch course data from Supabase
   useEffect(() => {
     async function loadCourse() {
@@ -241,6 +251,61 @@ const CourseDetailPage = () => {
 
     loadParticipants();
   }, [id]);
+
+  // Fetch waitlist when course is loaded
+  useEffect(() => {
+    async function loadWaitlist() {
+      if (!id) return;
+
+      setWaitlistLoading(true);
+      try {
+        const { data: waitlistData, error } = await fetchCourseWaitlist(id);
+        if (error) {
+          return;
+        }
+        if (waitlistData) {
+          setWaitlist(waitlistData);
+        }
+      } catch {
+        // Silent fail for waitlist
+      } finally {
+        setWaitlistLoading(false);
+      }
+    }
+
+    loadWaitlist();
+  }, [id]);
+
+  // Handle promote from waitlist
+  const handlePromote = async (signupId: string) => {
+    setPromotingId(signupId);
+    try {
+      const { error } = await promoteFromWaitlist(signupId);
+      if (!error) {
+        // Refresh waitlist
+        const { data: updatedWaitlist } = await fetchCourseWaitlist(id!);
+        if (updatedWaitlist) {
+          setWaitlist(updatedWaitlist);
+        }
+      }
+    } finally {
+      setPromotingId(null);
+    }
+  };
+
+  // Handle remove from waitlist
+  const handleRemoveFromWaitlist = async (signupId: string) => {
+    setRemovingId(signupId);
+    try {
+      const { error } = await removeFromWaitlist(signupId);
+      if (!error) {
+        // Remove from local state
+        setWaitlist(prev => prev.filter(w => w.id !== signupId));
+      }
+    } finally {
+      setRemovingId(null);
+    }
+  };
 
   // Handle save individual session
   const handleSaveSession = async (sessionId: string) => {
@@ -376,25 +441,32 @@ const CourseDetailPage = () => {
     }
   };
 
-  // Handle delete course
+  // Handle cancel course (with refunds and notifications)
   const handleDeleteCourse = async () => {
     if (!id) return;
 
     setIsDeleting(true);
 
     try {
-      const { error: deleteError } = await deleteCourse(id);
+      const { data: result, error: cancelError } = await cancelCourse(id, {
+        notify_participants: true
+      });
 
-      if (deleteError) {
-        setSaveError(deleteError.message || 'Kunne ikke slette kurset');
+      if (cancelError) {
+        setSaveError(cancelError.message || 'Kunne ikke avlyse kurset');
         setShowDeleteConfirm(false);
         return;
       }
 
+      // Show success message with details
+      const message = result
+        ? `Kurset er avlyst. ${result.refunds_processed} refusjoner behandlet, ${result.notifications_sent} deltakere varslet.`
+        : 'Kurset er avlyst.';
+
       // Navigate to courses list on success
-      navigate('/teacher/courses');
+      navigate('/teacher/courses', { state: { message } });
     } catch {
-      setSaveError('En feil oppstod ved sletting');
+      setSaveError('En feil oppstod ved avlysning');
       setShowDeleteConfirm(false);
     } finally {
       setIsDeleting(false);
@@ -802,7 +874,7 @@ const CourseDetailPage = () => {
                             value={week.id}
                             className={`group rounded-xl border transition-all hover:shadow-sm ${
                               week.isNext
-                                ? 'border-primary/30 bg-white shadow-sm ring-1 ring-primary/10'
+                                ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
                                 : week.status === 'upcoming'
                                 ? 'border-border bg-white/50 hover:bg-white hover:border-ring'
                                 : 'border-border bg-white hover:border-ring'
@@ -1196,6 +1268,151 @@ const CourseDetailPage = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Waitlist Section */}
+                {(waitlist.length > 0 || waitlistLoading) && (
+                  <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden mt-6">
+                    <div className="px-6 py-4 border-b border-border bg-status-waitlist-bg/30">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-text-primary">Venteliste</h3>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
+                            {waitlist.length} {waitlist.length === 1 ? 'person' : 'personer'}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Deltakere som venter på ledig plass. Send tilbud for å gi dem mulighet til å betale.
+                      </p>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-border bg-surface/50">
+                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide w-12">#</th>
+                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
+                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Tid på liste</th>
+                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {waitlistLoading ? (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center">
+                                <Loader2 className="h-5 w-5 animate-spin text-text-tertiary mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">Laster venteliste...</p>
+                              </td>
+                            </tr>
+                          ) : (
+                            waitlist.map((entry) => {
+                              const timeOnList = (() => {
+                                const created = new Date(entry.created_at);
+                                const now = new Date();
+                                const diffMs = now.getTime() - created.getTime();
+                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                const diffDays = Math.floor(diffHours / 24);
+                                if (diffDays > 0) return `${diffDays}d`;
+                                if (diffHours > 0) return `${diffHours}t`;
+                                return 'Nå';
+                              })();
+
+                              const offerExpiry = entry.offer_expires_at ? (() => {
+                                const expires = new Date(entry.offer_expires_at);
+                                const now = new Date();
+                                const diffMs = expires.getTime() - now.getTime();
+                                if (diffMs <= 0) return 'Utløpt';
+                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                                if (diffHours > 0) return `${diffHours}t ${diffMins}m igjen`;
+                                return `${diffMins}m igjen`;
+                              })() : null;
+
+                              return (
+                                <tr key={entry.id} className="group hover:bg-secondary transition-colors">
+                                  <td className="py-4 px-6">
+                                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-surface-elevated text-xs font-semibold text-text-secondary">
+                                      {entry.waitlist_position}
+                                    </span>
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    <div className="flex items-center gap-3">
+                                      <ParticipantAvatar participant={{ name: entry.participant_name || '', email: entry.participant_email || '' }} size="sm" showPhoto={false} />
+                                      <div>
+                                        <p className="text-sm font-medium text-text-primary">{entry.participant_name || 'Ukjent'}</p>
+                                        <p className="text-xs text-muted-foreground">{entry.participant_email}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    {entry.offer_status === 'pending' ? (
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xxs font-medium bg-blue-50 text-blue-700 border border-blue-200 w-fit">
+                                          <Send className="h-3 w-3" />
+                                          Tilbud sendt
+                                        </span>
+                                        {offerExpiry && (
+                                          <span className="text-xxs text-muted-foreground">{offerExpiry}</span>
+                                        )}
+                                      </div>
+                                    ) : entry.offer_status === 'expired' ? (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                                        Utløpt
+                                      </span>
+                                    ) : entry.offer_status === 'skipped' ? (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                        Hoppet over
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
+                                        Venter
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-4 px-6">
+                                    <span className="text-sm text-muted-foreground">{timeOnList}</span>
+                                  </td>
+                                  <td className="py-4 px-6 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      {(!entry.offer_status || entry.offer_status === 'expired' || entry.offer_status === 'skipped') && (
+                                        <Button
+                                          variant="outline-soft"
+                                          size="compact"
+                                          onClick={() => handlePromote(entry.id)}
+                                          disabled={promotingId === entry.id}
+                                        >
+                                          {promotingId === entry.id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <ArrowUpCircle className="h-3 w-3" />
+                                          )}
+                                          Send tilbud
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="compact"
+                                        onClick={() => handleRemoveFromWaitlist(entry.id)}
+                                        disabled={removingId === entry.id}
+                                        className="text-muted-foreground hover:text-status-error-text"
+                                      >
+                                        {removingId === entry.id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-3 w-3" />
+                                        )}
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -1442,10 +1659,10 @@ const CourseDetailPage = () => {
                               {isDeleting ? (
                                 <>
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Sletter...
+                                  Avlyser...
                                 </>
                               ) : (
-                                'Ja, slett'
+                                'Ja, avlys kurs'
                               )}
                             </Button>
                           </motion.div>

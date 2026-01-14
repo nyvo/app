@@ -14,6 +14,7 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type OrgMemberRole = 'owner' | 'admin' | 'teacher'
 export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
 export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
+export type OfferStatus = 'pending' | 'claimed' | 'expired' | 'skipped'
 
 export interface Database {
   public: {
@@ -225,6 +226,10 @@ export interface Database {
           stripe_payment_intent_id: string | null
           stripe_checkout_session_id: string | null
           amount_paid: number | null
+          offer_sent_at: string | null
+          offer_expires_at: string | null
+          offer_status: OfferStatus | null
+          offer_claim_token: string | null
           registered_at: string
           created_at: string
           updated_at: string
@@ -247,6 +252,10 @@ export interface Database {
           stripe_payment_intent_id?: string | null
           stripe_checkout_session_id?: string | null
           amount_paid?: number | null
+          offer_sent_at?: string | null
+          offer_expires_at?: string | null
+          offer_status?: OfferStatus | null
+          offer_claim_token?: string | null
           registered_at?: string
           created_at?: string
           updated_at?: string
@@ -269,6 +278,10 @@ export interface Database {
           stripe_payment_intent_id?: string | null
           stripe_checkout_session_id?: string | null
           amount_paid?: number | null
+          offer_sent_at?: string | null
+          offer_expires_at?: string | null
+          offer_status?: OfferStatus | null
+          offer_claim_token?: string | null
           registered_at?: string
           created_at?: string
           updated_at?: string

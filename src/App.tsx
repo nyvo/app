@@ -24,6 +24,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
+const ClaimSpotPage = lazy(() => import('./pages/public/ClaimSpotPage'));
 
 const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
 const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/claim-spot/:token" element={<ClaimSpotPage />} />
             {/* Studio/Organization Public Routes */}
             <Route path="/studio/:slug" element={<PublicCoursesPage />} />
             <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
