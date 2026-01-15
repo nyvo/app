@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Leaf, Loader2, AlertCircle, Clock, Calendar, MapPin, CreditCard, XCircle, CheckCircle2 } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { Leaf, Loader2, Clock, Calendar, MapPin, CreditCard, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface ClaimData {
@@ -29,7 +28,6 @@ interface ClaimData {
 
 const ClaimSpotPage = () => {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);

@@ -106,8 +106,9 @@ export async function getWaitlistCount(
 export async function removeFromWaitlist(
   signupId: string
 ): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('signups')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase
+    .from('signups') as any)
     .update({
       status: 'cancelled',
       updated_at: new Date().toISOString()
