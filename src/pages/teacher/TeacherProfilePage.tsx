@@ -188,7 +188,7 @@ const TeacherProfilePage = () => {
 
       <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
         {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
+        <div className="flex md:hidden items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
           <div className="flex items-center gap-3">
              <Leaf className="h-5 w-5 text-primary" />
              <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
@@ -221,8 +221,8 @@ const TeacherProfilePage = () => {
                         onClick={() => switchTab('profile')}
                         className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'profile'
-                            ? 'border border-border bg-white text-text-primary shadow-sm'
-                            : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
                         }`}
                     >
                         <User className="h-3.5 w-3.5" />
@@ -232,8 +232,8 @@ const TeacherProfilePage = () => {
                         onClick={() => switchTab('notifications')}
                         className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'notifications'
-                            ? 'border border-border bg-white text-text-primary shadow-sm'
-                            : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
                         }`}
                     >
                         <Bell className="h-3.5 w-3.5" />
@@ -243,8 +243,8 @@ const TeacherProfilePage = () => {
                         onClick={() => switchTab('security')}
                         className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
                             activeTab === 'security'
-                            ? 'border border-border bg-white text-text-primary shadow-sm'
-                            : 'border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
                         }`}
                     >
                         <Shield className="h-3.5 w-3.5" />
@@ -258,7 +258,7 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
                     {/* Avatar Section */}
-                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
                                 <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar shadow-md">
@@ -273,7 +273,7 @@ const TeacherProfilePage = () => {
                     </div>
 
                     {/* Personal Info Form */}
-                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Personlig Informasjon</h3>
                             {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
@@ -400,7 +400,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
@@ -469,13 +469,13 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="rounded-2xl border border-border bg-white p-6 md:p-8 shadow-sm">
+                     <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-semibold text-text-primary">Passord & Sikkerhet</h3>
                         </div>
 
                         <div className="flex flex-col items-center justify-center py-8 text-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated border border-border mb-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated mb-4">
                             <Shield className="h-6 w-6 text-text-tertiary" />
                           </div>
                           <p className="text-sm font-medium text-text-primary mb-1">Sikkerhetsinnstillinger kommer snart</p>

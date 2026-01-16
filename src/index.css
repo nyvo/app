@@ -93,12 +93,12 @@
   --color-sidebar-ring: #3b82f6;
 
   /* Text Colors - Now using Gray scale */
-  --color-text-primary: #111827;
+  --color-text-primary: #1F2937;
   --color-text-secondary: #4B5563;
   --color-text-tertiary: #9CA3AF;
 
   /* Surface/Background Variations - Now using Gray scale */
-  --color-surface: #F9FAFB;
+  --color-surface: #F8FAFC;
   --color-surface-elevated: #F3F4F6;
   --color-input-bg: rgba(249, 250, 251, 0.3);
 
@@ -142,14 +142,14 @@
   /* Custom Shadows - Subtle, refined shadows
      Based on the new design system for cleaner UI */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.06);
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.05);
   --shadow-xl: 0 20px 25px rgba(0,0,0,0.08);
 
-  /* Card-specific shadow - very subtle for cards */
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.02);
+  /* Divider color - softer than border for internal dividers */
+  --color-divider: #F3F4F6;
 
   /* Dark Card Gradient - for stat cards and dark UI elements */
   --gradient-dark-card: linear-gradient(to bottom right, var(--color-gray-800), var(--color-gray-900));
@@ -270,4 +270,69 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #9CA3AF;
   }
+}
+
+/* Sonner Toast - Dark Minimalist Theme
+   NOTE: These styles are OUTSIDE @layer components to ensure they override
+   Sonner's injected styles which are not layered */
+[data-sonner-toaster] {
+  --border-radius: 8px;
+}
+
+/* High Specificity Overrides */
+html body [data-sonner-toast] {
+  /* Override internal variables */
+  --normal-bg: #1C1C1E;
+  --normal-border: rgba(255, 255, 255, 0.07);
+  --normal-text: #F2F2F2;
+
+  font-family: 'Geist Sans', system-ui, -apple-system, sans-serif !important;
+  background-color: #1C1C1E !important; /* Deep neutral */
+  border: 1px solid rgba(255, 255, 255, 0.07) !important; /* Subtle white border */
+  border-radius: 8px !important;
+  color: #F2F2F2 !important; /* Off-white */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+html body [data-sonner-toast] [data-title] {
+  color: #F2F2F2 !important; /* Off-white */
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+html body [data-sonner-toast] [data-description] {
+  color: #8E8E93 !important; /* Muted gray */
+  font-size: 13px !important;
+}
+
+/* Main Action Button - High Contrast White */
+html body [data-sonner-toast] [data-button]:not([data-cancel]) {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 1px solid #FFFFFF !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  transition: background-color 0.2s, color 0.2s !important;
+}
+
+html body [data-sonner-toast] [data-button]:not([data-cancel]):hover {
+  background-color: #E4E4E7 !important; /* zinc-200 */
+}
+
+/* Cancel Button - Subtle */
+html body [data-sonner-toast] [data-cancel] {
+  color: #A1A1AA !important;
+  background-color: transparent !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+  padding: 6px 12px !important;
+  transition: color 0.2s, background-color 0.2s !important;
+}
+
+html body [data-sonner-toast] [data-cancel]:hover {
+  color: #FFFFFF !important;
+  background-color: #27272A !important; /* zinc-800 */
 }

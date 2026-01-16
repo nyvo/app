@@ -1,7 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Infinity, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Infinity, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 
 interface FormData {
@@ -148,17 +150,19 @@ const ResetPasswordPage = () => {
   // Invalid/expired session
   if (isValidSession === false) {
     return (
-      <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex flex-col selection:bg-stone-200 selection:text-stone-900">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
         {/* Minimal Header */}
-        <header className="w-full pt-8 pb-4 flex justify-center z-50">
+        <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
+          <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-stone-900 rounded-md flex items-center justify-center text-white shadow-sm">
+            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-stone-900">
+            <span className="text-lg font-semibold tracking-tighter text-text-primary">
               Ease
             </span>
           </Link>
+          <div className="w-24"></div>
         </header>
 
         {/* Main Content */}
@@ -170,39 +174,42 @@ const ResetPasswordPage = () => {
             className="w-full flex flex-col items-center"
           >
             <div className="text-center mb-8 space-y-4 w-full">
-              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <div className="w-16 h-16 rounded-full bg-status-error-bg flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-status-error-text" />
               </div>
-              <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
                 Ugyldig lenke
               </h1>
-              <p className="text-stone-500 text-sm">
+              <p className="text-text-secondary text-sm">
                 Denne lenken for tilbakestilling av passord er ugyldig eller utløpt.
               </p>
             </div>
 
             <div className="w-full space-y-3">
-              <Link
-                to="/forgot-password"
-                className="w-full h-11 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm"
+              <Button
+                asChild
+                className="w-full h-11"
               >
-                Be om ny lenke
-              </Link>
-              <Link
-                to="/login"
-                className="w-full h-11 border border-stone-200 hover:bg-stone-50 text-stone-900 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+                <Link to="/forgot-password">
+                  Be om ny lenke
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full h-11"
               >
-                Tilbake til innlogging
-              </Link>
+                <Link to="/login">
+                  Tilbake til innlogging
+                </Link>
+              </Button>
             </div>
           </motion.div>
         </main>
 
         {/* Simple Footer */}
-        <footer className="py-6 text-center border-t border-stone-200/50">
-          <p className="text-xs text-stone-400">
+        <footer className="py-6 text-center border-t border-border bg-white">
+          <p className="text-xs text-text-tertiary">
             Trenger du hjelp? Kontakt support
           </p>
         </footer>
@@ -213,8 +220,8 @@ const ResetPasswordPage = () => {
   // Loading session check
   if (isValidSession === null) {
     return (
-      <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
       </div>
     );
   }
@@ -222,17 +229,19 @@ const ResetPasswordPage = () => {
   // Success state - Password reset
   if (resetSuccess) {
     return (
-      <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex flex-col selection:bg-stone-200 selection:text-stone-900">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
         {/* Minimal Header */}
-        <header className="w-full pt-8 pb-4 flex justify-center z-50">
+        <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
+          <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-stone-900 rounded-md flex items-center justify-center text-white shadow-sm">
+            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-stone-900">
+            <span className="text-lg font-semibold tracking-tighter text-text-primary">
               Ease
             </span>
           </Link>
+          <div className="w-24"></div>
         </header>
 
         {/* Main Content */}
@@ -244,36 +253,38 @@ const ResetPasswordPage = () => {
             className="w-full flex flex-col items-center"
           >
             {/* Success Icon */}
-            <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-8 h-8 text-status-confirmed-text" />
             </div>
 
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
                 Passord oppdatert!
               </h1>
-              <p className="text-stone-500 text-sm">
+              <p className="text-text-secondary text-sm">
                 Passordet ditt har blitt oppdatert. Du kan nå logge inn med det nye passordet.
               </p>
             </div>
 
             <div className="w-full">
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full h-11 bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm"
+              <Button
+                asChild
+                className="w-full h-11"
               >
-                Fortsett til innlogging
-              </button>
+                <Link to="/login">
+                  Fortsett til innlogging
+                </Link>
+              </Button>
             </div>
           </motion.div>
         </main>
 
         {/* Simple Footer */}
-        <footer className="py-6 text-center border-t border-stone-200/50">
-          <p className="text-xs text-stone-400">
+        <footer className="py-6 text-center border-t border-border bg-white">
+          <p className="text-xs text-text-tertiary">
             <Link
               to="/login"
-              className="text-stone-900 font-medium hover:underline"
+              className="text-text-primary font-medium hover:underline"
             >
               Tilbake til innlogging
             </Link>
@@ -285,17 +296,28 @@ const ResetPasswordPage = () => {
 
   // Form state - Reset password
   return (
-    <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex flex-col selection:bg-stone-200 selection:text-stone-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
       {/* Minimal Header */}
-      <header className="w-full pt-8 pb-4 flex justify-center z-50">
+      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
+        <div className="w-24">
+          <Button variant="outline-soft" size="sm" className="text-text-secondary hover:text-text-primary" asChild>
+            <Link to="/login">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Tilbake
+            </Link>
+          </Button>
+        </div>
+        
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-stone-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-stone-900">
+          <span className="text-lg font-semibold tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
+
+        <div className="w-24" />
       </header>
 
       {/* Main Content */}
@@ -306,21 +328,11 @@ const ResetPasswordPage = () => {
           transition={{ duration: 0.5, ease: easing }}
           className="w-full flex flex-col items-center"
         >
-          {/* Back to login */}
-          <div className="w-full mb-6">
-            <Link
-              to="/login"
-              className="text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1.5 text-sm font-medium"
-            >
-              <ArrowLeft className="w-4 h-4" /> Tilbake
-            </Link>
-          </div>
-
           <div className="text-center mb-8 space-y-2 w-full">
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
               Tilbakestill passord
             </h1>
-            <p className="text-stone-500 text-sm">
+            <p className="text-text-secondary text-sm">
               Skriv inn det nye passordet ditt.
             </p>
           </div>
@@ -330,32 +342,28 @@ const ResetPasswordPage = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-xs font-medium text-stone-700"
+                className="block text-xs font-medium text-text-secondary"
               >
                 Nytt passord
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   onBlur={() => handleBlur('password')}
-                  className={`
-                    w-full h-10 px-3 pr-10 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                    transition-all duration-150 outline-none
-                    ${
-                      touched.password && errors.password
-                        ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                        : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
-                    }
-                  `}
+                  className={`pr-10 ${
+                    touched.password && errors.password
+                      ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                      : ''
+                  }`}
                   placeholder="Minst 8 tegn"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-900 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -365,7 +373,7 @@ const ResetPasswordPage = () => {
                 </button>
               </div>
               {touched.password && errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
+                <p className="text-xs text-destructive">{errors.password}</p>
               )}
             </div>
 
@@ -373,32 +381,28 @@ const ResetPasswordPage = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="confirmPassword"
-                className="block text-xs font-medium text-stone-700"
+                className="block text-xs font-medium text-text-secondary"
               >
                 Bekreft passord
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                   onBlur={() => handleBlur('confirmPassword')}
-                  className={`
-                    w-full h-10 px-3 pr-10 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                    transition-all duration-150 outline-none
-                    ${
-                      touched.confirmPassword && errors.confirmPassword
-                        ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                        : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
-                    }
-                  `}
+                  className={`pr-10 ${
+                    touched.confirmPassword && errors.confirmPassword
+                      ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                      : ''
+                  }`}
                   placeholder="Skriv passordet på nytt"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-900 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -408,29 +412,29 @@ const ResetPasswordPage = () => {
                 </button>
               </div>
               {touched.confirmPassword && errors.confirmPassword && (
-                <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+                <p className="text-xs text-destructive">{errors.confirmPassword}</p>
               )}
             </div>
 
             {/* Password requirements */}
-            <div className="p-3 rounded-lg bg-stone-50 border border-stone-200">
-              <p className="text-xs text-stone-600 font-medium mb-1">Passordkrav:</p>
-              <ul className="text-xs text-stone-500 space-y-0.5 ml-3">
+            <div className="p-3 rounded-lg bg-surface-elevated">
+              <p className="text-xs text-text-secondary font-medium mb-1">Passordkrav:</p>
+              <ul className="text-xs text-text-tertiary space-y-0.5 ml-3">
                 <li className="list-disc">Minst 8 tegn</li>
               </ul>
             </div>
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-xs text-red-600">{errors.general}</p>
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-xs text-destructive">{errors.general}</p>
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-11 mt-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="w-full h-11 mt-2"
             >
               {isSubmitting ? (
                 <>
@@ -440,18 +444,18 @@ const ResetPasswordPage = () => {
               ) : (
                 'Oppdater passord'
               )}
-            </button>
+            </Button>
           </form>
         </motion.div>
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-stone-200/50">
-        <p className="text-xs text-stone-400">
+      <footer className="py-6 text-center border-t border-border bg-white">
+        <p className="text-xs text-text-tertiary">
           Husker du passordet ditt?{' '}
           <Link
             to="/login"
-            className="text-stone-900 font-medium hover:underline"
+            className="text-text-primary font-medium hover:underline"
           >
             Logg inn
           </Link>

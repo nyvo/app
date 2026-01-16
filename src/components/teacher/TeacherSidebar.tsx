@@ -57,7 +57,7 @@ export const TeacherSidebar = () => {
   };
 
   return (
-    <Sidebar className="border-r border-border bg-white">
+    <Sidebar className="border-r border-gray-100 bg-white shadow-[1px_0_3px_rgba(0,0,0,0.02)]">
       <SidebarHeader className="px-6 pt-8 pb-10">
         <div className="flex items-center gap-3 px-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-text-primary text-white shadow-sm">

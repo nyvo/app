@@ -162,7 +162,7 @@ const StudentRegisterPage = () => {
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-transparent">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
           <Link to="/courses" className="flex items-center gap-3 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
               <Leaf className="h-5 w-5" />
             </div>
             <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">
@@ -176,7 +176,7 @@ const StudentRegisterPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Registration Card */}
-          <div className="rounded-3xl border border-border bg-white p-8 shadow-xl shadow-gray-900/5">
+          <div className="rounded-3xl bg-white p-8 shadow-md">
             {/* Title */}
             <div className="text-center mb-8">
               <h1 className="font-geist text-2xl font-semibold text-text-primary tracking-tight">

@@ -10,7 +10,7 @@ interface UpcomingClassCardProps {
 export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
-      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-white shadow-sm border border-border">
+      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-white shadow-sm">
         {/* Subtle background shapes */}
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-surface-elevated blur-3xl"></div>
         <div className="absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-surface-elevated blur-3xl"></div>
@@ -44,7 +44,7 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   return (
     <Link
       to={`/teacher/courses/${classData.id}`}
-      className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-gray-900 text-white shadow-lg shadow-gray-900/20 ios-ease hover:shadow-xl hover:shadow-gray-900/30 hover:scale-[1.005] cursor-pointer border border-gray-800 block"
+      className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-gray-900 text-white shadow-xl shadow-gray-900/15 ios-ease hover:shadow-2xl hover:shadow-gray-900/20 hover:scale-[1.005] cursor-pointer block"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 z-0"></div>
       <div className="absolute inset-0 bg-grain opacity-[0.35] mix-blend-overlay pointer-events-none z-0"></div>
@@ -69,7 +69,11 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
 
         <div>
           <h2 className="font-geist text-3xl md:text-4xl font-medium tracking-tight mb-5 text-white leading-tight">
-            {classData.title.split(':')[0]}:<br />{classData.title.split(':')[1]}
+            {classData.title.includes(':') ? (
+              <>{classData.title.split(':')[0]}:<br />{classData.title.split(':').slice(1).join(':')}</>
+            ) : (
+              classData.title
+            )}
           </h2>
 
           <div className="flex flex-wrap items-center gap-5 text-sm font-medium text-white/90">
@@ -92,7 +96,7 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
           <div className="flex flex-col gap-1">
             <span className="text-sm text-white/70">Påmeldte</span>
             <span className="text-lg font-semibold text-white tracking-tight">
-              {classData.attendees}/{classData.capacity}
+              {classData.capacity > 0 ? `${classData.attendees}/${classData.capacity}` : `${classData.attendees} påmeldt`}
             </span>
           </div>
           <span className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-xs font-medium text-text-primary shadow-sm group-hover:bg-surface-elevated ios-ease">

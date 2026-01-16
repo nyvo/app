@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { nb } from 'date-fns/locale';
 import { tabVariants, tabTransition, fadeVariants, fadeTransition } from '@/lib/motion';
@@ -18,7 +19,6 @@ import {
   BarChart2,
   Clock,
   Mail,
-  CheckCircle2,
   Settings2,
   Minus,
   CalendarIcon,
@@ -27,7 +27,8 @@ import {
   Loader2,
   ArrowUpCircle,
   Trash2,
-  Send
+  Send,
+  Image
 } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
@@ -60,6 +61,53 @@ import { useAuth } from '@/contexts/AuthContext';
 type Tab = 'overview' | 'participants' | 'settings';
 
 const timeSlots = TIME_SLOTS_DEFAULT;
+
+// Format date range for display (e.g., "17. jan – 7. feb 2025")
+function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+
+  // Validate start date
+  if (isNaN(start.getTime())) return null;
+
+  const end = endDate ? new Date(endDate) : null;
+
+  // Validate end date if provided
+  if (end && isNaN(end.getTime())) return null;
+
+  // Validate end is not before start
+  if (end && end.getTime() < start.getTime()) return null;
+
+  const formatDay = (date: Date) => date.getDate();
+  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
+  const formatYear = (date: Date) => date.getFullYear();
+
+  if (!end) {
+    // Single date - show full format
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const sameDay = sameMonth && start.getDate() === end.getDate();
+
+  // Same day - just show single date
+  if (sameDay) {
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  if (sameMonth) {
+    // Same month: "17. – 28. jan 2025"
+    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else if (sameYear) {
+    // Same year: "17. jan – 7. feb 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else {
+    // Different years: "17. des 2024 – 7. jan 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  }
+}
 
 // Helper to map database course to component format
 function mapCourseToComponentFormat(courseData: CourseWithStyle & { signups_count: number }) {
@@ -105,7 +153,9 @@ function mapCourseToComponentFormat(courseData: CourseWithStyle & { signups_coun
     totalWeeks: courseData.total_weeks || 0,
     currentWeek: courseData.current_week || 0,
     timeSchedule: courseData.time_schedule || '',
-    imageUrl: courseData.image_url || null
+    imageUrl: courseData.image_url || null,
+    startDate: courseData.start_date || null,
+    endDate: courseData.end_date || null,
   };
 }
 
@@ -140,11 +190,14 @@ const CourseDetailPage = () => {
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Delete state
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Quick image upload (from overview placeholder)
+  const quickImageInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingQuickImage, setIsUploadingQuickImage] = useState(false);
 
   // Sessions state (for Kursplan)
   const [sessions, setSessions] = useState<CourseSession[]>([]);
@@ -161,6 +214,7 @@ const CourseDetailPage = () => {
   const [waitlistLoading, setWaitlistLoading] = useState(false);
   const [promotingId, setPromotingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+
 
   // Fetch course data from Supabase
   useEffect(() => {
@@ -278,15 +332,33 @@ const CourseDetailPage = () => {
 
   // Handle promote from waitlist
   const handlePromote = async (signupId: string) => {
+    // Check capacity before promoting
+    if (courseData && courseData.capacity > 0 && courseData.enrolled >= courseData.capacity) {
+      // Course is full - don't promote
+      setSaveError('Kurset er fullt. Kan ikke flytte flere fra ventelisten.');
+      setTimeout(() => setSaveError(null), 5000);
+      return;
+    }
+
     setPromotingId(signupId);
     try {
       const { error } = await promoteFromWaitlist(signupId);
       if (!error) {
-        // Refresh waitlist
+        toast.success('Deltaker flyttet fra venteliste');
+        // Refresh waitlist and participants
         const { data: updatedWaitlist } = await fetchCourseWaitlist(id!);
         if (updatedWaitlist) {
           setWaitlist(updatedWaitlist);
         }
+        // Also refresh participants to update enrolled count
+        const { data: participantsData } = await fetchSignupsByCourseWithProfiles(id!);
+        if (participantsData) {
+          setParticipants(participantsData);
+          // Update enrolled count in courseData
+          setCourseData(prev => prev ? { ...prev, enrolled: participantsData.length } : null);
+        }
+      } else {
+        toast.error('Kunne ikke flytte deltaker fra venteliste');
       }
     } finally {
       setPromotingId(null);
@@ -299,8 +371,11 @@ const CourseDetailPage = () => {
     try {
       const { error } = await removeFromWaitlist(signupId);
       if (!error) {
+        toast.success('Fjernet fra venteliste');
         // Remove from local state
         setWaitlist(prev => prev.filter(w => w.id !== signupId));
+      } else {
+        toast.error('Kunne ikke fjerne fra venteliste');
       }
     } finally {
       setRemovingId(null);
@@ -357,7 +432,6 @@ const CourseDetailPage = () => {
 
     setIsSaving(true);
     setSaveError(null);
-    setSaveSuccess(false);
 
     try {
       let newImageUrl = settingsImageUrl;
@@ -431,9 +505,7 @@ const CourseDetailPage = () => {
       } : null);
       setSettingsImageUrl(newImageUrl);
 
-      setSaveSuccess(true);
-      // Clear success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
+      toast.success('Endringer lagret');
     } catch {
       setSaveError('En feil oppstod');
     } finally {
@@ -463,6 +535,7 @@ const CourseDetailPage = () => {
         ? `Kurset er avlyst. ${result.refunds_processed} refusjoner behandlet, ${result.notifications_sent} deltakere varslet.`
         : 'Kurset er avlyst.';
 
+      toast.success('Kurs avlyst');
       // Navigate to courses list on success
       navigate('/teacher/courses', { state: { message } });
     } catch {
@@ -584,6 +657,56 @@ const CourseDetailPage = () => {
     }
   };
 
+  // Handle quick image upload from overview placeholder
+  const handleQuickImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    // Validate file type
+    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!acceptedTypes.includes(file.type)) {
+      setSaveError('Ugyldig filtype. Bruk JPG, PNG eller WebP.');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError('Bildet er for stort. Maks 5MB.');
+      return;
+    }
+
+    setIsUploadingQuickImage(true);
+    setSaveError(null);
+
+    try {
+      const { url, error: uploadError } = await uploadCourseImage(id, file);
+      if (uploadError) {
+        setSaveError(uploadError.message);
+        return;
+      }
+
+      // Update course with new image URL
+      const { error: updateError } = await updateCourse(id, { image_url: url });
+      if (updateError) {
+        setSaveError(updateError.message || 'Kunne ikke lagre bildet');
+        return;
+      }
+
+      // Update local state
+      setCourseData(prev => prev ? { ...prev, imageUrl: url || undefined } : null);
+      setSettingsImageUrl(url);
+      toast.success('Bilde lastet opp');
+    } catch {
+      setSaveError('En feil oppstod under opplasting');
+    } finally {
+      setIsUploadingQuickImage(false);
+      // Reset input so same file can be selected again
+      if (quickImageInputRef.current) {
+        quickImageInputRef.current.value = '';
+      }
+    }
+  };
+
   const spotsLeft = course.capacity - course.enrolled;
 
   // Map participants from database to display format
@@ -593,7 +716,8 @@ const CourseDetailPage = () => {
     email: signup.participant_email || signup.profile?.email || '',
     status: signup.status as SignupStatus,
     paymentStatus: signup.payment_status as PaymentStatus,
-    notes: signup.note || undefined
+    notes: signup.note || undefined,
+    receiptUrl: signup.stripe_receipt_url || undefined
   }));
 
   // Filter participants based on search and filters
@@ -619,7 +743,7 @@ const CourseDetailPage = () => {
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
 
         {/* Header Section - same bg as sidebar */}
-        <header className="bg-sidebar border-b border-border px-6 py-5 shrink-0 z-10">
+        <header className="bg-sidebar border-b border-gray-100 px-6 py-5 shrink-0 z-10">
           <div className="max-w-7xl mx-auto w-full">
             {/* Breadcrumbs */}
             <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
@@ -644,13 +768,13 @@ const CourseDetailPage = () => {
                   </span>
                 )}
                 {course.status === 'completed' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground border border-border translate-y-[-2px]">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
                     Fullført
                   </span>
                 )}
                 {course.status === 'draft' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground border border-border translate-y-[-2px]">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground translate-y-[-2px]">
                     <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
                     Utkast
                   </span>
@@ -731,20 +855,27 @@ const CourseDetailPage = () => {
               >
 
                 {/* 1. Date Card */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1">
+                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1">
                   <div className="flex items-start justify-between">
                     <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
                       <Calendar className="h-4 w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Dato</span>
-                    <p className="text-sm font-semibold text-text-primary mt-0.5">{course.date}</p>
+                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Periode</span>
+                    {formatDateRange(course.startDate, course.endDate) ? (
+                      <div className="mt-0.5">
+                        <p className="text-sm font-semibold text-text-primary">{formatDateRange(course.startDate, course.endDate)}</p>
+                        {course.date && <p className="text-xs text-muted-foreground mt-0.5">{course.date}</p>}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-semibold text-text-primary mt-0.5">{course.date || 'Ikke angitt'}</p>
+                    )}
                   </div>
                 </div>
 
                 {/* 2. Location Card */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1">
+                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1">
                   <div className="flex items-start justify-between">
                     <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
                       <MapPin className="h-4 w-4" />
@@ -757,7 +888,7 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* 3. Occupancy Card (Wide) */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between h-32 hover:border-ring ios-ease col-span-1 md:col-span-2">
+                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
@@ -785,9 +916,9 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* 4. About the Class (Large 2x2) */}
-                <div className="bg-white rounded-xl border border-border shadow-sm flex flex-col col-span-1 md:col-span-2 row-span-2 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm flex flex-col col-span-1 md:col-span-2 row-span-2 overflow-hidden">
                   {/* Course Image */}
-                  {course.imageUrl && (
+                  {course.imageUrl ? (
                     <div className="w-full h-40 overflow-hidden">
                       <img
                         src={course.imageUrl}
@@ -795,29 +926,77 @@ const CourseDetailPage = () => {
                         className="w-full h-full object-cover"
                       />
                     </div>
+                  ) : (
+                    <>
+                      <input
+                        ref={quickImageInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleQuickImageUpload}
+                        className="hidden"
+                      />
+                      <div
+                        className="w-full h-40 bg-surface-elevated/30 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer hover:bg-surface-elevated/50 transition-colors group"
+                        onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
+                      >
+                        {isUploadingQuickImage ? (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-xs font-medium">Laster opp...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-muted-foreground group-hover:text-text-primary transition-colors">
+                            <div className="p-2 rounded-full bg-white shadow-sm group-hover:shadow-md transition-shadow">
+                              <Image className="h-4 w-4" />
+                            </div>
+                            <span className="text-xs font-medium">Legg til bilde</span>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                   <div className="p-6 flex flex-col flex-1">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4">
                       <h3 className="text-base font-semibold text-text-primary">Om timen</h3>
-                      <button className="text-text-tertiary hover:text-text-primary cursor-pointer">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-text-secondary leading-relaxed mb-4">
-                        {course.description}
-                      </p>
-                      <p className="text-sm text-text-secondary leading-relaxed">
-                        {course.description2}
-                      </p>
+                      {course.description ? (
+                        <>
+                          <p className="text-sm text-text-secondary leading-relaxed mb-4">
+                            {course.description}
+                          </p>
+                          {course.description2 && (
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                              {course.description2}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[140px] text-center py-4">
+                          <div className="mb-3 rounded-full bg-surface p-3 border border-surface-elevated">
+                            <Info className="h-5 w-5 text-text-tertiary stroke-[1.5]" />
+                          </div>
+                          <h4 className="text-sm font-medium text-text-primary mb-1">Ingen beskrivelse</h4>
+                          <p className="text-xs text-muted-foreground max-w-[240px] mb-4">
+                            Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
+                          </p>
+                          <Button 
+                            variant="outline-soft" 
+                            size="compact" 
+                            onClick={() => setActiveTab('settings')}
+                          >
+                            Legg til beskrivelse
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
-                  <div className="mt-6 pt-6 border-t border-border flex gap-3 flex-wrap">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
+                  <div className="mt-6 pt-6 border-t border-gray-100 flex gap-3 flex-wrap">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar text-xs font-medium text-text-secondary">
                         <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
                         Nivå: {course.level}
                       </div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar border border-border text-xs font-medium text-text-secondary">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar text-xs font-medium text-text-secondary">
                         <Clock className="h-3.5 w-3.5 text-text-tertiary" />
                         Varighet: {course.duration}
                       </div>
@@ -826,7 +1005,7 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* Admin Actions Card */}
-                <div className="bg-white rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between col-span-2 row-span-2">
+                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between col-span-2 row-span-2">
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wide">Administrasjon</h3>
@@ -858,7 +1037,7 @@ const CourseDetailPage = () => {
                 {/* Course Plan - Only show for multi-day courses */}
                 {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
                   <div ref={kursplanRef} className="col-span-full mt-2">
-                    <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
+                    <div className="bg-white rounded-xl p-6 shadow-sm">
                       <div className="mb-6">
                         <h2 className="text-base font-semibold text-text-primary">Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})</h2>
                       </div>
@@ -876,15 +1055,15 @@ const CourseDetailPage = () => {
                               week.isNext
                                 ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
                                 : week.status === 'upcoming'
-                                ? 'border-border bg-white/50 hover:bg-white hover:border-ring'
-                                : 'border-border bg-white hover:border-ring'
+                                ? 'border-gray-100 bg-white/50 hover:bg-white hover:shadow-md'
+                                : 'border-gray-100 bg-white hover:shadow-md'
                             }`}
                           >
                             <div className="flex items-center px-4 cursor-pointer" onClick={() => setExpandedItem(expandedItem === week.id ? undefined : week.id)}>
                               <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg mr-4 ${
                                 week.isNext
                                   ? 'bg-gray-900 text-white shadow-sm'
-                                  : 'border border-border bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
+                                  : 'bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
                               }`}>
                                 <span className={`text-xxs font-medium uppercase ${week.isNext ? 'opacity-80' : ''}`}>{sessionLabel}</span>
                                 <span className="font-geist text-lg font-semibold">{week.weekNum}</span>
@@ -1103,9 +1282,9 @@ const CourseDetailPage = () => {
                           )}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent align="end" className="w-64 p-0 rounded-xl shadow-lg border border-border">
+                      <PopoverContent align="end" className="w-64 p-0 rounded-xl">
                         {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                           <span className="text-sm font-medium text-text-primary">Filter</span>
                           {activeFiltersCount > 0 && (
                             <button
@@ -1188,28 +1367,29 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* Table Container */}
-                <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-border bg-surface/50">
+                        <tr className="border-b border-gray-100 bg-surface/50">
                           <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
                           <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
                           <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Betalt</th>
+                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Kvittering</th>
                           <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Notater</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
+                      <tbody className="divide-y divide-gray-100">
                         {participantsLoading ? (
                           <tr>
-                            <td colSpan={4} className="py-12 text-center">
+                            <td colSpan={5} className="py-12 text-center">
                               <Loader2 className="h-6 w-6 animate-spin text-text-tertiary mx-auto mb-2" />
                               <p className="text-sm text-muted-foreground">Laster deltakere...</p>
                             </td>
                           </tr>
                         ) : filteredParticipants.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-12 text-center">
+                            <td colSpan={5} className="py-12 text-center">
                               <p className="text-sm text-muted-foreground">Ingen deltakere funnet</p>
                               {activeFiltersCount > 0 && (
                                 <button
@@ -1242,6 +1422,22 @@ const CourseDetailPage = () => {
                               <td className="py-4 px-6">
                                 <PaymentBadge status={participant.paymentStatus} />
                               </td>
+                              {/* Kvittering (receipt) */}
+                              <td className="py-4 px-6">
+                                {participant.receiptUrl ? (
+                                  <a
+                                    href={participant.receiptUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+                                  >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                    Se kvittering
+                                  </a>
+                                ) : (
+                                  <span className="text-text-tertiary text-xs">—</span>
+                                )}
+                              </td>
                               {/* Notater */}
                               <td className="py-4 px-6 text-right">
                                 {participant.notes ? (
@@ -1256,13 +1452,13 @@ const CourseDetailPage = () => {
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-6 py-3 border-t border-border bg-surface/50 flex items-center justify-between">
+                  <div className="px-6 py-3 border-t border-gray-100 bg-surface/50 flex items-center justify-between">
                     <span className="text-xxs text-muted-foreground">Viser <span className="font-medium text-text-primary">{filteredParticipants.length}</span> av <span className="font-medium text-text-primary">{displayParticipants.length}</span> deltakere</span>
                     <div className="flex items-center gap-2">
-                      <button className="p-1.5 rounded-lg border border-border bg-white hover:border-ring hover:text-text-primary text-text-tertiary disabled:opacity-50 transition-all" disabled>
+                      <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md hover:text-text-primary text-text-tertiary disabled:opacity-50 transition-all" disabled>
                         <ChevronLeft className="h-4 w-4" />
                       </button>
-                      <button className="p-1.5 rounded-lg border border-border bg-white hover:border-ring text-text-primary transition-all">
+                      <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md text-text-primary transition-all">
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -1271,8 +1467,8 @@ const CourseDetailPage = () => {
 
                 {/* Waitlist Section */}
                 {(waitlist.length > 0 || waitlistLoading) && (
-                  <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden mt-6">
-                    <div className="px-6 py-4 border-b border-border bg-status-waitlist-bg/30">
+                  <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-6">
+                    <div className="px-6 py-4 border-b border-gray-100 bg-status-waitlist-bg/30">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-semibold text-text-primary">Venteliste</h3>
@@ -1288,7 +1484,7 @@ const CourseDetailPage = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="border-b border-border bg-surface/50">
+                          <tr className="border-b border-gray-100 bg-surface/50">
                             <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide w-12">#</th>
                             <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
                             <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
@@ -1296,7 +1492,7 @@ const CourseDetailPage = () => {
                             <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-gray-100">
                           {waitlistLoading ? (
                             <tr>
                               <td colSpan={5} className="py-8 text-center">
@@ -1425,159 +1621,170 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="max-w-3xl mx-auto"
+                className="max-w-7xl mx-auto"
               >
-
-                <div className="space-y-6">
-                  {/* General Settings */}
-                  <div className="bg-white border border-border rounded-xl shadow-sm p-6">
-                    <h3 className="text-base font-semibold text-text-primary mb-1">Generelt</h3>
-                    <p className="text-xs text-muted-foreground mb-6">Grunnleggende informasjon om kurset.</p>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Navn på kurs</label>
-                        <Input
-                          type="text"
-                          value={settingsTitle}
-                          onChange={(e) => setSettingsTitle(e.target.value)}
-                        />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
+                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
+                      <div className="mb-6">
+                        <h3 className="text-base font-semibold text-text-primary mb-1">Generelt</h3>
+                        <p className="text-xs text-muted-foreground">Grunnleggende informasjon om kurset.</p>
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Beskrivelse</label>
-                        <textarea
-                          rows={4}
-                          className="w-full p-3 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring resize-none"
-                          value={settingsDescription}
-                          onChange={(e) => setSettingsDescription(e.target.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Kursbilde</label>
-                        <div className="aspect-video">
-                          <ImageUpload
-                            value={settingsImageUrl}
-                            onChange={(file) => {
-                              setSettingsImageFile(file);
-                              if (!file && settingsImageUrl) {
-                                // User wants to remove the image
-                                setImageToDelete(settingsImageUrl);
-                                setSettingsImageUrl(null);
-                              }
-                            }}
-                            onRemove={() => {
-                              if (settingsImageUrl) {
-                                setImageToDelete(settingsImageUrl);
-                                setSettingsImageUrl(null);
-                              }
-                            }}
-                            disabled={isSaving}
-                            className="h-full"
-                          />
-                        </div>
-                        <p className="mt-1.5 text-xs text-muted-foreground">
-                          Valgfritt. Et bilde som representerer kurset.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Time & Capacity */}
-                  <div className="bg-white border border-border rounded-xl shadow-sm p-6">
-                    <h3 className="text-base font-semibold text-text-primary mb-1">Tid og Kapasitet</h3>
-                    <p className="text-xs text-muted-foreground mb-6">Administrer når og hvor kurset holdes.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Dato</label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
-                            >
-                              <span>{settingsDate ? formatDateNorwegian(settingsDate) : 'Velg dato'}</span>
-                              <CalendarIcon className="h-4 w-4 text-text-tertiary" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent align="start" className="p-0" showOverlay>
-                            <CalendarComponent
-                              mode="single"
-                              selected={settingsDate}
-                              onSelect={setSettingsDate}
-                              locale={nb}
-                              className="rounded-md border"
+                      
+                      <div className="space-y-4 flex-1">
+                          <div>
+                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Navn på kurs</label>
+                            <Input
+                              type="text"
+                              value={settingsTitle}
+                              onChange={(e) => setSettingsTitle(e.target.value)}
                             />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Tidspunkt</label>
-                        <Popover open={isSettingsTimeOpen} onOpenChange={setIsSettingsTimeOpen}>
-                          <PopoverTrigger asChild>
-                            <button
-                              type="button"
-                              className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
-                            >
-                              <span>{settingsTime || 'Velg tid'}</span>
-                              <Clock className="h-4 w-4 text-text-tertiary" />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
-                            <div className="flex flex-col gap-0.5">
-                              {timeSlots.map((time) => (
-                                <button
-                                  key={time}
-                                  type="button"
-                                  onClick={() => {
-                                    setSettingsTime(time);
-                                    setIsSettingsTimeOpen(false);
-                                  }}
-                                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                    settingsTime === time
-                                      ? 'bg-text-primary text-white'
-                                      : 'text-sidebar-foreground hover:bg-surface-elevated'
-                                  }`}
-                                >
-                                  <span>{time}</span>
-                                  {settingsTime === time && <Check className="h-4 w-4" />}
-                                </button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
+                          </div>
 
-                    <div className="border-t border-border my-5"></div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <label className="block text-sm font-medium text-text-primary">Maks antall deltakere</label>
-                        <p className="text-xs text-muted-foreground">Begrens hvor mange som kan melde seg på.</p>
+                          <div>
+                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Beskrivelse</label>
+                            <textarea
+                              rows={6}
+                              className="w-full p-3 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring resize-none"
+                              value={settingsDescription}
+                              onChange={(e) => setSettingsDescription(e.target.value)}
+                            />
+                          </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setMaxParticipants(Math.max(1, maxParticipants - 1))}
-                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary cursor-pointer"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-semibold text-text-primary">{maxParticipants}</span>
-                        <button
-                          onClick={() => setMaxParticipants(maxParticipants + 1)}
-                          className="h-8 w-8 rounded-md border border-border flex items-center justify-center hover:bg-surface-elevated text-text-secondary cursor-pointer"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
                   </div>
 
-                  {/* Danger Zone */}
-                  <div className="rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
+                  {/* Tile 2: Media (Image) - Span 1, Row Span 2? */}
+                  <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
+                      <div className="mb-6">
+                        <h3 className="text-base font-semibold text-text-primary mb-1">Kursbilde</h3>
+                        <p className="text-xs text-muted-foreground">Et bilde som representerer kurset.</p>
+                      </div>
+                      <div className="flex-1 min-h-[200px] flex flex-col">
+                          <div className="flex-1 relative rounded-lg overflow-hidden bg-input-bg">
+                            <ImageUpload
+                                value={settingsImageUrl}
+                                onChange={(file) => {
+                                  setSettingsImageFile(file);
+                                  if (!file && settingsImageUrl) {
+                                    setImageToDelete(settingsImageUrl);
+                                    setSettingsImageUrl(null);
+                                  }
+                                }}
+                                onRemove={() => {
+                                  if (settingsImageUrl) {
+                                    setImageToDelete(settingsImageUrl);
+                                    setSettingsImageUrl(null);
+                                  }
+                                }}
+                                disabled={isSaving}
+                                className="h-full w-full absolute inset-0"
+                            />
+                          </div>
+                          <p className="mt-3 text-xs text-muted-foreground text-center">
+                            Last opp et bilde i bredformat (16:9).
+                          </p>
+                      </div>
+                  </div>
+
+                  {/* Tile 3: Schedule - Span 1 */}
+                  <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col">
+                      <div className="mb-6">
+                        <h3 className="text-base font-semibold text-text-primary mb-1">Tidspunkt</h3>
+                        <p className="text-xs text-muted-foreground">Når kurset holdes.</p>
+                      </div>
+                      <div className="space-y-4 flex-1">
+                          <div>
+                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Dato</label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
+                                >
+                                  <span>{settingsDate ? formatDateNorwegian(settingsDate) : 'Velg dato'}</span>
+                                  <CalendarIcon className="h-4 w-4 text-text-tertiary" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="start" className="p-0" showOverlay>
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={settingsDate}
+                                  onSelect={setSettingsDate}
+                                  locale={nb}
+                                  className="rounded-md border"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Tidspunkt</label>
+                            <Popover open={isSettingsTimeOpen} onOpenChange={setIsSettingsTimeOpen}>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
+                                >
+                                  <span>{settingsTime || 'Velg tid'}</span>
+                                  <Clock className="h-4 w-4 text-text-tertiary" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
+                                <div className="flex flex-col gap-0.5">
+                                  {timeSlots.map((time) => (
+                                    <button
+                                      key={time}
+                                      type="button"
+                                      onClick={() => {
+                                        setSettingsTime(time);
+                                        setIsSettingsTimeOpen(false);
+                                      }}
+                                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
+                                        settingsTime === time
+                                          ? 'bg-text-primary text-white'
+                                          : 'text-sidebar-foreground hover:bg-surface-elevated'
+                                      }`}
+                                    >
+                                      <span>{time}</span>
+                                      {settingsTime === time && <Check className="h-4 w-4" />}
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Tile 4: Capacity - Span 1 */}
+                  <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col">
+                      <div className="mb-6">
+                        <h3 className="text-base font-semibold text-text-primary mb-1">Kapasitet</h3>
+                        <p className="text-xs text-muted-foreground">Begrens antall deltakere.</p>
+                      </div>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="flex items-center gap-4">
+                            <button
+                              onClick={() => setMaxParticipants(Math.max(1, maxParticipants - 1))}
+                              className="h-10 w-10 rounded-lg bg-surface-elevated flex items-center justify-center hover:bg-surface text-text-secondary cursor-pointer transition-colors"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <div className="text-center">
+                                <span className="block text-3xl font-bold text-text-primary tracking-tight">{maxParticipants}</span>
+                                <span className="text-xxs text-muted-foreground uppercase tracking-wider font-medium">Plasser</span>
+                            </div>
+                            <button
+                              onClick={() => setMaxParticipants(maxParticipants + 1)}
+                              className="h-10 w-10 rounded-lg bg-surface-elevated flex items-center justify-center hover:bg-surface text-text-secondary cursor-pointer transition-colors"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                        </div>
+                      </div>
+                  </div>
+
+                  {/* Tile 5: Danger Zone - Span 3 */}
+                  <div className="lg:col-span-3 rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       {/* Left side: Text content */}
                       <AnimatePresence mode="wait">
@@ -1670,22 +1877,16 @@ const CourseDetailPage = () => {
                       </AnimatePresence>
                     </div>
                   </div>
+                  
+                  {/* Actions Bar */}
+                  <div className="lg:col-span-3 flex justify-end gap-3 pt-2">
+                      {saveError && (
+                        <div className="flex items-center gap-2 text-sm text-status-error-text bg-status-error-bg/30 border border-status-error-border rounded-lg px-4 py-2 mr-auto">
+                          <Info className="h-4 w-4 shrink-0" />
+                          {saveError}
+                        </div>
+                      )}
 
-                  {/* Save feedback */}
-                  {saveError && (
-                    <div className="flex items-center gap-2 text-sm text-status-error-text bg-status-error-bg/30 border border-status-error-border rounded-lg px-4 py-3">
-                      <Info className="h-4 w-4 shrink-0" />
-                      {saveError}
-                    </div>
-                  )}
-                  {saveSuccess && (
-                    <div className="flex items-center gap-2 text-sm text-status-success-text bg-status-success-bg border border-status-success-border rounded-lg px-4 py-3">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" />
-                      Endringene ble lagret
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-4">
                     <Button
                       variant="ghost"
                       size="compact"

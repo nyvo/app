@@ -10,8 +10,8 @@ interface RegistrationsListProps {
 
 export const RegistrationsList = ({ registrations }: RegistrationsListProps) => {
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl border border-border bg-white p-0 shadow-sm overflow-hidden ios-ease hover:border-ring hover:shadow-md">
-      <div className="flex items-center justify-between p-5 px-7 border-b border-border">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white p-0 shadow-sm overflow-hidden ios-ease hover:shadow-md">
+      <div className="flex items-center justify-between p-5 px-7">
         <h3 className="font-geist text-sm font-semibold text-text-primary">Påmeldinger</h3>
         <Link
           to="/teacher/signups"
@@ -33,7 +33,7 @@ export const RegistrationsList = ({ registrations }: RegistrationsListProps) => 
           <p className="text-xs text-text-tertiary mt-1">Påmeldinger vil vises her når du publiserer et kurs.</p>
         </div>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-gray-100">
           {registrations.map((registration) => (
             <div
               key={registration.id}

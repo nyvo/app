@@ -246,7 +246,7 @@ export const SignupsPage = () => {
       <TeacherSidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
         {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
+        <div className="flex md:hidden items-center justify-between p-6 border-b border-gray-100 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
           <div className="flex items-center gap-3">
             <Leaf className="h-5 w-5 text-primary" />
             <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
@@ -323,7 +323,7 @@ export const SignupsPage = () => {
 
         {/* Table Container */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
-          <div className="h-full rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
+          <div className="h-full rounded-2xl bg-white shadow-sm overflow-hidden flex flex-col">
             {/* Loading State */}
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-white">
@@ -345,7 +345,7 @@ export const SignupsPage = () => {
               /* Empty State or No Results */
               <>
                 {/* Table Header for empty state */}
-                <div className="border-b border-border bg-surface/50 px-6 py-3">
+                <div className="border-b border-gray-100 bg-surface/50 px-6 py-3">
                   <div className="flex items-center">
                     <div className="flex-[2] text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Deltaker</div>
                     <div className="flex-[2] text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Kurs & Tid</div>
@@ -374,7 +374,7 @@ export const SignupsPage = () => {
               /* Table with Data */
               <div className="overflow-auto flex-1 custom-scrollbar">
                 <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 bg-surface/50 border-b border-border">
+                  <thead className="sticky top-0 bg-surface/50 border-b border-gray-100">
                     <tr>
                       <th className="py-3 px-6 flex-[2] text-xxs font-semibold uppercase tracking-wide text-muted-foreground" style={{ width: '20%' }}>Deltaker</th>
                       <th className="py-3 px-6" style={{ width: '22%' }}>

@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 
 interface Participant {
   name: string;
+  email?: string;
   avatar?: string;
   initials?: string;
 }
@@ -32,7 +33,7 @@ export function ParticipantAvatar({
       <img
         src={participant.avatar}
         className={cn(
-          'rounded-full object-cover border border-border group-hover:border-ring',
+          'rounded-full object-cover',
           sizeClasses[size],
           className
         )}
@@ -44,7 +45,7 @@ export function ParticipantAvatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-full bg-surface-elevated font-medium text-text-secondary ring-1 ring-border',
+        'flex items-center justify-center rounded-full bg-surface-elevated font-medium text-text-secondary',
         sizeClasses[size],
         className
       )}

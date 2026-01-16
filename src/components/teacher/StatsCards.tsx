@@ -12,13 +12,13 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
     return (
       <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
         {/* Active Students - Empty State */}
-        <div className="relative h-[168px] rounded-3xl border border-border bg-white p-6 shadow-sm overflow-hidden group">
+        <div className="relative h-[168px] rounded-3xl bg-white p-6 shadow-sm overflow-hidden group">
           {/* Subtle background decoration */}
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-surface-elevated blur-3xl"></div>
 
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated border border-border text-muted-foreground">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-muted-foreground">
                 <UserCheck className="h-5 w-5 text-text-tertiary" />
               </div>
             </div>
@@ -32,7 +32,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
         </div>
 
         {/* Attendance - Empty State with Mock Chart */}
-        <div className="relative h-[168px] rounded-3xl border border-border bg-white p-6 shadow-sm overflow-hidden group">
+        <div className="relative h-[168px] rounded-3xl bg-white p-6 shadow-sm overflow-hidden group">
           {/* Subtle background decoration */}
           <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-surface-elevated blur-3xl"></div>
 
@@ -72,9 +72,9 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
 
   return (
     <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
-      <div className="h-[168px] rounded-3xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md flex flex-col justify-between group">
+      <div className="h-[168px] rounded-3xl bg-white p-6 shadow-sm ios-ease hover:shadow-md flex flex-col justify-between group">
         <div className="flex items-center justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated border border-border text-muted-foreground group-hover:bg-surface group-hover:border-ring transition-colors">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-muted-foreground group-hover:bg-surface transition-colors">
             <UserCheck className="h-5 w-5 text-text-secondary" />
           </div>
           <span className="text-xs font-medium text-text-tertiary uppercase tracking-wide">Denne uken</span>
@@ -90,7 +90,7 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
         </div>
       </div>
 
-      <div className="h-[168px] rounded-3xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md flex flex-col justify-between group">
+      <div className="h-[168px] rounded-3xl bg-white p-6 shadow-sm ios-ease hover:shadow-md flex flex-col justify-between group">
         <div>
           <p className="text-sm text-muted-foreground font-medium">Oppmøte</p>
           <div className="flex items-end gap-2 mt-1">

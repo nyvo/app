@@ -139,7 +139,7 @@ const StudentDashboard = () => {
       className="min-h-screen bg-surface flex flex-col"
     >
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -242,7 +242,7 @@ const StudentDashboard = () => {
 
           {/* Quick Stats */}
           <div className={`flex gap-4 ${!hasBookings && 'opacity-60 grayscale-[0.5]'}`}>
-            <div className="bg-white px-4 py-3 rounded-xl border border-border shadow-sm flex items-center gap-3">
+            <div className="bg-white px-4 py-3 rounded-xl shadow-sm flex items-center gap-3">
               <div
                 className={`p-2 rounded-lg ${
                   hasBookings ? 'bg-orange-50 text-orange-600' : 'bg-surface-elevated text-text-tertiary'
@@ -255,7 +255,7 @@ const StudentDashboard = () => {
                 <p className="text-lg font-semibold text-text-primary leading-none">{streak} dager</p>
               </div>
             </div>
-            <div className="bg-white px-4 py-3 rounded-xl border border-border shadow-sm flex items-center gap-3">
+            <div className="bg-white px-4 py-3 rounded-xl shadow-sm flex items-center gap-3">
               <div
                 className={`p-2 rounded-lg ${
                   hasBookings ? 'bg-blue-50 text-blue-600' : 'bg-surface-elevated text-text-tertiary'
@@ -291,7 +291,7 @@ const StudentDashboard = () => {
               upcomingBookings.map((booking, index) => (
                 <div
                   key={booking.id}
-                  className={`group bg-white rounded-2xl border border-border shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-ring transition-all duration-200 overflow-hidden ${
+                  className={`group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
                     index > 0 && 'opacity-90 hover:opacity-100'
                   }`}
                 >
@@ -430,7 +430,7 @@ const StudentDashboard = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-border p-6 shadow-sm relative overflow-hidden">
+              <div className="bg-white rounded-2xl p-6 shadow-sm relative overflow-hidden">
                 <div className="flex flex-col items-start">
                   <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 mb-4">
                     <CreditCard className="w-5 h-5" />
@@ -448,7 +448,7 @@ const StudentDashboard = () => {
             )}
 
             {/* Recommended Classes */}
-            <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+            <div className="bg-white rounded-2xl shadow-sm p-5">
               <h3 className="text-base font-medium text-text-primary mb-4">
                 {hasBookings ? 'Anbefalt for deg' : 'Populære førstegangskurs'}
               </h3>
@@ -496,7 +496,7 @@ const StudentDashboard = () => {
                 )}
               </div>
               <Link to="/courses">
-                <button className="w-full mt-5 py-2.5 text-sm font-medium text-muted-foreground bg-surface-elevated hover:bg-gray-100 rounded-lg transition-colors border border-border">
+                <button className="w-full mt-5 py-2.5 text-sm font-medium text-muted-foreground bg-surface-elevated hover:bg-gray-100 rounded-lg transition-colors">
                   Se alle kurs
                 </button>
               </Link>

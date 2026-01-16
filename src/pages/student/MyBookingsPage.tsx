@@ -146,10 +146,10 @@ const MyBookingsPage = () => {
       className="min-h-screen bg-surface"
     >
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-white">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link to="/student/dashboard" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
               <img src="/logo.svg" alt="Ease" className="h-5 w-5" />
             </div>
             <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">
@@ -195,7 +195,7 @@ const MyBookingsPage = () => {
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'all'
                 ? 'bg-text-primary text-white'
-                : 'bg-white border border-border text-muted-foreground hover:text-text-primary'
+                : 'bg-white shadow-sm text-muted-foreground hover:text-text-primary hover:shadow-md'
             }`}
           >
             Alle
@@ -205,7 +205,7 @@ const MyBookingsPage = () => {
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'upcoming'
                 ? 'bg-text-primary text-white'
-                : 'bg-white border border-border text-muted-foreground hover:text-text-primary'
+                : 'bg-white shadow-sm text-muted-foreground hover:text-text-primary hover:shadow-md'
             }`}
           >
             Kommende
@@ -215,7 +215,7 @@ const MyBookingsPage = () => {
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'past'
                 ? 'bg-text-primary text-white'
-                : 'bg-white border border-border text-muted-foreground hover:text-text-primary'
+                : 'bg-white shadow-sm text-muted-foreground hover:text-text-primary hover:shadow-md'
             }`}
           >
             Tidligere
@@ -233,8 +233,8 @@ const MyBookingsPage = () => {
         {!isLoading && (
           <div className="space-y-6">
             {filteredBookings.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-border bg-white p-12 text-center">
-                <div className="mx-auto w-16 h-16 bg-surface-elevated border border-border rounded-full flex items-center justify-center mb-4">
+              <div className="rounded-3xl bg-gray-50/50 p-12 text-center">
+                <div className="mx-auto w-16 h-16 bg-surface-elevated rounded-full flex items-center justify-center mb-4">
                   <Calendar className="w-7 h-7 text-text-tertiary" />
                 </div>
                 <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
@@ -259,7 +259,7 @@ const MyBookingsPage = () => {
                   return (
                     <div
                       key={booking.id}
-                      className="rounded-3xl border border-border bg-white p-6 shadow-sm transition-all hover:border-ring hover:shadow-md"
+                      className="rounded-3xl bg-white p-6 shadow-sm transition-all hover:shadow-md"
                     >
                       <div className="flex items-start gap-6">
                         {/* Course Image */}

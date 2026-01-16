@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 
 export const CoursesEmptyState = () => {
   return (
-    <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl bg-white shadow-sm overflow-hidden">
       {/* Table Header - matching active state */}
-      <div className="flex items-center px-4 py-3 border-b border-border bg-surface/50">
+      <div className="flex items-center px-4 py-3 border-b border-gray-100 bg-surface/50">
         <div className="flex-[2] pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Kurs & Sted</div>
         <div className="hidden md:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Kurstype</div>
         <div className="hidden md:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Status</div>

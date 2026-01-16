@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -9,7 +9,10 @@ import {
   Leaf,
   Menu,
   Calendar,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Copy,
+  Share2
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -19,6 +22,13 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import type { CourseStatus } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from 'sonner';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,66 +41,184 @@ const courseTypeLabels: Record<string, string> = {
   enkeltkurs: 'Enkeltkurs',
 };
 
-const CourseRow = ({ course }: { course: DetailedCourse }) => {
+// Format date range for display (e.g., "17. jan – 7. feb 2025")
+function formatDateRange(startDate?: string, endDate?: string): string | null {
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+
+  // Validate start date
+  if (isNaN(start.getTime())) return null;
+
+  const end = endDate ? new Date(endDate) : null;
+
+  // Validate end date if provided
+  if (end && isNaN(end.getTime())) return null;
+
+  // Validate end is not before start
+  if (end && end.getTime() < start.getTime()) return null;
+
+  const formatDay = (date: Date) => date.getDate();
+  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
+  const formatYear = (date: Date) => date.getFullYear();
+
+  if (!end) {
+    // Single date - show full format
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const sameDay = sameMonth && start.getDate() === end.getDate();
+
+  // Same day - just show single date
+  if (sameDay) {
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  if (sameMonth) {
+    // Same month: "17. – 28. jan 2025"
+    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else if (sameYear) {
+    // Same year: "17. jan – 7. feb 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else {
+    // Different years: "17. des 2024 – 7. jan 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  }
+}
+
+const CourseCard = ({ course, organizationSlug }: { course: DetailedCourse; organizationSlug?: string }) => {
+  const navigate = useNavigate();
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/studio/${organizationSlug}/${course.id}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Lenke kopiert');
+  };
+
+  const handleOpenPublicPage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(`/studio/${organizationSlug}/${course.id}`, '_blank');
+  };
+
+  const progressPercentage = course.maxParticipants > 0 
+    ? Math.min((course.participants / course.maxParticipants) * 100, 100) 
+    : 0;
+
   return (
-    <div className="group flex items-center p-4 border-b border-surface-elevated hover:bg-secondary transition-colors cursor-pointer">
-      {/* Course & Location - flex-[2] */}
-      <Link to={`/teacher/courses/${course.id}`} className="flex items-center gap-4 flex-[2] min-w-0 pr-4">
-        <div className="min-w-0">
-          <h3 className="text-sm font-medium truncate text-text-primary group-hover:text-primary transition-colors">
-            {course.title}
-          </h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">{course.location}</span>
+    <div 
+      className="group relative flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer h-full"
+      onClick={() => navigate(`/teacher/courses/${course.id}`)}
+    >
+      {/* Visual Header */}
+      <div className="h-32 w-full bg-surface-elevated relative overflow-hidden">
+        {course.imageUrl ? (
+          <img 
+            src={course.imageUrl} 
+            alt={course.title} 
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+            <span className="text-primary/30 text-sm font-medium">
+              {course.courseType === 'kursrekke' ? 'Kursrekke' : 'Enkeltkurs'}
+            </span>
           </div>
+        )}
+        <div className="absolute top-3 right-3">
+          <StatusBadge 
+            status={course.status as CourseStatus} 
+            size="sm" 
+            className="shadow-sm backdrop-blur-md bg-white/90"
+          />
         </div>
-      </Link>
-
-      {/* Course Type Column - flex-1 */}
-      <div className="hidden md:block flex-1 min-w-0 pr-4">
-        <span className="text-xs font-medium text-text-secondary">
-          {courseTypeLabels[course.courseType]}
-        </span>
-      </div>
-
-      {/* Status Column - flex-1 */}
-      <div className="hidden md:flex flex-1 min-w-0 pr-4">
-        <StatusBadge
-          status={course.status as CourseStatus}
-          customLabel={course.status === 'upcoming' ? course.startDate : undefined}
-          size="sm"
-        />
-      </div>
-
-      {/* Date/Time Column - flex-1 */}
-      <div className="hidden md:block flex-1 min-w-0 pr-4">
-        <div className="flex flex-col">
-          <span className="text-xs font-medium text-text-primary">{course.timeSchedule.split(' ')[0]}</span>
-          <span className="text-xxs text-muted-foreground">{course.timeSchedule.split(' ').slice(1).join(' ')}</span>
-        </div>
-      </div>
-
-      {/* Participants Column - flex-1 */}
-      <div className="hidden lg:flex flex-1 min-w-0 pr-4">
-        <div className="flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5 text-text-tertiary shrink-0" />
-          <span className="text-xs font-medium text-sidebar-foreground">
-            {course.participants} <span className="text-text-tertiary">/ {course.maxParticipants}</span>
+        <div className="absolute top-3 left-3">
+          <span className="inline-flex items-center rounded-md bg-white/90 backdrop-blur-md px-2 py-1 text-xs font-medium text-text-secondary shadow-sm ring-1 ring-inset ring-gray-200/50">
+            {courseTypeLabels[course.courseType]}
           </span>
         </div>
       </div>
 
-      {/* Price Column - w-24 fixed */}
-      <div className="hidden lg:block w-24 text-right pr-4">
-        <span className="text-xs font-medium text-text-secondary">{course.price}</span>
+      {/* Content Body */}
+      <div className="flex flex-col flex-1 p-4 gap-3">
+        <div>
+          <h3 className="font-semibold text-text-primary line-clamp-1 group-hover:text-primary transition-colors text-base">
+            {course.title}
+          </h3>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{course.location}</span>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2 text-xs text-text-secondary">
+          <Calendar className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <div className="flex flex-col gap-0.5">
+            <span className="line-clamp-1">{course.timeSchedule}</span>
+            {formatDateRange(course.startDate, course.endDate) && (
+              <span className="text-muted-foreground">{formatDateRange(course.startDate, course.endDate)}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-auto pt-2 space-y-2">
+          {/* Participants Progress */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <Users className="h-3 w-3" />
+                Deltakere
+              </span>
+              <span className="font-medium text-text-primary">
+                {course.participants} <span className="text-muted-foreground">/ {course.maxParticipants}</span>
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-surface-elevated rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Actions Column - w-12 fixed */}
-      <div className="w-12 flex justify-end">
-        <button className="text-text-tertiary hover:text-text-primary p-1.5 rounded-full hover:bg-surface-elevated transition-colors cursor-pointer" aria-label="Flere handlinger">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
+      {/* Footer Actions */}
+      <div className="flex items-center justify-between p-4 pt-0 border-t border-transparent group-hover:border-surface-elevated transition-colors mt-1">
+        <span className="text-sm font-medium text-text-primary pt-3">{course.price}</span>
+        
+        <div className="pt-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate(`/teacher/courses/${course.id}`)}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Se kurs
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/teacher/courses/${course.id}#deltakere`)}>
+                <Users className="h-4 w-4 mr-2" />
+                Se deltakere
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCopyLink}>
+                <Copy className="h-4 w-4 mr-2" />
+                Kopier lenke
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleOpenPublicPage}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Åpne offentlig side
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
@@ -141,8 +269,11 @@ function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number
     progress,
     currentWeek: course.current_week || undefined,
     totalWeeks: course.total_weeks || undefined,
+    startDate: course.start_date || undefined,
+    endDate: course.end_date || undefined,
     description: course.description || undefined,
     level: course.level ? course.level.charAt(0).toUpperCase() + course.level.slice(1) : undefined,
+    imageUrl: course.image_url,
   };
 }
 
@@ -322,7 +453,7 @@ const CoursesPage = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-2xl bg-white">
+              <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white shadow-sm">
                 <p className="text-sm text-destructive">{error}</p>
                 <button
                   onClick={() => window.location.reload()}
@@ -334,7 +465,7 @@ const CoursesPage = () => {
             ) : showCoursesEmptyState ? (
               <CoursesEmptyState />
             ) : filteredCourses.length === 0 ? (
-               <div className="flex flex-col items-center justify-center h-64 text-center border border-border rounded-2xl bg-white">
+               <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white shadow-sm">
                   <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
                      <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                   </div>
@@ -344,26 +475,12 @@ const CoursesPage = () => {
                   </p>
                </div>
             ) : (
-              <div className="h-full rounded-2xl border border-border bg-white shadow-sm overflow-hidden flex flex-col">
-                  <div className="overflow-auto flex-1 custom-scrollbar">
-                    {/* Table Header */}
-                    <div className="flex items-center px-4 py-3 border-b border-border bg-surface/50 sticky top-0">
-                        <div className="flex-[2] pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Kurs & Sted</div>
-                        <div className="hidden md:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Kurstype</div>
-                        <div className="hidden md:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Status</div>
-                        <div className="hidden md:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Tidspunkt</div>
-                        <div className="hidden lg:block flex-1 pr-4 text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Deltakere</div>
-                        <div className="hidden lg:block w-24 pr-4 text-right text-xxs font-semibold uppercase tracking-wide text-muted-foreground">Pris</div>
-                        <div className="w-12"></div>
-                    </div>
-
-                    {/* Table Body */}
-                    <div className="divide-y divide-surface-elevated">
-                      {filteredCourses.map((course) => (
-                          <CourseRow key={course.id} course={course} />
-                      ))}
-                    </div>
-                  </div>
+              <div className="h-full overflow-y-auto custom-scrollbar pb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredCourses.map((course) => (
+                      <CourseCard key={course.id} course={course} organizationSlug={currentOrganization?.slug} />
+                  ))}
+                </div>
               </div>
             )}
         </div>

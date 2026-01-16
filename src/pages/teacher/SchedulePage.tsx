@@ -64,15 +64,23 @@ const formatTime = (time: string): string => {
 };
 
 // Helper to calculate position and height
+// Grid shows 07:00-23:00, so clamp events to visible area
 const getEventStyle = (startTime: string, endTime: string) => {
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
 
-  const startOffset = (startHour - 7) * 100 + (startMin / 60) * 100;
-  const duration = (endHour - startHour) * 100 + ((endMin - startMin) / 60) * 100;
+  // Clamp to visible grid (07:00 - 24:00)
+  const clampedStartHour = Math.max(startHour, 7);
+  const clampedStartMin = startHour < 7 ? 0 : startMin;
+  const clampedEndHour = Math.min(endHour, 24);
+  const clampedEndMin = endHour >= 24 ? 0 : endMin;
+
+  const startOffset = (clampedStartHour - 7) * 100 + (clampedStartMin / 60) * 100;
+  const endOffset = (clampedEndHour - 7) * 100 + (clampedEndMin / 60) * 100;
+  const duration = Math.max(endOffset - startOffset, 20); // Minimum height of 20px
 
   return {
-    top: `${startOffset}px`,
+    top: `${Math.max(startOffset, 0)}px`,
     height: `${duration}px`,
   };
 };
@@ -99,7 +107,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white border border-border border-l-4 p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-lg bg-white shadow-sm border-l-4 p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={{
         ...positionStyle,
         borderLeftColor: accentBorderColor,
@@ -260,7 +268,8 @@ export const SchedulePage = () => {
         // Count signups per course
         const counts: Record<string, number> = {};
         if (signupsData) {
-          for (const signup of signupsData) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          for (const signup of signupsData as any[]) {
             counts[signup.course_id] = (counts[signup.course_id] || 0) + 1;
           }
         }
@@ -403,9 +412,9 @@ export const SchedulePage = () => {
     return Array.from(stylesMap.values());
   }, [courses]);
 
-  // Navigation handlers
-  const goToPreviousWeek = () => setWeekOffset(prev => prev - 1);
-  const goToNextWeek = () => setWeekOffset(prev => prev + 1);
+  // Navigation handlers (limit to ±52 weeks / 1 year)
+  const goToPreviousWeek = () => setWeekOffset(prev => Math.max(prev - 1, -52));
+  const goToNextWeek = () => setWeekOffset(prev => Math.min(prev + 1, 52));
   const goToCurrentWeek = () => setWeekOffset(0);
 
   return (
@@ -418,7 +427,7 @@ export const SchedulePage = () => {
             initial="initial"
             animate="animate"
             transition={pageTransition}
-            className="flex flex-col gap-4 border-b border-border bg-surface px-6 py-5 shrink-0 z-20"
+            className="flex flex-col gap-4 border-b border-gray-100 bg-surface px-6 py-5 shrink-0 z-20"
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
@@ -473,7 +482,7 @@ export const SchedulePage = () => {
 
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:shadow-md hover:text-text-primary ios-ease cursor-pointer">
                 <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
@@ -539,8 +548,8 @@ export const SchedulePage = () => {
             {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-900/5">
-                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl shadow-lg border border-border">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated border border-border">
+                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl shadow-md">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
                   <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
@@ -562,7 +571,7 @@ export const SchedulePage = () => {
             )}
 
             {/* Sticky Header (Days) */}
-            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
               {/* Corner */}
               <div className="border-r border-border p-3 bg-surface"></div>
 
@@ -606,9 +615,9 @@ export const SchedulePage = () => {
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-border bg-surface text-xxs font-medium text-text-tertiary">
+              <div className="flex flex-col border-r border-gray-100 bg-surface text-xxs font-medium text-text-tertiary">
                 {timeSlots.map((time) => (
-                  <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
+                  <div key={time} className="h-[100px] border-b border-gray-100/50 px-2 py-1">
                     {time}
                   </div>
                 ))}

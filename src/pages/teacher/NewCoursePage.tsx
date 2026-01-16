@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { nb } from 'date-fns/locale';
 import { addDays, format } from 'date-fns';
 import { formatDateNorwegian } from '@/utils/dateUtils';
@@ -117,7 +118,8 @@ const NewCoursePage = () => {
   const errors = useMemo<FormErrors>(() => {
     const errs: FormErrors = {};
 
-    if (!title.trim()) {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
       errs.title = 'Skriv inn en tittel.';
     }
 
@@ -133,7 +135,8 @@ const NewCoursePage = () => {
       errs.duration = 'Angi varighet (minst 1 minutt).';
     }
 
-    if (!location.trim()) {
+    const trimmedLocation = location.trim();
+    if (!trimmedLocation) {
       errs.location = 'Skriv inn et sted.';
     }
 
@@ -198,6 +201,9 @@ const NewCoursePage = () => {
   };
 
   const handlePublish = async () => {
+    // Prevent double submit
+    if (isSubmitting) return;
+
     setSubmitAttempted(true);
     setSubmitError(null);
 
@@ -260,17 +266,28 @@ const NewCoursePage = () => {
         })
       );
 
-      const { data: createdCourse, error } = await createCourse(courseData, {
+      const { data: createdCourse, error, conflicts } = await createCourse(courseData, {
         eventDays: courseType === 'single' ? parseInt(eventDays) : undefined,
         sessionTimeOverrides: sessionTimeOverrides.length > 0 ? sessionTimeOverrides : undefined,
       });
 
       if (error || !createdCourse) {
-        setSubmitError(error?.message || 'Kunne ikke opprette kurset');
+        if (conflicts && conflicts.length > 0) {
+          const conflict = conflicts[0];
+          const conflictDate = new Date(conflict.sessionDate).toLocaleDateString('nb-NO', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long'
+          });
+          setSubmitError(`Kurset kan ikke opprettes\nDette tidspunktet er allerede opptatt av:\n«${conflict.conflictingCourse.title}» – ${conflictDate}, kl. ${conflict.conflictingCourse.startTime}–${conflict.conflictingCourse.endTime}`);
+        } else {
+          setSubmitError(error?.message || 'Kunne ikke opprette kurset');
+        }
         return;
       }
 
       // Upload image if one was selected
+      let imageUploadFailed = false;
       if (imageFile) {
         const { url: imageUrl, error: uploadError } = await uploadCourseImage(
           createdCourse.id,
@@ -280,8 +297,17 @@ const NewCoursePage = () => {
         if (!uploadError && imageUrl) {
           // Update course with image URL
           await updateCourse(createdCourse.id, { image_url: imageUrl });
+        } else {
+          // Image upload failed, but course was created
+          imageUploadFailed = true;
         }
-        // If image upload fails, course is still created - just continue
+      }
+
+      // Show appropriate toast
+      if (imageUploadFailed) {
+        toast.warning('Kurset ble opprettet, men bildet kunne ikke lastes opp');
+      } else {
+        toast.success('Kurs opprettet!');
       }
 
       // Navigate to course detail page on success
@@ -299,7 +325,7 @@ const NewCoursePage = () => {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
         {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
+        <div className="flex md:hidden items-center justify-between p-6 border-b border-gray-100 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
           <div className="flex items-center gap-3">
             <Leaf className="h-5 w-5 text-primary" />
             <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
@@ -310,7 +336,7 @@ const NewCoursePage = () => {
         </div>
 
         {/* Header / Breadcrumbs - Sticky */}
-        <header className="bg-white border-b border-border sticky top-0 z-10 shrink-0">
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shrink-0">
           <div className="max-w-3xl mx-auto px-6 py-4">
             <nav className="flex items-center text-xs text-muted-foreground mb-2 space-x-2">
               <Link to="/teacher/schedule" className="hover:text-text-primary cursor-pointer transition-colors">
@@ -351,8 +377,8 @@ const NewCoursePage = () => {
                     onClick={() => setCourseType('series')}
                     className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
                       courseType === 'series'
-                        ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
-                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
+                        : 'bg-input-bg hover:bg-surface hover:shadow-md opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -360,16 +386,16 @@ const NewCoursePage = () => {
                         className={`h-10 w-10 rounded-xl flex items-center justify-center ${
                           courseType === 'series'
                             ? 'bg-surface-elevated text-text-primary'
-                            : 'bg-white border border-border text-muted-foreground'
+                            : 'bg-white text-muted-foreground shadow-sm'
                         }`}
                       >
                         <Layers className="h-5 w-5" aria-hidden="true" />
                       </div>
                       <div
-                        className={`h-5 w-5 rounded-full flex items-center justify-center ${
+                        className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all duration-200 ${
                           courseType === 'series'
-                            ? 'bg-text-primary text-white'
-                            : 'border border-border bg-white'
+                            ? 'bg-gray-900 border-gray-900 text-white'
+                            : 'bg-transparent border-gray-200 text-transparent'
                         }`}
                       >
                         {courseType === 'series' && <Check className="h-3 w-3" aria-hidden="true" />}
@@ -398,8 +424,8 @@ const NewCoursePage = () => {
                     onClick={() => setCourseType('single')}
                     className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
                       courseType === 'single'
-                        ? 'bg-surface ring-2 ring-text-secondary border border-transparent shadow-sm'
-                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
+                        : 'bg-input-bg hover:bg-surface hover:shadow-md opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -407,16 +433,16 @@ const NewCoursePage = () => {
                         className={`h-10 w-10 rounded-xl flex items-center justify-center ${
                           courseType === 'single'
                             ? 'bg-surface-elevated text-text-primary'
-                            : 'bg-white border border-border text-muted-foreground'
+                            : 'bg-white text-muted-foreground shadow-sm'
                         }`}
                       >
                         <CalendarDays className="h-5 w-5" aria-hidden="true" />
                       </div>
                       <div
-                        className={`h-5 w-5 rounded-full flex items-center justify-center ${
+                        className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all duration-200 ${
                           courseType === 'single'
-                            ? 'bg-text-primary text-white'
-                            : 'border border-border bg-white'
+                            ? 'bg-gray-900 border-gray-900 text-white'
+                            : 'bg-transparent border-gray-200 text-transparent'
                         }`}
                       >
                         {courseType === 'single' && <Check className="h-3 w-3" aria-hidden="true" />}
@@ -440,7 +466,7 @@ const NewCoursePage = () => {
             </section>
 
             {/* Section 2: Details */}
-            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-text-primary">Detaljer</h2>
                 <p className="text-sm text-muted-foreground">Angi informasjon om kurset.</p>
@@ -488,7 +514,7 @@ const NewCoursePage = () => {
                         onClick={() => setLevel('nybegynner')}
                         className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
                           level === 'nybegynner'
-                            ? 'bg-white text-text-primary shadow-sm'
+                            ? 'bg-white text-text-primary shadow-sm border border-border'
                             : 'text-muted-foreground hover:text-text-primary'
                         }`}
                       >
@@ -499,7 +525,7 @@ const NewCoursePage = () => {
                         onClick={() => setLevel('alle')}
                         className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
                           level === 'alle'
-                            ? 'bg-white text-text-primary shadow-sm'
+                            ? 'bg-white text-text-primary shadow-sm border border-border'
                             : 'text-muted-foreground hover:text-text-primary'
                         }`}
                       >
@@ -510,7 +536,7 @@ const NewCoursePage = () => {
                         onClick={() => setLevel('viderekommen')}
                         className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${
                           level === 'viderekommen'
-                            ? 'bg-white text-text-primary shadow-sm'
+                            ? 'bg-white text-text-primary shadow-sm border border-border'
                             : 'text-muted-foreground hover:text-text-primary'
                         }`}
                       >
@@ -620,7 +646,7 @@ const NewCoursePage = () => {
             </section>
 
             {/* Section 3: Time & Location */}
-            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-border">
+            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-text-primary">Tid & Sted</h2>
                 <p className="text-sm text-muted-foreground">Når og hvor skal dette foregå?</p>
@@ -848,7 +874,7 @@ const NewCoursePage = () => {
 
               {/* Session Schedule Panel - Shows when single course has 2+ days */}
               {courseType === 'single' && parseInt(eventDays) >= 2 && startDate && startTime && (
-                <div className="bg-surface border border-border rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300 mb-5">
+                <div className="bg-surface rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300 mb-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <CalendarClock className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
@@ -864,8 +890,8 @@ const NewCoursePage = () => {
                         key={session.dayNumber}
                         className={`flex items-center gap-4 p-3 rounded-lg ${
                           session.isPrimary
-                            ? 'bg-white/50 border border-transparent text-text-tertiary'
-                            : 'bg-white border border-border shadow-sm hover:border-ring transition-colors'
+                            ? 'bg-white/50 text-text-tertiary'
+                            : 'bg-white shadow-sm hover:shadow-md transition-shadow'
                         }`}
                       >
                         {/* Day label */}
@@ -1078,14 +1104,24 @@ const NewCoursePage = () => {
             )}
             {submitError && (
               <div
-                className="bg-destructive/10 border border-destructive/20 rounded-lg p-3"
+                className="bg-destructive/10 border border-destructive/20 rounded-lg p-4"
                 role="alert"
                 aria-live="polite"
               >
-                <p className="text-sm text-destructive flex items-center justify-center gap-2">
-                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                  {submitError}
-                </p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-sm text-destructive flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <p className="whitespace-pre-line">{submitError}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitError(null)}
+                    className="text-destructive/60 hover:text-destructive transition-colors p-1 -m-1 rounded"
+                    aria-label="Lukk feilmelding"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
             <div className="flex items-center justify-end space-x-4">

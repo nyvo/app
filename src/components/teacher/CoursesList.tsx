@@ -26,7 +26,7 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
   const filteredCourses = timeFilter === 'today' ? courses.slice(0, 2) : courses;
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl border border-border bg-white p-7 shadow-sm ios-ease hover:border-ring hover:shadow-md">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white p-7 shadow-sm ios-ease hover:shadow-md">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-geist text-sm font-semibold text-text-primary">Dine kurs</h3>
         <div className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredCourses.length === 0 ? (
-          <div className="col-span-full border border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center text-center bg-surface/30">
+          <div className="col-span-full rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-gray-50/50">
             <div className="w-12 h-12 bg-white border border-border rounded-xl flex items-center justify-center mb-4 shadow-sm">
               <CalendarPlus className="w-5 h-5 text-text-tertiary" />
             </div>
@@ -66,12 +66,14 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
         ) : (
           filteredCourses.map((course) => (
           <div key={course.id} className="flex items-center group p-1 rounded-xl transition-colors">
-            <div className="w-14 text-sm font-medium text-text-tertiary flex-shrink-0 group-hover:text-muted-foreground transition-colors">
-              {course.time}
-            </div>
+            {course.time && (
+              <div className="w-14 text-sm font-medium text-text-tertiary flex-shrink-0 group-hover:text-muted-foreground transition-colors">
+                {course.time}
+              </div>
+            )}
             <Link
               to={`/teacher/courses/${course.id}`}
-              className="flex-1 min-w-0 rounded-xl border border-border bg-surface/50 p-3.5 transition-all hover:bg-white hover:border-ring hover:shadow-sm cursor-pointer flex justify-between items-center group/card"
+              className="flex-1 min-w-0 rounded-xl bg-gray-50 p-3.5 transition-all hover:bg-white hover:shadow-sm cursor-pointer flex justify-between items-center group/card"
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getCourseColor(course.type)}`}></div>
@@ -91,6 +93,7 @@ export const CoursesList = ({ courses }: CoursesListProps) => {
     </div>
   );
 };
+
 
 
 

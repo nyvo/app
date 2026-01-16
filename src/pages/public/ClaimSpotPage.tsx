@@ -149,6 +149,7 @@ const ClaimSpotPage = () => {
 
       // Redirect to Stripe checkout
       if (data.checkout_url) {
+        toast.info('Går til betaling...');
         window.location.href = data.checkout_url;
       } else {
         throw new Error('Mangler checkout URL');
@@ -208,7 +209,7 @@ const ClaimSpotPage = () => {
         <Header />
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-border bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl bg-white p-8 md:p-12 shadow-sm">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
@@ -321,7 +322,7 @@ const ClaimSpotPage = () => {
             </div>
 
             {/* Right Column: Course Details */}
-            <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
+            <div className="rounded-3xl bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
               {/* Decorative background element */}
               <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
 
@@ -330,7 +331,7 @@ const ClaimSpotPage = () => {
               </h3>
 
               <div className="space-y-5 relative z-10">
-                <div className="pb-5 border-b border-border border-dashed">
+                <div className="pb-5 border-b border-gray-100">
                   <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
                   <span className="block font-semibold text-lg text-text-primary">{claimData.course.title}</span>
                 </div>
@@ -385,10 +386,10 @@ const ClaimSpotPage = () => {
 
 // Header component
 const Header = ({ studioUrl = '/' }: { studioUrl?: string }) => (
-  <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+  <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
       <Link to={studioUrl} className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
           <Leaf className="h-5 w-5" />
         </div>
         <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>

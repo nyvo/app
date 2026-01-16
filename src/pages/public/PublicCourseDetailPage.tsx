@@ -550,10 +550,10 @@ const PublicCourseDetailPage = () => {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
       <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to={backUrl} className="flex items-center gap-3 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -585,10 +585,10 @@ const PublicCourseDetailPage = () => {
 
     return (
       <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -597,7 +597,7 @@ const PublicCourseDetailPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-border bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl bg-white p-8 md:p-12 shadow-sm">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
@@ -613,7 +613,7 @@ const PublicCourseDetailPage = () => {
                 )}
               </p>
 
-              <div className="rounded-xl bg-surface border border-border p-4 mb-8 text-left">
+              <div className="rounded-xl bg-surface p-4 mb-8 text-left">
                 <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-3">Kursdetaljer</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -679,10 +679,10 @@ const PublicCourseDetailPage = () => {
 
     return (
       <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -691,7 +691,7 @@ const PublicCourseDetailPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-border bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl bg-white p-8 md:p-12 shadow-sm">
               {/* Position badge */}
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
                 <span className="text-3xl font-bold text-amber-800">#{waitlistPosition}</span>
@@ -799,10 +799,10 @@ const PublicCourseDetailPage = () => {
       <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden pb-32 lg:pb-0 font-geist">
 
         {/* Public Header */}
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
                 <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
                         <Leaf className="h-5 w-5" />
                     </div>
                     <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -889,7 +889,7 @@ const PublicCourseDetailPage = () => {
                                   </h1>
 
                                   {/* Metadata Row */}
-                                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground border-b border-border pb-6">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-muted-foreground border-b border-gray-100 pb-6">
                                       <div className="flex items-center gap-2">
                                           <Calendar className="h-4 w-4 text-text-tertiary" />
                                           <span>{dateInfo.fullDate}</span>
@@ -917,7 +917,7 @@ const PublicCourseDetailPage = () => {
 
                               {/* Hero Image */}
                               {course.image_url && (
-                                <div className="relative overflow-hidden rounded-3xl border border-border bg-surface-elevated shadow-sm">
+                                <div className="relative overflow-hidden rounded-3xl bg-surface-elevated shadow-sm">
                                     <div className="aspect-[16/7] w-full bg-gradient-to-br from-border to-surface-elevated relative">
                                         <img src={course.image_url} alt={course.title} className="absolute inset-0 h-full w-full object-cover opacity-90" />
                                     </div>
@@ -935,12 +935,12 @@ const PublicCourseDetailPage = () => {
                                   {/* Course tags */}
                                   <div className="flex flex-wrap items-center gap-2">
                                       {course.style && (
-                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary border border-border">
+                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary">
                                             {course.style.name}
                                         </span>
                                       )}
                                       {levelDisplay && (
-                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary border border-border">
+                                        <span className="inline-flex items-center rounded-full bg-surface-elevated px-2.5 py-1 text-xs font-medium text-text-secondary">
                                             Nivå: {levelDisplay}
                                         </span>
                                       )}
@@ -962,7 +962,7 @@ const PublicCourseDetailPage = () => {
                                         ({sessions.length} {isSeries ? 'uker' : 'dager'})
                                       </span>
                                     </h2>
-                                    <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden p-5 space-y-4">
+                                    <div className="rounded-2xl bg-white shadow-sm overflow-hidden p-5 space-y-4">
                                         {/* Schedule header */}
                                         <div className="flex items-center justify-between">
                                             <div>
@@ -1009,7 +1009,7 @@ const PublicCourseDetailPage = () => {
                               {course.location && (
                                 <div className="mb-12">
                                     <h2 className="mb-3 font-geist text-lg font-semibold text-text-primary">Sted & Oppmøte</h2>
-                                    <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
+                                    <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
                                         <div className="flex flex-col md:flex-row">
                                             <div className="bg-pattern-dot flex h-32 w-full items-center justify-center bg-surface md:h-auto md:w-32 shrink-0 border-b md:border-b-0 md:border-r border-border">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-text-primary text-white shadow-lg">
@@ -1057,7 +1057,7 @@ const PublicCourseDetailPage = () => {
                                 )}
 
                                 {/* Attendee 1 (Main Contact) */}
-                                <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+                                <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="mb-5 flex items-center justify-between border-b border-surface-elevated pb-4">
                                         <h2 className="font-geist text-lg font-semibold text-text-primary">Deltaker</h2>
                                     </div>
@@ -1191,7 +1191,7 @@ const PublicCourseDetailPage = () => {
                         <div className="sticky top-28 space-y-4">
 
                             {/* Main Booking Card */}
-                            <div className="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-gray-900/5">
+                            <div className="rounded-3xl bg-white p-6 shadow-md">
 
                                 {step === 1 ? (
                                   <>
@@ -1219,7 +1219,7 @@ const PublicCourseDetailPage = () => {
                                         )}
                                     </div>
 
-                                    <div className="mb-6 space-y-3 rounded-xl bg-surface p-4 border border-border/50">
+                                    <div className="mb-6 space-y-3 rounded-xl bg-surface p-4">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">Dato</span>
                                             <span className="font-medium text-text-primary">{dateInfo.shortDate}</span>
@@ -1321,7 +1321,7 @@ const PublicCourseDetailPage = () => {
                                         </p>
                                     </div>
 
-                                    <div className="rounded-xl bg-surface border border-border p-4">
+                                    <div className="rounded-xl bg-surface p-4">
                                         <div className="flex gap-3">
                                             <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                                             <div className="space-y-0.5">
@@ -1393,9 +1393,9 @@ const PublicCourseDetailPage = () => {
                                     </div>
 
                                     {/* Unified Reservation & Payment Section */}
-                                    <div className="rounded-xl bg-surface border border-border p-4">
+                                    <div className="rounded-xl bg-surface p-4">
                                         {/* Reservation Note */}
-                                        <div className="flex gap-3 mb-4 border-b border-border/60 pb-4">
+                                        <div className="flex gap-3 mb-4 border-b border-gray-100 pb-4">
                                             <Clock className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                                             <div className="space-y-0.5">
                                                 <p className="text-xs font-medium text-text-primary">Vi reserverer plassen din</p>

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { CheckCircle2, Loader2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -30,12 +31,17 @@ const CheckoutSuccessPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
+  const toastShownRef = useRef(false);
 
   useEffect(() => {
     async function fetchSignupDetails() {
       if (!sessionId) {
         // No session ID, just show generic success
+        if (!toastShownRef.current) {
+          toast.success('Betaling bekreftet!');
+          toastShownRef.current = true;
+        }
         setLoading(false);
         return;
       }
@@ -70,12 +76,20 @@ const CheckoutSuccessPage = () => {
 
         if (data && !fetchError) {
           setSignup(data as unknown as SignupDetails);
+          if (!toastShownRef.current) {
+            toast.success('Betaling bekreftet!');
+            toastShownRef.current = true;
+          }
           setLoading(false);
           return;
         }
 
         // If last attempt failed, still show success (payment went through)
         if (attempt === maxRetries) {
+          if (!toastShownRef.current) {
+            toast.success('Betaling bekreftet!');
+            toastShownRef.current = true;
+          }
           setLoading(false);
           return;
         }
@@ -115,10 +129,10 @@ const CheckoutSuccessPage = () => {
   if (error) {
     return (
       <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -154,10 +168,10 @@ const CheckoutSuccessPage = () => {
 
   return (
     <div className="min-h-screen w-full bg-surface font-geist">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/80 bg-surface/90 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to={studioUrl} className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm border border-border text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
               <Leaf className="h-5 w-5" />
             </div>
             <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>
@@ -222,16 +236,16 @@ const CheckoutSuccessPage = () => {
 
             {/* Right Column: Order Details */}
             {signup && (
-              <div className="rounded-3xl border border-border bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
+              <div className="rounded-3xl bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
                 {/* Decorative background element */}
                 <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-                
+
                 <h3 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
                   Kvittering
                 </h3>
-                
+
                 <div className="space-y-5 relative z-10">
-                  <div className="pb-5 border-b border-border border-dashed">
+                  <div className="pb-5 border-b border-gray-100">
                     <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
                     <span className="block font-semibold text-lg text-text-primary">{signup.course.title}</span>
                   </div>

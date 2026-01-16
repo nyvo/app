@@ -1,6 +1,7 @@
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import {
   Infinity,
   Building2,
@@ -8,9 +9,18 @@ import {
   ArrowRight,
   ArrowLeft,
   Loader2,
+  Check,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+
+// Card images
+const CARD_IMAGES = {
+  studio: 'https://images.unsplash.com/photo-1588286840104-8957b019727f?auto=format&fit=crop&w=800&q=80',
+  teacher: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
+};
 
 type UserType = 'studio' | 'teacher';
 
@@ -94,6 +104,14 @@ const SignupPage = () => {
   const handleBack = () => {
     setDirection(-1);
     setStep(1);
+  };
+
+  const handleHeaderBack = () => {
+    if (step === 2) {
+      handleBack();
+    } else {
+      navigate('/');
+    }
   };
 
   // Form handlers
@@ -243,6 +261,9 @@ const SignupPage = () => {
         type: userType
       }));
 
+      // Show success toast
+      toast.success('Konto opprettet!');
+
       // Navigate to dashboard where ProtectedRoute will create the org
       navigate('/teacher', {
         state: { isNewUser: true, accountType: userType, needsOrgCreation: true },
@@ -256,17 +277,31 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex flex-col selection:bg-stone-200 selection:text-stone-900 overflow-x-hidden">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900 overflow-x-hidden">
       {/* Minimal Header */}
-      <header className="w-full pt-8 pb-4 flex justify-center z-50">
+      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
+        <div className="w-24">
+          <Button 
+            variant="outline-soft" 
+            size="sm" 
+            className="text-text-secondary hover:text-text-primary"
+            onClick={handleHeaderBack}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Tilbake
+          </Button>
+        </div>
+
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-stone-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-stone-900">
+          <span className="text-lg font-semibold tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
+
+        <div className="w-24" /> {/* Spacer for centering */}
       </header>
 
       {/* Main Content */}
@@ -286,27 +321,18 @@ const SignupPage = () => {
                 className="w-full flex flex-col items-center"
               >
                 {/* Step 1: Selection */}
-                {/* Back to landing */}
-                <div className="w-full mb-6">
-                  <Link
-                    to="/"
-                    className="text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1.5 text-sm font-medium"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Tilbake
-                  </Link>
-                </div>
 
                 <div className="text-center mb-10 space-y-2 max-w-md mx-auto">
-                  <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+                  <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
                     Hvordan vil du bruke Ease?
                   </h1>
-                  <p className="text-stone-500 text-sm">
+                  <p className="text-text-secondary text-sm">
                     Velg den profilen som passer best for deg.
                   </p>
                 </div>
 
                 <div className="w-full space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Card A: Yogastudio */}
                     <label className="relative cursor-pointer group">
                       <input
@@ -319,44 +345,73 @@ const SignupPage = () => {
                       />
                       <div
                         className={`
-                          h-full p-6 rounded-xl border bg-white/50 flex flex-col transition-all duration-200
+                          relative overflow-hidden rounded-3xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
                           ${
                             userType === 'studio'
-                              ? 'border-stone-900 bg-white shadow-sm ring-1 ring-stone-900'
-                              : 'border-stone-200 hover:border-stone-300'
+                              ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
+                              : 'border-border hover:border-gray-300'
                           }
                         `}
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center text-stone-900 border border-stone-200/50">
-                            <Building2 className="w-5 h-5" />
-                          </div>
-                          <div
+                        {/* Image Section */}
+                        <div className="relative h-40 overflow-hidden bg-surface-elevated">
+                          <img
+                            src={CARD_IMAGES.studio}
+                            alt="Yogastudio"
                             className={`
-                              w-5 h-5 rounded-full border flex items-center justify-center transition-colors
-                              ${
-                                userType === 'studio'
-                                  ? 'bg-stone-900 border-stone-900'
-                                  : 'bg-white border-stone-300'
-                              }
+                              w-full h-full object-cover transition-all duration-500 group-hover:scale-105
+                              ${userType === 'studio' ? 'opacity-100' : 'opacity-70 saturate-50'}
                             `}
-                          >
-                            {userType === 'studio' && (
-                              <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                            )}
+                          />
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+
+                          {/* Selection Marker */}
+                          <div className="absolute top-4 right-4 z-20">
+                            <div
+                              className={`
+                                w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-200
+                                ${
+                                  userType === 'studio'
+                                    ? 'bg-gray-900 border-gray-900 text-white scale-110'
+                                    : 'border-white/80 bg-white/40 backdrop-blur-sm'
+                                }
+                              `}
+                            >
+                              {userType === 'studio' && (
+                                <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <h3 className="font-semibold text-stone-900 mb-2">
-                          Yogastudio
-                        </h3>
-                        <p className="text-sm text-stone-600 leading-relaxed">
-                          For deg som driver et studio. Administrer timeplaner,
-                          lærere, rom og betalinger på ett sted.
-                        </p>
+
+                        {/* Content Section */}
+                        <div className="p-6 flex-grow flex flex-col">
+                          <h3 className="font-semibold text-text-primary mb-1 text-lg">
+                            Yogastudio
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                            Administrer timeplan og klasser for flere lærere på et fast sted.
+                          </p>
+                          <div className="mt-auto space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Felles timeplan og romstyring
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Oppsett for lærere på lønn
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Sentralisert betalingshåndtering
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </label>
 
-                    {/* Card B: Teacher */}
+                    {/* Card B: Selvstendig */}
                     <label className="relative cursor-pointer group">
                       <input
                         type="radio"
@@ -368,52 +423,81 @@ const SignupPage = () => {
                       />
                       <div
                         className={`
-                          h-full p-6 rounded-xl border bg-white/50 flex flex-col transition-all duration-200
+                          relative overflow-hidden rounded-3xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
                           ${
                             userType === 'teacher'
-                              ? 'border-stone-900 bg-white shadow-sm ring-1 ring-stone-900'
-                              : 'border-stone-200 hover:border-stone-300'
+                              ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
+                              : 'border-border hover:border-gray-300'
                           }
                         `}
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center text-stone-900 border border-stone-200/50">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <div
+                        {/* Image Section */}
+                        <div className="relative h-40 overflow-hidden bg-surface-elevated">
+                          <img
+                            src={CARD_IMAGES.teacher}
+                            alt="Selvstendig lærer"
                             className={`
-                              w-5 h-5 rounded-full border flex items-center justify-center transition-colors
-                              ${
-                                userType === 'teacher'
-                                  ? 'bg-stone-900 border-stone-900'
-                                  : 'bg-white border-stone-300'
-                              }
+                              w-full h-full object-cover transition-all duration-500 group-hover:scale-105
+                              ${userType === 'teacher' ? 'opacity-100' : 'opacity-70 saturate-50'}
                             `}
-                          >
-                            {userType === 'teacher' && (
-                              <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                            )}
+                          />
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+
+                          {/* Selection Marker */}
+                          <div className="absolute top-4 right-4 z-20">
+                            <div
+                              className={`
+                                w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-200
+                                ${
+                                  userType === 'teacher'
+                                    ? 'bg-gray-900 border-gray-900 text-white scale-110'
+                                    : 'border-white/80 bg-white/40 backdrop-blur-sm'
+                                }
+                              `}
+                            >
+                              {userType === 'teacher' && (
+                                <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <h3 className="font-semibold text-stone-900 mb-2">
-                          Selvstendig Lærer
-                        </h3>
-                        <p className="text-sm text-stone-600 leading-relaxed">
-                          For deg som underviser. Sett opp dine egne klasser, ta
-                          imot betaling og bygg din egen følgerskare.
-                        </p>
+
+                        {/* Content Section */}
+                        <div className="p-6 flex-grow flex flex-col">
+                          <h3 className="font-semibold text-text-primary mb-1 text-lg">
+                            Selvstendig
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                            For lærere som styrer egne klasser og betalinger med full kontroll.
+                          </p>
+                          <div className="mt-auto space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Full kontroll over egne timer
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Direkte utbetalinger til deg
+                            </div>
+                            <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              Egen kundeoversikt
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </label>
                   </div>
 
                   <div className="flex justify-center pt-4">
-                    <button
+                    <Button
                       onClick={handleContinue}
                       disabled={!userType}
-                      className="w-full md:w-auto min-w-[200px] h-11 bg-stone-900 disabled:bg-stone-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm hover:bg-stone-800"
+                      className="w-full md:w-auto min-w-[200px]"
                     >
                       Fortsett <ArrowRight className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </motion.div>
@@ -430,18 +514,8 @@ const SignupPage = () => {
                 transition={{ duration: 0.5, ease: easing }}
                 className="w-full flex flex-col items-center"
               >
-                {/* Back Button */}
-                <div className="w-full max-w-sm mb-6">
-                  <button
-                    onClick={handleBack}
-                    className="text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1.5 text-sm font-medium"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Tilbake
-                  </button>
-                </div>
-
                 <div className="text-center mb-8 space-y-2 w-full max-w-sm">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 border border-stone-200 text-xs font-medium text-stone-600 mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-secondary mb-2">
                     {userType === 'studio' ? (
                       <Building2 className="w-3 h-3" />
                     ) : (
@@ -449,10 +523,10 @@ const SignupPage = () => {
                     )}
                     {userType === 'studio' ? 'Yogastudio' : 'Lærer'}
                   </div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-stone-900">
+                  <h2 className="text-2xl font-semibold tracking-tight text-text-primary">
                     Opprett din konto
                   </h2>
-                  <p className="text-stone-500 text-sm">
+                  <p className="text-text-secondary text-sm">
                     Fyll ut detaljene for å komme i gang.
                   </p>
                 </div>
@@ -465,11 +539,11 @@ const SignupPage = () => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="name"
-                      className="block text-xs font-medium text-stone-700"
+                      className="block text-xs font-medium text-text-secondary"
                     >
                       Fullt Navn
                     </label>
-                    <input
+                    <Input
                       type="text"
                       id="name"
                       value={formData.fullName}
@@ -478,18 +552,16 @@ const SignupPage = () => {
                       }
                       onBlur={() => handleBlur('fullName')}
                       className={`
-                        w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                        transition-all duration-150 outline-none
                         ${
                           touched.fullName && errors.fullName
-                            ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                            : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                            ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                            : ''
                         }
                       `}
                       placeholder="Ola Nordmann"
                     />
                     {touched.fullName && errors.fullName && (
-                      <p className="text-xs text-red-500">{errors.fullName}</p>
+                      <p className="text-xs text-destructive">{errors.fullName}</p>
                     )}
                   </div>
 
@@ -497,11 +569,11 @@ const SignupPage = () => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="email"
-                      className="block text-xs font-medium text-stone-700"
+                      className="block text-xs font-medium text-text-secondary"
                     >
                       E-post
                     </label>
-                    <input
+                    <Input
                       type="email"
                       id="email"
                       value={formData.email}
@@ -510,18 +582,16 @@ const SignupPage = () => {
                       }
                       onBlur={() => handleBlur('email')}
                       className={`
-                        w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                        transition-all duration-150 outline-none
                         ${
                           touched.email && errors.email
-                            ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                            : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                            ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                            : ''
                         }
                       `}
                       placeholder="navn@bedrift.no"
                     />
                     {touched.email && errors.email && (
-                      <p className="text-xs text-red-500">{errors.email}</p>
+                      <p className="text-xs text-destructive">{errors.email}</p>
                     )}
                   </div>
 
@@ -529,11 +599,11 @@ const SignupPage = () => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="password"
-                      className="block text-xs font-medium text-stone-700"
+                      className="block text-xs font-medium text-text-secondary"
                     >
                       Passord
                     </label>
-                    <input
+                    <Input
                       type="password"
                       id="password"
                       value={formData.password}
@@ -542,18 +612,16 @@ const SignupPage = () => {
                       }
                       onBlur={() => handleBlur('password')}
                       className={`
-                        w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                        transition-all duration-150 outline-none
                         ${
                           touched.password && errors.password
-                            ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                            : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                            ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                            : ''
                         }
                       `}
                       placeholder="••••••••"
                     />
                     {touched.password && errors.password && (
-                      <p className="text-xs text-red-500">{errors.password}</p>
+                      <p className="text-xs text-destructive">{errors.password}</p>
                     )}
                   </div>
 
@@ -561,11 +629,11 @@ const SignupPage = () => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor="organizationName"
-                      className="block text-xs font-medium text-stone-700"
+                      className="block text-xs font-medium text-text-secondary"
                     >
                       {userType === 'studio' ? 'Studionavn' : 'Bedriftsnavn'}
                     </label>
-                    <input
+                    <Input
                       type="text"
                       id="organizationName"
                       value={formData.organizationName}
@@ -574,32 +642,30 @@ const SignupPage = () => {
                       }
                       onBlur={() => handleBlur('organizationName')}
                       className={`
-                        w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                        transition-all duration-150 outline-none
                         ${
                           touched.organizationName && errors.organizationName
-                            ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                            : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                            ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                            : ''
                         }
                       `}
                       placeholder={userType === 'studio' ? 'Mitt Yogastudio' : 'Ola Nordmann Yoga'}
                     />
                     {touched.organizationName && errors.organizationName && (
-                      <p className="text-xs text-red-500">{errors.organizationName}</p>
+                      <p className="text-xs text-destructive">{errors.organizationName}</p>
                     )}
                   </div>
 
                   {/* General Error */}
                   {errors.general && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                      <p className="text-xs text-red-600">{errors.general}</p>
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <p className="text-xs text-destructive">{errors.general}</p>
                     </div>
                   )}
 
-                  <button
+                  <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-11 mt-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm"
+                    className="w-full h-11 mt-2"
                   >
                     {isSubmitting ? (
                       <>
@@ -609,11 +675,11 @@ const SignupPage = () => {
                     ) : (
                       'Opprett Konto'
                     )}
-                  </button>
+                  </Button>
 
-                  <p className="text-center text-xs text-stone-400 pt-2">
+                  <p className="text-center text-xs text-text-tertiary pt-2">
                     Ved å klikke opprett konto godtar du våre{' '}
-                    <a href="#" className="underline hover:text-stone-900">
+                    <a href="#" className="underline hover:text-text-primary">
                       vilkår
                     </a>
                     .
@@ -626,12 +692,12 @@ const SignupPage = () => {
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-stone-200/50">
-        <p className="text-xs text-stone-400">
+      <footer className="py-6 text-center border-t border-border bg-white">
+        <p className="text-xs text-text-tertiary">
           Har du allerede en konto?{' '}
           <Link
             to="/login"
-            className="text-stone-900 font-medium hover:underline"
+            className="text-text-primary font-medium hover:underline"
           >
             Logg inn
           </Link>

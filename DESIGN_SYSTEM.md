@@ -96,6 +96,21 @@ className="bg-gradient-to-br from-gray-800 to-gray-900"
 background: var(--gradient-dark-card);
 ```
 
+### Selection Cards
+Use for mutually exclusive choices (e.g., account type, plan selection).
+
+```tsx
+// Selected state
+className="relative h-full p-6 rounded-xl border border-gray-400 bg-surface-elevated flex flex-col transition-all duration-200 shadow-sm ring-2 ring-gray-200"
+
+// Unselected state
+className="relative h-full p-6 rounded-xl border border-border bg-white hover:border-gray-300 flex flex-col transition-all duration-200"
+```
+
+> **Radio Indicator**: Use a custom indicator.
+> - Selected: `bg-gray-900 border-gray-900 text-white` circle with check icon.
+> - Unselected: `bg-transparent border-gray-200` transparent circle.
+
 ---
 
 ## Color Palette

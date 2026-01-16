@@ -2,6 +2,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Infinity, ArrowLeft, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface FormData {
@@ -128,17 +130,28 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#FAF9F6] text-stone-900 font-sans antialiased flex flex-col selection:bg-stone-200 selection:text-stone-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
       {/* Minimal Header */}
-      <header className="w-full pt-8 pb-4 flex justify-center z-50">
+      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
+        <div className="w-24">
+          <Button variant="outline-soft" size="sm" className="text-text-secondary hover:text-text-primary" asChild>
+            <Link to="/">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Tilbake
+            </Link>
+          </Button>
+        </div>
+        
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-stone-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-stone-900">
+          <span className="text-lg font-semibold tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
+
+        <div className="w-24" /> {/* Spacer for centering */}
       </header>
 
       {/* Main Content */}
@@ -149,21 +162,11 @@ const LoginPage = () => {
           transition={{ duration: 0.5, ease: easing }}
           className="w-full flex flex-col items-center"
         >
-          {/* Back to landing */}
-          <div className="w-full mb-6">
-            <Link
-              to="/"
-              className="text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1.5 text-sm font-medium"
-            >
-              <ArrowLeft className="w-4 h-4" /> Tilbake
-            </Link>
-          </div>
-
           <div className="text-center mb-8 space-y-2 w-full">
-            <h1 className="text-2xl font-semibold tracking-tight text-stone-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
               Velkommen tilbake
             </h1>
-            <p className="text-stone-500 text-sm">
+            <p className="text-text-secondary text-sm">
               Logg inn for å fortsette til dashboardet.
             </p>
           </div>
@@ -173,29 +176,27 @@ const LoginPage = () => {
             <div className="space-y-1.5">
               <label
                 htmlFor="email"
-                className="block text-xs font-medium text-stone-700"
+                className="block text-xs font-medium text-text-secondary"
               >
                 E-post
               </label>
-              <input
+              <Input
                 type="email"
                 id="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
                 className={`
-                  w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                  transition-all duration-150 outline-none
                   ${
                     touched.email && errors.email
-                      ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                      : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                      ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                      : ''
                   }
                 `}
                 placeholder="navn@bedrift.no"
               />
               {touched.email && errors.email && (
-                <p className="text-xs text-red-500">{errors.email}</p>
+                <p className="text-xs text-destructive">{errors.email}</p>
               )}
             </div>
 
@@ -204,50 +205,56 @@ const LoginPage = () => {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-xs font-medium text-stone-700"
+                  className="block text-xs font-medium text-text-secondary"
                 >
                   Passord
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-stone-500 hover:text-stone-900 transition-colors"
+                  className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
                 >
                   Glemt passord?
                 </Link>
               </div>
-              <input
+              <Input
                 type="password"
                 id="password"
                 value={formData.password}
                 onChange={(e) => handleInputChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
                 className={`
-                  w-full h-10 px-3 rounded-lg border bg-white text-sm text-stone-900 placeholder:text-stone-400
-                  transition-all duration-150 outline-none
                   ${
                     touched.password && errors.password
-                      ? 'border-red-300 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                      : 'border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900'
+                      ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
+                      : ''
                   }
                 `}
                 placeholder="••••••••"
               />
               {touched.password && errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
+                <p className="text-xs text-destructive">{errors.password}</p>
               )}
             </div>
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-xs text-red-600">{errors.general}</p>
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-xs text-destructive">{errors.general}</p>
+                {errors.general === 'Feil e-post eller passord' && (
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-destructive underline hover:text-destructive/80 mt-1.5 inline-block"
+                  >
+                    Tilbakestill passord
+                  </Link>
+                )}
               </div>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-11 mt-2 bg-stone-900 hover:bg-stone-800 disabled:bg-stone-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="w-full h-11 mt-2"
             >
               {isSubmitting ? (
                 <>
@@ -257,18 +264,18 @@ const LoginPage = () => {
               ) : (
                 'Logg inn'
               )}
-            </button>
+            </Button>
           </form>
         </motion.div>
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-stone-200/50">
-        <p className="text-xs text-stone-400">
+      <footer className="py-6 text-center border-t border-border bg-white">
+        <p className="text-xs text-text-tertiary">
           Har du ikke en konto?{' '}
           <Link
             to="/signup"
-            className="text-stone-900 font-medium hover:underline"
+            className="text-text-primary font-medium hover:underline"
           >
             Opprett konto
           </Link>

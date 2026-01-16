@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Leaf, Menu, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Leaf, Menu, Loader2, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
@@ -16,12 +16,14 @@ import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, fetchUpcomingSession, type CourseWithStyle } from '@/services/courses';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
+import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
 import type {
   Course as DashboardCourse,
   CourseType as DashboardCourseType,
   UpcomingClass,
   Registration,
   SignupStatus,
+  Message as DashboardMessage,
 } from '@/types/dashboard';
 
 // Map database course to dashboard Course format
@@ -64,6 +66,24 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
 }
 
+// Map conversation to Dashboard Message format
+function mapConversationToMessage(conversation: ConversationWithDetails): DashboardMessage {
+  const participantName = conversation.participant?.name || 'Ukjent';
+  const lastMessage = conversation.last_message;
+  const timestamp = formatRelativeTime(conversation.updated_at);
+
+  return {
+    id: conversation.id,
+    sender: {
+      name: participantName,
+      avatar: conversation.participant?.avatar_url || '',
+    },
+    content: lastMessage?.content || 'Ingen meldinger',
+    timestamp,
+    isOnline: false, // We don't track online status yet
+  };
+}
+
 // Map signup to Registration format
 function mapSignupToRegistration(signup: SignupWithDetails): Registration {
   const participantName = signup.participant_name || signup.profile?.name || 'Ukjent';
@@ -97,8 +117,28 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
 // Calculate "starts in" text
 function calculateStartsIn(sessionDate: string, startTime: string): string {
   const now = new Date();
-  const [hours, minutes] = startTime.split(':').map(Number);
+
+  // Validate time string format
+  const timeParts = startTime?.split(':');
+  if (!timeParts || timeParts.length < 2) {
+    return 'Tid ikke angitt';
+  }
+
+  const hours = Number(timeParts[0]);
+  const minutes = Number(timeParts[1]);
+
+  // Validate parsed numbers
+  if (isNaN(hours) || isNaN(minutes)) {
+    return 'Ugyldig tid';
+  }
+
   const sessionDateTime = new Date(sessionDate);
+
+  // Validate date
+  if (isNaN(sessionDateTime.getTime())) {
+    return 'Ugyldig dato';
+  }
+
   sessionDateTime.setHours(hours, minutes, 0, 0);
 
   const diffMs = sessionDateTime.getTime() - now.getTime();
@@ -116,6 +156,12 @@ function calculateStartsIn(sessionDate: string, startTime: string): string {
 // Format session date for display
 function formatSessionDate(sessionDate: string): string {
   const date = new Date(sessionDate);
+
+  // Validate date
+  if (isNaN(date.getTime())) {
+    return 'Ugyldig dato';
+  }
+
   return date.toLocaleDateString('nb-NO', {
     weekday: 'short',
     day: 'numeric',
@@ -129,12 +175,17 @@ const TeacherDashboard = () => {
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[]>([]);
   const [upcomingClass, setUpcomingClass] = useState<UpcomingClass | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [messages, setMessages] = useState<DashboardMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasCourses, setHasCourses] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
   // Fetch all dashboard data
   useEffect(() => {
+    // Track if this effect is still active (for race condition prevention)
+    let isActive = true;
+
     async function loadDashboardData() {
       if (!currentOrganization?.id) {
         setIsLoading(false);
@@ -145,14 +196,25 @@ const TeacherDashboard = () => {
       if (!hasLoadedRef.current) {
         setIsLoading(true);
       }
+      setLoadError(null);
 
       try {
         // Fetch all data in parallel
-        const [coursesResult, upcomingResult, signupsResult] = await Promise.all([
+        const [coursesResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
           fetchCourses(currentOrganization.id),
           fetchUpcomingSession(currentOrganization.id),
           fetchRecentSignups(currentOrganization.id, 4),
+          fetchRecentConversations(currentOrganization.id, 4),
         ]);
+
+        // Check if component is still active (org hasn't changed)
+        if (!isActive) return;
+
+        // Check for critical errors
+        if (coursesResult.error) {
+          console.error('Failed to fetch courses:', coursesResult.error);
+          setLoadError('Kunne ikke laste kurs');
+        }
 
         // Process courses
         if (coursesResult.data && coursesResult.data.length > 0) {
@@ -164,6 +226,7 @@ const TeacherDashboard = () => {
           setDashboardCourses(activeCourses);
         } else {
           setHasCourses(false);
+          setDashboardCourses([]);
         }
 
         // Process upcoming session
@@ -172,7 +235,9 @@ const TeacherDashboard = () => {
 
           // Calculate end time (session duration or default 60 min)
           const duration = course.duration || 60;
-          const [startHours, startMins] = session.start_time.split(':').map(Number);
+          const timeParts = session.start_time?.split(':');
+          const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
+          const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
           const endDate = new Date();
           endDate.setHours(startHours, startMins + duration, 0, 0);
           const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
@@ -196,14 +261,35 @@ const TeacherDashboard = () => {
         // Process signups
         if (signupsResult.data) {
           setRegistrations(signupsResult.data.map(mapSignupToRegistration));
+        } else {
+          setRegistrations([]);
+        }
+
+        // Process messages
+        if (messagesResult.data) {
+          setMessages(messagesResult.data.map(mapConversationToMessage));
+        } else {
+          setMessages([]);
+        }
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        if (isActive) {
+          setLoadError('En feil oppstod ved lasting av data');
         }
       } finally {
-        setIsLoading(false);
-        hasLoadedRef.current = true;
+        if (isActive) {
+          setIsLoading(false);
+          hasLoadedRef.current = true;
+        }
       }
     }
 
     loadDashboardData();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isActive = false;
+    };
   }, [currentOrganization?.id]);
 
   // Get user's first name for greeting
@@ -257,6 +343,22 @@ const TeacherDashboard = () => {
                 <div className="flex items-center justify-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
                 </div>
+              ) : loadError ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
+                    <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
+                  </div>
+                  <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste dashboard</h3>
+                  <p className="text-xs text-muted-foreground max-w-xs mb-4">{loadError}</p>
+                  <Button
+                    variant="outline-soft"
+                    size="compact"
+                    onClick={() => window.location.reload()}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Prøv igjen
+                  </Button>
+                </div>
               ) : (showEmptyState || !hasCourses) ? (
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -305,7 +407,7 @@ const TeacherDashboard = () => {
                   </div>
 
                   {/* Messages Card */}
-                  <MessagesList messages={[]} />
+                  <MessagesList messages={messages} />
 
                   {/* Courses Card */}
                   <CoursesList courses={[]} />
@@ -317,7 +419,7 @@ const TeacherDashboard = () => {
                 // Normal dashboard with data
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   <UpcomingClassCard classData={upcomingClass} />
-                  <MessagesList messages={[]} />
+                  <MessagesList messages={messages} />
                   <CoursesList courses={dashboardCourses} />
                   <RegistrationsList registrations={registrations} />
                 </div>
