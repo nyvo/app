@@ -1,228 +1,28 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Plus,
-  MoreHorizontal,
-  MapPin,
-  Users,
   Leaf,
   Menu,
   Calendar,
-  Loader2,
-  ExternalLink,
-  Copy,
-  Share2
+  Archive,
 } from 'lucide-react';
+import { ErrorState } from '@/components/ui/error-state';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { StatusBadge } from '@/components/ui/status-badge';
-import type { CourseStatus } from '@/components/ui/status-badge';
+import { CourseSection, CourseSectionSkeleton, ArchiveLink } from '@/components/teacher/CourseSection';
+import { CoursePreviewCard } from '@/components/teacher/CoursePreviewCard';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { toast } from 'sonner';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
 import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, type CourseWithStyle } from '@/services/courses';
 import { supabase } from '@/lib/supabase';
 import type { DetailedCourse } from '@/data/mockData';
-
-const courseTypeLabels: Record<string, string> = {
-  kursrekke: 'Kursrekke',
-  enkeltkurs: 'Enkeltkurs',
-};
-
-// Format date range for display (e.g., "17. jan – 7. feb 2025")
-function formatDateRange(startDate?: string, endDate?: string): string | null {
-  if (!startDate) return null;
-
-  const start = new Date(startDate);
-
-  // Validate start date
-  if (isNaN(start.getTime())) return null;
-
-  const end = endDate ? new Date(endDate) : null;
-
-  // Validate end date if provided
-  if (end && isNaN(end.getTime())) return null;
-
-  // Validate end is not before start
-  if (end && end.getTime() < start.getTime()) return null;
-
-  const formatDay = (date: Date) => date.getDate();
-  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
-  const formatYear = (date: Date) => date.getFullYear();
-
-  if (!end) {
-    // Single date - show full format
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
-  }
-
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = sameYear && start.getMonth() === end.getMonth();
-  const sameDay = sameMonth && start.getDate() === end.getDate();
-
-  // Same day - just show single date
-  if (sameDay) {
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
-  }
-
-  if (sameMonth) {
-    // Same month: "17. – 28. jan 2025"
-    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else if (sameYear) {
-    // Same year: "17. jan – 7. feb 2025"
-    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else {
-    // Different years: "17. des 2024 – 7. jan 2025"
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  }
-}
-
-const CourseCard = ({ course, organizationSlug }: { course: DetailedCourse; organizationSlug?: string }) => {
-  const navigate = useNavigate();
-
-  const handleCopyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = `${window.location.origin}/studio/${organizationSlug}/${course.id}`;
-    navigator.clipboard.writeText(url);
-    toast.success('Lenke kopiert');
-  };
-
-  const handleOpenPublicPage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    window.open(`/studio/${organizationSlug}/${course.id}`, '_blank');
-  };
-
-  const progressPercentage = course.maxParticipants > 0 
-    ? Math.min((course.participants / course.maxParticipants) * 100, 100) 
-    : 0;
-
-  return (
-    <div 
-      className="group relative flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer h-full"
-      onClick={() => navigate(`/teacher/courses/${course.id}`)}
-    >
-      {/* Visual Header */}
-      <div className="h-32 w-full bg-surface-elevated relative overflow-hidden">
-        {course.imageUrl ? (
-          <img 
-            src={course.imageUrl} 
-            alt={course.title} 
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
-            <span className="text-primary/30 text-sm font-medium">
-              {course.courseType === 'kursrekke' ? 'Kursrekke' : 'Enkeltkurs'}
-            </span>
-          </div>
-        )}
-        <div className="absolute top-3 right-3">
-          <StatusBadge 
-            status={course.status as CourseStatus} 
-            size="sm" 
-            className="shadow-sm backdrop-blur-md bg-white/90"
-          />
-        </div>
-        <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center rounded-md bg-white/90 backdrop-blur-md px-2 py-1 text-xs font-medium text-text-secondary shadow-sm ring-1 ring-inset ring-gray-200/50">
-            {courseTypeLabels[course.courseType]}
-          </span>
-        </div>
-      </div>
-
-      {/* Content Body */}
-      <div className="flex flex-col flex-1 p-4 gap-3">
-        <div>
-          <h3 className="font-semibold text-text-primary line-clamp-1 group-hover:text-primary transition-colors text-base">
-            {course.title}
-          </h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1.5">
-            <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">{course.location}</span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2 text-xs text-text-secondary">
-          <Calendar className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-          <div className="flex flex-col gap-0.5">
-            <span className="line-clamp-1">{course.timeSchedule}</span>
-            {formatDateRange(course.startDate, course.endDate) && (
-              <span className="text-muted-foreground">{formatDateRange(course.startDate, course.endDate)}</span>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-auto pt-2 space-y-2">
-          {/* Participants Progress */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground flex items-center gap-1.5">
-                <Users className="h-3 w-3" />
-                Deltakere
-              </span>
-              <span className="font-medium text-text-primary">
-                {course.participants} <span className="text-muted-foreground">/ {course.maxParticipants}</span>
-              </span>
-            </div>
-            <div className="h-1.5 w-full bg-surface-elevated rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary rounded-full transition-all duration-500" 
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer Actions */}
-      <div className="flex items-center justify-between p-4 pt-0 border-t border-transparent group-hover:border-surface-elevated transition-colors mt-1">
-        <span className="text-sm font-medium text-text-primary pt-3">{course.price}</span>
-        
-        <div className="pt-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button 
-                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate(`/teacher/courses/${course.id}`)}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Se kurs
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/teacher/courses/${course.id}#deltakere`)}>
-                <Users className="h-4 w-4 mr-2" />
-                Se deltakere
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleCopyLink}>
-                <Copy className="h-4 w-4 mr-2" />
-                Kopier lenke
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleOpenPublicPage}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Åpne offentlig side
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Helper to map database course to DetailedCourse format
 function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number): DetailedCourse {
@@ -277,89 +77,148 @@ function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number
   };
 }
 
+/**
+ * Sorting logic for courses based on time relevance.
+ *
+ * Primary sort: Status priority (active > upcoming > rest)
+ * Secondary sort: Start date (soonest first)
+ * Tertiary sort: Series progression or alphabetical
+ *
+ * Note: Urgency is shown visually but doesn't affect sort order.
+ * This keeps the list predictable while still highlighting issues.
+ */
+function sortCourses(courses: DetailedCourse[], type: 'kursrekke' | 'enkeltkurs'): DetailedCourse[] {
+  return [...courses].sort((a, b) => {
+    // Status priority: active courses first, then upcoming
+    const statusOrder: Record<string, number> = {
+      active: 0,
+      upcoming: 1,
+      draft: 2,
+      completed: 3,
+      cancelled: 4,
+    };
+    const statusDiff = (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
+    if (statusDiff !== 0) return statusDiff;
+
+    // Then by start date (soonest first)
+    if (a.startDate && b.startDate) {
+      const dateA = new Date(a.startDate);
+      const dateB = new Date(b.startDate);
+      const dateDiff = dateA.getTime() - dateB.getTime();
+      if (dateDiff !== 0) return dateDiff;
+    }
+
+    // For active series: earlier in progression is higher priority
+    if (type === 'kursrekke' && a.status === 'active' && b.status === 'active') {
+      const progressA = a.currentWeek && a.totalWeeks ? a.currentWeek / a.totalWeeks : 1;
+      const progressB = b.currentWeek && b.totalWeeks ? b.currentWeek / b.totalWeeks : 1;
+      if (progressA !== progressB) return progressA - progressB;
+    }
+
+    // Alphabetical as tiebreaker
+    return a.title.localeCompare(b.title, 'nb-NO');
+  });
+}
+
 const CoursesPage = () => {
   const { showEmptyState } = useEmptyState();
   const { currentOrganization } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
   const [courses, setCourses] = useState<DetailedCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
 
   // Fetch courses from Supabase
-  useEffect(() => {
-    async function loadCourses() {
-      if (!currentOrganization?.id) {
-        setIsLoading(false);
+  const loadCourses = useCallback(async () => {
+    if (!currentOrganization?.id) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data: coursesData, error: fetchError } = await fetchCourses(currentOrganization.id);
+
+      if (fetchError) {
+        setError('Kunne ikke hente kurs. Sjekk nettilkoblingen.');
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const { data: coursesData, error: fetchError } = await fetchCourses(currentOrganization.id);
-
-        if (fetchError) {
-          setError('Kunne ikke hente kurs');
-          return;
-        }
-
-        if (!coursesData || coursesData.length === 0) {
-          setCourses([]);
-          return;
-        }
-
-        // Fetch signups count for each course
-        const courseIds = coursesData.map(c => c.id);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: signupsData } = await (supabase
-          .from('signups') as any)
-          .select('course_id')
-          .in('course_id', courseIds)
-          .eq('status', 'confirmed');
-
-        // Count signups per course
-        const signupsCounts: Record<string, number> = {};
-        (signupsData as { course_id: string }[] | null)?.forEach(s => {
-          signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1;
-        });
-
-        // Map to DetailedCourse format
-        const mappedCourses = coursesData.map(course =>
-          mapCourseToDetailedCourse(course, signupsCounts[course.id] || 0)
-        );
-
-        setCourses(mappedCourses);
-      } catch {
-        setError('En feil oppstod');
-      } finally {
-        setIsLoading(false);
+      if (!coursesData || coursesData.length === 0) {
+        setCourses([]);
+        return;
       }
-    }
 
-    loadCourses();
+      // Fetch signups count for each course
+      const courseIds = coursesData.map(c => c.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: signupsData } = await (supabase
+        .from('signups') as any)
+        .select('course_id')
+        .in('course_id', courseIds)
+        .eq('status', 'confirmed');
+
+      // Count signups per course
+      const signupsCounts: Record<string, number> = {};
+      (signupsData as { course_id: string }[] | null)?.forEach(s => {
+        signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1;
+      });
+
+      // Map to DetailedCourse format
+      const mappedCourses = coursesData.map(course =>
+        mapCourseToDetailedCourse(course, signupsCounts[course.id] || 0)
+      );
+
+      setCourses(mappedCourses);
+    } catch {
+      setError('Kunne ikke laste inn kurs.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [currentOrganization?.id]);
 
-  const filteredCourses = useMemo(() => {
-    let result = courses;
+  // Initial load
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
+  // Filter and group courses
+  const { kursrekker, arrangementer, completedCourses, searchResults } = useMemo(() => {
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(course =>
+      const filtered = courses.filter(course =>
         course.title.toLowerCase().includes(query) ||
         course.location.toLowerCase().includes(query)
       );
+
+      // Return flat search results (no grouping)
+      return {
+        kursrekker: [],
+        arrangementer: [],
+        completedCourses: [],
+        searchResults: filtered,
+      };
     }
 
-    // Filter by status tabs
-    if (activeFilter !== 'all') {
-      result = result.filter(course => course.status === activeFilter);
-    }
+    // Smart default: show active and upcoming courses, archive completed
+    const activeCourses = courses.filter(c => c.status !== 'completed');
+    const completed = courses.filter(c => c.status === 'completed');
 
-    return result;
-  }, [courses, searchQuery, activeFilter]);
+    // Group by course type
+    const series = activeCourses.filter(c => c.courseType === 'kursrekke');
+    const events = activeCourses.filter(c => c.courseType === 'enkeltkurs');
+
+    return {
+      kursrekker: sortCourses(series, 'kursrekke'),
+      arrangementer: sortCourses(events, 'enkeltkurs'),
+      completedCourses: completed,
+      searchResults: [],
+    };
+  }, [courses, searchQuery]);
 
   // Show empty state if no courses after loading (or dev toggle active)
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
@@ -373,7 +232,7 @@ const CoursesPage = () => {
         <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
             <div className="flex items-center gap-3">
                  <Leaf className="h-5 w-5 text-primary" />
-                 <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
+                 <span className="font-geist text-base font-medium text-text-primary">Ease</span>
             </div>
             <SidebarTrigger>
                 <Menu className="h-6 w-6 text-muted-foreground" />
@@ -391,7 +250,19 @@ const CoursesPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine Kurs</h1>
-                    <p className="text-sm text-muted-foreground mt-1">Administrer dine aktive kursrekker, workshops og arrangementer.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {courses.length === 0
+                        ? 'Kom i gang ved å opprette ditt første kurs.'
+                        : (() => {
+                            const activeCount = courses.filter(c => c.status === 'active').length;
+                            const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
+                            const parts = [];
+                            if (activeCount > 0) parts.push(`${activeCount} aktive`);
+                            if (upcomingCount > 0) parts.push(`${upcomingCount} kommende`);
+                            return parts.length > 0 ? parts.join(', ') : 'Ingen aktive kurs';
+                          })()
+                      }
+                    </p>
                 </div>
                 {!showCoursesEmptyState && (
                   <div className="flex items-center gap-3">
@@ -405,82 +276,134 @@ const CoursesPage = () => {
                 )}
             </div>
 
-            {/* Filters Bar */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
-                {/* Search */}
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Søk etter kurs..."
-                  aria-label="Søk etter kurs"
-                  className="flex-1 max-w-md"
-                />
-
-                {/* Filters */}
-                <div className="flex gap-2 overflow-x-auto py-1 no-scrollbar">
-                    <button
-                      onClick={() => setActiveFilter('all')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'all' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
-                    >
-                        Alle
-                    </button>
-                    <button
-                      onClick={() => setActiveFilter('active')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'active' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
-                    >
-                        Aktive
-                    </button>
-                    <button
-                      onClick={() => setActiveFilter('upcoming')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'upcoming' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
-                    >
-                        Kommende
-                    </button>
-                    <button
-                      onClick={() => setActiveFilter('completed')}
-                      className={`shrink-0 h-10 rounded-lg px-3 py-2 text-xs font-medium border ios-ease cursor-pointer ${activeFilter === 'completed' ? 'bg-white text-text-primary shadow-sm border-border' : 'bg-transparent text-text-secondary border-transparent hover:bg-surface-elevated hover:text-text-primary'}`}
-                    >
-                        Fullførte
-                    </button>
-                </div>
-            </div>
+            {/* Search */}
+            {!showCoursesEmptyState && (
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Søk etter kurs..."
+                aria-label="Søk etter kurs"
+                className="max-w-md"
+              />
+            )}
         </motion.div>
 
         {/* Course List / Empty State */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
             {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
+              <div
+                className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8"
+                role="status"
+                aria-live="polite"
+                aria-label="Laster kurs..."
+              >
+                <span className="sr-only">Henter kurs...</span>
+                <CourseSectionSkeleton count={3} />
+                <CourseSectionSkeleton count={2} />
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white shadow-sm">
-                <p className="text-sm text-destructive">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-2 text-sm text-text-secondary hover:text-text-primary underline"
-                >
-                  Prøv igjen
-                </button>
-              </div>
+              <ErrorState
+                title="Kunne ikke laste kurs"
+                message={error}
+                onRetry={loadCourses}
+                variant="card"
+              />
             ) : showCoursesEmptyState ? (
               <CoursesEmptyState />
-            ) : filteredCourses.length === 0 ? (
-               <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white shadow-sm">
-                  <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
-                     <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
-                  </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary">Ingen kurs funnet</h3>
-                  <p className="mt-1 text-xs text-muted-foreground max-w-xs">
-                     Det ser ut til at du ikke har noen kurs her ennå. Opprett et nytt kurs for å komme i gang.
-                  </p>
-               </div>
-            ) : (
+            ) : searchQuery ? (
+              // Search results - flat list
               <div className="h-full overflow-y-auto custom-scrollbar pb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} organizationSlug={currentOrganization?.slug} />
-                  ))}
-                </div>
+                {searchResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-center rounded-3xl bg-white border border-gray-200">
+                    <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
+                       <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
+                    </div>
+                    <h3 className="font-geist text-sm font-medium text-text-primary">Ingen kurs funnet</h3>
+                    <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+                       Prøv et annet søkeord eller fjern søket for å se alle kurs.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {searchResults.length} resultat{searchResults.length !== 1 ? 'er' : ''} for «{searchQuery}»
+                    </p>
+                    {searchResults.map((course) => (
+                      <CoursePreviewCard
+                        key={course.id}
+                        course={course}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Grouped view
+              <div className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8">
+                {/* Kursrekker (Series) */}
+                <CourseSection
+                  title="Kursrekker"
+                  subtitle="Faste ukentlige kurs"
+                  courses={kursrekker}
+                  maxVisible={5}
+                />
+
+                {/* Arrangementer (Events) */}
+                <CourseSection
+                  title="Arrangementer"
+                  subtitle="Workshops og enkeltarrangementer"
+                  courses={arrangementer}
+                  maxVisible={5}
+                />
+
+                {/* Archive section */}
+                {completedCourses.length > 0 && !showArchive && (
+                  <ArchiveLink
+                    count={completedCourses.length}
+                    onClick={() => setShowArchive(true)}
+                  />
+                )}
+
+                {/* Expanded archive */}
+                {showArchive && completedCourses.length > 0 && (
+                  <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-sm font-medium text-text-primary uppercase tracking-wide flex items-center gap-2">
+                          <Archive className="h-4 w-4" />
+                          Arkiv
+                        </h2>
+                        <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
+                          {completedCourses.length}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowArchive(false)}
+                        className="text-xs text-muted-foreground hover:text-text-primary transition-colors"
+                      >
+                        Skjul arkiv
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {completedCourses.map((course) => (
+                        <CoursePreviewCard
+                          key={course.id}
+                          course={course}
+                          showUrgency={false}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Empty state when both sections are empty but archive exists */}
+                {kursrekker.length === 0 && arrangementer.length === 0 && completedCourses.length > 0 && !showArchive && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Ingen aktive eller kommende kurs. Se arkivet for fullførte kurs.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
         </div>

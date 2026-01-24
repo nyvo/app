@@ -35,6 +35,13 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     label: 'Avbestilt',
     icon: 'x-circle',
   },
+  course_cancelled: {
+    bg: 'bg-status-cancelled-bg',
+    text: 'text-status-cancelled-text',
+    dot: '',
+    label: 'Kurs avlyst',
+    icon: 'x-circle',
+  },
   // Course statuses - Keep original feedback colors
   active: {
     bg: 'bg-status-confirmed-bg',
@@ -46,7 +53,7 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     bg: 'bg-status-waitlist-bg',
     text: 'text-status-waitlist-text',
     dot: 'bg-status-waitlist-text',
-    label: 'Planlagt',
+    label: 'Kommende',
   },
   completed: {
     bg: 'bg-surface-elevated',
@@ -78,6 +85,8 @@ export function StatusBadge({
 
   return (
     <span
+      role="status"
+      aria-label={`Status: ${label}`}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full font-medium',
         config.bg,
@@ -87,11 +96,11 @@ export function StatusBadge({
       )}
     >
       {config.icon === 'x-circle' ? (
-        <XCircle className={size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+        <XCircle className={size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3'} aria-hidden="true" />
       ) : (
-        <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} />
+        <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} aria-hidden="true" />
       )}
-      {label}
+      <span aria-hidden="true">{label}</span>
     </span>
   );
 }
