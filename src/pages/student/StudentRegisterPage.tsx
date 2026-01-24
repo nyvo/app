@@ -143,7 +143,7 @@ const StudentRegisterPage = () => {
         if (error.message.includes('already registered')) {
           setRegisterError('Denne e-posten er allerede i bruk');
         } else {
-          setRegisterError('Kontoen ble ikke opprettet. Prøv igjen.');
+          setRegisterError('Kontoen ble ikke opprettet. Prøv på nytt.');
         }
         setIsLoading(false);
         return;
@@ -151,7 +151,7 @@ const StudentRegisterPage = () => {
 
       // Navigation will happen automatically via useEffect when userType is set
     } catch (err) {
-      setRegisterError('Noe gikk galt. Prøv igjen.');
+      setRegisterError('Noe gikk galt. Prøv på nytt.');
       setIsLoading(false);
     }
   };

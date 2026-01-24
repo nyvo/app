@@ -109,7 +109,7 @@ const StudentLoginPage = () => {
       // Success - clear loading state and let useEffect handle navigation
       setIsLoading(false);
     } catch {
-      setLoginError('Noe gikk galt. Prøv igjen.');
+      setLoginError('Noe gikk galt. Prøv på nytt.');
       setIsLoading(false);
     }
   };

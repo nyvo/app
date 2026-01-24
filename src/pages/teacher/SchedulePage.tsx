@@ -274,7 +274,7 @@ const MobileDayView = ({
               </div>
               <h3 className="font-medium text-text-primary mb-1">Noe gikk galt</h3>
               <p className="text-sm text-muted-foreground mb-4">{error}</p>
-              <Button onClick={onRetry} size="compact">Prøv igjen</Button>
+              <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
         ) : (showEmptyState || !hasEventsThisWeek) ? (
@@ -433,7 +433,7 @@ export const SchedulePage = () => {
         setSignupsCounts(counts);
       }
     } catch {
-      setError('Kunne ikke laste timeplan. Prøv igjen senere.');
+      setError('Kunne ikke laste timeplanen. Prøv på nytt senere.');
     } finally {
       setIsLoading(false);
     }
@@ -727,7 +727,7 @@ export const SchedulePage = () => {
                     {error}
                   </p>
                   <Button onClick={loadScheduleData} size="compact" className="gap-2">
-                    Prøv igjen
+                    Prøv på nytt
                   </Button>
                 </div>
               </div>

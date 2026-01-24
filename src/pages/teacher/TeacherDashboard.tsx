@@ -428,7 +428,7 @@ const TeacherDashboard = () => {
                     onClick={() => window.location.reload()}
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    Prøv igjen
+                    Prøv på nytt
                   </Button>
                 </div>
               ) : (showEmptyState || !hasCourses) ? (
