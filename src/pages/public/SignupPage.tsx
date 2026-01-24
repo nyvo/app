@@ -270,7 +270,7 @@ const SignupPage = () => {
       });
 
     } catch {
-      setErrors({ general: 'En uventet feil oppstod. Prøv igjen.' });
+      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
     } finally {
       setIsSubmitting(false);
     }

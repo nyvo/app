@@ -361,7 +361,7 @@ export const SignupsPage = () => {
     const { data, error: fetchError } = await fetchAllSignups(currentOrganization.id);
 
     if (fetchError) {
-      setError('Sjekk internettforbindelsen din og prøv igjen.');
+      setError('Sjekk internettforbindelsen og prøv på nytt.');
       setLoading(false);
       return;
     }
