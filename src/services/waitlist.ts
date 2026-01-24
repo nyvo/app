@@ -197,3 +197,30 @@ export async function validateClaimToken(
     }
   }
 }
+
+// Trigger automatic waitlist promotion for a course (when capacity increases)
+export async function triggerWaitlistPromotion(
+  courseId: string,
+  count?: number // Optional: number of spots to offer (promotes up to this many)
+): Promise<{ data: { promoted_count: number; message: string } | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('process-waitlist-promotion', {
+      body: { course_id: courseId, count }
+    })
+
+    if (error) {
+      return { data: null, error: error.message || 'Kunne ikke sende tilbud til venteliste' }
+    }
+
+    if (data?.error) {
+      return { data: null, error: data.error }
+    }
+
+    return { data: data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err.message : 'Ukjent feil'
+    }
+  }
+}

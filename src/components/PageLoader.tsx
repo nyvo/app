@@ -1,9 +1,9 @@
-import { Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner'
 
 export const PageLoader = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <Spinner size="xl" />
     </div>
-  );
-};
+  )
+}

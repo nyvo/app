@@ -8,8 +8,8 @@ export type Json =
 
 // Enum types matching the database
 export type CourseType = 'course-series' | 'event' | 'online'
-export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed'
-export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled'
+export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'cancelled'
+export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled' | 'course_cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type OrgMemberRole = 'owner' | 'admin' | 'teacher'
 export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
@@ -153,6 +153,7 @@ export interface Database {
           instructor_id: string | null
           image_url: string | null
           style_id: string | null
+          idempotency_key: string | null
           created_at: string
           updated_at: string
         }
@@ -178,6 +179,7 @@ export interface Database {
           instructor_id?: string | null
           image_url?: string | null
           style_id?: string | null
+          idempotency_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -203,6 +205,7 @@ export interface Database {
           instructor_id?: string | null
           image_url?: string | null
           style_id?: string | null
+          idempotency_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -225,11 +228,15 @@ export interface Database {
           payment_status: PaymentStatus
           stripe_payment_intent_id: string | null
           stripe_checkout_session_id: string | null
+          stripe_receipt_url: string | null
           amount_paid: number | null
+          signup_package_id: string | null
+          package_weeks: number | null
           offer_sent_at: string | null
           offer_expires_at: string | null
           offer_status: OfferStatus | null
           offer_claim_token: string | null
+          package_end_date: string | null
           registered_at: string
           created_at: string
           updated_at: string
@@ -251,11 +258,15 @@ export interface Database {
           payment_status?: PaymentStatus
           stripe_payment_intent_id?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_receipt_url?: string | null
           amount_paid?: number | null
+          signup_package_id?: string | null
+          package_weeks?: number | null
           offer_sent_at?: string | null
           offer_expires_at?: string | null
           offer_status?: OfferStatus | null
           offer_claim_token?: string | null
+          package_end_date?: string | null
           registered_at?: string
           created_at?: string
           updated_at?: string
@@ -277,11 +288,15 @@ export interface Database {
           payment_status?: PaymentStatus
           stripe_payment_intent_id?: string | null
           stripe_checkout_session_id?: string | null
+          stripe_receipt_url?: string | null
           amount_paid?: number | null
+          signup_package_id?: string | null
+          package_weeks?: number | null
           offer_sent_at?: string | null
           offer_expires_at?: string | null
           offer_status?: OfferStatus | null
           offer_claim_token?: string | null
+          package_end_date?: string | null
           registered_at?: string
           created_at?: string
           updated_at?: string
@@ -294,6 +309,7 @@ export interface Database {
           user_id: string | null
           guest_email: string | null
           is_read: boolean
+          archived: boolean
           created_at: string
           updated_at: string
         }
@@ -303,6 +319,7 @@ export interface Database {
           user_id?: string | null
           guest_email?: string | null
           is_read?: boolean
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -312,6 +329,7 @@ export interface Database {
           user_id?: string | null
           guest_email?: string | null
           is_read?: boolean
+          archived?: boolean
           created_at?: string
           updated_at?: string
         }

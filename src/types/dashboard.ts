@@ -41,7 +41,7 @@ export interface TeacherStats {
 export type PaymentStatus = 'paid' | 'pending' | 'failed';
 
 // Status types (used by both Registration and Signup)
-export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled';
+export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled' | 'course_cancelled';
 
 export interface Registration {
   id: string;
@@ -56,6 +56,8 @@ export interface Registration {
   courseType: CourseType;
   registeredAt: string;
   status: SignupStatus;
+  /** Indicates signup needs teacher attention (payment failed, offer expiring, etc.) */
+  hasException?: boolean;
 }
 
 // Signups page types

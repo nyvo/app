@@ -1,8 +1,31 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Leaf, Loader2, Clock, Calendar, MapPin, CreditCard, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+
+// Mock data for dev preview
+const MOCK_CLAIM_DATA: ClaimData = {
+  signup: {
+    id: 'mock-signup-id',
+    participant_name: 'Ola Nordmann',
+    participant_email: 'ola@example.com',
+    offer_expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), // 12 hours from now
+  },
+  course: {
+    id: 'mock-course-id',
+    title: 'Yoga for nybegynnere',
+    price: 450,
+    start_date: '2025-02-15',
+    time_schedule: '18:00-19:30',
+    location: 'Studio Zen, Oslo',
+  },
+  organization: {
+    id: 'mock-org-id',
+    name: 'Yoga Studio',
+    slug: 'yoga-studio',
+  },
+};
 
 interface ClaimData {
   signup: {
@@ -28,6 +51,10 @@ interface ClaimData {
 
 const ClaimSpotPage = () => {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+
+  // Dev preview mode: ?preview=expired | claimed | error | valid
+  const previewMode = searchParams.get('preview');
 
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
@@ -37,6 +64,27 @@ const ClaimSpotPage = () => {
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
 
   useEffect(() => {
+    // Dev preview mode - skip API call and set mock state
+    if (previewMode) {
+      setLoading(false);
+      switch (previewMode) {
+        case 'expired':
+          setExpired(true);
+          break;
+        case 'claimed':
+          setAlreadyClaimed(true);
+          break;
+        case 'error':
+          setError('Dette er en test-feilmelding');
+          break;
+        case 'valid':
+        default:
+          setClaimData(MOCK_CLAIM_DATA);
+          break;
+      }
+      return;
+    }
+
     async function validateToken() {
       if (!token) {
         setError('Ugyldig lenke');
@@ -72,22 +120,33 @@ const ClaimSpotPage = () => {
         }
       } catch (err) {
         console.error('Error validating token:', err);
-        setError('Kunne ikke validere lenken');
+        setError('Kunne ikke sjekke lenken');
       } finally {
         setLoading(false);
       }
     }
 
     validateToken();
-  }, [token]);
+  }, [token, previewMode]);
 
-  // Calculate time remaining
+  // Auto-updating countdown timer state
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  // Update the current time every minute for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Calculate time remaining (auto-updates every minute)
   const timeRemaining = useMemo(() => {
     if (!claimData?.signup.offer_expires_at) return null;
 
     const expiresAt = new Date(claimData.signup.offer_expires_at);
-    const now = new Date();
-    const diff = expiresAt.getTime() - now.getTime();
+    const diff = expiresAt.getTime() - currentTime.getTime();
 
     if (diff <= 0) return null;
 
@@ -98,7 +157,7 @@ const ClaimSpotPage = () => {
       return `${hours} time${hours !== 1 ? 'r' : ''} og ${minutes} minutt${minutes !== 1 ? 'er' : ''}`;
     }
     return `${minutes} minutt${minutes !== 1 ? 'er' : ''}`;
-  }, [claimData?.signup.offer_expires_at]);
+  }, [claimData?.signup.offer_expires_at, currentTime]);
 
   // Format date for display
   const formatDate = (dateString: string | null): string => {
@@ -116,7 +175,7 @@ const ClaimSpotPage = () => {
     return match ? match[1] : '';
   };
 
-  const handleClaimSpot = async () => {
+  const handleClaimSpot = useCallback(async () => {
     if (!claimData || !token) return;
 
     setClaiming(true);
@@ -149,7 +208,7 @@ const ClaimSpotPage = () => {
 
       // Redirect to Stripe checkout
       if (data.checkout_url) {
-        toast.info('Går til betaling...');
+        toast.info('Går til betaling');
         window.location.href = data.checkout_url;
       } else {
         throw new Error('Mangler checkout URL');
@@ -159,14 +218,14 @@ const ClaimSpotPage = () => {
       toast.error(err instanceof Error ? err.message : 'Noe gikk galt');
       setClaiming(false);
     }
-  };
+  }, [claimData, token]);
 
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Validerer lenke...</p>
+        <div className="text-center" role="status" aria-live="polite">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" aria-hidden="true" />
+          <p className="text-sm text-muted-foreground">Sjekker lenke</p>
         </div>
       </div>
     );
@@ -179,21 +238,38 @@ const ClaimSpotPage = () => {
         <Header />
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-amber-200 bg-white p-8 md:p-12 shadow-sm">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
-                <Clock className="h-8 w-8 text-amber-600" />
+            <div className="rounded-3xl border border-status-waitlist-border bg-white p-8 md:p-12">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-waitlist-bg">
+                <Clock className="h-8 w-8 text-status-waitlist-text" aria-hidden="true" />
               </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
-                Tilbudet har utløpt
+              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
+                Fristen gikk ut
               </h1>
               <p className="text-muted-foreground mb-4">
-                Tiden for å bekrefte plassen har dessverre gått ut.
+                Fristen for å bekrefte gikk ut.
               </p>
-              <p className="text-sm text-muted-foreground mb-8">
-                Du er nå flyttet til slutten av ventelisten. Vi sender deg en ny e-post hvis det blir ledig plass igjen.
-              </p>
+
+              {/* Clear explanation of what happens next */}
+              <div className="rounded-xl bg-surface p-4 mb-6 text-left">
+                <p className="text-sm font-medium text-text-primary mb-2">Hva skjer videre?</p>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="text-text-tertiary mt-0.5">1.</span>
+                    <span>Du er satt tilbake på ventelisten</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-text-tertiary mt-0.5">2.</span>
+                    <span>Hvis en ny plass blir ledig, får du en ny e-post</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-text-tertiary mt-0.5">3.</span>
+                    <span>Du har da 24 timer på å bekrefte</span>
+                  </li>
+                </ul>
+              </div>
+
               <Button asChild variant="outline-soft">
-                <Link to="/">Gå til forsiden</Link>
+                <Link to="/">Til forsiden</Link>
               </Button>
             </div>
           </div>
@@ -209,18 +285,18 @@ const ClaimSpotPage = () => {
         <Header />
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl bg-white p-8 md:p-12 border border-gray-200">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
+              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
                 Plassen er allerede bekreftet
               </h1>
               <p className="text-muted-foreground mb-8">
-                Du har allerede bekreftet denne plassen.
+                Du har allerede bekreftet plassen.
               </p>
               <Button asChild variant="outline-soft">
-                <Link to="/student/bookings">Se dine påmeldinger</Link>
+                <Link to="/student/bookings">Mine kurs</Link>
               </Button>
             </div>
           </div>
@@ -236,18 +312,18 @@ const ClaimSpotPage = () => {
         <Header />
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-destructive/30 bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl border border-destructive/30 bg-white p-8 md:p-12">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
                 <XCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
+              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
                 Ugyldig lenke
               </h1>
               <p className="text-muted-foreground mb-8">
-                {error || 'Denne lenken er ikke gyldig. Sjekk at du har kopiert hele lenken fra e-posten.'}
+                {error || 'Lenken er ugyldig. Sjekk at du kopierte hele lenken.'}
               </p>
               <Button asChild variant="outline-soft">
-                <Link to="/">Gå til forsiden</Link>
+                <Link to="/">Til forsiden</Link>
               </Button>
             </div>
           </div>
@@ -265,33 +341,35 @@ const ClaimSpotPage = () => {
     <div className="min-h-screen w-full bg-surface font-geist">
       <Header studioUrl={studioUrl} />
 
-      <main className="pt-24 px-4 sm:px-6 pb-24">
+      <main className="pt-20 sm:pt-24 px-4 sm:px-6 pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-start">
 
             {/* Left Column: Claim Message */}
             <div className="flex flex-col justify-center text-center md:text-left pt-4 md:pt-8">
               <div className="mx-auto md:mx-0 mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-confirmed-bg text-status-confirmed-text text-sm font-medium">
                 <CheckCircle2 className="h-4 w-4" />
-                En plass er ledig!
+                En plass er ledig
               </div>
 
-              <h1 className="font-geist text-3xl md:text-4xl font-semibold text-text-primary mb-4">
+              <h1 className="font-geist text-3xl md:text-4xl font-medium text-text-primary mb-4">
                 Bekreft plassen din
               </h1>
 
               <p className="text-muted-foreground mb-4 text-base leading-relaxed">
-                Gratulerer, {claimData.signup.participant_name}! En plass har blitt ledig i <span className="font-medium text-text-primary">{claimData.course.title}</span>.
+                {claimData.signup.participant_name}, en plass har blitt ledig i <span className="font-medium text-text-primary">{claimData.course.title}</span>.
               </p>
 
               {/* Urgency box */}
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
-                <div className="flex items-center gap-2 text-amber-800">
-                  <Clock className="h-5 w-5 flex-shrink-0" />
+              <div className="bg-status-waitlist-bg border border-status-waitlist-border rounded-2xl p-4 mb-6">
+                <div className="flex items-center gap-2 text-status-waitlist-text">
+                  <Clock className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="font-medium">Tilbudet utløper snart</p>
+                    <p className="font-medium">Fristen går snart ut</p>
                     {timeRemaining && (
-                      <p className="text-sm text-amber-700">Du har {timeRemaining} igjen til å bekrefte</p>
+                      <p className="text-sm text-status-waitlist-text/80" role="timer" aria-live="polite" aria-atomic="true">
+                        {timeRemaining} igjen
+                      </p>
                     )}
                   </div>
                 </div>
@@ -306,34 +384,34 @@ const ClaimSpotPage = () => {
                 {claiming ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Forbereder betaling...
+                    Går til betaling
                   </>
                 ) : (
                   <>
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Bekreft og betal {claimData.course.price} kr
+                    Betal {claimData.course.price} kr
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-muted-foreground mt-4">
-                Du sendes til sikker betaling hos Stripe.
+                Du sendes til sikker betaling.
               </p>
             </div>
 
             {/* Right Column: Course Details */}
-            <div className="rounded-3xl bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
+            <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 relative overflow-hidden">
               {/* Decorative background element */}
               <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
 
-              <h3 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
+              <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
                 Kursdetaljer
               </h3>
 
               <div className="space-y-5 relative z-10">
                 <div className="pb-5 border-b border-gray-100">
                   <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
-                  <span className="block font-semibold text-lg text-text-primary">{claimData.course.title}</span>
+                  <span className="block font-medium text-lg text-text-primary">{claimData.course.title}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -386,13 +464,13 @@ const ClaimSpotPage = () => {
 
 // Header component
 const Header = ({ studioUrl = '/' }: { studioUrl?: string }) => (
-  <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
+  <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 bg-surface/90 backdrop-blur-xl">
     <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
       <Link to={studioUrl} className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
           <Leaf className="h-5 w-5" />
         </div>
-        <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+        <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
       </Link>
     </div>
   </header>

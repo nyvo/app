@@ -2,6 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@17.3.1'
+import { verifyAuth, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2024-12-18.acacia',
@@ -10,10 +11,7 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders()
 
 interface ProcessRefundRequest {
   signup_id: string
@@ -22,19 +20,21 @@ interface ProcessRefundRequest {
 
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   try {
+    // Verify authentication
+    const authResult = await verifyAuth(req)
+    if (!authResult.authenticated) {
+      return errorResponse(authResult.error || 'Unauthorized', 401)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body: ProcessRefundRequest = await req.json()
 
     if (!body.signup_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing signup_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Missing signup_id', 400)
     }
 
     // Get signup with course details
@@ -48,25 +48,30 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return new Response(
-        JSON.stringify({ error: 'Signup not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Signup not found', 404)
+    }
+
+    // Verify user owns this signup (either by user_id or by matching email)
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', authResult.userId)
+      .single()
+
+    const isOwner = signup.user_id === authResult.userId ||
+                    signup.participant_email === userProfile?.email
+
+    if (!isOwner) {
+      return errorResponse('You can only cancel your own signups', 403)
     }
 
     // Check if already cancelled/refunded
     if (signup.status === 'cancelled') {
-      return new Response(
-        JSON.stringify({ error: 'Signup is already cancelled' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Signup is already cancelled', 400)
     }
 
     if (signup.payment_status === 'refunded') {
-      return new Response(
-        JSON.stringify({ error: 'Signup has already been refunded' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Signup has already been refunded', 400)
     }
 
     // Check 48-hour cancellation policy
@@ -138,10 +143,7 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) {
       console.error('Error updating signup:', updateError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to update signup status' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Failed to update signup status', 500)
     }
 
     // If this was a confirmed signup, trigger waitlist promotion

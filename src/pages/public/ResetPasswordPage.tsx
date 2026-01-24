@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Infinity, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -20,8 +20,6 @@ interface FormErrors {
 const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const ResetPasswordPage = () => {
-  const navigate = useNavigate();
-
   // Form state
   const [formData, setFormData] = useState<FormData>({
     password: '',
@@ -70,16 +68,16 @@ const ResetPasswordPage = () => {
     switch (field) {
       case 'password':
         if (!formData.password.trim()) {
-          newErrors.password = 'Passord er påkrevd';
+          newErrors.password = 'Skriv inn et passord';
         } else if (formData.password.length < 8) {
-          newErrors.password = 'Passord må være minst 8 tegn';
+          newErrors.password = 'Passordet må ha minst 8 tegn';
         } else {
           delete newErrors.password;
         }
         // Re-validate confirm password if it's been touched
         if (touched.confirmPassword && formData.confirmPassword) {
           if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passordene matcher ikke';
+            newErrors.confirmPassword = 'Passordene er ikke like';
           } else {
             delete newErrors.confirmPassword;
           }
@@ -87,9 +85,9 @@ const ResetPasswordPage = () => {
         break;
       case 'confirmPassword':
         if (!formData.confirmPassword.trim()) {
-          newErrors.confirmPassword = 'Bekreft passord';
+          newErrors.confirmPassword = 'Gjenta passordet';
         } else if (formData.password !== formData.confirmPassword) {
-          newErrors.confirmPassword = 'Passordene matcher ikke';
+          newErrors.confirmPassword = 'Passordene er ikke like';
         } else {
           delete newErrors.confirmPassword;
         }
@@ -103,15 +101,15 @@ const ResetPasswordPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Passord er påkrevd';
+      newErrors.password = 'Skriv inn et passord';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'Passord må være minst 8 tegn';
+      newErrors.password = 'Passordet må ha minst 8 tegn';
     }
 
     if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Bekreft passord';
+      newErrors.confirmPassword = 'Gjenta passordet';
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passordene matcher ikke';
+      newErrors.confirmPassword = 'Passordene er ikke like';
     }
 
     setErrors(newErrors);
@@ -133,7 +131,7 @@ const ResetPasswordPage = () => {
       });
 
       if (error) {
-        setErrors({ general: 'Kunne ikke oppdatere passord. Prøv igjen.' });
+        setErrors({ general: 'Passordet ble ikke oppdatert. Prøv på nytt.' });
         setIsSubmitting(false);
         return;
       }
@@ -142,7 +140,7 @@ const ResetPasswordPage = () => {
       setResetSuccess(true);
       setIsSubmitting(false);
     } catch (err) {
-      setErrors({ general: 'En uventet feil oppstod. Prøv igjen.' });
+      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
       setIsSubmitting(false);
     }
   };
@@ -155,10 +153,10 @@ const ResetPasswordPage = () => {
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-text-primary">
+            <span className="text-lg font-medium tracking-tighter text-text-primary">
               Ease
             </span>
           </Link>
@@ -177,11 +175,11 @@ const ResetPasswordPage = () => {
               <div className="w-16 h-16 rounded-full bg-status-error-bg flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-status-error-text" />
               </div>
-              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+              <h1 className="text-2xl font-medium tracking-tight text-text-primary">
                 Ugyldig lenke
               </h1>
               <p className="text-text-secondary text-sm">
-                Denne lenken for tilbakestilling av passord er ugyldig eller utløpt.
+                Lenken er utløpt eller ugyldig.
               </p>
             </div>
 
@@ -200,7 +198,7 @@ const ResetPasswordPage = () => {
                 className="w-full h-11"
               >
                 <Link to="/login">
-                  Tilbake til innlogging
+                  Til innlogging
                 </Link>
               </Button>
             </div>
@@ -210,7 +208,7 @@ const ResetPasswordPage = () => {
         {/* Simple Footer */}
         <footer className="py-6 text-center border-t border-border bg-white">
           <p className="text-xs text-text-tertiary">
-            Trenger du hjelp? Kontakt support
+            Trenger du hjelp?
           </p>
         </footer>
       </div>
@@ -234,10 +232,10 @@ const ResetPasswordPage = () => {
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-text-primary">
+            <span className="text-lg font-medium tracking-tighter text-text-primary">
               Ease
             </span>
           </Link>
@@ -258,11 +256,11 @@ const ResetPasswordPage = () => {
             </div>
 
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-                Passord oppdatert!
+              <h1 className="text-2xl font-medium tracking-tight text-text-primary">
+                Passordet er oppdatert
               </h1>
               <p className="text-text-secondary text-sm">
-                Passordet ditt har blitt oppdatert. Du kan nå logge inn med det nye passordet.
+                Passordet er oppdatert. Du kan logge inn.
               </p>
             </div>
 
@@ -286,7 +284,7 @@ const ResetPasswordPage = () => {
               to="/login"
               className="text-text-primary font-medium hover:underline"
             >
-              Tilbake til innlogging
+              Til innlogging
             </Link>
           </p>
         </footer>
@@ -309,10 +307,10 @@ const ResetPasswordPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
@@ -329,7 +327,7 @@ const ResetPasswordPage = () => {
           className="w-full flex flex-col items-center"
         >
           <div className="text-center mb-8 space-y-2 w-full">
-            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            <h1 className="text-2xl font-medium tracking-tight text-text-primary">
               Tilbakestill passord
             </h1>
             <p className="text-text-secondary text-sm">
@@ -383,7 +381,7 @@ const ResetPasswordPage = () => {
                 htmlFor="confirmPassword"
                 className="block text-xs font-medium text-text-secondary"
               >
-                Bekreft passord
+                Gjenta passord
               </label>
               <div className="relative">
                 <Input
@@ -397,7 +395,7 @@ const ResetPasswordPage = () => {
                       ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
                       : ''
                   }`}
-                  placeholder="Skriv passordet på nytt"
+                  placeholder="Skriv passordet igjen"
                 />
                 <button
                   type="button"
@@ -418,7 +416,7 @@ const ResetPasswordPage = () => {
 
             {/* Password requirements */}
             <div className="p-3 rounded-lg bg-surface-elevated">
-              <p className="text-xs text-text-secondary font-medium mb-1">Passordkrav:</p>
+              <p className="text-xs text-text-secondary font-medium mb-1">Krav</p>
               <ul className="text-xs text-text-tertiary space-y-0.5 ml-3">
                 <li className="list-disc">Minst 8 tegn</li>
               </ul>
@@ -439,7 +437,7 @@ const ResetPasswordPage = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Oppdaterer...
+                  Oppdaterer
                 </>
               ) : (
                 'Oppdater passord'

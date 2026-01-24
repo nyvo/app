@@ -1,85 +1,88 @@
-import { Calendar } from 'lucide-react';
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { ParticipantAvatar } from '@/components/ui/participant-avatar';
+import { Calendar, Leaf } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { extractDayName, extractTimeFromSchedule } from '@/utils/dateFormatting';
 import type { Registration } from '@/types/dashboard';
 
 interface RegistrationsListProps {
   registrations: Registration[];
 }
 
-export const RegistrationsList = ({ registrations }: RegistrationsListProps) => {
+/**
+ * Dashboard Activity Feed: Recent Signups
+ *
+ * Design intent: A lightweight, skimmable activity feed — NOT a data table.
+ * Two-line card format per row:
+ *   Line 1: Name (primary) + Timestamp (tertiary, right)
+ *   Line 2: Course + Day badge (secondary metadata)
+ *
+ * Each signup renders as an individual mini-card with border for visual separation.
+ */
+export const RegistrationsList = memo(function RegistrationsList({ registrations }: RegistrationsListProps) {
+  // Limit to 3 most recent for a compact feed
+  const displayedRegistrations = registrations.slice(0, 3);
+
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white p-0 shadow-sm overflow-hidden ios-ease hover:shadow-md">
-      <div className="flex items-center justify-between p-5 px-7">
-        <h3 className="font-geist text-sm font-semibold text-text-primary">Påmeldinger</h3>
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white border border-gray-200 overflow-hidden ios-ease hover:border-ring">
+      {/* Card Header */}
+      <div className="flex items-center justify-between p-5 sm:p-6 pb-3">
+        <h3 className="font-geist text-sm font-medium text-text-primary">Siste påmeldinger</h3>
         <Link
           to="/teacher/signups"
-          className="text-xs font-medium text-text-tertiary hover:text-text-secondary transition-colors"
+          className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors"
         >
           Se alle
         </Link>
       </div>
 
       {registrations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8">
-          {/* Stacked avatars placeholder */}
-          <div className="flex items-center -space-x-2 mb-3 opacity-40 grayscale">
-            <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
-            <div className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white"></div>
-            <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white"></div>
-          </div>
-          <p className="text-sm font-medium text-text-primary">Ingen påmeldinger ennå</p>
-          <p className="text-xs text-text-tertiary mt-1">Påmeldinger vil vises her når du publiserer et kurs.</p>
+        /* Empty State */
+        <div className="flex flex-col items-center justify-center py-10 px-6">
+          <p className="text-sm text-text-secondary">Ingen påmeldinger ennå</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
-          {registrations.map((registration) => (
-            <div
-              key={registration.id}
-              className="group flex items-center gap-4 px-7 py-4 hover:bg-surface cursor-pointer transition-colors"
-            >
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                <ParticipantAvatar participant={registration.participant} size="lg" />
-              </div>
+        /* Activity Feed - Individual card-style rows */
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-2">
+          {displayedRegistrations.map((registration) => {
+            const dayName = extractDayName(registration.courseTime);
+            const startTime = extractTimeFromSchedule(registration.courseTime);
 
-              {/* Participant Info: Name + Email */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-medium text-text-primary truncate">
+            return (
+              <Link
+                key={registration.id}
+                to="/teacher/signups"
+                className={cn(
+                  "block p-3.5 rounded-2xl border border-gray-100 bg-surface/30 hover:bg-surface hover:border-gray-200 transition-colors relative overflow-hidden",
+                  // Left accent for exception rows (payment failed, offer expiring, pending payment)
+                  registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-warning"
+                )}
+              >
+                {/* Line 1: Name + Timestamp */}
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-text-primary truncate">
                     {registration.participant.name}
-                  </p>
-                  <span className="text-xxs font-medium text-text-tertiary group-hover:text-muted-foreground flex-shrink-0">
+                  </span>
+                  <span className="text-xs text-text-tertiary flex-shrink-0">
                     {registration.registeredAt}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {registration.participant.email}
-                </p>
-              </div>
 
-              {/* Course & Time */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate mb-0.5">
-                  {registration.course}
+                {/* Line 2: Day + Time · Course + Icon */}
+                <p className="flex items-center gap-1.5 text-xs leading-none text-muted-foreground mt-1">
+                  <Calendar className="h-3 w-3 text-text-tertiary flex-shrink-0" />
+                  <span className="truncate">
+                    {dayName}{startTime && ` kl. ${startTime}`}
+                  </span>
+                  {(dayName || startTime) && <span className="text-text-tertiary mx-1.5">·</span>}
+                  <Leaf className="h-3 w-3 text-text-tertiary flex-shrink-0" />
+                  <span className="truncate">{registration.course}</span>
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3 text-text-tertiary" />
-                  <p className="text-xs text-muted-foreground truncate group-hover:text-text-secondary">
-                    {registration.courseTime}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Badge */}
-              <div className="flex-1 min-w-0 flex justify-end">
-                <StatusBadge status={registration.status} size="sm" />
-              </div>
-            </div>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
-};
+});

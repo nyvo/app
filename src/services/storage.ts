@@ -56,11 +56,28 @@ export async function uploadCourseImage(
   return { url: urlData.publicUrl, error: null }
 }
 
-// Delete course image by URL
+// Delete course image by URL with ownership verification
 export async function deleteCourseImage(
-  imageUrl: string
+  courseId: string,
+  imageUrl: string,
+  organizationId: string
 ): Promise<{ error: Error | null }> {
-  // Extract file path from URL
+  // 1. Verify course belongs to the organization
+  const { data: course, error: courseError } = await supabase
+    .from('courses')
+    .select('organization_id')
+    .eq('id', courseId)
+    .single<{ organization_id: string }>()
+
+  if (courseError || !course) {
+    return { error: new Error('Kurset ble ikke funnet') }
+  }
+
+  if (course.organization_id !== organizationId) {
+    return { error: new Error('Du har ikke tilgang til å slette dette bildet') }
+  }
+
+  // 2. Extract file path from URL
   const urlParts = imageUrl.split(`${COURSE_IMAGES_BUCKET}/`)
   if (urlParts.length !== 2) {
     return { error: new Error('Ugyldig bilde-URL') }
@@ -68,6 +85,13 @@ export async function deleteCourseImage(
 
   const filePath = urlParts[1]
 
+  // 3. Verify the file path belongs to this course (prevent path traversal)
+  const expectedPrefix = `courses/${courseId}/`
+  if (!filePath.startsWith(expectedPrefix)) {
+    return { error: new Error('Bilde tilhører ikke dette kurset') }
+  }
+
+  // 4. Delete the file
   const { error } = await supabase.storage
     .from(COURSE_IMAGES_BUCKET)
     .remove([filePath])

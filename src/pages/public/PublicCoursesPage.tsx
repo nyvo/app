@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   MapPin,
@@ -15,14 +15,17 @@ import { Button } from '@/components/ui/button';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
 import { fetchMySignups } from '@/services/studentSignups';
+import { fetchCourseStyles } from '@/services/courses';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Organization } from '@/types/database';
+import type { Organization, CourseStyle } from '@/types/database';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { getDisplayStyle } from '@/utils/styleDetection';
 
 // Format date range for multi-day events
 function formatDateRange(startDate: string | null, endDate: string | null): string | null {
@@ -73,6 +76,7 @@ const PublicCoursesPage = () => {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [archivedCourses, setArchivedCourses] = useState<PublicCourseWithDetails[]>([]);
+  const [allStyles, setAllStyles] = useState<CourseStyle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [signedUpCourseIds, setSignedUpCourseIds] = useState<Set<string>>(new Set());
@@ -82,17 +86,28 @@ const PublicCoursesPage = () => {
   // Select course list based on tab
   const displayedCourses = showArchive ? archivedCourses : courses;
 
-  // Extract unique styles from displayed courses
-  const availableStyles = displayedCourses
-    .map(course => course.style)
-    .filter((style): style is NonNullable<typeof style> => style !== null && style !== undefined)
-    .filter((style, index, self) => self.findIndex(s => s.id === style.id) === index)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Get display styles for all courses (assigned or auto-detected)
+  const coursesWithStyles = useMemo(() => {
+    return displayedCourses.map(course => ({
+      ...course,
+      displayStyle: getDisplayStyle(course, allStyles)
+    }));
+  }, [displayedCourses, allStyles]);
 
-  // Filter courses by selected style
+  // Extract unique styles from courses (including auto-detected ones)
+  const availableStyles = useMemo(() => {
+    const styles = coursesWithStyles
+      .map(course => course.displayStyle)
+      .filter((style): style is CourseStyle => style !== null)
+      .filter((style, index, self) => self.findIndex(s => s.id === style.id) === index)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return styles;
+  }, [coursesWithStyles]);
+
+  // Filter courses by selected style (using displayStyle for auto-detected ones)
   const filteredCourses = selectedStyle
-    ? displayedCourses.filter(course => course.style?.id === selectedStyle)
-    : displayedCourses;
+    ? coursesWithStyles.filter(course => course.displayStyle?.id === selectedStyle)
+    : coursesWithStyles;
 
   useEffect(() => {
     async function loadData() {
@@ -116,10 +131,11 @@ const PublicCoursesPage = () => {
 
       setOrganization(orgData);
 
-      // Fetch active and archived courses
-      const [activeResult, archivedResult] = await Promise.all([
+      // Fetch active courses, archived courses, and all styles for auto-detection
+      const [activeResult, archivedResult, stylesResult] = await Promise.all([
         fetchPublicCourses({ organizationSlug: slug }),
-        fetchPublicCourses({ organizationSlug: slug, includePast: true })
+        fetchPublicCourses({ organizationSlug: slug, includePast: true }),
+        fetchCourseStyles()
       ]);
 
       if (activeResult.error) {
@@ -130,6 +146,7 @@ const PublicCoursesPage = () => {
 
       setCourses(activeResult.data || []);
       setArchivedCourses(archivedResult.data || []);
+      setAllStyles(stylesResult.data || []);
 
       // Load student's signups if authenticated
       if (user && profile?.email) {
@@ -150,7 +167,7 @@ const PublicCoursesPage = () => {
     loadData();
   }, [slug, user, profile?.email]);
 
-  const isEmpty = !loading && courses.length === 0 && organization;
+  const isEmpty = !loading && filteredCourses.length === 0 && organization;
 
   return (
     <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
@@ -261,37 +278,24 @@ const PublicCoursesPage = () => {
             {/* 2. Filters & Navigation */}
             <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sticky top-20 z-40 bg-surface/95 backdrop-blur py-2 -mx-2 px-2">
               {/* Tabs */}
-              <div className="flex items-center gap-1 bg-surface-elevated p-1 rounded-lg self-start">
-                <button
-                  onClick={() => { setShowArchive(false); setSelectedStyle(null); }}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    !showArchive 
-                      ? 'bg-white text-text-primary shadow-sm' 
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  Kommende
-                </button>
+              <FilterTabs
+                value={showArchive ? 'archive' : 'upcoming'}
+                onValueChange={(v) => { setShowArchive(v === 'archive'); setSelectedStyle(null); }}
+                variant="contained"
+                className="self-start"
+              >
+                <FilterTab value="upcoming">Kommende</FilterTab>
                 {archivedCourses.length > 0 && (
-                  <button
-                    onClick={() => { setShowArchive(true); setSelectedStyle(null); }}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      showArchive 
-                        ? 'bg-white text-text-primary shadow-sm' 
-                        : 'text-text-secondary hover:text-text-primary'
-                    }`}
-                  >
-                    Tidligere
-                  </button>
+                  <FilterTab value="archive">Tidligere</FilterTab>
                 )}
-              </div>
+              </FilterTabs>
 
               {/* Style Pills */}
               {!isEmpty && availableStyles.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setSelectedStyle(null)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    className={`px-4 py-2 rounded-full text-xs font-medium border transition-colors ${
                       selectedStyle === null
                         ? 'bg-text-primary text-white border-text-primary'
                         : 'bg-transparent border-border text-text-secondary hover:border-text-secondary'
@@ -303,7 +307,7 @@ const PublicCoursesPage = () => {
                     <button
                       key={style.id}
                       onClick={() => setSelectedStyle(style.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      className={`px-4 py-2 rounded-full text-xs font-medium border transition-colors ${
                         selectedStyle === style.id
                           ? 'bg-text-primary text-white border-text-primary'
                           : 'bg-transparent border-border text-text-secondary hover:border-text-secondary'
@@ -319,7 +323,9 @@ const PublicCoursesPage = () => {
             {/* Empty State */}
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-white/50">
-                <p className="text-sm font-medium text-text-primary">Ingen aktive kurs</p>
+                <p className="text-sm font-medium text-text-primary">
+                  {showArchive ? 'Ingen tidligere kurs' : 'Ingen aktive kurs'}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {showArchive
                     ? 'Det finnes ingen avsluttede kurs ennå.'
@@ -334,17 +340,46 @@ const PublicCoursesPage = () => {
                 const isFull = course.spots_available === 0;
                 const isSignedUp = signedUpCourseIds.has(course.id);
                 const isSeries = course.course_type === 'course-series';
-                
+
                 // Date formatting
                 const displayDate = (course.next_session?.session_date) || course.start_date;
                 const rangeString = formatDateRange(course.start_date, course.end_date);
                 const dateString = rangeString || formatMinimalDate(displayDate, course.time_schedule);
-                
+
+                // Simplified card for archived courses
+                if (showArchive) {
+                  return (
+                    <Link
+                      key={course.id}
+                      to={`/studio/${slug}/${course.id}`}
+                      className="group block relative rounded-xl bg-white p-4 border border-gray-200 transition-all hover:border-gray-300"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-text-primary truncate group-hover:text-sidebar-foreground transition-colors">
+                            {course.title}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <span>{dateString}</span>
+                            {course.displayStyle && (
+                              <>
+                                <span className="text-border">•</span>
+                                <span>{course.displayStyle.name}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-xs text-text-tertiary shrink-0">Avsluttet</span>
+                      </div>
+                    </Link>
+                  );
+                }
+
                 return (
                   <Link
                     key={course.id}
                     to={`/studio/${slug}/${course.id}`}
-                    className={`group block relative rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md ${
+                    className={`group block relative rounded-xl bg-white p-5 border border-gray-200 transition-all hover:border-gray-300 ${
                       isFull ? 'opacity-75 bg-surface/50' : ''
                     }`}
                   >
@@ -355,7 +390,7 @@ const PublicCoursesPage = () => {
                           <h3 className="text-base font-medium text-text-primary truncate pr-2 group-hover:text-sidebar-foreground transition-colors">
                             {course.title}
                           </h3>
-                          
+
                           {/* Minimal Inline Badges */}
                           {isSignedUp && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
@@ -378,6 +413,20 @@ const PublicCoursesPage = () => {
                           </span>
                           <span className="text-border">•</span>
                           <span className="truncate">{course.location || 'Sted kommer'}</span>
+                          {course.displayStyle && (
+                            <>
+                              <span className="text-border">•</span>
+                              <span
+                                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                style={{
+                                  backgroundColor: course.displayStyle.color ? `${course.displayStyle.color}15` : undefined,
+                                  color: course.displayStyle.color || undefined,
+                                }}
+                              >
+                                {course.displayStyle.name}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -386,7 +435,7 @@ const PublicCoursesPage = () => {
                         <div className="font-medium text-text-primary">
                            {course.price ? `${course.price} kr` : 'Gratis'}
                         </div>
-                        
+
                         <div className="text-xs">
                           {isFull ? (
                             <span className="text-muted-foreground font-medium">Fullt</span>

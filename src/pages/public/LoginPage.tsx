@@ -58,16 +58,16 @@ const LoginPage = () => {
     switch (field) {
       case 'email':
         if (!formData.email.trim()) {
-          newErrors.email = 'E-postadresse er påkrevd';
+          newErrors.email = 'Skriv inn e-postadressen din';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Ugyldig e-postadresse';
+          newErrors.email = 'Sjekk at e-postadressen er riktig';
         } else {
           delete newErrors.email;
         }
         break;
       case 'password':
         if (!formData.password.trim()) {
-          newErrors.password = 'Passord er påkrevd';
+          newErrors.password = 'Skriv inn passordet ditt';
         } else {
           delete newErrors.password;
         }
@@ -81,9 +81,9 @@ const LoginPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-postadressen din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Sjekk at e-postadressen er riktig';
     }
 
     if (!formData.password.trim()) {
@@ -109,7 +109,7 @@ const LoginPage = () => {
       if (error) {
         // Handle specific error messages
         if (error.message.includes('Invalid login credentials')) {
-          setErrors({ general: 'Feil e-post eller passord' });
+          setErrors({ general: 'E-post eller passord stemmer ikke' });
         } else if (error.message.includes('Email not confirmed')) {
           setErrors({ general: 'Vennligst bekreft e-posten din før du logger inn' });
         } else {
@@ -123,7 +123,7 @@ const LoginPage = () => {
       // The auth state will update in the background
       navigate('/teacher');
     } catch (err) {
-      setErrors({ general: 'En uventet feil oppstod. Prøv igjen.' });
+      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
       setIsSubmitting(false);
     }
     // Don't reset isSubmitting on success - we're navigating away
@@ -240,7 +240,7 @@ const LoginPage = () => {
             {errors.general && (
               <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                 <p className="text-xs text-destructive">{errors.general}</p>
-                {errors.general === 'Feil e-post eller passord' && (
+                {errors.general === 'E-post eller passord stemmer ikke' && (
                   <Link
                     to="/forgot-password"
                     className="text-xs text-destructive underline hover:text-destructive/80 mt-1.5 inline-block"
@@ -259,7 +259,7 @@ const LoginPage = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Logger inn...
+                  Logger inn
                 </>
               ) : (
                 'Logg inn'
@@ -277,7 +277,7 @@ const LoginPage = () => {
             to="/signup"
             className="text-text-primary font-medium hover:underline"
           >
-            Opprett konto
+            Registrer deg
           </Link>
         </p>
       </footer>

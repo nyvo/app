@@ -101,7 +101,7 @@ const StudentLoginPage = () => {
       const { error } = await signIn(email, password);
 
       if (error) {
-        setLoginError('Ugyldig e-postadresse eller passord');
+        setLoginError('Feil e-post eller passord');
         setIsLoading(false);
         return;
       }
@@ -109,7 +109,7 @@ const StudentLoginPage = () => {
       // Success - clear loading state and let useEffect handle navigation
       setIsLoading(false);
     } catch {
-      setLoginError('En feil oppstod. Prøv igjen.');
+      setLoginError('Noe gikk galt. Prøv igjen.');
       setIsLoading(false);
     }
   };
@@ -120,10 +120,10 @@ const StudentLoginPage = () => {
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-transparent">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
           <Link to="/courses" className="flex items-center gap-3 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
               <Leaf className="h-5 w-5" />
             </div>
-            <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">
+            <span className="font-geist text-lg font-medium text-text-primary tracking-tight">
               Ease
             </span>
           </Link>
@@ -134,14 +134,14 @@ const StudentLoginPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Login Card */}
-          <div className="rounded-3xl bg-white p-8 shadow-md">
+          <div className="rounded-3xl bg-white p-8 border border-gray-200">
             {/* Title */}
             <div className="text-center mb-8">
-              <h1 className="font-geist text-2xl font-semibold text-text-primary tracking-tight">
+              <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
                 Velkommen tilbake
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Logg inn for å administrere dine timer
+                Logg inn for å se timene dine
               </p>
             </div>
 
@@ -173,7 +173,7 @@ const StudentLoginPage = () => {
                 </div>
                 {errors.email && touched.email && (
                   <p className="text-xs text-status-error-text font-medium mt-1.5">
-                    {!email.trim() ? 'E-postadresse er påkrevd' : 'Ugyldig e-postadresse'}
+                    {!email.trim() ? 'Skriv inn e-postadressen din' : 'Ugyldig e-postadresse'}
                   </p>
                 )}
               </div>
@@ -196,7 +196,7 @@ const StudentLoginPage = () => {
                   />
                 </div>
                 {errors.password && touched.password && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">Passord er påkrevd</p>
+                  <p className="text-xs text-status-error-text font-medium mt-1.5">Skriv inn passordet ditt</p>
                 )}
                 {/* Forgot Password Link */}
                 <div className="flex justify-end pt-1">
@@ -213,12 +213,12 @@ const StudentLoginPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Logger inn...
+                    Logger inn
                   </>
                 ) : (
                   'Logg inn'
@@ -241,7 +241,7 @@ const StudentLoginPage = () => {
             {/* Vipps Button */}
             <Button
               type="button"
-              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-vipps-hover hover:shadow-md ios-ease active:scale-[0.98]"
+              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease active:scale-[0.98]"
             >
               Logg inn med
               <img

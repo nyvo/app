@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays, Loader2 } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays, Menu } from 'lucide-react';
+import { PageLoader } from '@/components/ui/page-loader';
+import { Leaf } from 'lucide-react';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
@@ -18,6 +20,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, fetchCourseSessions, type CourseWithStyle } from '@/services/courses';
 import { supabase } from '@/lib/supabase';
 import type { CourseSession } from '@/types/database';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { getInitials } from '@/utils/stringUtils';
 
 // Types
 interface ScheduleEvent {
@@ -36,7 +40,7 @@ interface ScheduleEvent {
   maxCapacity: number | null;
 }
 
-const timeSlots = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
+const timeSlots = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
 
 // Default gray color for events without a style color
 const DEFAULT_EVENT_COLOR = '#6B7280'; // gray-500 from design system
@@ -50,12 +54,6 @@ const calculateEndTime = (startTime: string, durationMinutes: number): string =>
   return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
 };
 
-// Get initials from name
-const getInitials = (name: string | null | undefined): string => {
-  if (!name) return '?';
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-};
-
 // Format time to HH:MM (remove seconds if present)
 const formatTime = (time: string): string => {
   // Handle both HH:MM and HH:MM:SS formats
@@ -64,19 +62,19 @@ const formatTime = (time: string): string => {
 };
 
 // Helper to calculate position and height
-// Grid shows 07:00-23:00, so clamp events to visible area
+// Grid shows 06:00-22:00, so clamp events to visible area
 const getEventStyle = (startTime: string, endTime: string) => {
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
 
-  // Clamp to visible grid (07:00 - 24:00)
-  const clampedStartHour = Math.max(startHour, 7);
-  const clampedStartMin = startHour < 7 ? 0 : startMin;
-  const clampedEndHour = Math.min(endHour, 24);
-  const clampedEndMin = endHour >= 24 ? 0 : endMin;
+  // Clamp to visible grid (06:00 - 23:00)
+  const clampedStartHour = Math.max(startHour, 6);
+  const clampedStartMin = startHour < 6 ? 0 : startMin;
+  const clampedEndHour = Math.min(endHour, 23);
+  const clampedEndMin = endHour >= 23 ? 0 : endMin;
 
-  const startOffset = (clampedStartHour - 7) * 100 + (clampedStartMin / 60) * 100;
-  const endOffset = (clampedEndHour - 7) * 100 + (clampedEndMin / 60) * 100;
+  const startOffset = (clampedStartHour - 6) * 100 + (clampedStartMin / 60) * 100;
+  const endOffset = (clampedEndHour - 6) * 100 + (clampedEndMin / 60) * 100;
   const duration = Math.max(endOffset - startOffset, 20); // Minimum height of 20px
 
   return {
@@ -107,14 +105,14 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white shadow-sm border-l-4 p-2 hover:shadow-md transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-lg bg-white border border-gray-200 border-l-4 p-2 hover:border-ring transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={{
         ...positionStyle,
         borderLeftColor: accentBorderColor,
       }}
     >
       <div className="flex justify-between items-start">
-        <span className="text-xxs font-bold text-text-secondary">
+        <span className="text-tiny font-medium text-text-secondary">
           {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
         {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
@@ -127,8 +125,8 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
           <Users className="h-3 w-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
-      <p className="text-xs font-semibold text-text-primary mt-1 truncate">{event.title}</p>
-      <p className="text-xxs text-muted-foreground mt-0.5">{event.location}</p>
+      <p className="text-xs font-medium text-text-primary mt-1 truncate">{event.title}</p>
+      <p className="text-tiny text-text-tertiary mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -139,11 +137,11 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
                 {event.instructorInitials}
               </div>
             )}
-            <span className="text-xxs text-muted-foreground">{event.instructor}</span>
+            <span className="text-tiny text-text-tertiary">{event.instructor}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-3 w-3 text-text-tertiary" />
-            <span className="text-xxs text-muted-foreground">
+            <span className="text-tiny text-text-tertiary">
               {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
             </span>
           </div>
@@ -172,6 +170,161 @@ const DayColumn = ({ isToday, isWeekend, events: dayEvents }: { dayIndex: number
   );
 };
 
+// Mobile Event Card - optimized for touch with larger targets
+const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
+  const { accentBorderColor } = getEventColorStyles(event.styleColor);
+  const isCompleted = event.status === 'completed';
+  const isActive = event.status === 'active';
+
+  return (
+    <Link
+      to={`/teacher/courses/${event.courseId}`}
+      className={`block rounded-xl bg-white border border-gray-200 border-l-4 p-4 hover:border-ring transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      style={{ borderLeftColor: accentBorderColor }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-medium text-text-secondary">
+              {formatTime(event.startTime)} - {formatTime(event.endTime)}
+            </span>
+            {isActive && (
+              <span className="inline-flex items-center rounded-full bg-success px-2 py-0.5 text-xs font-medium text-white">
+                Pågår
+              </span>
+            )}
+            {isCompleted && <CheckCircle2 className="h-4 w-4 text-text-tertiary" />}
+          </div>
+          <p className="text-sm font-medium text-text-primary truncate">{event.title}</p>
+          <p className="text-xs text-text-tertiary mt-0.5">{event.location}</p>
+        </div>
+        {!isCompleted && (
+          <div className="flex items-center gap-1 text-xs text-text-tertiary shrink-0">
+            <Users className="h-4 w-4" />
+            <span>{event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}</span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+};
+
+// Mobile Day View Component
+const MobileDayView = ({
+  weekDays,
+  selectedDayIndex,
+  onDaySelect,
+  events,
+  isLoading,
+  error,
+  onRetry,
+  showEmptyState,
+  hasEventsThisWeek,
+  courses,
+}: {
+  weekDays: { name: string; date: number; isToday: boolean; isWeekend: boolean }[];
+  selectedDayIndex: number;
+  onDaySelect: (index: number) => void;
+  events: Record<number, ScheduleEvent[]>;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  showEmptyState: boolean;
+  hasEventsThisWeek: boolean;
+  courses: CourseWithStyle[];
+}) => {
+  const dayEvents = events[selectedDayIndex] || [];
+  const selectedDay = weekDays[selectedDayIndex];
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Day Selector - Horizontal scroll */}
+      <div className="border-b border-gray-200 bg-white px-4 py-3 shrink-0">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          {weekDays.map((day, index) => (
+            <button
+              key={day.name}
+              onClick={() => onDaySelect(index)}
+              className={`flex flex-col items-center justify-center min-w-[52px] h-16 rounded-xl transition-all cursor-pointer ${
+                selectedDayIndex === index
+                  ? 'bg-text-primary text-white'
+                  : day.isToday
+                  ? 'bg-surface-elevated text-text-primary border border-border'
+                  : 'bg-surface hover:bg-surface-elevated text-text-secondary'
+              }`}
+            >
+              <span className="text-xs font-medium uppercase tracking-wide">
+                {day.name.slice(0, 3)}
+              </span>
+              <span className="text-lg font-medium mt-0.5">{day.date}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Events List */}
+      <div className="flex-1 overflow-y-auto bg-surface">
+        {isLoading ? (
+          <PageLoader message="Laster timeplan..." />
+        ) : error ? (
+          <div className="flex items-center justify-center h-64 p-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
+                <CalendarDays className="h-7 w-7 text-destructive" />
+              </div>
+              <h3 className="font-medium text-text-primary mb-1">Noe gikk galt</h3>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <Button onClick={onRetry} size="compact">Prøv igjen</Button>
+            </div>
+          </div>
+        ) : (showEmptyState || !hasEventsThisWeek) ? (
+          <div className="flex items-center justify-center h-64 p-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-elevated">
+                <CalendarDays className="h-7 w-7 text-text-tertiary" />
+              </div>
+              <h3 className="font-medium text-text-primary mb-1">Ingen timer denne uken</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {courses.length === 0
+                  ? 'Opprett et kurs for å komme i gang.'
+                  : 'Ingen planlagte timer denne uken.'}
+              </p>
+              <Button asChild size="compact" className="gap-2">
+                <Link to="/teacher/new-course">
+                  <Plus className="h-3.5 w-3.5" />
+                  Opprett kurs
+                </Link>
+              </Button>
+            </div>
+          </div>
+        ) : dayEvents.length === 0 ? (
+          <div className="flex items-center justify-center h-64 p-6">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-elevated">
+                <CalendarDays className="h-7 w-7 text-text-tertiary" />
+              </div>
+              <h3 className="font-medium text-text-primary mb-1">
+                Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Velg en annen dag for å se timer.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 space-y-3">
+            {dayEvents
+              .sort((a, b) => a.startTime.localeCompare(b.startTime))
+              .map((event) => (
+                <MobileEventCard key={event.id} event={event} />
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Session with course data for transformation
 interface SessionWithCourse extends CourseSession {
   course: CourseWithStyle;
@@ -180,6 +333,7 @@ interface SessionWithCourse extends CourseSession {
 export const SchedulePage = () => {
   const { showEmptyState } = useEmptyState();
   const { currentOrganization, profile } = useAuth();
+  const isMobile = useIsMobile();
 
   // Data fetching state
   const [courses, setCourses] = useState<CourseWithStyle[]>([]);
@@ -187,6 +341,9 @@ export const SchedulePage = () => {
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({}); // courseId -> count
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Mobile day selector state
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
   // Initialize with current Oslo time
   const [currentTime, setCurrentTime] = useState(getOsloTime);
@@ -361,6 +518,16 @@ export const SchedulePage = () => {
     return generateWeekDays(displayedMonday, today);
   }, [displayedMonday]);
 
+  // Auto-select today's index on mobile when viewing current week
+  useEffect(() => {
+    if (isMobile && weekOffset === 0) {
+      const todayIndex = weekDays.findIndex(day => day.isToday);
+      if (todayIndex !== -1) {
+        setSelectedDayIndex(todayIndex);
+      }
+    }
+  }, [isMobile, weekOffset, weekDays]);
+
   // Get the week number for display
   const displayedWeekNumber = useMemo(() => {
     return getWeekNumber(displayedMonday);
@@ -370,8 +537,8 @@ export const SchedulePage = () => {
   const currentTimePosition = useMemo(() => {
     const hours = currentTime.getHours();
     const minutes = currentTime.getMinutes();
-    // Grid starts at 07:00, each hour is 100px
-    const offsetFromStart = (hours - 7) * 100 + (minutes / 60) * 100;
+    // Grid starts at 06:00, each hour is 100px
+    const offsetFromStart = (hours - 6) * 100 + (minutes / 60) * 100;
     return offsetFromStart;
   }, [currentTime]);
 
@@ -382,10 +549,10 @@ export const SchedulePage = () => {
     return `${hours}:${minutes}`;
   }, [currentTime]);
 
-  // Check if the current time indicator should be visible (between 07:00 and 24:00)
+  // Check if the current time indicator should be visible (between 06:00 and 23:00)
   const showTimeIndicator = useMemo(() => {
     const hours = currentTime.getHours();
-    return weekOffset === 0 && hours >= 7 && hours < 24;
+    return weekOffset === 0 && hours >= 6 && hours < 23;
   }, [currentTime, weekOffset]);
 
   // Check if there are any events in the current week
@@ -421,13 +588,24 @@ export const SchedulePage = () => {
     <SidebarProvider>
       <TeacherSidebar />
       <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
+          {/* Mobile Header */}
+          <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
+            <div className="flex items-center gap-3">
+              <Leaf className="h-5 w-5 text-primary" />
+              <span className="font-geist text-base font-medium text-text-primary">Ease</span>
+            </div>
+            <SidebarTrigger>
+              <Menu className="h-6 w-6 text-muted-foreground" />
+            </SidebarTrigger>
+          </div>
+
           {/* Schedule Toolbar */}
           <motion.header
             variants={pageVariants}
             initial="initial"
             animate="animate"
             transition={pageTransition}
-            className="flex flex-col gap-4 border-b border-gray-100 bg-surface px-6 py-5 shrink-0 z-20"
+            className="flex flex-col gap-4 border-b border-gray-200 bg-surface px-6 py-5 shrink-0 z-20"
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
@@ -481,15 +659,15 @@ export const SchedulePage = () => {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <button className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:shadow-md hover:text-text-primary ios-ease cursor-pointer">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-nowrap -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12">
+              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-gray-200 px-3 py-2 text-tiny font-medium text-text-secondary hover:bg-gray-50 hover:text-text-primary ios-ease cursor-pointer">
                 <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-tiny font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Rom
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-tiny font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Kurstype
               </button>
               {/* Dynamic style legend - only shows styles from active courses */}
@@ -504,7 +682,7 @@ export const SchedulePage = () => {
                           borderColor: `${style.color}40`
                         }}
                       />
-                      <span className="text-xs text-muted-foreground">{style.name}</span>
+                      <span className="text-tiny text-muted-foreground">{style.name}</span>
                     </div>
                   ))}
                 </div>
@@ -512,17 +690,27 @@ export const SchedulePage = () => {
             </div>
           </motion.header>
 
-          {/* Schedule Grid Container */}
+          {/* Mobile View */}
+          {isMobile ? (
+            <MobileDayView
+              weekDays={weekDays}
+              selectedDayIndex={selectedDayIndex}
+              onDaySelect={setSelectedDayIndex}
+              events={currentEvents}
+              isLoading={isLoading}
+              error={error}
+              onRetry={loadScheduleData}
+              showEmptyState={showEmptyState}
+              hasEventsThisWeek={hasEventsThisWeek}
+              courses={courses}
+            />
+          ) : (
+          /* Desktop Schedule Grid Container */
           <div className={`flex-1 bg-white relative flex flex-col ${!isLoading && !error && (showEmptyState || !hasEventsThisWeek) ? 'overflow-hidden' : 'overflow-auto'}`}>
 
             {/* Loading State Overlay */}
             {isLoading && (
-              <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">Laster timeplan...</p>
-                </div>
-              </div>
+              <PageLoader variant="overlay" message="Laster timeplan..." />
             )}
 
             {/* Error State Overlay */}
@@ -532,7 +720,7 @@ export const SchedulePage = () => {
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
                     <CalendarDays className="h-8 w-8 text-destructive" />
                   </div>
-                  <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
+                  <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
                     Noe gikk galt
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6">
@@ -548,11 +736,11 @@ export const SchedulePage = () => {
             {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-900/5">
-                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl shadow-md">
+                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-gray-200">
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
-                  <h3 className="font-geist text-lg font-semibold text-text-primary mb-2">
+                  <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
                     Ingen timer denne uken
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6">
@@ -571,7 +759,7 @@ export const SchedulePage = () => {
             )}
 
             {/* Sticky Header (Days) */}
-            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-gray-100 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] min-w-[1040px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-gray-200 bg-white min-w-[1040px]">
               {/* Corner */}
               <div className="border-r border-border p-3 bg-surface"></div>
 
@@ -581,13 +769,13 @@ export const SchedulePage = () => {
                   key={day.name}
                   className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                 >
-                  <span className={`text-xxs font-medium uppercase tracking-wide ${day.isToday ? 'font-bold text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
+                  <span className={`text-tiny font-medium uppercase tracking-wider ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
                     {day.name}
                   </span>
                   <span
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
                       day.isToday
-                        ? 'bg-text-primary text-white font-bold shadow-md shadow-text-primary/20'
+                        ? 'bg-text-primary text-white'
                         : day.isWeekend
                         ? 'text-text-tertiary group-hover:bg-surface-elevated'
                         : 'text-text-secondary group-hover:bg-surface-elevated'
@@ -608,16 +796,16 @@ export const SchedulePage = () => {
                   className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
                   style={{ top: `${currentTimePosition}px` }}
                 >
-                  <div className="w-[60px] text-right pr-2 text-xxs font-bold text-red-500">{currentTimeString}</div>
-                  <div className="h-px flex-1 bg-red-500 opacity-50"></div>
-                  <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500"></div>
+                  <div className="w-[60px] text-right pr-2 text-tiny font-medium text-destructive">{currentTimeString}</div>
+                  <div className="h-px flex-1 bg-destructive opacity-50"></div>
+                  <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-destructive"></div>
                 </div>
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-gray-100 bg-surface text-xxs font-medium text-text-tertiary">
+              <div className="flex flex-col border-r border-gray-200 bg-surface text-tiny font-medium text-text-tertiary">
                 {timeSlots.map((time) => (
-                  <div key={time} className="h-[100px] border-b border-gray-100/50 px-2 py-1">
+                  <div key={time} className="h-[100px] border-b border-gray-200/50 px-2 py-1">
                     {time}
                   </div>
                 ))}
@@ -635,6 +823,7 @@ export const SchedulePage = () => {
               ))}
             </div>
           </div>
+          )}
         </main>
       <EmptyStateToggle />
     </SidebarProvider>

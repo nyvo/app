@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Leaf, Menu, Loader2, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Leaf, Menu, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
@@ -17,6 +18,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, fetchUpcomingSession, type CourseWithStyle } from '@/services/courses';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
 import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
+import { getInitials } from '@/utils/stringUtils';
+import { extractTimeFromSchedule, formatRelativeTimePast } from '@/utils/dateFormatting';
+import { useDashboardSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
   CourseType as DashboardCourseType,
@@ -31,13 +35,6 @@ function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
   // Map style to dashboard course type
   const styleType = course.style?.normalized_name || course.course_type;
 
-  // Extract time from time_schedule (e.g., "Tirsdager, 18:00" -> "18:00")
-  const extractTime = (schedule: string | null): string => {
-    if (!schedule) return '';
-    const timeMatch = schedule.match(/(\d{1,2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '';
-  };
-
   // Create subtitle from location or course type
   const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
 
@@ -45,32 +42,16 @@ function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
     id: course.id,
     title: course.title,
     subtitle,
-    time: extractTime(course.time_schedule),
+    time: extractTimeFromSchedule(course.time_schedule),
     type: styleType as DashboardCourseType,
   };
-}
-
-// Format relative time for registrations
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'Nå';
-  if (diffMins < 60) return `${diffMins} min siden`;
-  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'time' : 'timer'} siden`;
-  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'dag' : 'dager'} siden`;
-  return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
 }
 
 // Map conversation to Dashboard Message format
 function mapConversationToMessage(conversation: ConversationWithDetails): DashboardMessage {
   const participantName = conversation.participant?.name || 'Ukjent';
   const lastMessage = conversation.last_message;
-  const timestamp = formatRelativeTime(conversation.updated_at);
+  const timestamp = formatRelativeTimePast(conversation.updated_at);
 
   return {
     id: conversation.id,
@@ -84,19 +65,38 @@ function mapConversationToMessage(conversation: ConversationWithDetails): Dashbo
   };
 }
 
+// Detect if a signup requires teacher attention
+// Only checks confirmed signups - waitlist entries are excluded
+function detectSignupException(signup: SignupWithDetails): boolean {
+  // Only check confirmed signups, not waitlist
+  if (signup.status !== 'confirmed') {
+    return false;
+  }
+
+  // Payment failed - needs follow-up or cancellation
+  if (signup.payment_status === 'failed') {
+    return true;
+  }
+
+  // Confirmed but payment still pending - might need chase
+  if (signup.payment_status === 'pending') {
+    return true;
+  }
+
+  return false;
+}
+
 // Map signup to Registration format
 function mapSignupToRegistration(signup: SignupWithDetails): Registration {
   const participantName = signup.participant_name || signup.profile?.name || 'Ukjent';
   const participantEmail = signup.participant_email || signup.profile?.email || '';
-  const initials = participantName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = getInitials(participantName);
 
   // Format course time from time_schedule
   const courseTime = signup.course?.time_schedule || '';
+
+  // Detect if this signup needs attention
+  const hasException = detectSignupException(signup);
 
   return {
     id: signup.id,
@@ -109,8 +109,9 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
     course: signup.course?.title || 'Ukjent kurs',
     courseTime,
     courseType: (signup.course?.course_type || 'vinyasa') as DashboardCourseType,
-    registeredAt: formatRelativeTime(signup.created_at),
+    registeredAt: formatRelativeTimePast(signup.created_at),
     status: signup.status as SignupStatus,
+    hasException,
   };
 }
 
@@ -121,7 +122,7 @@ function calculateStartsIn(sessionDate: string, startTime: string): string {
   // Validate time string format
   const timeParts = startTime?.split(':');
   if (!timeParts || timeParts.length < 2) {
-    return 'Tid ikke angitt';
+    return 'Tid mangler';
   }
 
   const hours = Number(timeParts[0]);
@@ -181,9 +182,85 @@ const TeacherDashboard = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  // Fetch all dashboard data
+  // Refetch function for real-time updates (memoized to prevent subscription loops)
+  const refetchDashboardData = useCallback(async () => {
+    if (!currentOrganization?.id) return;
+
+    try {
+      // Fetch all data in parallel (silently, no loading state for real-time updates)
+      const [coursesResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
+        fetchCourses(currentOrganization.id),
+        fetchUpcomingSession(currentOrganization.id),
+        fetchRecentSignups(currentOrganization.id, 4),
+        fetchRecentConversations(currentOrganization.id, 4),
+      ]);
+
+      // Process courses
+      if (coursesResult.data && coursesResult.data.length > 0) {
+        setHasCourses(true);
+        const activeCourses = coursesResult.data
+          .filter(c => c.status === 'active' || c.status === 'upcoming')
+          .slice(0, 6)
+          .map(mapCourseForDashboard);
+        setDashboardCourses(activeCourses);
+      } else {
+        setHasCourses(false);
+        setDashboardCourses([]);
+      }
+
+      // Process upcoming session
+      if (upcomingResult.data) {
+        const { session, course, attendeeCount } = upcomingResult.data;
+
+        const duration = course.duration || 60;
+        const timeParts = session.start_time?.split(':');
+        const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
+        const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
+        const endDate = new Date();
+        endDate.setHours(startHours, startMins + duration, 0, 0);
+        const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+        const formatTime = (time: string | null) => time?.slice(0, 5) || '';
+
+        setUpcomingClass({
+          id: course.id,
+          title: course.title,
+          type: (course.style?.normalized_name || course.course_type) as DashboardCourseType,
+          startTime: formatTime(session.start_time),
+          endTime: formatTime(session.end_time) || endTime,
+          date: formatSessionDate(session.session_date),
+          location: course.location || 'Ikke angitt',
+          attendees: attendeeCount,
+          capacity: course.max_participants || 0,
+          startsIn: calculateStartsIn(session.session_date, session.start_time),
+        });
+      } else {
+        setUpcomingClass(null);
+      }
+
+      // Process signups
+      if (signupsResult.data) {
+        setRegistrations(signupsResult.data.map(mapSignupToRegistration));
+      } else {
+        setRegistrations([]);
+      }
+
+      // Process messages
+      if (messagesResult.data) {
+        setMessages(messagesResult.data.map(mapConversationToMessage));
+      } else {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Dashboard refetch error:', err);
+      // Don't show error for real-time updates, keep existing data
+    }
+  }, [currentOrganization?.id]);
+
+  // Subscribe to real-time updates for dashboard data
+  useDashboardSubscription(currentOrganization?.id, refetchDashboardData);
+
+  // Initial data fetch
   useEffect(() => {
-    // Track if this effect is still active (for race condition prevention)
     let isActive = true;
 
     async function loadDashboardData() {
@@ -192,7 +269,7 @@ const TeacherDashboard = () => {
         return;
       }
 
-      // Only show loading spinner on very first load
+      // Only show loading skeleton on very first load
       if (!hasLoadedRef.current) {
         setIsLoading(true);
       }
@@ -207,10 +284,8 @@ const TeacherDashboard = () => {
           fetchRecentConversations(currentOrganization.id, 4),
         ]);
 
-        // Check if component is still active (org hasn't changed)
         if (!isActive) return;
 
-        // Check for critical errors
         if (coursesResult.error) {
           console.error('Failed to fetch courses:', coursesResult.error);
           setLoadError('Kunne ikke laste kurs');
@@ -233,7 +308,6 @@ const TeacherDashboard = () => {
         if (upcomingResult.data) {
           const { session, course, attendeeCount } = upcomingResult.data;
 
-          // Calculate end time (session duration or default 60 min)
           const duration = course.duration || 60;
           const timeParts = session.start_time?.split(':');
           const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
@@ -241,13 +315,14 @@ const TeacherDashboard = () => {
           const endDate = new Date();
           endDate.setHours(startHours, startMins + duration, 0, 0);
           const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+          const formatTime = (time: string | null) => time?.slice(0, 5) || '';
 
           setUpcomingClass({
             id: course.id,
             title: course.title,
             type: (course.style?.normalized_name || course.course_type) as DashboardCourseType,
-            startTime: session.start_time,
-            endTime: session.end_time || endTime,
+            startTime: formatTime(session.start_time),
+            endTime: formatTime(session.end_time) || endTime,
             date: formatSessionDate(session.session_date),
             location: course.location || 'Ikke angitt',
             attendees: attendeeCount,
@@ -274,7 +349,7 @@ const TeacherDashboard = () => {
       } catch (err) {
         console.error('Dashboard load error:', err);
         if (isActive) {
-          setLoadError('En feil oppstod ved lasting av data');
+          setLoadError('Noe gikk galt ved lasting av data');
         }
       } finally {
         if (isActive) {
@@ -286,7 +361,6 @@ const TeacherDashboard = () => {
 
     loadDashboardData();
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
       isActive = false;
     };
@@ -303,14 +377,14 @@ const TeacherDashboard = () => {
           <div className="flex md:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-30">
             <div className="flex items-center gap-3">
               <Leaf className="h-5 w-5 text-primary" />
-              <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
+              <span className="font-geist text-base font-medium text-text-primary">Ease</span>
             </div>
             <SidebarTrigger>
               <Menu className="h-6 w-6 text-muted-foreground" />
             </SidebarTrigger>
           </div>
 
-          <div className="mx-auto max-w-7xl p-6 lg:p-12">
+          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-12">
             <motion.div
               variants={pageVariants}
               initial="initial"
@@ -319,8 +393,8 @@ const TeacherDashboard = () => {
             >
               <header className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
-                  <h1 className="font-geist text-2xl md:text-3xl font-medium tracking-tight text-text-primary">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
+                  <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                     {getTimeBasedGreeting()}, {userName}
                   </h1>
                 </div>
@@ -340,9 +414,7 @@ const TeacherDashboard = () => {
               </header>
 
               {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
-                </div>
+                <DashboardSkeleton />
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
@@ -363,22 +435,22 @@ const TeacherDashboard = () => {
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {/* Primary Action Card - Dark Hero Style */}
-                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-gray-900 text-white shadow-lg shadow-gray-900/20 ios-ease hover:shadow-xl hover:shadow-gray-900/30 hover:scale-[1.005] border border-gray-800">
+                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-gray-900 text-white border border-gray-800 ios-ease hover:border-gray-700">
                     {/* Gradient background */}
                     <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 z-0"></div>
                     {/* Grain texture */}
                     <div className="absolute inset-0 bg-grain opacity-[0.35] mix-blend-overlay pointer-events-none z-0"></div>
                     {/* Glow effect */}
-                    <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl transition-all duration-1000 group-hover:scale-110 group-hover:bg-white/10 z-0"></div>
+                    <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl transition-all duration-1000 group-hover:bg-white/10 z-0"></div>
 
                     <div className="relative flex h-full flex-col justify-between z-10 p-9">
                       {/* Top badges */}
                       <div className="flex items-start justify-between">
                         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                          <span className="text-xs font-medium text-emerald-400">Konfigurering kreves</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse"></span>
+                          <span className="text-tiny font-medium text-success">Konfigurering kreves</span>
                         </div>
-                        <div className="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-900 shadow-sm">
+                        <div className="rounded-full bg-white px-3 py-1 text-tiny font-medium text-text-primary">
                           Kom i gang
                         </div>
                       </div>
@@ -389,7 +461,7 @@ const TeacherDashboard = () => {
                           La oss sette opp<br />ditt første kurs
                         </h2>
                         <p className="text-sm text-white/70 max-w-sm">
-                          Opprett et kurs for å begynne å motta bookinger og administrere timeplanen din.
+                          Opprett et kurs for å motta påmeldinger og administrere timeplanen.
                         </p>
                       </div>
 
@@ -397,7 +469,7 @@ const TeacherDashboard = () => {
                       <div className="flex justify-end">
                         <Link
                           to="/teacher/new-course"
-                          className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-xs font-medium text-text-primary shadow-sm group-hover:bg-surface-elevated ios-ease"
+                          className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-tiny font-medium text-text-primary group-hover:bg-surface-elevated ios-ease"
                         >
                           Opprett kurs
                           <ArrowRight className="h-3.5 w-3.5" />

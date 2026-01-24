@@ -1,37 +1,82 @@
 // Setup type definitions for built-in Supabase Runtime APIs
+// Deployed: 2026-01-20 - using Stripe SDK constructEventAsync for verification
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2024-12-18.acacia',
+  httpClient: Stripe.createFetchHttpClient(),
 })
-
-// Use SubtleCrypto for webhook verification in Deno
-const cryptoProvider = Stripe.createSubtleCryptoProvider()
 
 const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
+// Use Stripe SDK for signature verification - it handles all the complexity
+async function verifyAndParseWebhook(body: string, signature: string, secret: string): Promise<Stripe.Event | null> {
+  try {
+    // The Stripe SDK handles HMAC verification correctly
+    // Use constructEventAsync which is the proper async version
+    const event = await stripe.webhooks.constructEventAsync(body, signature, secret)
+    console.log('Stripe SDK verified signature successfully!')
+    return event
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('Stripe SDK verification failed:', message)
+    return null
+  }
+}
+
 Deno.serve(async (req: Request) => {
+  // Debug: Log webhook secret info (first 10 chars only for security)
+  const secretPrefix = webhookSecret ? webhookSecret.substring(0, 10) : 'NOT_SET'
+  console.log('Webhook secret prefix:', secretPrefix, '| Length:', webhookSecret?.length || 0)
+
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
     return new Response('Missing stripe-signature header', { status: 400 })
   }
 
+  console.log('Received signature header:', signature.substring(0, 50) + '...')
+
   try {
     const body = await req.text()
-    const event = await stripe.webhooks.constructEventAsync(
-      body,
-      signature,
-      webhookSecret,
-      undefined,
-      cryptoProvider
-    )
+    console.log('Body length:', body.length)
+
+    // Use Stripe SDK for verification
+    const event = await verifyAndParseWebhook(body, signature, webhookSecret)
+    if (!event) {
+      return new Response('Invalid signature', { status: 400 })
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // ============================================
+    // IDEMPOTENCY CHECK: Prevent duplicate processing
+    // Stripe may retry webhooks, so we track processed event IDs
+    // ============================================
+    const eventId = event.id
+
+    // Check if this event was already processed
+    const { data: existingEvent } = await supabase
+      .from('processed_webhook_events')
+      .select('event_id, result')
+      .eq('event_id', eventId)
+      .single()
+
+    if (existingEvent) {
+      console.log(`Event ${eventId} already processed, skipping (idempotency)`)
+      return new Response(JSON.stringify({
+        status: 'already_processed',
+        event_id: eventId,
+        previous_result: existingEvent.result
+      }), { status: 200 })
+    }
+
+    // Process the event and track result
+    let processingResult: Record<string, unknown> = {}
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -46,15 +91,42 @@ Deno.serve(async (req: Request) => {
         const customerPhone = metadata.customer_phone
         const isDropIn = metadata.is_drop_in === 'true'
         const sessionId = metadata.session_id
+        // Package metadata
+        const signupPackageId = metadata.signup_package_id || null
+        const packageWeeks = metadata.package_weeks ? parseInt(metadata.package_weeks, 10) : null
         // Waitlist claim metadata
         const isWaitlistClaim = metadata.is_waitlist_claim === 'true'
         const claimToken = metadata.claim_token
         const signupIdToClaim = metadata.signup_id
 
-        if (!courseId || !organizationId || !customerEmail) {
-          console.error('Missing required metadata in checkout session')
-          return new Response('Missing metadata', { status: 400 })
+        // Validate all required metadata with detailed logging
+        const missingFields: string[] = []
+        if (!courseId) missingFields.push('course_id')
+        if (!organizationId) missingFields.push('organization_id')
+        if (!customerEmail) missingFields.push('customer_email')
+        if (!customerName) missingFields.push('customer_name')
+
+        if (missingFields.length > 0) {
+          console.error('Missing required metadata in checkout session:', {
+            sessionId: session.id,
+            missingFields,
+            metadata,
+            customerEmail: session.customer_email,
+          })
+          return new Response(`Missing metadata: ${missingFields.join(', ')}`, { status: 400 })
         }
+
+        console.log('Processing checkout.session.completed:', {
+          sessionId: session.id,
+          courseId,
+          organizationId,
+          customerEmail,
+          customerName,
+          isDropIn,
+          isWaitlistClaim,
+          paymentIntent: session.payment_intent,
+          amountTotal: session.amount_total,
+        })
 
         // Handle waitlist claim differently
         if (isWaitlistClaim && signupIdToClaim) {
@@ -79,6 +151,12 @@ Deno.serve(async (req: Request) => {
           // Check if already claimed
           if (existingSignup.offer_status === 'claimed') {
             console.log('Spot already claimed')
+            // Record and return early
+            await supabase.from('processed_webhook_events').insert({
+              event_id: eventId,
+              event_type: event.type,
+              result: { type: 'waitlist_claim', status: 'already_claimed' }
+            }).catch(() => {}) // Ignore errors
             return new Response('OK', { status: 200 })
           }
 
@@ -86,6 +164,22 @@ Deno.serve(async (req: Request) => {
           if (existingSignup.offer_expires_at && new Date(existingSignup.offer_expires_at) < new Date()) {
             console.error('Offer has expired')
             return new Response('Offer expired', { status: 400 })
+          }
+
+          // Fetch receipt URL from the charge
+          let receiptUrl: string | null = null
+          if (session.payment_intent) {
+            try {
+              const charges = await stripe.charges.list({
+                payment_intent: session.payment_intent as string,
+                limit: 1
+              })
+              if (charges.data.length > 0 && charges.data[0].receipt_url) {
+                receiptUrl = charges.data[0].receipt_url
+              }
+            } catch (chargeError) {
+              console.error('Error fetching charge for receipt URL:', chargeError)
+            }
           }
 
           // Update the existing signup to confirmed
@@ -98,6 +192,7 @@ Deno.serve(async (req: Request) => {
               waitlist_position: null,
               stripe_checkout_session_id: session.id,
               stripe_payment_intent_id: session.payment_intent as string,
+              stripe_receipt_url: receiptUrl,
               amount_paid: session.amount_total ? session.amount_total / 100 : null,
               updated_at: new Date().toISOString()
             })
@@ -109,6 +204,13 @@ Deno.serve(async (req: Request) => {
           }
 
           console.log(`Waitlist claim successful for signup ${signupIdToClaim}`)
+
+          // Track result for idempotency
+          processingResult = {
+            type: 'waitlist_claim',
+            signup_id: signupIdToClaim,
+            status: 'confirmed'
+          }
 
           // Send confirmation email
           try {
@@ -167,38 +269,41 @@ Deno.serve(async (req: Request) => {
         }
 
         // Check if signup already exists (idempotency for regular signups)
-        const { data: existingSignup } = await supabase
+        const { data: existingSignups, error: idempotencyError } = await supabase
           .from('signups')
           .select('id')
           .eq('stripe_payment_intent_id', session.payment_intent)
-          .single()
 
-        if (existingSignup) {
-          console.log('Signup already exists for this payment intent')
-          return new Response('OK', { status: 200 })
+        if (idempotencyError) {
+          console.error('Error checking for existing signup:', {
+            error: idempotencyError,
+            paymentIntent: session.payment_intent,
+          })
         }
 
-        // Get course details for signup status and confirmation email
-        const { data: course } = await supabase
-          .from('courses')
-          .select('title, max_participants, location, time_schedule, start_date')
-          .eq('id', courseId)
-          .single()
-
-        // Count current confirmed signups
-        const { count: currentSignups } = await supabase
-          .from('signups')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', courseId)
-          .eq('status', 'confirmed')
-
-        // Determine if this signup should be waitlisted
-        const spotsAvailable = course?.max_participants
-          ? course.max_participants - (currentSignups || 0)
-          : 999
-
-        const signupStatus = spotsAvailable > 0 ? 'confirmed' : 'waitlist'
-        const waitlistPosition = signupStatus === 'waitlist' ? (currentSignups || 0) - (course?.max_participants || 0) + 1 : null
+        if (existingSignups && existingSignups.length > 0) {
+          console.log('Signup already exists for this payment intent:', {
+            existingId: existingSignups[0].id,
+            paymentIntent: session.payment_intent,
+          })
+          // Ensure payment is captured if signup exists
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string)
+            if (paymentIntent.status === 'requires_capture') {
+              await stripe.paymentIntents.capture(session.payment_intent as string)
+              console.log('Captured payment for existing signup')
+            }
+          } catch (captureError) {
+            console.error('Error capturing payment for existing signup:', captureError)
+          }
+          // Record event before returning (signup already existed via payment_intent check)
+          await supabase.from('processed_webhook_events').insert({
+            event_id: eventId,
+            event_type: event.type,
+            result: { type: 'regular_signup', status: 'already_exists', existing_id: existingSignups[0].id }
+          }).catch(() => {}) // Ignore errors
+          return new Response('OK', { status: 200 })
+        }
 
         // Get session date/time if it's a drop-in
         let classDate = null
@@ -217,32 +322,145 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        // Create the signup
-        const { error: signupError } = await supabase
-          .from('signups')
-          .insert({
-            organization_id: organizationId,
-            course_id: courseId,
-            participant_name: customerName,
-            participant_email: customerEmail,
-            participant_phone: customerPhone || null,
-            status: signupStatus,
-            waitlist_position: waitlistPosition,
-            is_drop_in: isDropIn,
-            class_date: classDate,
-            class_time: classTime,
-            payment_status: 'paid',
-            stripe_checkout_session_id: session.id,
-            stripe_payment_intent_id: session.payment_intent as string,
-            amount_paid: session.amount_total ? session.amount_total / 100 : null,
+        // Use atomic function to check capacity and create signup
+        // This prevents race conditions where two people try to book the last spot
+        const { data: signupResult, error: signupError } = await supabase
+          .rpc('create_signup_if_available', {
+            p_course_id: courseId,
+            p_organization_id: organizationId,
+            p_participant_name: customerName,
+            p_participant_email: customerEmail,
+            p_participant_phone: customerPhone || null,
+            p_stripe_checkout_session_id: session.id,
+            p_stripe_payment_intent_id: session.payment_intent as string,
+            p_stripe_receipt_url: null, // Will update after capture
+            p_amount_paid: session.amount_total ? session.amount_total / 100 : null,
+            p_is_drop_in: isDropIn,
+            p_class_date: classDate,
+            p_class_time: classTime,
+            // Package parameters for package-aware capacity
+            p_signup_package_id: signupPackageId,
+            p_package_weeks: packageWeeks
           })
 
+        // Handle atomic function result
         if (signupError) {
-          console.error('Error creating signup:', signupError)
-          return new Response('Error creating signup', { status: 500 })
+          console.error('Error calling create_signup_if_available:', signupError)
+          // Cancel the payment authorization since we couldn't create signup
+          try {
+            await stripe.paymentIntents.cancel(session.payment_intent as string)
+            console.log('Payment cancelled due to database error')
+          } catch (cancelError) {
+            console.error('Error cancelling payment:', cancelError)
+          }
+          return new Response(`Error creating signup: ${signupError.message}`, { status: 500 })
         }
 
-        console.log(`Signup created for ${customerEmail} - Course: ${courseId}`)
+        // Check if signup was successful
+        if (!signupResult || !signupResult.success) {
+          const errorType = signupResult?.error || 'unknown'
+          const errorMessage = signupResult?.message || 'Kunne ikke opprette påmelding'
+
+          console.log('Signup failed - cancelling payment:', {
+            error: errorType,
+            message: errorMessage,
+            courseId,
+            customerEmail,
+          })
+
+          // Course is full or duplicate - cancel the payment authorization
+          try {
+            await stripe.paymentIntents.cancel(session.payment_intent as string)
+            console.log('Payment authorization cancelled successfully')
+          } catch (cancelError) {
+            console.error('Error cancelling payment authorization:', cancelError)
+          }
+
+          // Send booking failed email to notify customer
+          try {
+            // Get course details for email
+            const { data: course } = await supabase
+              .from('courses')
+              .select('title')
+              .eq('id', courseId)
+              .single()
+
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                to: customerEmail,
+                template: 'booking-failed',
+                templateData: {
+                  courseName: course?.title || 'Kurset',
+                  reason: errorType === 'course_full' ? 'Kurset ble dessverre fullt før vi kunne bekrefte din påmelding.' :
+                          errorType === 'already_signed_up' ? 'Du er allerede påmeldt dette kurset.' :
+                          'Det oppstod en feil ved påmelding.',
+                  wasCharged: 'false'
+                }
+              })
+            })
+            console.log('Booking failed email sent to', customerEmail)
+          } catch (emailError) {
+            console.error('Error sending booking failed email:', emailError)
+          }
+
+          return new Response('OK', { status: 200 }) // Return OK - we handled it gracefully
+        }
+
+        // Signup created successfully - now capture the payment
+        console.log('Signup created successfully, capturing payment:', {
+          signupId: signupResult.signup_id,
+          status: signupResult.status,
+          paymentIntent: session.payment_intent,
+        })
+
+        // Track result for idempotency
+        processingResult = {
+          type: 'regular_signup',
+          signup_id: signupResult.signup_id,
+          status: 'confirmed'
+        }
+
+        let receiptUrl: string | null = null
+        try {
+          const capturedPayment = await stripe.paymentIntents.capture(session.payment_intent as string)
+          console.log('Payment captured successfully:', capturedPayment.id)
+
+          // Get receipt URL from the charge
+          if (capturedPayment.latest_charge) {
+            const charge = await stripe.charges.retrieve(capturedPayment.latest_charge as string)
+            receiptUrl = charge.receipt_url || null
+          }
+
+          // Update signup with receipt URL
+          if (receiptUrl) {
+            await supabase
+              .from('signups')
+              .update({ stripe_receipt_url: receiptUrl })
+              .eq('id', signupResult.signup_id)
+          }
+        } catch (captureError) {
+          // Payment capture failed - this is a critical error
+          // The signup was created but payment wasn't captured
+          console.error('CRITICAL: Payment capture failed after signup created:', captureError)
+          // Mark signup as payment failed
+          await supabase
+            .from('signups')
+            .update({ payment_status: 'failed' })
+            .eq('id', signupResult.signup_id)
+          return new Response('Payment capture failed', { status: 500 })
+        }
+
+        // Get course details for confirmation email
+        const { data: course } = await supabase
+          .from('courses')
+          .select('title, location, time_schedule, start_date')
+          .eq('id', courseId)
+          .single()
 
         // Send confirmation email (non-blocking)
         try {
@@ -313,6 +531,7 @@ Deno.serve(async (req: Request) => {
       case 'checkout.session.expired': {
         const session = event.data.object as Stripe.Checkout.Session
         console.log(`Checkout session expired: ${session.id}`)
+        processingResult = { type: 'session_expired', session_id: session.id }
         // Could notify user or clean up pending bookings
         break
       }
@@ -330,6 +549,7 @@ Deno.serve(async (req: Request) => {
         if (updateError) {
           console.error('Error updating signup payment status:', updateError)
         }
+        processingResult = { type: 'payment_failed', payment_intent_id: paymentIntent.id }
         break
       }
 
@@ -349,11 +569,28 @@ Deno.serve(async (req: Request) => {
         if (updateError) {
           console.error('Error updating signup for refund:', updateError)
         }
+        processingResult = { type: 'refund', charge_id: charge.id }
         break
       }
 
       default:
         console.log(`Unhandled event type: ${event.type}`)
+        processingResult = { status: 'unhandled', event_type: event.type }
+    }
+
+    // ============================================
+    // RECORD EVENT AS PROCESSED (idempotency)
+    // ============================================
+    try {
+      await supabase.from('processed_webhook_events').insert({
+        event_id: eventId,
+        event_type: event.type,
+        result: processingResult
+      })
+      console.log(`Recorded event ${eventId} as processed`)
+    } catch (recordError) {
+      // Don't fail if we can't record - the event was still processed
+      console.error('Warning: Could not record processed event:', recordError)
     }
 
     return new Response('OK', { status: 200 })

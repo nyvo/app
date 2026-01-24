@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 interface ShareCoursePopoverProps {
   courseUrl: string;
   courseTitle?: string;
+  children?: React.ReactNode;
 }
 
-export function ShareCoursePopover({ courseUrl, courseTitle = 'this course' }: ShareCoursePopoverProps) {
+export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', children }: ShareCoursePopoverProps) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -40,10 +41,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course' }: S
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline-soft" size="compact">
-          <Share2 className="h-3.5 w-3.5" />
-          Del kurs
-        </Button>
+        {children || (
+          <Button variant="outline-soft" size="compact">
+            <Share2 className="h-3.5 w-3.5" />
+            Del kurs
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className="w-[360px] p-0 bg-white rounded-xl shadow-lg border border-border ring-1 ring-black/5 overflow-hidden"
@@ -53,7 +56,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course' }: S
         <div className="px-5 pt-5 pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-text-primary tracking-tight">Del dette kurset</h3>
+              <h3 className="text-sm font-medium text-text-primary tracking-tight">Del dette kurset</h3>
               <p className="text-xs text-muted-foreground mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>

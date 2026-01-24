@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import type { Message } from '@/types/dashboard';
@@ -6,27 +7,27 @@ interface MessagesListProps {
   messages: Message[];
 }
 
-export const MessagesList = ({ messages }: MessagesListProps) => {
+export const MessagesList = memo(function MessagesList({ messages }: MessagesListProps) {
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-3xl bg-white shadow-sm overflow-hidden ios-ease hover:shadow-md flex flex-col">
+    <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-3xl bg-white border border-gray-200 overflow-hidden ios-ease hover:border-ring flex flex-col">
       <div className="flex items-center justify-between p-5 pb-4">
-        <h3 className="font-geist text-sm font-semibold text-text-primary">Meldinger</h3>
+        <h3 className="font-geist text-sm font-medium text-text-primary">Meldinger</h3>
         <Link to="/teacher/messages" className="text-xs font-medium text-text-tertiary hover:text-text-secondary transition-colors">Se alle</Link>
       </div>
-      <div className="flex-1 overflow-y-auto p-2 space-y-1 flex flex-col">
+      <div className="flex-1 overflow-y-auto p-2 space-y-2 flex flex-col">
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center mx-2 my-2 rounded-2xl bg-gray-50/50">
-            <div className="w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center mb-3 shadow-sm">
+          <div className="flex-1 flex flex-col items-center justify-center text-center mx-2 my-2 rounded-2xl bg-white border border-gray-200">
+            <div className="w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center mb-3">
               <MessageSquare className="w-4 h-4 text-text-tertiary" />
             </div>
             <p className="text-sm font-medium text-text-primary">Alt oppdatert</p>
-            <p className="text-xs text-text-tertiary mt-1">Ingen nye henvendelser fra elever.</p>
+            <p className="text-xs text-text-secondary mt-1">Ingen nye henvendelser fra elever.</p>
           </div>
         ) : (
           messages.map((message) => (
           <div
             key={message.id}
-            className="group flex items-center gap-3.5 p-3 rounded-3xl hover:bg-surface-elevated cursor-pointer transition-colors"
+            className="group flex items-center gap-3.5 p-3 rounded-3xl hover:bg-gray-50 cursor-pointer transition-colors"
           >
             <div className="relative flex-shrink-0">
               {message.sender.avatar ? (
@@ -48,11 +49,11 @@ export const MessagesList = ({ messages }: MessagesListProps) => {
                 <p className="text-sm font-medium text-text-primary truncate">
                   {message.sender.name}
                 </p>
-                <span className="text-xxs font-medium text-text-tertiary flex-shrink-0 ml-1.5 group-hover:text-muted-foreground">
+                <span className="text-xs font-normal text-text-tertiary flex-shrink-0 ml-1.5 group-hover:text-text-secondary">
                   {message.timestamp}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground truncate group-hover:text-text-secondary">
+              <p className="text-xs text-text-secondary truncate group-hover:text-text-primary transition-colors">
                 {message.content}
               </p>
             </div>
@@ -62,4 +63,4 @@ export const MessagesList = ({ messages }: MessagesListProps) => {
       </div>
     </div>
   );
-};
+});

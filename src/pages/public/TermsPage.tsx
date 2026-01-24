@@ -20,7 +20,7 @@ const TermsPage = () => {
           <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
@@ -32,14 +32,14 @@ const TermsPage = () => {
       <main className="flex-1 px-4 sm:px-6 py-12">
         <div className="max-w-2xl mx-auto">
           {/* Title */}
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary mb-12 text-center">
+          <h1 className="text-3xl font-medium tracking-tight text-text-primary mb-12 text-center">
             Vilkår for påmelding
           </h1>
 
           {/* Content */}
           <div className="space-y-12">
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-4">1. Påmelding og betaling</h2>
+              <h2 className="text-lg font-medium text-text-primary mb-4">1. Påmelding og betaling</h2>
               <p className="text-text-secondary leading-relaxed mb-4 text-sm">
                 Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er gjennomført.
               </p>
@@ -49,7 +49,7 @@ const TermsPage = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-4">2. Avbestilling</h2>
+              <h2 className="text-lg font-medium text-text-primary mb-4">2. Avbestilling</h2>
               <p className="text-text-secondary leading-relaxed mb-4 text-sm">
                 Du kan avbestille din påmelding inntil 48 timer før kursstart for full refusjon.
               </p>
@@ -62,7 +62,7 @@ const TermsPage = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-4">3. Ansvar</h2>
+              <h2 className="text-lg font-medium text-text-primary mb-4">3. Ansvar</h2>
               <p className="text-text-secondary leading-relaxed mb-4 text-sm">
                 Deltakelse på kurs skjer på eget ansvar. Instruktøren er ikke ansvarlig for skader som måtte oppstå under kurset.
               </p>
@@ -72,7 +72,7 @@ const TermsPage = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-4">4. Personvern</h2>
+              <h2 className="text-lg font-medium text-text-primary mb-4">4. Personvern</h2>
               <p className="text-text-secondary leading-relaxed text-sm">
                 Vi behandler dine personopplysninger i henhold til gjeldende personvernlovgivning.
                 Opplysninger brukes kun til administrasjon av kurspåmelding og kommunikasjon relatert til kurset.
@@ -80,7 +80,7 @@ const TermsPage = () => {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-text-primary mb-4">5. Endringer</h2>
+              <h2 className="text-lg font-medium text-text-primary mb-4">5. Endringer</h2>
               <p className="text-text-secondary leading-relaxed text-sm">
                 Instruktøren forbeholder seg retten til å gjøre endringer i kursprogrammet eller vilkårene.
                 Eventuelle endringer vil bli kommunisert til påmeldte deltakere.

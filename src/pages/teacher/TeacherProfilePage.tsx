@@ -13,6 +13,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
 import { toast } from 'sonner';
@@ -58,17 +59,17 @@ const TeacherProfilePage = () => {
     let isValid = true;
 
     if (!firstName.trim()) {
-      newErrors.firstName = 'Fornavn er påkrevd';
+      newErrors.firstName = 'Skriv inn fornavn';
       isValid = false;
     }
 
     if (!lastName.trim()) {
-      newErrors.lastName = 'Etternavn er påkrevd';
+      newErrors.lastName = 'Skriv inn etternavn';
       isValid = false;
     }
 
     if (!email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-postadresse';
       isValid = false;
     } else if (!validateEmail(email)) {
       newErrors.email = 'Ugyldig e-postadresse';
@@ -76,7 +77,7 @@ const TeacherProfilePage = () => {
     }
 
     if (studioDescription.length > 500) {
-      newErrors.studioDescription = 'Beskrivelse kan ikke være mer enn 500 tegn';
+      newErrors.studioDescription = 'Maks 500 tegn';
       isValid = false;
     }
 
@@ -90,20 +91,20 @@ const TeacherProfilePage = () => {
     const newErrors = { ...errors };
 
     if (field === 'firstName' && !firstName.trim()) {
-      newErrors.firstName = 'Fornavn er påkrevd';
+      newErrors.firstName = 'Skriv inn fornavn';
     } else if (field === 'firstName') {
       delete newErrors.firstName;
     }
 
     if (field === 'lastName' && !lastName.trim()) {
-      newErrors.lastName = 'Etternavn er påkrevd';
+      newErrors.lastName = 'Skriv inn etternavn';
     } else if (field === 'lastName') {
       delete newErrors.lastName;
     }
 
     if (field === 'email') {
       if (!email.trim()) {
-        newErrors.email = 'E-postadresse er påkrevd';
+        newErrors.email = 'Skriv inn e-postadresse';
       } else if (!validateEmail(email)) {
         newErrors.email = 'Ugyldig e-postadresse';
       } else {
@@ -112,7 +113,7 @@ const TeacherProfilePage = () => {
     }
 
     if (field === 'studioDescription' && studioDescription.length > 500) {
-      newErrors.studioDescription = 'Beskrivelse kan ikke være mer enn 500 tegn';
+      newErrors.studioDescription = 'Maks 500 tegn';
     } else if (field === 'studioDescription') {
       delete newErrors.studioDescription;
     }
@@ -142,7 +143,7 @@ const TeacherProfilePage = () => {
     }
 
     if (!currentOrganization) {
-      toast.error('Kunne ikke finne organisasjonen');
+      toast.error('Fant ikke organisasjonen');
       return;
     }
 
@@ -163,7 +164,7 @@ const TeacherProfilePage = () => {
     // Refresh organization data in context
     await refreshOrganizations();
 
-    toast.success('Endringene ble lagret');
+    toast.success('Endringer lagret');
     setIsSaving(false);
   };
 
@@ -188,10 +189,10 @@ const TeacherProfilePage = () => {
 
       <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
         {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
+        <div className="flex md:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
           <div className="flex items-center gap-3">
              <Leaf className="h-5 w-5 text-primary" />
-             <span className="font-geist text-base font-semibold text-text-primary">Ease</span>
+             <span className="font-geist text-base font-medium text-text-primary">Ease</span>
           </div>
           <SidebarTrigger>
             <Menu className="h-6 w-6 text-muted-foreground" />
@@ -216,41 +217,20 @@ const TeacherProfilePage = () => {
 
             {/* Tabs Navigation */}
             <div className="mb-8 flex w-full md:w-auto overflow-x-auto no-scrollbar">
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => switchTab('profile')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
-                            activeTab === 'profile'
-                            ? 'bg-white text-text-primary shadow-sm'
-                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
-                        }`}
-                    >
+                <FilterTabs value={activeTab} onValueChange={(v) => switchTab(v as Tab)}>
+                    <FilterTab value="profile" className="flex items-center gap-2">
                         <User className="h-3.5 w-3.5" />
                         Profil
-                    </button>
-                    <button
-                        onClick={() => switchTab('notifications')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
-                            activeTab === 'notifications'
-                            ? 'bg-white text-text-primary shadow-sm'
-                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
-                        }`}
-                    >
+                    </FilterTab>
+                    <FilterTab value="notifications" className="flex items-center gap-2">
                         <Bell className="h-3.5 w-3.5" />
                         Varslinger
-                    </button>
-                    <button
-                        onClick={() => switchTab('security')}
-                        className={`flex items-center gap-2 h-10 rounded-lg px-3 py-2 text-xs font-medium ios-ease cursor-pointer ${
-                            activeTab === 'security'
-                            ? 'bg-white text-text-primary shadow-sm'
-                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-elevated'
-                        }`}
-                    >
+                    </FilterTab>
+                    <FilterTab value="security" className="flex items-center gap-2">
                         <Shield className="h-3.5 w-3.5" />
                         Sikkerhet
-                    </button>
-                </div>
+                    </FilterTab>
+                </FilterTabs>
             </div>
 
             {/* Tab Content: Profile */}
@@ -258,10 +238,10 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
                     {/* Avatar Section */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
-                                <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar shadow-md">
+                                <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar">
                                   {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
                                 </div>
                             </div>
@@ -273,9 +253,9 @@ const TeacherProfilePage = () => {
                     </div>
 
                     {/* Personal Info Form */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-geist text-base font-semibold text-text-primary">Personlig Informasjon</h3>
+                            <h3 className="font-geist text-base font-medium text-text-primary">Personlig Informasjon</h3>
                             {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
                         </div>
 
@@ -400,9 +380,9 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
+                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
                         <div className="mb-6">
-                            <h3 className="font-geist text-base font-semibold text-text-primary">Varslingsinnstillinger</h3>
+                            <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
                         </div>
 
@@ -412,11 +392,11 @@ const TeacherProfilePage = () => {
                             <div className="flex items-center justify-between py-4">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
-                                    <span className="text-xs text-muted-foreground">Få e-post når en student melder seg på din time.</span>
+                                    <span className="text-xs text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
                                 </div>
                                 <button
                                     onClick={() => handleToggle('newSignups')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-gray-900' : 'bg-gray-200'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-text-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Nye påmeldinger</span>
                                     <span
@@ -430,11 +410,11 @@ const TeacherProfilePage = () => {
                             <div className="flex items-center justify-between py-4">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
-                                    <span className="text-xs text-muted-foreground">Send e-post umiddelbart ved avbestilling (mindre enn 24t).</span>
+                                    <span className="text-xs text-muted-foreground">Send e-post umiddelbart ved avbestilling (under 24t).</span>
                                 </div>
                                 <button
                                     onClick={() => handleToggle('cancellations')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-gray-900' : 'bg-gray-200'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-text-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Avbestillinger</span>
                                     <span
@@ -452,7 +432,7 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('marketing')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-gray-900' : 'bg-gray-200'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-text-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Markedsføring</span>
                                     <span
@@ -469,9 +449,9 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
+                     <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-geist text-base font-semibold text-text-primary">Passord & Sikkerhet</h3>
+                            <h3 className="font-geist text-base font-medium text-text-primary">Passord & Sikkerhet</h3>
                         </div>
 
                         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -497,7 +477,7 @@ const TeacherProfilePage = () => {
                     onClick={handleSave}
                     disabled={isSaving}
                   >
-                      {isSaving ? 'Lagrer...' : 'Lagre endringer'}
+                      {isSaving ? 'Lagrer' : 'Lagre endringer'}
                   </Button>
               </div>
             )}

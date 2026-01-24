@@ -3,13 +3,14 @@ import { useAuth, type UserType } from '@/contexts/AuthContext';
 import { Loader2, Infinity } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Spinner } from '@/components/ui/spinner';
 
 // Reusable loading screen component
-function LoadingScreen({ message = 'Laster...' }: { message?: string }) {
+function LoadingScreen({ message = 'Laster' }: { message?: string }) {
   return (
     <div className="min-h-screen w-full bg-surface flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
+        <Spinner size="xl" />
         <p className="text-sm text-muted-foreground">{message}</p>
       </div>
     </div>
@@ -72,7 +73,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
         // Check slug availability before creating
         const isAvailable = await checkSlugAvailable(slug);
         if (!isAvailable) {
-          setOrgCreationError('En organisasjon med dette navnet finnes allerede. Velg et annet navn.');
+          setOrgCreationError('Dette navnet er opptatt. Velg et annet.');
           return;
         }
 
@@ -96,13 +97,13 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
     e.preventDefault();
 
     if (!orgName.trim()) {
-      setOrgNameError('Organisasjonsnavn er påkrevd');
+      setOrgNameError('Skriv inn et navn');
       return;
     }
 
     const slug = generateSlug(orgName);
     if (!slug) {
-      setOrgNameError('Ugyldig organisasjonsnavn');
+      setOrgNameError('Skriv inn et gyldig navn');
       return;
     }
 
@@ -113,7 +114,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
       // Check slug availability
       const isAvailable = await checkSlugAvailable(slug);
       if (!isAvailable) {
-        setOrgNameError('En organisasjon med dette navnet finnes allerede');
+        setOrgNameError('Dette navnet er opptatt');
         setIsCheckingSlug(false);
         return;
       }
@@ -131,9 +132,9 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
     }
   };
 
-  // Loading states
+  // Loading states - return null to avoid double loader (App Suspense handles it)
   if (isLoading || !isInitialized) {
-    return <LoadingScreen />;
+    return null;
   }
 
   if (!user) {
@@ -150,7 +151,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
   }
 
   if (isCreatingOrg || (requireOrganization && !currentOrganization && localStorage.getItem('pendingOrganization'))) {
-    return <LoadingScreen message="Setter opp din konto..." />;
+    return <LoadingScreen message="Setter opp kontoen din" />;
   }
 
   // Error state (from pending org creation)
@@ -166,7 +167,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
             }}
             className="text-sm text-text-secondary underline hover:text-text-primary ios-ease"
           >
-            Prøv igjen
+            Prøv på nytt
           </button>
         </div>
       </div>
@@ -192,17 +193,17 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
           <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
             <div className="text-center mb-6">
               <h1 className="text-lg font-semibold text-text-primary mb-1">
-                Opprett din organisasjon
+                Opprett ditt studio
               </h1>
               <p className="text-sm text-muted-foreground">
-                Du trenger en organisasjon for å komme i gang.
+                Du trenger et studio for å komme i gang.
               </p>
             </div>
 
             <form onSubmit={handleCreateOrg} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="orgName" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Organisasjonsnavn
+                  Navn på studioet
                 </label>
                 <input
                   type="text"
@@ -235,10 +236,10 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
                 {isCheckingSlug || isCreatingOrg ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {isCheckingSlug ? 'Sjekker...' : 'Oppretter...'}
+                    {isCheckingSlug ? 'Sjekker' : 'Oppretter'}
                   </>
                 ) : (
-                  'Opprett organisasjon'
+                  'Opprett'
                 )}
               </button>
             </form>

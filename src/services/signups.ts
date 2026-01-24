@@ -5,6 +5,8 @@ import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus 
 export interface SignupWithDetails extends Signup {
   course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
+  // Exception detection fields (already on Signup, explicitly noted here)
+  // payment_status, offer_status, offer_expires_at are inherited from Signup
 }
 
 // Signup with profile for participants list
@@ -78,7 +80,8 @@ export async function fetchSignupStats(courseId: string): Promise<{
     cancelled: 0
   }
 
-  for (const signup of data || []) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const signup of (data || []) as any[]) {
     if (signup.status in stats) {
       stats[signup.status as keyof typeof stats]++
     }
@@ -134,8 +137,8 @@ export async function updateSignupStatus(
   signupId: string,
   status: SignupStatus
 ): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('signups')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('signups') as any)
     .update({ status })
     .eq('id', signupId)
 
@@ -205,7 +208,8 @@ export async function checkCourseAvailability(
     return { available: 0, total: 0, error: courseError as Error }
   }
 
-  const total = course?.max_participants || 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const total = (course as any)?.max_participants || 0
 
   // Count confirmed signups
   const { count, error: countError } = await supabase

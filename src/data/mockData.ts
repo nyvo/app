@@ -37,7 +37,7 @@ export interface DetailedCourse {
   title: string;
   type: 'private' | 'online' | 'yin' | 'meditation' | 'vinyasa' | 'course-series';
   courseType: CourseType;
-  status: 'active' | 'upcoming' | 'completed' | 'draft';
+  status: 'active' | 'upcoming' | 'completed' | 'draft' | 'cancelled';
   location: string;
   timeSchedule: string;
   duration: string;
@@ -48,6 +48,7 @@ export interface DetailedCourse {
   currentWeek?: number;
   totalWeeks?: number;
   startDate?: string;
+  endDate?: string;
   completedDate?: string;
   attendeeAvatars?: string[];
   description?: string;

@@ -30,6 +30,9 @@ interface CheckoutRequest {
   sessionId?: string // For drop-in to a specific session
   successUrl: string
   cancelUrl: string
+  // Package selection
+  signupPackageId?: string  // ID of the selected signup package
+  packageWeeks?: number     // Number of weeks in the package
   // Waitlist claim fields
   claim_token?: string
   signup_id?: string
@@ -59,6 +62,8 @@ Deno.serve(async (req: Request) => {
       sessionId,
       successUrl,
       cancelUrl,
+      signupPackageId,
+      packageWeeks,
       claim_token,
       signup_id,
       // Support alternative field names
@@ -124,6 +129,25 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // If a package is selected, fetch it to get the correct price
+    let selectedPackage: { id: string; price: number; weeks: number; label: string } | null = null
+    if (signupPackageId) {
+      const { data: packageData, error: packageError } = await supabase
+        .from('course_signup_packages')
+        .select('id, price, weeks, label')
+        .eq('id', signupPackageId)
+        .eq('course_id', finalCourseId)
+        .single()
+
+      if (packageError || !packageData) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid signup package' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      selectedPackage = packageData
+    }
+
     // For waitlist claims, validate the claim token
     if (isWaitlistClaim) {
       const { data: signup, error: signupError } = await supabase
@@ -164,10 +188,12 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Determine price
-    const price = isDropIn && course.drop_in_price
-      ? course.drop_in_price
-      : course.price
+    // Determine price - use package price if selected, otherwise course price
+    const price = selectedPackage
+      ? selectedPackage.price
+      : isDropIn && course.drop_in_price
+        ? course.drop_in_price
+        : course.price
 
     if (!price || price <= 0) {
       return new Response(
@@ -200,8 +226,10 @@ Deno.serve(async (req: Request) => {
     const priceInOre = Math.round(price * 100) // Convert NOK to øre
 
     // Determine URLs for waitlist claims
+    // Include organization_slug in success URL so the success page can redirect back to the studio
+    const orgSlug = organizationSlug || course.organization.slug
     const finalSuccessUrl = isWaitlistClaim
-      ? `${Deno.env.get('SITE_URL') || 'http://localhost:5173'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
+      ? `${Deno.env.get('SITE_URL') || 'http://localhost:5173'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${orgSlug}`
       : successUrl
     const finalCancelUrl = isWaitlistClaim
       ? `${Deno.env.get('SITE_URL') || 'http://localhost:5173'}/claim-spot/${claim_token}`
@@ -216,12 +244,16 @@ Deno.serve(async (req: Request) => {
           price_data: {
             currency: 'nok',
             product_data: {
-              name: course.title,
+              name: selectedPackage
+                ? `${course.title} - ${selectedPackage.label}`
+                : course.title,
               description: isWaitlistClaim
                 ? `Venteliste-plass: ${course.title}`
-                : isDropIn
-                  ? `Drop-in: ${course.title}`
-                  : course.description || `Påmelding til ${course.title}`,
+                : selectedPackage
+                  ? `${selectedPackage.label} - ${course.title}`
+                  : isDropIn
+                    ? `Drop-in: ${course.title}`
+                    : course.description || `Påmelding til ${course.title}`,
               metadata: {
                 course_id: finalCourseId,
                 organization_id: course.organization.id,
@@ -241,6 +273,9 @@ Deno.serve(async (req: Request) => {
         customer_phone: customerPhone || '',
         is_drop_in: isDropIn.toString(),
         session_id: sessionId || '',
+        // Package metadata for package-aware capacity
+        signup_package_id: signupPackageId || '',
+        package_weeks: packageWeeks?.toString() || '',
         // Waitlist claim metadata
         is_waitlist_claim: isWaitlistClaim.toString(),
         claim_token: claim_token || '',
@@ -251,17 +286,26 @@ Deno.serve(async (req: Request) => {
       locale: 'nb', // Norwegian
     }
 
-    // If organization has Stripe Connect, use connected account
+    // Configure payment intent data
+    // Use manual capture to allow atomic capacity check before charging
+    // This prevents overbooking in race conditions
     const org = course.organization
+
     if (org.stripe_account_id && org.stripe_onboarding_complete) {
-      // Calculate platform fee (e.g., 5%)
-      const platformFee = Math.round(priceInOre * 0.05)
+      // Organization has Stripe Connect - use connected account with platform fee
+      const platformFee = Math.round(priceInOre * 0.05) // 5% platform fee
 
       sessionOptions.payment_intent_data = {
+        capture_method: 'manual', // Authorize only, capture after capacity check
         application_fee_amount: platformFee,
         transfer_data: {
           destination: org.stripe_account_id,
         },
+      }
+    } else {
+      // No Stripe Connect - direct payment with manual capture
+      sessionOptions.payment_intent_data = {
+        capture_method: 'manual', // Authorize only, capture after capacity check
       }
     }
 

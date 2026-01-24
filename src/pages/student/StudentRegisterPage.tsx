@@ -53,12 +53,12 @@ const StudentRegisterPage = () => {
     let isValid = true;
 
     if (!fullName.trim()) {
-      newErrors.fullName = 'Fullt navn er påkrevd';
+      newErrors.fullName = 'Skriv inn navnet ditt';
       isValid = false;
     }
 
     if (!email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-postadressen din';
       isValid = false;
     } else if (!validateEmail(email)) {
       newErrors.email = 'Ugyldig e-postadresse';
@@ -66,18 +66,18 @@ const StudentRegisterPage = () => {
     }
 
     if (!password.trim()) {
-      newErrors.password = 'Passord er påkrevd';
+      newErrors.password = 'Skriv inn et passord';
       isValid = false;
     } else if (password.length < 8) {
-      newErrors.password = 'Passord må være minst 8 tegn';
+      newErrors.password = 'Minst 8 tegn';
       isValid = false;
     }
 
     if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Bekreft passord er påkrevd';
+      newErrors.confirmPassword = 'Gjenta passordet';
       isValid = false;
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passordene stemmer ikke overens';
+      newErrors.confirmPassword = 'Passordene er ikke like';
       isValid = false;
     }
 
@@ -97,13 +97,13 @@ const StudentRegisterPage = () => {
     }
 
     if (field === 'confirmPassword' && confirmPassword.trim() && password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passordene stemmer ikke overens';
+      newErrors.confirmPassword = 'Passordene er ikke like';
     } else if (field === 'confirmPassword' && password === confirmPassword && confirmPassword.trim()) {
       delete newErrors.confirmPassword;
     }
 
     if (field === 'password' && password.trim() && password.length < 8) {
-      newErrors.password = 'Passord må være minst 8 tegn';
+      newErrors.password = 'Minst 8 tegn';
     } else if (field === 'password' && password.length >= 8) {
       delete newErrors.password;
     }
@@ -141,9 +141,9 @@ const StudentRegisterPage = () => {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          setRegisterError('Denne e-postadressen er allerede registrert');
+          setRegisterError('Denne e-posten er allerede i bruk');
         } else {
-          setRegisterError('Kunne ikke opprette konto. Prøv igjen.');
+          setRegisterError('Kontoen ble ikke opprettet. Prøv igjen.');
         }
         setIsLoading(false);
         return;
@@ -151,7 +151,7 @@ const StudentRegisterPage = () => {
 
       // Navigation will happen automatically via useEffect when userType is set
     } catch (err) {
-      setRegisterError('En feil oppstod. Prøv igjen.');
+      setRegisterError('Noe gikk galt. Prøv igjen.');
       setIsLoading(false);
     }
   };
@@ -162,10 +162,10 @@ const StudentRegisterPage = () => {
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-transparent">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
           <Link to="/courses" className="flex items-center gap-3 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
               <Leaf className="h-5 w-5" />
             </div>
-            <span className="font-geist text-lg font-semibold text-text-primary tracking-tight">
+            <span className="font-geist text-lg font-medium text-text-primary tracking-tight">
               Ease
             </span>
           </Link>
@@ -176,14 +176,14 @@ const StudentRegisterPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Registration Card */}
-          <div className="rounded-3xl bg-white p-8 shadow-md">
+          <div className="rounded-3xl bg-white p-8 border border-gray-200">
             {/* Title */}
             <div className="text-center mb-8">
-              <h1 className="font-geist text-2xl font-semibold text-text-primary tracking-tight">
+              <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
                 Opprett konto
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Få oversikt over dine timer og book enkelt
+                Hold oversikt og book enkelt
               </p>
             </div>
 
@@ -290,12 +290,12 @@ const StudentRegisterPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated shadow-md hover:shadow-lg ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Registrerer...
+                    Oppretter konto
                   </>
                 ) : (
                   'Opprett konto'
@@ -318,7 +318,7 @@ const StudentRegisterPage = () => {
             {/* Vipps Button */}
             <Button
               type="button"
-              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-vipps-hover hover:shadow-md ios-ease active:scale-[0.98]"
+              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease active:scale-[0.98]"
             >
               Registrer med
               <img

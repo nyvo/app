@@ -46,6 +46,7 @@ export async function fetchCourses(
       style:course_styles(*)
     `, { count: options ? 'exact' : undefined })
     .eq('organization_id', organizationId)
+    .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
   // Apply pagination if provided
@@ -112,14 +113,266 @@ export interface SessionTimeOverride {
   time: string // e.g., "18:00"
 }
 
+// Schedule conflict result
+export interface ScheduleConflict {
+  sessionDate: string
+  startTime: string
+  conflictingCourse: {
+    id: string
+    title: string
+    startTime: string
+    endTime: string
+  }
+}
+
+// Check for schedule conflicts before creating a course
+export async function checkScheduleConflicts(
+  organizationId: string,
+  plannedSessions: { date: string; startTime: string; duration: number }[]
+): Promise<{ conflicts: ScheduleConflict[]; error: Error | null }> {
+  if (plannedSessions.length === 0) {
+    return { conflicts: [], error: null }
+  }
+
+  // Get all session dates we need to check
+  const sessionDates = plannedSessions.map(s => s.date)
+
+  // Fetch existing sessions for this organization on those dates
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existingSessions, error } = await (supabase
+    .from('course_sessions') as any)
+    .select(`
+      id,
+      session_date,
+      start_time,
+      course:courses!inner(
+        id,
+        title,
+        organization_id,
+        duration,
+        status
+      )
+    `)
+    .in('session_date', sessionDates)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .neq('status', 'cancelled')
+
+  if (error) {
+    return { conflicts: [], error: error as Error }
+  }
+
+  if (!existingSessions || existingSessions.length === 0) {
+    return { conflicts: [], error: null }
+  }
+
+  const conflicts: ScheduleConflict[] = []
+
+  // Check each planned session against existing sessions
+  for (const planned of plannedSessions) {
+    const plannedStart = timeToMinutes(planned.startTime)
+    const plannedEnd = plannedStart + planned.duration
+
+    for (const existing of existingSessions) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existingCourse = existing.course as any
+
+      // Skip if different date
+      if (existing.session_date !== planned.date) continue
+
+      const existingStart = timeToMinutes(existing.start_time)
+      // Ensure duration is at least 1 minute (default to 60 if missing or zero)
+      const existingDuration = existingCourse.duration > 0 ? existingCourse.duration : 60
+      const existingEnd = existingStart + existingDuration
+
+      // Check for time overlap
+      // Two sessions overlap if: start1 < end2 AND start2 < end1
+      if (plannedStart < existingEnd && existingStart < plannedEnd) {
+        // Calculate end time string
+        const endHours = Math.floor(existingEnd / 60)
+        const endMins = existingEnd % 60
+        const endTimeStr = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
+
+        // Format start time to HH:MM (strip seconds if present)
+        const startTimeStr = existing.start_time.slice(0, 5)
+
+        conflicts.push({
+          sessionDate: planned.date,
+          startTime: planned.startTime,
+          conflictingCourse: {
+            id: existingCourse.id,
+            title: existingCourse.title,
+            startTime: startTimeStr,
+            endTime: endTimeStr
+          }
+        })
+        break // Only report one conflict per planned session
+      }
+    }
+  }
+
+  return { conflicts, error: null }
+}
+
+// Booked time slot info for time picker
+export interface BookedTimeSlot {
+  startTime: string  // HH:MM format
+  endTime: string    // HH:MM format
+  courseTitle: string
+  courseId: string
+}
+
+// Fetch booked time slots for a specific date (for time picker availability)
+export async function fetchBookedTimesForDate(
+  organizationId: string,
+  date: string, // YYYY-MM-DD format
+  excludeCourseId?: string // Optional: exclude this course from results (for editing existing courses)
+): Promise<{ data: BookedTimeSlot[] | null; error: Error | null }> {
+  // Query sessions for this date with course data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: sessions, error } = await (supabase
+    .from('course_sessions') as any)
+    .select(`
+      id,
+      session_date,
+      start_time,
+      status,
+      course:courses(
+        id,
+        title,
+        organization_id,
+        duration,
+        status
+      )
+    `)
+    .eq('session_date', date)
+    .neq('status', 'cancelled')
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+
+  if (!sessions || sessions.length === 0) {
+    return { data: [], error: null }
+  }
+
+  // Filter and map sessions to booked time slots
+  const bookedSlots: BookedTimeSlot[] = []
+
+  for (const session of sessions) {
+    const course = session.course
+
+    // Skip if no course data or wrong organization
+    if (!course) continue
+    if (course.organization_id !== organizationId) continue
+    if (course.status === 'cancelled') continue
+    // Skip if this is the course we're excluding (editing)
+    if (excludeCourseId && course.id === excludeCourseId) continue
+
+    const startMinutes = timeToMinutes(session.start_time || '')
+    const duration = course.duration > 0 ? course.duration : 60
+    const endMinutes = startMinutes + duration
+
+    // Format times to HH:MM
+    const formatTime = (mins: number) => {
+      const h = Math.floor(mins / 60)
+      const m = mins % 60
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+    }
+
+    bookedSlots.push({
+      startTime: (session.start_time || '').slice(0, 5), // Strip seconds if present
+      endTime: formatTime(endMinutes),
+      courseTitle: course.title,
+      courseId: course.id
+    })
+  }
+
+  return { data: bookedSlots, error: null }
+}
+
+// Helper to convert time string to minutes since midnight
+function timeToMinutes(time: string): number {
+  if (!time || !time.includes(':')) {
+    return 0 // Default to midnight for invalid time
+  }
+  const parts = time.split(':')
+  const hours = parseInt(parts[0], 10)
+  const minutes = parseInt(parts[1], 10)
+  if (isNaN(hours) || isNaN(minutes)) {
+    return 0
+  }
+  return hours * 60 + minutes
+}
+
 // Create a new course (and auto-generate sessions for course series)
 export async function createCourse(
   courseData: CourseInsert,
   options?: {
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
+    skipConflictCheck?: boolean // Skip conflict validation (for testing/admin)
   }
-): Promise<{ data: Course | null; error: Error | null }> {
+): Promise<{ data: Course | null; error: Error | null; conflicts?: ScheduleConflict[]; sessionError?: Error }> {
+  // Extract time from time_schedule (e.g., "Mandager, 18:00" -> "18:00")
+  const timeMatch = courseData.time_schedule?.match(/(\d{1,2}:\d{2})/)
+  const startTime = timeMatch ? timeMatch[1] : '09:00'
+  const duration = courseData.duration || 60
+
+  // Build planned sessions for conflict check
+  if (!options?.skipConflictCheck && courseData.start_date && courseData.organization_id) {
+    const plannedSessions: { date: string; startTime: string; duration: number }[] = []
+
+    if (courseData.course_type === 'course-series' && courseData.total_weeks) {
+      // Generate planned sessions for course series
+      const baseDate = new Date(courseData.start_date)
+      for (let i = 0; i < courseData.total_weeks; i++) {
+        const sessionDate = new Date(baseDate)
+        sessionDate.setDate(baseDate.getDate() + (i * 7))
+        plannedSessions.push({
+          date: sessionDate.toISOString().split('T')[0],
+          startTime,
+          duration
+        })
+      }
+    } else if (courseData.course_type === 'event') {
+      const eventDays = options?.eventDays || 1
+      const sessionTimeOverrides = options?.sessionTimeOverrides || []
+      const baseDate = new Date(courseData.start_date)
+
+      for (let i = 0; i < eventDays; i++) {
+        const sessionDate = new Date(baseDate)
+        sessionDate.setDate(baseDate.getDate() + i)
+        const override = sessionTimeOverrides.find(o => o.dayIndex === i)
+        plannedSessions.push({
+          date: sessionDate.toISOString().split('T')[0],
+          startTime: override?.time || startTime,
+          duration
+        })
+      }
+    }
+
+    // Check for conflicts
+    if (plannedSessions.length > 0) {
+      const { conflicts, error: conflictError } = await checkScheduleConflicts(
+        courseData.organization_id,
+        plannedSessions
+      )
+
+      if (conflictError) {
+        return { data: null, error: conflictError }
+      }
+
+      if (conflicts.length > 0) {
+        return {
+          data: null,
+          error: new Error('Det finnes allerede et kurs på dette tidspunktet'),
+          conflicts
+        }
+      }
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase
     .from('courses') as any)
@@ -128,36 +381,70 @@ export async function createCourse(
     .single()
 
   if (error) {
+    // Check if it's an idempotency key collision (same course already exists)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pgError = error as any
+    if (pgError.code === '23505' && pgError.message?.includes('idempotency_key')) {
+      // Fetch the existing course with this idempotency key
+      if (courseData.idempotency_key && courseData.organization_id) {
+        const { data: existing } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('organization_id', courseData.organization_id)
+          .eq('idempotency_key', courseData.idempotency_key)
+          .single()
+
+        if (existing) {
+          // Return the existing course (idempotent behavior)
+          return { data: existing as Course, error: null }
+        }
+      }
+    }
     return { data: null, error: error as Error }
   }
 
   const course = data as Course
 
-  // Extract time from time_schedule (e.g., "Mandager, 18:00" -> "18:00")
-  const timeMatch = courseData.time_schedule?.match(/(\d{1,2}:\d{2})/)
-  const startTime = timeMatch ? timeMatch[1] : '09:00'
+  // Helper to format date as YYYY-MM-DD in local timezone
+  const formatLocalDate = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   // Auto-generate sessions based on course type
   if (courseData.course_type === 'course-series' && courseData.total_weeks && courseData.start_date) {
     // Generate multiple sessions for course series (one per week)
     const sessions: CourseSessionInsert[] = []
-    const baseDate = new Date(courseData.start_date)
+    const baseDate = new Date(courseData.start_date + 'T12:00:00') // Use noon to avoid timezone issues
+
+    // Calculate and set end_date for course series (last week's session date)
+    const endDate = new Date(baseDate.getTime()) // Immutable copy
+    endDate.setDate(baseDate.getDate() + ((courseData.total_weeks - 1) * 7))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('courses') as any)
+      .update({ end_date: formatLocalDate(endDate) })
+      .eq('id', course.id)
 
     for (let i = 0; i < courseData.total_weeks; i++) {
-      const sessionDate = new Date(baseDate)
+      const sessionDate = new Date(baseDate.getTime()) // Immutable copy
       sessionDate.setDate(baseDate.getDate() + (i * 7))
       sessions.push({
         course_id: course.id,
         session_number: i + 1,
-        session_date: sessionDate.toISOString().split('T')[0],
+        session_date: formatLocalDate(sessionDate),
         start_time: startTime,
         status: 'upcoming',
       })
     }
 
-    // Insert sessions (ignore errors - course was created successfully)
+    // Insert sessions - return error to caller so they can handle it
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('course_sessions') as any).insert(sessions)
+    const { error: sessionsError } = await (supabase.from('course_sessions') as any).insert(sessions)
+    if (sessionsError) {
+      return { data: course, error: null, sessionError: sessionsError as Error }
+    }
   } else if (courseData.course_type === 'event' && courseData.start_date) {
     const eventDays = options?.eventDays || 1
     const sessionTimeOverrides = options?.sessionTimeOverrides || []
@@ -165,18 +452,18 @@ export async function createCourse(
     if (eventDays > 1) {
       // Generate multiple sessions for multi-day events
       const sessions: CourseSessionInsert[] = []
-      const baseDate = new Date(courseData.start_date)
+      const baseDate = new Date(courseData.start_date + 'T12:00:00') // Use noon to avoid timezone issues
 
       // Calculate and set end_date for multi-day events
-      const endDate = new Date(baseDate)
+      const endDate = new Date(baseDate.getTime()) // Immutable copy
       endDate.setDate(baseDate.getDate() + eventDays - 1)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('courses') as any)
-        .update({ end_date: endDate.toISOString().split('T')[0] })
+        .update({ end_date: formatLocalDate(endDate) })
         .eq('id', course.id)
 
       for (let i = 0; i < eventDays; i++) {
-        const sessionDate = new Date(baseDate)
+        const sessionDate = new Date(baseDate.getTime()) // Immutable copy
         sessionDate.setDate(baseDate.getDate() + i)
 
         // Check if there's a custom time for this day
@@ -186,15 +473,18 @@ export async function createCourse(
         sessions.push({
           course_id: course.id,
           session_number: i + 1,
-          session_date: sessionDate.toISOString().split('T')[0],
+          session_date: formatLocalDate(sessionDate),
           start_time: sessionTime,
           status: 'upcoming',
         })
       }
 
-      // Insert all sessions
+      // Insert all sessions - return error to caller so they can handle it
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('course_sessions') as any).insert(sessions)
+      const { error: sessionsError } = await (supabase.from('course_sessions') as any).insert(sessions)
+      if (sessionsError) {
+        return { data: course, error: null, sessionError: sessionsError as Error }
+      }
     } else {
       // Generate a single session for single-day events
       const session: CourseSessionInsert = {
@@ -205,9 +495,12 @@ export async function createCourse(
         status: 'upcoming',
       }
 
-      // Insert session (ignore errors - course was created successfully)
+      // Insert session - return error to caller so they can handle it
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('course_sessions') as any).insert(session)
+      const { error: sessionError } = await (supabase.from('course_sessions') as any).insert(session)
+      if (sessionError) {
+        return { data: course, error: null, sessionError: sessionError as Error }
+      }
     }
   }
 
@@ -243,6 +536,43 @@ export async function deleteCourse(courseId: string): Promise<{ error: Error | n
   }
 
   return { error: null }
+}
+
+// Cancel course result
+export interface CancelCourseResult {
+  success: boolean
+  refunds_processed: number
+  refunds_failed: number
+  notifications_sent: number
+  total_refunded: number
+  message: string
+}
+
+// Cancel a course with refunds and notifications
+export async function cancelCourse(
+  courseId: string,
+  options?: { reason?: string; notify_participants?: boolean }
+): Promise<{ data: CancelCourseResult | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('cancel-course', {
+      body: {
+        course_id: courseId,
+        reason: options?.reason,
+        notify_participants: options?.notify_participants ?? true
+      }
+    })
+
+    if (error) {
+      return { data: null, error: error as Error }
+    }
+
+    return { data: data as CancelCourseResult, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Unknown error')
+    }
+  }
 }
 
 // Fetch all course styles (for dropdowns)
@@ -312,7 +642,7 @@ export async function fetchUpcomingSession(organizationId: string): Promise<{
   // Get today's date in ISO format
   const today = new Date().toISOString().split('T')[0]
 
-  // Find the next upcoming session
+  // Find the next upcoming session (exclude cancelled courses)
   const { data: sessionData, error: sessionError } = await supabase
     .from('course_sessions')
     .select(`
@@ -323,6 +653,7 @@ export async function fetchUpcomingSession(organizationId: string): Promise<{
       )
     `)
     .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
     .gte('session_date', today)
     .eq('status', 'upcoming')
     .order('session_date', { ascending: true })
@@ -416,3 +747,4 @@ export async function generateCourseSessions(
 
   return { error: null }
 }
+

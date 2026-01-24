@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard } from 'lucide-react';
+import { CheckCircle2, Loader2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,11 +27,14 @@ interface SignupDetails {
 const CheckoutSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const orgSlugFromUrl = searchParams.get('org');
   const { user, userType } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
   const [error, _setError] = useState<string | null>(null);
+  const [bookingFailed, setBookingFailed] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
   const toastShownRef = useRef(false);
 
   useEffect(() => {
@@ -39,7 +42,7 @@ const CheckoutSuccessPage = () => {
       if (!sessionId) {
         // No session ID, just show generic success
         if (!toastShownRef.current) {
-          toast.success('Betaling bekreftet!');
+          toast.success('Betaling fullført');
           toastShownRef.current = true;
         }
         setLoading(false);
@@ -47,10 +50,13 @@ const CheckoutSuccessPage = () => {
       }
 
       // Retry fetching signup details (webhook may take a moment to process)
-      const maxRetries = 6;
-      const retryDelay = 1500; // 1.5 seconds between retries
+      const maxRetries = 15;
+      const retryDelay = 2000; // 2 seconds between retries
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Update attempt counter for UI feedback
+        setAttemptCount(attempt);
+
         // Wait before each attempt (including first, to give webhook time)
         await new Promise(resolve => setTimeout(resolve, retryDelay));
 
@@ -77,17 +83,29 @@ const CheckoutSuccessPage = () => {
         if (data && !fetchError) {
           setSignup(data as unknown as SignupDetails);
           if (!toastShownRef.current) {
-            toast.success('Betaling bekreftet!');
+            toast.success('Betaling fullført');
             toastShownRef.current = true;
           }
           setLoading(false);
           return;
         }
 
-        // If last attempt failed, still show success (payment went through)
+        // If last attempt failed, show appropriate message
+        // With manual capture, if no signup exists it means the booking failed
+        // (course was full, payment was cancelled - user was NOT charged)
         if (attempt === maxRetries) {
+          console.warn('Signup not found after max retries:', {
+            sessionId,
+            attempts: maxRetries,
+            totalWaitTime: `${maxRetries * retryDelay / 1000}s`,
+            lastError: fetchError?.message || 'No data returned',
+          });
+
+          // Mark as booking failed - user will see appropriate message
+          // The org slug is available from the URL parameter for redirect
+          setBookingFailed(true);
           if (!toastShownRef.current) {
-            toast.success('Betaling bekreftet!');
+            toast.info('Påmeldingen kunne ikke fullføres');
             toastShownRef.current = true;
           }
           setLoading(false);
@@ -116,11 +134,34 @@ const CheckoutSuccessPage = () => {
   };
 
   if (loading) {
+    // Show progressive feedback based on how long we've been waiting
+    const getLoadingMessage = () => {
+      if (attemptCount <= 3) {
+        return 'Bekrefter betaling';
+      } else if (attemptCount <= 6) {
+        return 'Behandler betaling';
+      } else if (attemptCount <= 10) {
+        return 'Nesten klar';
+      } else {
+        return 'Dette tar litt tid';
+      }
+    };
+
     return (
       <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Bekrefter betaling...</p>
+        <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg">
+            <Loader2 className="h-8 w-8 animate-spin text-status-info-text" aria-hidden="true" />
+          </div>
+          <p className="text-base font-medium text-text-primary mb-2">{getLoadingMessage()}</p>
+          <p className="text-sm text-muted-foreground">
+            Bekrefter med banken. Ikke lukk vinduet.
+          </p>
+          {attemptCount > 8 && (
+            <p className="text-xs text-text-tertiary mt-4">
+              Du får beskjed når betalingen er klar.
+            </p>
+          )}
         </div>
       </div>
     );
@@ -129,30 +170,30 @@ const CheckoutSuccessPage = () => {
   if (error) {
     return (
       <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 bg-surface/90 backdrop-blur-xl">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
-              <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+              <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
             </Link>
           </div>
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl border border-destructive/30 bg-white p-8 md:p-12 shadow-sm">
+            <div className="rounded-3xl border border-destructive/30 bg-white p-8 md:p-12">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-semibold text-text-primary mb-3">
+              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
                 Noe gikk galt
               </h1>
               <p className="text-muted-foreground mb-8">{error}</p>
               <Button asChild>
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
-                  Gå til forsiden
+                  Til forsiden
                 </Link>
               </Button>
             </div>
@@ -162,19 +203,75 @@ const CheckoutSuccessPage = () => {
     );
   }
 
+  // Determine studio URL from signup data or URL parameter
   const studioUrl = signup?.course?.organization?.slug
     ? `/studio/${signup.course.organization.slug}`
-    : '/';
+    : orgSlugFromUrl
+      ? `/studio/${orgSlugFromUrl}`
+      : '/';
+
+  // Show booking failed state
+  if (bookingFailed) {
+    const failedStudioUrl = orgSlugFromUrl ? `/studio/${orgSlugFromUrl}` : '/';
+
+    return (
+      <div className="min-h-screen w-full bg-surface font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 bg-surface/90 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+            <Link to={failedStudioUrl} className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
+                <Leaf className="h-5 w-5" />
+              </div>
+              <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
+            </Link>
+          </div>
+        </header>
+        <main className="pt-24 px-4 sm:px-6 pb-24">
+          <div className="mx-auto max-w-lg text-center">
+            <div className="rounded-3xl bg-white p-8 md:p-12 border border-gray-200">
+              {/* Most important message first - no charge */}
+              <div className="bg-status-confirmed-bg border-2 border-status-confirmed-border rounded-2xl p-5 mb-6">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <CheckCircle2 className="h-5 w-5 text-status-confirmed-text" />
+                  <p className="text-base text-status-confirmed-text font-medium">
+                    Ingenting er trukket
+                  </p>
+                </div>
+                <p className="text-sm text-status-confirmed-text/80">
+                  Ingen penger er trukket.
+                </p>
+              </div>
+
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-status-waitlist-bg">
+                <AlertCircle className="h-6 w-6 text-status-waitlist-text" />
+              </div>
+              <h1 className="font-geist text-xl md:text-2xl font-medium text-text-primary mb-2">
+                Kurset ble fullt
+              </h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Kurset ble fullt før påmeldingen ble bekreftet.
+              </p>
+              <Button asChild>
+                <Link to={failedStudioUrl}>
+                  Se andre kurs
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-surface font-geist">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-100/80 bg-surface/90 backdrop-blur-xl">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 bg-surface/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <Link to={studioUrl} className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
               <Leaf className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold text-text-primary tracking-tight">Ease</span>
+            <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
           </Link>
         </div>
       </header>
@@ -182,26 +279,40 @@ const CheckoutSuccessPage = () => {
       <main className="pt-24 px-4 sm:px-6 pb-24">
         <div className="mx-auto max-w-4xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-            
+
             {/* Left Column: Success Message */}
             <div className="flex flex-col justify-center text-center md:text-left pt-4 md:pt-8">
               <div className="mx-auto md:mx-0 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
-              
-              <h1 className="font-geist text-3xl md:text-4xl font-semibold text-text-primary mb-4">
-                Betaling fullført!
+
+              <h1 className="font-geist text-3xl md:text-4xl font-medium text-text-primary mb-4">
+                Betaling fullført
               </h1>
-              
-              <div className="text-muted-foreground mb-8 text-base leading-relaxed">
+
+              <div className="text-muted-foreground mb-6 text-base leading-relaxed">
                 {signup ? (
-                  <>
-                    <p className="mb-2">Du er nå påmeldt <span className="font-medium text-text-primary">{signup.course.title}</span>.</p>
-                    <p>En bekreftelse er sendt til {signup.participant_email}.</p>
-                  </>
+                  <p>Du er påmeldt <span className="font-medium text-text-primary">{signup.course.title}</span>.</p>
                 ) : (
-                  <p>Betalingen din er bekreftet. Du vil motta en bekreftelse på e-post.</p>
+                  <p>Betalingen er bekreftet.</p>
                 )}
+              </div>
+
+              {/* Email confirmation notice */}
+              <div className="rounded-xl bg-status-info-bg border border-status-info-border p-4 mb-8 text-left">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-4 w-4 text-status-info-text mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-medium text-status-info-text">Bekreftelse sendt</p>
+                    <p className="text-xs text-status-info-text/80 mt-0.5">
+                      {signup ? (
+                        <>Vi sender kvittering til <span className="font-medium">{signup.participant_email}</span>.</>
+                      ) : (
+                        <>Vi sender kvittering til e-postadressen du oppga.</>
+                      )}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -210,7 +321,7 @@ const CheckoutSuccessPage = () => {
                     <Button asChild size="default" className="w-full sm:w-auto">
                       <Link to="/student/dashboard">
                         <BookOpen className="h-4 w-4 mr-2" />
-                        Se dine påmeldinger
+                        Mine kurs
                       </Link>
                     </Button>
                     <Button asChild variant="outline-soft" size="default" className="w-full sm:w-auto">
@@ -236,18 +347,18 @@ const CheckoutSuccessPage = () => {
 
             {/* Right Column: Order Details */}
             {signup && (
-              <div className="rounded-3xl bg-white p-6 md:p-8 shadow-sm relative overflow-hidden">
+              <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 relative overflow-hidden">
                 {/* Decorative background element */}
                 <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
 
-                <h3 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
+                <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
                   Kvittering
                 </h3>
 
                 <div className="space-y-5 relative z-10">
                   <div className="pb-5 border-b border-gray-100">
                     <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
-                    <span className="block font-semibold text-lg text-text-primary">{signup.course.title}</span>
+                    <span className="block font-medium text-lg text-text-primary">{signup.course.title}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -285,7 +396,7 @@ const CheckoutSuccessPage = () => {
 
                   <div className="pt-2 flex items-center justify-between">
                     <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CreditCard className="h-3.5 w-3.5" /> Beløp betalt
+                      <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
                     <span className="font-bold text-xl text-text-primary">{signup.amount_paid} kr</span>
                   </div>

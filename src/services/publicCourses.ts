@@ -74,6 +74,7 @@ export async function fetchPublicCourses(
       organization:organizations(name, slug)
     `, { count: filters?.limit ? 'exact' : undefined })
     .neq('status', 'draft')
+    .neq('status', 'cancelled')
     .order('start_date', { ascending: true })
 
   // Apply filters
@@ -96,35 +97,73 @@ export async function fetchPublicCourses(
 
   query = query.range(offset, offset + limit - 1)
 
-  const { data: courses, error: coursesError, count } = await query
+  const { data: coursesData, error: coursesError, count } = await query
 
   if (coursesError) {
     return { data: null, error: coursesError as Error }
   }
 
-  if (!courses || courses.length === 0) {
+  if (!coursesData || coursesData.length === 0) {
     return { data: [], error: null }
   }
 
-  // Get signup counts for all courses in one query
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const courses = coursesData as any[]
   const courseIds = courses.map(c => c.id)
-  const { data: signupCounts, error: signupError } = await supabase
-    .from('signups')
-    .select('course_id')
-    .in('course_id', courseIds)
-    .eq('status', 'confirmed')
+  const todayStr = new Date().toISOString().split('T')[0]
 
-  if (signupError) {
-    // Signup count fetch failed, continue with zero counts
-  }
+  // Batch fetch signups and sessions in parallel (2 queries instead of 4)
+  const [signupsResult, sessionsResult] = await Promise.all([
+    // Query 1: Get all confirmed signups for these courses
+    supabase
+      .from('signups')
+      .select('course_id')
+      .in('course_id', courseIds)
+      .eq('status', 'confirmed'),
+    // Query 2: Get all sessions for these courses (both for next session and total count)
+    supabase
+      .from('course_sessions')
+      .select('course_id, session_date, session_number, status')
+      .in('course_id', courseIds)
+      .order('session_date', { ascending: true })
+  ])
 
-  // Count signups per course
+  // Build signup count map
   const signupCountMap: Record<string, number> = {}
-  for (const signup of signupCounts || []) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const signup of (signupsResult.data || []) as any[]) {
     signupCountMap[signup.course_id] = (signupCountMap[signup.course_id] || 0) + 1
   }
 
-  // Map to public format with spots available
+  // Build session maps (total count + next upcoming session per course)
+  const totalSessionsMap: Record<string, number> = {}
+  const nextSessionMap: Record<string, NextSessionInfo> = {}
+  const sessionsTyped = sessionsResult.data as { course_id: string; session_date: string; session_number: number; status: string }[] | null
+
+  for (const session of sessionsTyped || []) {
+    // Count all sessions for total
+    totalSessionsMap[session.course_id] = (totalSessionsMap[session.course_id] || 0) + 1
+
+    // Track first upcoming session per course
+    if (
+      session.status === 'upcoming' &&
+      session.session_date >= todayStr &&
+      !nextSessionMap[session.course_id]
+    ) {
+      nextSessionMap[session.course_id] = {
+        session_date: session.session_date,
+        session_number: session.session_number,
+        total_sessions: 0, // Will be set after we have all counts
+      }
+    }
+  }
+
+  // Set total_sessions in nextSessionMap
+  for (const courseId of Object.keys(nextSessionMap)) {
+    nextSessionMap[courseId].total_sessions = totalSessionsMap[courseId] || 1
+  }
+
+  // Map to public format with spots available and next session
   const publicCourses: PublicCourseWithDetails[] = courses.map(course => {
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
@@ -151,49 +190,9 @@ export async function fetchPublicCourses(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       organization: course.organization as any,
       spots_available: spotsAvailable,
-      next_session: null, // Will be populated below for ongoing courses
+      next_session: nextSessionMap[course.id] || null,
     }
   })
-
-  // Fetch next sessions for all courses (we'll filter to ongoing ones after)
-  const todayStr = new Date().toISOString().split('T')[0]
-  const { data: upcomingSessions } = await supabase
-    .from('course_sessions')
-    .select('course_id, session_date, session_number')
-    .in('course_id', courseIds)
-    .gte('session_date', todayStr)
-    .eq('status', 'upcoming')
-    .order('session_date', { ascending: true })
-
-  // Get total session counts per course
-  const { data: sessionCounts } = await supabase
-    .from('course_sessions')
-    .select('course_id')
-    .in('course_id', courseIds) as { data: { course_id: string }[] | null }
-
-  // Build session count map
-  const totalSessionsMap: Record<string, number> = {}
-  for (const s of sessionCounts || []) {
-    totalSessionsMap[s.course_id] = (totalSessionsMap[s.course_id] || 0) + 1
-  }
-
-  // Build next session map (first upcoming session per course)
-  const nextSessionMap: Record<string, NextSessionInfo> = {}
-  const sessionsTyped = upcomingSessions as { course_id: string; session_date: string; session_number: number }[] | null
-  for (const session of sessionsTyped || []) {
-    if (!nextSessionMap[session.course_id]) {
-      nextSessionMap[session.course_id] = {
-        session_date: session.session_date,
-        session_number: session.session_number,
-        total_sessions: totalSessionsMap[session.course_id] || 1,
-      }
-    }
-  }
-
-  // Attach next_session to courses
-  for (const course of publicCourses) {
-    course.next_session = nextSessionMap[course.id] || null
-  }
 
   // Filter courses by past/active status
   const today = new Date()
@@ -240,6 +239,7 @@ export async function fetchPublicCourseById(
     `)
     .eq('id', courseId)
     .neq('status', 'draft')
+    .neq('status', 'cancelled')
     .single()
 
   if (courseError) {
@@ -249,6 +249,9 @@ export async function fetchPublicCourseById(
   if (!course) {
     return { data: null, error: new Error('Course not found') }
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const typedCourse = course as any
 
   // Get signup count for this course
   const { count, error: countError } = await supabase
@@ -262,29 +265,27 @@ export async function fetchPublicCourseById(
   }
 
   const confirmedCount = count || 0
-  const maxParticipants = course.max_participants || 0
+  const maxParticipants = typedCourse.max_participants || 0
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
 
   const publicCourse: PublicCourseWithDetails = {
-    id: course.id,
-    title: course.title,
-    description: course.description,
-    course_type: course.course_type as CourseType,
-    status: course.status as CourseStatus,
-    level: course.level as CourseLevel | null,
-    location: course.location,
-    time_schedule: course.time_schedule,
-    duration: course.duration,
-    max_participants: course.max_participants,
-    price: course.price,
-    start_date: course.start_date,
-    end_date: course.end_date,
-    image_url: course.image_url,
-    organization_id: course.organization_id,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    style: course.style as any as CourseStyle | null,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    organization: course.organization as any,
+    id: typedCourse.id,
+    title: typedCourse.title,
+    description: typedCourse.description,
+    course_type: typedCourse.course_type as CourseType,
+    status: typedCourse.status as CourseStatus,
+    level: typedCourse.level as CourseLevel | null,
+    location: typedCourse.location,
+    time_schedule: typedCourse.time_schedule,
+    duration: typedCourse.duration,
+    max_participants: typedCourse.max_participants,
+    price: typedCourse.price,
+    start_date: typedCourse.start_date,
+    end_date: typedCourse.end_date,
+    image_url: typedCourse.image_url,
+    organization_id: typedCourse.organization_id,
+    style: typedCourse.style as CourseStyle | null,
+    organization: typedCourse.organization,
     spots_available: spotsAvailable,
     next_session: null, // Detail page fetches sessions separately
   }

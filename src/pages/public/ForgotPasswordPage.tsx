@@ -48,9 +48,9 @@ const ForgotPasswordPage = () => {
 
     if (field === 'email') {
       if (!formData.email.trim()) {
-        newErrors.email = 'E-postadresse er påkrevd';
+        newErrors.email = 'Skriv inn e-postadressen din';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Ugyldig e-postadresse';
+        newErrors.email = 'Sjekk at e-postadressen er riktig';
       } else {
         delete newErrors.email;
       }
@@ -63,9 +63,9 @@ const ForgotPasswordPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-postadressen din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Sjekk at e-postadressen er riktig';
     }
 
     setErrors(newErrors);
@@ -85,7 +85,7 @@ const ForgotPasswordPage = () => {
       const { error } = await resetPassword(formData.email);
 
       if (error) {
-        setErrors({ general: 'En feil oppstod. Prøv igjen.' });
+        setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
         setIsSubmitting(false);
         return;
       }
@@ -94,7 +94,7 @@ const ForgotPasswordPage = () => {
       setEmailSent(true);
       setIsSubmitting(false);
     } catch (err) {
-      setErrors({ general: 'En uventet feil oppstod. Prøv igjen.' });
+      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
       setIsSubmitting(false);
     }
   };
@@ -139,7 +139,7 @@ const ForgotPasswordPage = () => {
                 Sjekk e-posten din
               </h1>
               <p className="text-text-secondary text-sm">
-                Vi har sendt en lenke for tilbakestilling av passord til{' '}
+                Vi har sendt en lenke til{' '}
                 <span className="font-medium text-text-primary">{formData.email}</span>
               </p>
             </div>
@@ -147,7 +147,7 @@ const ForgotPasswordPage = () => {
             <div className="w-full space-y-4">
               <div className="p-4 rounded-lg bg-surface-elevated">
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  Hvis du ikke mottar en e-post innen noen minutter, sjekk søppelpost-mappen din eller prøv igjen.
+                  Sjekk søppelpost hvis du ikke finner den.
                 </p>
               </div>
 
@@ -155,7 +155,7 @@ const ForgotPasswordPage = () => {
                 onClick={() => navigate('/login')}
                 className="w-full h-11"
               >
-                Tilbake til innlogging
+                Til innlogging
               </Button>
 
               <button
@@ -180,7 +180,7 @@ const ForgotPasswordPage = () => {
               to="/login"
               className="text-text-primary font-medium hover:underline"
             >
-              Tilbake til innlogging
+              Til innlogging
             </Link>
           </p>
         </footer>
@@ -227,7 +227,7 @@ const ForgotPasswordPage = () => {
               Glemt passord?
             </h1>
             <p className="text-text-secondary text-sm">
-              Skriv inn e-postadressen din, så sender vi deg en lenke for å tilbakestille passordet.
+              Skriv inn e-postadressen din, så sender vi deg en lenke.
             </p>
           </div>
 
@@ -276,10 +276,10 @@ const ForgotPasswordPage = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Sender...
+                  Sender
                 </>
               ) : (
-                'Send tilbakestillingslenke'
+                'Send lenke'
               )}
             </Button>
           </form>

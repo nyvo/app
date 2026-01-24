@@ -1,14 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { verifyAuth, verifyOrgMembership, handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders()
 
 interface PromoteSignupRequest {
   signup_id: string
@@ -16,19 +14,21 @@ interface PromoteSignupRequest {
 
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   try {
+    // Verify authentication
+    const authResult = await verifyAuth(req)
+    if (!authResult.authenticated) {
+      return errorResponse(authResult.error || 'Unauthorized', 401)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body: PromoteSignupRequest = await req.json()
 
     if (!body.signup_id) {
-      return new Response(
-        JSON.stringify({ error: 'Missing signup_id' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Missing signup_id', 400)
     }
 
     // Get the signup
@@ -42,18 +42,25 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return new Response(
-        JSON.stringify({ error: 'Signup not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return errorResponse('Signup not found', 404)
+    }
+
+    // Verify user is authorized to promote waitlist (must be org member)
+    const course = signup.course as { organization_id: string } | null
+    if (course) {
+      const authzResult = await verifyOrgMembership(
+        authResult.userId!,
+        course.organization_id,
+        ['owner', 'admin', 'teacher']
       )
+      if (!authzResult.authorized) {
+        return errorResponse('You do not have permission to manage this waitlist', 403)
+      }
     }
 
     // Verify it's a waitlist signup
     if (signup.status !== 'waitlist') {
-      return new Response(
-        JSON.stringify({ error: 'Signup is not on waitlist' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Signup is not on waitlist', 400)
     }
 
     const course = signup.course as {
@@ -95,10 +102,7 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) {
       console.error('Error updating signup:', updateError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to update signup' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Failed to update signup', 500)
     }
 
     // Get organization name
@@ -207,21 +211,15 @@ Deno.serve(async (req: Request) => {
       console.error('Error sending promotion email:', emailError)
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Tilbud sendt til deltaker',
-        claim_token: claimToken,
-        expires_at: expiresAt.toISOString()
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return successResponse({
+      success: true,
+      message: 'Tilbud sendt til deltaker',
+      claim_token: claimToken,
+      expires_at: expiresAt.toISOString()
+    })
   } catch (error) {
     console.error('Promote waitlist signup error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return errorResponse(message, 500)
   }
 })

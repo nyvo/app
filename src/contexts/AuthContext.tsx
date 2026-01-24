@@ -57,8 +57,8 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newProfile, error: insertError } = await (supabase.from('profiles') as any)
           .insert({
             id: userId,
             email: user.email || '',

@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE course_type AS ENUM ('course-series', 'event', 'online');
 
 -- Course status: lifecycle state
-CREATE TYPE course_status AS ENUM ('draft', 'upcoming', 'active', 'completed');
+CREATE TYPE course_status AS ENUM ('draft', 'upcoming', 'active', 'completed', 'cancelled');
 
 -- Signup status: booking state
 CREATE TYPE signup_status AS ENUM ('confirmed', 'waitlist', 'cancelled');
@@ -221,6 +221,7 @@ CREATE TABLE conversations (
 
   -- Status
   is_read BOOLEAN DEFAULT FALSE,
+  archived BOOLEAN DEFAULT FALSE,
 
   -- Timestamps
   created_at TIMESTAMPTZ DEFAULT NOW(),

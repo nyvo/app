@@ -1,14 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders()
 
 interface ExpiredOffer {
   id: string
@@ -20,11 +18,23 @@ interface ExpiredOffer {
 
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   try {
+    // This function is typically called by a cron job or internally
+    // Verify the request comes from a trusted source (service role key or cron secret)
+    const authHeader = req.headers.get('authorization')
+    const cronSecret = Deno.env.get('CRON_SECRET')
+
+    // Allow if: has service role key OR has valid cron secret
+    const hasServiceKey = authHeader?.includes(supabaseServiceKey.substring(0, 20))
+    const hasValidCronSecret = cronSecret && req.headers.get('x-cron-secret') === cronSecret
+
+    if (!hasServiceKey && !hasValidCronSecret) {
+      return errorResponse('Unauthorized - this endpoint is for internal use only', 401)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const now = new Date().toISOString()
 
@@ -38,17 +48,11 @@ Deno.serve(async (req: Request) => {
 
     if (fetchError) {
       console.error('Error fetching expired offers:', fetchError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch expired offers' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Failed to fetch expired offers', 500)
     }
 
     if (!expiredOffers || expiredOffers.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No expired offers to process', processed: 0 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return successResponse({ message: 'No expired offers to process', processed: 0 })
     }
 
     console.log(`Processing ${expiredOffers.length} expired offers`)
@@ -218,20 +222,14 @@ Deno.serve(async (req: Request) => {
 
     console.log(`Processed ${results.processed} expired offers, triggered ${results.promotions_triggered} promotions`)
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Processed ${results.processed} expired offers`,
-        ...results
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return successResponse({
+      success: true,
+      message: `Processed ${results.processed} expired offers`,
+      ...results
+    })
   } catch (error) {
     console.error('Process expired offers error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return errorResponse(message, 500)
   }
 })

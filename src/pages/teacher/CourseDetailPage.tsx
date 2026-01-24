@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { nb } from 'date-fns/locale';
-import { tabVariants, tabTransition, fadeVariants, fadeTransition } from '@/lib/motion';
+import { tabVariants, tabTransition } from '@/lib/motion';
 import {
   ChevronRight,
   Calendar,
@@ -12,7 +11,6 @@ import {
   ExternalLink,
   Filter,
   Plus,
-  MoreHorizontal,
   ChevronLeft,
   ChevronDown,
   ChevronUp,
@@ -21,15 +19,14 @@ import {
   Mail,
   Settings2,
   Minus,
-  CalendarIcon,
-  Check,
   Info,
-  Loader2,
   ArrowUpCircle,
   Trash2,
   Send,
   Image
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
@@ -37,7 +34,7 @@ import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
 import { fetchCourseById, updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
-import { fetchCourseWaitlist, promoteFromWaitlist, removeFromWaitlist, type WaitlistSignup } from '@/services/waitlist';
+import { fetchCourseWaitlist, promoteFromWaitlist, removeFromWaitlist, triggerWaitlistPromotion, type WaitlistSignup } from '@/services/waitlist';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import type { CourseSession } from '@/types/database';
@@ -48,19 +45,30 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { TIME_SLOTS_DEFAULT } from '@/utils/timeSlots';
+import { DatePicker } from '@/components/ui/date-picker';
+import { TimePicker, isTimeSlotBooked } from '@/components/ui/time-picker';
+import { DurationPicker } from '@/components/ui/duration-picker';
+import { fetchBookedTimesForDate } from '@/services/courses';
 import { formatDateNorwegian } from '@/utils/dateUtils';
 import { ParticipantAvatar } from '@/components/ui/participant-avatar';
 import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
 import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
 import { NotePopover } from '@/components/ui/note-popover';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCourseParticipantsSubscription } from '@/hooks/use-realtime-subscription';
 
 type Tab = 'overview' | 'participants' | 'settings';
-
-const timeSlots = TIME_SLOTS_DEFAULT;
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
@@ -149,6 +157,7 @@ function mapCourseToComponentFormat(courseData: CourseWithStyle & { signups_coun
       }
     })(),
     duration: formatDuration(),
+    durationMinutes: courseData.duration || 60,
     courseType: courseTypeMap[courseData.course_type] || 'enkeltkurs',
     totalWeeks: courseData.total_weeks || 0,
     currentWeek: courseData.current_week || 0,
@@ -169,11 +178,16 @@ const CourseDetailPage = () => {
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
   const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
-  const [openTimePopovers, setOpenTimePopovers] = useState<Record<string, boolean>>({});
   const [visibleWeeks, setVisibleWeeks] = useState(3);
   const [settingsTime, setSettingsTime] = useState('09:00');
-  const [isSettingsTimeOpen, setIsSettingsTimeOpen] = useState(false);
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
+  const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
+  const prevSettingsDurationRef = useRef<number | null>(null);
+  // Refs to read current values in effects without triggering re-runs
+  const settingsTimeRef = useRef(settingsTime);
+  const settingsDateRef = useRef(settingsDate);
+  settingsTimeRef.current = settingsTime;
+  settingsDateRef.current = settingsDate;
   const kursplanRef = useRef<HTMLDivElement>(null);
 
   // State for fetched course data
@@ -193,7 +207,6 @@ const CourseDetailPage = () => {
 
   // Delete state
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Quick image upload (from overview placeholder)
   const quickImageInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +228,14 @@ const CourseDetailPage = () => {
   const [promotingId, setPromotingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
+  // Waitlist promotion dialog (shown when capacity increases and there's a waitlist)
+  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
+  const [originalCapacity, setOriginalCapacity] = useState<number | null>(null);
+  const [isPromotingWaitlist, setIsPromotingWaitlist] = useState(false);
+  const [newSpotsCount, setNewSpotsCount] = useState(0); // How many new spots were added
+
+  // Cancel preview dialog state
+  const [showCancelPreview, setShowCancelPreview] = useState(false);
 
   // Fetch course data from Supabase
   useEffect(() => {
@@ -239,6 +260,7 @@ const CourseDetailPage = () => {
         const mappedCourse = mapCourseToComponentFormat(data);
         setCourseData(mappedCourse);
         setMaxParticipants(mappedCourse.capacity);
+        setOriginalCapacity(mappedCourse.capacity);
 
         // Initialize settings form state
         setSettingsTitle(mappedCourse.title);
@@ -249,6 +271,14 @@ const CourseDetailPage = () => {
         const timeMatch = mappedCourse.timeSchedule.match(/(\d{1,2}:\d{2})/);
         if (timeMatch) {
           setSettingsTime(timeMatch[1]);
+        }
+
+        // Initialize duration
+        setSettingsDuration(mappedCourse.durationMinutes);
+
+        // Initialize start date
+        if (mappedCourse.startDate) {
+          setSettingsDate(new Date(mappedCourse.startDate));
         }
       } catch {
         setError('En feil oppstod');
@@ -329,6 +359,77 @@ const CourseDetailPage = () => {
 
     loadWaitlist();
   }, [id]);
+
+  // Real-time refetch for participants and waitlist
+  const refetchParticipantsAndWaitlist = useCallback(async () => {
+    if (!id) return;
+
+    try {
+      const [participantsResult, waitlistResult] = await Promise.all([
+        fetchSignupsByCourseWithProfiles(id),
+        fetchCourseWaitlist(id)
+      ]);
+
+      if (participantsResult.data) {
+        setParticipants(participantsResult.data);
+      }
+      if (waitlistResult.data) {
+        setWaitlist(waitlistResult.data);
+      }
+    } catch {
+      // Silent fail for real-time updates
+    }
+  }, [id]);
+
+  // Subscribe to real-time updates for this course's participants and waitlist
+  useCourseParticipantsSubscription(id, refetchParticipantsAndWaitlist);
+
+  // Validate time when duration changes in settings (clear if conflict)
+  useEffect(() => {
+    // Skip if duration hasn't actually changed
+    if (prevSettingsDurationRef.current === settingsDuration) {
+      return;
+    }
+
+    const previousDuration = prevSettingsDurationRef.current;
+    prevSettingsDurationRef.current = settingsDuration;
+
+    // Skip on initial mount (when previous was null)
+    if (previousDuration === null) {
+      return;
+    }
+
+    // Read current values from refs to avoid stale closures
+    const currentTime = settingsTimeRef.current;
+    const currentDate = settingsDateRef.current;
+
+    // Skip validation if missing required data
+    if (!currentTime || !currentDate || !currentOrganization?.id || settingsDuration === null) {
+      return;
+    }
+
+    const validateTimeWithNewDuration = async () => {
+      try {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const { data: bookedSlots } = await fetchBookedTimesForDate(
+          currentOrganization.id,
+          dateStr,
+          id // Exclude current course from conflict check
+        );
+
+        const conflict = isTimeSlotBooked(currentTime, settingsDuration, bookedSlots || []);
+        if (conflict) {
+          setSettingsTime('');
+          toast.info('Valgt tidspunkt er ikke lenger ledig med ny varighet. Velg et nytt tidspunkt.');
+        }
+      } catch (err) {
+        console.error('Error validating time slot:', err);
+      }
+    };
+
+    validateTimeWithNewDuration();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsDuration, currentOrganization?.id, id]);
 
   // Handle promote from waitlist
   const handlePromote = async (signupId: string) => {
@@ -437,8 +538,8 @@ const CourseDetailPage = () => {
       let newImageUrl = settingsImageUrl;
 
       // Delete old image if marked for deletion
-      if (imageToDelete) {
-        await deleteCourseImage(imageToDelete);
+      if (imageToDelete && currentOrganization?.id) {
+        await deleteCourseImage(id, imageToDelete, currentOrganization.id);
         setImageToDelete(null);
       }
 
@@ -467,6 +568,7 @@ const CourseDetailPage = () => {
         max_participants: maxParticipants,
         time_schedule: timeSchedule,
         image_url: newImageUrl,
+        duration: settingsDuration,
       };
 
       const { error: updateError } = await updateCourse(id, updateData);
@@ -502,15 +604,69 @@ const CourseDetailPage = () => {
         capacity: maxParticipants,
         timeSchedule: timeSchedule || prev.timeSchedule,
         imageUrl: newImageUrl,
+        durationMinutes: settingsDuration || prev.durationMinutes,
       } : null);
       setSettingsImageUrl(newImageUrl);
 
-      toast.success('Endringer lagret');
+      // Check if capacity increased and there are people on waitlist
+      const capacityIncreased = originalCapacity !== null && maxParticipants > originalCapacity;
+      const hasWaitlist = waitlist.length > 0;
+
+      if (capacityIncreased && hasWaitlist) {
+        // Calculate how many new spots were added
+        const addedSpots = maxParticipants - (originalCapacity || 0);
+        setNewSpotsCount(addedSpots);
+        // Show promotion dialog
+        setShowPromotionDialog(true);
+      } else {
+        toast.success('Endringer lagret');
+      }
+
+      // Update original capacity to the new value
+      setOriginalCapacity(maxParticipants);
     } catch {
       setSaveError('En feil oppstod');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Handle promoting waitlist after capacity increase
+  const handlePromoteWaitlist = async () => {
+    if (!id) return;
+
+    setIsPromotingWaitlist(true);
+    try {
+      // Pass the number of new spots to promote up to that many people
+      const { data, error } = await triggerWaitlistPromotion(id, newSpotsCount);
+
+      if (error) {
+        toast.error(error);
+      } else if (data) {
+        const count = data.promoted_count || 0;
+        if (count > 0) {
+          toast.success(`Endringer lagret – tilbud sendt til ${count} ${count === 1 ? 'person' : 'personer'}`);
+        } else {
+          toast.success('Endringer lagret');
+        }
+        // Refresh waitlist to show updated status
+        const { data: waitlistData } = await fetchCourseWaitlist(id);
+        if (waitlistData) {
+          setWaitlist(waitlistData);
+        }
+      }
+    } catch {
+      toast.error('Kunne ikke sende tilbud til ventelisten');
+    } finally {
+      setIsPromotingWaitlist(false);
+      setShowPromotionDialog(false);
+    }
+  };
+
+  // Handle declining waitlist promotion
+  const handleDeclinePromotion = () => {
+    setShowPromotionDialog(false);
+    toast.success('Endringer lagret');
   };
 
   // Handle cancel course (with refunds and notifications)
@@ -526,7 +682,7 @@ const CourseDetailPage = () => {
 
       if (cancelError) {
         setSaveError(cancelError.message || 'Kunne ikke avlyse kurset');
-        setShowDeleteConfirm(false);
+        setShowCancelPreview(false);
         return;
       }
 
@@ -535,16 +691,28 @@ const CourseDetailPage = () => {
         ? `Kurset er avlyst. ${result.refunds_processed} refusjoner behandlet, ${result.notifications_sent} deltakere varslet.`
         : 'Kurset er avlyst.';
 
+      setShowCancelPreview(false);
       toast.success('Kurs avlyst');
       // Navigate to courses list on success
       navigate('/teacher/courses', { state: { message } });
     } catch {
       setSaveError('En feil oppstod ved avlysning');
-      setShowDeleteConfirm(false);
+      setShowCancelPreview(false);
     } finally {
       setIsDeleting(false);
     }
   };
+
+  // Compute refund preview for cancel dialog (must be before early returns)
+  const refundPreview = useMemo(() => {
+    const paidSignups = participants.filter(p => p.payment_status === 'paid');
+    const totalRefund = paidSignups.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
+    return {
+      participants: paidSignups,
+      totalAmount: totalRefund,
+      count: paidSignups.length
+    };
+  }, [participants]);
 
   // Loading state
   if (isLoading) {
@@ -552,7 +720,7 @@ const CourseDetailPage = () => {
       <SidebarProvider>
         <TeacherSidebar />
         <main className="flex-1 flex items-center justify-center h-screen bg-surface">
-          <Loader2 className="h-8 w-8 animate-spin text-text-tertiary" />
+          <Spinner size="xl" />
         </main>
       </SidebarProvider>
     );
@@ -619,11 +787,6 @@ const CourseDetailPage = () => {
       ...prev,
       [weekId]: { ...prev[weekId], time }
     }));
-    setOpenTimePopovers(prev => ({ ...prev, [weekId]: false }));
-  };
-
-  const toggleTimePopover = (weekId: string, isOpen: boolean) => {
-    setOpenTimePopovers(prev => ({ ...prev, [weekId]: isOpen }));
   };
 
   const handleShowMore = () => {
@@ -693,7 +856,7 @@ const CourseDetailPage = () => {
       }
 
       // Update local state
-      setCourseData(prev => prev ? { ...prev, imageUrl: url || undefined } : null);
+      setCourseData(prev => prev ? { ...prev, imageUrl: url || null } : null);
       setSettingsImageUrl(url);
       toast.success('Bilde lastet opp');
     } catch {
@@ -799,7 +962,7 @@ const CourseDetailPage = () => {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex gap-6 mt-8 -mb-5 overflow-x-auto">
+            <div className="flex gap-4 sm:gap-6 mt-6 sm:mt-8 -mb-5 overflow-x-auto no-scrollbar -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
               <button
                 onClick={() => setActiveTab('overview')}
                 className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
@@ -851,62 +1014,62 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 auto-rows-min"
+                className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 auto-rows-min"
               >
 
                 {/* 1. Date Card */}
-                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1">
+                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-1">
                   <div className="flex items-start justify-between">
-                    <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
-                      <Calendar className="h-4 w-4" />
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
+                      <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Periode</span>
+                    <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Periode</span>
                     {formatDateRange(course.startDate, course.endDate) ? (
                       <div className="mt-0.5">
-                        <p className="text-sm font-semibold text-text-primary">{formatDateRange(course.startDate, course.endDate)}</p>
-                        {course.date && <p className="text-xs text-muted-foreground mt-0.5">{course.date}</p>}
+                        <p className="text-xs md:text-sm font-medium text-text-primary">{formatDateRange(course.startDate, course.endDate)}</p>
+                        {course.date && <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 hidden sm:block">{course.date}</p>}
                       </div>
                     ) : (
-                      <p className="text-sm font-semibold text-text-primary mt-0.5">{course.date || 'Ikke angitt'}</p>
+                      <p className="text-xs md:text-sm font-medium text-text-primary mt-0.5">{course.date || 'Ikke angitt'}</p>
                     )}
                   </div>
                 </div>
 
                 {/* 2. Location Card */}
-                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1">
+                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-1">
                   <div className="flex items-start justify-between">
-                    <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
-                      <MapPin className="h-4 w-4" />
+                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
+                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Sted</span>
-                    <p className="text-sm font-semibold text-text-primary mt-0.5">{course.location}</p>
+                    <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Sted</span>
+                    <p className="text-xs md:text-sm font-medium text-text-primary mt-0.5 truncate">{course.location}</p>
                   </div>
                 </div>
 
-                {/* 3. Occupancy Card (Wide) */}
-                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between h-32 hover:shadow-md ios-ease col-span-1 md:col-span-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
-                        <Users className="h-4 w-4" />
+                {/* 3. Occupancy Card (Full width on mobile) */}
+                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-2">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                      <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary shrink-0">
+                        <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       </div>
-                      <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
+                      <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
                     </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-xxs font-semibold tracking-wide">
+                    <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-[10px] md:text-xxs font-medium tracking-wide whitespace-nowrap shrink-0">
                       {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
                     </span>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-end justify-between">
-                      <span className="text-2xl font-semibold text-text-primary tracking-tight">{course.enrolled}</span>
-                      <span className="text-xs text-muted-foreground font-medium">Kap: {course.capacity}</span>
+                      <span className="text-xl md:text-2xl font-medium text-text-primary tracking-tight">{course.enrolled}</span>
+                      <span className="text-[10px] md:text-xs text-muted-foreground font-medium">Kap: {course.capacity}</span>
                     </div>
-                    <div className="h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
+                    <div className="h-1.5 md:h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
                       <div
                         className="h-full bg-text-primary rounded-full"
                         style={{ width: `${(course.enrolled / course.capacity) * 100}%` }}
@@ -915,11 +1078,11 @@ const CourseDetailPage = () => {
                   </div>
                 </div>
 
-                {/* 4. About the Class (Large 2x2) */}
-                <div className="bg-white rounded-xl shadow-sm flex flex-col col-span-1 md:col-span-2 row-span-2 overflow-hidden">
-                  {/* Course Image */}
+                {/* 4. About the Class (Full width) */}
+                <div className="bg-white rounded-3xl border border-gray-200 flex flex-col col-span-2 overflow-hidden hover:border-ring ios-ease">
+                  {/* Course Image - smaller on mobile */}
                   {course.imageUrl ? (
-                    <div className="w-full h-40 overflow-hidden">
+                    <div className="w-full h-28 md:h-40 overflow-hidden">
                       <img
                         src={course.imageUrl}
                         alt={course.title}
@@ -936,17 +1099,17 @@ const CourseDetailPage = () => {
                         className="hidden"
                       />
                       <div
-                        className="w-full h-40 bg-surface-elevated/30 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer hover:bg-surface-elevated/50 transition-colors group"
+                        className="w-full h-24 md:h-40 bg-surface-elevated/30 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer hover:bg-surface-elevated/50 transition-colors group"
                         onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
                       >
                         {isUploadingQuickImage ? (
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Spinner size="md" />
                             <span className="text-xs font-medium">Laster opp...</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 text-muted-foreground group-hover:text-text-primary transition-colors">
-                            <div className="p-2 rounded-full bg-white shadow-sm group-hover:shadow-md transition-shadow">
+                            <div className="p-2 rounded-full bg-white border border-gray-200 group-hover:border-ring transition-colors">
                               <Image className="h-4 w-4" />
                             </div>
                             <span className="text-xs font-medium">Legg til bilde</span>
@@ -955,34 +1118,34 @@ const CourseDetailPage = () => {
                       </div>
                     </>
                   )}
-                  <div className="p-6 flex flex-col flex-1">
-                    <div className="mb-4">
-                      <h3 className="text-base font-semibold text-text-primary">Om timen</h3>
+                  <div className="p-4 md:p-6 flex flex-col flex-1">
+                    <div className="mb-3 md:mb-4">
+                      <h3 className="text-sm md:text-base font-medium text-text-primary">Om timen</h3>
                     </div>
                     <div className="flex-1">
                       {course.description ? (
                         <>
-                          <p className="text-sm text-text-secondary leading-relaxed mb-4">
+                          <p className="text-xs md:text-sm text-text-secondary leading-relaxed mb-4">
                             {course.description}
                           </p>
                           {course.description2 && (
-                            <p className="text-sm text-text-secondary leading-relaxed">
+                            <p className="text-xs md:text-sm text-text-secondary leading-relaxed">
                               {course.description2}
                             </p>
                           )}
                         </>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-full min-h-[140px] text-center py-4">
-                          <div className="mb-3 rounded-full bg-surface p-3 border border-surface-elevated">
-                            <Info className="h-5 w-5 text-text-tertiary stroke-[1.5]" />
+                        <div className="flex flex-col items-center justify-center h-full min-h-[100px] md:min-h-[140px] text-center py-3 md:py-4">
+                          <div className="mb-2 md:mb-3 rounded-full bg-surface p-2.5 md:p-3 border border-surface-elevated">
+                            <Info className="h-4 w-4 md:h-5 md:w-5 text-text-tertiary stroke-[1.5]" />
                           </div>
-                          <h4 className="text-sm font-medium text-text-primary mb-1">Ingen beskrivelse</h4>
-                          <p className="text-xs text-muted-foreground max-w-[240px] mb-4">
+                          <h4 className="text-xs md:text-sm font-medium text-text-primary mb-1">Ingen beskrivelse</h4>
+                          <p className="text-[10px] md:text-xs text-muted-foreground max-w-[240px] mb-3 md:mb-4">
                             Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
                           </p>
-                          <Button 
-                            variant="outline-soft" 
-                            size="compact" 
+                          <Button
+                            variant="outline-soft"
+                            size="compact"
                             onClick={() => setActiveTab('settings')}
                           >
                             Legg til beskrivelse
@@ -991,13 +1154,13 @@ const CourseDetailPage = () => {
                       )}
                     </div>
 
-                  <div className="mt-6 pt-6 border-t border-gray-100 flex gap-3 flex-wrap">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar text-xs font-medium text-text-secondary">
-                        <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
+                  <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-100 flex gap-2 md:gap-3 flex-wrap">
+                      <div className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md bg-sidebar text-[10px] md:text-xs font-medium text-text-secondary">
+                        <BarChart2 className="h-3 w-3 md:h-3.5 md:w-3.5 text-text-tertiary" />
                         Nivå: {course.level}
                       </div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-sidebar text-xs font-medium text-text-secondary">
-                        <Clock className="h-3.5 w-3.5 text-text-tertiary" />
+                      <div className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md bg-sidebar text-[10px] md:text-xs font-medium text-text-secondary">
+                        <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 text-text-tertiary" />
                         Varighet: {course.duration}
                       </div>
                     </div>
@@ -1005,15 +1168,15 @@ const CourseDetailPage = () => {
                 </div>
 
                 {/* Admin Actions Card */}
-                <div className="bg-white rounded-xl p-5 shadow-sm flex flex-col justify-between col-span-2 row-span-2">
+                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between col-span-2 hover:border-ring ios-ease">
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wide">Administrasjon</h3>
+                      <h3 className="text-xs font-medium text-text-primary uppercase tracking-wide">Administrasjon</h3>
                       <Settings2 className="h-4 w-4 text-text-tertiary" />
                     </div>
                     <div className="mb-5">
                       <span className="text-xxs text-muted-foreground font-medium">Pris</span>
-                      <p className="text-xl font-semibold text-text-primary tracking-tight">{course.price} NOK</p>
+                      <p className="text-xl font-medium text-text-primary tracking-tight">{course.price} NOK</p>
                     </div>
                   </div>
 
@@ -1037,9 +1200,9 @@ const CourseDetailPage = () => {
                 {/* Course Plan - Only show for multi-day courses */}
                 {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
                   <div ref={kursplanRef} className="col-span-full mt-2">
-                    <div className="bg-white rounded-xl p-6 shadow-sm">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-200">
                       <div className="mb-6">
-                        <h2 className="text-base font-semibold text-text-primary">Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})</h2>
+                        <h2 className="text-base font-medium text-text-primary">Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})</h2>
                       </div>
 
                       <div className="relative">
@@ -1051,27 +1214,27 @@ const CourseDetailPage = () => {
                           <AccordionItem
                             key={week.id}
                             value={week.id}
-                            className={`group rounded-xl border transition-all hover:shadow-sm ${
+                            className={`group rounded-xl border transition-all ${
                               week.isNext
-                                ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
+                                ? 'border-ring bg-white ring-2 ring-border/30'
                                 : week.status === 'upcoming'
-                                ? 'border-gray-100 bg-white/50 hover:bg-white hover:shadow-md'
-                                : 'border-gray-100 bg-white hover:shadow-md'
+                                ? 'border-gray-200 bg-white/50 hover:bg-white hover:border-ring'
+                                : 'border-gray-200 bg-white hover:border-ring'
                             }`}
                           >
                             <div className="flex items-center px-4 cursor-pointer" onClick={() => setExpandedItem(expandedItem === week.id ? undefined : week.id)}>
                               <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg mr-4 ${
                                 week.isNext
-                                  ? 'bg-gray-900 text-white shadow-sm'
+                                  ? 'bg-gray-900 text-white'
                                   : 'bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
                               }`}>
                                 <span className={`text-xxs font-medium uppercase ${week.isNext ? 'opacity-80' : ''}`}>{sessionLabel}</span>
-                                <span className="font-geist text-lg font-semibold">{week.weekNum}</span>
+                                <span className="font-geist text-lg font-medium">{week.weekNum}</span>
                               </div>
 
                               <div className="flex-1 py-4">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <h3 className={`text-sm font-semibold ${week.status === 'completed' ? 'text-muted-foreground line-through decoration-text-tertiary' : 'text-text-primary'}`}>
+                                  <h3 className={`text-sm font-medium ${week.status === 'completed' ? 'text-muted-foreground line-through decoration-text-tertiary' : 'text-text-primary'}`}>
                                     {week.title}
                                   </h3>
                                   {week.status === 'completed' && (
@@ -1102,81 +1265,33 @@ const CourseDetailPage = () => {
                                     <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                                       Dato
                                     </label>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className="flex items-center justify-between w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all text-left"
-                                        >
-                                          <span>
-                                            {sessionEdits[week.id]?.date
-                                              ? formatDateNorwegian(sessionEdits[week.id].date!)
-                                              : week.date}
-                                          </span>
-                                          <CalendarIcon className="h-4 w-4 text-text-tertiary" />
-                                        </button>
-                                      </PopoverTrigger>
-                                      <PopoverContent align="start" className="p-0" showOverlay>
-                                        <CalendarComponent
-                                          mode="single"
-                                          selected={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : new Date())}
-                                          onSelect={(date) => {
-                                            if (date) {
-                                              setSessionEdits(prev => ({
-                                                ...prev,
-                                                [week.id]: { ...prev[week.id], date }
-                                              }));
-                                            }
-                                          }}
-                                          locale={nb}
-                                          className="rounded-md border"
-                                        />
-                                      </PopoverContent>
-                                    </Popover>
+                                    <DatePicker
+                                      value={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : undefined)}
+                                      onChange={(date) => {
+                                        if (date) {
+                                          setSessionEdits(prev => ({
+                                            ...prev,
+                                            [week.id]: { ...prev[week.id], date }
+                                          }));
+                                        }
+                                      }}
+                                      placeholder={week.date}
+                                    />
                                   </div>
 
                                   <div>
                                     <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
                                       Tidspunkt
                                     </label>
-                                    <Popover open={openTimePopovers[week.id]} onOpenChange={(isOpen) => toggleTimePopover(week.id, isOpen)}>
-                                      <PopoverTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className="flex items-center justify-between w-full rounded-xl border-0 py-2.5 px-3 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all text-left"
-                                        >
-                                          <span className="text-text-primary">
-                                            {sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
-                                          </span>
-                                          <div className="flex items-center gap-2">
-                                            <Clock className="h-4 w-4 text-text-tertiary" />
-                                            <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${openTimePopovers[week.id] ? 'rotate-180' : ''}`} />
-                                          </div>
-                                        </button>
-                                      </PopoverTrigger>
-                                      <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
-                                        <div className="flex flex-col gap-0.5">
-                                          {timeSlots.map((time) => {
-                                            const currentTime = sessionEdits[week.id]?.time || week.time;
-                                            return (
-                                            <button
-                                              key={time}
-                                              type="button"
-                                              onClick={() => handleTimeSelect(week.id, time)}
-                                              className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                currentTime.startsWith(time)
-                                                  ? 'bg-text-primary text-white'
-                                                  : 'text-sidebar-foreground hover:bg-surface-elevated'
-                                              }`}
-                                            >
-                                              <span>{time}</span>
-                                              {currentTime.startsWith(time) && <Check className="h-4 w-4" />}
-                                            </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </PopoverContent>
-                                    </Popover>
+                                    <TimePicker
+                                      value={sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
+                                      onChange={(time) => handleTimeSelect(week.id, time)}
+                                      date={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : undefined)}
+                                      organizationId={currentOrganization?.id}
+                                      duration={courseData?.durationMinutes || 60}
+                                      excludeCourseId={id}
+                                      placeholder={week.time.split(' - ')[0]}
+                                    />
                                   </div>
                                 </div>
 
@@ -1208,7 +1323,7 @@ const CourseDetailPage = () => {
                                   >
                                     {savingSessionId === week.id ? (
                                       <>
-                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                        <Spinner size="xs" />
                                         Lagrer...
                                       </>
                                     ) : (
@@ -1381,12 +1496,12 @@ const CourseDetailPage = () => {
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {participantsLoading ? (
-                          <tr>
-                            <td colSpan={5} className="py-12 text-center">
-                              <Loader2 className="h-6 w-6 animate-spin text-text-tertiary mx-auto mb-2" />
-                              <p className="text-sm text-muted-foreground">Laster deltakere...</p>
-                            </td>
-                          </tr>
+                          <>
+                            <SkeletonTableRow columns={5} hasAvatar={true} />
+                            <SkeletonTableRow columns={5} hasAvatar={true} />
+                            <SkeletonTableRow columns={5} hasAvatar={true} />
+                            <span className="sr-only">Laster deltakere...</span>
+                          </>
                         ) : filteredParticipants.length === 0 ? (
                           <tr>
                             <td colSpan={5} className="py-12 text-center">
@@ -1494,12 +1609,11 @@ const CourseDetailPage = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                           {waitlistLoading ? (
-                            <tr>
-                              <td colSpan={5} className="py-8 text-center">
-                                <Loader2 className="h-5 w-5 animate-spin text-text-tertiary mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">Laster venteliste...</p>
-                              </td>
-                            </tr>
+                            <>
+                              <SkeletonTableRow columns={5} hasAvatar={true} />
+                              <SkeletonTableRow columns={5} hasAvatar={true} />
+                              <span className="sr-only">Laster venteliste...</span>
+                            </>
                           ) : (
                             waitlist.map((entry) => {
                               const timeOnList = (() => {
@@ -1578,7 +1692,7 @@ const CourseDetailPage = () => {
                                           disabled={promotingId === entry.id}
                                         >
                                           {promotingId === entry.id ? (
-                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                            <Spinner size="xs" />
                                           ) : (
                                             <ArrowUpCircle className="h-3 w-3" />
                                           )}
@@ -1593,7 +1707,7 @@ const CourseDetailPage = () => {
                                         className="text-muted-foreground hover:text-status-error-text"
                                       >
                                         {removingId === entry.id ? (
-                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                          <Spinner size="xs" />
                                         ) : (
                                           <Trash2 className="h-3 w-3" />
                                         )}
@@ -1645,7 +1759,7 @@ const CourseDetailPage = () => {
                             <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Beskrivelse</label>
                             <textarea
                               rows={6}
-                              className="w-full p-3 rounded-lg border-0 ring-1 ring-inset ring-border text-sm focus:outline-none focus:ring-1 focus:ring-primary/20 bg-input-bg hover:ring-ring resize-none"
+                              className="w-full p-3 rounded-xl border border-border text-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white bg-input-bg hover:border-ring ios-ease resize-none"
                               value={settingsDescription}
                               onChange={(e) => setSettingsDescription(e.target.value)}
                             />
@@ -1695,62 +1809,30 @@ const CourseDetailPage = () => {
                       <div className="space-y-4 flex-1">
                           <div>
                             <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Dato</label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
-                                >
-                                  <span>{settingsDate ? formatDateNorwegian(settingsDate) : 'Velg dato'}</span>
-                                  <CalendarIcon className="h-4 w-4 text-text-tertiary" />
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent align="start" className="p-0" showOverlay>
-                                <CalendarComponent
-                                  mode="single"
-                                  selected={settingsDate}
-                                  onSelect={setSettingsDate}
-                                  locale={nb}
-                                  className="rounded-md border"
-                                />
-                              </PopoverContent>
-                            </Popover>
+                            <DatePicker
+                              value={settingsDate}
+                              onChange={setSettingsDate}
+                              placeholder="Velg dato"
+                            />
                           </div>
                           <div>
                             <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Tidspunkt</label>
-                            <Popover open={isSettingsTimeOpen} onOpenChange={setIsSettingsTimeOpen}>
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-between w-full h-11 rounded-xl border-0 px-4 text-text-primary shadow-sm ring-1 ring-inset ring-border hover:ring-ring focus:ring-1 focus:ring-inset focus:ring-primary/20 text-sm bg-input-bg transition-all text-left"
-                                >
-                                  <span>{settingsTime || 'Velg tid'}</span>
-                                  <Clock className="h-4 w-4 text-text-tertiary" />
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent align="start" className="w-[200px] p-2 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
-                                <div className="flex flex-col gap-0.5">
-                                  {timeSlots.map((time) => (
-                                    <button
-                                      key={time}
-                                      type="button"
-                                      onClick={() => {
-                                        setSettingsTime(time);
-                                        setIsSettingsTimeOpen(false);
-                                      }}
-                                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                                        settingsTime === time
-                                          ? 'bg-text-primary text-white'
-                                          : 'text-sidebar-foreground hover:bg-surface-elevated'
-                                      }`}
-                                    >
-                                      <span>{time}</span>
-                                      {settingsTime === time && <Check className="h-4 w-4" />}
-                                    </button>
-                                  ))}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
+                            <TimePicker
+                              value={settingsTime}
+                              onChange={(time) => setSettingsTime(time)}
+                              date={settingsDate}
+                              organizationId={currentOrganization?.id}
+                              duration={settingsDuration || 60}
+                              excludeCourseId={id}
+                              placeholder="Velg tid"
+                            />
+                          </div>
+                          <div>
+                            <DurationPicker
+                              value={settingsDuration}
+                              onChange={setSettingsDuration}
+                              label="Varighet"
+                            />
                           </div>
                       </div>
                   </div>
@@ -1761,11 +1843,16 @@ const CourseDetailPage = () => {
                         <h3 className="text-base font-semibold text-text-primary mb-1">Kapasitet</h3>
                         <p className="text-xs text-muted-foreground">Begrens antall deltakere.</p>
                       </div>
-                      <div className="flex-1 flex items-center justify-center">
+                      <div className="flex-1 flex flex-col items-center justify-center gap-2">
                         <div className="flex items-center gap-4">
                             <button
-                              onClick={() => setMaxParticipants(Math.max(1, maxParticipants - 1))}
-                              className="h-10 w-10 rounded-lg bg-surface-elevated flex items-center justify-center hover:bg-surface text-text-secondary cursor-pointer transition-colors"
+                              onClick={() => setMaxParticipants(Math.max(courseData?.enrolled || 1, maxParticipants - 1))}
+                              disabled={maxParticipants <= (courseData?.enrolled || 1)}
+                              className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors ${
+                                maxParticipants <= (courseData?.enrolled || 1)
+                                  ? 'bg-surface-elevated/50 text-text-tertiary cursor-not-allowed'
+                                  : 'bg-surface-elevated hover:bg-surface text-text-secondary cursor-pointer'
+                              }`}
                             >
                               <Minus className="h-4 w-4" />
                             </button>
@@ -1780,101 +1867,36 @@ const CourseDetailPage = () => {
                               <Plus className="h-4 w-4" />
                             </button>
                         </div>
+                        {/* Capacity warning - shows when at minimum */}
+                        {courseData && courseData.enrolled > 0 && maxParticipants <= courseData.enrolled && (
+                          <div className="rounded-lg border border-status-warning-border bg-status-warning-bg/30 px-3 py-2 mt-2">
+                            <p className="text-xs text-status-warning-text text-center">
+                              Kan ikke reduseres – {courseData.enrolled} påmeldt{courseData.enrolled > 1 ? 'e' : ''}
+                            </p>
+                          </div>
+                        )}
                       </div>
                   </div>
 
                   {/* Tile 5: Danger Zone - Span 3 */}
                   <div className="lg:col-span-3 rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      {/* Left side: Text content */}
-                      <AnimatePresence mode="wait">
-                        {!showDeleteConfirm ? (
-                          <motion.div
-                            key="initial-text"
-                            variants={fadeVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={fadeTransition}
-                          >
-                            <h3 className="text-sm font-semibold text-status-error-text">Avlys eller slett kurs</h3>
-                            <p className="text-xs text-status-error-text/80 mt-1">Dette vil varsle alle påmeldte deltakere og refundere betalinger.</p>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="confirm-text"
-                            variants={fadeVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={fadeTransition}
-                          >
-                            <h3 className="text-sm font-semibold text-status-error-text">Er du sikker?</h3>
-                            <p className="text-xs text-status-error-text/80 mt-1">
-                              Dette vil permanent slette kurset. Handlingen kan ikke angres.
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Right side: Buttons */}
-                      <AnimatePresence mode="wait">
-                        {!showDeleteConfirm ? (
-                          <motion.div
-                            key="initial-btn"
-                            variants={fadeVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={fadeTransition}
-                            className="flex items-center gap-3 shrink-0"
-                          >
-                            <Button
-                              variant="outline-soft"
-                              size="compact"
-                              className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap"
-                              onClick={() => setShowDeleteConfirm(true)}
-                            >
-                              Slett kurs
-                            </Button>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="confirm-btn"
-                            variants={fadeVariants}
-                            initial="initial"
-                            animate="animate"
-                            exit="exit"
-                            transition={fadeTransition}
-                            className="flex items-center gap-3 shrink-0"
-                          >
-                            <Button
-                              variant="ghost"
-                              size="compact"
-                              onClick={() => setShowDeleteConfirm(false)}
-                              disabled={isDeleting}
-                            >
-                              Avbryt
-                            </Button>
-                            <Button
-                              variant="outline-soft"
-                              size="compact"
-                              className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap"
-                              onClick={handleDeleteCourse}
-                              disabled={isDeleting}
-                            >
-                              {isDeleting ? (
-                                <>
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                  Avlyser...
-                                </>
-                              ) : (
-                                'Ja, avlys kurs'
-                              )}
-                            </Button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      <div>
+                        <h3 className="text-sm font-semibold text-status-error-text">Avlys kurs</h3>
+                        <p className="text-xs text-status-error-text/80 mt-1">
+                          {refundPreview.count > 0
+                            ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
+                            : 'Kurset vil bli avlyst.'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline-soft"
+                        size="compact"
+                        className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap shrink-0"
+                        onClick={() => setShowCancelPreview(true)}
+                      >
+                        Avlys kurs
+                      </Button>
                     </div>
                   </div>
                   
@@ -1902,7 +1924,7 @@ const CourseDetailPage = () => {
                     >
                       {isSaving ? (
                         <>
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <Spinner size="sm" />
                           Lagrer...
                         </>
                       ) : (
@@ -1918,6 +1940,107 @@ const CourseDetailPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Waitlist Promotion Dialog */}
+      <AlertDialog open={showPromotionDialog} onOpenChange={setShowPromotionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send tilbud til ventelisten?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const toPromote = Math.min(newSpotsCount, waitlist.length);
+                if (toPromote === waitlist.length) {
+                  return `Du har økt kapasiteten med ${newSpotsCount} ${newSpotsCount === 1 ? 'plass' : 'plasser'}. ${waitlist.length} ${waitlist.length === 1 ? 'person venter' : 'personer venter'} på ventelisten.`;
+                } else {
+                  return `Du har økt kapasiteten med ${newSpotsCount} ${newSpotsCount === 1 ? 'plass' : 'plasser'}. ${toPromote} av ${waitlist.length} på ventelisten kan få tilbud.`;
+                }
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeclinePromotion} disabled={isPromotingWaitlist}>
+              Ikke nå
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handlePromoteWaitlist} disabled={isPromotingWaitlist}>
+              {isPromotingWaitlist ? (
+                <>
+                  <Spinner size="md" className="mr-2" />
+                  Sender...
+                </>
+              ) : (
+                `Send tilbud (${Math.min(newSpotsCount, waitlist.length)})`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Course Preview Dialog */}
+      <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avlys kurs</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                {refundPreview.count > 0 ? (
+                  <>
+                    <p>
+                      {refundPreview.count} deltaker{refundPreview.count !== 1 ? 'e' : ''} vil
+                      bli refundert totalt <strong>{refundPreview.totalAmount} kr</strong>
+                    </p>
+
+                    {/* Participant list */}
+                    <div className="max-h-[200px] overflow-y-auto border border-border rounded-lg">
+                      {refundPreview.participants.map((p) => (
+                        <div key={p.id} className="flex justify-between px-3 py-2 border-b border-border last:border-b-0">
+                          <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
+                          <span className="text-sm text-muted-foreground">{p.amount_paid} kr</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-sm text-muted-foreground">
+                      Alle deltakere vil bli varslet på e-post.
+                    </p>
+                  </>
+                ) : (
+                  <p>Ingen betalende deltakere å refundere. Kurset vil bli avlyst.</p>
+                )}
+
+                {/* Tip about editing instead */}
+                <div className="flex items-start gap-2 p-3 bg-surface-elevated rounded-lg">
+                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-text-secondary">Tips:</strong> Du kan også endre dato, tid eller andre detaljer i innstillinger uten å avlyse kurset.
+                  </p>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteCourse();
+              }}
+              disabled={isDeleting}
+              className="bg-status-error-text hover:bg-status-error-text/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Spinner size="md" className="mr-2" />
+                  {refundPreview.count > 0
+                    ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}...`
+                    : 'Avlyser...'}
+                </>
+              ) : (
+                refundPreview.count > 0 ? 'Bekreft avlysning og refunder' : 'Bekreft avlysning'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 };

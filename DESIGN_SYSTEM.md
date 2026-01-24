@@ -25,11 +25,10 @@ Use these for general UI elements, backgrounds, borders, and text when you need 
 ### Text Colors (Semantic)
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `text-text-primary` | #111827 | Headings, primary text, dark emphasis |
-| `text-text-secondary` | #4B5563 | Body text, secondary content |
-| `text-sidebar-foreground` | #374151 | Labels, form labels, sidebar text |
-| `text-muted-foreground` | #6B7280 | Muted text, descriptions |
-| `text-text-tertiary` | #9CA3AF | Tertiary text, timestamps, placeholders |
+| `text-text-primary` | #374151 (Gray-700) | Headings, primary text, dark emphasis |
+| `text-text-secondary` | #52525B (Zinc-600) | Body text, secondary content |
+| `text-text-tertiary` | #71717A (Zinc-500) | Tertiary text, timestamps, placeholders |
+| `text-muted-foreground` | #6B7280 (Gray-500) | Muted text, descriptions |
 
 ### Background Colors
 | Token | Hex | Usage |
@@ -43,11 +42,10 @@ Use these for general UI elements, backgrounds, borders, and text when you need 
 ### Border Colors
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `border-border` | #E5E7EB | Default borders (gray-200) |
-| `ring-ring` | #D1D5DB | Focus rings, hover borders (gray-300) |
-| `border-ring` | #D1D5DB | Hover state borders (gray-300) |
-| `border-gray-200` | #E5E7EB | Alternative neutral border |
-| `border-gray-100` | #F3F4F6 | Very subtle dividers |
+| `border-gray-200` | #E5E7EB | **Default structural border** (Cards, Inputs) |
+| `border-gray-100` | #F3F4F6 | Subtle dividers (List items, table rows) |
+| `border-gray-300` | #D1D5DB | Hover/Active border state |
+| `border-gray-800` | #1F2937 | Dark border for hero cards |
 
 ### Status Colors
 | Status | Background | Border | Text | Hex Values |
@@ -65,112 +63,47 @@ Use these for general UI elements, backgrounds, borders, and text when you need 
 | `bg-warning` / `text-warning` | Warning states (#F97316) |
 | `bg-destructive` / `text-destructive` | Error/destructive (#EF4444) |
 
-### Shadows
+### Growth/Trend Colors
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `text-growth-text` | #15803D (green-700) | Positive growth percentage text |
+| `bg-growth-bg` | #F0FDF4 (green-50) | Positive growth badge background |
+
+### Shadows (Minimal Elevation)
+**Principle:** Shadows are reserved for **overlays only** (modals, popovers). Cards and structural elements use borders.
+
 | Token | Value | Usage |
 |-------|-------|-------|
-| `shadow-xs` | `0 1px 2px rgba(0,0,0,0.02)` | Very subtle, minimal elevation |
-| `shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Buttons, small elements |
-| `shadow` | `0 1px 3px rgba(0,0,0,0.05)` | Default shadow |
-| `shadow-md` | `0 4px 6px rgba(0,0,0,0.05)` | Cards, dropdowns |
-| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.05)` | Modals, popovers |
-| `shadow-xl` | `0 20px 25px rgba(0,0,0,0.08)` | Large overlays |
-| `shadow-card` | `0 1px 2px rgba(0,0,0,0.02)` | Card-specific, very subtle |
+| `shadow-xs` | `0 1px 2px rgba(0,0,0,0.02)` | Extremely subtle (Buttons only) |
+| `shadow-sm` | `none` | **Disabled** on standard cards |
+| `shadow` | `none` | **Disabled** |
+| `shadow-md` | `none` | **Disabled** |
+| `shadow-lg` | `0 10px 15px rgba(0,0,0,0.05)` | Modals, Popovers, Toasts |
+| `shadow-xl` | `0 20px 25px rgba(0,0,0,0.08)` | Large Overlays |
 
-> **Note:** Shadows are intentionally subtle for a clean, modern look. Use `shadow-[0_1px_2px_rgba(0,0,0,0.02)]` for inline custom card shadows.
-
-### Border Radius
-| Token | Size | Usage |
-|-------|------|-------|
-| `rounded-full` | 9999px | Avatars, badges, pills, status dots |
-| `rounded-3xl` | 24px | Dashboard cards, hero sections |
-| `rounded-2xl` | 16px | Form section cards, detail pages |
-| `rounded-xl` | 12px | Selection cards, nested elements |
-| `rounded-lg` | 8px | Compact buttons, inputs, small cards |
-| `rounded-md` | 6px | Icon buttons, small elements |
-
-### Dark Card Gradient
-For dark stat cards and hero elements:
-```tsx
-className="bg-gradient-to-br from-gray-800 to-gray-900"
-// Or use the CSS variable:
-background: var(--gradient-dark-card);
-```
-
-### Selection Cards
-Use for mutually exclusive choices (e.g., account type, plan selection).
-
-```tsx
-// Selected state
-className="relative h-full p-6 rounded-xl border border-gray-400 bg-surface-elevated flex flex-col transition-all duration-200 shadow-sm ring-2 ring-gray-200"
-
-// Unselected state
-className="relative h-full p-6 rounded-xl border border-border bg-white hover:border-gray-300 flex flex-col transition-all duration-200"
-```
-
-> **Radio Indicator**: Use a custom indicator.
-> - Selected: `bg-gray-900 border-gray-900 text-white` circle with check icon.
-> - Unselected: `bg-transparent border-gray-200` transparent circle.
-
----
-
-## Color Palette
-
-The design system uses the **Gray Scale** - a cool, neutral palette for a clean, professional look.
-
-### Semantic Tokens (Preferred)
-Use these semantic tokens for consistency:
-
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `text-text-primary` | #111827 (gray-900) | Headings, primary text |
-| `text-text-secondary` | #4B5563 (gray-600) | Body text, secondary content |
-| `text-muted-foreground` | #6B7280 (gray-500) | Muted text, descriptions |
-| `text-text-tertiary` | #9CA3AF (gray-400) | Placeholders, timestamps |
-| `bg-surface` | #F9FAFB (gray-50) | Page backgrounds |
-| `bg-surface-elevated` | #F3F4F6 (gray-100) | Cards, elevated surfaces |
-| `border-border` | #E5E7EB (gray-200) | Borders, dividers |
-| `border-ring` / `ring-ring` | #D1D5DB (gray-300) | Focus rings, hover borders |
-
-### Direct Gray Scale
-You can also use the gray scale directly:
-
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `gray-50` | #F9FAFB | Lightest backgrounds |
-| `gray-100` | #F3F4F6 | Subtle backgrounds |
-| `gray-200` | #E5E7EB | Borders |
-| `gray-300` | #D1D5DB | Disabled states |
-| `gray-400` | #9CA3AF | Icons, placeholders |
-| `gray-500` | #6B7280 | Secondary text |
-| `gray-600` | #4B5563 | Body text |
-| `gray-700` | #374151 | Primary text |
-| `gray-800` | #1F2937 | Dark backgrounds |
-| `gray-900` | #111827 | Darkest text |
-
----
-
-## Typography Scale
-
-### Font Sizes
-| Class | Size | Usage |
-|-------|------|-------|
-| `text-xxs` | 10px | Tiny labels, timestamps, badges |
-| `text-xs` | 12px | Small text, captions, metadata |
-| `text-sm` | 14px | Body text, default |
-| `text-base` | 16px | Base size |
-| `text-lg` | 18px | Section headers |
-| `text-xl` | 20px | Page subtitles |
-| `text-2xl` | 24px | Large headings |
-| `text-3xl` | 30px | Page titles |
-| `text-4xl` | 36px | Hero titles |
+### Typography Scale
+| Class | Size | Line Height | Usage |
+|-------|------|-------------|-------|
+| `text-tiny` | 10px | 14px | Rare micro-text only (timestamps) |
+| `text-xxs` | 11px | 14px | Uppercase labels, small badges |
+| `text-xs` | 12px | 16px | Meta text, secondary info, badges |
+| `text-small` | 13px | 18px | Dense lists, table data |
+| `text-sm` | 14px | 20px | Standard body text, inputs |
+| `text-base` | 16px | 24px | Lead text, major components |
+| `text-lg` | 18px | 28px | Section headers |
+| `text-2xl` | 24px | 32px | Page titles |
+| `text-3xl` | 30px | 36px | Hero numbers |
 
 ### Font Weights
+**Principle:** Use lighter weights for a cleaner, modern look. Let font SIZE establish hierarchy, not weight.
+
 | Class | Weight | Usage |
 |-------|--------|-------|
-| `font-normal` | 400 | Body text |
-| `font-medium` | 500 | Most text, titles, emphasis |
-| `font-semibold` | 600 | Buttons, card headers |
-| `font-bold` | 700 | Strong emphasis, badge labels |
+| `font-normal` | 400 | Body text, Large display numbers, Secondary text |
+| `font-medium` | 500 | Headings, Buttons, Table headers, Labels |
+| `font-semibold` | 600 | **Avoid** - rarely needed in calm UI |
+
+> **Soft Light Mode:** Prefer `font-medium` over `font-semibold` for table headers and labels. The goal is a calm, minimal interface where size (not weight) creates hierarchy.
 
 ### Font Family
 - **Primary**: Geist Sans (loaded via CDN)
@@ -183,48 +116,49 @@ You can also use the gray scale directly:
 
 ### Page Headers
 ```tsx
-<p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2">
+<p className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-2">
   Oversikt
 </p>
-<h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-text-primary">
+<h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
   God morgen, Elena
 </h1>
 ```
 
 ### Section Headers
 ```tsx
-<h2 className="text-lg font-semibold text-text-primary">
+<h2 className="text-lg font-medium text-text-primary">
   Section Title
 </h2>
 ```
 
 ### Card Headers
 ```tsx
-<h3 className="text-sm font-semibold text-text-primary">
+<h3 className="text-sm font-medium text-text-primary">
   Card Title
 </h3>
 ```
 
 ### Body Text
 ```tsx
-<p className="text-sm text-text-secondary">
+<p className="text-sm font-normal text-text-secondary">
   Regular body text content.
 </p>
 ```
 
 ### Muted/Secondary Text
 ```tsx
-<span className="text-xs text-muted-foreground">
+<span className="text-xs font-normal text-text-tertiary">
   Secondary information
 </span>
 ```
 
-### Tiny Labels
+### Tiny Labels (Micro-labels)
 ```tsx
-<span className="text-xxs font-medium text-text-tertiary uppercase tracking-wide">
+<span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">
   Label
 </span>
 ```
+> **Note:** Use `text-[11px]` (or `text-xxs`) with `tracking-wider` for all uppercase micro-labels. Avoid `tracking-widest` as it creates overly spread text.
 
 ---
 
@@ -236,7 +170,7 @@ You can also use the gray scale directly:
 
 #### Primary Button (Dark) - Compact
 ```tsx
-className="flex items-center gap-2 rounded-lg bg-text-primary border border-text-primary px-3 py-2 text-xs font-medium text-white shadow-md shadow-text-primary/10 hover:bg-sidebar-foreground hover:border-sidebar-foreground ios-ease"
+className="flex items-center gap-2 rounded-lg bg-text-primary border border-text-primary px-3 py-2 text-tiny font-medium text-white shadow-md shadow-text-primary/10 hover:bg-sidebar-foreground hover:border-sidebar-foreground ios-ease"
 ```
 
 #### Primary Button (Dark) - Standard
@@ -246,7 +180,7 @@ className="flex items-center gap-2 rounded-xl bg-text-primary px-5 py-2.5 text-s
 
 #### Secondary/Outline Button - Compact (Soft hover)
 ```tsx
-className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease"
+className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2 text-tiny font-medium text-text-secondary shadow-sm hover:bg-surface-elevated hover:text-text-primary ios-ease"
 ```
 
 #### Secondary/Outline Button - Standard (Invert hover)
@@ -256,23 +190,23 @@ className="flex items-center gap-2 rounded-xl border border-border bg-white px-5
 
 #### Ghost Button
 ```tsx
-className="rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary ios-ease"
+className="rounded-lg px-3 py-2 text-tiny font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary ios-ease"
 ```
 
 #### Filter/Tab Pill (inside container)
 ```tsx
-className="flex-1 rounded-full py-1.5 text-xs font-medium transition-all bg-white text-text-primary shadow-sm"
+className="flex-1 rounded-full py-1.5 text-tiny font-medium transition-all bg-white text-text-primary shadow-sm"
 ```
 
 #### Filter Dropdown Button
 ```tsx
-className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-xs font-medium text-text-secondary shadow-sm whitespace-nowrap hover:bg-surface-elevated hover:text-text-primary ios-ease"
+className="flex items-center gap-2 h-10 rounded-lg border border-border bg-white px-3 py-2 text-tiny font-medium text-text-secondary shadow-sm whitespace-nowrap hover:bg-surface-elevated hover:text-text-primary ios-ease"
 ```
 
 #### Icon Sizes in Buttons
 | Button Size | Icon Size |
 |-------------|-----------|
-| Compact (text-xs) | `h-3.5 w-3.5` |
+| Compact (text-tiny) | `h-3.5 w-3.5` |
 | Standard (text-sm) | `h-4 w-4` |
 
 #### Button Component Variants
@@ -289,7 +223,7 @@ The `<Button>` component supports these variants and sizes:
 
 **Sizes:**
 - `default` - Standard (h-10, px-5, text-sm)
-- `compact` - Refined smaller (h-10, px-3, text-xs, rounded-lg)
+- `compact` - Refined smaller (h-10, px-3, text-tiny, rounded-lg)
 - `sm` - Small (h-9, px-4, text-xs)
 - `lg` - Large (h-12, px-6)
 - `pill` - Pill shape
@@ -342,47 +276,30 @@ The `<Button>` component supports these variants and sizes:
 
 ### Cards
 
-#### Standard Card
+#### Standard Card (Minimal)
 ```tsx
-className="rounded-2xl border border-border bg-white p-6 shadow-sm ios-ease hover:border-ring hover:shadow-md"
+className="rounded-3xl bg-white p-7 border border-gray-200 ios-ease hover:border-gray-300"
 ```
-> Use `rounded-3xl` for dashboard cards (stats, messages, courses list, registrations). Use `rounded-2xl` for form section cards and table/detail pages. Use `rounded-xl` for selection cards and nested interactive elements.
+> **Usage:** Dashboard cards, stats, list containers. No drop shadows by default.
 
-#### Form Section Card (with header separation)
+#### Hero Card (Dark)
 ```tsx
-<section className="rounded-2xl border border-border bg-white p-1 shadow-sm">
-  <div className="px-6 pt-6 pb-2">
-    <h2 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-      Section Header
-    </h2>
-  </div>
-  <div className="p-6 space-y-6">
-    {/* Form content */}
-  </div>
-</section>
+className="relative rounded-3xl bg-gray-900 text-white border border-gray-800 ios-ease hover:border-gray-700"
 ```
-> Use `p-1` on outer card with inner wrappers for header (`px-6 pt-6 pb-2`) and content (`p-6`) for better visual separation.
-
-#### Hero Card (Dark with Gradient)
-```tsx
-className="relative rounded-3xl bg-gradient-to-br from-gray-800 to-gray-900 text-white shadow-lg shadow-gray-900/10 ios-ease hover:shadow-xl hover:shadow-gray-900/20"
-```
-- Use grain overlay: `bg-grain opacity-[0.2] mix-blend-overlay`
-- Glow effect: `h-80 w-80 rounded-full bg-white/10 blur-3xl`
+> **Usage:** Primary action cards ("New Course"). Uses `border-gray-800` for subtle definition.
 
 ### Form Inputs
 
-> **IMPORTANT:** Always use the shadcn `<Input>` component from `@/components/ui/input` instead of native `<input>` elements. For search fields, use `<SearchInput>` from `@/components/ui/search-input`. These components have all design system styles built-in, ensuring consistency across the app.
+> **IMPORTANT:** Always use the shadcn `<Input>` component.
 
 #### Form Field Labels
 ```tsx
-className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5"
+className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5"
 ```
-> **Standard form labels** use uppercase with `text-muted-foreground` (#78716C). Always include `block` and `mb-1.5` for reliable spacing.
 
-#### Form Section Card Header (for grouped form sections)
+#### Form Section Card Header
 ```tsx
-className="text-xs font-semibold uppercase tracking-wider text-text-tertiary"
+className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary"
 ```
 > Use `text-text-tertiary` for section headers like "Generell Informasjon" or step indicators like "1. Velg type". These sit above the form fields.
 
@@ -465,15 +382,16 @@ className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase trackin
 
 #### Message Item
 ```tsx
-<div className="group flex items-center gap-3.5 p-3 rounded-2xl hover:bg-surface cursor-pointer transition-colors">
+<div className="group flex items-center gap-3.5 p-3 rounded-3xl hover:bg-gray-50 cursor-pointer transition-colors">
   <img className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-ring" />
   <div>
     <p className="text-sm font-medium text-text-primary">Name</p>
     <p className="text-xs text-muted-foreground group-hover:text-text-secondary">Content</p>
   </div>
-  <span className="text-xxs font-medium text-text-tertiary group-hover:text-muted-foreground">2m</span>
+  <span className="text-tiny font-medium text-text-tertiary group-hover:text-muted-foreground">2m</span>
 </div>
 ```
+> **Note:** List items use `rounded-3xl` for consistency with card border-radius. Use `hover:bg-gray-50` for subtle hover state.
 
 ### Status Indicators
 
@@ -501,12 +419,13 @@ className="flex items-center border-b border-border bg-surface/50 px-6 py-3"
 
 #### Table Header Text
 ```tsx
-className="text-xxs font-semibold uppercase tracking-wide text-muted-foreground"
+className="text-xxs font-medium uppercase tracking-wide text-muted-foreground"
 ```
+> **Note:** Use `font-medium` (not `font-semibold`) for table headers to maintain a calm, light aesthetic.
 
 #### Sortable Header
 ```tsx
-className="flex items-center gap-1.5 group text-xxs font-semibold uppercase tracking-wide text-muted-foreground hover:text-text-primary transition-colors"
+className="flex items-center gap-1.5 group text-xxs font-medium uppercase tracking-wide text-muted-foreground hover:text-text-primary transition-colors"
 ```
 
 #### Table Row
@@ -526,7 +445,7 @@ className="border-t border-border bg-surface/50 px-6 py-3 flex items-center just
 
 #### Pagination Text
 ```tsx
-className="text-xxs text-muted-foreground"
+className="text-tiny text-muted-foreground"
 // Numbers highlighted with:
 <span className="font-medium text-text-primary">0-10</span>
 ```
@@ -680,14 +599,14 @@ Used for sticky action bars at the bottom of forms/pages.
 
 ### Active Nav Item
 ```tsx
-className="bg-white border border-sidebar-border text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+className="bg-white border border-gray-200 text-text-primary"
 ```
 
 ### Inactive Nav Item
 ```tsx
-className="text-muted-foreground border border-transparent hover:bg-sidebar-border/50 hover:text-text-secondary ios-ease"
+className="text-text-secondary border border-transparent hover:bg-gray-50 hover:text-text-primary ios-ease"
 ```
-> Use `hover:bg-sidebar-border/50` for a subtle, semi-transparent hover effect instead of solid white.
+> Use `hover:bg-gray-50` for a clean tint effect instead of shadows or heavy fills.
 
 ---
 
@@ -695,12 +614,19 @@ className="text-muted-foreground border border-transparent hover:bg-sidebar-bord
 
 For schedule events and course type indicators:
 
-| Type | Color Token |
-|------|-------------|
-| Private | `bg-course-private` (#FB923C) |
-| Online | `bg-course-online` (#A78BFA) |
-| Yin | `bg-course-yin` (#547564) |
-| Meditation | `bg-course-meditation` (#60A5FA) |
+| Type | Background | Ring | Hex |
+|------|------------|------|-----|
+| Private | `bg-course-private` | `ring-course-private-ring` | #FB923C |
+| Online | `bg-course-online` | `ring-course-online-ring` | #A78BFA |
+| Yin | `bg-course-yin` | `ring-course-yin-ring` | #547564 |
+| Meditation | `bg-course-meditation` | `ring-course-meditation-ring` | #60A5FA |
+| Vinyasa | `bg-course-vinyasa` | `ring-course-vinyasa-ring` | #F472B6 |
+| Course Series | `bg-course-series` | `ring-course-series-ring` | #818CF8 |
+
+**Usage pattern** for course type dots:
+```tsx
+<div className="h-2 w-2 rounded-full bg-course-private ring-2 ring-course-private-ring" />
+```
 
 ---
 

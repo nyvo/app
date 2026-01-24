@@ -1,6 +1,5 @@
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/mono/index.css');
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/sans/index.css');
-@import "react-day-picker/style.css";
 @import "tailwindcss";
 
 @theme {
@@ -93,9 +92,9 @@
   --color-sidebar-ring: #3b82f6;
 
   /* Text Colors - Now using Gray scale */
-  --color-text-primary: #1F2937;
-  --color-text-secondary: #4B5563;
-  --color-text-tertiary: #9CA3AF;
+  --color-text-primary: #374151;
+  --color-text-secondary: #52525B;
+  --color-text-tertiary: #71717A;
 
   /* Surface/Background Variations - Now using Gray scale */
   --color-surface: #F8FAFC;
@@ -136,15 +135,19 @@
   --font-family-geist: 'Geist Sans', system-ui, -apple-system, sans-serif;
 
   /* Custom Font Sizes */
-  --text-xxs: 10px;
+  --text-xxs: 11px;
   --text-xxs--line-height: 14px;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
+  --text-tiny: 10px;
+  --text-tiny--line-height: 14px;
 
   /* Custom Shadows - Subtle, refined shadows
      Based on the new design system for cleaner UI */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.06);
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: none;
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.05);
   --shadow-xl: 0 20px 25px rgba(0,0,0,0.08);
 
@@ -162,8 +165,9 @@
 
   body {
     background-color: var(--color-surface);
-    color: var(--color-sidebar-foreground);
+    color: var(--color-text-secondary);
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -223,6 +227,22 @@
     letter-spacing: -0.02em;
   }
 
+  /* Custom Text Utilities */
+  .text-small {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .text-tiny {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .text-xxs {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
   /* Transition Utilities */
 
   /* iOS-style Easing - slightly slower, more fluid */
@@ -270,69 +290,126 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #9CA3AF;
   }
+
+  /* Mobile-first responsive utilities */
+
+  /* Safe area padding for iOS devices with notches */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Touch-friendly minimum tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection on touch interactions */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Optimize touch response */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
 }
 
-/* Sonner Toast - Dark Minimalist Theme
+/* Sonner Toast - Dark Gray Theme (ChatGPT-inspired)
    NOTE: These styles are OUTSIDE @layer components to ensure they override
    Sonner's injected styles which are not layered */
 [data-sonner-toaster] {
-  --border-radius: 8px;
+  --border-radius: 12px;
 }
 
 /* High Specificity Overrides */
 html body [data-sonner-toast] {
   /* Override internal variables */
-  --normal-bg: #1C1C1E;
-  --normal-border: rgba(255, 255, 255, 0.07);
-  --normal-text: #F2F2F2;
+  --normal-bg: #374151;
+  --normal-border: #4B5563;
+  --normal-text: #F3F4F6;
 
   font-family: 'Geist Sans', system-ui, -apple-system, sans-serif !important;
-  background-color: #1C1C1E !important; /* Deep neutral */
-  border: 1px solid rgba(255, 255, 255, 0.07) !important; /* Subtle white border */
-  border-radius: 8px !important;
-  color: #F2F2F2 !important; /* Off-white */
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+  background-color: #374151 !important; /* gray-700 - darker like ChatGPT */
+  border: 1px solid #4B5563 !important; /* gray-600 - subtle contrast border */
+  border-radius: 12px !important;
+  color: #F3F4F6 !important; /* gray-100 - bright but not white */
+  box-shadow: none !important;
 }
 
 html body [data-sonner-toast] [data-title] {
-  color: #F2F2F2 !important; /* Off-white */
+  color: #FAFAFA !important; /* near-white for better readability */
   font-weight: 500 !important;
-  font-size: 14px !important;
-}
-
-html body [data-sonner-toast] [data-description] {
-  color: #8E8E93 !important; /* Muted gray */
   font-size: 13px !important;
 }
 
-/* Main Action Button - High Contrast White */
+html body [data-sonner-toast] [data-description] {
+  color: #E5E7EB !important; /* gray-200 - brighter secondary text */
+  font-size: 12px !important;
+}
+
+/* Toast icon styling */
+html body [data-sonner-toast] [data-icon] svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Success toast icon */
+html body [data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: #22C55E !important; /* success green */
+}
+
+/* Error toast icon */
+html body [data-sonner-toast][data-type="error"] [data-icon] svg {
+  color: #EF4444 !important; /* destructive red */
+}
+
+/* Info toast icon */
+html body [data-sonner-toast][data-type="info"] [data-icon] svg {
+  color: #3B82F6 !important; /* info blue */
+}
+
+/* Warning toast icon */
+html body [data-sonner-toast][data-type="warning"] [data-icon] svg {
+  color: #F97316 !important; /* warning orange */
+}
+
+/* Main Action Button */
 html body [data-sonner-toast] [data-button]:not([data-cancel]) {
-  background-color: #FFFFFF !important;
-  color: #000000 !important;
-  border: 1px solid #FFFFFF !important;
-  border-radius: 6px !important;
-  font-weight: 600 !important;
+  background-color: #F3F4F6 !important; /* gray-100 - light on dark */
+  color: #374151 !important; /* gray-700 */
+  border: 1px solid #F3F4F6 !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
   font-size: 12px !important;
   padding: 6px 12px !important;
-  transition: background-color 0.2s, color 0.2s !important;
+  transition: background-color 0.2s !important;
 }
 
 html body [data-sonner-toast] [data-button]:not([data-cancel]):hover {
-  background-color: #E4E4E7 !important; /* zinc-200 */
+  background-color: #E5E7EB !important; /* gray-200 */
 }
 
 /* Cancel Button - Subtle */
 html body [data-sonner-toast] [data-cancel] {
-  color: #A1A1AA !important;
+  color: #D1D5DB !important; /* gray-300 */
   background-color: transparent !important;
-  border-radius: 6px !important;
+  border: 1px solid #4B5563 !important; /* gray-600 */
+  border-radius: 8px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
   padding: 6px 12px !important;
-  transition: color 0.2s, background-color 0.2s !important;
+  transition: all 0.2s !important;
 }
 
 html body [data-sonner-toast] [data-cancel]:hover {
-  color: #FFFFFF !important;
-  background-color: #27272A !important; /* zinc-800 */
+  color: #F3F4F6 !important;
+  background-color: #4B5563 !important; /* gray-600 */
+  border-color: #6B7280 !important;
 }

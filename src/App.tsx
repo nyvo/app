@@ -28,8 +28,8 @@ const ClaimSpotPage = lazy(() => import('./pages/public/ClaimSpotPage'));
 
 const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
 const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
-const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard'));
-const MyBookingsPage = lazy(() => import('./pages/student/MyBookingsPage'));
+const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboardPage'));
+const StudentProfilePage = lazy(() => import('./pages/student/StudentProfilePage'));
 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -37,7 +37,10 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          theme="light"
+        />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public Routes */}
@@ -66,9 +69,9 @@ const App = () => {
             {/* Student Routes */}
             <Route path="/student/login" element={<StudentLoginPage />} />
             <Route path="/student/register" element={<StudentRegisterPage />} />
-            <Route path="/student/dashboard" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentDashboard /></ProtectedRoute>} />
-            <Route path="/student/bookings" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><MyBookingsPage /></ProtectedRoute>} />
-
+            <Route path="/student/dashboard" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentDashboardPage /></ProtectedRoute>} />
+            <Route path="/student/profile" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentProfilePage /></ProtectedRoute>} />
+            
             {/* 404 Catch-all */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

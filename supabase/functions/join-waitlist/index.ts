@@ -1,14 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders()
 
 interface JoinWaitlistRequest {
   course_id: string
@@ -25,11 +23,13 @@ interface JoinWaitlistResponse {
   message: string
 }
 
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -37,10 +37,17 @@ Deno.serve(async (req: Request) => {
 
     // Validate required fields
     if (!body.course_id || !body.organization_id || !body.customer_email || !body.customer_name) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: course_id, organization_id, customer_email, customer_name' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Missing required fields: course_id, organization_id, customer_email, customer_name', 400)
+    }
+
+    // Validate email format
+    if (!EMAIL_REGEX.test(body.customer_email)) {
+      return errorResponse('Invalid email format', 400)
+    }
+
+    // Validate name length
+    if (body.customer_name.length < 2 || body.customer_name.length > 100) {
+      return errorResponse('Name must be between 2 and 100 characters', 400)
     }
 
     // Get course details
@@ -51,18 +58,12 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return new Response(
-        JSON.stringify({ error: 'Course not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Course not found', 404)
     }
 
     // Verify organization matches
     if (course.organization_id !== body.organization_id) {
-      return new Response(
-        JSON.stringify({ error: 'Organization mismatch' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Organization mismatch', 400)
     }
 
     // Check if user already has a signup for this course
@@ -75,13 +76,11 @@ Deno.serve(async (req: Request) => {
       .maybeSingle()
 
     if (existingSignup) {
-      return new Response(
-        JSON.stringify({
-          error: existingSignup.status === 'confirmed'
-            ? 'Du er allerede påmeldt dette kurset'
-            : 'Du er allerede på ventelisten for dette kurset'
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      return errorResponse(
+        existingSignup.status === 'confirmed'
+          ? 'Du er allerede påmeldt dette kurset'
+          : 'Du er allerede på ventelisten for dette kurset',
+        400
       )
     }
 
@@ -136,10 +135,7 @@ Deno.serve(async (req: Request) => {
 
     if (signupError || !signup) {
       console.error('Error creating waitlist signup:', signupError)
-      return new Response(
-        JSON.stringify({ error: 'Kunne ikke legge til på ventelisten. Prøv igjen.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Kunne ikke legge til på ventelisten. Prøv igjen.', 500)
     }
 
     // Get organization name for email
@@ -232,16 +228,10 @@ Deno.serve(async (req: Request) => {
       message: `Du er nå på plass #${nextPosition} på ventelisten`
     }
 
-    return new Response(
-      JSON.stringify(response),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return successResponse(response)
   } catch (error) {
     console.error('Join waitlist error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return errorResponse(message, 500)
   }
 })

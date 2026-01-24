@@ -1,10 +1,14 @@
 import { supabase } from '@/lib/supabase'
 import type { Signup, Course, CourseStyle } from '@/types/database'
 
-// Student signup with full course details
+// Student signup with full course and instructor details
 export interface StudentSignupWithCourse extends Signup {
-  course: (Pick<Course, 'id' | 'title' | 'description' | 'course_type' | 'location' | 'time_schedule' | 'start_date' | 'end_date' | 'duration' | 'price' | 'image_url' | 'level'> & {
+  course: (Pick<Course, 'id' | 'title' | 'description' | 'course_type' | 'location' | 'time_schedule' | 'start_date' | 'end_date' | 'duration' | 'price' | 'image_url' | 'level' | 'instructor_id'> & {
     style: CourseStyle | null
+    instructor?: {
+      name: string | null
+      avatar_url: string | null
+    } | null
   }) | null
 }
 
@@ -30,10 +34,15 @@ export async function fetchMySignups(
         price,
         image_url,
         level,
-        style:course_styles(*)
+        instructor_id,
+        style:course_styles(*),
+        instructor:profiles!courses_instructor_id_fkey(
+          name,
+          avatar_url
+        )
       )
     `)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
+    .or(`user_id.eq."${userId}",participant_email.eq."${email}"`)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
@@ -69,10 +78,15 @@ export async function fetchUpcomingSignups(
         price,
         image_url,
         level,
-        style:course_styles(*)
+        instructor_id,
+        style:course_styles(*),
+        instructor:profiles!courses_instructor_id_fkey(
+          name,
+          avatar_url
+        )
       )
     `)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
+    .or(`user_id.eq."${userId}",participant_email.eq."${email}"`)
     .eq('status', 'confirmed')
     .gte('courses.start_date', today)
     .order('created_at', { ascending: false })
@@ -82,7 +96,8 @@ export async function fetchUpcomingSignups(
   }
 
   // Sort by course start_date in JavaScript since we can't do it in the query
-  const sortedData = (data || []).sort((a, b) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedData = ((data || []) as any[]).sort((a, b) => {
     const dateA = a.course?.start_date ? new Date(a.course.start_date).getTime() : 0
     const dateB = b.course?.start_date ? new Date(b.course.start_date).getTime() : 0
     return dateA - dateB
@@ -116,10 +131,15 @@ export async function fetchPastSignups(
         price,
         image_url,
         level,
-        style:course_styles(*)
+        instructor_id,
+        style:course_styles(*),
+        instructor:profiles!courses_instructor_id_fkey(
+          name,
+          avatar_url
+        )
       )
     `)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
+    .or(`user_id.eq."${userId}",participant_email.eq."${email}"`)
     .eq('status', 'confirmed')
     .lt('courses.end_date', today)
     .order('created_at', { ascending: false })
@@ -129,7 +149,8 @@ export async function fetchPastSignups(
   }
 
   // Sort by course end_date in JavaScript since we can't do it in the query
-  const sortedData = (data || []).sort((a, b) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sortedData = ((data || []) as any[]).sort((a, b) => {
     const dateA = a.course?.end_date ? new Date(a.course.end_date).getTime() : 0
     const dateB = b.course?.end_date ? new Date(b.course.end_date).getTime() : 0
     return dateB - dateA // Descending order (most recent first)
@@ -139,21 +160,35 @@ export async function fetchPastSignups(
   return { data: sortedData as any as StudentSignupWithCourse[], error: null }
 }
 
-// Cancel a signup
+// Cancellation result with refund info
+export interface CancellationResult {
+  success: boolean
+  refunded: boolean
+  refund_amount: number
+  message: string
+  error?: string
+}
+
+// Cancel a signup with refund processing
 export async function cancelMySignup(
   signupId: string
-): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase
-    .from('signups') as any)
-    .update({ status: 'cancelled' })
-    .eq('id', signupId)
+): Promise<{ data: CancellationResult | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('process-refund', {
+      body: { signup_id: signupId }
+    })
 
-  if (error) {
-    return { error: error as Error }
+    if (error) {
+      return { data: null, error: error as Error }
+    }
+
+    return { data: data as CancellationResult, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Unknown error')
+    }
   }
-
-  return { error: null }
 }
 
 // Link bookings without user_id to student account after registration
@@ -186,7 +221,7 @@ export async function checkIfAlreadySignedUp(
     .from('signups')
     .select('status')
     .eq('course_id', courseId)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
+    .or(`user_id.eq."${userId}",participant_email.eq."${email}"`)
     .neq('status', 'cancelled')
     .maybeSingle()
 
@@ -196,7 +231,8 @@ export async function checkIfAlreadySignedUp(
 
   return {
     isSignedUp: !!data,
-    signupStatus: data?.status || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    signupStatus: (data as any)?.status || null,
     error: null
   }
 }
