@@ -38,8 +38,7 @@ const NotFoundPage = () => {
             Siden ble ikke funnet
           </h1>
           <p className="text-text-secondary text-sm mb-8">
-            Beklager, vi kunne ikke finne siden du leter etter. Den kan ha blitt
-            flyttet eller fjernet.
+            Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
           </p>
 
           {/* Back Button */}

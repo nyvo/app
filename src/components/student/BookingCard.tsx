@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from 'sonner';
-import { checkCancellationWindow } from '@/utils__cancellation';
+import { checkCancellationWindow } from '@/lib/cancellation';
 import { cancelMySignup } from '@/services/studentSignups';
 import type { StudentSignupWithCourse } from '@/services/studentSignups';
 

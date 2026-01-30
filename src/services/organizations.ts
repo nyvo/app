@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type { Organization, OrganizationUpdate } from '@/types/database'
 
 // Fetch organization by slug for public pages
@@ -40,9 +40,7 @@ export async function updateOrganization(
   id: string,
   updates: OrganizationUpdate
 ): Promise<{ data: Organization | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('organizations') as any)
+  const { data, error } = await typedFrom('organizations')
     .update(updates)
     .eq('id', id)
     .select()

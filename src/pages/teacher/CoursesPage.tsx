@@ -18,10 +18,10 @@ import { CoursePreviewCard } from '@/components/teacher/CoursePreviewCard';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
-import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
+import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, type CourseWithStyle } from '@/services/courses';
-import { supabase } from '@/lib/supabase';
+import { typedFrom } from '@/lib/supabase';
 import type { DetailedCourse } from '@/data/mockData';
 
 // Helper to map database course to DetailedCourse format
@@ -154,9 +154,7 @@ const CoursesPage = () => {
 
       // Fetch signups count for each course
       const courseIds = coursesData.map(c => c.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: signupsData } = await (supabase
-        .from('signups') as any)
+      const { data: signupsData } = await typedFrom('signups')
         .select('course_id')
         .in('course_id', courseIds)
         .eq('status', 'confirmed');
@@ -250,19 +248,18 @@ const CoursesPage = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine Kurs</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {courses.length === 0
-                        ? 'Kom i gang ved å opprette ditt første kurs.'
-                        : (() => {
+                    {!showCoursesEmptyState && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {(() => {
                             const activeCount = courses.filter(c => c.status === 'active').length;
                             const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
                             const parts = [];
                             if (activeCount > 0) parts.push(`${activeCount} aktive`);
                             if (upcomingCount > 0) parts.push(`${upcomingCount} kommende`);
                             return parts.length > 0 ? parts.join(', ') : 'Ingen aktive kurs';
-                          })()
-                      }
-                    </p>
+                          })()}
+                      </p>
+                    )}
                 </div>
                 {!showCoursesEmptyState && (
                   <div className="flex items-center gap-3">
@@ -281,7 +278,7 @@ const CoursesPage = () => {
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Søk etter kurs..."
+                placeholder="Søk etter kurs"
                 aria-label="Søk etter kurs"
                 className="max-w-md"
               />
@@ -295,9 +292,9 @@ const CoursesPage = () => {
                 className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8"
                 role="status"
                 aria-live="polite"
-                aria-label="Laster kurs..."
+                aria-label="Laster kurs"
               >
-                <span className="sr-only">Henter kurs...</span>
+                <span className="sr-only">Henter kurs</span>
                 <CourseSectionSkeleton count={3} />
                 <CourseSectionSkeleton count={2} />
               </div>

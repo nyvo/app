@@ -561,7 +561,7 @@ const PublicCourseDetailPage = () => {
       <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Laster kurs...</p>
+          <p className="text-sm text-muted-foreground">Laster kurs</p>
         </div>
       </div>
     );
@@ -1118,7 +1118,7 @@ const PublicCourseDetailPage = () => {
                                         Deltakerinformasjon
                                     </h1>
                                     <p className="mt-2 text-muted-foreground">
-                                        Vennligst fyll inn dine detaljer. Felter merket med <span className="text-destructive">*</span> er påkrevde.
+                                        Fyll inn opplysningene dine. Felter merket med <span className="text-destructive">*</span> er påkrevde.
                                     </p>
                                 </div>
 
@@ -1157,7 +1157,7 @@ const PublicCourseDetailPage = () => {
                                                     className={errors.firstName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.firstName && touched.firstName && (
-                                                    <p id="firstName-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Fornavn er påkrevd</p>
+                                                    <p id="firstName-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Skriv inn fornavnet ditt</p>
                                                 )}
                                             </div>
                                             <div>
@@ -1179,7 +1179,7 @@ const PublicCourseDetailPage = () => {
                                                     className={errors.lastName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                                 />
                                                 {errors.lastName && touched.lastName && (
-                                                    <p id="lastName-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Etternavn er påkrevd</p>
+                                                    <p id="lastName-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Skriv inn etternavnet ditt</p>
                                                 )}
                                             </div>
                                         </div>
@@ -1204,7 +1204,7 @@ const PublicCourseDetailPage = () => {
                                                 className={errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20 animate-shake' : ''}
                                             />
                                             {errors.email && touched.email ? (
-                                                <p id="email-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Gyldig e-postadresse er påkrevd</p>
+                                                <p id="email-error" role="alert" className="text-xs text-status-error-text font-medium mt-1.5">Skriv inn en gyldig e-postadresse</p>
                                             ) : (
                                                 <p id="email-hint" className="text-xs text-text-tertiary mt-1.5">Ordrebekreftelse sendes hit.</p>
                                             )}
@@ -1236,7 +1236,7 @@ const PublicCourseDetailPage = () => {
                                                 name="message"
                                                 value={formData.message}
                                                 onChange={handleInputChange}
-                                                placeholder="Skriv en beskjed..."
+                                                placeholder="Skriv en beskjed"
                                                 rows={3}
                                                 disabled={submitting}
                                                 className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none disabled:opacity-50"
@@ -1571,7 +1571,7 @@ const PublicCourseDetailPage = () => {
                                             {submitting ? (
                                               <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                                Behandler...
+                                                Behandler
                                               </span>
                                             ) : (
                                               <span className="relative z-10 flex items-center justify-center gap-2">

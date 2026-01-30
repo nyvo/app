@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { CheckCircle2, Loader2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
@@ -94,7 +95,7 @@ const CheckoutSuccessPage = () => {
         // With manual capture, if no signup exists it means the booking failed
         // (course was full, payment was cancelled - user was NOT charged)
         if (attempt === maxRetries) {
-          console.warn('Signup not found after max retries:', {
+          logger.warn('Signup not found after max retries:', {
             sessionId,
             attempts: maxRetries,
             totalWaitTime: `${maxRetries * retryDelay / 1000}s`,

@@ -355,7 +355,7 @@ const TeacherProfilePage = () => {
                                     value={studioDescription}
                                     onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
                                     onBlur={() => handleBlur('studioDescription')}
-                                    placeholder="Fortell litt om studioet ditt..."
+                                    placeholder="Fortell litt om studioet ditt"
                                     aria-invalid={!!errors.studioDescription}
                                     className={`w-full rounded-xl border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease resize-none ${
                                       errors.studioDescription

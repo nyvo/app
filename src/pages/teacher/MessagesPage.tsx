@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { motion } from 'framer-motion';
 import {
   Leaf,
@@ -204,7 +205,7 @@ const MessagesPage = () => {
           conversationUrl,
           organizationName
         ).catch(err => {
-          console.error('Failed to send email notification:', err);
+          logger.error('Failed to send email notification:', err);
         });
       }
     }
@@ -227,7 +228,7 @@ const MessagesPage = () => {
     );
 
     if (convError || !conversation) {
-      console.error('Conversation creation error:', convError);
+      logger.error('Conversation creation error:', convError);
       toast.error('Kunne ikke opprette samtale');
       setSendingMessage(false);
       return;
@@ -255,7 +256,7 @@ const MessagesPage = () => {
       conversationUrl,
       organizationName
     ).catch(err => {
-      console.error('Failed to send email notification:', err);
+      logger.error('Failed to send email notification:', err);
     });
 
     // Reload conversations and select new one
@@ -493,7 +494,7 @@ const MessagesPage = () => {
                           rows={8}
                           value={newMessageBody}
                           onChange={(e) => setNewMessageBody(e.target.value)}
-                          placeholder="Skriv din melding her..."
+                          placeholder="Skriv meldingen din her"
                           className="w-full resize-none bg-transparent px-1 py-1 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none custom-scrollbar"
                         />
                         <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-elevated">
@@ -708,7 +709,7 @@ const MessagesPage = () => {
               <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-gray-200 focus-within:ring-4 focus-within:ring-border/30 focus-within:border-ring transition-all relative">
                 <textarea
                   rows={1}
-                  placeholder="Skriv en melding..."
+                  placeholder="Skriv en melding"
                   aria-label="Skriv en melding"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}

@@ -38,7 +38,7 @@ function SectionLoader({
       {message && (
         <p className="mt-3 text-xs text-muted-foreground">{message}</p>
       )}
-      <span className="sr-only">{message || 'Laster...'}</span>
+      <span className="sr-only">{message || 'Laster'}</span>
     </div>
   )
 }

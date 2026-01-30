@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type {
   Course,
   CourseInsert,
@@ -6,12 +6,42 @@ import type {
   CourseStyle,
   CourseSession,
   CourseSessionInsert,
-  CourseSessionUpdate
+  CourseSessionUpdate,
+  SessionStatus,
 } from '@/types/database'
 
 // Course with joined style data
 export interface CourseWithStyle extends Course {
   style: CourseStyle | null
+}
+
+// Internal types for Supabase join query results
+interface SessionWithCourseJoin {
+  id: string
+  session_date: string
+  start_time: string
+  status?: string
+  course: {
+    id: string
+    title: string
+    organization_id: string
+    duration: number
+    status: string
+  }
+}
+
+interface SessionWithFullCourseJoin {
+  id: string
+  course_id: string
+  session_number: number
+  session_date: string
+  start_time: string
+  end_time: string | null
+  status: SessionStatus
+  notes: string | null
+  created_at: string
+  updated_at: string
+  course: CourseWithStyle
 }
 
 // Check if organization has ever created a course (for onboarding detection)
@@ -63,8 +93,7 @@ export async function fetchCourses(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as CourseWithStyle[], error: null, count: count || undefined }
+  return { data: data as unknown as CourseWithStyle[], error: null, count: count || undefined }
 }
 
 // Fetch a single course by ID (with style and signups count)
@@ -98,9 +127,8 @@ export async function fetchCourseById(courseId: string): Promise<{
   }
 
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: {
-      ...(course as any as CourseWithStyle),
+      ...(course as unknown as CourseWithStyle),
       signups_count: count || 0
     },
     error: null
@@ -138,9 +166,7 @@ export async function checkScheduleConflicts(
   const sessionDates = plannedSessions.map(s => s.date)
 
   // Fetch existing sessions for this organization on those dates
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existingSessions, error } = await (supabase
-    .from('course_sessions') as any)
+  const { data: existingSessions, error } = await typedFrom('course_sessions')
     .select(`
       id,
       session_date,
@@ -167,15 +193,15 @@ export async function checkScheduleConflicts(
   }
 
   const conflicts: ScheduleConflict[] = []
+  const typedSessions = existingSessions as unknown as SessionWithCourseJoin[]
 
   // Check each planned session against existing sessions
   for (const planned of plannedSessions) {
     const plannedStart = timeToMinutes(planned.startTime)
     const plannedEnd = plannedStart + planned.duration
 
-    for (const existing of existingSessions) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const existingCourse = existing.course as any
+    for (const existing of typedSessions) {
+      const existingCourse = existing.course
 
       // Skip if different date
       if (existing.session_date !== planned.date) continue
@@ -229,9 +255,7 @@ export async function fetchBookedTimesForDate(
   excludeCourseId?: string // Optional: exclude this course from results (for editing existing courses)
 ): Promise<{ data: BookedTimeSlot[] | null; error: Error | null }> {
   // Query sessions for this date with course data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sessions, error } = await (supabase
-    .from('course_sessions') as any)
+  const { data: sessions, error } = await typedFrom('course_sessions')
     .select(`
       id,
       session_date,
@@ -258,8 +282,9 @@ export async function fetchBookedTimesForDate(
 
   // Filter and map sessions to booked time slots
   const bookedSlots: BookedTimeSlot[] = []
+  const typedSessions = sessions as unknown as SessionWithCourseJoin[]
 
-  for (const session of sessions) {
+  for (const session of typedSessions) {
     const course = session.course
 
     // Skip if no course data or wrong organization
@@ -373,17 +398,14 @@ export async function createCourse(
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('courses') as any)
+  const { data, error } = await typedFrom('courses')
     .insert(courseData)
     .select()
     .single()
 
   if (error) {
     // Check if it's an idempotency key collision (same course already exists)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pgError = error as any
+    const pgError = error as { code?: string; message?: string }
     if (pgError.code === '23505' && pgError.message?.includes('idempotency_key')) {
       // Fetch the existing course with this idempotency key
       if (courseData.idempotency_key && courseData.organization_id) {
@@ -422,8 +444,7 @@ export async function createCourse(
     // Calculate and set end_date for course series (last week's session date)
     const endDate = new Date(baseDate.getTime()) // Immutable copy
     endDate.setDate(baseDate.getDate() + ((courseData.total_weeks - 1) * 7))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('courses') as any)
+    await typedFrom('courses')
       .update({ end_date: formatLocalDate(endDate) })
       .eq('id', course.id)
 
@@ -440,8 +461,7 @@ export async function createCourse(
     }
 
     // Insert sessions - return error to caller so they can handle it
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: sessionsError } = await (supabase.from('course_sessions') as any).insert(sessions)
+    const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
     if (sessionsError) {
       return { data: course, error: null, sessionError: sessionsError as Error }
     }
@@ -457,8 +477,7 @@ export async function createCourse(
       // Calculate and set end_date for multi-day events
       const endDate = new Date(baseDate.getTime()) // Immutable copy
       endDate.setDate(baseDate.getDate() + eventDays - 1)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('courses') as any)
+      await typedFrom('courses')
         .update({ end_date: formatLocalDate(endDate) })
         .eq('id', course.id)
 
@@ -480,8 +499,7 @@ export async function createCourse(
       }
 
       // Insert all sessions - return error to caller so they can handle it
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: sessionsError } = await (supabase.from('course_sessions') as any).insert(sessions)
+      const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
       if (sessionsError) {
         return { data: course, error: null, sessionError: sessionsError as Error }
       }
@@ -496,8 +514,7 @@ export async function createCourse(
       }
 
       // Insert session - return error to caller so they can handle it
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: sessionError } = await (supabase.from('course_sessions') as any).insert(session)
+      const { error: sessionError } = await typedFrom('course_sessions').insert(session)
       if (sessionError) {
         return { data: course, error: null, sessionError: sessionError as Error }
       }
@@ -509,9 +526,7 @@ export async function createCourse(
 
 // Update a course
 export async function updateCourse(courseId: string, courseData: CourseUpdate): Promise<{ data: Course | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('courses') as any)
+  const { data, error } = await typedFrom('courses')
     .update(courseData)
     .eq('id', courseId)
     .select()
@@ -577,9 +592,7 @@ export async function cancelCourse(
 
 // Fetch all course styles (for dropdowns)
 export async function fetchCourseStyles(): Promise<{ data: CourseStyle[] | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('course_styles') as any)
+  const { data, error } = await typedFrom('course_styles')
     .select('*')
     .order('name', { ascending: true })
 
@@ -596,9 +609,7 @@ export async function fetchCourseStyles(): Promise<{ data: CourseStyle[] | null;
 
 // Fetch all sessions for a course
 export async function fetchCourseSessions(courseId: string): Promise<{ data: CourseSession[] | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('course_sessions') as any)
+  const { data, error } = await typedFrom('course_sessions')
     .select('*')
     .eq('course_id', courseId)
     .order('session_number', { ascending: true })
@@ -615,9 +626,7 @@ export async function updateCourseSession(
   sessionId: string,
   sessionData: CourseSessionUpdate
 ): Promise<{ data: CourseSession | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('course_sessions') as any)
+  const { data, error } = await typedFrom('course_sessions')
     .update(sessionData)
     .eq('id', sessionId)
     .select()
@@ -673,8 +682,7 @@ export async function fetchUpcomingSession(organizationId: string): Promise<{
     return { data: null, error: null }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const session = sessionData as any
+  const session = sessionData as unknown as SessionWithFullCourseJoin
   const course = session.course as CourseWithStyle
 
   // Get attendee count for this course
@@ -709,6 +717,70 @@ export async function fetchUpcomingSession(organizationId: string): Promise<{
   }
 }
 
+// Fetch upcoming sessions for the week (for dashboard "Dine kurs" component)
+export async function fetchWeekSessions(organizationId: string, limit = 6): Promise<{
+  data: Array<{
+    session: CourseSession
+    course: CourseWithStyle
+  }> | null
+  error: Error | null
+}> {
+  // Get today and end of week dates
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+
+  // Get end of week (Sunday)
+  const endOfWeek = new Date(today)
+  endOfWeek.setDate(today.getDate() + (7 - today.getDay()))
+  const endOfWeekStr = endOfWeek.toISOString().split('T')[0]
+
+  const { data: sessionsData, error: sessionsError } = await supabase
+    .from('course_sessions')
+    .select(`
+      *,
+      course:courses!inner(
+        *,
+        style:course_styles(*)
+      )
+    `)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .neq('course.status', 'completed')
+    .gte('session_date', todayStr)
+    .lte('session_date', endOfWeekStr)
+    .eq('status', 'upcoming')
+    .order('session_date', { ascending: true })
+    .order('start_time', { ascending: true })
+    .limit(limit)
+
+  if (sessionsError) {
+    return { data: null, error: sessionsError as Error }
+  }
+
+  if (!sessionsData || sessionsData.length === 0) {
+    return { data: [], error: null }
+  }
+
+  const typedResults = sessionsData as unknown as SessionWithFullCourseJoin[]
+  const results = typedResults.map(session => ({
+    session: {
+      id: session.id,
+      course_id: session.course_id,
+      session_number: session.session_number,
+      session_date: session.session_date,
+      start_time: session.start_time,
+      end_time: session.end_time,
+      status: session.status,
+      notes: session.notes,
+      created_at: session.created_at,
+      updated_at: session.updated_at,
+    } as CourseSession,
+    course: session.course as CourseWithStyle,
+  }))
+
+  return { data: results, error: null }
+}
+
 // Generate sessions for an existing course (useful for updating week count)
 export async function generateCourseSessions(
   courseId: string,
@@ -717,8 +789,7 @@ export async function generateCourseSessions(
   startTime: string
 ): Promise<{ error: Error | null }> {
   // First, delete existing sessions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('course_sessions') as any)
+  await typedFrom('course_sessions')
     .delete()
     .eq('course_id', courseId)
 
@@ -738,8 +809,7 @@ export async function generateCourseSessions(
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('course_sessions') as any).insert(sessions)
+  const { error } = await typedFrom('course_sessions').insert(sessions)
 
   if (error) {
     return { error: error as Error }

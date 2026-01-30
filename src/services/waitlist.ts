@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 
 export interface JoinWaitlistParams {
   courseId: string
@@ -106,9 +106,7 @@ export async function getWaitlistCount(
 export async function removeFromWaitlist(
   signupId: string
 ): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase
-    .from('signups') as any)
+  const { error } = await typedFrom('signups')
     .update({
       status: 'cancelled',
       updated_at: new Date().toISOString()

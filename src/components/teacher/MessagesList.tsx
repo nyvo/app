@@ -17,7 +17,7 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
       <div className="flex-1 overflow-y-auto p-2 space-y-2 flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center mx-2 my-2 rounded-2xl bg-white border border-gray-200">
-            <div className="w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center mb-3">
+            <div className="w-10 h-10 bg-white border border-border rounded-xl flex items-center justify-center mb-3">
               <MessageSquare className="w-4 h-4 text-text-tertiary" />
             </div>
             <p className="text-sm font-medium text-text-primary">Alt oppdatert</p>

@@ -1,6 +1,27 @@
 import { supabase } from '@/lib/supabase'
 import type { CourseStyle, CourseType, CourseStatus, CourseLevel } from '@/types/database'
 
+// Internal type for the joined course query result
+interface CourseQueryResult {
+  id: string
+  title: string
+  description: string | null
+  course_type: string
+  status: string
+  level: string | null
+  location: string | null
+  time_schedule: string | null
+  duration: number | null
+  max_participants: number | null
+  price: number | null
+  start_date: string | null
+  end_date: string | null
+  image_url: string | null
+  organization_id: string
+  style: CourseStyle | null
+  organization: { name: string; slug: string } | null
+}
+
 // Next session info for ongoing courses
 export interface NextSessionInfo {
   session_date: string
@@ -107,8 +128,7 @@ export async function fetchPublicCourses(
     return { data: [], error: null }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const courses = coursesData as any[]
+  const courses = coursesData as unknown as CourseQueryResult[]
   const courseIds = courses.map(c => c.id)
   const todayStr = new Date().toISOString().split('T')[0]
 
@@ -130,8 +150,7 @@ export async function fetchPublicCourses(
 
   // Build signup count map
   const signupCountMap: Record<string, number> = {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const signup of (signupsResult.data || []) as any[]) {
+  for (const signup of (signupsResult.data || []) as unknown as { course_id: string }[]) {
     signupCountMap[signup.course_id] = (signupCountMap[signup.course_id] || 0) + 1
   }
 
@@ -185,10 +204,8 @@ export async function fetchPublicCourses(
       end_date: course.end_date,
       image_url: course.image_url,
       organization_id: course.organization_id,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      style: course.style as any as CourseStyle | null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      organization: course.organization as any,
+      style: course.style as unknown as CourseStyle | null,
+      organization: course.organization as unknown as { name: string; slug: string } | null,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
     }
@@ -250,8 +267,7 @@ export async function fetchPublicCourseById(
     return { data: null, error: new Error('Course not found') }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const typedCourse = course as any
+  const typedCourse = course as unknown as CourseQueryResult
 
   // Get signup count for this course
   const { count, error: countError } = await supabase

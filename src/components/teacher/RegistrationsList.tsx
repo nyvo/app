@@ -1,6 +1,6 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Leaf } from 'lucide-react';
+import { Calendar, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { extractDayName, extractTimeFromSchedule } from '@/utils/dateFormatting';
 import type { Registration } from '@/types/dashboard';
@@ -8,6 +8,20 @@ import type { Registration } from '@/types/dashboard';
 interface RegistrationsListProps {
   registrations: Registration[];
 }
+
+/** Maximum age in days for a signup to appear in the "recent" feed */
+const MAX_AGE_DAYS = 7;
+
+/**
+ * Check if a signup is within the recent window (last 7 days)
+ */
+const isRecentSignup = (createdAt: string): boolean => {
+  const signupDate = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - signupDate.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays <= MAX_AGE_DAYS;
+};
 
 /**
  * Dashboard Activity Feed: Recent Signups
@@ -17,11 +31,16 @@ interface RegistrationsListProps {
  *   Line 1: Name (primary) + Timestamp (tertiary, right)
  *   Line 2: Course + Day badge (secondary metadata)
  *
+ * Only shows signups from the last 7 days to keep the feed fresh and relevant.
  * Each signup renders as an individual mini-card with border for visual separation.
  */
 export const RegistrationsList = memo(function RegistrationsList({ registrations }: RegistrationsListProps) {
-  // Limit to 3 most recent for a compact feed
-  const displayedRegistrations = registrations.slice(0, 3);
+  // Filter to recent signups (last 7 days), then limit to 3
+  const displayedRegistrations = useMemo(() => {
+    return registrations
+      .filter(r => isRecentSignup(r.createdAt))
+      .slice(0, 3);
+  }, [registrations]);
 
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white border border-gray-200 overflow-hidden ios-ease hover:border-ring">
@@ -36,10 +55,16 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         </Link>
       </div>
 
-      {registrations.length === 0 ? (
+      {displayedRegistrations.length === 0 ? (
         /* Empty State */
-        <div className="flex flex-col items-center justify-center py-10 px-6">
-          <p className="text-sm text-text-secondary">Ingen påmeldinger ennå</p>
+        <div className="px-4 sm:px-5 pb-4 sm:pb-5">
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl bg-white border border-gray-200">
+            <div className="w-10 h-10 bg-white border border-border rounded-xl flex items-center justify-center mb-3">
+              <UserPlus className="w-4 h-4 text-text-tertiary" />
+            </div>
+            <p className="text-sm font-medium text-text-primary">Ingen nye påmeldinger</p>
+            <p className="text-xs text-text-secondary mt-1">Nye påmeldinger vises her.</p>
+          </div>
         </div>
       ) : (
         /* Activity Feed - Individual card-style rows */
@@ -69,13 +94,12 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
                 </div>
 
                 {/* Line 2: Day + Time · Course + Icon */}
-                <p className="flex items-center gap-1.5 text-xs leading-none text-muted-foreground mt-1">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                   <Calendar className="h-3 w-3 text-text-tertiary flex-shrink-0" />
                   <span className="truncate">
                     {dayName}{startTime && ` kl. ${startTime}`}
                   </span>
                   {(dayName || startTime) && <span className="text-text-tertiary mx-1.5">·</span>}
-                  <Leaf className="h-3 w-3 text-text-tertiary flex-shrink-0" />
                   <span className="truncate">{registration.course}</span>
                 </p>
               </Link>

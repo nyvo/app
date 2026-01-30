@@ -30,6 +30,8 @@ export interface Course {
   subtitle: string;
   time: string;
   type: CourseType;
+  /** ISO date string for the next session/start date */
+  date?: string;
 }
 
 export interface TeacherStats {
@@ -55,6 +57,8 @@ export interface Registration {
   courseTime: string;
   courseType: CourseType;
   registeredAt: string;
+  /** ISO timestamp for filtering by age */
+  createdAt: string;
   status: SignupStatus;
   /** Indicates signup needs teacher attention (payment failed, offer expiring, etc.) */
   hasException?: boolean;

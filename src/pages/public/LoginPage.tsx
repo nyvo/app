@@ -87,7 +87,7 @@ const LoginPage = () => {
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Passord er påkrevd';
+      newErrors.password = 'Skriv inn passordet ditt';
     }
 
     setErrors(newErrors);
@@ -111,7 +111,7 @@ const LoginPage = () => {
         if (error.message.includes('Invalid login credentials')) {
           setErrors({ general: 'E-post eller passord stemmer ikke' });
         } else if (error.message.includes('Email not confirmed')) {
-          setErrors({ general: 'Vennligst bekreft e-posten din før du logger inn' });
+          setErrors({ general: 'Bekreft e-posten din før du logger inn' });
         } else {
           setErrors({ general: error.message });
         }

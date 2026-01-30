@@ -1,59 +1,24 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import {
-  ChevronRight,
-  Calendar,
-  MapPin,
-  Users,
-  ExternalLink,
-  Filter,
-  Plus,
-  ChevronLeft,
-  ChevronDown,
-  ChevronUp,
-  BarChart2,
-  Clock,
-  Mail,
-  Settings2,
-  Minus,
-  Info,
-  ArrowUpCircle,
-  Trash2,
-  Send,
-  Image
-} from 'lucide-react';
+import { ChevronRight, ExternalLink, Info } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SearchInput } from '@/components/ui/search-input';
 import { fetchCourseById, updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { fetchCourseWaitlist, promoteFromWaitlist, removeFromWaitlist, triggerWaitlistPromotion, type WaitlistSignup } from '@/services/waitlist';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
-import { ImageUpload } from '@/components/ui/image-upload';
 import type { CourseSession } from '@/types/database';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker, isTimeSlotBooked } from '@/components/ui/time-picker';
-import { DurationPicker } from '@/components/ui/duration-picker';
+import { isTimeSlotBooked } from '@/components/ui/time-picker';
 import { fetchBookedTimesForDate } from '@/services/courses';
 import { formatDateNorwegian } from '@/utils/dateUtils';
-import { ParticipantAvatar } from '@/components/ui/participant-avatar';
-import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
-import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
-import { NotePopover } from '@/components/ui/note-popover';
+import type { PaymentStatus } from '@/components/ui/payment-badge';
+import type { SignupStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import {
   AlertDialog,
@@ -67,6 +32,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseParticipantsSubscription } from '@/hooks/use-realtime-subscription';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
+import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
+import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 
 type Tab = 'overview' | 'participants' | 'settings';
 
@@ -172,13 +141,15 @@ const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<SignupStatus | 'all'>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
   const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
-  const [visibleWeeks, setVisibleWeeks] = useState(3);
+  // Show fewer sessions on mobile to reduce scroll fatigue
+  const [visibleWeeks, setVisibleWeeks] = useState(isMobile ? 1 : 3);
   const [settingsTime, setSettingsTime] = useState('09:00');
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
@@ -423,7 +394,7 @@ const CourseDetailPage = () => {
           toast.info('Valgt tidspunkt er ikke lenger ledig med ny varighet. Velg et nytt tidspunkt.');
         }
       } catch (err) {
-        console.error('Error validating time slot:', err);
+        logger.error('Error validating time slot:', err);
       }
     };
 
@@ -781,19 +752,13 @@ const CourseDetailPage = () => {
   // Check if we have real sessions from DB
   const hasRealSessions = sessions.length > 0;
 
-  const handleTimeSelect = (weekId: string, time: string) => {
-    // Update session edits
-    setSessionEdits(prev => ({
-      ...prev,
-      [weekId]: { ...prev[weekId], time }
-    }));
-  };
-
   const handleShowMore = () => {
+    const increment = isMobile ? 2 : 3;
+    const defaultVisible = isMobile ? 1 : 3;
     if (visibleWeeks >= generatedCourseWeeks.length) {
-      setVisibleWeeks(3);
+      setVisibleWeeks(defaultVisible);
     } else {
-      setVisibleWeeks(prev => Math.min(prev + 3, generatedCourseWeeks.length));
+      setVisibleWeeks(prev => Math.min(prev + increment, generatedCourseWeeks.length));
     }
   };
 
@@ -905,45 +870,21 @@ const CourseDetailPage = () => {
       <TeacherSidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
 
-        {/* Header Section - same bg as sidebar */}
-        <header className="bg-sidebar border-b border-gray-100 px-6 py-5 shrink-0 z-10">
-          <div className="max-w-7xl mx-auto w-full">
-            {/* Breadcrumbs */}
-            <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-              <a href="/teacher/courses" className="hover:text-text-primary transition-colors">Kurs</a>
-              <ChevronRight className="h-3 w-3 text-text-tertiary" />
-              <span className="font-medium text-text-primary">{course.title}</span>
-            </nav>
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-baseline gap-3">
-                <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">{course.title}</h1>
-                {course.status === 'active' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border translate-y-[-2px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>
-                    Aktiv
-                  </span>
-                )}
-                {course.status === 'upcoming' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border translate-y-[-2px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-warning mr-1.5"></span>
-                    Kommende
-                  </span>
-                )}
-                {course.status === 'completed' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground translate-y-[-2px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
-                    Fullført
-                  </span>
-                )}
-                {course.status === 'draft' && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xxs font-medium bg-surface-elevated text-muted-foreground translate-y-[-2px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-text-tertiary mr-1.5"></span>
-                    Utkast
-                  </span>
-                )}
+        {/* Header Section */}
+        <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
+          <div className="max-w-6xl mx-auto w-full">
+            {/* Breadcrumbs & Actions */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+              <div>
+                <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                  <a href="/teacher/courses" className="hover:text-text-primary ios-ease">Kurs</a>
+                  <ChevronRight className="h-3 w-3 text-text-tertiary" />
+                  <span className="text-text-primary font-medium">{course.title}</span>
+                </nav>
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+                  {course.title}
+                </h1>
               </div>
-
               <div className="flex items-center gap-3">
                 <ShareCoursePopover
                   courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
@@ -961,48 +902,54 @@ const CourseDetailPage = () => {
               </div>
             </div>
 
-            {/* Tabs Navigation */}
-            <div className="flex gap-4 sm:gap-6 mt-6 sm:mt-8 -mb-5 overflow-x-auto no-scrollbar -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+            {/* Tabs */}
+            <div className="flex items-center gap-8" role="tablist">
               <button
+                role="tab"
+                aria-selected={activeTab === 'overview'}
                 onClick={() => setActiveTab('overview')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  activeTab === 'overview' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
+                className={`pb-3 text-sm font-medium ios-ease ${
+                  activeTab === 'overview'
+                    ? 'text-text-primary border-b-2 border-text-primary'
+                    : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
                 Oversikt
-                <span className={`absolute bottom-0 left-0 h-[2px] w-full bg-text-primary rounded-t-full transition-transform ${
-                  activeTab === 'overview' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'
-                }`}></span>
               </button>
               <button
+                role="tab"
+                aria-selected={activeTab === 'participants'}
                 onClick={() => setActiveTab('participants')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  activeTab === 'participants' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
+                className={`pb-3 text-sm font-medium ios-ease flex items-center gap-1.5 ${
+                  activeTab === 'participants'
+                    ? 'text-text-primary border-b-2 border-text-primary'
+                    : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
                 Deltakere
-                <span className={`absolute bottom-0 left-0 h-[2px] w-full bg-text-primary rounded-t-full transition-transform ${
-                  activeTab === 'participants' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'
-                }`}></span>
+                <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs text-muted-foreground">
+                  {course.enrolled}
+                </span>
               </button>
               <button
+                role="tab"
+                aria-selected={activeTab === 'settings'}
                 onClick={() => setActiveTab('settings')}
-                className={`tab-btn group relative pb-3 text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                  activeTab === 'settings' ? 'text-text-primary' : 'text-muted-foreground hover:text-text-primary'
+                className={`pb-3 text-sm font-medium ios-ease ${
+                  activeTab === 'settings'
+                    ? 'text-text-primary border-b-2 border-text-primary'
+                    : 'text-muted-foreground hover:text-text-primary'
                 }`}
               >
                 Innstillinger
-                <span className={`absolute bottom-0 left-0 h-[2px] w-full bg-text-primary rounded-t-full transition-transform ${
-                  activeTab === 'settings' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-50'
-                }`}></span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto pb-10">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10" role="tabpanel">
+          <div className="max-w-6xl mx-auto w-full">
             <AnimatePresence mode="wait">
 
             {/* TAB 1: OVERSIKT (Overview) */}
@@ -1014,351 +961,49 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 auto-rows-min"
               >
-
-                {/* 1. Date Card */}
-                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-1">
-                  <div className="flex items-start justify-between">
-                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
-                      <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Periode</span>
-                    {formatDateRange(course.startDate, course.endDate) ? (
-                      <div className="mt-0.5">
-                        <p className="text-xs md:text-sm font-medium text-text-primary">{formatDateRange(course.startDate, course.endDate)}</p>
-                        {course.date && <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 hidden sm:block">{course.date}</p>}
-                      </div>
-                    ) : (
-                      <p className="text-xs md:text-sm font-medium text-text-primary mt-0.5">{course.date || 'Ikke angitt'}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Location Card */}
-                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-1">
-                  <div className="flex items-start justify-between">
-                    <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary">
-                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Sted</span>
-                    <p className="text-xs md:text-sm font-medium text-text-primary mt-0.5 truncate">{course.location}</p>
-                  </div>
-                </div>
-
-                {/* 3. Occupancy Card (Full width on mobile) */}
-                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between min-h-[120px] md:h-32 hover:border-ring ios-ease col-span-2">
-                  <div className="flex items-center justify-between mb-2 gap-2">
-                    <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                      <div className="h-7 w-7 md:h-8 md:w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary shrink-0">
-                        <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                      </div>
-                      <span className="text-[10px] md:text-xxs font-medium text-text-tertiary uppercase tracking-wider">Påmeldinger</span>
-                    </div>
-                    <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-[10px] md:text-xxs font-medium tracking-wide whitespace-nowrap shrink-0">
-                      {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-end justify-between">
-                      <span className="text-xl md:text-2xl font-medium text-text-primary tracking-tight">{course.enrolled}</span>
-                      <span className="text-[10px] md:text-xs text-muted-foreground font-medium">Kap: {course.capacity}</span>
-                    </div>
-                    <div className="h-1.5 md:h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-text-primary rounded-full"
-                        style={{ width: `${(course.enrolled / course.capacity) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. About the Class (Full width) */}
-                <div className="bg-white rounded-3xl border border-gray-200 flex flex-col col-span-2 overflow-hidden hover:border-ring ios-ease">
-                  {/* Course Image - smaller on mobile */}
-                  {course.imageUrl ? (
-                    <div className="w-full h-28 md:h-40 overflow-hidden">
-                      <img
-                        src={course.imageUrl}
-                        alt={course.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <input
-                        ref={quickImageInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        onChange={handleQuickImageUpload}
-                        className="hidden"
-                      />
-                      <div
-                        className="w-full h-24 md:h-40 bg-surface-elevated/30 flex flex-col items-center justify-center border-b border-gray-100 cursor-pointer hover:bg-surface-elevated/50 transition-colors group"
-                        onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
-                      >
-                        {isUploadingQuickImage ? (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Spinner size="md" />
-                            <span className="text-xs font-medium">Laster opp...</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-muted-foreground group-hover:text-text-primary transition-colors">
-                            <div className="p-2 rounded-full bg-white border border-gray-200 group-hover:border-ring transition-colors">
-                              <Image className="h-4 w-4" />
-                            </div>
-                            <span className="text-xs font-medium">Legg til bilde</span>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                  <div className="p-4 md:p-6 flex flex-col flex-1">
-                    <div className="mb-3 md:mb-4">
-                      <h3 className="text-sm md:text-base font-medium text-text-primary">Om timen</h3>
-                    </div>
-                    <div className="flex-1">
-                      {course.description ? (
-                        <>
-                          <p className="text-xs md:text-sm text-text-secondary leading-relaxed mb-4">
-                            {course.description}
-                          </p>
-                          {course.description2 && (
-                            <p className="text-xs md:text-sm text-text-secondary leading-relaxed">
-                              {course.description2}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full min-h-[100px] md:min-h-[140px] text-center py-3 md:py-4">
-                          <div className="mb-2 md:mb-3 rounded-full bg-surface p-2.5 md:p-3 border border-surface-elevated">
-                            <Info className="h-4 w-4 md:h-5 md:w-5 text-text-tertiary stroke-[1.5]" />
-                          </div>
-                          <h4 className="text-xs md:text-sm font-medium text-text-primary mb-1">Ingen beskrivelse</h4>
-                          <p className="text-[10px] md:text-xs text-muted-foreground max-w-[240px] mb-3 md:mb-4">
-                            Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
-                          </p>
-                          <Button
-                            variant="outline-soft"
-                            size="compact"
-                            onClick={() => setActiveTab('settings')}
-                          >
-                            Legg til beskrivelse
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-
-                  <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-100 flex gap-2 md:gap-3 flex-wrap">
-                      <div className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md bg-sidebar text-[10px] md:text-xs font-medium text-text-secondary">
-                        <BarChart2 className="h-3 w-3 md:h-3.5 md:w-3.5 text-text-tertiary" />
-                        Nivå: {course.level}
-                      </div>
-                      <div className="inline-flex items-center gap-1 md:gap-1.5 px-2 md:px-2.5 py-1 md:py-1.5 rounded-md bg-sidebar text-[10px] md:text-xs font-medium text-text-secondary">
-                        <Clock className="h-3 w-3 md:h-3.5 md:w-3.5 text-text-tertiary" />
-                        Varighet: {course.duration}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Admin Actions Card */}
-                <div className="bg-white rounded-3xl p-4 md:p-5 border border-gray-200 flex flex-col justify-between col-span-2 hover:border-ring ios-ease">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xs font-medium text-text-primary uppercase tracking-wide">Administrasjon</h3>
-                      <Settings2 className="h-4 w-4 text-text-tertiary" />
-                    </div>
-                    <div className="mb-5">
-                      <span className="text-xxs text-muted-foreground font-medium">Pris</span>
-                      <p className="text-xl font-medium text-text-primary tracking-tight">{course.price} NOK</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Button
-                      variant="outline-soft"
-                      size="compact"
-                      className="w-full justify-center"
-                      disabled={course.enrolled === 0}
-                    >
-                      <Mail className="h-3 w-3" />
-                      Send melding til deltakere
-                    </Button>
-                    <Button variant="outline-soft" size="compact" className="w-full justify-center" onClick={handleEditTime}>
-                      <Clock className="h-3 w-3" />
-                      Endre time
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Course Plan - Only show for multi-day courses */}
-                {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
-                  <div ref={kursplanRef} className="col-span-full mt-2">
-                    <div className="bg-white rounded-3xl p-6 border border-gray-200">
-                      <div className="mb-6">
-                        <h2 className="text-base font-medium text-text-primary">Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})</h2>
-                      </div>
-
-                      <div className="relative">
-                        {/* Timeline Line */}
-                        <div className="absolute left-[27px] top-4 bottom-4 w-[1px] bg-border -z-10"></div>
-
-                        <Accordion type="single" collapsible className="space-y-3" value={expandedItem} onValueChange={setExpandedItem}>
-                          {generatedCourseWeeks.slice(0, visibleWeeks).map((week) => (
-                          <AccordionItem
-                            key={week.id}
-                            value={week.id}
-                            className={`group rounded-xl border transition-all ${
-                              week.isNext
-                                ? 'border-ring bg-white ring-2 ring-border/30'
-                                : week.status === 'upcoming'
-                                ? 'border-gray-200 bg-white/50 hover:bg-white hover:border-ring'
-                                : 'border-gray-200 bg-white hover:border-ring'
-                            }`}
-                          >
-                            <div className="flex items-center px-4 cursor-pointer" onClick={() => setExpandedItem(expandedItem === week.id ? undefined : week.id)}>
-                              <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg mr-4 ${
-                                week.isNext
-                                  ? 'bg-gray-900 text-white'
-                                  : 'bg-surface-elevated text-muted-foreground group-hover:bg-white transition-colors'
-                              }`}>
-                                <span className={`text-xxs font-medium uppercase ${week.isNext ? 'opacity-80' : ''}`}>{sessionLabel}</span>
-                                <span className="font-geist text-lg font-medium">{week.weekNum}</span>
-                              </div>
-
-                              <div className="flex-1 py-4">
-                                <div className="flex items-center gap-2 mb-0.5">
-                                  <h3 className={`text-sm font-medium ${week.status === 'completed' ? 'text-muted-foreground line-through decoration-text-tertiary' : 'text-text-primary'}`}>
-                                    {week.title}
-                                  </h3>
-                                  {week.status === 'completed' && (
-                                    <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 text-xxs font-medium text-muted-foreground">Fullført</span>
-                                  )}
-                                  {week.isNext && (
-                                    <span className="rounded-md bg-status-confirmed-bg px-1.5 py-0.5 text-xxs font-medium text-status-confirmed-text animate-pulse">Neste time</span>
-                                  )}
-                                </div>
-                                <div className={`flex items-center gap-3 text-xs ${week.status === 'completed' ? 'text-text-tertiary' : 'text-muted-foreground'}`}>
-                                  <span>{week.time}</span>
-                                  <span className={`w-1 h-1 rounded-full ${week.status === 'completed' ? 'bg-ring' : 'bg-text-tertiary'}`}></span>
-                                  <span>{week.date}</span>
-                                </div>
-                              </div>
-
-                              <AccordionTrigger className="p-2 text-muted-foreground hover:bg-surface-elevated hover:text-text-primary rounded-lg transition-all hover:no-underline [&>svg]:h-4 [&>svg]:w-4">
-                                <span className="sr-only">Rediger</span>
-                              </AccordionTrigger>
-                            </div>
-
-                            <AccordionContent className="px-4 pb-4 pt-0">
-                              <div className="pl-[72px] pt-2 space-y-4">
-                                <div className="h-px w-full bg-surface-elevated mb-4"></div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                                      Dato
-                                    </label>
-                                    <DatePicker
-                                      value={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : undefined)}
-                                      onChange={(date) => {
-                                        if (date) {
-                                          setSessionEdits(prev => ({
-                                            ...prev,
-                                            [week.id]: { ...prev[week.id], date }
-                                          }));
-                                        }
-                                      }}
-                                      placeholder={week.date}
-                                    />
-                                  </div>
-
-                                  <div>
-                                    <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
-                                      Tidspunkt
-                                    </label>
-                                    <TimePicker
-                                      value={sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
-                                      onChange={(time) => handleTimeSelect(week.id, time)}
-                                      date={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : undefined)}
-                                      organizationId={currentOrganization?.id}
-                                      duration={courseData?.durationMinutes || 60}
-                                      excludeCourseId={id}
-                                      placeholder={week.time.split(' - ')[0]}
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="flex items-start gap-2 p-3 rounded-lg bg-surface text-xs text-muted-foreground">
-                                  <Info className="h-4 w-4 shrink-0 mt-0.5 text-text-tertiary" />
-                                  <p>Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2">
-                                  <button
-                                    onClick={() => {
-                                      // Clear edits for this session and close
-                                      setSessionEdits(prev => {
-                                        const newEdits = { ...prev };
-                                        delete newEdits[week.id];
-                                        return newEdits;
-                                      });
-                                      setExpandedItem(undefined);
-                                    }}
-                                    className="text-xs font-medium text-muted-foreground hover:text-text-primary px-3 py-2 rounded-lg hover:bg-surface-elevated transition-colors"
-                                    disabled={savingSessionId === week.id}
-                                  >
-                                    Avbryt
-                                  </button>
-                                  <button
-                                    onClick={() => handleSaveSession(week.id)}
-                                    disabled={savingSessionId === week.id || !hasRealSessions || !sessionEdits[week.id]}
-                                    className="rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                  >
-                                    {savingSessionId === week.id ? (
-                                      <>
-                                        <Spinner size="xs" />
-                                        Lagrer...
-                                      </>
-                                    ) : (
-                                      'Lagre endringer'
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-
-                        {generatedCourseWeeks.length > 3 && (
-                          <button
-                            onClick={handleShowMore}
-                            className="flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-ring py-3 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors mt-3"
-                          >
-                            {visibleWeeks >= generatedCourseWeeks.length ? (
-                              <>
-                                <ChevronUp className="h-3.5 w-3.5" />
-                                Vis mindre
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown className="h-3.5 w-3.5" />
-                                Vis {Math.min(3, generatedCourseWeeks.length - visibleWeeks)} {sessionLabelPlural} til
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <CourseOverviewTab
+                  course={course}
+                  courseId={id!}
+                  organizationSlug={currentOrganization?.slug}
+                  spotsLeft={spotsLeft}
+                  isMultiDayCourse={isMultiDayCourse}
+                  sessionLabel={sessionLabel}
+                  sessionLabelPlural={sessionLabelPlural}
+                  generatedCourseWeeks={generatedCourseWeeks}
+                  visibleWeeks={visibleWeeks}
+                  expandedItem={expandedItem}
+                  sessionEdits={sessionEdits}
+                  savingSessionId={savingSessionId}
+                  hasRealSessions={hasRealSessions}
+                  isMobile={isMobile}
+                  organizationId={currentOrganization?.id}
+                  isUploadingQuickImage={isUploadingQuickImage}
+                  quickImageInputRef={quickImageInputRef}
+                  onShowMore={handleShowMore}
+                  onExpandedItemChange={setExpandedItem}
+                  onSessionEditChange={(weekId, field, value) => {
+                    setSessionEdits(prev => ({
+                      ...prev,
+                      [weekId]: { ...prev[weekId], [field]: value }
+                    }));
+                  }}
+                  onSessionEditCancel={(weekId) => {
+                    setSessionEdits(prev => {
+                      const newEdits = { ...prev };
+                      delete newEdits[weekId];
+                      return newEdits;
+                    });
+                    setExpandedItem(undefined);
+                  }}
+                  onSaveSession={handleSaveSession}
+                  onQuickImageUpload={handleQuickImageUpload}
+                  onEditTime={handleEditTime}
+                  onCancelCourse={() => setShowCancelPreview(true)}
+                  onNavigateToSettings={() => setActiveTab('settings')}
+                  kursplanRef={kursplanRef}
+                  formatDateRange={formatDateRange}
+                />
               </motion.div>
             )}
 
@@ -1371,358 +1016,26 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="flex flex-col gap-4"
               >
-
-                {/* Toolbar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-                  <div className="relative w-full sm:w-80">
-                    <SearchInput
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      placeholder="Søk etter deltaker..."
-                      aria-label="Søk etter deltaker"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline-soft" size="compact" className="relative">
-                          <Filter className="h-3.5 w-3.5" />
-                          Filter
-                          {activeFiltersCount > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-text-primary text-xxs font-medium text-white flex items-center justify-center shadow-sm">
-                              {activeFiltersCount}
-                            </span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-64 p-0 rounded-xl">
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                          <span className="text-sm font-medium text-text-primary">Filter</span>
-                          {activeFiltersCount > 0 && (
-                            <button
-                              onClick={clearFilters}
-                              className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
-                            >
-                              Nullstill
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4 space-y-5">
-                          {/* Status Section */}
-                          <div>
-                            <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
-                              Status
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                              {([
-                                { value: 'all', label: 'Alle' },
-                                { value: 'confirmed', label: 'Påmeldt' },
-                                { value: 'waitlist', label: 'Venteliste' },
-                                { value: 'cancelled', label: 'Avbestilt' },
-                              ] as const).map((option) => (
-                                <button
-                                  key={option.value}
-                                  onClick={() => setStatusFilter(option.value)}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                    statusFilter === option.value
-                                      ? 'bg-gray-900 text-white shadow-sm'
-                                      : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
-                                  }`}
-                                >
-                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                                    statusFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
-                                  }`} />
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Payment Section */}
-                          <div>
-                            <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
-                              Betaling
-                            </p>
-                            <div className="grid grid-cols-2 gap-2">
-                              {([
-                                { value: 'all', label: 'Alle' },
-                                { value: 'paid', label: 'Betalt' },
-                                { value: 'pending', label: 'Venter' },
-                              ] as const).map((option) => (
-                                <button
-                                  key={option.value}
-                                  onClick={() => setPaymentFilter(option.value)}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                                    paymentFilter === option.value
-                                      ? 'bg-gray-900 text-white shadow-sm'
-                                      : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
-                                  }`}
-                                >
-                                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                                    paymentFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
-                                  }`} />
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                    <Button size="compact">
-                      <Plus className="h-4 w-4" />
-                      Legg til deltaker
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Table Container */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-gray-100 bg-surface/50">
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Betalt</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Kvittering</th>
-                          <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Notater</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {participantsLoading ? (
-                          <>
-                            <SkeletonTableRow columns={5} hasAvatar={true} />
-                            <SkeletonTableRow columns={5} hasAvatar={true} />
-                            <SkeletonTableRow columns={5} hasAvatar={true} />
-                            <span className="sr-only">Laster deltakere...</span>
-                          </>
-                        ) : filteredParticipants.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-12 text-center">
-                              <p className="text-sm text-muted-foreground">Ingen deltakere funnet</p>
-                              {activeFiltersCount > 0 && (
-                                <button
-                                  onClick={clearFilters}
-                                  className="mt-2 text-xs text-primary hover:underline"
-                                >
-                                  Nullstill filter
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredParticipants.map((participant) => (
-                            <tr key={participant.id} className="group hover:bg-secondary transition-colors">
-                              {/* Navn */}
-                              <td className="py-4 px-6">
-                                <div className="flex items-center gap-3">
-                                  <ParticipantAvatar participant={participant} size="sm" showPhoto={false} />
-                                  <div>
-                                    <p className="text-sm font-medium text-text-primary">{participant.name}</p>
-                                    <p className="text-xs text-muted-foreground">{participant.email}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              {/* Status (attendance) */}
-                              <td className="py-4 px-6">
-                                <StatusBadge status={participant.status} />
-                              </td>
-                              {/* Betalt (payment) */}
-                              <td className="py-4 px-6">
-                                <PaymentBadge status={participant.paymentStatus} />
-                              </td>
-                              {/* Kvittering (receipt) */}
-                              <td className="py-4 px-6">
-                                {participant.receiptUrl ? (
-                                  <a
-                                    href={participant.receiptUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
-                                  >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    Se kvittering
-                                  </a>
-                                ) : (
-                                  <span className="text-text-tertiary text-xs">—</span>
-                                )}
-                              </td>
-                              {/* Notater */}
-                              <td className="py-4 px-6 text-right">
-                                {participant.notes ? (
-                                  <NotePopover note={participant.notes} />
-                                ) : (
-                                  <span className="text-text-tertiary">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="px-6 py-3 border-t border-gray-100 bg-surface/50 flex items-center justify-between">
-                    <span className="text-xxs text-muted-foreground">Viser <span className="font-medium text-text-primary">{filteredParticipants.length}</span> av <span className="font-medium text-text-primary">{displayParticipants.length}</span> deltakere</span>
-                    <div className="flex items-center gap-2">
-                      <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md hover:text-text-primary text-text-tertiary disabled:opacity-50 transition-all" disabled>
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md text-text-primary transition-all">
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Waitlist Section */}
-                {(waitlist.length > 0 || waitlistLoading) && (
-                  <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-6">
-                    <div className="px-6 py-4 border-b border-gray-100 bg-status-waitlist-bg/30">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-semibold text-text-primary">Venteliste</h3>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
-                            {waitlist.length} {waitlist.length === 1 ? 'person' : 'personer'}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Deltakere som venter på ledig plass. Send tilbud for å gi dem mulighet til å betale.
-                      </p>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="border-b border-gray-100 bg-surface/50">
-                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide w-12">#</th>
-                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
-                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Tid på liste</th>
-                            <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {waitlistLoading ? (
-                            <>
-                              <SkeletonTableRow columns={5} hasAvatar={true} />
-                              <SkeletonTableRow columns={5} hasAvatar={true} />
-                              <span className="sr-only">Laster venteliste...</span>
-                            </>
-                          ) : (
-                            waitlist.map((entry) => {
-                              const timeOnList = (() => {
-                                const created = new Date(entry.created_at);
-                                const now = new Date();
-                                const diffMs = now.getTime() - created.getTime();
-                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                                const diffDays = Math.floor(diffHours / 24);
-                                if (diffDays > 0) return `${diffDays}d`;
-                                if (diffHours > 0) return `${diffHours}t`;
-                                return 'Nå';
-                              })();
-
-                              const offerExpiry = entry.offer_expires_at ? (() => {
-                                const expires = new Date(entry.offer_expires_at);
-                                const now = new Date();
-                                const diffMs = expires.getTime() - now.getTime();
-                                if (diffMs <= 0) return 'Utløpt';
-                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                                if (diffHours > 0) return `${diffHours}t ${diffMins}m igjen`;
-                                return `${diffMins}m igjen`;
-                              })() : null;
-
-                              return (
-                                <tr key={entry.id} className="group hover:bg-secondary transition-colors">
-                                  <td className="py-4 px-6">
-                                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-surface-elevated text-xs font-semibold text-text-secondary">
-                                      {entry.waitlist_position}
-                                    </span>
-                                  </td>
-                                  <td className="py-4 px-6">
-                                    <div className="flex items-center gap-3">
-                                      <ParticipantAvatar participant={{ name: entry.participant_name || '', email: entry.participant_email || '' }} size="sm" showPhoto={false} />
-                                      <div>
-                                        <p className="text-sm font-medium text-text-primary">{entry.participant_name || 'Ukjent'}</p>
-                                        <p className="text-xs text-muted-foreground">{entry.participant_email}</p>
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="py-4 px-6">
-                                    {entry.offer_status === 'pending' ? (
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xxs font-medium bg-blue-50 text-blue-700 border border-blue-200 w-fit">
-                                          <Send className="h-3 w-3" />
-                                          Tilbud sendt
-                                        </span>
-                                        {offerExpiry && (
-                                          <span className="text-xxs text-muted-foreground">{offerExpiry}</span>
-                                        )}
-                                      </div>
-                                    ) : entry.offer_status === 'expired' ? (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                        Utløpt
-                                      </span>
-                                    ) : entry.offer_status === 'skipped' ? (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                        Hoppet over
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
-                                        Venter
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="py-4 px-6">
-                                    <span className="text-sm text-muted-foreground">{timeOnList}</span>
-                                  </td>
-                                  <td className="py-4 px-6 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                      {(!entry.offer_status || entry.offer_status === 'expired' || entry.offer_status === 'skipped') && (
-                                        <Button
-                                          variant="outline-soft"
-                                          size="compact"
-                                          onClick={() => handlePromote(entry.id)}
-                                          disabled={promotingId === entry.id}
-                                        >
-                                          {promotingId === entry.id ? (
-                                            <Spinner size="xs" />
-                                          ) : (
-                                            <ArrowUpCircle className="h-3 w-3" />
-                                          )}
-                                          Send tilbud
-                                        </Button>
-                                      )}
-                                      <Button
-                                        variant="ghost"
-                                        size="compact"
-                                        onClick={() => handleRemoveFromWaitlist(entry.id)}
-                                        disabled={removingId === entry.id}
-                                        className="text-muted-foreground hover:text-status-error-text"
-                                      >
-                                        {removingId === entry.id ? (
-                                          <Spinner size="xs" />
-                                        ) : (
-                                          <Trash2 className="h-3 w-3" />
-                                        )}
-                                      </Button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                <CourseParticipantsTab
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  paymentFilter={paymentFilter}
+                  onPaymentFilterChange={setPaymentFilter}
+                  filteredParticipants={filteredParticipants}
+                  displayParticipants={displayParticipants}
+                  participantsLoading={participantsLoading}
+                  activeFiltersCount={activeFiltersCount}
+                  onClearFilters={clearFilters}
+                  waitlist={waitlist}
+                  waitlistLoading={waitlistLoading}
+                  promotingId={promotingId}
+                  removingId={removingId}
+                  onPromote={handlePromote}
+                  onRemoveFromWaitlist={handleRemoveFromWaitlist}
+                />
               </motion.div>
             )}
 
@@ -1735,204 +1048,45 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="max-w-7xl mx-auto"
+                className="max-w-6xl mx-auto"
               >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
-                  <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
-                      <div className="mb-6">
-                        <h3 className="text-base font-semibold text-text-primary mb-1">Generelt</h3>
-                        <p className="text-xs text-muted-foreground">Grunnleggende informasjon om kurset.</p>
-                      </div>
-                      
-                      <div className="space-y-4 flex-1">
-                          <div>
-                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Navn på kurs</label>
-                            <Input
-                              type="text"
-                              value={settingsTitle}
-                              onChange={(e) => setSettingsTitle(e.target.value)}
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Beskrivelse</label>
-                            <textarea
-                              rows={6}
-                              className="w-full p-3 rounded-xl border border-border text-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white bg-input-bg hover:border-ring ios-ease resize-none"
-                              value={settingsDescription}
-                              onChange={(e) => setSettingsDescription(e.target.value)}
-                            />
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Tile 2: Media (Image) - Span 1, Row Span 2? */}
-                  <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
-                      <div className="mb-6">
-                        <h3 className="text-base font-semibold text-text-primary mb-1">Kursbilde</h3>
-                        <p className="text-xs text-muted-foreground">Et bilde som representerer kurset.</p>
-                      </div>
-                      <div className="flex-1 min-h-[200px] flex flex-col">
-                          <div className="flex-1 relative rounded-lg overflow-hidden bg-input-bg">
-                            <ImageUpload
-                                value={settingsImageUrl}
-                                onChange={(file) => {
-                                  setSettingsImageFile(file);
-                                  if (!file && settingsImageUrl) {
-                                    setImageToDelete(settingsImageUrl);
-                                    setSettingsImageUrl(null);
-                                  }
-                                }}
-                                onRemove={() => {
-                                  if (settingsImageUrl) {
-                                    setImageToDelete(settingsImageUrl);
-                                    setSettingsImageUrl(null);
-                                  }
-                                }}
-                                disabled={isSaving}
-                                className="h-full w-full absolute inset-0"
-                            />
-                          </div>
-                          <p className="mt-3 text-xs text-muted-foreground text-center">
-                            Last opp et bilde i bredformat (16:9).
-                          </p>
-                      </div>
-                  </div>
-
-                  {/* Tile 3: Schedule - Span 1 */}
-                  <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-                      <div className="mb-6">
-                        <h3 className="text-base font-semibold text-text-primary mb-1">Tidspunkt</h3>
-                        <p className="text-xs text-muted-foreground">Når kurset holdes.</p>
-                      </div>
-                      <div className="space-y-4 flex-1">
-                          <div>
-                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Dato</label>
-                            <DatePicker
-                              value={settingsDate}
-                              onChange={setSettingsDate}
-                              placeholder="Velg dato"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">Tidspunkt</label>
-                            <TimePicker
-                              value={settingsTime}
-                              onChange={(time) => setSettingsTime(time)}
-                              date={settingsDate}
-                              organizationId={currentOrganization?.id}
-                              duration={settingsDuration || 60}
-                              excludeCourseId={id}
-                              placeholder="Velg tid"
-                            />
-                          </div>
-                          <div>
-                            <DurationPicker
-                              value={settingsDuration}
-                              onChange={setSettingsDuration}
-                              label="Varighet"
-                            />
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Tile 4: Capacity - Span 1 */}
-                  <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col">
-                      <div className="mb-6">
-                        <h3 className="text-base font-semibold text-text-primary mb-1">Kapasitet</h3>
-                        <p className="text-xs text-muted-foreground">Begrens antall deltakere.</p>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                        <div className="flex items-center gap-4">
-                            <button
-                              onClick={() => setMaxParticipants(Math.max(courseData?.enrolled || 1, maxParticipants - 1))}
-                              disabled={maxParticipants <= (courseData?.enrolled || 1)}
-                              className={`h-10 w-10 rounded-lg flex items-center justify-center transition-colors ${
-                                maxParticipants <= (courseData?.enrolled || 1)
-                                  ? 'bg-surface-elevated/50 text-text-tertiary cursor-not-allowed'
-                                  : 'bg-surface-elevated hover:bg-surface text-text-secondary cursor-pointer'
-                              }`}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <div className="text-center">
-                                <span className="block text-3xl font-bold text-text-primary tracking-tight">{maxParticipants}</span>
-                                <span className="text-xxs text-muted-foreground uppercase tracking-wider font-medium">Plasser</span>
-                            </div>
-                            <button
-                              onClick={() => setMaxParticipants(maxParticipants + 1)}
-                              className="h-10 w-10 rounded-lg bg-surface-elevated flex items-center justify-center hover:bg-surface text-text-secondary cursor-pointer transition-colors"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                        </div>
-                        {/* Capacity warning - shows when at minimum */}
-                        {courseData && courseData.enrolled > 0 && maxParticipants <= courseData.enrolled && (
-                          <div className="rounded-lg border border-status-warning-border bg-status-warning-bg/30 px-3 py-2 mt-2">
-                            <p className="text-xs text-status-warning-text text-center">
-                              Kan ikke reduseres – {courseData.enrolled} påmeldt{courseData.enrolled > 1 ? 'e' : ''}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                  </div>
-
-                  {/* Tile 5: Danger Zone - Span 3 */}
-                  <div className="lg:col-span-3 rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <h3 className="text-sm font-semibold text-status-error-text">Avlys kurs</h3>
-                        <p className="text-xs text-status-error-text/80 mt-1">
-                          {refundPreview.count > 0
-                            ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
-                            : 'Kurset vil bli avlyst.'}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline-soft"
-                        size="compact"
-                        className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap shrink-0"
-                        onClick={() => setShowCancelPreview(true)}
-                      >
-                        Avlys kurs
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Actions Bar */}
-                  <div className="lg:col-span-3 flex justify-end gap-3 pt-2">
-                      {saveError && (
-                        <div className="flex items-center gap-2 text-sm text-status-error-text bg-status-error-bg/30 border border-status-error-border rounded-lg px-4 py-2 mr-auto">
-                          <Info className="h-4 w-4 shrink-0" />
-                          {saveError}
-                        </div>
-                      )}
-
-                    <Button
-                      variant="ghost"
-                      size="compact"
-                      onClick={() => setActiveTab('overview')}
-                      disabled={isSaving}
-                    >
-                      Avbryt
-                    </Button>
-                    <Button
-                      size="compact"
-                      onClick={handleSaveSettings}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? (
-                        <>
-                          <Spinner size="sm" />
-                          Lagrer...
-                        </>
-                      ) : (
-                        'Lagre endringer'
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                <CourseSettingsTab
+                  settingsTitle={settingsTitle}
+                  onTitleChange={setSettingsTitle}
+                  settingsDescription={settingsDescription}
+                  onDescriptionChange={setSettingsDescription}
+                  settingsImageUrl={settingsImageUrl}
+                  onImageFileChange={(file) => {
+                    setSettingsImageFile(file);
+                    if (!file && settingsImageUrl) {
+                      setImageToDelete(settingsImageUrl);
+                      setSettingsImageUrl(null);
+                    }
+                  }}
+                  onImageRemove={() => {
+                    if (settingsImageUrl) {
+                      setImageToDelete(settingsImageUrl);
+                      setSettingsImageUrl(null);
+                    }
+                  }}
+                  isSaving={isSaving}
+                  settingsDate={settingsDate}
+                  onDateChange={setSettingsDate}
+                  settingsTime={settingsTime}
+                  onTimeChange={setSettingsTime}
+                  settingsDuration={settingsDuration}
+                  onDurationChange={setSettingsDuration}
+                  organizationId={currentOrganization?.id}
+                  excludeCourseId={id}
+                  maxParticipants={maxParticipants}
+                  onMaxParticipantsChange={setMaxParticipants}
+                  currentEnrolled={courseData?.enrolled || 0}
+                  refundPreview={refundPreview}
+                  onCancelCourse={() => setShowCancelPreview(true)}
+                  saveError={saveError}
+                  onSave={handleSaveSettings}
+                  onCancel={() => setActiveTab('overview')}
+                />
               </motion.div>
             )}
 
@@ -1965,7 +1119,7 @@ const CourseDetailPage = () => {
               {isPromotingWaitlist ? (
                 <>
                   <Spinner size="md" className="mr-2" />
-                  Sender...
+                  Sender
                 </>
               ) : (
                 `Send tilbud (${Math.min(newSpotsCount, waitlist.length)})`
@@ -2031,8 +1185,8 @@ const CourseDetailPage = () => {
                 <>
                   <Spinner size="md" className="mr-2" />
                   {refundPreview.count > 0
-                    ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}...`
-                    : 'Avlyser...'}
+                    ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}`
+                    : 'Avlyser'}
                 </>
               ) : (
                 refundPreview.count > 0 ? 'Bekreft avlysning og refunder' : 'Bekreft avlysning'

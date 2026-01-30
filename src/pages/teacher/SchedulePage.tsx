@@ -9,7 +9,7 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
-import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
+import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import {
   getOsloTime,
   getWeekNumber,
@@ -265,26 +265,26 @@ const MobileDayView = ({
       {/* Events List */}
       <div className="flex-1 overflow-y-auto bg-surface">
         {isLoading ? (
-          <PageLoader message="Laster timeplan..." />
+          <PageLoader message="Laster timeplan" />
         ) : error ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
                 <CalendarDays className="h-7 w-7 text-destructive" />
               </div>
-              <h3 className="font-medium text-text-primary mb-1">Noe gikk galt</h3>
-              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <h3 className="text-sm font-medium text-text-primary mb-1">Noe gikk galt</h3>
+              <p className="text-xs text-muted-foreground mb-4">{error}</p>
               <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
         ) : (showEmptyState || !hasEventsThisWeek) ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-elevated">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-border">
                 <CalendarDays className="h-7 w-7 text-text-tertiary" />
               </div>
-              <h3 className="font-medium text-text-primary mb-1">Ingen timer denne uken</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-sm font-medium text-text-primary mb-1">Ingen timer denne uken</h3>
+              <p className="text-xs text-muted-foreground mb-4">
                 {courses.length === 0
                   ? 'Opprett et kurs for å komme i gang.'
                   : 'Ingen planlagte timer denne uken.'}
@@ -300,13 +300,13 @@ const MobileDayView = ({
         ) : dayEvents.length === 0 ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-elevated">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-white border border-border">
                 <CalendarDays className="h-7 w-7 text-text-tertiary" />
               </div>
-              <h3 className="font-medium text-text-primary mb-1">
+              <h3 className="text-sm font-medium text-text-primary mb-1">
                 Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Velg en annen dag for å se timer.
               </p>
             </div>
@@ -425,8 +425,7 @@ export const SchedulePage = () => {
         // Count signups per course
         const counts: Record<string, number> = {};
         if (signupsData) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          for (const signup of signupsData as any[]) {
+          for (const signup of signupsData as unknown as { course_id: string }[]) {
             counts[signup.course_id] = (counts[signup.course_id] || 0) + 1;
           }
         }
@@ -710,7 +709,7 @@ export const SchedulePage = () => {
 
             {/* Loading State Overlay */}
             {isLoading && (
-              <PageLoader variant="overlay" message="Laster timeplan..." />
+              <PageLoader variant="overlay" message="Laster timeplan" />
             )}
 
             {/* Error State Overlay */}
@@ -737,7 +736,7 @@ export const SchedulePage = () => {
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-900/5">
                 <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-gray-200">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-elevated">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-white border border-border">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
                   <h3 className="font-geist text-lg font-medium text-text-primary mb-2">

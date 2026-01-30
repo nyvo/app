@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { logger } from '@/lib/logger'
 
 /**
  * Hook for auto-saving form drafts to localStorage.
@@ -49,7 +50,7 @@ export function useFormDraft<T extends object>(
         setHasDraft(true)
       }
     } catch (err) {
-      console.warn('[FormDraft] Failed to load draft:', err)
+      logger.warn('[FormDraft] Failed to load draft:', err)
       // Clear corrupted data
       localStorage.removeItem(storageKey)
     }
@@ -76,7 +77,7 @@ export function useFormDraft<T extends object>(
           setHasDraft(true)
         }
       } catch (err) {
-        console.warn('[FormDraft] Failed to save draft:', err)
+        logger.warn('[FormDraft] Failed to save draft:', err)
       }
     }, debounceMs)
   }, [storageKey, debounceMs])
@@ -88,7 +89,7 @@ export function useFormDraft<T extends object>(
       setDraft(null)
       setHasDraft(false)
     } catch (err) {
-      console.warn('[FormDraft] Failed to clear draft:', err)
+      logger.warn('[FormDraft] Failed to clear draft:', err)
     }
   }, [storageKey])
 

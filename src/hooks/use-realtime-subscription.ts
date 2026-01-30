@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 
 type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*'
@@ -78,9 +79,9 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.debug(`[Realtime] Subscribed to ${table}${filter ? ` (${filter})` : ''}`)
+          logger.debug(`[Realtime] Subscribed to ${table}${filter ? ` (${filter})` : ''}`)
         } else if (status === 'CHANNEL_ERROR') {
-          console.error(`[Realtime] Error subscribing to ${table}`)
+          logger.error(`[Realtime] Error subscribing to ${table}`)
         }
       })
 
@@ -164,7 +165,7 @@ export function useMultiTableSubscription(
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.debug(`[Realtime] Multi-sub: ${table}${filter ? ` (${filter})` : ''}`)
+            logger.debug(`[Realtime] Multi-sub: ${table}${filter ? ` (${filter})` : ''}`)
           }
         })
     })

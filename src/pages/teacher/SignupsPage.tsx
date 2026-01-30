@@ -183,8 +183,6 @@ const TimeDropdown = ({
     { value: null, label: 'Alle' },
   ];
 
-  const currentLabel = options.find(o => o.value === value)?.label || 'Kommende';
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -563,7 +561,7 @@ export const SignupsPage = () => {
                 <SearchInput
                   value={searchQuery}
                   onChange={setSearchQuery}
-                  placeholder="Søk etter navn eller e-post..."
+                  placeholder="Søk etter navn eller e-post"
                   aria-label="Søk etter deltakere"
                   className="flex-1 max-w-xs"
                 />
@@ -597,7 +595,7 @@ export const SignupsPage = () => {
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Søk etter navn eller e-post..."
+                placeholder="Søk etter navn eller e-post"
                 aria-label="Søk etter deltakere"
                 className="flex-1 max-w-md"
               />
@@ -669,8 +667,8 @@ export const SignupsPage = () => {
             <div className="h-full rounded-3xl bg-white border border-gray-200 overflow-hidden flex flex-col">
               {/* Loading State */}
               {loading ? (
-                <div className="overflow-auto flex-1" role="status" aria-live="polite" aria-label="Laster påmeldinger...">
-                  <span className="sr-only">Henter påmeldinger...</span>
+                <div className="overflow-auto flex-1" role="status" aria-live="polite" aria-label="Laster påmeldinger">
+                  <span className="sr-only">Henter påmeldinger</span>
                   <table className="w-full text-left border-collapse">
                     <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
                       <tr>

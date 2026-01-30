@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { PageLoader } from './components/PageLoader';
+import { PageLoader } from './components/ui/page-loader';
 
 // Lazy load all route components for code splitting
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
@@ -41,7 +41,7 @@ const App = () => {
           position="top-right"
           theme="light"
         />
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<PageLoader variant="fullscreen" />}>
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />

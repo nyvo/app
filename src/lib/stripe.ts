@@ -1,4 +1,5 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
+import { logger } from '@/lib/logger'
 
 // Singleton promise for Stripe instance
 let stripePromise: Promise<Stripe | null> | null = null
@@ -12,7 +13,7 @@ export function getStripe(): Promise<Stripe | null> {
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 
     if (!publishableKey) {
-      console.warn('Stripe publishable key not configured')
+      logger.warn('Stripe publishable key not configured')
       return Promise.resolve(null)
     }
 

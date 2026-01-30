@@ -133,14 +133,14 @@ const SignupPage = () => {
     switch (field) {
       case 'fullName':
         if (!formData.fullName.trim()) {
-          newErrors.fullName = 'Fullt navn er påkrevd';
+          newErrors.fullName = 'Skriv inn navnet ditt';
         } else {
           delete newErrors.fullName;
         }
         break;
       case 'email':
         if (!formData.email.trim()) {
-          newErrors.email = 'E-postadresse er påkrevd';
+          newErrors.email = 'Skriv inn e-postadressen din';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
           newErrors.email = 'Ugyldig e-postadresse';
         } else {
@@ -149,7 +149,7 @@ const SignupPage = () => {
         break;
       case 'password':
         if (!formData.password.trim()) {
-          newErrors.password = 'Passord er påkrevd';
+          newErrors.password = 'Skriv inn et passord';
         } else if (formData.password.length < 8) {
           newErrors.password = 'Passord må være minst 8 tegn';
         } else {
@@ -158,7 +158,7 @@ const SignupPage = () => {
         break;
       case 'organizationName':
         if (!formData.organizationName.trim()) {
-          newErrors.organizationName = userType === 'studio' ? 'Studionavn er påkrevd' : 'Bedriftsnavn er påkrevd';
+          newErrors.organizationName = userType === 'studio' ? 'Skriv inn studionavnet' : 'Skriv inn bedriftsnavnet';
         } else {
           delete newErrors.organizationName;
         }
@@ -172,23 +172,23 @@ const SignupPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Fullt navn er påkrevd';
+      newErrors.fullName = 'Skriv inn navnet ditt';
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-postadressen din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Ugyldig e-postadresse';
     }
 
     if (!formData.password.trim()) {
-      newErrors.password = 'Passord er påkrevd';
+      newErrors.password = 'Skriv inn et passord';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Passord må være minst 8 tegn';
     }
 
     if (!formData.organizationName.trim()) {
-      newErrors.organizationName = userType === 'studio' ? 'Studionavn er påkrevd' : 'Bedriftsnavn er påkrevd';
+      newErrors.organizationName = userType === 'studio' ? 'Skriv inn studionavnet' : 'Skriv inn bedriftsnavnet';
     }
 
     setErrors(newErrors);
@@ -262,7 +262,7 @@ const SignupPage = () => {
       }));
 
       // Show success toast
-      toast.success('Konto opprettet!');
+      toast.success('Kontoen er opprettet');
 
       // Navigate to dashboard where ProtectedRoute will create the org
       navigate('/teacher', {

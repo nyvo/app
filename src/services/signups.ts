@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus } from '@/types/database'
 
 // Signup with joined course and profile data
@@ -34,8 +34,7 @@ export async function fetchRecentSignups(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as SignupWithDetails[], error: null }
+  return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
 // Fetch signups for a specific course
@@ -56,8 +55,7 @@ export async function fetchSignupsByCourse(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as SignupWithDetails[], error: null }
+  return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
 // Get signup counts by status for a course
@@ -80,8 +78,7 @@ export async function fetchSignupStats(courseId: string): Promise<{
     cancelled: 0
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const signup of (data || []) as any[]) {
+  for (const signup of (data || []) as unknown as { status: string }[]) {
     if (signup.status in stats) {
       stats[signup.status as keyof typeof stats]++
     }
@@ -98,9 +95,7 @@ export async function fetchSignupStats(courseId: string): Promise<{
 export async function createSignup(
   signupData: SignupInsert
 ): Promise<{ data: Signup | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('signups') as any)
+  const { data, error } = await typedFrom('signups')
     .insert(signupData)
     .select()
     .single()
@@ -117,9 +112,7 @@ export async function updateSignup(
   signupId: string,
   signupData: SignupUpdate
 ): Promise<{ data: Signup | null; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('signups') as any)
+  const { data, error } = await typedFrom('signups')
     .update(signupData)
     .eq('id', signupId)
     .select()
@@ -137,8 +130,7 @@ export async function updateSignupStatus(
   signupId: string,
   status: SignupStatus
 ): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('signups') as any)
+  const { error } = await typedFrom('signups')
     .update({ status })
     .eq('id', signupId)
 
@@ -167,8 +159,7 @@ export async function fetchSignupsByCourseWithProfiles(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as SignupWithProfile[], error: null }
+  return { data: data as unknown as SignupWithProfile[], error: null }
 }
 
 // Fetch all signups for an organization (for SignupsPage)
@@ -189,8 +180,7 @@ export async function fetchAllSignups(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as SignupWithDetails[], error: null }
+  return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
 // Check course availability (spots remaining)
@@ -208,8 +198,7 @@ export async function checkCourseAvailability(
     return { available: 0, total: 0, error: courseError as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const total = (course as any)?.max_participants || 0
+  const total = (course as unknown as { max_participants: number })?.max_participants || 0
 
   // Count confirmed signups
   const { count, error: countError } = await supabase

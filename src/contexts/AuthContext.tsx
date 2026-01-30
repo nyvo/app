@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type { Profile, Organization, OrgMemberRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 
@@ -57,8 +57,7 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: newProfile, error: insertError } = await (supabase.from('profiles') as any)
+        const { data: newProfile, error: insertError } = await typedFrom('profiles')
           .insert({
             id: userId,
             email: user.email || '',
@@ -299,11 +298,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { organization: null, error: new Error('Must be logged in') }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.rpc as any)('create_organization_for_user', {
+    // typedFrom doesn't cover RPC — use targeted cast for DB function call
+    const { data, error } = await (supabase.rpc as unknown as (
+      fn: string, args: Record<string, string>
+    ) => ReturnType<typeof supabase.rpc>)('create_organization_for_user', {
       org_name: name,
       org_slug: slug,
-      user_id: userRef.current.id
+      user_id: userRef.current.id,
     })
 
     if (error) {

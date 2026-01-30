@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -15,3 +15,18 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 })
+
+/**
+ * Typed query builder helper.
+ *
+ * The auto-generated Database type resolves insert/update/select to `never`
+ * for tables with RLS policies. Until we regenerate types from the live schema
+ * (supabase gen types typescript), this helper centralizes the single
+ * unavoidable cast so service files stay free of `as any`.
+ */
+type TableName = keyof Database['public']['Tables']
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function typedFrom(table: TableName): ReturnType<SupabaseClient['from']> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return supabase.from(table) as any
+}

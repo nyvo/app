@@ -29,7 +29,7 @@ function PageLoader({
         {message && (
           <p className="mt-4 text-sm text-muted-foreground">{message}</p>
         )}
-        <span className="sr-only">{message || 'Laster...'}</span>
+        <span className="sr-only">{message || 'Laster'}</span>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type { Conversation, ConversationInsert, Message, MessageInsert, Profile } from '@/types/database'
 
 // Conversation with last message and participant info
@@ -45,8 +45,7 @@ export async function fetchConversations(
     return { data: [], error: null }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const typedConversations = conversations as any as ConversationWithMessages[]
+  const typedConversations = conversations as unknown as ConversationWithMessages[]
 
   // Get user profiles for conversations with user_id
   const userIds = typedConversations
@@ -61,8 +60,7 @@ export async function fetchConversations(
       .in('id', userIds)
 
     if (profiles) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const typedProfiles = profiles as any as Profile[]
+      const typedProfiles = profiles as unknown as Profile[]
       profilesMap = typedProfiles.reduce((acc, p) => {
         acc[p.id] = p
         return acc
@@ -122,8 +120,7 @@ export async function fetchMessages(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as Message[], error: null }
+  return { data: data as unknown as Message[], error: null }
 }
 
 // Find or create a conversation with a recipient
@@ -151,8 +148,7 @@ export async function findOrCreateConversation(
   }
 
   if (existing) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { data: existing as any as Conversation, error: null }
+    return { data: existing as unknown as Conversation, error: null }
   }
 
   // Create new conversation
@@ -163,10 +159,8 @@ export async function findOrCreateConversation(
     is_read: true // Teacher starts conversation, so it's read
   }
 
-  const { data: created, error: createError } = await supabase
-    .from('conversations')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(newConversation as any)
+  const { data: created, error: createError } = await typedFrom('conversations')
+    .insert(newConversation)
     .select()
     .single()
 
@@ -174,8 +168,7 @@ export async function findOrCreateConversation(
     return { data: null, error: createError as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: created as any as Conversation, error: null }
+  return { data: created as unknown as Conversation, error: null }
 }
 
 // Send a message in a conversation
@@ -191,10 +184,8 @@ export async function sendMessage(
     is_read: isOutgoing // Outgoing messages are "read" by sender
   }
 
-  const { data, error } = await supabase
-    .from('messages')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(newMessage as any)
+  const { data, error } = await typedFrom('messages')
+    .insert(newMessage)
     .select()
     .single()
 
@@ -203,13 +194,11 @@ export async function sendMessage(
   }
 
   // Update conversation's updated_at timestamp
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from('conversations') as any)
+  await typedFrom('conversations')
     .update({ updated_at: new Date().toISOString() })
     .eq('id', conversationId)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as Message, error: null }
+  return { data: data as unknown as Message, error: null }
 }
 
 // Mark a conversation as read
@@ -217,8 +206,7 @@ export async function markConversationRead(
   conversationId: string
 ): Promise<{ error: Error | null }> {
   // Mark conversation as read
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: convError } = await (supabase.from('conversations') as any)
+  const { error: convError } = await typedFrom('conversations')
     .update({ is_read: true })
     .eq('id', conversationId)
 
@@ -227,8 +215,7 @@ export async function markConversationRead(
   }
 
   // Mark all incoming messages as read
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: msgError } = await (supabase.from('messages') as any)
+  const { error: msgError } = await typedFrom('messages')
     .update({ is_read: true })
     .eq('conversation_id', conversationId)
     .eq('is_outgoing', false)
@@ -245,8 +232,7 @@ export async function archiveConversation(
   conversationId: string,
   archived: boolean = true
 ): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('conversations') as any)
+  const { error } = await typedFrom('conversations')
     .update({ archived, is_read: true }) // Also mark as read when archiving
     .eq('id', conversationId)
 
@@ -294,8 +280,7 @@ export async function getUnreadCount(
 
   // Count unread incoming messages across all conversations
   let unreadCount = 0
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const conv of (data || []) as any[]) {
+  for (const conv of (data || []) as unknown as { messages: { is_read: boolean; is_outgoing: boolean }[] }[]) {
     const messages = (conv.messages as { is_read: boolean; is_outgoing: boolean }[]) || []
     unreadCount += messages.filter(m => !m.is_read && !m.is_outgoing).length
   }

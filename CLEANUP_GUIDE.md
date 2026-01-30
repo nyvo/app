@@ -1,153 +1,103 @@
 # Code Cleanup Guide
 
-This document outlines remaining code cleanup tasks after the initial optimization pass.
+This document outlines remaining code cleanup tasks.
+Last audited: 2026-01-29
 
-## Console.log Statements to Remove/Replace
+---
 
-The following files contain debug console.log statements that should be removed or replaced with the logger utility (`import { logger } from '@/lib/logger'`):
+## 1. Console Statements → Logger Utility
 
-### High Priority (Development Debug Code)
+A logger utility exists at `src/lib/logger.ts` with `logger.debug()`, `logger.info()`, `logger.warn()`, and `logger.error()`. All direct `console.*` calls should migrate to it for consistency.
 
-1. **src/contexts/AuthContext.tsx** (29 console.logs)
-   - Lines 122-134: Window focus tracking
-   - Lines 139-167: Dependency tracking
-   - Lines 179-216: Object reference tracking
-   - Lines 255-356: Auth state change logging
-   - **Action**: Remove all debug tracking code (lines 122-216) entirely
-   - **Action**: Replace remaining logs with `logger.debug()`
+### Files to update (22 statements across 9 files)
 
-2. **src/pages/teacher/TeacherDashboard.tsx** (10 console.logs)
-   - Lines 127-171: Component render tracking
-   - **Action**: Remove dependency tracking code
-   - **Action**: Replace functional logs with `logger.debug()`
+| File | Count | Type | Action |
+|------|-------|------|--------|
+| `src/services/emails.ts` | 6 | `console.error` | Replace with `logger.error()` |
+| `src/pages/teacher/TeacherDashboard.tsx` | 3 | `console.error` | Replace with `logger.error()` |
+| `src/pages/teacher/MessagesPage.tsx` | 3 | `console.error` | Replace with `logger.error()` |
+| `src/hooks/use-form-draft.ts` | 3 | `console.warn` | Replace with `logger.warn()` |
+| `src/hooks/use-realtime-subscription.ts` | 2 | `console.debug` + `console.error` | Replace with `logger.debug()` / `logger.error()` |
+| `src/pages/public/ClaimSpotPage.tsx` | 2 | `console.error` | Replace with `logger.error()` |
+| `src/pages/teacher/CourseDetailPage.tsx` | 1 | `console.error` | Replace with `logger.error()` |
+| `src/pages/public/CheckoutSuccessPage.tsx` | 1 | `console.warn` | Replace with `logger.warn()` |
+| `src/lib/stripe.ts` | 1 | `console.warn` | Replace with `logger.warn()` |
 
-3. **src/pages/student/StudentDashboard.tsx** (8 console.logs)
-   - Lines 18-46: Similar debug tracking
-   - **Action**: Remove debug tracking code
+> **Note:** `src/lib/logger.ts` itself uses `console.*` internally — that's expected and correct.
 
-### Medium Priority (Functional Logging)
+---
 
-4. **src/pages/public/PublicCoursesPage.tsx** (8 console.logs)
-   - Some are functional error logging
-   - **Action**: Replace `console.log()` with `logger.debug()`
-   - **Action**: Replace `console.error()` with `logger.error()`
+## 2. Type Safety — `as any` Casts
 
-5. **src/services/publicCourses.ts** (debugging logs)
-   - **Action**: Remove or replace with `logger.debug()`
+66 instances of `as any` across 9 files, plus 25 eslint-disable comments. Most are Supabase client typing workarounds.
 
-6. **src/services/studentSignups.ts** (debugging logs)
-   - **Action**: Remove or replace with `logger.debug()`
+### By file
 
-### Low Priority
+| File | `as any` count | Pattern |
+|------|----------------|---------|
+| `src/services/courses.ts` | 18 | `.from('table') as any`, response casting |
+| `src/services/messages.ts` | 18 | `.from('table') as any`, response casting |
+| `src/services/signups.ts` | 12 | `.from('table') as any`, response casting |
+| `src/services/studentSignups.ts` | 9 | Response casting, sorting workarounds |
+| `src/services/publicCourses.ts` | 6 | Response casting |
+| `src/contexts/AuthContext.tsx` | 2 | `.from('profiles') as any`, `.rpc as any` |
+| `src/services/organizations.ts` | 1 | `.from('organizations') as any` |
+| `src/services/waitlist.ts` | 1 | `.from('signups') as any` |
+| `src/pages/teacher/CoursesPage.tsx` | 1 | `.from('signups') as any` |
 
-Remaining files with occasional console.error statements can stay but should use `logger.error()` for consistency.
+### Fix approach
 
-## Folder Structure Consolidation
-
-### Context Folders
-
-Currently there are TWO context folders:
-- `src/context/EmptyStateContext.tsx`
-- `src/contexts/AuthContext.tsx`
-
-**Action**:
-```bash
-# Move EmptyStateContext to contexts folder
-mv src/context/EmptyStateContext.tsx src/contexts/EmptyStateContext.tsx
-rmdir src/context
-
-# Update all imports from './context/EmptyStateContext' to './contexts/EmptyStateContext'
-```
-
-**Files to update**:
-- `src/pages/teacher/TeacherDashboard.tsx`
-- `src/components/ui/EmptyStateToggle.tsx`
-- Any other files importing from './context/'
-
-## Type Safety Improvements
-
-### Replace 'any' Types in Services
-
-**Files with unsafe type casting (13 instances)**:
-
-1. **src/services/courses.ts**
-   - Lines 42-43, 78-79, 101-105, 136-137, 165-166, 178-179
-   - Replace `as any` casts with proper Supabase types
-   - Remove `// eslint-disable-next-line @typescript-eslint/no-explicit-any` comments
-
-2. **src/services/signups.ts**
-   - Similar pattern
-   - Use proper database types from `@/types/database`
-
-3. **src/contexts/AuthContext.tsx**
-   - Lines 138, 154, 156
-   - Replace `useRef<any>({})` with properly typed refs
-
-4. **src/pages/teacher/TeacherDashboard.tsx**
-   - Lines 146, 153, 155
-   - Similar pattern
-
-### Fix Supabase Query Types
-
-Instead of:
-```typescript
-const { data, error } = await (supabase.from('courses') as any)
-  .insert(courseData)
-  .select()
-  .single()
-
-return { data: data as any as CourseWithStyle[], error: null }
-```
-
-Use:
-```typescript
-const { data, error } = await supabase
-  .from('courses')
-  .insert(courseData)
-  .select<'*', CourseWithStyle>()
-  .single()
-
-if (error) return { data: null, error: error as Error }
-return { data, error: null }
-```
-
-## Component Export Consistency
-
-**Fix**: Change `EmptyStateToggle.tsx` from default export to named export:
+Generate proper Supabase database types using `supabase gen types typescript` and use typed client methods:
 
 ```typescript
 // Before
-export default EmptyStateToggle;
+const { data } = await (supabase.from('courses') as any).select('*')
+return data as any as CourseWithStyle[]
 
 // After
-export { EmptyStateToggle };
+const { data } = await supabase.from('courses').select('*')
+return { data: data as CourseWithStyle[], error: null }
 ```
 
-Update imports accordingly.
+This eliminates both the `as any` casts and the eslint-disable comments.
 
-## Implementation Priority
+---
 
-1. **Immediate** (5 min):
-   - Remove console.log from supabase.ts ✅ (done)
-   - Merge context folders
+## 3. File & Folder Cleanup
 
-2. **High Priority** (30 min):
-   - Remove AuthContext debug tracking code (lines 122-216)
-   - Remove TeacherDashboard debug tracking
-   - Remove StudentDashboard debug tracking
+### Duplicate PageLoader components
+- `src/components/PageLoader.tsx` — simple wrapper (used by `App.tsx`)
+- `src/components/ui/page-loader.tsx` — full-featured version with variants (used by `SchedulePage.tsx`)
 
-3. **Medium Priority** (1 hour):
-   - Replace remaining console.log with logger.debug
-   - Fix 'any' types in services
+**Action:** Consolidate into `src/components/ui/page-loader.tsx` and update `App.tsx` import. Delete `src/components/PageLoader.tsx`.
 
-4. **Low Priority** (ongoing):
-   - Improve type safety across the codebase
-   - Add proper error boundaries
+### Orphaned temp file
+- `src/pages/teacher/CourseDetailPage.tsx.temp`
+
+**Action:** Delete.
+
+### Non-standard file location
+- `src/utils__cancellation.ts` — utility at root of `src/` with double-underscore naming
+
+**Action:** Move to `src/utils/cancellation.ts` (or `src/lib/cancellation.ts`). Update import in `src/components/student/BookingCard.tsx`.
+
+---
+
+## 4. Export Consistency
+
+### EmptyStateToggle default export
+`src/components/ui/EmptyStateToggle.tsx` uses `export default` while all other UI components use named exports.
+
+**Action:** Change to named export `export { EmptyStateToggle }`. Update import in `src/main.tsx`.
+
+---
 
 ## Verification
 
 After cleanup, verify:
-- `grep -r "console.log" src/` should only show logger utility
-- `grep -r "as any" src/` should return minimal results
-- `ls src/context` should not exist
-- `npm run build` should complete without type errors
+- `grep -r "console\." src/ --include="*.ts" --include="*.tsx" | grep -v logger.ts` → should return 0 results
+- `grep -r "as any" src/` → should return minimal/zero results
+- `ls src/components/PageLoader.tsx` → should not exist
+- `ls src/pages/teacher/CourseDetailPage.tsx.temp` → should not exist
+- `ls src/utils__cancellation.ts` → should not exist
+- `npm run build` → should complete without errors

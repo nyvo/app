@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Leaf, Loader2, Clock, Calendar, MapPin, CreditCard, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -119,7 +120,7 @@ const ClaimSpotPage = () => {
           setClaimData(data);
         }
       } catch (err) {
-        console.error('Error validating token:', err);
+        logger.error('Error validating token:', err);
         setError('Kunne ikke sjekke lenken');
       } finally {
         setLoading(false);
@@ -214,7 +215,7 @@ const ClaimSpotPage = () => {
         throw new Error('Mangler checkout URL');
       }
     } catch (err) {
-      console.error('Error creating checkout:', err);
+      logger.error('Error creating checkout:', err);
       toast.error(err instanceof Error ? err.message : 'Noe gikk galt');
       setClaiming(false);
     }

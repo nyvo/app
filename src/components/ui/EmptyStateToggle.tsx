@@ -15,4 +15,4 @@ const EmptyStateToggle = () => {
   );
 };
 
-export default EmptyStateToggle;
+export { EmptyStateToggle };

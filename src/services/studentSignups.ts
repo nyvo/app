@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import type { Signup, Course, CourseStyle } from '@/types/database'
 
 // Student signup with full course and instructor details
@@ -50,8 +50,7 @@ export async function fetchMySignups(
     return { data: null, error: error as Error }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: data as any as StudentSignupWithCourse[], error: null }
+  return { data: data as unknown as StudentSignupWithCourse[], error: null }
 }
 
 // Fetch upcoming signups for a student
@@ -96,15 +95,13 @@ export async function fetchUpcomingSignups(
   }
 
   // Sort by course start_date in JavaScript since we can't do it in the query
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sortedData = ((data || []) as any[]).sort((a, b) => {
+  const sortedData = ((data || []) as unknown as StudentSignupWithCourse[]).sort((a, b) => {
     const dateA = a.course?.start_date ? new Date(a.course.start_date).getTime() : 0
     const dateB = b.course?.start_date ? new Date(b.course.start_date).getTime() : 0
     return dateA - dateB
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: sortedData as any as StudentSignupWithCourse[], error: null }
+  return { data: sortedData as unknown as StudentSignupWithCourse[], error: null }
 }
 
 // Fetch past signups for a student
@@ -149,15 +146,13 @@ export async function fetchPastSignups(
   }
 
   // Sort by course end_date in JavaScript since we can't do it in the query
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sortedData = ((data || []) as any[]).sort((a, b) => {
+  const sortedData = ((data || []) as unknown as StudentSignupWithCourse[]).sort((a, b) => {
     const dateA = a.course?.end_date ? new Date(a.course.end_date).getTime() : 0
     const dateB = b.course?.end_date ? new Date(b.course.end_date).getTime() : 0
     return dateB - dateA // Descending order (most recent first)
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { data: sortedData as any as StudentSignupWithCourse[], error: null }
+  return { data: sortedData as unknown as StudentSignupWithCourse[], error: null }
 }
 
 // Cancellation result with refund info
@@ -196,9 +191,7 @@ export async function linkGuestBookingsToUser(
   userId: string,
   email: string
 ): Promise<{ count: number; error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .from('signups') as any)
+  const { data, error } = await typedFrom('signups')
     .update({ user_id: userId })
     .eq('participant_email', email)
     .is('user_id', null)
@@ -231,8 +224,7 @@ export async function checkIfAlreadySignedUp(
 
   return {
     isSignedUp: !!data,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    signupStatus: (data as any)?.status || null,
+    signupStatus: (data as unknown as { status: string })?.status || null,
     error: null
   }
 }

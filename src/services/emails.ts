@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface SendEmailResult {
   success: boolean
@@ -28,13 +29,13 @@ export async function sendEmail(
     })
 
     if (error) {
-      console.error('Email send error:', error)
+      logger.error('Email send error:', error)
       return { success: false, error: error.message }
     }
 
     return { success: true, messageId: data?.messageId }
   } catch (err) {
-    console.error('Email send exception:', err)
+    logger.error('Email send exception:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
@@ -64,13 +65,13 @@ export async function sendNewMessageNotification(
     })
 
     if (error) {
-      console.error('New message notification error:', error)
+      logger.error('New message notification error:', error)
       return { success: false, error: error.message }
     }
 
     return { success: true, messageId: data?.messageId }
   } catch (err) {
-    console.error('New message notification exception:', err)
+    logger.error('New message notification exception:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }
@@ -104,13 +105,13 @@ export async function sendSignupConfirmation(
     })
 
     if (error) {
-      console.error('Signup confirmation error:', error)
+      logger.error('Signup confirmation error:', error)
       return { success: false, error: error.message }
     }
 
     return { success: true, messageId: data?.messageId }
   } catch (err) {
-    console.error('Signup confirmation exception:', err)
+    logger.error('Signup confirmation exception:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
   }
 }

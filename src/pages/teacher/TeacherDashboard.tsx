@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Leaf, Menu, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
@@ -13,9 +14,10 @@ import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
-import EmptyStateToggle from '@/components/ui/EmptyStateToggle';
+import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, fetchUpcomingSession, type CourseWithStyle } from '@/services/courses';
+import { fetchCourses, fetchUpcomingSession, fetchWeekSessions, type CourseWithStyle } from '@/services/courses';
+import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
 import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
 import { getInitials } from '@/utils/stringUtils';
@@ -30,7 +32,7 @@ import type {
   Message as DashboardMessage,
 } from '@/types/dashboard';
 
-// Map database course to dashboard Course format
+// Map database course to dashboard Course format (fallback when no sessions)
 function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
   // Map style to dashboard course type
   const styleType = course.style?.normalized_name || course.course_type;
@@ -44,6 +46,22 @@ function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
     subtitle,
     time: extractTimeFromSchedule(course.time_schedule),
     type: styleType as DashboardCourseType,
+    date: course.start_date || undefined,
+  };
+}
+
+// Map session + course to dashboard Course format (preferred - has actual session date)
+function mapSessionForDashboard(session: CourseSession, course: CourseWithStyle): DashboardCourse {
+  const styleType = course.style?.normalized_name || course.course_type;
+  const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
+
+  return {
+    id: course.id,
+    title: course.title,
+    subtitle,
+    time: session.start_time?.slice(0, 5) || extractTimeFromSchedule(course.time_schedule),
+    type: styleType as DashboardCourseType,
+    date: session.session_date || undefined,
   };
 }
 
@@ -110,6 +128,7 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
     courseTime,
     courseType: (signup.course?.course_type || 'vinyasa') as DashboardCourseType,
     registeredAt: formatRelativeTimePast(signup.created_at),
+    createdAt: signup.created_at,
     status: signup.status as SignupStatus,
     hasException,
   };
@@ -188,15 +207,22 @@ const TeacherDashboard = () => {
 
     try {
       // Fetch all data in parallel (silently, no loading state for real-time updates)
-      const [coursesResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
+      const [coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
         fetchCourses(currentOrganization.id),
+        fetchWeekSessions(currentOrganization.id, 6),
         fetchUpcomingSession(currentOrganization.id),
         fetchRecentSignups(currentOrganization.id, 4),
         fetchRecentConversations(currentOrganization.id, 4),
       ]);
 
-      // Process courses
-      if (coursesResult.data && coursesResult.data.length > 0) {
+      // Process courses - prefer week sessions (has actual dates) over raw courses
+      if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
+        setHasCourses(true);
+        const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
+          mapSessionForDashboard(session, course)
+        );
+        setDashboardCourses(sessionCourses);
+      } else if (coursesResult.data && coursesResult.data.length > 0) {
         setHasCourses(true);
         const activeCourses = coursesResult.data
           .filter(c => c.status === 'active' || c.status === 'upcoming')
@@ -251,7 +277,7 @@ const TeacherDashboard = () => {
         setMessages([]);
       }
     } catch (err) {
-      console.error('Dashboard refetch error:', err);
+      logger.error('Dashboard refetch error:', err);
       // Don't show error for real-time updates, keep existing data
     }
   }, [currentOrganization?.id]);
@@ -277,8 +303,9 @@ const TeacherDashboard = () => {
 
       try {
         // Fetch all data in parallel
-        const [coursesResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
+        const [coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
           fetchCourses(currentOrganization.id),
+          fetchWeekSessions(currentOrganization.id, 6),
           fetchUpcomingSession(currentOrganization.id),
           fetchRecentSignups(currentOrganization.id, 4),
           fetchRecentConversations(currentOrganization.id, 4),
@@ -287,12 +314,19 @@ const TeacherDashboard = () => {
         if (!isActive) return;
 
         if (coursesResult.error) {
-          console.error('Failed to fetch courses:', coursesResult.error);
+          logger.error('Failed to fetch courses:', coursesResult.error);
           setLoadError('Kunne ikke laste kurs');
         }
 
-        // Process courses
-        if (coursesResult.data && coursesResult.data.length > 0) {
+        // Process courses - prefer week sessions (has actual dates) over raw courses
+        if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
+          setHasCourses(true);
+          const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
+            mapSessionForDashboard(session, course)
+          );
+          setDashboardCourses(sessionCourses);
+        } else if (coursesResult.data && coursesResult.data.length > 0) {
+          // Fallback to raw courses if no sessions this week
           setHasCourses(true);
           const activeCourses = coursesResult.data
             .filter(c => c.status === 'active' || c.status === 'upcoming')
@@ -347,7 +381,7 @@ const TeacherDashboard = () => {
           setMessages([]);
         }
       } catch (err) {
-        console.error('Dashboard load error:', err);
+        logger.error('Dashboard load error:', err);
         if (isActive) {
           setLoadError('Noe gikk galt ved lasting av data');
         }
