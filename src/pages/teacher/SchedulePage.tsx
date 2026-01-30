@@ -470,7 +470,8 @@ export const SchedulePage = () => {
 
       // Calculate end time from duration
       const duration = session.course.duration || 60;
-      const endTime = session.end_time || calculateEndTime(session.start_time, duration);
+      const endTime = session.end_time || (session.start_time ? calculateEndTime(session.start_time, duration) : null);
+      if (!endTime) continue;
 
       // Determine session status
       const now = getOsloTime();

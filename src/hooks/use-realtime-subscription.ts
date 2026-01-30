@@ -231,7 +231,7 @@ export function useWaitlistSubscription(
   const stableCallback = useCallback(onUpdate, [onUpdate])
 
   useRealtimeSubscription(
-    { table: 'waitlist', filter: `course_id=eq.${courseId}` },
+    { table: 'signups', filter: `course_id=eq.${courseId}` },
     stableCallback,
     !!courseId
   )
@@ -280,7 +280,6 @@ export function useCourseParticipantsSubscription(
   useMultiTableSubscription(
     [
       { table: 'signups', filter: `course_id=eq.${courseId}` },
-      { table: 'waitlist', filter: `course_id=eq.${courseId}` },
     ],
     stableCallback,
     !!courseId

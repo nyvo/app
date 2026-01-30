@@ -277,7 +277,7 @@ export async function fetchPublicCourseById(
     .eq('status', 'confirmed')
 
   if (countError) {
-    // Signup count fetch failed, continue with zero count
+    return { data: null, error: countError as Error }
   }
 
   const confirmedCount = count || 0

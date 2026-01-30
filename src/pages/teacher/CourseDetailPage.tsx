@@ -457,7 +457,7 @@ const CourseDetailPage = () => {
   // Handle save individual session
   const handleSaveSession = async (sessionId: string) => {
     const edits = sessionEdits[sessionId];
-    if (!edits) return;
+    if (!edits || savingSessionId) return;
 
     setSavingSessionId(sessionId);
 
@@ -519,8 +519,7 @@ const CourseDetailPage = () => {
         const { url, error: uploadError } = await uploadCourseImage(id, settingsImageFile);
         if (uploadError) {
           setSaveError(uploadError.message);
-          setIsSaving(false);
-          return;
+          return; // finally block handles setIsSaving(false)
         }
         newImageUrl = url;
         setSettingsImageFile(null);

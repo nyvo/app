@@ -74,17 +74,16 @@ export async function fetchCourses(
     .select(`
       *,
       style:course_styles(*)
-    `, { count: options ? 'exact' : undefined })
+    `, { count: options?.limit || options?.offset ? 'exact' : undefined })
     .eq('organization_id', organizationId)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
-  // Apply pagination if provided
-  if (options?.limit) {
-    query = query.limit(options.limit)
-  }
-  if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 50) - 1)
+  // Apply pagination if provided — use range() only (not limit + range)
+  if (options?.limit || options?.offset) {
+    const offset = options?.offset || 0
+    const limit = options?.limit || 50
+    query = query.range(offset, offset + limit - 1)
   }
 
   const { data, error, count } = await query
@@ -338,7 +337,7 @@ export async function createCourse(
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
     skipConflictCheck?: boolean // Skip conflict validation (for testing/admin)
   }
-): Promise<{ data: Course | null; error: Error | null; conflicts?: ScheduleConflict[]; sessionError?: Error }> {
+): Promise<{ data: Course | null; error: Error | null; conflicts?: ScheduleConflict[] }> {
   // Extract time from time_schedule (e.g., "Mandager, 18:00" -> "18:00")
   const timeMatch = courseData.time_schedule?.match(/(\d{1,2}:\d{2})/)
   const startTime = timeMatch ? timeMatch[1] : '09:00'
@@ -460,10 +459,11 @@ export async function createCourse(
       })
     }
 
-    // Insert sessions - return error to caller so they can handle it
+    // Insert sessions — if this fails, delete the orphaned course and return error
     const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
     if (sessionsError) {
-      return { data: course, error: null, sessionError: sessionsError as Error }
+      await typedFrom('courses').delete().eq('id', course.id)
+      return { data: null, error: sessionsError as Error }
     }
   } else if (courseData.course_type === 'event' && courseData.start_date) {
     const eventDays = options?.eventDays || 1
@@ -498,10 +498,11 @@ export async function createCourse(
         })
       }
 
-      // Insert all sessions - return error to caller so they can handle it
+      // Insert all sessions — if this fails, delete the orphaned course and return error
       const { error: sessionsError } = await typedFrom('course_sessions').insert(sessions)
       if (sessionsError) {
-        return { data: course, error: null, sessionError: sessionsError as Error }
+        await typedFrom('courses').delete().eq('id', course.id)
+        return { data: null, error: sessionsError as Error }
       }
     } else {
       // Generate a single session for single-day events
@@ -513,10 +514,11 @@ export async function createCourse(
         status: 'upcoming',
       }
 
-      // Insert session - return error to caller so they can handle it
+      // Insert session — if this fails, delete the orphaned course and return error
       const { error: sessionError } = await typedFrom('course_sessions').insert(session)
       if (sessionError) {
-        return { data: course, error: null, sessionError: sessionError as Error }
+        await typedFrom('courses').delete().eq('id', course.id)
+        return { data: null, error: sessionError as Error }
       }
     }
   }

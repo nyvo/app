@@ -206,6 +206,7 @@ const MessagesPage = () => {
           organizationName
         ).catch(err => {
           logger.error('Failed to send email notification:', err);
+          toast.warning('Melding sendt, men e-postvarsling feilet');
         });
       }
     }
@@ -257,6 +258,7 @@ const MessagesPage = () => {
       organizationName
     ).catch(err => {
       logger.error('Failed to send email notification:', err);
+      toast.warning('Melding sendt, men e-postvarsling feilet');
     });
 
     // Reload conversations and select new one

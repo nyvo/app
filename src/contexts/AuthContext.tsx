@@ -346,7 +346,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('organization_id', organizationId)
         .eq('user_id', userRef.current.id)
         .single()
-        .then(({ data }) => {
+        .then(({ data, error: roleError }) => {
+          if (roleError) {
+            logger.error('Error fetching org member role:', roleError)
+            setUserRole(null)
+            return
+          }
           const memberData = data as { role: OrgMemberRole } | null
           setUserRole(memberData?.role || null)
         })

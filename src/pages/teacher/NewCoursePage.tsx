@@ -204,7 +204,7 @@ const NewCoursePage = () => {
     }
 
     // Price is required - 0 is allowed for free courses
-    if (price === '' || parseInt(price) < 0 || isNaN(parseInt(price))) {
+    if (price === '' || isNaN(parseInt(price)) || parseInt(price) < 0) {
       errs.price = 'Angi pris';
     }
 
