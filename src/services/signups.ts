@@ -125,13 +125,27 @@ export async function updateSignup(
   return { data: data as Signup, error: null }
 }
 
-// Update signup status only
+// Valid signup status transitions
+const validTransitions: Record<SignupStatus, SignupStatus[]> = {
+  confirmed: ['cancelled', 'course_cancelled'],
+  waitlist: ['confirmed', 'cancelled', 'course_cancelled'],
+  cancelled: [],
+  course_cancelled: [],
+}
+
+// Update signup status with transition validation
 export async function updateSignupStatus(
   signupId: string,
-  status: SignupStatus
+  newStatus: SignupStatus,
+  currentStatus?: SignupStatus
 ): Promise<{ error: Error | null }> {
+  // Validate transition if current status is known
+  if (currentStatus && !validTransitions[currentStatus]?.includes(newStatus)) {
+    return { error: new Error(`Ugyldig statusendring: ${currentStatus} → ${newStatus}`) }
+  }
+
   const { error } = await typedFrom('signups')
-    .update({ status })
+    .update({ status: newStatus })
     .eq('id', signupId)
 
   if (error) {

@@ -1,9 +1,9 @@
-export type CourseType = 'private' | 'online' | 'yin' | 'meditation' | 'vinyasa' | 'course-series';
+export type CourseStyleType = 'private' | 'online' | 'yin' | 'meditation' | 'vinyasa' | 'course-series';
 
 export interface UpcomingClass {
   id: string;
   title: string;
-  type: CourseType;
+  type: CourseStyleType;
   startTime: string;
   endTime: string;
   date: string;
@@ -29,7 +29,7 @@ export interface Course {
   title: string;
   subtitle: string;
   time: string;
-  type: CourseType;
+  type: CourseStyleType;
   /** ISO date string for the next session/start date */
   date?: string;
 }
@@ -55,7 +55,7 @@ export interface Registration {
   };
   course: string;
   courseTime: string;
-  courseType: CourseType;
+  courseType: CourseStyleType;
   registeredAt: string;
   /** ISO timestamp for filtering by age */
   createdAt: string;

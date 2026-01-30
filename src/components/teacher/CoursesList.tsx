@@ -1,15 +1,15 @@
 import { useState, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from 'lucide-react';
-import type { Course, CourseType } from '@/types/dashboard';
+import type { Course, CourseStyleType } from '@/types/dashboard';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 
 interface CoursesListProps {
   courses: Course[];
 }
 
-const getCourseColor = (type: CourseType): string => {
-  const colors: Record<CourseType, string> = {
+const getCourseColor = (type: CourseStyleType): string => {
+  const colors: Record<CourseStyleType, string> = {
     private: 'bg-course-private ring-2 ring-course-private-ring',
     online: 'bg-course-online ring-2 ring-course-online-ring',
     yin: 'bg-course-yin ring-2 ring-course-yin-ring',
@@ -20,8 +20,8 @@ const getCourseColor = (type: CourseType): string => {
   return colors[type] || 'bg-muted';
 };
 
-const getCourseTypeLabel = (type: CourseType): string => {
-  const labels: Record<CourseType, string> = {
+const getCourseStyleTypeLabel = (type: CourseStyleType): string => {
+  const labels: Record<CourseStyleType, string> = {
     private: 'Privat',
     online: 'Online',
     yin: 'Yin',
@@ -128,7 +128,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
                       className={`h-2 w-2 rounded-full flex-shrink-0 ${getCourseColor(course.type)}`}
                       aria-hidden="true"
                     />
-                    <span className="sr-only">{getCourseTypeLabel(course.type)}</span>
+                    <span className="sr-only">{getCourseStyleTypeLabel(course.type)}</span>
                     <div className="flex flex-col min-w-0">
                       <span className="text-sm font-medium text-text-primary group-hover/card:text-black">
                         {course.title}

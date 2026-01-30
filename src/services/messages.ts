@@ -1,4 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { Conversation, ConversationInsert, Message, MessageInsert, Profile } from '@/types/database'
 
 // Conversation with last message and participant info
@@ -193,10 +194,14 @@ export async function sendMessage(
     return { data: null, error: error as Error }
   }
 
-  // Update conversation's updated_at timestamp
-  await typedFrom('conversations')
+  // Update conversation's updated_at timestamp (best-effort, don't fail the message send)
+  const { error: updateError } = await typedFrom('conversations')
     .update({ updated_at: new Date().toISOString() })
     .eq('id', conversationId)
+
+  if (updateError) {
+    logger.error('Failed to update conversation timestamp:', updateError)
+  }
 
   return { data: data as unknown as Message, error: null }
 }
@@ -244,8 +249,7 @@ export async function deleteConversation(
   conversationId: string
 ): Promise<{ error: Error | null }> {
   // Delete messages first (foreign key constraint)
-  const { error: msgError } = await supabase
-    .from('messages')
+  const { error: msgError } = await typedFrom('messages')
     .delete()
     .eq('conversation_id', conversationId)
 
@@ -254,8 +258,7 @@ export async function deleteConversation(
   }
 
   // Delete conversation
-  const { error: convError } = await supabase
-    .from('conversations')
+  const { error: convError } = await typedFrom('conversations')
     .delete()
     .eq('id', conversationId)
 

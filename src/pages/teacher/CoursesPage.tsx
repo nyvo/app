@@ -154,10 +154,14 @@ const CoursesPage = () => {
 
       // Fetch signups count for each course
       const courseIds = coursesData.map(c => c.id);
-      const { data: signupsData } = await typedFrom('signups')
+      const { data: signupsData, error: signupsError } = await typedFrom('signups')
         .select('course_id')
         .in('course_id', courseIds)
         .eq('status', 'confirmed');
+
+      if (signupsError) {
+        console.error('Failed to fetch signups counts:', signupsError);
+      }
 
       // Count signups per course
       const signupsCounts: Record<string, number> = {};

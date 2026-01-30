@@ -25,7 +25,7 @@ import { extractTimeFromSchedule, formatRelativeTimePast } from '@/utils/dateFor
 import { useDashboardSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
-  CourseType as DashboardCourseType,
+  CourseStyleType as DashboardCourseType,
   UpcomingClass,
   Registration,
   SignupStatus,

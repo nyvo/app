@@ -273,8 +273,8 @@ const CourseDetailPage = () => {
         if (sessionsData) {
           setSessions(sessionsData);
         }
-      } catch {
-        // Silent fail for sessions
+      } catch (err) {
+        logger.error('Failed to load sessions:', err);
       } finally {
         setSessionsLoading(false);
       }
@@ -297,8 +297,8 @@ const CourseDetailPage = () => {
         if (participantsData) {
           setParticipants(participantsData);
         }
-      } catch {
-        // Silent fail for participants
+      } catch (err) {
+        logger.error('Failed to load participants:', err);
       } finally {
         setParticipantsLoading(false);
       }
@@ -321,8 +321,8 @@ const CourseDetailPage = () => {
         if (waitlistData) {
           setWaitlist(waitlistData);
         }
-      } catch {
-        // Silent fail for waitlist
+      } catch (err) {
+        logger.error('Failed to load waitlist:', err);
       } finally {
         setWaitlistLoading(false);
       }

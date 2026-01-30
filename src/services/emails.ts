@@ -7,6 +7,12 @@ interface SendEmailResult {
   error?: string
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email)
+}
+
 // Send a raw email (for custom content)
 export async function sendEmail(
   to: string,
@@ -17,6 +23,10 @@ export async function sendEmail(
     replyTo?: string
   }
 ): Promise<SendEmailResult> {
+  if (!isValidEmail(to)) {
+    return { success: false, error: `Invalid email address: ${to}` }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: {
@@ -49,6 +59,10 @@ export async function sendNewMessageNotification(
   organizationName?: string,
   replyTo?: string
 ): Promise<SendEmailResult> {
+  if (!isValidEmail(recipientEmail)) {
+    return { success: false, error: `Invalid email address: ${recipientEmail}` }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: {
@@ -88,6 +102,10 @@ export async function sendSignupConfirmation(
     courseUrl?: string
   }
 ): Promise<SendEmailResult> {
+  if (!isValidEmail(recipientEmail)) {
+    return { success: false, error: `Invalid email address: ${recipientEmail}` }
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: {

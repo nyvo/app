@@ -541,8 +541,25 @@ export async function updateCourse(courseId: string, courseData: CourseUpdate): 
   return { data: data as Course, error: null }
 }
 
-// Delete a course
+// Delete a course and its dependent records
 export async function deleteCourse(courseId: string): Promise<{ error: Error | null }> {
+  // Delete dependent records first (foreign key order)
+  const { error: signupsError } = await typedFrom('signups')
+    .delete()
+    .eq('course_id', courseId)
+
+  if (signupsError) {
+    return { error: signupsError as Error }
+  }
+
+  const { error: sessionsError } = await typedFrom('course_sessions')
+    .delete()
+    .eq('course_id', courseId)
+
+  if (sessionsError) {
+    return { error: sessionsError as Error }
+  }
+
   const { error } = await supabase
     .from('courses')
     .delete()
