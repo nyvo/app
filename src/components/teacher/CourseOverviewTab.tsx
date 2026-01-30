@@ -156,7 +156,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div className="w-full bg-surface-elevated rounded-full h-2 mb-2">
             <div
               className="bg-gray-900 h-2 rounded-full ios-ease"
-              style={{ width: `${Math.max(2, Math.min((course.enrolled / course.capacity) * 100, 100))}%` }}
+              style={{ width: `${course.capacity > 0 ? Math.max(2, Math.min((course.enrolled / course.capacity) * 100, 100)) : 0}%` }}
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">

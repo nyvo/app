@@ -16,6 +16,7 @@ import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
+import { typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 type Tab = 'profile' | 'notifications' | 'security';
@@ -148,6 +149,20 @@ const TeacherProfilePage = () => {
     }
 
     setIsSaving(true);
+
+    // Save profile name
+    if (profile?.id) {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const { error: profileError } = await typedFrom('profiles')
+        .update({ name: fullName })
+        .eq('id', profile.id);
+
+      if (profileError) {
+        toast.error('Kunne ikke lagre profildata');
+        setIsSaving(false);
+        return;
+      }
+    }
 
     // Save organization data (description, city)
     const { error: orgError } = await updateOrganization(currentOrganization.id, {
@@ -384,6 +399,7 @@ const TeacherProfilePage = () => {
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
+                            <p className="text-xs text-muted-foreground mt-2 italic">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
                         </div>
 
                         <div className="divide-y divide-surface-elevated">

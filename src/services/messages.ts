@@ -296,17 +296,87 @@ export async function fetchRecentConversations(
   organizationId: string,
   limit: number = 5
 ): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
-  const result = await fetchConversations(organizationId)
+  // Fetch only recent conversations with a limit, sorted by update time
+  const { data: conversations, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      messages(*)
+    `)
+    .eq('organization_id', organizationId)
+    .order('updated_at', { ascending: false })
+    .limit(limit * 2) // Fetch a bit more to allow sorting by unread
 
-  if (result.error || !result.data) {
-    return result
+  if (error) {
+    return { data: null, error: error as Error }
   }
 
-  // Return only conversations with unread messages, limited
-  const unreadFirst = result.data
+  if (!conversations || conversations.length === 0) {
+    return { data: [], error: null }
+  }
+
+  const typedConversations = conversations as unknown as ConversationWithMessages[]
+
+  // Get user profiles for conversations with user_id
+  const userIds = typedConversations
+    .filter(c => c.user_id)
+    .map(c => c.user_id as string)
+
+  let profilesMap: Record<string, Profile> = {}
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds)
+
+    if (profiles) {
+      const typedProfiles = profiles as unknown as Profile[]
+      profilesMap = typedProfiles.reduce((acc, p) => {
+        acc[p.id] = p
+        return acc
+      }, {} as Record<string, Profile>)
+    }
+  }
+
+  // Map conversations with details
+  const conversationsWithDetails: ConversationWithDetails[] = typedConversations.map(conv => {
+    const messages = conv.messages || []
+    const sortedMessages = [...messages].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    const lastMessage = sortedMessages[0] || null
+    const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length
+
+    let participant = null
+    if (conv.user_id && profilesMap[conv.user_id]) {
+      const profile = profilesMap[conv.user_id]
+      participant = {
+        name: profile.name || profile.email || 'Ukjent',
+        email: profile.email || '',
+        avatar_url: profile.avatar_url
+      }
+    } else if (conv.guest_email) {
+      participant = {
+        name: conv.guest_email,
+        email: conv.guest_email,
+        avatar_url: null
+      }
+    }
+
+    return {
+      ...conv,
+      messages: sortedMessages,
+      participant,
+      last_message: lastMessage,
+      unread_count: unreadCount
+    }
+  })
+
+  // Sort by unread first, then by update time, and limit
+  const sorted = conversationsWithDetails
     .sort((a, b) => b.unread_count - a.unread_count ||
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, limit)
 
-  return { data: unreadFirst, error: null }
+  return { data: sorted, error: null }
 }

@@ -29,6 +29,7 @@ export function useDelayedLoading(
   minDuration = 400
 ): boolean {
   const [showLoading, setShowLoading] = useState(false)
+  const showLoadingRef = useRef(false)
   const loadingStartTime = useRef<number | null>(null)
   const delayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const minDurationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -43,11 +44,12 @@ export function useDelayedLoading(
       // Start delayed show
       delayTimeoutRef.current = setTimeout(() => {
         setShowLoading(true)
+        showLoadingRef.current = true
         loadingStartTime.current = Date.now()
       }, delay)
     } else {
       // Loading finished
-      if (showLoading && loadingStartTime.current) {
+      if (showLoadingRef.current && loadingStartTime.current) {
         // Calculate how long loading has been shown
         const elapsed = Date.now() - loadingStartTime.current
         const remaining = minDuration - elapsed
@@ -56,16 +58,19 @@ export function useDelayedLoading(
           // Keep showing for minimum duration
           minDurationTimeoutRef.current = setTimeout(() => {
             setShowLoading(false)
+            showLoadingRef.current = false
             loadingStartTime.current = null
           }, remaining)
         } else {
           // Already shown long enough
           setShowLoading(false)
+          showLoadingRef.current = false
           loadingStartTime.current = null
         }
       } else {
         // Never shown (fast load), just reset
         setShowLoading(false)
+        showLoadingRef.current = false
         loadingStartTime.current = null
       }
     }
@@ -78,7 +83,8 @@ export function useDelayedLoading(
         clearTimeout(minDurationTimeoutRef.current)
       }
     }
-  }, [isLoading, delay, minDuration, showLoading])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, delay, minDuration])
 
   return showLoading
 }

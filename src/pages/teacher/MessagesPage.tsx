@@ -48,9 +48,9 @@ import { getInitials } from '@/utils/stringUtils'
 import { formatMessageTimestamp } from '@/utils/dateFormatting'
 
 const MessagesPage = () => {
-  const { organizations, profile } = useAuth();
-  const organizationId = organizations[0]?.id;
-  const organizationName = organizations[0]?.name || 'Ease';
+  const { currentOrganization, profile } = useAuth();
+  const organizationId = currentOrganization?.id;
+  const organizationName = currentOrganization?.name || 'Ease';
   const senderName = profile?.name || 'Instruktør';
 
   // Data state
@@ -77,6 +77,7 @@ const MessagesPage = () => {
     const { data, error } = await fetchConversations(organizationId);
     if (error) {
       toast.error('Kunne ikke laste meldinger. Prøv på nytt.');
+      setLoading(false);
       return;
     }
     setConversations(data || []);

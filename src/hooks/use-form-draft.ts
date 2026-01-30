@@ -69,7 +69,7 @@ export function useFormDraft<T extends object>(
       try {
         // Don't save empty drafts
         const hasContent = Object.values(data).some(v =>
-          v !== '' && v !== null && v !== undefined && v !== 0
+          v !== '' && v !== null && v !== undefined
         )
 
         if (hasContent) {

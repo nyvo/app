@@ -346,7 +346,7 @@ const TeacherDashboard = () => {
           const timeParts = session.start_time?.split(':');
           const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
           const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
-          const endDate = new Date();
+          const endDate = session.session_date ? new Date(session.session_date) : new Date();
           endDate.setHours(startHours, startMins + duration, 0, 0);
           const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
           const formatTime = (time: string | null) => time?.slice(0, 5) || '';

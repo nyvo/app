@@ -391,24 +391,19 @@ export const SchedulePage = () => {
       const fetchedCourses = coursesData || [];
       setCourses(fetchedCourses);
 
-      // Fetch sessions for each course
+      // Fetch sessions for all courses in parallel
+      const sessionResults = await Promise.all(
+        fetchedCourses.map(course => fetchCourseSessions(course.id).then(result => ({ course, result })))
+      );
+
       const allSessions: SessionWithCourse[] = [];
-
-      for (const course of fetchedCourses) {
-        const { data: sessionsData, error: sessionsError } = await fetchCourseSessions(course.id);
-
-        if (sessionsError) {
-          continue;
-        }
-
-        if (sessionsData) {
-          // Attach course data to each session
-          const sessionsWithCourse = sessionsData.map(session => ({
-            ...session,
-            course
-          }));
-          allSessions.push(...sessionsWithCourse);
-        }
+      for (const { course, result } of sessionResults) {
+        if (result.error || !result.data) continue;
+        const sessionsWithCourse = result.data.map(session => ({
+          ...session,
+          course
+        }));
+        allSessions.push(...sessionsWithCourse);
       }
 
       setSessions(allSessions);

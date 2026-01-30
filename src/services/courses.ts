@@ -808,9 +808,13 @@ export async function generateCourseSessions(
   startTime: string
 ): Promise<{ error: Error | null }> {
   // First, delete existing sessions
-  await typedFrom('course_sessions')
+  const { error: deleteError } = await typedFrom('course_sessions')
     .delete()
     .eq('course_id', courseId)
+
+  if (deleteError) {
+    return { error: deleteError as Error }
+  }
 
   // Generate new sessions
   const sessions: CourseSessionInsert[] = []

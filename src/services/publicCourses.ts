@@ -118,7 +118,7 @@ export async function fetchPublicCourses(
 
   query = query.range(offset, offset + limit - 1)
 
-  const { data: coursesData, error: coursesError, count } = await query
+  const { data: coursesData, error: coursesError } = await query
 
   if (coursesError) {
     return { data: null, error: coursesError as Error }
@@ -226,7 +226,7 @@ export async function fetchPublicCourses(
     return filters?.includePast ? isPast : !isPast
   })
 
-  return { data: filteredCourses, error: null, count: count || undefined }
+  return { data: filteredCourses, error: null, count: filteredCourses.length }
 }
 
 // Fetch a single course by ID for public detail page

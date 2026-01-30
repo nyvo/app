@@ -105,26 +105,26 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
     const cancelled: SignupDisplay[] = [];
 
     for (const signup of groupSignups) {
-      // Detect and assign exception type
+      // Detect and assign exception type (create new object to avoid mutation)
       const exception = detectException(signup);
-      signup.exceptionType = exception;
+      const annotatedSignup = { ...signup, exceptionType: exception };
 
       // Add to exceptions list if applicable (don't duplicate in other lists)
       if (exception) {
-        exceptions.push(signup);
+        exceptions.push(annotatedSignup);
       }
 
       // Categorize by status
-      switch (signup.status) {
+      switch (annotatedSignup.status) {
         case 'confirmed':
-          if (!exception) confirmed.push(signup);
+          if (!exception) confirmed.push(annotatedSignup);
           break;
         case 'waitlist':
-          if (!exception) waitlist.push(signup);
+          if (!exception) waitlist.push(annotatedSignup);
           break;
         case 'cancelled':
         case 'course_cancelled':
-          cancelled.push(signup);
+          cancelled.push(annotatedSignup);
           break;
       }
     }
