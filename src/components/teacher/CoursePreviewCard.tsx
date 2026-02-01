@@ -7,8 +7,6 @@ import {
   ChevronRight,
   CheckCircle2,
 } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
-import type { CourseStatus } from '@/components/ui/status-badge';
 import { cn } from '@/lib/utils';
 import type { DetailedCourse } from '@/data/mockData';
 
@@ -118,13 +116,8 @@ function formatDateShort(dateString: string): string {
 }
 
 /**
- * Gets the enrollment status display with visual hierarchy.
- *
- * Enrollment rate determines text styling:
- * - Full (100%): Green badge with checkmark
- * - Healthy (≥50%): Muted, blends into background
- * - Moderate (30-50%): Default weight, visible
- * - Low (<30%): Primary weight, draws attention
+ * Gets the enrollment status display.
+ * Full courses show a green badge; others show consistent "X/Y" text.
  */
 function getEnrollmentStatus(course: DetailedCourse): {
   text: string;
@@ -147,18 +140,7 @@ function getEnrollmentStatus(course: DetailedCourse): {
     };
   }
 
-  // Determine text styling based on enrollment health
-  let textClass: string;
-  if (enrollmentRate >= 0.5) {
-    // Healthy - muted, fades into background
-    textClass = 'text-sm font-normal text-muted-foreground';
-  } else if (enrollmentRate >= 0.3) {
-    // Moderate - visible but not alarming
-    textClass = 'text-sm font-medium text-text-secondary';
-  } else {
-    // Low - draws attention
-    textClass = 'text-sm font-medium text-text-primary';
-  }
+  const textClass = 'text-sm font-medium text-text-secondary';
 
   return {
     text: `${course.participants}/${course.maxParticipants}`,
@@ -220,10 +202,7 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
 
       {/* Time signal */}
       <div className="shrink-0 hidden sm:flex items-center">
-        <span className={cn(
-          "text-xs font-medium",
-          course.status === 'active' ? "text-status-confirmed-text" : "text-text-secondary"
-        )}>
+        <span className="text-xs font-medium text-text-secondary">
           {timeSignal}
         </span>
       </div>
@@ -244,17 +223,6 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
           </div>
         )}
       </div>
-
-      {/* Status badge - only show for non-obvious states */}
-      {/* Upcoming courses don't need badge - time signal already conveys this */}
-      {(course.status === 'active' || course.status === 'completed' || course.status === 'draft') && (
-        <div className="shrink-0 flex items-center">
-          <StatusBadge
-            status={course.status as CourseStatus}
-            size="sm"
-          />
-        </div>
-      )}
 
       {/* Chevron */}
       <div className="shrink-0 flex items-center">

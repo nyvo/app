@@ -164,7 +164,7 @@ export const TeacherSidebar = () => {
               {!isCollapsed && (
                 <div className="flex-1 overflow-hidden">
                   <p className="truncate text-sm font-medium text-text-primary">{profile?.name || 'Bruker'}</p>
-                  <p className="truncate text-xs text-text-tertiary">{userRole === 'owner' ? 'Eier' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}</p>
+                  <p className="truncate text-xs text-text-tertiary">{userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}</p>
                 </div>
               )}
             </button>

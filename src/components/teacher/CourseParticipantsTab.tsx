@@ -85,8 +85,8 @@ export const CourseParticipantsTab = ({
           <SearchInput
             value={searchQuery}
             onChange={onSearchQueryChange}
-            placeholder="S\u00f8k etter deltaker"
-            aria-label="S\u00f8k etter deltaker"
+            placeholder="Søk etter deltaker"
+            aria-label="Søk etter deltaker"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export const CourseParticipantsTab = ({
                   <div className="grid grid-cols-2 gap-2">
                     {([
                       { value: 'all', label: 'Alle' },
-                      { value: 'confirmed', label: 'P\u00e5meldt' },
+                      { value: 'confirmed', label: 'Påmeldt' },
                       { value: 'waitlist', label: 'Venteliste' },
                       { value: 'cancelled', label: 'Avbestilt' },
                     ] as const).map((option) => (
@@ -255,7 +255,7 @@ export const CourseParticipantsTab = ({
                           Se kvittering
                         </a>
                       ) : (
-                        <span className="text-text-tertiary text-xs">\u2014</span>
+                        <span className="text-text-tertiary text-xs">—</span>
                       )}
                     </td>
                     {/* Notater */}
@@ -263,7 +263,7 @@ export const CourseParticipantsTab = ({
                       {participant.notes ? (
                         <NotePopover note={participant.notes} />
                       ) : (
-                        <span className="text-text-tertiary">\u2014</span>
+                        <span className="text-text-tertiary">—</span>
                       )}
                     </td>
                   </tr>
@@ -298,7 +298,7 @@ export const CourseParticipantsTab = ({
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Deltakere som venter p\u00e5 ledig plass. Send tilbud for \u00e5 gi dem mulighet til \u00e5 betale.
+              Deltakere som venter på ledig plass. Send tilbud for å gi dem mulighet til å betale.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -308,7 +308,7 @@ export const CourseParticipantsTab = ({
                   <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide w-12">#</th>
                   <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
                   <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Tid p\u00e5 liste</th>
+                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Tid på liste</th>
                   <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
                 </tr>
               </thead>
@@ -329,14 +329,14 @@ export const CourseParticipantsTab = ({
                       const diffDays = Math.floor(diffHours / 24);
                       if (diffDays > 0) return `${diffDays}d`;
                       if (diffHours > 0) return `${diffHours}t`;
-                      return 'N\u00e5';
+                      return 'Nå';
                     })();
 
                     const offerExpiry = entry.offer_expires_at ? (() => {
                       const expires = new Date(entry.offer_expires_at);
                       const now = new Date();
                       const diffMs = expires.getTime() - now.getTime();
-                      if (diffMs <= 0) return 'Utl\u00f8pt';
+                      if (diffMs <= 0) return 'Utløpt';
                       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                       const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                       if (diffHours > 0) return `${diffHours}t ${diffMins}m igjen`;
@@ -372,7 +372,7 @@ export const CourseParticipantsTab = ({
                             </div>
                           ) : entry.offer_status === 'expired' ? (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                              Utl\u00f8pt
+                              Utløpt
                             </span>
                           ) : entry.offer_status === 'skipped' ? (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-gray-100 text-gray-600 border border-gray-200">
