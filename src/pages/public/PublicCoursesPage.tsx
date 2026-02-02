@@ -7,16 +7,16 @@ import {
   User,
   LogOut,
   BookOpen,
-  CheckCircle2,
   Calendar,
-  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TimelineClassCard } from '@/components/public/TimelineClassCard';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
 import { fetchMySignups } from '@/services/studentSignups';
-import { fetchCourseStyles } from '@/services/courses';
 import { useAuth } from '@/contexts/AuthContext';
+import { getRelativeTimeDescription, formatDateShort, formatDateWithWeekday } from '@/utils/dateFormatting';
+import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import type { Organization, CourseStyle } from '@/types/database';
 import {
   DropdownMenu,
@@ -24,50 +24,84 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
-import { getDisplayStyle } from '@/utils/styleDetection';
 
-// Format date range for multi-day events
-function formatDateRange(startDate: string | null, endDate: string | null): string | null {
-  if (!startDate) return null;
+// Date grouping helper
+function groupCoursesByDate(
+  courses: PublicCourseWithDetails[]
+): Map<string, PublicCourseWithDetails[]> {
+  const groups = new Map<string, PublicCourseWithDetails[]>();
 
-  const start = new Date(startDate);
-  const end = endDate ? new Date(endDate) : null;
+  courses.forEach((course) => {
+    // Use next_session date if available, otherwise start_date
+    const dateKey = course.next_session?.session_date || course.start_date || 'no-date';
 
-  if (!end || start.getTime() === end.getTime()) return null;
+    if (!groups.has(dateKey)) {
+      groups.set(dateKey, []);
+    }
+    groups.get(dateKey)!.push(course);
+  });
 
-  const startDay = start.getDate();
-  const endDay = end.getDate();
-  const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+  // Sort courses within each date by time
+  groups.forEach((coursesInDate) => {
+    coursesInDate.sort((a, b) => {
+      const timeA = extractTimeFromSchedule(a.time_schedule);
+      const timeB = extractTimeFromSchedule(b.time_schedule);
 
-  if (start.getMonth() === end.getMonth()) {
-    return `${startDay}.–${endDay}. ${months[start.getMonth()]}`;
-  }
+      if (!timeA) return 1;
+      if (!timeB) return -1;
 
-  const startMonth = months[start.getMonth()];
-  const endMonth = months[end.getMonth()];
-  return `${startDay}. ${startMonth} – ${endDay}. ${endMonth}`;
+      return timeA.hour - timeB.hour;
+    });
+  });
+
+  // Sort dates chronologically
+  const sortedEntries = Array.from(groups.entries()).sort((a, b) => {
+    if (a[0] === 'no-date') return 1;
+    if (b[0] === 'no-date') return -1;
+    return new Date(a[0]).getTime() - new Date(b[0]).getTime();
+  });
+
+  return new Map(sortedEntries);
 }
 
-// Minimal date formatter
-function formatMinimalDate(dateString: string | null, timeSchedule: string | null): string {
-  if (!dateString) return 'Dato kommer';
-  
-  const date = new Date(dateString);
-  const days = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'];
-  const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
-  
-  const dayName = days[date.getDay()];
-  const day = date.getDate();
-  const month = months[date.getMonth()];
-  
-  let timePart = '';
-  if (timeSchedule) {
-      const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
-      if (match) timePart = `, ${match[1]}`;
+// Format date header label
+function formatDateHeader(dateStr: string): string {
+  if (dateStr === 'no-date') return 'Dato kommer';
+
+  const relativeDesc = getRelativeTimeDescription(dateStr);
+  const shortDate = formatDateShort(dateStr);
+
+  // If it's "i dag", "i morgen", etc., combine with short date
+  if (relativeDesc && !relativeDesc.includes('.')) {
+    // Capitalize first letter
+    const capitalized = relativeDesc.charAt(0).toUpperCase() + relativeDesc.slice(1);
+    return `${capitalized}, ${shortDate}`;
   }
-  
-  return `${dayName} ${day}. ${month}${timePart}`;
+
+  // For dates beyond a week, use weekday format
+  return formatDateWithWeekday(dateStr);
+}
+
+// Check if a date is within the current week (Monday to Sunday)
+function isDateInCurrentWeek(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false;
+
+  const date = new Date(dateStr);
+  const today = new Date();
+
+  // Get Monday of current week
+  const currentMonday = new Date(today);
+  const dayOfWeek = today.getDay();
+  const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Adjust for Sunday
+  currentMonday.setDate(today.getDate() - diff);
+  currentMonday.setHours(0, 0, 0, 0);
+
+  // Get Sunday of current week
+  const currentSunday = new Date(currentMonday);
+  currentSunday.setDate(currentMonday.getDate() + 6);
+  currentSunday.setHours(23, 59, 59, 999);
+
+  return date >= currentMonday && date <= currentSunday;
 }
 
 const PublicCoursesPage = () => {
@@ -75,39 +109,42 @@ const PublicCoursesPage = () => {
   const { user, userType, profile, signOut } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
-  const [archivedCourses, setArchivedCourses] = useState<PublicCourseWithDetails[]>([]);
-  const [allStyles, setAllStyles] = useState<CourseStyle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [signedUpCourseIds, setSignedUpCourseIds] = useState<Set<string>>(new Set());
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [showArchive, setShowArchive] = useState(false);
+  const [dateFilter, setDateFilter] = useState<'week' | 'all'>('all');
 
-  // Select course list based on tab
-  const displayedCourses = showArchive ? archivedCourses : courses;
-
-  // Get display styles for all courses (assigned or auto-detected)
-  const coursesWithStyles = useMemo(() => {
-    return displayedCourses.map(course => ({
-      ...course,
-      displayStyle: getDisplayStyle(course, allStyles)
-    }));
-  }, [displayedCourses, allStyles]);
-
-  // Extract unique styles from courses (including auto-detected ones)
+  // Extract unique styles from courses (only assigned styles)
   const availableStyles = useMemo(() => {
-    const styles = coursesWithStyles
-      .map(course => course.displayStyle)
+    const styles = courses
+      .map(course => course.style)
       .filter((style): style is CourseStyle => style !== null)
       .filter((style, index, self) => self.findIndex(s => s.id === style.id) === index)
       .sort((a, b) => a.name.localeCompare(b.name));
     return styles;
-  }, [coursesWithStyles]);
+  }, [courses]);
 
-  // Filter courses by selected style (using displayStyle for auto-detected ones)
+  // Filter courses by date filter
+  const dateFilteredCourses = useMemo(() => {
+    if (dateFilter === 'week') {
+      return courses.filter(course => {
+        const dateToCheck = course.next_session?.session_date || course.start_date;
+        return isDateInCurrentWeek(dateToCheck);
+      });
+    }
+    return courses;
+  }, [courses, dateFilter]);
+
+  // Filter courses by selected style (only assigned styles)
   const filteredCourses = selectedStyle
-    ? coursesWithStyles.filter(course => course.displayStyle?.id === selectedStyle)
-    : coursesWithStyles;
+    ? dateFilteredCourses.filter(course => course.style?.id === selectedStyle)
+    : dateFilteredCourses;
+
+  // Group courses by date
+  const groupedCourses = useMemo(() => {
+    return groupCoursesByDate(filteredCourses);
+  }, [filteredCourses]);
 
   useEffect(() => {
     async function loadData() {
@@ -131,12 +168,8 @@ const PublicCoursesPage = () => {
 
       setOrganization(orgData);
 
-      // Fetch active courses, archived courses, and all styles for auto-detection
-      const [activeResult, archivedResult, stylesResult] = await Promise.all([
-        fetchPublicCourses({ organizationSlug: slug }),
-        fetchPublicCourses({ organizationSlug: slug, includePast: true }),
-        fetchCourseStyles()
-      ]);
+      // Fetch active courses
+      const activeResult = await fetchPublicCourses({ organizationSlug: slug });
 
       if (activeResult.error) {
         setError('Kunne ikke laste kurs');
@@ -145,8 +178,6 @@ const PublicCoursesPage = () => {
       }
 
       setCourses(activeResult.data || []);
-      setArchivedCourses(archivedResult.data || []);
-      setAllStyles(stylesResult.data || []);
 
       // Load student's signups if authenticated
       if (user && profile?.email) {
@@ -170,12 +201,12 @@ const PublicCoursesPage = () => {
   const isEmpty = !loading && filteredCourses.length === 0 && organization;
 
   return (
-    <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
+    <div className="min-h-screen w-full bg-white text-sidebar-foreground overflow-x-hidden font-sans">
       {/* Minimal Navbar */}
       <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100/50">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface shadow-sm group-hover:shadow-md transition-shadow">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface border border-gray-200 group-hover:border-gray-300 transition-colors">
               <Leaf className="h-4 w-4 text-text-primary" />
             </div>
             <span className="text-sm font-medium tracking-tight text-text-primary">Ease</span>
@@ -210,7 +241,54 @@ const PublicCoursesPage = () => {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-4xl px-6 py-12 sm:py-16">
+      {/* Filters Sub-bar */}
+      {organization && !loading && !error && (
+        <div className="sticky top-16 z-40 bg-white border-b border-gray-50">
+          <div className="max-w-3xl mx-auto px-6 py-3 flex gap-3 overflow-x-auto no-scrollbar">
+            {/* Date filter pill */}
+            <button
+              onClick={() => setDateFilter(dateFilter === 'week' ? 'all' : 'week')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                dateFilter === 'week'
+                  ? 'bg-gray-100 text-text-primary'
+                  : 'border border-gray-200 text-text-secondary hover:border-gray-300'
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              {dateFilter === 'week' ? 'Denne uken' : 'Alle'}
+            </button>
+
+            {/* Style filters - only show if multiple styles available */}
+            {!isEmpty && availableStyles.length > 1 && (
+              <>
+                {selectedStyle === null && (
+                  <button
+                    className="px-3 py-1.5 rounded-full text-xs font-medium border border-transparent bg-transparent text-text-secondary whitespace-nowrap"
+                    disabled
+                  >
+                    Alle stiler
+                  </button>
+                )}
+                {availableStyles.map((style) => (
+                  <button
+                    key={style.id}
+                    onClick={() => setSelectedStyle(selectedStyle === style.id ? null : style.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${
+                      selectedStyle === style.id
+                        ? 'bg-text-primary text-white border-text-primary'
+                        : 'bg-transparent border-gray-200 text-text-secondary hover:border-gray-300'
+                    }`}
+                  >
+                    {style.name}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-24">
@@ -231,228 +309,98 @@ const PublicCoursesPage = () => {
         {/* Organization Content */}
         {organization && !loading && !error && (
           <>
-            {/* 1. Header Section - Minimal & Clean */}
-            <header className="mb-16">
-              <div className="flex flex-col items-start gap-6">
-                {/* Logo */}
-                <div className="h-16 w-16 overflow-hidden rounded-xl bg-surface-elevated shadow-sm">
-                  {organization.logo_url ? (
-                    <img
-                      src={organization.logo_url}
-                      alt={organization.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-text-tertiary">
-                      <span className="text-xl font-medium">
-                        {organization.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Text Info */}
-                <div className="space-y-3">
-                  <h1 className="text-3xl font-medium tracking-tight text-text-primary sm:text-4xl">
-                    {organization.name}
-                  </h1>
-                  
-                  <div className="flex items-center gap-3 text-sm text-text-secondary">
-                    {organization.city && (
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-text-tertiary" />
-                        {organization.city}
-                      </span>
-                    )}
+            {/* Hero Section - Studio Info */}
+            <header className="mb-12 flex items-start gap-6">
+              {/* Logo */}
+              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-2xl bg-surface-elevated border border-gray-100 shrink-0">
+                {organization.logo_url ? (
+                  <img
+                    src={organization.logo_url}
+                    alt={organization.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-text-tertiary">
+                    <span className="text-2xl font-medium">
+                      {organization.name.charAt(0).toUpperCase()}
+                    </span>
                   </div>
+                )}
+              </div>
 
-                  {organization.description && (
-                    <p className="max-w-2xl text-base text-muted-foreground leading-relaxed pt-2">
-                      {organization.description}
-                    </p>
-                  )}
-                </div>
+              {/* Text Info */}
+              <div className="space-y-2 flex-1">
+                <h1 className="text-2xl font-medium text-text-primary sm:text-3xl tracking-tight">
+                  {organization.name}
+                </h1>
+
+                {organization.city && (
+                  <div className="flex items-center gap-1.5 text-sm text-text-secondary">
+                    <MapPin className="h-3.5 w-3.5 text-text-tertiary" />
+                    {organization.city}
+                  </div>
+                )}
+
+                {organization.description && (
+                  <p className="max-w-2xl text-sm text-text-tertiary leading-relaxed pt-1">
+                    {organization.description}
+                  </p>
+                )}
               </div>
             </header>
 
-            {/* 2. Filters & Navigation */}
-            <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sticky top-20 z-40 bg-surface/95 backdrop-blur py-2 -mx-2 px-2">
-              {/* Tabs */}
-              <FilterTabs
-                value={showArchive ? 'archive' : 'upcoming'}
-                onValueChange={(v) => { setShowArchive(v === 'archive'); setSelectedStyle(null); }}
-                variant="contained"
-                className="self-start"
-              >
-                <FilterTab value="upcoming">Kommende</FilterTab>
-                {archivedCourses.length > 0 && (
-                  <FilterTab value="archive">Tidligere</FilterTab>
-                )}
-              </FilterTabs>
-
-              {/* Style Pills */}
-              {!isEmpty && availableStyles.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setSelectedStyle(null)}
-                    className={`px-4 py-2 rounded-full text-xs font-medium border transition-colors ${
-                      selectedStyle === null
-                        ? 'bg-text-primary text-white border-text-primary'
-                        : 'bg-transparent border-border text-text-secondary hover:border-text-secondary'
-                    }`}
-                  >
-                    Alle
-                  </button>
-                  {availableStyles.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => setSelectedStyle(style.id)}
-                      className={`px-4 py-2 rounded-full text-xs font-medium border transition-colors ${
-                        selectedStyle === style.id
-                          ? 'bg-text-primary text-white border-text-primary'
-                          : 'bg-transparent border-border text-text-secondary hover:border-text-secondary'
-                      }`}
-                    >
-                      {style.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-white/50">
+              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-gradient-to-br from-white to-surface-elevated/50">
                 <p className="text-sm font-medium text-text-primary">
-                  {showArchive ? 'Ingen tidligere kurs' : 'Ingen aktive kurs'}
+                  {dateFilter === 'week' ? 'Ingen kurs denne uken' : 'Ingen aktive kurs'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {showArchive
-                    ? 'Det finnes ingen avsluttede kurs ennå.'
+                  {dateFilter === 'week'
+                    ? 'Prøv å vise alle kurs.'
                     : 'Det er ingen planlagte kurs for øyeblikket.'}
                 </p>
+                {dateFilter === 'week' && (
+                  <Button
+                    variant="outline-soft"
+                    size="sm"
+                    className="mt-4"
+                    onClick={() => setDateFilter('all')}
+                  >
+                    Vis alle kurs
+                  </Button>
+                )}
               </div>
             )}
 
-            {/* 3. Course List */}
-            <div className="space-y-4">
-              {filteredCourses.map((course) => {
-                const isFull = course.spots_available === 0;
-                const isSignedUp = signedUpCourseIds.has(course.id);
-                const isSeries = course.course_type === 'course-series';
-
-                // Date formatting
-                const displayDate = (course.next_session?.session_date) || course.start_date;
-                const rangeString = formatDateRange(course.start_date, course.end_date);
-                const dateString = rangeString || formatMinimalDate(displayDate, course.time_schedule);
-
-                // Simplified card for archived courses
-                if (showArchive) {
-                  return (
-                    <Link
-                      key={course.id}
-                      to={`/studio/${slug}/${course.id}`}
-                      className="group block relative rounded-xl bg-white p-4 border border-gray-200 transition-all hover:border-gray-300"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-text-primary truncate group-hover:text-sidebar-foreground transition-colors">
-                            {course.title}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span>{dateString}</span>
-                            {course.displayStyle && (
-                              <>
-                                <span className="text-border">•</span>
-                                <span>{course.displayStyle.name}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-xs text-text-tertiary shrink-0">Avsluttet</span>
-                      </div>
-                    </Link>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={course.id}
-                    to={`/studio/${slug}/${course.id}`}
-                    className={`group block relative rounded-xl bg-white p-5 border border-gray-200 transition-all hover:border-gray-300 ${
-                      isFull ? 'opacity-75 bg-surface/50' : ''
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                      {/* Left: Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <h3 className="text-base font-medium text-text-primary truncate pr-2 group-hover:text-sidebar-foreground transition-colors">
-                            {course.title}
-                          </h3>
-
-                          {/* Minimal Inline Badges */}
-                          {isSignedUp && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700">
-                              <CheckCircle2 className="h-3 w-3" />
-                              Påmeldt
-                            </span>
-                          )}
-                          {isSeries && !isSignedUp && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-medium text-text-secondary">
-                              <Layers className="h-3 w-3" />
-                              Kursrekke
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 text-text-tertiary" />
-                            {dateString}
-                          </span>
-                          <span className="text-border">•</span>
-                          <span className="truncate">{course.location || 'Sted kommer'}</span>
-                          {course.displayStyle && (
-                            <>
-                              <span className="text-border">•</span>
-                              <span
-                                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium"
-                                style={{
-                                  backgroundColor: course.displayStyle.color ? `${course.displayStyle.color}15` : undefined,
-                                  color: course.displayStyle.color || undefined,
-                                }}
-                              >
-                                {course.displayStyle.name}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Status & Price */}
-                      <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1 sm:gap-0.5 shrink-0 pl-0 sm:pl-4 border-t sm:border-t-0 border-border pt-3 sm:pt-0 mt-2 sm:mt-0">
-                        <div className="font-medium text-text-primary">
-                           {course.price ? `${course.price} kr` : 'Gratis'}
-                        </div>
-
-                        <div className="text-xs">
-                          {isFull ? (
-                            <span className="text-muted-foreground font-medium">Fullt</span>
-                          ) : course.spots_available <= 3 ? (
-                            <span className="text-status-waitlist-text font-medium">
-                              {course.spots_available} {course.spots_available === 1 ? 'plass' : 'plasser'} igjen
-                            </span>
-                          ) : (
-                            <span className="text-status-confirmed-text font-medium">Ledige plasser</span>
-                          )}
-                        </div>
-                      </div>
+            {/* Timeline Feed */}
+            {!isEmpty && (
+              <div className="space-y-12">
+                {Array.from(groupedCourses.entries()).map(([dateKey, coursesInDate]) => (
+                  <section key={dateKey}>
+                    {/* Sticky Date Header */}
+                    <div className="sticky top-32 z-10 bg-white/90 backdrop-blur-sm w-fit pr-4 rounded-r-lg py-1 mb-4">
+                      <h3 className="text-lg font-medium text-text-primary">
+                        {formatDateHeader(dateKey)}
+                      </h3>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
+
+                    {/* Class Cards */}
+                    <div className="space-y-4">
+                      {coursesInDate.map((course) => (
+                        <div key={course.id}>
+                          <TimelineClassCard
+                            course={course}
+                            studioSlug={slug || ''}
+                            isSignedUp={signedUpCourseIds.has(course.id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>

@@ -52,6 +52,11 @@ export interface PublicCourseWithDetails {
     name: string
     slug: string
   } | null
+  instructor: {
+    id: string
+    name: string | null
+    avatar_url: string | null
+  } | null
   next_session: NextSessionInfo | null
 }
 
@@ -92,7 +97,8 @@ export async function fetchPublicCourses(
       image_url,
       organization_id,
       style:course_styles(id, name, normalized_name, color),
-      organization:organizations(name, slug)
+      organization:organizations(name, slug),
+      instructor:instructor_id(id, name, avatar_url)
     `, { count: filters?.limit ? 'exact' : undefined })
     .neq('status', 'draft')
     .neq('status', 'cancelled')
@@ -206,6 +212,7 @@ export async function fetchPublicCourses(
       organization_id: course.organization_id,
       style: course.style as unknown as CourseStyle | null,
       organization: course.organization as unknown as { name: string; slug: string } | null,
+      instructor: course.instructor as unknown as { id: string; name: string | null; avatar_url: string | null } | null,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
     }
@@ -252,7 +259,8 @@ export async function fetchPublicCourseById(
       image_url,
       organization_id,
       style:course_styles(id, name, normalized_name, color),
-      organization:organizations(name, slug)
+      organization:organizations(name, slug),
+      instructor:instructor_id(id, name, avatar_url)
     `)
     .eq('id', courseId)
     .neq('status', 'draft')
@@ -302,6 +310,7 @@ export async function fetchPublicCourseById(
     organization_id: typedCourse.organization_id,
     style: typedCourse.style as CourseStyle | null,
     organization: typedCourse.organization,
+    instructor: typedCourse.instructor || null,
     spots_available: spotsAvailable,
     next_session: null, // Detail page fetches sessions separately
   }

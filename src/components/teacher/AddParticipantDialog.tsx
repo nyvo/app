@@ -1,0 +1,449 @@
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { Info, Loader2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { checkCourseAvailability, createSignup } from '@/services/signups';
+import { fetchCourseWaitlist } from '@/services/waitlist';
+import type { SignupInsert } from '@/types/database';
+
+interface AddParticipantDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  courseId: string;
+  organizationId: string;
+  onSuccess: () => void;
+}
+
+export function AddParticipantDialog({
+  open,
+  onOpenChange,
+  courseId,
+  organizationId,
+  onSuccess,
+}: AddParticipantDialogProps) {
+  // Form data
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    note: '',
+  });
+
+  // Validation
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Capacity check
+  const [availableSpots, setAvailableSpots] = useState<number | null>(null);
+  const [isCheckingCapacity, setIsCheckingCapacity] = useState(true);
+
+  // Payment marking
+  const [paymentMarked, setPaymentMarked] = useState<'pending' | 'paid'>('pending');
+
+  // Submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Derived state
+  const isFull = availableSpots !== null && availableSpots <= 0;
+
+  // Check capacity when dialog opens
+  useEffect(() => {
+    if (open) {
+      checkCapacity();
+    }
+  }, [open, courseId]);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setFormData({ firstName: '', lastName: '', email: '', phone: '', note: '' });
+      setErrors({});
+      setTouched({});
+      setSubmitError(null);
+      setPaymentMarked('pending');
+    }
+  }, [open]);
+
+  const checkCapacity = async () => {
+    setIsCheckingCapacity(true);
+    const { available, error } = await checkCourseAvailability(courseId);
+
+    if (!error) {
+      setAvailableSpots(available);
+    }
+
+    setIsCheckingCapacity(false);
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'Skriv inn fornavn';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Skriv inn etternavn';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = 'E-postadresse er påkrevd';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Skriv inn en gyldig e-postadresse';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Mark all fields as touched
+    setTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+    });
+
+    if (!validateForm()) {
+      return;
+    }
+
+    // Validate organizationId is present
+    if (!organizationId) {
+      setSubmitError('Organisasjons-ID mangler. Vennligst last siden på nytt.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Re-check capacity to handle race condition
+      const { available } = await checkCourseAvailability(courseId);
+      const finalStatus = available <= 0 ? 'waitlist' : 'confirmed';
+
+      const signupData: SignupInsert = {
+        organization_id: organizationId,
+        course_id: courseId,
+        participant_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        participant_email: formData.email.trim(),
+        participant_phone: formData.phone.trim() || null,
+        note: formData.note.trim() || null,
+        status: finalStatus,
+        payment_status: paymentMarked,
+      };
+
+      // Calculate waitlist position if needed
+      if (finalStatus === 'waitlist') {
+        const { data: waitlist } = await fetchCourseWaitlist(courseId);
+        const maxPosition =
+          waitlist?.reduce((max, entry) => Math.max(max, entry.waitlist_position || 0), 0) || 0;
+        signupData.waitlist_position = maxPosition + 1;
+      }
+
+      const { error } = await createSignup(signupData);
+
+      if (error) {
+        setSubmitError(error.message || 'Kunne ikke legge til deltaker');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success!
+      setIsSubmitting(false);
+      onOpenChange(false);
+      onSuccess(); // Trigger refresh
+
+      const successMessage =
+        finalStatus === 'confirmed' ? 'Deltaker lagt til' : 'Deltaker lagt til på venteliste';
+      toast.success(successMessage);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'En feil oppstod');
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Legg til deltaker</DialogTitle>
+          <DialogDescription>
+            Fyll inn deltakerinformasjon for å legge til manuelt.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isCheckingCapacity ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Info banner if full */}
+            {isFull && (
+              <div className="flex items-start gap-2 p-3 bg-status-info-bg rounded-xl border border-status-info-border">
+                <Info className="h-4 w-4 text-status-info-text shrink-0 mt-0.5" />
+                <p className="text-sm text-text-secondary">
+                  Kurset er fullt. Deltakeren legges automatisk til på ventelisten.
+                </p>
+              </div>
+            )}
+
+            {/* Error banner */}
+            {submitError && (
+              <div className="rounded-xl border border-destructive/30 bg-status-error-bg p-4">
+                <p className="text-sm text-status-error-text">{submitError}</p>
+              </div>
+            )}
+
+            {/* Form fields */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* First Name */}
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                >
+                  Fornavn <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur('firstName')}
+                  placeholder="Ola"
+                  aria-invalid={!!errors.firstName}
+                  aria-describedby={
+                    errors.firstName && touched.firstName ? 'firstName-error' : undefined
+                  }
+                  aria-required="true"
+                  disabled={isSubmitting}
+                  className={
+                    errors.firstName && touched.firstName
+                      ? 'border-status-error-text bg-status-error-bg animate-shake'
+                      : ''
+                  }
+                />
+                {errors.firstName && touched.firstName && (
+                  <p
+                    id="firstName-error"
+                    role="alert"
+                    className="text-xs text-status-error-text font-medium mt-1.5"
+                  >
+                    {errors.firstName}
+                  </p>
+                )}
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                >
+                  Etternavn <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  onBlur={() => handleBlur('lastName')}
+                  placeholder="Nordmann"
+                  aria-invalid={!!errors.lastName}
+                  aria-describedby={
+                    errors.lastName && touched.lastName ? 'lastName-error' : undefined
+                  }
+                  aria-required="true"
+                  disabled={isSubmitting}
+                  className={
+                    errors.lastName && touched.lastName
+                      ? 'border-status-error-text bg-status-error-bg animate-shake'
+                      : ''
+                  }
+                />
+                {errors.lastName && touched.lastName && (
+                  <p
+                    id="lastName-error"
+                    role="alert"
+                    className="text-xs text-status-error-text font-medium mt-1.5"
+                  >
+                    {errors.lastName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                E-postadresse <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                onBlur={() => handleBlur('email')}
+                placeholder="ola@eksempel.no"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email && touched.email ? 'email-error' : 'email-hint'}
+                aria-required="true"
+                disabled={isSubmitting}
+                className={
+                  errors.email && touched.email
+                    ? 'border-status-error-text bg-status-error-bg animate-shake'
+                    : ''
+                }
+              />
+              {errors.email && touched.email ? (
+                <p
+                  id="email-error"
+                  role="alert"
+                  className="text-xs text-status-error-text font-medium mt-1.5"
+                >
+                  {errors.email}
+                </p>
+              ) : (
+                <p id="email-hint" className="text-xs text-text-tertiary mt-1.5">
+                  Bekreftelse sendes hit
+                </p>
+              )}
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label htmlFor="phone" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Telefonnummer <span className="text-text-tertiary font-normal">(valgfritt)</span>
+              </label>
+              <Input
+                id="phone"
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="+47 000 00 000"
+                aria-describedby="phone-hint"
+                disabled={isSubmitting}
+              />
+              <p id="phone-hint" className="text-xs text-text-tertiary mt-1.5">
+                For kontakt ved endringer
+              </p>
+            </div>
+
+            {/* Note */}
+            <div>
+              <label htmlFor="note" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                Kommentar <span className="text-text-tertiary font-normal">(valgfritt)</span>
+              </label>
+              <textarea
+                id="note"
+                name="note"
+                value={formData.note}
+                onChange={handleInputChange}
+                placeholder="Skriv en beskjed"
+                rows={3}
+                disabled={isSubmitting}
+                className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none disabled:opacity-50"
+              />
+              <p className="text-xs text-text-tertiary mt-1.5">Synlig kun for instruktør</p>
+            </div>
+
+            {/* Payment Toggle */}
+            <div>
+              <p id="payment-label" className="text-xs font-medium text-muted-foreground mb-2">
+                Betalingsstatus
+              </p>
+              <div
+                role="radiogroup"
+                aria-labelledby="payment-label"
+                className="flex gap-1 p-1 bg-surface-elevated rounded-xl"
+              >
+                {[
+                  { value: 'pending' as const, label: 'Ikke betalt' },
+                  { value: 'paid' as const, label: 'Betalt' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={paymentMarked === option.value}
+                    onClick={() => setPaymentMarked(option.value)}
+                    disabled={isSubmitting}
+                    className={`flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 ${
+                      paymentMarked === option.value
+                        ? 'bg-white text-text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-text-tertiary mt-1.5">Dette oppretter ikke noen faktisk betaling</p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline-soft"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Avbryt
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Legger til...
+                  </>
+                ) : isFull ? (
+                  'Legg til på venteliste'
+                ) : (
+                  'Legg til deltaker'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
