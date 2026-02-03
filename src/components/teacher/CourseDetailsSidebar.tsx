@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Clock, BarChart2, Mail, Settings2, UserPlus, Link as LinkIcon, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { toast } from 'sonner';
 
 interface CourseDetailsProps {
@@ -19,7 +20,7 @@ interface CourseDetailsProps {
 
 export const CourseDetailsCard = ({ course }: CourseDetailsProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm ring-1 ring-slate-200 overflow-hidden h-full">
+    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border overflow-hidden h-full">
       <div className="p-5 border-b border-gray-100">
         <h3 className="text-sm font-medium text-text-primary">Kursdetaljer</h3>
       </div>
@@ -31,7 +32,7 @@ export const CourseDetailsCard = ({ course }: CourseDetailsProps) => {
             <Calendar className="h-4 w-4" />
           </div>
           <div>
-            <span className="text-xs font-medium text-gray-600 block mb-0.5">Tidspunkt</span>
+            <span className="text-xs font-medium text-text-tertiary block mb-0.5">Tidspunkt</span>
             {course.formattedDateRange ? (
               <>
                 <p className="text-sm font-medium text-text-primary">{course.formattedDateRange}</p>
@@ -49,7 +50,7 @@ export const CourseDetailsCard = ({ course }: CourseDetailsProps) => {
             <MapPin className="h-4 w-4" />
           </div>
           <div>
-            <span className="text-xs font-medium text-gray-600 block mb-0.5">Sted</span>
+            <span className="text-xs font-medium text-text-tertiary block mb-0.5">Sted</span>
             <p className="text-sm font-medium text-text-primary">{course.location}</p>
           </div>
         </div>
@@ -57,10 +58,10 @@ export const CourseDetailsCard = ({ course }: CourseDetailsProps) => {
         {/* Price */}
         <div className="flex gap-3">
           <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center text-text-secondary shrink-0">
-            <span className="text-xs font-bold">kr</span>
+            <span className="text-xs font-medium">kr</span>
           </div>
           <div>
-            <span className="text-xs font-medium text-gray-600 block mb-0.5">Pris</span>
+            <span className="text-xs font-medium text-text-tertiary block mb-0.5">Pris</span>
             <p className="text-sm font-medium text-text-primary">{course.price},-</p>
           </div>
         </div>
@@ -106,13 +107,16 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm ring-1 ring-slate-200 p-5 h-full flex flex-col justify-between">
+    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border p-5 h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-text-primary">Påmelding</h3>
-          <span className="inline-flex items-center px-2 py-1 rounded bg-status-confirmed-bg text-status-confirmed-text text-tiny font-medium tracking-wide">
-            {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-          </span>
+          <StatusIndicator
+            variant="success"
+            mode="inline"
+            size="sm"
+            label={`${spotsLeft} ${spotsLeft === 1 ? 'plass' : 'plasser'} igjen`}
+          />
         </div>
 
         {isEmpty ? (
@@ -208,7 +212,7 @@ export const CourseActionsCard = ({
   onViewPage: _onViewPage
 }: CourseActionsProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm ring-1 ring-slate-200 p-5">
+    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border p-5">
       <h3 className="text-sm font-medium text-text-primary mb-4">Handlinger</h3>
       <div className="space-y-2">
         <Button

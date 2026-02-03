@@ -1,13 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import {
-  MapPin,
-  Users,
-  Calendar,
-  AlertCircle,
-  ChevronRight,
-  CheckCircle2,
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StatusIndicator } from '@/components/ui/status-indicator';
+import { formatCourseStartTime } from '@/utils/dateFormatting';
 import type { DetailedCourse } from '@/data/mockData';
 
 interface CoursePreviewCardProps {
@@ -16,14 +11,12 @@ interface CoursePreviewCardProps {
 }
 
 /**
- * Determines if a course needs attention based on various factors.
+ * Determines if a course needs attention based on enrollment.
  *
- * Urgency is contextual - a new course with 0 signups is normal,
- * but a course starting in 3 days with low enrollment needs attention.
+ * Shows "Lav påmelding" only when a course is starting soon with low enrollment.
+ * This ensures the warning is actionable and meaningful.
  *
- * Triggers:
- * - Course starting soon AND low enrollment (time pressure + problem)
- * - Course has been open for a while but enrollment is stagnant
+ * Trigger: Course starting within 7 days with less than 40% enrollment
  */
 function getUrgencyInfo(course: DetailedCourse): { isUrgent: boolean; reason?: string } {
   const now = new Date();
@@ -45,74 +38,25 @@ function getUrgencyInfo(course: DetailedCourse): { isUrgent: boolean; reason?: s
     ? course.participants / course.maxParticipants
     : 1;
 
-  // Urgency requires BOTH time pressure AND an enrollment issue
-  // This avoids flagging new courses that just haven't had time to fill
-
-  // Critical: Starting very soon (≤3 days) and not full
-  if (daysUntilStart <= 3 && enrollmentRate < 1) {
-    if (enrollmentRate < 0.3) {
-      return { isUrgent: true, reason: 'Få påmeldte' };
-    }
-    // Only flag if significantly under capacity when very close
-    if (enrollmentRate < 0.7) {
-      return { isUrgent: true, reason: 'Ikke fullt' };
-    }
-  }
-
-  // Warning: Starting soon (≤7 days) with low enrollment (<30%)
-  if (daysUntilStart <= 7 && enrollmentRate < 0.3) {
+  // Single, clear trigger: Starting within 7 days with low enrollment (<40%)
+  if (daysUntilStart <= 7 && enrollmentRate < 0.4) {
     return { isUrgent: true, reason: 'Lav påmelding' };
-  }
-
-  // For events: starting within 2 weeks with very low enrollment (<20%)
-  if (course.courseType === 'enkeltkurs' && daysUntilStart <= 14 && enrollmentRate < 0.2) {
-    return { isUrgent: true, reason: 'Trenger oppmerksomhet' };
   }
 
   return { isUrgent: false };
 }
 
 /**
- * Formats the time signal for display
- * - Series: "Uke 4/8" or relative time
- * - Events: "Om 3 dager", "I morgen", etc.
+ * Formats the time signal for display using centralized utility
  */
 function getTimeSignal(course: DetailedCourse): string {
-  // For active series, show week progress
-  if (course.courseType === 'kursrekke' && course.currentWeek && course.totalWeeks) {
-    return `Uke ${course.currentWeek}/${course.totalWeeks}`;
-  }
-
-  // For upcoming courses, show relative time
-  if (course.startDate) {
-    const now = new Date();
-    const startDate = new Date(course.startDate);
-    const daysUntil = Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (daysUntil < 0) {
-      // Already started - show progress or status
-      if (course.status === 'active') {
-        return 'Pågår';
-      }
-      return 'Startet';
-    }
-    if (daysUntil === 0) return 'I dag';
-    if (daysUntil === 1) return 'I morgen';
-    if (daysUntil <= 7) return `Om ${daysUntil} dager`;
-    if (daysUntil <= 14) return 'Om 1 uke';
-    if (daysUntil <= 30) return `Om ${Math.ceil(daysUntil / 7)} uker`;
-    return formatDateShort(course.startDate);
-  }
-
-  // Fallback
-  if (course.status === 'completed') return 'Fullført';
-  if (course.status === 'active') return 'Pågår';
-  return '';
-}
-
-function formatDateShort(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+  return formatCourseStartTime(
+    course.startDate,
+    course.status,
+    course.courseType,
+    course.currentWeek,
+    course.totalWeeks
+  );
 }
 
 /**
@@ -127,24 +71,13 @@ function getEnrollmentStatus(course: DetailedCourse): {
 } {
   const isFull = course.participants >= course.maxParticipants;
   const hasWaitlist = false; // Placeholder - would come from actual data
-  const enrollmentRate = course.maxParticipants > 0
-    ? course.participants / course.maxParticipants
-    : 1;
 
-  if (isFull) {
-    return {
-      text: 'Fullt',
-      isFull: true,
-      hasWaitlist,
-      textClass: ''
-    };
-  }
-
-  const textClass = 'text-sm font-medium text-text-secondary';
+  // Always show enrollment numbers, "Fullt" badge will indicate if full
+  const textClass = 'text-xs font-medium text-text-secondary';
 
   return {
     text: `${course.participants}/${course.maxParticipants}`,
-    isFull: false,
+    isFull: isFull,
     hasWaitlist,
     textClass
   };
@@ -159,20 +92,15 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 p-4 bg-white rounded-2xl border transition-all duration-200 cursor-pointer",
+        "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 cursor-pointer bg-white",
         urgency.isUrgent
           ? "border-amber-200 hover:border-amber-300"
-          : "border-gray-200 hover:border-ring"
+          : "border-border hover:border-ring"
       )}
       onClick={() => navigate(`/teacher/courses/${course.id}`)}
       role="article"
       aria-label={`${course.title}, ${timeSignal}, ${enrollment.text} påmeldt`}
     >
-      {/* Urgency indicator */}
-      {urgency.isUrgent && (
-        <div className="shrink-0 w-1 h-8 rounded-full bg-amber-400" aria-hidden="true" />
-      )}
-
       {/* Course info */}
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-center gap-2">
@@ -180,52 +108,68 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
             {course.title}
           </h3>
           {urgency.isUrgent && urgency.reason && (
-            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 text-xxs font-medium">
-              <AlertCircle className="h-2.5 w-2.5" />
-              {urgency.reason}
-            </span>
+            <StatusIndicator
+              variant="warning"
+              mode="badge"
+              size="xs"
+              label={urgency.reason}
+              className="shrink-0"
+            />
           )}
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1 truncate">
-            <MapPin className="h-3 w-3 shrink-0" />
+        <div className="flex items-center gap-2 text-xs text-text-tertiary">
+          <span className="truncate">
             {course.location}
           </span>
           {course.timeSchedule && (
-            <span className="hidden sm:flex items-center gap-1 truncate">
-              <Calendar className="h-3 w-3 shrink-0" />
-              {course.timeSchedule}
-            </span>
+            <>
+              <span className="hidden sm:inline">·</span>
+              <span className="hidden sm:inline truncate">
+                {course.timeSchedule}
+              </span>
+            </>
           )}
         </div>
       </div>
 
-      {/* Time signal */}
-      <div className="shrink-0 hidden sm:flex items-center">
-        <span className="text-xs font-medium text-text-secondary">
-          {timeSignal}
-        </span>
-      </div>
-
-      {/* Enrollment status */}
-      <div className="shrink-0 min-w-[80px] flex items-center justify-end">
+      {/* Attendance + Week (horizontal, attendance stronger) */}
+      <div className="shrink-0 hidden sm:flex items-center gap-1.5">
         {enrollment.isFull ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-status-confirmed-bg text-status-confirmed-text text-xs font-medium">
-            <CheckCircle2 className="h-3 w-3" />
-            Fullt
-          </span>
+          <>
+            <StatusIndicator
+              variant="success"
+              mode="badge"
+              size="xs"
+              label="Fullt"
+            />
+            {timeSignal && (
+              <>
+                <span className="text-xs text-text-tertiary">·</span>
+                <span className="text-xs font-normal text-text-tertiary">
+                  {timeSignal}
+                </span>
+              </>
+            )}
+          </>
         ) : (
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className={enrollment.textClass}>
+          <>
+            <span className="text-xs font-medium text-text-primary">
               {enrollment.text}
             </span>
-          </div>
+            {timeSignal && (
+              <>
+                <span className="text-xs text-text-tertiary">·</span>
+                <span className="text-xs font-normal text-text-tertiary">
+                  {timeSignal}
+                </span>
+              </>
+            )}
+          </>
         )}
       </div>
 
-      {/* Chevron */}
-      <div className="shrink-0 flex items-center">
+      {/* Chevron - navigation affordance */}
+      <div className="shrink-0 flex items-center ml-2">
         <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
       </div>
     </div>

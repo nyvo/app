@@ -10,10 +10,10 @@ import {
   Mail,
   Info,
   Image,
-  CheckCircle2,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import {
   Accordion,
   AccordionContent,
@@ -133,15 +133,25 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 Påmelding
               </span>
             </div>
-            {spotsLeft > 0 ? (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border">
-                God kapasitet
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border">
-                <CheckCircle2 className="h-3 w-3" />
-                Fullt
-              </span>
+            {/* Enrollment status badge */}
+            {course.capacity > 0 && (
+              <div className="flex items-center">
+                {course.enrolled >= course.capacity ? (
+                  <StatusIndicator
+                    variant="success"
+                    mode="badge"
+                    size="sm"
+                    label="Fullt"
+                  />
+                ) : (
+                  <StatusIndicator
+                    variant="neutral"
+                    mode="badge"
+                    size="sm"
+                    label={`${spotsLeft} ${spotsLeft === 1 ? 'plass' : 'plasser'} igjen`}
+                  />
+                )}
+              </div>
             )}
           </div>
           <div className="flex items-end gap-3 mb-2">
@@ -149,19 +159,15 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               {course.enrolled}
             </span>
             <span className="text-sm text-muted-foreground mb-0.5">
-              av {course.capacity} plasser opptatt
+              av {course.capacity} påmeldte
             </span>
           </div>
           {/* Progress Bar */}
-          <div className="w-full bg-surface-elevated rounded-full h-2 mb-2">
+          <div className="w-full bg-surface-elevated rounded-full h-2">
             <div
-              className="bg-gray-900 h-2 rounded-full ios-ease"
+              className="bg-text-primary h-2 rounded-full ios-ease"
               style={{ width: `${course.capacity > 0 ? Math.max(2, Math.min((course.enrolled / course.capacity) * 100, 100)) : 0}%` }}
             />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{course.enrolled === 0 ? 'Ingen påmeldte ennå' : `${course.enrolled} påmeldt${course.enrolled > 1 ? 'e' : ''}`}</span>
-            <span>{spotsLeft} ledige</span>
           </div>
         </div>
 
@@ -316,9 +322,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             {sessionLabel}
                           </span>
                           <span
-                            className={`text-lg leading-none ${
-                              week.isNext ? 'font-bold' : 'font-medium'
-                            }`}
+                            className="text-lg leading-none font-medium"
                           >
                             {week.weekNum}
                           </span>
@@ -329,14 +333,20 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                               {week.title}
                             </h4>
                             {week.isNext && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-status-confirmed-bg text-status-confirmed-text">
-                                Neste time
-                              </span>
+                              <StatusIndicator
+                                variant="success"
+                                mode="badge"
+                                size="xs"
+                                label="Neste time"
+                              />
                             )}
                             {week.status === 'completed' && (
-                              <span className="rounded-md bg-surface-elevated px-1.5 py-0.5 text-xxs font-medium text-muted-foreground">
-                                Fullført
-                              </span>
+                              <StatusIndicator
+                                variant="neutral"
+                                mode="inline"
+                                size="xs"
+                                label="Fullført"
+                              />
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -358,7 +368,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                              <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
                                 Dato
                               </label>
                               <DatePicker
@@ -373,7 +383,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-xs font-medium text-sidebar-foreground mb-1.5">
+                              <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
                                 Tidspunkt
                               </label>
                               <TimePicker
@@ -394,17 +404,18 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                           </div>
 
                           <div className="flex justify-end gap-2 pt-2">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="compact"
                               onClick={() => onSessionEditCancel(week.id)}
-                              className="text-xs font-medium text-muted-foreground hover:text-text-primary px-3 py-2 rounded-lg hover:bg-surface-elevated transition-colors"
                               disabled={savingSessionId === week.id}
                             >
                               Avbryt
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              size="compact"
                               onClick={() => onSaveSession(week.id)}
                               disabled={savingSessionId === week.id || !hasRealSessions || !sessionEdits[week.id]}
-                              className="rounded-lg bg-text-primary px-3 py-2 text-xs font-medium text-white shadow-sm hover:bg-sidebar-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                               {savingSessionId === week.id ? (
                                 <>
@@ -414,7 +425,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                               ) : (
                                 'Lagre endringer'
                               )}
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </AccordionContent>

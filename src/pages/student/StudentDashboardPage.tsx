@@ -128,25 +128,28 @@ const StudentDashboardPage = () => {
           {upcoming.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
               {upcoming.map((signup) => (
-                <BookingCard 
-                  key={signup.id} 
-                  signup={signup} 
+                <BookingCard
+                  key={signup.id}
+                  signup={signup}
                   onStatusChange={loadData}
                 />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-dashed border-gray-200">
-              <div className="rounded-full bg-surface-elevated p-4 mb-4">
-                <CalendarX className="h-8 w-8 text-text-tertiary" />
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-white to-surface-elevated/50 rounded-xl border border-gray-200 overflow-hidden">
+              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gray-200/30 blur-3xl"></div>
+              <div className="relative z-10">
+                <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
+                  <CalendarX className="h-8 w-8 text-text-tertiary" />
+                </div>
+                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+                  Du har ingen planlagte kurs.
+                </p>
+                <Button onClick={() => window.open('/', '_self')} variant="default">
+                  Finn kurs
+                </Button>
               </div>
-              <h3 className="text-lg font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-                Du har ingen planlagte kurs.
-              </p>
-              <Button onClick={() => window.open('/', '_self')} variant="default">
-                Finn kurs
-              </Button>
             </div>
           )}
         </TabsContent>
@@ -155,22 +158,25 @@ const StudentDashboardPage = () => {
           {past.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 opacity-75">
               {past.map((signup) => (
-                <BookingCard 
-                  key={signup.id} 
-                  signup={signup} 
+                <BookingCard
+                  key={signup.id}
+                  signup={signup}
                   onStatusChange={loadData}
                 />
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center bg-surface/30 rounded-xl border border-dashed border-gray-200">
-              <div className="rounded-full bg-surface-elevated p-4 mb-4">
-                <Clock className="h-8 w-8 text-text-tertiary" />
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-surface/50 to-surface-elevated/30 rounded-xl border border-gray-200 overflow-hidden">
+              <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-gray-200/20 blur-3xl"></div>
+              <div className="relative z-10">
+                <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
+                  <Clock className="h-8 w-8 text-text-tertiary" />
+                </div>
+                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen historikk</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Ingen tidligere kurs.
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-text-primary mb-1">Ingen historikk</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Ingen tidligere kurs.
-              </p>
             </div>
           )}
         </TabsContent>

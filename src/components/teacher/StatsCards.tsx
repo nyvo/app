@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { UserCheck, TrendingUp } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 import type { TeacherStats } from '@/types/dashboard';
 
 interface StatsCardsProps {
@@ -24,9 +24,8 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm text-text-secondary font-normal mb-1">Aktive studenter</span>
-              <span className="font-geist text-sm font-medium text-text-tertiary">
-                Starter etter første økt
+              <span className="text-sm text-text-tertiary">
+                Data vises etter første økt
               </span>
             </div>
           </div>
@@ -39,32 +38,10 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
 
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-text-secondary font-normal mb-1">Oppmøte</p>
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-text-tertiary" />
-                  <span className="font-geist text-sm font-medium text-text-tertiary">
-                    Din vekstkurve
-                  </span>
-                </div>
-              </div>
+              <span className="text-sm text-text-tertiary">
+                Statistikk aktiveres etter første økt
+              </span>
             </div>
-
-            {/* Mock growth chart skeleton */}
-            <div className="flex h-12 items-end gap-2 mt-2">
-              {[30, 45, 35, 60, 75, 55].map((height, index) => (
-                <div
-                  key={index}
-                  className="w-1/6 rounded-t-sm bg-surface-elevated"
-                  style={{ height: `${height}%` }}
-                  aria-label={`Potential growth day ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            <p className="text-tiny text-text-tertiary mt-2">
-              Analyser aktiveres etter din første økt
-            </p>
           </div>
         </div>
       </div>

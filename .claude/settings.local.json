@@ -33,7 +33,8 @@
       "Bash(npx tsc --noEmit)",
       "Bash(supabase --version:*)",
       "Bash(npx supabase functions logs:*)",
-      "Bash(npx supabase functions:*)"
+      "Bash(npx supabase functions:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

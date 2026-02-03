@@ -52,18 +52,10 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
       <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl transition-all duration-1000 group-hover:bg-white/10 z-0"></div>
 
       <div className="relative flex h-full flex-col justify-between z-10 p-6 sm:p-9">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 shrink-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse"></span>
-            <span className="text-xxs sm:text-xs font-medium text-success whitespace-nowrap">{classData.startsIn}</span>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
-            <div className="rounded-full bg-white px-2.5 sm:px-3 py-1 text-xxs sm:text-xs font-medium text-text-primary whitespace-nowrap">
-              Neste kurs
-            </div>
-            <div className="rounded-full bg-white/10 px-2.5 sm:px-3 py-1 text-xxs sm:text-xs font-medium backdrop-blur-md border border-white/10 text-white whitespace-nowrap">
-              Kursrekke
-            </div>
+            <span className="text-xs font-medium text-white">{classData.startsIn}</span>
           </div>
         </div>
 

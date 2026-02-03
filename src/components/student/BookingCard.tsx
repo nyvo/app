@@ -4,6 +4,7 @@ import { nb } from 'date-fns/locale';
 import { MapPin, Calendar, Clock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import {
   Tooltip,
   TooltipContent,
@@ -45,17 +46,17 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   // Check Cancellation
   const { canCancel } = checkCancellationWindow(course.start_date || new Date().toISOString());
   
-  // Payment Status Visuals
+  // Payment Status Visuals - using StatusIndicator component
   const getPaymentBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border">Betalt</span>;
+        return <StatusIndicator variant="success" mode="inline" size="xs" label="Betalt" />;
       case 'pending':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">Venter</span>;
+        return <StatusIndicator variant="warning" mode="inline" size="xs" label="Venter" />;
       case 'refunded':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-cancelled-bg text-status-cancelled-text border border-status-cancelled-border">Refundert</span>;
+        return <StatusIndicator variant="neutral" mode="inline" size="xs" label="Refundert" />;
       default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-status-error-bg text-status-error-text border border-status-error-border">Feilet</span>;
+        return <StatusIndicator variant="error" mode="badge" size="xs" label="Feilet" />;
     }
   };
 

@@ -1,5 +1,5 @@
 import { XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
 import type { SignupStatus } from '@/types/dashboard';
 
 export type { SignupStatus };
@@ -7,59 +7,48 @@ export type CourseStatus = 'active' | 'upcoming' | 'completed';
 export type BadgeStatus = SignupStatus | CourseStatus;
 
 interface StatusConfig {
-  bg: string;
-  text: string;
-  dot: string;
+  variant: IndicatorVariant;
   label: string;
-  icon?: 'x-circle';
+  showIcon: boolean;
 }
 
 const statusConfig: Record<BadgeStatus, StatusConfig> = {
-  // Signup statuses - Administrative colors (Blue/Amber)
+  // Signup statuses
   confirmed: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    dot: 'bg-blue-500',
+    variant: 'neutral', // De-emphasized: default state, not an exception
     label: 'Påmeldt',
+    showIcon: false,
   },
   waitlist: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    dot: 'bg-amber-500',
+    variant: 'warning', // Clearly visible: exception requiring attention
     label: 'Venteliste',
+    showIcon: false,
   },
   cancelled: {
-    bg: 'bg-status-cancelled-bg',
-    text: 'text-status-cancelled-text',
-    dot: '',
+    variant: 'neutral',
     label: 'Avbestilt',
-    icon: 'x-circle',
+    showIcon: false,
   },
   course_cancelled: {
-    bg: 'bg-status-cancelled-bg',
-    text: 'text-status-cancelled-text',
-    dot: '',
+    variant: 'neutral',
     label: 'Kurs avlyst',
-    icon: 'x-circle',
+    showIcon: false,
   },
-  // Course statuses - Keep original feedback colors
+  // Course statuses
   active: {
-    bg: 'bg-status-confirmed-bg',
-    text: 'text-status-confirmed-text',
-    dot: 'bg-status-confirmed-text',
+    variant: 'success',
     label: 'Pågår',
+    showIcon: false,
   },
   upcoming: {
-    bg: 'bg-status-waitlist-bg',
-    text: 'text-status-waitlist-text',
-    dot: 'bg-status-waitlist-text',
+    variant: 'warning',
     label: 'Kommende',
+    showIcon: false,
   },
   completed: {
-    bg: 'bg-surface-elevated',
-    text: 'text-muted-foreground',
-    dot: 'bg-muted-foreground',
+    variant: 'neutral',
     label: 'Fullført',
+    showIcon: false,
   },
 };
 
@@ -70,6 +59,15 @@ interface StatusBadgeProps {
   className?: string;
 }
 
+/**
+ * StatusBadge - Displays signup and course status
+ *
+ * Uses StatusIndicator internally for consistency and accessibility.
+ * Maintains backward compatible API.
+ *
+ * Key change from previous version: Uses rounded-md instead of rounded-full
+ * for a modern, calm SaaS aesthetic.
+ */
 export function StatusBadge({
   status,
   size = 'md',
@@ -79,28 +77,18 @@ export function StatusBadge({
   const config = statusConfig[status];
   const label = customLabel || config.label;
 
-  const sizeClasses = size === 'sm'
-    ? 'px-2 py-0.5 text-xxs'
-    : 'px-2.5 py-1 text-xs';
+  // Map md/sm to StatusIndicator sizes
+  const indicatorSize: IndicatorSize = size === 'sm' ? 'sm' : 'md';
 
   return (
-    <span
-      role="status"
-      aria-label={`Status: ${label}`}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium',
-        config.bg,
-        config.text,
-        sizeClasses,
-        className
-      )}
-    >
-      {config.icon === 'x-circle' ? (
-        <XCircle className={size === 'sm' ? 'h-2.5 w-2.5' : 'h-3 w-3'} aria-hidden="true" />
-      ) : (
-        <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} aria-hidden="true" />
-      )}
-      <span aria-hidden="true">{label}</span>
-    </span>
+    <StatusIndicator
+      variant={config.variant}
+      mode="badge"
+      size={indicatorSize}
+      label={label}
+      icon={config.showIcon ? XCircle : undefined}
+      ariaLabel={`Status: ${label}`}
+      className={className}
+    />
   );
 }

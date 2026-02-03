@@ -13,10 +13,11 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseSection, CourseSectionSkeleton, ArchiveLink } from '@/components/teacher/CourseSection';
+import { CourseSection, CourseSectionSkeleton } from '@/components/teacher/CourseSection';
 import { CoursePreviewCard } from '@/components/teacher/CoursePreviewCard';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useEmptyState } from '@/contexts/EmptyStateContext';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -78,11 +79,25 @@ function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number
 }
 
 /**
+ * Get day of week normalized to Monday=0, Sunday=6
+ */
+function getDayOfWeek(dateString: string | undefined): number {
+  if (!dateString) return 7; // Sort missing dates to the end
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 7;
+  // getDay() returns 0=Sunday, 1=Monday, ..., 6=Saturday
+  // Normalize to Monday=0, Sunday=6
+  const day = date.getDay();
+  return day === 0 ? 6 : day - 1;
+}
+
+/**
  * Sorting logic for courses based on time relevance.
  *
  * Primary sort: Status priority (active > upcoming > rest)
- * Secondary sort: Start date (soonest first)
- * Tertiary sort: Series progression or alphabetical
+ * Secondary sort (kursrekker only): Day of week (Monday to Sunday)
+ * Tertiary sort: Start date (soonest first)
+ * Quaternary sort: Series progression or alphabetical
  *
  * Note: Urgency is shown visually but doesn't affect sort order.
  * This keeps the list predictable while still highlighting issues.
@@ -99,6 +114,13 @@ function sortCourses(courses: DetailedCourse[], type: 'kursrekke' | 'enkeltkurs'
     };
     const statusDiff = (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
     if (statusDiff !== 0) return statusDiff;
+
+    // For kursrekker: sort by day of week (Monday to Sunday)
+    if (type === 'kursrekke') {
+      const dayA = getDayOfWeek(a.startDate);
+      const dayB = getDayOfWeek(b.startDate);
+      if (dayA !== dayB) return dayA - dayB;
+    }
 
     // Then by start date (soonest first)
     if (a.startDate && b.startDate) {
@@ -127,7 +149,7 @@ const CoursesPage = () => {
   const [courses, setCourses] = useState<DetailedCourse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showArchive, setShowArchive] = useState(false);
+  const [viewFilter, setViewFilter] = useState<'active' | 'archive'>('active');
 
   // Fetch courses from Supabase
   const loadCourses = useCallback(async () => {
@@ -277,15 +299,21 @@ const CoursesPage = () => {
                 )}
             </div>
 
-            {/* Search */}
+            {/* Search & Filter */}
             {!showCoursesEmptyState && (
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Søk etter kurs"
-                aria-label="Søk etter kurs"
-                className="max-w-md"
-              />
+              <div className="flex items-center gap-4">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Søk etter kurs"
+                  aria-label="Søk etter kurs"
+                  className="max-w-md"
+                />
+                <FilterTabs value={viewFilter} onValueChange={(v) => setViewFilter(v as 'active' | 'archive')}>
+                  <FilterTab value="active">Aktive</FilterTab>
+                  <FilterTab value="archive">Arkiv</FilterTab>
+                </FilterTabs>
+              </div>
             )}
         </motion.div>
 
@@ -341,69 +369,66 @@ const CoursesPage = () => {
             ) : (
               // Grouped view
               <div className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8">
-                {/* Kursrekker (Series) */}
-                <CourseSection
-                  title="Kursrekker"
-                  subtitle="Faste ukentlige kurs"
-                  courses={kursrekker}
-                  maxVisible={5}
-                />
+                {viewFilter === 'active' ? (
+                  <>
+                    {/* Kursrekker (Series) */}
+                    <CourseSection
+                      title="Kursrekker"
+                      subtitle="Faste ukentlige kurs"
+                      courses={kursrekker}
+                      maxVisible={5}
+                    />
 
-                {/* Arrangementer (Events) */}
-                <CourseSection
-                  title="Arrangementer"
-                  subtitle="Workshops og enkeltarrangementer"
-                  courses={arrangementer}
-                  maxVisible={5}
-                />
+                    {/* Arrangementer (Events) */}
+                    <CourseSection
+                      title="Arrangementer"
+                      subtitle="Workshops og enkeltarrangementer"
+                      courses={arrangementer}
+                      maxVisible={5}
+                    />
 
-                {/* Archive section */}
-                {completedCourses.length > 0 && !showArchive && (
-                  <ArchiveLink
-                    count={completedCourses.length}
-                    onClick={() => setShowArchive(true)}
-                  />
-                )}
-
-                {/* Expanded archive */}
-                {showArchive && completedCourses.length > 0 && (
-                  <section className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-sm font-medium text-text-primary uppercase tracking-wide flex items-center gap-2">
-                          <Archive className="h-4 w-4" />
-                          Arkiv
-                        </h2>
-                        <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
-                          {completedCourses.length}
-                        </span>
+                    {/* Empty state when no active courses */}
+                    {kursrekker.length === 0 && arrangementer.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          Ingen aktive eller kommende kurs.
+                          {completedCourses.length > 0 && ' Se arkivet for fullførte kurs.'}
+                        </p>
                       </div>
-                      <button
-                        onClick={() => setShowArchive(false)}
-                        className="text-xs text-muted-foreground hover:text-text-primary transition-colors"
-                      >
-                        Skjul arkiv
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {completedCourses.map((course) => (
-                        <CoursePreviewCard
-                          key={course.id}
-                          course={course}
-                          showUrgency={false}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Empty state when both sections are empty but archive exists */}
-                {kursrekker.length === 0 && arrangementer.length === 0 && completedCourses.length > 0 && !showArchive && (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Ingen aktive eller kommende kurs. Se arkivet for fullførte kurs.
-                    </p>
-                  </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Archive view */}
+                    {completedCourses.length > 0 ? (
+                      <section className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-sm font-medium text-text-primary uppercase tracking-wide flex items-center gap-2">
+                            <Archive className="h-4 w-4" />
+                            Arkiv
+                          </h2>
+                          <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
+                            {completedCourses.length}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {completedCourses.map((course) => (
+                            <CoursePreviewCard
+                              key={course.id}
+                              course={course}
+                              showUrgency={false}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <p className="text-sm text-muted-foreground">
+                          Ingen fullførte kurs i arkivet.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

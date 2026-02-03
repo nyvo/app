@@ -1,42 +1,36 @@
-import { Check, Clock, X, RotateCcw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { XCircle } from 'lucide-react';
+import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
 
 export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
+export type PaymentVisibility = 'always' | 'exceptions';
 
 interface PaymentConfig {
-  text: string;
-  icon: 'check' | 'clock' | 'x' | 'rotate';
+  variant: IndicatorVariant;
   label: string;
+  showIcon: boolean;
 }
 
 const paymentConfig: Record<PaymentStatus, PaymentConfig> = {
   paid: {
-    text: 'text-status-confirmed-text',
-    icon: 'check',
+    variant: 'success',
     label: 'Betalt',
+    showIcon: false,
   },
   pending: {
-    text: 'text-text-tertiary',
-    icon: 'clock',
-    label: 'Venter',
+    variant: 'warning',
+    label: 'Venter betaling',
+    showIcon: false,
   },
   failed: {
-    text: 'text-status-error-text',
-    icon: 'x',
+    variant: 'error',
     label: 'Betaling feilet',
+    showIcon: false,
   },
   refunded: {
-    text: 'text-muted-foreground',
-    icon: 'rotate',
+    variant: 'neutral',
     label: 'Refundert',
+    showIcon: false,
   },
-};
-
-const iconComponents = {
-  check: Check,
-  clock: Clock,
-  x: X,
-  rotate: RotateCcw,
 };
 
 interface PaymentBadgeProps {
@@ -44,32 +38,53 @@ interface PaymentBadgeProps {
   size?: 'sm' | 'md';
   customLabel?: string;
   className?: string;
+  /**
+   * Controls visibility behavior:
+   * - "exceptions" (default): Renders nothing for "paid" status (silence is success)
+   * - "always": Renders all statuses including "paid"
+   */
+  visibility?: PaymentVisibility;
 }
 
+/**
+ * PaymentBadge - Displays payment status with configurable visibility
+ *
+ * Default behavior (visibility="exceptions"):
+ * - "paid" renders NOTHING (silent success for dense teacher/admin views)
+ * - Other statuses render normally (exceptions are visible)
+ *
+ * Alternative (visibility="always"):
+ * - All statuses render, including "Betalt" for paid (useful in student-facing contexts)
+ *
+ * Uses StatusIndicator internally for consistency and accessibility.
+ */
 export function PaymentBadge({
   status,
   size = 'md',
   customLabel,
   className,
+  visibility = 'exceptions',
 }: PaymentBadgeProps) {
+  // Exception-only mode: paid is silent
+  if (visibility === 'exceptions' && status === 'paid') {
+    return null;
+  }
+
   const config = paymentConfig[status];
   const label = customLabel || config.label;
-  const Icon = iconComponents[config.icon];
 
-  const textSize = size === 'sm' ? 'text-xxs' : 'text-xs';
-  const iconSize = size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5';
+  // Map md/sm to StatusIndicator sizes
+  const indicatorSize: IndicatorSize = size === 'sm' ? 'sm' : 'md';
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 font-medium',
-        config.text,
-        textSize,
-        className
-      )}
-    >
-      <Icon className={iconSize} />
-      {label}
-    </span>
+    <StatusIndicator
+      variant={config.variant}
+      mode="badge"
+      size={indicatorSize}
+      label={label}
+      icon={config.showIcon ? XCircle : undefined}
+      ariaLabel={`Betaling: ${label}`}
+      className={className}
+    />
   );
 }

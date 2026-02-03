@@ -1,12 +1,11 @@
 import {
   Filter,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
+  FileText,
   ArrowUpCircle,
   Trash2,
   Send,
+  X,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SkeletonTableRow } from '@/components/ui/skeleton';
@@ -16,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ParticipantAvatar } from '@/components/ui/participant-avatar';
 import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
 import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { NotePopover } from '@/components/ui/note-popover';
 
 interface DisplayParticipant {
@@ -46,7 +46,6 @@ interface CourseParticipantsTabProps {
   paymentFilter: PaymentStatus | 'all';
   onPaymentFilterChange: (filter: PaymentStatus | 'all') => void;
   filteredParticipants: DisplayParticipant[];
-  displayParticipants: DisplayParticipant[];
   participantsLoading: boolean;
   activeFiltersCount: number;
   onClearFilters: () => void;
@@ -56,6 +55,7 @@ interface CourseParticipantsTabProps {
   removingId: string | null;
   onPromote: (id: string) => void;
   onRemoveFromWaitlist: (id: string) => void;
+  onOpenAddDialog: () => void;
 }
 
 export const CourseParticipantsTab = ({
@@ -66,7 +66,6 @@ export const CourseParticipantsTab = ({
   paymentFilter,
   onPaymentFilterChange,
   filteredParticipants,
-  displayParticipants,
   participantsLoading,
   activeFiltersCount,
   onClearFilters,
@@ -76,6 +75,7 @@ export const CourseParticipantsTab = ({
   removingId,
   onPromote,
   onRemoveFromWaitlist,
+  onOpenAddDialog,
 }: CourseParticipantsTabProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -102,101 +102,158 @@ export const CourseParticipantsTab = ({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 p-0 rounded-xl">
+            <PopoverContent align="end" className="w-72 p-0 rounded-xl" role="dialog" aria-label="Filter deltakere">
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <span className="text-sm font-medium text-text-primary">Filter</span>
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={onClearFilters}
-                    className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
+                    aria-label="Nullstill alle filtre"
+                    className="text-xs font-medium text-muted-foreground hover:text-text-primary smooth-transition"
                   >
-                    Nullstill
+                    Nullstill alle
                   </button>
                 )}
               </div>
 
               {/* Content */}
               <div className="p-4 space-y-5">
-                {/* Status Section */}
+                {/* Status: Segmented Control */}
                 <div>
-                  <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
+                  <p id="status-label" className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-2">
                     Status
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="status-label"
+                    className="flex gap-1 p-1 bg-surface-elevated rounded-xl"
+                  >
                     {([
-                      { value: 'all', label: 'Alle' },
                       { value: 'confirmed', label: 'Påmeldt' },
                       { value: 'waitlist', label: 'Venteliste' },
                       { value: 'cancelled', label: 'Avbestilt' },
                     ] as const).map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => onStatusFilterChange(option.value)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                        role="radio"
+                        aria-checked={statusFilter === option.value}
+                        onClick={() => onStatusFilterChange(statusFilter === option.value ? 'all' : option.value)}
+                        className={`flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                           statusFilter === option.value
-                            ? 'bg-gray-900 text-white shadow-sm'
-                            : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
+                            ? 'bg-white text-text-primary shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary'
                         }`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                          statusFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
-                        }`} />
                         {option.label}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* Payment Section */}
+                {/* Payment: Radio Group */}
                 <div>
-                  <p className="text-xxs font-semibold uppercase tracking-wide text-text-tertiary mb-2.5">
+                  <p id="payment-label" className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-2">
                     Betaling
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div role="radiogroup" aria-labelledby="payment-label" className="space-y-1">
                     {([
-                      { value: 'all', label: 'Alle' },
                       { value: 'paid', label: 'Betalt' },
                       { value: 'pending', label: 'Venter' },
                     ] as const).map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => onPaymentFilterChange(option.value)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                          paymentFilter === option.value
-                            ? 'bg-gray-900 text-white shadow-sm'
-                            : 'bg-surface-elevated text-text-secondary hover:bg-surface hover:text-text-primary'
-                        }`}
+                        role="radio"
+                        aria-checked={paymentFilter === option.value}
+                        onClick={() => onPaymentFilterChange(paymentFilter === option.value ? 'all' : option.value)}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-surface smooth-transition focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-                          paymentFilter === option.value ? 'bg-white' : 'bg-text-tertiary'
-                        }`} />
-                        {option.label}
+                        <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          paymentFilter === option.value
+                            ? 'border-text-primary'
+                            : 'border-gray-300'
+                        }`}>
+                          {paymentFilter === option.value && (
+                            <div className="h-2 w-2 rounded-full bg-text-primary" />
+                          )}
+                        </div>
+                        <span className={`text-sm font-normal ${
+                          paymentFilter === option.value ? 'text-text-primary' : 'text-text-secondary'
+                        }`}>
+                          {option.label}
+                        </span>
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
+
+              {/* Result count footer */}
+              <div className="px-4 py-2.5 border-t border-border bg-surface/50">
+                <p className="text-xxs text-muted-foreground">
+                  <span className="font-medium text-text-primary">{filteredParticipants.length}</span> {filteredParticipants.length === 1 ? 'resultat' : 'resultater'}
+                </p>
+              </div>
             </PopoverContent>
           </Popover>
-          <Button size="compact">
+          <Button size="compact" onClick={onOpenAddDialog}>
             <Plus className="h-4 w-4" />
             Legg til deltaker
           </Button>
         </div>
       </div>
 
+      {/* Active Filter Chips */}
+      {activeFiltersCount > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {statusFilter !== 'all' && (
+            <button
+              onClick={() => onStatusFilterChange('all')}
+              aria-label={`Fjern filter: Status ${
+                statusFilter === 'confirmed' ? 'Påmeldt' :
+                statusFilter === 'waitlist' ? 'Venteliste' :
+                'Avbestilt'
+              }`}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-ring smooth-transition"
+            >
+              Status: {
+                statusFilter === 'confirmed' ? 'Påmeldt' :
+                statusFilter === 'waitlist' ? 'Venteliste' :
+                'Avbestilt'
+              }
+              <X className="h-3 w-3" />
+            </button>
+          )}
+          {paymentFilter !== 'all' && (
+            <button
+              onClick={() => onPaymentFilterChange('all')}
+              aria-label={`Fjern filter: Betaling ${paymentFilter === 'paid' ? 'Betalt' : 'Venter'}`}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-ring smooth-transition"
+            >
+              Betaling: {paymentFilter === 'paid' ? 'Betalt' : 'Venter'}
+              <X className="h-3 w-3" />
+            </button>
+          )}
+          <button
+            onClick={onClearFilters}
+            className="text-xs font-medium text-muted-foreground hover:text-text-primary smooth-transition"
+          >
+            Nullstill alle
+          </button>
+        </div>
+      )}
+
       {/* Table Container */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-100 bg-surface/50">
-                <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
-                <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Betalt</th>
-                <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Kvittering</th>
-                <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Notater</th>
+              <tr className="border-b border-border bg-surface/50">
+                <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide w-auto">Navn</th>
+                <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide w-32">Status</th>
+                <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide w-40">Betaling</th>
+                <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide w-20">Kvittering</th>
+                <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide text-right w-20">Notater</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -238,33 +295,28 @@ export const CourseParticipantsTab = ({
                     <td className="py-4 px-6">
                       <StatusBadge status={participant.status} />
                     </td>
-                    {/* Betalt (payment) */}
+                    {/* Betaling (payment) - exception-only (paid is silent by default) */}
                     <td className="py-4 px-6">
                       <PaymentBadge status={participant.paymentStatus} />
                     </td>
-                    {/* Kvittering (receipt) */}
+                    {/* Kvittering (receipt) - icon-only when present */}
                     <td className="py-4 px-6">
-                      {participant.receiptUrl ? (
+                      {participant.receiptUrl && (
                         <a
                           href={participant.receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-elevated transition-colors"
+                          aria-label="Åpne kvittering"
+                          title="Åpne kvittering"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          Se kvittering
+                          <FileText className="h-4 w-4" />
                         </a>
-                      ) : (
-                        <span className="text-text-tertiary text-xs">—</span>
                       )}
                     </td>
-                    {/* Notater */}
+                    {/* Notater - icon-only when present */}
                     <td className="py-4 px-6 text-right">
-                      {participant.notes ? (
-                        <NotePopover note={participant.notes} />
-                      ) : (
-                        <span className="text-text-tertiary">—</span>
-                      )}
+                      <NotePopover note={participant.notes} />
                     </td>
                   </tr>
                 ))
@@ -272,44 +324,25 @@ export const CourseParticipantsTab = ({
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-3 border-t border-gray-100 bg-surface/50 flex items-center justify-between">
-          <span className="text-xxs text-muted-foreground">Viser <span className="font-medium text-text-primary">{filteredParticipants.length}</span> av <span className="font-medium text-text-primary">{displayParticipants.length}</span> deltakere</span>
-          <div className="flex items-center gap-2">
-            <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md hover:text-text-primary text-text-tertiary disabled:opacity-50 transition-all" disabled>
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button className="p-1.5 rounded-lg bg-white shadow-sm hover:shadow-md text-text-primary transition-all">
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Waitlist Section */}
       {(waitlist.length > 0 || waitlistLoading) && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden mt-6">
-          <div className="px-6 py-4 border-b border-gray-100 bg-status-waitlist-bg/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-text-primary">Venteliste</h3>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
-                  {waitlist.length} {waitlist.length === 1 ? 'person' : 'personer'}
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Deltakere som venter på ledig plass. Send tilbud for å gi dem mulighet til å betale.
-            </p>
+        <div className="bg-white rounded-xl border border-border overflow-hidden mt-6">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="text-sm font-medium text-text-primary">
+              Venteliste ({waitlist.length})
+            </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-gray-100 bg-surface/50">
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide w-12">#</th>
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Navn</th>
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide">Tid på liste</th>
-                  <th className="py-3 px-6 text-xxs font-semibold text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
+                <tr className="border-b border-border bg-surface/50">
+                  <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide w-12">#</th>
+                  <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide">Navn</th>
+                  <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide">Tid på liste</th>
+                  <th className="py-3 px-6 text-xxs font-medium text-muted-foreground uppercase tracking-wide text-right">Handlinger</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -346,7 +379,7 @@ export const CourseParticipantsTab = ({
                     return (
                       <tr key={entry.id} className="group hover:bg-secondary transition-colors">
                         <td className="py-4 px-6">
-                          <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-surface-elevated text-xs font-semibold text-text-secondary">
+                          <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-surface-elevated text-xs font-medium text-text-secondary">
                             {entry.waitlist_position}
                           </span>
                         </td>
@@ -362,26 +395,41 @@ export const CourseParticipantsTab = ({
                         <td className="py-4 px-6">
                           {entry.offer_status === 'pending' ? (
                             <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xxs font-medium bg-blue-50 text-blue-700 border border-blue-200 w-fit">
-                                <Send className="h-3 w-3" />
-                                Tilbud sendt
-                              </span>
+                              <StatusIndicator
+                                variant="success"
+                                mode="badge"
+                                size="sm"
+                                label="Tilbud sendt"
+                                icon={Send}
+                                ariaLabel="Tilbud sendt til venteliste"
+                                className="w-fit"
+                              />
                               {offerExpiry && (
                                 <span className="text-xxs text-muted-foreground">{offerExpiry}</span>
                               )}
                             </div>
                           ) : entry.offer_status === 'expired' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                              Utløpt
-                            </span>
+                            <StatusIndicator
+                              variant="warning"
+                              mode="badge"
+                              size="sm"
+                              label="Utløpt"
+                            />
                           ) : entry.offer_status === 'skipped' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                              Hoppet over
-                            </span>
+                            <StatusIndicator
+                              variant="neutral"
+                              mode="badge"
+                              size="sm"
+                              label="Hoppet over"
+                            />
                           ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xxs font-medium bg-status-waitlist-bg text-status-waitlist-text border border-status-waitlist-border">
-                              Venter
-                            </span>
+                            <StatusIndicator
+                              variant="warning"
+                              mode="badge"
+                              size="sm"
+                              label="Venter"
+                              ariaLabel="Venter på tilbud fra venteliste"
+                            />
                           )}
                         </td>
                         <td className="py-4 px-6">

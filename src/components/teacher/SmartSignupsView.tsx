@@ -1,5 +1,6 @@
-import { Search, Calendar, Users, CheckCircle, Archive } from 'lucide-react';
+import { Search, Calendar, Users, CheckCircle, Archive, AlertTriangle } from 'lucide-react';
 import { SignupGroup } from './SignupGroup';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
 
 interface SmartSignupsViewProps {
@@ -138,9 +139,12 @@ export function SmartSignupsView({
           {stats.confirmed} påmeldt
         </span>
         {stats.waitlist > 0 && (
-          <span className="text-status-waitlist-text">
-            {stats.waitlist} på venteliste
-          </span>
+          <StatusIndicator
+            variant="warning"
+            mode="inline"
+            size="sm"
+            label={`${stats.waitlist} på venteliste`}
+          />
         )}
         {stats.cancelled > 0 && (
           <span className="text-muted-foreground">
@@ -148,9 +152,14 @@ export function SmartSignupsView({
           </span>
         )}
         {stats.exceptions > 0 && (
-          <span className="text-status-error-text font-medium">
-            {stats.exceptions} krever handling
-          </span>
+          <StatusIndicator
+            variant="critical"
+            mode="text-icon"
+            size="sm"
+            label={`${stats.exceptions} krever handling`}
+            icon={AlertTriangle}
+            ariaLabel={`${stats.exceptions} påmeldinger krever handling`}
+          />
         )}
       </div>
 

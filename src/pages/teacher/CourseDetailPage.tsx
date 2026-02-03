@@ -36,6 +36,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
+import { AddParticipantDialog } from '@/components/teacher/AddParticipantDialog';
 
 type Tab = 'overview' | 'participants' | 'settings';
 
@@ -207,6 +208,9 @@ const CourseDetailPage = () => {
 
   // Cancel preview dialog state
   const [showCancelPreview, setShowCancelPreview] = useState(false);
+
+  // Add participant dialog state
+  const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
 
   // Fetch course data from Supabase
   useEffect(() => {
@@ -1024,7 +1028,6 @@ const CourseDetailPage = () => {
                   paymentFilter={paymentFilter}
                   onPaymentFilterChange={setPaymentFilter}
                   filteredParticipants={filteredParticipants}
-                  displayParticipants={displayParticipants}
                   participantsLoading={participantsLoading}
                   activeFiltersCount={activeFiltersCount}
                   onClearFilters={clearFilters}
@@ -1034,6 +1037,16 @@ const CourseDetailPage = () => {
                   removingId={removingId}
                   onPromote={handlePromote}
                   onRemoveFromWaitlist={handleRemoveFromWaitlist}
+                  onOpenAddDialog={() => setAddParticipantDialogOpen(true)}
+                />
+
+                {/* Add Participant Dialog */}
+                <AddParticipantDialog
+                  open={addParticipantDialogOpen}
+                  onOpenChange={setAddParticipantDialogOpen}
+                  courseId={id!}
+                  organizationId={currentOrganization?.id || ''}
+                  onSuccess={refetchParticipantsAndWaitlist}
                 />
               </motion.div>
             )}
@@ -1172,13 +1185,13 @@ const CourseDetailPage = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="destructive"
               onClick={(e) => {
                 e.preventDefault();
                 handleDeleteCourse();
               }}
               disabled={isDeleting}
-              className="bg-status-error-text hover:bg-status-error-text/90"
             >
               {isDeleting ? (
                 <>
@@ -1188,9 +1201,11 @@ const CourseDetailPage = () => {
                     : 'Avlyser'}
                 </>
               ) : (
-                refundPreview.count > 0 ? 'Bekreft avlysning og refunder' : 'Bekreft avlysning'
+                refundPreview.count > 0
+                  ? `Avlys kurs og refunder ${refundPreview.totalAmount} kr`
+                  : 'Avlys kurs'
               )}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

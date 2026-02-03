@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from 'lucide-react';
 import type { Course, CourseStyleType } from '@/types/dashboard';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 
 interface CoursesListProps {
   courses: Course[];
@@ -110,9 +111,19 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
                   <div className="w-14 flex-shrink-0 group-hover:text-text-primary transition-colors">
                     {/* Show day name in week view when courses span multiple days */}
                     {dayName && (
-                      <span className={`block text-xxs font-medium uppercase tracking-wide ${isCourseToday ? 'text-status-confirmed-text' : 'text-text-tertiary'}`}>
-                        {isCourseToday ? 'I dag' : dayName}
-                      </span>
+                      isCourseToday ? (
+                        <StatusIndicator
+                          variant="success"
+                          mode="inline"
+                          size="xs"
+                          label="I dag"
+                          className="mb-0.5"
+                        />
+                      ) : (
+                        <span className="block text-xxs font-medium uppercase tracking-wide text-text-tertiary">
+                          {dayName}
+                        </span>
+                      )
                     )}
                     <span className="text-sm font-normal text-text-secondary">
                       {course.time}

@@ -8,24 +8,17 @@ export const CoursesEmptyState = () => {
       <div className="w-full max-w-2xl mx-auto">
         {/* Main card with gradient background */}
         <div className="relative rounded-3xl border border-border bg-gradient-to-br from-white to-surface-elevated/50 p-8 overflow-hidden">
-          {/* Decorative blur elements */}
-          <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-gray-200/40 blur-3xl" />
-          <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-gray-100/60 blur-2xl" />
-
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center text-center">
             {/* Icon */}
-            <div className="mb-6 rounded-2xl bg-white p-4 border border-gray-200 shadow-sm">
+            <div className="mb-6 rounded-2xl bg-white p-4 border border-border">
               <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
             </div>
 
             {/* Text */}
-            <h2 className="font-geist text-xl font-medium tracking-tight text-text-primary mb-2">
+            <h2 className="font-geist text-xl font-medium tracking-tight text-text-primary mb-6">
               Opprett ditt første kurs
             </h2>
-            <p className="text-sm text-muted-foreground max-w-sm mb-8">
-              Start med å opprette en kursrekke eller et enkeltarrangement. Kursene dine vil vises her.
-            </p>
 
             {/* CTA Button */}
             <Button asChild size="default" className="gap-2">

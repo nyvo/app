@@ -757,6 +757,7 @@ export const SignupsPage = () => {
                       <div className="flex items-center justify-between pl-[44px]">
                         <div className="flex items-center gap-2">
                           <StatusBadge status={signup.status} size="sm" />
+                          {/* Payment badge: exception-only (paid is silent by default) */}
                           <PaymentBadge status={signup.paymentStatus} size="sm" />
                         </div>
                         <span className="text-xs text-text-tertiary">{signup.registeredAt}</span>
@@ -827,6 +828,7 @@ export const SignupsPage = () => {
                           <StatusBadge status={signup.status} />
                         </td>
                         <td className="py-4 px-6">
+                          {/* Payment badge: exception-only (paid is silent by default) */}
                           <PaymentBadge status={signup.paymentStatus} />
                         </td>
                         <td className="py-4 px-6 text-center">

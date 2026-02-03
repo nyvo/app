@@ -378,6 +378,95 @@ className="... ring-red-500 focus:ring-red-500/20"
 className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase tracking-wide text-text-primary shadow-sm"
 ```
 
+### Status Indicators (Unified System)
+
+Use the `<StatusIndicator>` component for all status, payment, and exception badges across the application.
+
+**IMPORTANT**: This replaces ad-hoc badge implementations. Always use StatusIndicator for semantic states to ensure WCAG compliance and visual consistency.
+
+#### Variants
+- **success** - Confirmed signups, successful payments, active courses
+- **warning** - Waitlist positions, pending payments, upcoming events
+- **error** - Failed payments, cancelled signups, expired offers
+- **neutral** - Completed courses, refunded payments, archived items
+- **critical** - Exceptions requiring immediate attention (uses rounded-full for urgency)
+
+#### Modes
+- **badge** - Full background + border (default for tables, cards)
+- **inline** - Subtle background (50% opacity), no border (secondary info like payment status)
+- **text-icon** - Text + icon only, no background (exceptional states)
+
+#### Sizes
+- **xs** - Extra small (11px text, 2.5px icons)
+- **sm** - Small (11px text, 3px icons) - **default**
+- **md** - Medium (12px text, 3.5px icons)
+
+#### Usage Examples
+
+**Status badge in table:**
+```tsx
+import { StatusIndicator } from '@/components/ui/status-indicator';
+
+<StatusIndicator variant="success" label="Påmeldt" />
+```
+
+**Payment badge (subtle, secondary):**
+```tsx
+<StatusIndicator variant="warning" mode="inline" label="Venter" />
+```
+
+**Exception badge (critical, with icon):**
+```tsx
+import { AlertTriangle } from 'lucide-react';
+
+<StatusIndicator
+  variant="critical"
+  label="Betaling feilet"
+  icon={AlertTriangle}
+  ariaLabel="Krever oppmerksomhet: Betaling feilet"
+/>
+```
+
+**Waitlist offer (with custom icon):**
+```tsx
+import { Send } from 'lucide-react';
+
+<StatusIndicator
+  variant="success"
+  label="Tilbud sendt"
+  icon={Send}
+  size="sm"
+/>
+```
+
+**Exception count badge:**
+```tsx
+<StatusIndicator
+  variant="critical"
+  count={3}
+  label="krever oppmerksomhet"
+  icon={AlertTriangle}
+/>
+```
+
+#### Accessibility Requirements
+- All critical states MUST include icons (never color-only)
+- Use `ariaLabel` prop for screen reader context
+- Decorative icons automatically get `aria-hidden="true"`
+- Error/critical states use `role="alert"`, others use `role="status"`
+
+#### Visual Styling
+- Default: `rounded-md` (modern, calm SaaS style)
+- Critical only: `rounded-full` (urgency signal through shape)
+- Text: `text-xxs` (11px) for compact tables
+- Icons: `h-3 w-3` for sm badges, `h-3.5 w-3.5` for md badges
+
+#### When NOT to Use StatusIndicator
+- Filter chips/tabs (use native button with pill styling)
+- Course type dots (use colored dot with ring)
+- Waitlist position numbers (use square badge)
+- Generic informational pills (use custom badge patterns)
+
 ### List Items
 
 #### Message Item
@@ -393,7 +482,7 @@ className="rounded-full bg-surface px-3 py-1 text-xs font-bold uppercase trackin
 ```
 > **Note:** List items use `rounded-3xl` for consistency with card border-radius. Use `hover:bg-gray-50` for subtle hover state.
 
-### Status Indicators
+### Connection Indicators
 
 #### Online Badge
 ```tsx
