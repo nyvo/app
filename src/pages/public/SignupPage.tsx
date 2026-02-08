@@ -140,9 +140,9 @@ const SignupPage = () => {
         break;
       case 'email':
         if (!formData.email.trim()) {
-          newErrors.email = 'Skriv inn e-postadressen din';
+          newErrors.email = 'Skriv inn e-posten din';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Ugyldig e-postadresse';
+          newErrors.email = 'Ugyldig e-post';
         } else {
           delete newErrors.email;
         }
@@ -176,9 +176,9 @@ const SignupPage = () => {
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-postadressen din';
+      newErrors.email = 'Skriv inn e-posten din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Ugyldig e-post';
     }
 
     if (!formData.password.trim()) {
@@ -231,7 +231,7 @@ const SignupPage = () => {
       const isSlugAvailable = await checkSlugAvailable(slug);
 
       if (!isSlugAvailable) {
-        setErrors({ organizationName: 'En organisasjon med dette navnet finnes allerede' });
+        setErrors({ organizationName: 'Dette navnet er allerede i bruk' });
         setIsSubmitting(false);
         return;
       }
@@ -246,7 +246,7 @@ const SignupPage = () => {
       if (signUpError) {
         // Handle specific error messages
         if (signUpError.message.includes('already registered')) {
-          setErrors({ email: 'Denne e-postadressen er allerede registrert' });
+          setErrors({ email: 'E-posten er allerede registrert' });
         } else {
           setErrors({ general: signUpError.message });
         }
@@ -261,8 +261,10 @@ const SignupPage = () => {
         type: userType
       }));
 
-      // Show success toast
-      toast.success('Kontoen er opprettet');
+      // Show success toast with email confirmation note
+      toast.success('Kontoen er opprettet', {
+        description: 'Sjekk e-posten din for å bekrefte kontoen.',
+      });
 
       // Navigate to dashboard where ProtectedRoute will create the org
       navigate('/teacher', {
@@ -270,14 +272,14 @@ const SignupPage = () => {
       });
 
     } catch {
-      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900 overflow-x-hidden">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900 overflow-x-hidden">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -293,7 +295,7 @@ const SignupPage = () => {
         </div>
 
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-semibold tracking-tighter text-text-primary">
@@ -327,7 +329,7 @@ const SignupPage = () => {
                     Hvordan vil du bruke Ease?
                   </h1>
                   <p className="text-text-secondary text-sm">
-                    Velg den profilen som passer best for deg.
+                    Velg det som passer best.
                   </p>
                 </div>
 
@@ -345,11 +347,11 @@ const SignupPage = () => {
                       />
                       <div
                         className={`
-                          relative overflow-hidden rounded-3xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
+                          relative overflow-hidden rounded-2xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
                           ${
                             userType === 'studio'
-                              ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
-                              : 'border-border hover:border-gray-300'
+                              ? 'border-zinc-400 bg-surface-elevated ring-2 ring-zinc-200'
+                              : 'border-border hover:border-zinc-300'
                           }
                         `}
                       >
@@ -373,7 +375,7 @@ const SignupPage = () => {
                                 w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-200
                                 ${
                                   userType === 'studio'
-                                    ? 'bg-gray-900 border-gray-900 text-white scale-110'
+                                    ? 'bg-zinc-900 border-zinc-900 text-white scale-110'
                                     : 'border-white/80 bg-white/40 backdrop-blur-sm'
                                 }
                               `}
@@ -391,20 +393,20 @@ const SignupPage = () => {
                             Yogastudio
                           </h3>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            Administrer timeplan og klasser for flere lærere på et fast sted.
+                            Timeplan og booking for flere lærere på ett sted.
                           </p>
                           <div className="mt-auto space-y-2">
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-primary' : 'bg-text-tertiary'}`} />
                               Felles timeplan og romstyring
                             </div>
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
-                              Oppsett for lærere på lønn
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-primary' : 'bg-text-tertiary'}`} />
+                              Støtte for ansatte lærere
                             </div>
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
-                              Sentralisert betalingshåndtering
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'studio' ? 'bg-primary' : 'bg-text-tertiary'}`} />
+                              Samlet betalingsoversikt
                             </div>
                           </div>
                         </div>
@@ -423,11 +425,11 @@ const SignupPage = () => {
                       />
                       <div
                         className={`
-                          relative overflow-hidden rounded-3xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
+                          relative overflow-hidden rounded-2xl border bg-white flex flex-col transition-all duration-200 min-h-[400px]
                           ${
                             userType === 'teacher'
-                              ? 'border-gray-400 bg-surface-elevated shadow-sm ring-2 ring-gray-200'
-                              : 'border-border hover:border-gray-300'
+                              ? 'border-zinc-400 bg-surface-elevated ring-2 ring-zinc-200'
+                              : 'border-border hover:border-zinc-300'
                           }
                         `}
                       >
@@ -451,7 +453,7 @@ const SignupPage = () => {
                                 w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-200
                                 ${
                                   userType === 'teacher'
-                                    ? 'bg-gray-900 border-gray-900 text-white scale-110'
+                                    ? 'bg-zinc-900 border-zinc-900 text-white scale-110'
                                     : 'border-white/80 bg-white/40 backdrop-blur-sm'
                                 }
                               `}
@@ -469,19 +471,19 @@ const SignupPage = () => {
                             Selvstendig
                           </h3>
                           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                            For lærere som styrer egne klasser og betalinger med full kontroll.
+                            For lærere som styrer sine egne timer og betalinger.
                           </p>
                           <div className="mt-auto space-y-2">
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-primary' : 'bg-text-tertiary'}`} />
                               Full kontroll over egne timer
                             </div>
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
-                              Direkte utbetalinger til deg
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-primary' : 'bg-text-tertiary'}`} />
+                              Utbetaling rett til deg
                             </div>
                             <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-text-primary' : 'bg-text-tertiary'}`} />
+                              <div className={`w-1 h-1 rounded-full transition-all duration-200 ${userType === 'teacher' ? 'bg-primary' : 'bg-text-tertiary'}`} />
                               Egen kundeoversikt
                             </div>
                           </div>
@@ -527,7 +529,7 @@ const SignupPage = () => {
                     Opprett din konto
                   </h2>
                   <p className="text-text-secondary text-sm">
-                    Fyll ut detaljene for å komme i gang.
+                    Fyll ut for å komme i gang.
                   </p>
                 </div>
 
@@ -541,7 +543,7 @@ const SignupPage = () => {
                       htmlFor="name"
                       className="block text-xs font-medium text-text-secondary"
                     >
-                      Fullt Navn
+                      Navn
                     </label>
                     <Input
                       type="text"
@@ -673,12 +675,12 @@ const SignupPage = () => {
                         Oppretter konto...
                       </>
                     ) : (
-                      'Opprett Konto'
+                      'Opprett konto'
                     )}
                   </Button>
 
                   <p className="text-center text-xs text-text-tertiary pt-2">
-                    Ved å klikke opprett konto godtar du våre{' '}
+                    Ved å opprette konto godtar du{' '}
                     <a href="#" className="underline hover:text-text-primary">
                       vilkår
                     </a>

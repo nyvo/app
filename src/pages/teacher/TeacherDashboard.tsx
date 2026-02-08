@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Leaf, Menu, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Leaf, Menu, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -13,15 +13,17 @@ import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
-import { useEmptyState } from '@/contexts/EmptyStateContext';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
+import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, fetchUpcomingSession, fetchWeekSessions, type CourseWithStyle } from '@/services/courses';
+import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
+import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
 import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
 import { getInitials } from '@/utils/stringUtils';
-import { extractTimeFromSchedule, formatRelativeTimePast } from '@/utils/dateFormatting';
+import { formatRelativeTimePast } from '@/utils/dateFormatting';
+import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { useDashboardSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
@@ -33,9 +35,8 @@ import type {
 } from '@/types/dashboard';
 
 // Map database course to dashboard Course format (fallback when no sessions)
-function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
-  // Map style to dashboard course type
-  const styleType = course.style?.normalized_name || course.course_type;
+function mapCourseForDashboard(course: CourseDB): DashboardCourse {
+  const styleType = course.course_type;
 
   // Create subtitle from location or course type
   const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
@@ -44,22 +45,22 @@ function mapCourseForDashboard(course: CourseWithStyle): DashboardCourse {
     id: course.id,
     title: course.title,
     subtitle,
-    time: extractTimeFromSchedule(course.time_schedule),
+    time: extractTimeFromSchedule(course.time_schedule)?.time ?? '',
     type: styleType as DashboardCourseType,
     date: course.start_date || undefined,
   };
 }
 
 // Map session + course to dashboard Course format (preferred - has actual session date)
-function mapSessionForDashboard(session: CourseSession, course: CourseWithStyle): DashboardCourse {
-  const styleType = course.style?.normalized_name || course.course_type;
+function mapSessionForDashboard(session: CourseSession, course: CourseDB): DashboardCourse {
+  const styleType = course.course_type;
   const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
 
   return {
     id: course.id,
     title: course.title,
     subtitle,
-    time: session.start_time?.slice(0, 5) || extractTimeFromSchedule(course.time_schedule),
+    time: session.start_time?.slice(0, 5) || (extractTimeFromSchedule(course.time_schedule)?.time ?? ''),
     type: styleType as DashboardCourseType,
     date: session.session_date || undefined,
   };
@@ -84,9 +85,7 @@ function mapConversationToMessage(conversation: ConversationWithDetails): Dashbo
 }
 
 // Detect if a signup requires teacher attention
-// Only checks confirmed signups - waitlist entries are excluded
 function detectSignupException(signup: SignupWithDetails): boolean {
-  // Only check confirmed signups, not waitlist
   if (signup.status !== 'confirmed') {
     return false;
   }
@@ -190,7 +189,7 @@ function formatSessionDate(sessionDate: string): string {
 }
 
 const TeacherDashboard = () => {
-  const { showEmptyState } = useEmptyState();
+  const showEmptyState = getShowEmptyState();
   const { currentOrganization, profile } = useAuth();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[]>([]);
   const [upcomingClass, setUpcomingClass] = useState<UpcomingClass | null>(null);
@@ -200,6 +199,78 @@ const TeacherDashboard = () => {
   const [hasCourses, setHasCourses] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+
+  // Shared processing: takes the 5 parallel fetch results and updates all dashboard state.
+  // Callers handle loading/error state themselves; this function is pure data processing + setters.
+  function processDashboardResults(
+    coursesResult: Awaited<ReturnType<typeof fetchCourses>>,
+    weekSessionsResult: Awaited<ReturnType<typeof fetchWeekSessions>>,
+    upcomingResult: Awaited<ReturnType<typeof fetchUpcomingSession>>,
+    signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
+    messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
+  ) {
+    // Process courses - prefer week sessions (has actual dates) over raw courses
+    if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
+      setHasCourses(true);
+      const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
+        mapSessionForDashboard(session, course)
+      );
+      setDashboardCourses(sessionCourses);
+    } else if (coursesResult.data && coursesResult.data.length > 0) {
+      setHasCourses(true);
+      const activeCourses = coursesResult.data
+        .filter(c => c.status === 'active' || c.status === 'upcoming')
+        .slice(0, 6)
+        .map(mapCourseForDashboard);
+      setDashboardCourses(activeCourses);
+    } else {
+      setHasCourses(false);
+      setDashboardCourses([]);
+    }
+
+    // Process upcoming session
+    if (upcomingResult.data) {
+      const { session, course, attendeeCount } = upcomingResult.data;
+
+      const duration = course.duration || 60;
+      const timeParts = session.start_time?.split(':');
+      const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
+      const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
+      const endDate = session.session_date ? new Date(session.session_date) : new Date();
+      endDate.setHours(startHours, startMins + duration, 0, 0);
+      const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+      const formatTime = (time: string | null) => time?.slice(0, 5) || '';
+
+      setUpcomingClass({
+        id: course.id,
+        title: course.title,
+        type: course.course_type as DashboardCourseType,
+        startTime: formatTime(session.start_time),
+        endTime: formatTime(session.end_time) || endTime,
+        date: formatSessionDate(session.session_date),
+        location: course.location || 'Ikke angitt',
+        attendees: attendeeCount,
+        capacity: course.max_participants || 0,
+        startsIn: calculateStartsIn(session.session_date, session.start_time),
+      });
+    } else {
+      setUpcomingClass(null);
+    }
+
+    // Process signups
+    if (signupsResult.data) {
+      setRegistrations(signupsResult.data.map(mapSignupToRegistration));
+    } else {
+      setRegistrations([]);
+    }
+
+    // Process messages
+    if (messagesResult.data) {
+      setMessages(messagesResult.data.map(mapConversationToMessage));
+    } else {
+      setMessages([]);
+    }
+  }
 
   // Refetch function for real-time updates (memoized to prevent subscription loops)
   const refetchDashboardData = useCallback(async () => {
@@ -215,67 +286,7 @@ const TeacherDashboard = () => {
         fetchRecentConversations(currentOrganization.id, 4),
       ]);
 
-      // Process courses - prefer week sessions (has actual dates) over raw courses
-      if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
-        setHasCourses(true);
-        const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
-          mapSessionForDashboard(session, course)
-        );
-        setDashboardCourses(sessionCourses);
-      } else if (coursesResult.data && coursesResult.data.length > 0) {
-        setHasCourses(true);
-        const activeCourses = coursesResult.data
-          .filter(c => c.status === 'active' || c.status === 'upcoming')
-          .slice(0, 6)
-          .map(mapCourseForDashboard);
-        setDashboardCourses(activeCourses);
-      } else {
-        setHasCourses(false);
-        setDashboardCourses([]);
-      }
-
-      // Process upcoming session
-      if (upcomingResult.data) {
-        const { session, course, attendeeCount } = upcomingResult.data;
-
-        const duration = course.duration || 60;
-        const timeParts = session.start_time?.split(':');
-        const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
-        const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
-        const endDate = new Date();
-        endDate.setHours(startHours, startMins + duration, 0, 0);
-        const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
-        const formatTime = (time: string | null) => time?.slice(0, 5) || '';
-
-        setUpcomingClass({
-          id: course.id,
-          title: course.title,
-          type: (course.style?.normalized_name || course.course_type) as DashboardCourseType,
-          startTime: formatTime(session.start_time),
-          endTime: formatTime(session.end_time) || endTime,
-          date: formatSessionDate(session.session_date),
-          location: course.location || 'Ikke angitt',
-          attendees: attendeeCount,
-          capacity: course.max_participants || 0,
-          startsIn: calculateStartsIn(session.session_date, session.start_time),
-        });
-      } else {
-        setUpcomingClass(null);
-      }
-
-      // Process signups
-      if (signupsResult.data) {
-        setRegistrations(signupsResult.data.map(mapSignupToRegistration));
-      } else {
-        setRegistrations([]);
-      }
-
-      // Process messages
-      if (messagesResult.data) {
-        setMessages(messagesResult.data.map(mapConversationToMessage));
-      } else {
-        setMessages([]);
-      }
+      processDashboardResults(coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult);
     } catch (err) {
       logger.error('Dashboard refetch error:', err);
       // Don't show error for real-time updates, keep existing data
@@ -318,68 +329,7 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        // Process courses - prefer week sessions (has actual dates) over raw courses
-        if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
-          setHasCourses(true);
-          const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
-            mapSessionForDashboard(session, course)
-          );
-          setDashboardCourses(sessionCourses);
-        } else if (coursesResult.data && coursesResult.data.length > 0) {
-          // Fallback to raw courses if no sessions this week
-          setHasCourses(true);
-          const activeCourses = coursesResult.data
-            .filter(c => c.status === 'active' || c.status === 'upcoming')
-            .slice(0, 6)
-            .map(mapCourseForDashboard);
-          setDashboardCourses(activeCourses);
-        } else {
-          setHasCourses(false);
-          setDashboardCourses([]);
-        }
-
-        // Process upcoming session
-        if (upcomingResult.data) {
-          const { session, course, attendeeCount } = upcomingResult.data;
-
-          const duration = course.duration || 60;
-          const timeParts = session.start_time?.split(':');
-          const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
-          const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
-          const endDate = session.session_date ? new Date(session.session_date) : new Date();
-          endDate.setHours(startHours, startMins + duration, 0, 0);
-          const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
-          const formatTime = (time: string | null) => time?.slice(0, 5) || '';
-
-          setUpcomingClass({
-            id: course.id,
-            title: course.title,
-            type: (course.style?.normalized_name || course.course_type) as DashboardCourseType,
-            startTime: formatTime(session.start_time),
-            endTime: formatTime(session.end_time) || endTime,
-            date: formatSessionDate(session.session_date),
-            location: course.location || 'Ikke angitt',
-            attendees: attendeeCount,
-            capacity: course.max_participants || 0,
-            startsIn: calculateStartsIn(session.session_date, session.start_time),
-          });
-        } else {
-          setUpcomingClass(null);
-        }
-
-        // Process signups
-        if (signupsResult.data) {
-          setRegistrations(signupsResult.data.map(mapSignupToRegistration));
-        } else {
-          setRegistrations([]);
-        }
-
-        // Process messages
-        if (messagesResult.data) {
-          setMessages(messagesResult.data.map(mapConversationToMessage));
-        } else {
-          setMessages([]);
-        }
+        processDashboardResults(coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult);
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {
@@ -427,7 +377,7 @@ const TeacherDashboard = () => {
             >
               <header className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
+                  <p className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                     {getTimeBasedGreeting()}, {userName}
                   </h1>
@@ -437,10 +387,10 @@ const TeacherDashboard = () => {
                   <Button
                     asChild
                     size="compact"
-                    className="hidden md:flex group gap-2"
+                    className="hidden md:flex gap-2"
                   >
                     <Link to="/teacher/new-course">
-                      <Plus className="h-3.5 w-3.5 transition-transform group-hover:rotate-90" />
+                      <CalendarPlus className="h-3.5 w-3.5" />
                       Nytt kurs
                     </Link>
                   </Button>
@@ -468,46 +418,29 @@ const TeacherDashboard = () => {
               ) : (showEmptyState || !hasCourses) ? (
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  {/* Primary Action Card - Dark Hero Style */}
-                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-3xl bg-gray-900 text-white border border-gray-800 ios-ease hover:border-gray-700">
-                    {/* Gradient background */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 z-0"></div>
-                    {/* Grain texture */}
-                    <div className="absolute inset-0 bg-grain opacity-[0.35] mix-blend-overlay pointer-events-none z-0"></div>
-                    {/* Glow effect */}
-                    <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl transition-all duration-1000 group-hover:bg-white/10 z-0"></div>
-
-                    <div className="relative flex h-full flex-col justify-between z-10 p-9">
-                      {/* Top badges */}
-                      <div className="flex items-start justify-between">
-                        <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 px-3 py-1.5">
-                          <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse"></span>
-                          <span className="text-tiny font-medium text-success">Konfigurering kreves</span>
+                  {/* Primary Action Card - Minimal Style */}
+                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+                    <div className="relative flex h-full flex-col justify-center z-10 p-9">
+                      <div className="max-w-md">
+                        <div className="mb-6 rounded-xl bg-surface border border-zinc-100 p-3 w-fit">
+                          <Plus className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
                         </div>
-                        <div className="rounded-full bg-white px-3 py-1 text-tiny font-medium text-text-primary">
-                          Kom i gang
-                        </div>
-                      </div>
-
-                      {/* Main content */}
-                      <div>
-                        <h2 className="font-geist text-2xl md:text-3xl font-medium tracking-tight mb-3 text-white leading-tight">
-                          La oss sette opp<br />ditt første kurs
+                        <h2 className="font-geist text-2xl md:text-3xl font-medium tracking-tight mb-2 text-text-primary leading-tight">
+                          La oss sette opp ditt første kurs
                         </h2>
-                        <p className="text-sm text-white/70 max-w-sm">
-                          Opprett et kurs for å motta påmeldinger og administrere timeplanen.
+                        <p className="text-sm text-text-secondary mb-8">
+                          Opprett et kurs for å motta påmeldinger og administrere timeplanen din.
                         </p>
-                      </div>
-
-                      {/* Button */}
-                      <div className="flex justify-end">
-                        <Link
-                          to="/teacher/new-course"
-                          className="flex items-center gap-2 h-10 rounded-lg bg-white px-3 py-2 text-tiny font-medium text-text-primary group-hover:bg-surface-elevated ios-ease"
+                        <Button
+                          asChild
+                          size="default"
+                          className="gap-2"
                         >
-                          Opprett kurs
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
+                          <Link to="/teacher/new-course">
+                            <CalendarPlus className="h-4 w-4" />
+                            Opprett kurs
+                          </Link>
+                        </Button>
                       </div>
                     </div>
                   </div>

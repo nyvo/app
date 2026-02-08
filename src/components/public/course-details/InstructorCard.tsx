@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserAvatar } from '@/components/ui/user-avatar';
 
 export interface InstructorCardProps {
   instructor: {
@@ -22,21 +23,13 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({ instructor }) =>
   const { name, role, avatar_url, profileUrl } = instructor;
 
   return (
-    <div className="flex items-center gap-4 p-5 rounded-xl border border-gray-200 bg-surface/30">
+    <div className="flex items-center gap-4 p-5 rounded-2xl border border-zinc-200 bg-surface/30">
       {/* Avatar - larger (64x64) */}
-      <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden shrink-0">
-        {avatar_url ? (
-          <img
-            src={avatar_url}
-            alt={name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-tertiary font-medium text-xl">
-            {name.charAt(0).toUpperCase()}
-          </div>
-        )}
-      </div>
+      <UserAvatar
+        name={name}
+        src={avatar_url}
+        size="xl"
+      />
 
       {/* Info */}
       <div className="flex-1 min-w-0">

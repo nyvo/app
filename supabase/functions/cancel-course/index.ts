@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
       .from('signups')
       .select('*')
       .eq('course_id', body.course_id)
-      .in('status', ['confirmed', 'waitlist'])
+      .eq('status', 'confirmed')
 
     if (signupsError) {
       console.error('Error fetching signups:', signupsError)
@@ -101,9 +101,23 @@ Deno.serve(async (req: Request) => {
       message: ''
     }
 
-    // Process each signup: refund and notify
-    for (const signup of (signups || [])) {
-      // Process refund if paid
+    // Cancel the course FIRST to prevent new signups during refund processing
+    const { error: updateError } = await supabase
+      .from('courses')
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', body.course_id)
+
+    if (updateError) {
+      console.error('Error updating course status:', updateError)
+      return errorResponse('Failed to cancel course', 500)
+    }
+
+    // Process refunds in parallel (not sequentially)
+    const refundPromises = (signups || []).map(async (signup) => {
+      let refunded = false
       if (signup.stripe_payment_intent_id && signup.payment_status === 'paid') {
         try {
           const refund = await stripe.refunds.create({
@@ -111,55 +125,53 @@ Deno.serve(async (req: Request) => {
             reason: 'requested_by_customer',
           })
           console.log(`Refund created for signup ${signup.id}: ${refund.id}`)
-          results.refunds_processed++
-          results.total_refunded += signup.amount_paid || 0
-
-          // Update signup status
-          await supabase
-            .from('signups')
-            .update({
-              status: 'course_cancelled',
-              payment_status: 'refunded',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', signup.id)
+          refunded = true
         } catch (refundError) {
           console.error(`Refund failed for signup ${signup.id}:`, refundError)
-          results.refunds_failed++
-
-          // Still cancel the signup
-          await supabase
-            .from('signups')
-            .update({
-              status: 'course_cancelled',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', signup.id)
         }
-      } else {
-        // No payment to refund, just cancel
-        await supabase
-          .from('signups')
-          .update({
-            status: 'course_cancelled',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', signup.id)
       }
 
-      // Send notification email if requested
-      if (body.notify_participants !== false && signup.participant_email) {
-        try {
-          const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceKey}`
-            },
-            body: JSON.stringify({
-              to: signup.participant_email,
-              subject: `Kurs avlyst: ${course.title}`,
-              html: `
+      // Update signup status
+      await supabase
+        .from('signups')
+        .update({
+          status: 'course_cancelled',
+          payment_status: refunded ? 'refunded' : signup.payment_status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', signup.id)
+
+      return { refunded, amount: refunded ? (signup.amount_paid || 0) : 0 }
+    })
+
+    const refundResults = await Promise.allSettled(refundPromises)
+    for (const r of refundResults) {
+      if (r.status === 'fulfilled') {
+        if (r.value.refunded) {
+          results.refunds_processed++
+          results.total_refunded += r.value.amount
+        }
+      } else {
+        results.refunds_failed++
+      }
+    }
+
+    // Send notification emails AFTER all refunds are processed (non-blocking)
+    if (body.notify_participants !== false) {
+      const emailPromises = (signups || [])
+        .filter(s => s.participant_email)
+        .map(async (signup) => {
+          try {
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                to: signup.participant_email,
+                subject: `Kurs avlyst: ${course.title}`,
+                html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -206,36 +218,24 @@ Deno.serve(async (req: Request) => {
   </div>
 </body>
 </html>
-              `,
-              text: `Hei ${signup.participant_name || ''}, vi må dessverre informere om at ${course.title} er avlyst.${signup.payment_status === 'paid' && signup.amount_paid ? ` ${signup.amount_paid} kr vil bli tilbakebetalt innen 5-10 virkedager.` : ''} Vi beklager eventuelle ulemper.`
+                `,
+                text: `Hei ${signup.participant_name || ''}, vi må dessverre informere om at ${course.title} er avlyst.${signup.payment_status === 'paid' && signup.amount_paid ? ` ${signup.amount_paid} kr vil bli tilbakebetalt innen 5-10 virkedager.` : ''} Vi beklager eventuelle ulemper.`
+              })
             })
-          })
-
-          if (emailResponse.ok) {
-            results.notifications_sent++
+            return emailResponse.ok
+          } catch (emailError) {
+            console.error(`Email failed for ${signup.participant_email}:`, emailError)
+            return false
           }
-        } catch (emailError) {
-          console.error(`Email failed for ${signup.participant_email}:`, emailError)
-        }
-      }
+        })
+
+      const emailResults = await Promise.allSettled(emailPromises)
+      results.notifications_sent = emailResults.filter(
+        r => r.status === 'fulfilled' && r.value
+      ).length
     }
 
-    // Update course status to cancelled
-    const { error: updateError } = await supabase
-      .from('courses')
-      .update({
-        status: 'cancelled',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', body.course_id)
-
-    if (updateError) {
-      console.error('Error updating course status:', updateError)
-      results.success = false
-      results.message = 'Refusjoner behandlet, men kunne ikke oppdatere kursstatus'
-    } else {
-      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
-    }
+    results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
 
     return new Response(
       JSON.stringify(results),

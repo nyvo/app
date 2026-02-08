@@ -131,7 +131,7 @@ const ResetPasswordPage = () => {
       });
 
       if (error) {
-        setErrors({ general: 'Passordet ble ikke oppdatert. Prøv på nytt.' });
+        setErrors({ general: 'Passordet ble ikke oppdatert. Prøv igjen.' });
         setIsSubmitting(false);
         return;
       }
@@ -140,7 +140,7 @@ const ResetPasswordPage = () => {
       setResetSuccess(true);
       setIsSubmitting(false);
     } catch (err) {
-      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
       setIsSubmitting(false);
     }
   };
@@ -148,12 +148,12 @@ const ResetPasswordPage = () => {
   // Invalid/expired session
   if (isValidSession === false) {
     return (
-      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
         {/* Minimal Header */}
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
+            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -179,7 +179,7 @@ const ResetPasswordPage = () => {
                 Ugyldig lenke
               </h1>
               <p className="text-text-secondary text-sm">
-                Lenken er utløpt eller ugyldig.
+                Lenken er utløpt eller fungerer ikke.
               </p>
             </div>
 
@@ -227,12 +227,12 @@ const ResetPasswordPage = () => {
   // Success state - Password reset
   if (resetSuccess) {
     return (
-      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
         {/* Minimal Header */}
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
+            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -260,7 +260,7 @@ const ResetPasswordPage = () => {
                 Passordet er oppdatert
               </h1>
               <p className="text-text-secondary text-sm">
-                Passordet er oppdatert. Du kan logge inn.
+                Passordet er oppdatert. Du kan nå logge inn.
               </p>
             </div>
 
@@ -270,7 +270,7 @@ const ResetPasswordPage = () => {
                 className="w-full h-11"
               >
                 <Link to="/login">
-                  Fortsett til innlogging
+                  Gå til innlogging
                 </Link>
               </Button>
             </div>
@@ -294,7 +294,7 @@ const ResetPasswordPage = () => {
 
   // Form state - Reset password
   return (
-    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -307,7 +307,7 @@ const ResetPasswordPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white">
+          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -331,7 +331,7 @@ const ResetPasswordPage = () => {
               Tilbakestill passord
             </h1>
             <p className="text-text-secondary text-sm">
-              Skriv inn det nye passordet ditt.
+              Velg et nytt passord.
             </p>
           </div>
 
@@ -395,7 +395,7 @@ const ResetPasswordPage = () => {
                       ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
                       : ''
                   }`}
-                  placeholder="Skriv passordet igjen"
+                  placeholder="Gjenta passordet"
                 />
                 <button
                   type="button"

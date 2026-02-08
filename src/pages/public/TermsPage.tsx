@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 const TermsPage = () => {
   return (
-    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -17,7 +17,7 @@ const TermsPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-medium tracking-tighter text-text-primary">

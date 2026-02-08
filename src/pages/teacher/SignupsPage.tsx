@@ -25,13 +25,22 @@ import { SkeletonTableRows } from '@/components/ui/skeleton';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
 import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
-import { ParticipantAvatar } from '@/components/ui/participant-avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { SearchInput } from '@/components/ui/search-input';
 import { NotePopover } from '@/components/ui/note-popover';
 import { SmartSignupsView } from '@/components/teacher/SmartSignupsView';
-import { fetchAllSignups, type SignupWithDetails } from '@/services/signups';
+import { toast } from 'sonner';
+import {
+  fetchAllSignups,
+  teacherCancelSignup,
+  sendPaymentLink,
+  markPaymentResolved,
+  type SignupWithDetails,
+} from '@/services/signups';
+import type { ExceptionActionHandlers } from '@/components/teacher/ExceptionActionMenu';
 import {
   useGroupedSignups,
   type SignupDisplay,
@@ -133,7 +142,7 @@ const ModeTabs = ({
   ];
 
   return (
-    <div className="flex gap-1 p-1 bg-surface-elevated rounded-xl">
+    <div className="flex gap-1 p-1 bg-surface-elevated rounded-lg">
       {tabs.map(tab => (
         <button
           key={tab.value}
@@ -141,7 +150,7 @@ const ModeTabs = ({
           className={cn(
             'flex items-center gap-1.5 rounded-lg py-2 px-4 text-xs font-medium transition-all whitespace-nowrap',
             value === tab.value
-              ? 'bg-white text-text-primary shadow-sm'
+              ? 'bg-white text-text-primary'
               : 'text-muted-foreground hover:text-text-primary'
           )}
         >
@@ -219,7 +228,6 @@ const StatusDropdown = ({
   const options: Array<{ value: StatusFilter; label: string }> = [
     { value: 'all', label: 'Alle' },
     { value: 'confirmed', label: 'Påmeldt' },
-    { value: 'waitlist', label: 'Venteliste' },
     { value: 'cancelled', label: 'Avbestilt' },
   ];
 
@@ -250,46 +258,6 @@ const StatusDropdown = ({
   );
 };
 
-// Payment dropdown filter
-const PaymentDropdown = ({
-  value,
-  onChange,
-}: {
-  value: PaymentFilter;
-  onChange: (value: PaymentFilter) => void;
-}) => {
-  const options: Array<{ value: PaymentFilter; label: string }> = [
-    { value: 'all', label: 'Alle' },
-    { value: 'paid', label: 'Betalt' },
-    { value: 'refunded', label: 'Refundert' },
-  ];
-
-  const currentLabel = options.find(o => o.value === value)?.label || 'Alle';
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className={cn(
-          'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-          value !== 'all'
-            ? 'bg-white text-text-primary border-border'
-            : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-        )}>
-          Betaling: {currentLabel}
-          <ChevronDown className="ml-1 h-3.5 w-3.5" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {options.map(option => (
-          <DropdownMenuItem key={option.value} onClick={() => onChange(option.value)}>
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
 // View toggle component
 const ViewToggle = ({
   value,
@@ -304,7 +272,7 @@ const ViewToggle = ({
         onClick={() => onChange('smart')}
         className={cn(
           'p-2 rounded-md transition-colors',
-          value === 'smart' ? 'bg-white shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-primary'
+          value === 'smart' ? 'bg-white text-text-primary' : 'text-text-tertiary hover:text-text-primary'
         )}
         aria-label="Oversiktsvisning"
         title="Oversikt (gruppert)"
@@ -315,7 +283,7 @@ const ViewToggle = ({
         onClick={() => onChange('table')}
         className={cn(
           'p-2 rounded-md transition-colors',
-          value === 'table' ? 'bg-white shadow-sm text-text-primary' : 'text-text-tertiary hover:text-text-primary'
+          value === 'table' ? 'bg-white text-text-primary' : 'text-text-tertiary hover:text-text-primary'
         )}
         aria-label="Tabellvisning"
         title="Alle påmeldinger (tabell)"
@@ -337,17 +305,31 @@ export const SignupsPage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('smart');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Smart view filters (new architecture)
+  // Filters state (shared between views)
   const [modeFilter, setModeFilter] = useState<ModeFilter>('active');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>('upcoming'); // Default to "Kommende"
+  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>('upcoming');
   const [statusFilterSmart, setStatusFilterSmart] = useState<StatusFilter>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [classFilter, setClassFilter] = useState<string>('Alle');
 
-  // Table view filters (separate state)
+  // Attendance state (local UI state for now)
+  const [attendedSignups, setAttendedSignups] = useState<Set<string>>(new Set());
+
+  const handleToggleAttendance = (signupId: string) => {
+    setAttendedSignups(prev => {
+      const next = new Set(prev);
+      if (next.has(signupId)) {
+        next.delete(signupId);
+      } else {
+        next.add(signupId);
+      }
+      return next;
+    });
+  };
+
+  // Table view sort state
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [statusFilter, setStatusFilter] = useState<string>('Alle');
-  const [classFilter, setClassFilter] = useState<string>('Alle');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -394,10 +376,10 @@ export const SignupsPage = () => {
         status: signup.status as SignupStatus,
         paymentStatus: signup.payment_status as PaymentStatus,
         note: signup.note || undefined,
-        // Additional fields for exception detection
-        waitlistPosition: signup.waitlist_position || undefined,
-        offerStatus: signup.offer_status || null,
-        offerExpiresAt: signup.offer_expires_at ? new Date(signup.offer_expires_at) : null,
+        attended: attendedSignups.has(signup.id),
+        // Additional fields for teacher actions
+        stripePaymentIntentId: signup.stripe_payment_intent_id || null,
+        organizationId: signup.organization_id,
       };
     });
   }, [signups]);
@@ -431,7 +413,8 @@ export const SignupsPage = () => {
   };
 
   // Determine if time filter should be visible based on mode
-  const showTimeFilter = modeFilter !== 'ended';
+  // Hidden for "ended" (not applicable) and "needs_attention" (search-only)
+  const showTimeFilter = modeFilter === 'active';
 
   // Get the appropriate default time filter for current mode
   const getDefaultTimeFilter = (): TimeFilter | null => {
@@ -446,6 +429,39 @@ export const SignupsPage = () => {
     setPaymentFilter('all');
     setSearchQuery('');
   };
+
+  // ============================================
+  // EXCEPTION ACTION HANDLERS
+  // ============================================
+
+  const actionHandlers: ExceptionActionHandlers = useMemo(() => ({
+    onSendPaymentLink: async (signupId: string) => {
+      const { error } = await sendPaymentLink(signupId);
+      if (!error) {
+        toast.success('Betalingslenke sendt');
+      } else {
+        toast.error(error.message);
+      }
+    },
+    onCancelEnrollment: async (signupId: string, refund: boolean) => {
+      const { error } = await teacherCancelSignup(signupId, { refund });
+      if (!error) {
+        toast.success('Deltaker avmeldt');
+        loadSignups();
+      } else {
+        toast.error(error.message);
+      }
+    },
+    onMarkResolved: async (signupId: string) => {
+      const { error } = await markPaymentResolved(signupId);
+      if (!error) {
+        toast.success('Markert som betalt');
+        loadSignups();
+      } else {
+        toast.error('Kunne ikke oppdatere status');
+      }
+    },
+  }), [loadSignups]);
 
   // Get unique class names for filter dropdown (table view)
   const uniqueClassNames = useMemo(() => {
@@ -478,12 +494,10 @@ export const SignupsPage = () => {
     }
 
     // Filter by status
-    if (statusFilter !== 'Alle') {
-      if (statusFilter === 'Påmeldt') {
+    if (statusFilterSmart !== 'all') {
+      if (statusFilterSmart === 'confirmed') {
         result = result.filter(s => s.status === 'confirmed');
-      } else if (statusFilter === 'Venteliste') {
-        result = result.filter(s => s.status === 'waitlist');
-      } else if (statusFilter === 'Avbestilt') {
+      } else if (statusFilterSmart === 'cancelled') {
         result = result.filter(s => s.status === 'cancelled');
       }
     }
@@ -509,7 +523,7 @@ export const SignupsPage = () => {
     }
 
     return result;
-  }, [displaySignups, searchQuery, sortField, sortDirection, statusFilter, classFilter]);
+  }, [displaySignups, searchQuery, sortField, sortDirection, statusFilterSmart, classFilter]);
 
   // hasActiveFilters comes from the hook and tracks all secondary filters
 
@@ -517,16 +531,7 @@ export const SignupsPage = () => {
     <SidebarProvider>
       <TeacherSidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
-        {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            <Leaf className="h-5 w-5 text-primary" />
-            <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-          </div>
-          <SidebarTrigger>
-            <Menu className="h-6 w-6 text-muted-foreground" />
-          </SidebarTrigger>
-        </div>
+        <MobileTeacherHeader title="Påmeldinger" />
 
         {/* Header Toolbar */}
         <motion.header
@@ -571,10 +576,9 @@ export const SignupsPage = () => {
                   {showTimeFilter && (
                     <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
                   )}
-                  <StatusDropdown value={statusFilterSmart} onChange={setStatusFilterSmart} />
-                  {/* Payment filter only visible in "Krever handling" mode */}
-                  {modeFilter === 'needs_attention' && (
-                    <PaymentDropdown value={paymentFilter} onChange={setPaymentFilter} />
+                  {/* Status/Payment filters hidden in "Krever handling" mode (all items are payment issues) */}
+                  {modeFilter !== 'needs_attention' && (
+                    <StatusDropdown value={statusFilterSmart} onChange={setStatusFilterSmart} />
                   )}
 
                   {/* Clear filters button - only when filters deviate from defaults */}
@@ -602,16 +606,20 @@ export const SignupsPage = () => {
               <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer ${statusFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
+                    <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer ${statusFilterSmart !== 'all' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
                       <Filter className="h-3.5 w-3.5" />
-                      Status: {statusFilter}
+                      Status: {statusFilterSmart === 'all' ? 'Alle' : statusFilterSmart === 'confirmed' ? 'Påmeldt' : 'Avbestilt'}
                       <ChevronDown className="ml-1 h-3.5 w-3.5" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {['Alle', 'Påmeldt', 'Venteliste', 'Avbestilt'].map((status) => (
-                      <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
-                        {status}
+                    {[
+                      { value: 'all', label: 'Alle' },
+                      { value: 'confirmed', label: 'Påmeldt' },
+                      { value: 'cancelled', label: 'Avbestilt' }
+                    ].map((status) => (
+                      <DropdownMenuItem key={status.value} onClick={() => setStatusFilterSmart(status.value as StatusFilter)}>
+                        {status.label}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -648,7 +656,7 @@ export const SignupsPage = () => {
                   title="Kunne ikke laste påmeldinger"
                   message={error}
                   onRetry={loadSignups}
-                  className="rounded-3xl bg-white border border-gray-200"
+                  className="rounded-2xl bg-white border border-zinc-200"
                 />
               ) : (
                 <SmartSignupsView
@@ -659,18 +667,20 @@ export const SignupsPage = () => {
                   hasFilters={hasActiveFilters}
                   mode={modeFilter}
                   onClearFilters={clearFilters}
+                  actionHandlers={actionHandlers}
+                  onToggleAttendance={handleToggleAttendance}
                 />
               )}
             </div>
           ) : (
             /* Table View */
-            <div className="h-full rounded-3xl bg-white border border-gray-200 overflow-hidden flex flex-col">
+            <div className="h-full rounded-2xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
               {/* Loading State */}
               {loading ? (
                 <div className="overflow-auto flex-1" role="status" aria-live="polite" aria-label="Laster påmeldinger">
                   <span className="sr-only">Henter påmeldinger</span>
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
+                    <thead className="sticky top-0 bg-white border-b border-zinc-200 z-10">
                       <tr>
                         <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '20%' }}>Deltaker</th>
                         <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '22%' }}>Kurs & Tid</th>
@@ -695,7 +705,7 @@ export const SignupsPage = () => {
                 /* Empty State or No Results */
                 <>
                   {/* Table Header for empty state - hidden on mobile */}
-                  <div className="hidden md:block border-b border-gray-200 bg-surface/50 px-6 py-3">
+                  <div className="hidden md:block border-b border-zinc-200 bg-surface/50 px-6 py-3">
                     <div className="flex items-center">
                       <div className="flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground">Deltaker</div>
                       <div className="flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground">Kurs & Tid</div>
@@ -722,15 +732,16 @@ export const SignupsPage = () => {
                 </>
               ) : isMobile ? (
                 /* Mobile Card Layout */
-                <div className="flex-1 overflow-auto custom-scrollbar divide-y divide-gray-200 bg-white">
+                <div className="flex-1 overflow-auto custom-scrollbar divide-y divide-zinc-200 bg-white">
                   {filteredAndSortedSignups.map((signup) => (
                     <div key={signup.id} className="p-4 hover:bg-secondary transition-colors">
                       {/* Row 1: Avatar + Name + Status */}
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <ParticipantAvatar
-                            participant={{ name: signup.participantName, email: signup.participantEmail }}
-                            showPhoto={false}
+                          <UserAvatar
+                            name={signup.participantName}
+                            email={signup.participantEmail}
+                            size="md"
                           />
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-text-primary truncate">{signup.participantName}</p>
@@ -769,7 +780,7 @@ export const SignupsPage = () => {
                 /* Desktop Table Layout */
                 <div className="overflow-auto flex-1 custom-scrollbar">
                   <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
+                    <thead className="sticky top-0 bg-white border-b border-zinc-200 z-10">
                       <tr>
                         <th className="py-3 px-6 flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '20%' }}>Deltaker</th>
                         <th className="py-3 px-6" style={{ width: '22%' }}>
@@ -800,9 +811,10 @@ export const SignupsPage = () => {
                       <tr key={signup.id} className="group hover:bg-secondary transition-colors">
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
-                            <ParticipantAvatar
-                              participant={{ name: signup.participantName, email: signup.participantEmail }}
-                              showPhoto={false}
+                            <UserAvatar
+                              name={signup.participantName}
+                              email={signup.participantEmail}
+                              size="md"
                             />
                             <div>
                               <p className="text-sm font-medium text-text-primary">{signup.participantName}</p>

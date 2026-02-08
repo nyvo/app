@@ -153,7 +153,6 @@ const handleDelete = async (courseId: string) => {
    - ✅ Signup confirmed
    - ✅ Signup cancelled
    - ✅ Signup status changed
-   - ✅ Waitlist joined
 
 4. **Profile Updates**
    - ✅ Profile saved

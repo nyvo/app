@@ -49,14 +49,6 @@ ALTER TABLE signups
     guest_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'
   );
 
--- Waitlist position logic enforcement
-ALTER TABLE signups
-  ADD CONSTRAINT check_waitlist_position_with_status
-  CHECK (
-    (status = 'waitlist' AND waitlist_position IS NOT NULL) OR
-    (status != 'waitlist' AND waitlist_position IS NULL)
-  );
-
 -- Either user_id OR guest fields must be present (not both)
 ALTER TABLE signups
   ADD CONSTRAINT check_user_or_guest_data

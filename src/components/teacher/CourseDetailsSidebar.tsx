@@ -20,8 +20,8 @@ interface CourseDetailsProps {
 
 export const CourseDetailsCard = ({ course }: CourseDetailsProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border overflow-hidden h-full">
-      <div className="p-5 border-b border-gray-100">
+    <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden h-full">
+      <div className="p-5 border-b border-zinc-100">
         <h3 className="text-sm font-medium text-text-primary">Kursdetaljer</h3>
       </div>
       
@@ -107,7 +107,7 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border p-5 h-full flex flex-col justify-between">
+    <div className="bg-white rounded-2xl border border-zinc-200 p-5 h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-text-primary">Påmelding</h3>
@@ -121,7 +121,7 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
 
         {isEmpty ? (
           <div className="text-center py-4 px-2 space-y-3">
-             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-surface-elevated border border-dashed border-gray-300">
+             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-surface-elevated border border-dashed border-zinc-300">
                <Users className="h-5 w-5 text-text-tertiary" />
              </div>
              <div>
@@ -149,7 +149,7 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
             </div>
             <div className="h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
               <div
-                className="h-full bg-text-primary rounded-full transition-all duration-500"
+                className="h-full bg-primary rounded-full transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
@@ -168,13 +168,13 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
       */}
 
       {!isEmpty && (
-          <div className="pt-4 border-t border-gray-100 flex justify-between items-center mt-auto">
+          <div className="pt-4 border-t border-zinc-100 flex justify-between items-center mt-auto">
             <span className="text-xs text-text-tertiary">Estimert omsetning</span>
             <span className="text-sm font-medium text-text-primary">{revenue.toLocaleString('nb-NO')} kr</span>
           </div>
       )}
        {isEmpty && (
-           <div className="pt-4 border-t border-gray-100 mt-auto">
+           <div className="pt-4 border-t border-zinc-100 mt-auto">
                 <div className="flex items-end justify-between text-xs mb-2">
                   <span className="text-text-secondary">Kapasitet</span>
                   <span className="font-medium text-text-primary">
@@ -183,7 +183,7 @@ export const CourseOccupancyCard = ({ course, courseUrl }: CourseDetailsProps) =
                 </div>
                 <div className="h-2 w-full bg-surface-elevated rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-text-primary rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
@@ -212,7 +212,7 @@ export const CourseActionsCard = ({
   onViewPage: _onViewPage
 }: CourseActionsProps) => {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 ring-1 ring-border p-5">
+    <div className="bg-white rounded-2xl border border-zinc-200 p-5">
       <h3 className="text-sm font-medium text-text-primary mb-4">Handlinger</h3>
       <div className="space-y-2">
         <Button

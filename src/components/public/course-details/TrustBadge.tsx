@@ -8,7 +8,7 @@ import { ShieldCheck } from 'lucide-react';
  */
 export const TrustBadge: React.FC = () => {
   return (
-    <div className="rounded-xl bg-surface p-4">
+    <div className="rounded-2xl bg-surface p-4">
       <div className="flex gap-3 mb-2">
         <ShieldCheck className="h-4 w-4 shrink-0 text-text-primary mt-0.5" />
         <div className="space-y-0.5">

@@ -15,11 +15,11 @@ const StudentProfilePage = () => {
             Min profil
           </h1>
           <p className="text-muted-foreground mt-1">
-            Dine personlige opplysninger.
+            Kontoinformasjon
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
           <div className="p-6 space-y-6">
             
             {/* Name */}
@@ -86,8 +86,8 @@ const StudentProfilePage = () => {
 
           </div>
           
-          <div className="px-6 py-4 bg-surface/30 border-t border-gray-200 text-xs text-muted-foreground">
-            Kontakt support hvis du trenger å endre opplysningene dine.
+          <div className="px-6 py-4 bg-surface/30 border-t border-zinc-200 text-xs text-muted-foreground">
+            Ta kontakt hvis du trenger å endre noe.
           </div>
         </div>
       </div>

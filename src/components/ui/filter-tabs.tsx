@@ -34,7 +34,7 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center",
-            variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-xl" : "gap-2",
+            variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-lg" : "gap-2",
             className
           )}
           role="tablist"
@@ -63,11 +63,11 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-text-primary text-white rounded-xl"
-            : "bg-white text-muted-foreground hover:text-text-primary rounded-xl border border-border"
+            ? "bg-primary text-primary-foreground rounded-lg"
+            : "bg-white text-muted-foreground hover:text-text-primary rounded-lg border border-border"
         case "contained":
           return isActive
-            ? "bg-white text-text-primary shadow-sm"
+            ? "bg-white text-text-primary"
             : "bg-transparent text-text-secondary hover:text-text-primary"
         default:
           return isActive
@@ -85,8 +85,10 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         onClick={() => context.onValueChange(value)}
         className={cn(
           "shrink-0 h-10 px-4 py-2.5 text-sm font-medium ios-ease cursor-pointer transition-colors",
-          "focus:outline-none focus-visible:ring-4 focus-visible:ring-border/30",
-          variant !== "pill" && "rounded-lg text-xs px-3 py-2",
+          // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          "rounded-lg",
+          variant !== "pill" && "text-xs px-3 py-2",
           getStyles(),
           className
         )}

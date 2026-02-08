@@ -18,9 +18,8 @@ import {
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { isTimeSlotBooked } from '@/components/ui/time-picker';
 import { useAuth } from '@/contexts/AuthContext';
-import { createCourse, updateCourse, fetchBookedTimesForDate, type SessionTimeOverride } from '@/services/courses';
+import { createCourse, updateCourse, type SessionTimeOverride } from '@/services/courses';
 import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { NewCourseScheduleSection } from '@/components/teacher/NewCourseScheduleSection';
@@ -58,6 +57,8 @@ interface CourseDraft {
 }
 
 const DRAFT_KEY = 'new-course-draft';
+const DESCRIPTION_MAX_LENGTH = 600;
+const DESCRIPTION_WARN_LENGTH = 500;
 
 const NewCoursePage = () => {
   const navigate = useNavigate();
@@ -265,47 +266,6 @@ const NewCoursePage = () => {
     prevStartDateRef.current = startDate;
   }, [startDate]);
 
-  // Validate time slot when duration changes (may cause conflicts)
-  const prevDurationRef = useRef<number | null>(duration);
-  useEffect(() => {
-    // Skip if duration didn't change, or no time selected, or no date/org
-    if (prevDurationRef.current === duration || !startTime || !startDate || !currentOrganization?.id) {
-      prevDurationRef.current = duration;
-      return;
-    }
-
-    const validateTimeWithNewDuration = async () => {
-      if (duration === null) {
-        prevDurationRef.current = duration;
-        return;
-      }
-
-      // Fetch booked times for the selected date
-      const year = startDate.getFullYear();
-      const month = String(startDate.getMonth() + 1).padStart(2, '0');
-      const day = String(startDate.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-
-      const { data: bookedSlots } = await fetchBookedTimesForDate(
-        currentOrganization.id,
-        dateStr
-      );
-
-      // Check if current startTime is still valid with new duration
-      const conflict = isTimeSlotBooked(startTime, duration, bookedSlots || []);
-
-      if (conflict) {
-        setStartTime('');
-        setSessionTimes({});
-        toast.info('Tidspunktet er ikke lenger ledig. Velg et annet.');
-      }
-
-      prevDurationRef.current = duration;
-    };
-
-    validateTimeWithNewDuration();
-  }, [duration, startTime, startDate, currentOrganization?.id]);
-
   const showError = (field: keyof FormErrors) => {
     return (touched[field] || submitAttempted) && errors[field];
   };
@@ -498,9 +458,9 @@ const NewCoursePage = () => {
         </div>
 
         {/* Header / Breadcrumbs - Sticky */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shrink-0">
+        <header className="bg-white border-b border-zinc-100 sticky top-0 z-10 shrink-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
-            <nav className="flex items-center text-xs text-muted-foreground mb-2 space-x-2">
+            <nav className="flex items-center text-xxs text-muted-foreground mb-2 space-x-2">
               <Link to="/teacher/schedule" className="hover:text-text-primary cursor-pointer transition-colors">
                 Timeplan
               </Link>
@@ -537,18 +497,18 @@ const NewCoursePage = () => {
                     role="radio"
                     aria-checked={courseType === 'series'}
                     onClick={() => setCourseType('series')}
-                    className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
+                    className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
                       courseType === 'series'
                         ? 'border-2 border-ring bg-surface-elevated'
-                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        : 'border border-zinc-100 bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div
-                        className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                        className={`h-10 w-10 rounded-lg flex items-center justify-center ${
                           courseType === 'series'
                             ? 'bg-surface-elevated text-text-primary'
-                            : 'bg-white text-muted-foreground border border-border'
+                            : 'bg-white text-muted-foreground border border-zinc-100'
                         }`}
                       >
                         <Layers className="h-5 w-5" aria-hidden="true" />
@@ -556,8 +516,8 @@ const NewCoursePage = () => {
                       <div
                         className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all duration-200 ${
                           courseType === 'series'
-                            ? 'bg-text-primary border-text-primary text-white'
-                            : 'bg-transparent border-gray-200 text-transparent'
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-transparent border-zinc-200 text-transparent'
                         }`}
                       >
                         {courseType === 'series' && <Check className="h-3 w-3" aria-hidden="true" />}
@@ -584,18 +544,18 @@ const NewCoursePage = () => {
                     role="radio"
                     aria-checked={courseType === 'single'}
                     onClick={() => setCourseType('single')}
-                    className={`relative flex flex-col gap-3 p-5 rounded-xl text-left cursor-pointer group transition-all focus:outline-none focus:ring-4 focus:ring-border/30 ${
+                    className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
                       courseType === 'single'
                         ? 'border-2 border-ring bg-surface-elevated'
-                        : 'border border-border bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        : 'border border-zinc-100 bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div
-                        className={`h-10 w-10 rounded-xl flex items-center justify-center ${
+                        className={`h-10 w-10 rounded-lg flex items-center justify-center ${
                           courseType === 'single'
                             ? 'bg-surface-elevated text-text-primary'
-                            : 'bg-white text-muted-foreground border border-border'
+                            : 'bg-white text-muted-foreground border border-zinc-100'
                         }`}
                       >
                         <CalendarDays className="h-5 w-5" aria-hidden="true" />
@@ -603,8 +563,8 @@ const NewCoursePage = () => {
                       <div
                         className={`h-5 w-5 rounded-full flex items-center justify-center border transition-all duration-200 ${
                           courseType === 'single'
-                            ? 'bg-text-primary border-text-primary text-white'
-                            : 'bg-transparent border-gray-200 text-transparent'
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-transparent border-zinc-200 text-transparent'
                         }`}
                       >
                         {courseType === 'single' && <Check className="h-3 w-3" aria-hidden="true" />}
@@ -628,7 +588,7 @@ const NewCoursePage = () => {
             </section>
 
             {/* Section 2: Details */}
-            <section className="bg-white rounded-3xl p-6 md:p-8 border border-gray-200">
+            <section className="bg-white rounded-2xl p-6 md:p-8 border border-zinc-200">
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-text-primary">Detaljer</h2>
                 <p className="text-sm text-muted-foreground">Fyll inn kursdetaljene.</p>
@@ -639,7 +599,7 @@ const NewCoursePage = () => {
                 <div className="md:col-span-7 space-y-5">
                   {/* Title */}
                   <div>
-                    <label htmlFor="course-title" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    <label htmlFor="course-title" className="block text-xxs font-medium text-muted-foreground mb-1.5">
                       Tittel <span className="text-destructive">*</span>
                     </label>
                     <input
@@ -653,8 +613,8 @@ const NewCoursePage = () => {
                       aria-describedby={showError('title') ? 'title-error' : undefined}
                       aria-invalid={showError('title') ? 'true' : undefined}
                       aria-required="true"
-                      className={`w-full h-10 rounded-xl border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                        showError('title') ? 'border-destructive' : 'border-border'
+                      className={`w-full h-10 rounded-lg border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                        showError('title') ? 'border-destructive' : 'border-zinc-200'
                       }`}
                     />
                     {showError('title') && (
@@ -667,7 +627,7 @@ const NewCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="course-description" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    <label htmlFor="course-description" className="block text-xxs font-medium text-muted-foreground mb-1.5">
                       Beskrivelse
                       <span className="ml-2 text-xxs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
@@ -676,12 +636,12 @@ const NewCoursePage = () => {
                       placeholder="Legg til en kort beskrivelse"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      maxLength={600}
-                      className="min-h-[120px] w-full rounded-xl border border-border px-3 py-2.5 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring resize-none"
+                      maxLength={DESCRIPTION_MAX_LENGTH}
+                      className="min-h-[120px] w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 resize-none"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs ${description.length > 500 ? (description.length > 600 ? 'text-destructive' : 'text-warning') : 'text-text-tertiary'}`}>
-                        {description.length}/600
+                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-text-tertiary'}`}>
+                        {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
                   </div>
@@ -689,7 +649,7 @@ const NewCoursePage = () => {
 
                 {/* Right Column: Image Upload */}
                 <div className="md:col-span-5 flex flex-col">
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                  <label className="block text-xxs font-medium text-muted-foreground mb-1.5">
                     Kursbilde
                     <span className="ml-2 text-xxs font-normal text-muted-foreground">Valgfritt</span>
                   </label>
@@ -724,12 +684,13 @@ const NewCoursePage = () => {
               errors={errors}
               touched={touched}
               submitAttempted={submitAttempted}
-              organizationId={currentOrganization?.id}
-              weeksRef={weeksRef}
-              eventDaysRef={eventDaysRef}
-              locationRef={locationRef}
-              priceRef={priceRef}
-              capacityRef={capacityRef}
+              fieldRefs={{
+                weeksRef,
+                eventDaysRef,
+                locationRef,
+                priceRef,
+                capacityRef,
+              }}
               onStartDateChange={setStartDate}
               onStartTimeChange={setStartTime}
               onDurationChange={setDuration}
@@ -742,7 +703,6 @@ const NewCoursePage = () => {
               onCapacityChange={setCapacity}
               onBlur={handleBlur}
               onTouchedChange={setTouched}
-              showError={showError}
               updateSessionTime={updateSessionTime}
               resetSessionTime={resetSessionTime}
             />

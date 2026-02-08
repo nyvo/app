@@ -145,3 +145,17 @@ export function handleCors(req: Request): Response | null {
   }
   return null
 }
+
+/**
+ * Escape HTML special characters to prevent XSS in email templates.
+ * Apply this to all user-supplied values before interpolating into HTML.
+ */
+export function escapeHtml(str: string | null | undefined): string {
+  if (!str) return ''
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}

@@ -13,18 +13,16 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
     return (
       <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
         {/* Active Students - Empty State */}
-        <div className="relative h-[168px] rounded-3xl bg-white p-6 border border-gray-200 overflow-hidden group">
-          {/* Subtle background decoration */}
-          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-surface-elevated blur-3xl"></div>
-
+        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden group">
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-muted-foreground">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-muted-foreground">
                 <UserCheck className="h-5 w-5 text-text-tertiary" />
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm text-text-tertiary">
+              <span className="text-sm font-medium text-text-primary">Aktive studenter</span>
+              <span className="text-xs text-text-tertiary">
                 Data vises etter første økt
               </span>
             </div>
@@ -32,13 +30,16 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         </div>
 
         {/* Attendance - Empty State with Mock Chart */}
-        <div className="relative h-[168px] rounded-3xl bg-white p-6 border border-gray-200 overflow-hidden group">
-          {/* Subtle background decoration */}
-          <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-surface-elevated blur-3xl"></div>
-
+        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden group">
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-text-tertiary">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-muted-foreground">
+                <BarChart2 className="h-5 w-5 text-text-tertiary" />
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-text-primary">Oppmøte</span>
+              <span className="text-xs text-text-tertiary">
                 Statistikk aktiveres etter første økt
               </span>
             </div>
@@ -50,12 +51,12 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
 
   return (
     <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
-      <div className="h-[168px] rounded-3xl bg-white p-6 border border-gray-200 ios-ease hover:border-ring flex flex-col justify-between group">
+      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 flex flex-col justify-between group">
         <div className="flex items-center justify-between">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-elevated text-muted-foreground group-hover:bg-surface transition-colors">
             <UserCheck className="h-5 w-5 text-text-secondary" />
           </div>
-          <span className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider">Denne uken</span>
+          <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Denne uken</span>
         </div>
         <div className="flex flex-col">
           <span className="text-sm text-text-secondary font-normal">Aktive studenter</span>
@@ -63,12 +64,11 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
             <span className="font-geist text-3xl font-normal tracking-tight text-text-primary mt-1">
               {stats.activeStudents}
             </span>
-            <span className="text-xs font-medium text-growth-text bg-growth-bg px-1.5 py-0.5 rounded">+12%</span>
           </div>
         </div>
       </div>
 
-      <div className="h-[168px] rounded-3xl bg-white p-6 border border-gray-200 ios-ease hover:border-ring flex flex-col justify-between group">
+      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 flex flex-col justify-between group">
         <div>
           <p className="text-sm text-text-secondary font-normal">Oppmøte</p>
           <div className="flex items-end gap-2 mt-1">
@@ -83,7 +83,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
             <div
               key={index}
               className={`w-1/6 rounded-t-sm ${
-                index === 4 ? 'bg-text-primary' : index === 3 ? 'bg-ring group-hover:bg-text-tertiary' : 'bg-surface-elevated group-hover:bg-border'
+                index === 4 ? 'bg-primary' : index === 3 ? 'bg-zinc-300 group-hover:bg-text-tertiary' : 'bg-surface-elevated group-hover:bg-border'
               } transition-colors ${index === 0 ? 'delay-75' : index === 1 ? 'delay-100' : index === 2 ? 'delay-150' : index === 3 ? 'delay-200' : index === 5 ? 'delay-300' : ''}`}
               style={{ height: `${value}%` }}
               aria-label={`Day ${index + 1}: ${value}% attendance`}

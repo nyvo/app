@@ -9,12 +9,11 @@ export type Json =
 // Enum types matching the database
 export type CourseType = 'course-series' | 'event' | 'online'
 export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'cancelled'
-export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled' | 'course_cancelled'
+export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type OrgMemberRole = 'owner' | 'admin' | 'teacher'
 export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
 export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
-export type OfferStatus = 'pending' | 'claimed' | 'expired' | 'skipped'
 
 export interface Database {
   public: {
@@ -152,7 +151,6 @@ export interface Database {
           end_date: string | null
           instructor_id: string | null
           image_url: string | null
-          style_id: string | null
           idempotency_key: string | null
           created_at: string
           updated_at: string
@@ -178,7 +176,6 @@ export interface Database {
           end_date?: string | null
           instructor_id?: string | null
           image_url?: string | null
-          style_id?: string | null
           idempotency_key?: string | null
           created_at?: string
           updated_at?: string
@@ -204,7 +201,6 @@ export interface Database {
           end_date?: string | null
           instructor_id?: string | null
           image_url?: string | null
-          style_id?: string | null
           idempotency_key?: string | null
           created_at?: string
           updated_at?: string
@@ -220,7 +216,6 @@ export interface Database {
           participant_email: string | null
           participant_phone: string | null
           status: SignupStatus
-          waitlist_position: number | null
           is_drop_in: boolean
           class_date: string | null
           class_time: string | null
@@ -232,10 +227,6 @@ export interface Database {
           amount_paid: number | null
           signup_package_id: string | null
           package_weeks: number | null
-          offer_sent_at: string | null
-          offer_expires_at: string | null
-          offer_status: OfferStatus | null
-          offer_claim_token: string | null
           package_end_date: string | null
           registered_at: string
           created_at: string
@@ -250,7 +241,6 @@ export interface Database {
           participant_email?: string | null
           participant_phone?: string | null
           status?: SignupStatus
-          waitlist_position?: number | null
           is_drop_in?: boolean
           class_date?: string | null
           class_time?: string | null
@@ -262,10 +252,6 @@ export interface Database {
           amount_paid?: number | null
           signup_package_id?: string | null
           package_weeks?: number | null
-          offer_sent_at?: string | null
-          offer_expires_at?: string | null
-          offer_status?: OfferStatus | null
-          offer_claim_token?: string | null
           package_end_date?: string | null
           registered_at?: string
           created_at?: string
@@ -280,7 +266,6 @@ export interface Database {
           participant_email?: string | null
           participant_phone?: string | null
           status?: SignupStatus
-          waitlist_position?: number | null
           is_drop_in?: boolean
           class_date?: string | null
           class_time?: string | null
@@ -292,10 +277,6 @@ export interface Database {
           amount_paid?: number | null
           signup_package_id?: string | null
           package_weeks?: number | null
-          offer_sent_at?: string | null
-          offer_expires_at?: string | null
-          offer_status?: OfferStatus | null
-          offer_claim_token?: string | null
           package_end_date?: string | null
           registered_at?: string
           created_at?: string
@@ -357,29 +338,6 @@ export interface Database {
           content?: string
           is_outgoing?: boolean
           is_read?: boolean
-          created_at?: string
-        }
-      }
-      course_styles: {
-        Row: {
-          id: string
-          name: string
-          normalized_name: string
-          color: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          normalized_name: string
-          color?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          normalized_name?: string
-          color?: string | null
           created_at?: string
         }
       }
@@ -472,10 +430,6 @@ export type ConversationUpdate = Database['public']['Tables']['conversations']['
 export type Message = Database['public']['Tables']['messages']['Row']
 export type MessageInsert = Database['public']['Tables']['messages']['Insert']
 export type MessageUpdate = Database['public']['Tables']['messages']['Update']
-
-export type CourseStyle = Database['public']['Tables']['course_styles']['Row']
-export type CourseStyleInsert = Database['public']['Tables']['course_styles']['Insert']
-export type CourseStyleUpdate = Database['public']['Tables']['course_styles']['Update']
 
 export type CourseSession = Database['public']['Tables']['course_sessions']['Row']
 export type CourseSessionInsert = Database['public']['Tables']['course_sessions']['Insert']

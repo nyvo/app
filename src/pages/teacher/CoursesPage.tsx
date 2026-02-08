@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Plus,
+  CalendarPlus,
   Leaf,
   Menu,
   Calendar,
@@ -12,21 +12,23 @@ import { ErrorState } from '@/components/ui/error-state';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseSection, CourseSectionSkeleton } from '@/components/teacher/CourseSection';
 import { CoursePreviewCard } from '@/components/teacher/CoursePreviewCard';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
-import { useEmptyState } from '@/contexts/EmptyStateContext';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, type CourseWithStyle } from '@/services/courses';
+import { getShowEmptyState } from '@/lib/utils';
+import { fetchCourses } from '@/services/courses';
+import type { Course } from '@/types/database';
 import { typedFrom } from '@/lib/supabase';
-import type { DetailedCourse } from '@/data/mockData';
+import type { DetailedCourse } from '@/types/dashboard';
 
 // Helper to map database course to DetailedCourse format
-function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number): DetailedCourse {
+function mapCourseToDetailedCourse(course: Course, signupsCount: number): DetailedCourse {
   // Map course_type to courseType
   const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
     'course-series': 'kursrekke',
@@ -34,8 +36,7 @@ function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number
     'online': 'enkeltkurs',
   };
 
-  // Map style normalized_name to type, or use course_type as fallback
-  const styleType = course.style?.normalized_name || course.course_type;
+  const styleType = course.course_type;
 
   // Format duration
   const formatDuration = () => {
@@ -79,14 +80,32 @@ function mapCourseToDetailedCourse(course: CourseWithStyle, signupsCount: number
 }
 
 /**
- * Get day of week normalized to Monday=0, Sunday=6
+ * Get day of week normalized to Monday=0, Sunday=6.
+ * Parses the Norwegian day name from timeSchedule (e.g. "Mandager 18:00-19:15").
+ * Falls back to startDate if timeSchedule doesn't contain a recognized day.
  */
-function getDayOfWeek(dateString: string | undefined): number {
-  if (!dateString) return 7; // Sort missing dates to the end
-  const date = new Date(dateString);
+const DAY_NAME_ORDER: Record<string, number> = {
+  mandag: 0, mandager: 0,
+  tirsdag: 1, tirsdager: 1,
+  onsdag: 2, onsdager: 2,
+  torsdag: 3, torsdager: 3,
+  fredag: 4, fredager: 4,
+  lørdag: 5, lørdager: 5,
+  søndag: 6, søndager: 6,
+};
+
+function getDayOfWeek(timeSchedule: string | undefined, startDate: string | undefined): number {
+  // Try parsing day name from timeSchedule first
+  if (timeSchedule) {
+    const firstWord = timeSchedule.split(/\s/)[0].toLowerCase();
+    const dayIndex = DAY_NAME_ORDER[firstWord];
+    if (dayIndex !== undefined) return dayIndex;
+  }
+
+  // Fallback to startDate
+  if (!startDate) return 7;
+  const date = new Date(startDate);
   if (isNaN(date.getTime())) return 7;
-  // getDay() returns 0=Sunday, 1=Monday, ..., 6=Saturday
-  // Normalize to Monday=0, Sunday=6
   const day = date.getDay();
   return day === 0 ? 6 : day - 1;
 }
@@ -117,8 +136,8 @@ function sortCourses(courses: DetailedCourse[], type: 'kursrekke' | 'enkeltkurs'
 
     // For kursrekker: sort by day of week (Monday to Sunday)
     if (type === 'kursrekke') {
-      const dayA = getDayOfWeek(a.startDate);
-      const dayB = getDayOfWeek(b.startDate);
+      const dayA = getDayOfWeek(a.timeSchedule, a.startDate);
+      const dayB = getDayOfWeek(b.timeSchedule, b.startDate);
       if (dayA !== dayB) return dayA - dayB;
     }
 
@@ -143,7 +162,7 @@ function sortCourses(courses: DetailedCourse[], type: 'kursrekke' | 'enkeltkurs'
 }
 
 const CoursesPage = () => {
-  const { showEmptyState } = useEmptyState();
+  const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<DetailedCourse[]>([]);
@@ -252,16 +271,7 @@ const CoursesPage = () => {
       <TeacherSidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
 
-        {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-            <div className="flex items-center gap-3">
-                 <Leaf className="h-5 w-5 text-primary" />
-                 <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-            </div>
-            <SidebarTrigger>
-                <Menu className="h-6 w-6 text-muted-foreground" />
-            </SidebarTrigger>
-        </div>
+        <MobileTeacherHeader title="Mine Kurs" />
 
         {/* Header Area & Controls */}
         <motion.div
@@ -291,7 +301,7 @@ const CoursesPage = () => {
                   <div className="flex items-center gap-3">
                     <Button asChild size="compact" className="gap-2">
                       <Link to="/teacher/new-course">
-                        <Plus className="h-3.5 w-3.5" />
+                        <CalendarPlus className="h-3.5 w-3.5" />
                         <span>Opprett nytt</span>
                       </Link>
                     </Button>
@@ -343,7 +353,7 @@ const CoursesPage = () => {
               // Search results - flat list
               <div className="h-full overflow-y-auto custom-scrollbar pb-8">
                 {searchResults.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 text-center rounded-3xl bg-white border border-gray-200">
+                  <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white border border-zinc-200">
                     <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
                        <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                     </div>

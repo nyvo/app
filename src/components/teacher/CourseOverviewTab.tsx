@@ -20,7 +20,54 @@ import {
   AccordionItem,
 } from '@/components/ui/accordion';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker } from '@/components/ui/time-picker';
+import { TimePicker24h } from '@/components/course/time-picker-24h';
+
+// Format date range for display (e.g., "17. jan – 7. feb 2025")
+function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+
+  // Validate start date
+  if (isNaN(start.getTime())) return null;
+
+  const end = endDate ? new Date(endDate) : null;
+
+  // Validate end date if provided
+  if (end && isNaN(end.getTime())) return null;
+
+  // Validate end is not before start
+  if (end && end.getTime() < start.getTime()) return null;
+
+  const formatDay = (date: Date) => date.getDate();
+  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
+  const formatYear = (date: Date) => date.getFullYear();
+
+  if (!end) {
+    // Single date - show full format
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const sameDay = sameMonth && start.getDate() === end.getDate();
+
+  // Same day - just show single date
+  if (sameDay) {
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+  }
+
+  if (sameMonth) {
+    // Same month: "17. – 28. jan 2025"
+    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else if (sameYear) {
+    // Same year: "17. jan – 7. feb 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  } else {
+    // Different years: "17. des 2024 – 7. jan 2025"
+    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
+  }
+}
 
 interface CourseWeek {
   id: string;
@@ -32,6 +79,14 @@ interface CourseWeek {
   time: string;
   originalDate: string;
   originalTime: string;
+}
+
+interface SessionEditHandlers {
+  sessionEdits: Record<string, { date?: Date; time?: string }>;
+  savingSessionId: string | null;
+  onSessionEditChange: (weekId: string, field: 'date' | 'time', value: Date | string) => void;
+  onSessionEditCancel: (weekId: string) => void;
+  onSaveSession: (sessionId: string) => void;
 }
 
 interface CourseOverviewTabProps {
@@ -55,7 +110,6 @@ interface CourseOverviewTabProps {
     endDate: string | null;
     timeSchedule: string;
   };
-  courseId: string;
   organizationSlug?: string;
   spotsLeft: number;
 
@@ -66,11 +120,11 @@ interface CourseOverviewTabProps {
   generatedCourseWeeks: CourseWeek[];
   visibleWeeks: number;
   expandedItem: string | undefined;
-  sessionEdits: Record<string, { date?: Date; time?: string }>;
-  savingSessionId: string | null;
   hasRealSessions: boolean;
   isMobile: boolean;
-  organizationId?: string;
+
+  // Session editing (grouped)
+  sessionEditHandlers: SessionEditHandlers;
 
   // Image upload
   isUploadingQuickImage: boolean;
@@ -79,21 +133,16 @@ interface CourseOverviewTabProps {
   // Callbacks
   onShowMore: () => void;
   onExpandedItemChange: (id: string | undefined) => void;
-  onSessionEditChange: (weekId: string, field: 'date' | 'time', value: Date | string) => void;
-  onSessionEditCancel: (weekId: string) => void;
-  onSaveSession: (sessionId: string) => void;
   onQuickImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEditTime: () => void;
   onCancelCourse: () => void;
   onNavigateToSettings: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
-  formatDateRange: (start: string | null, end: string | null) => string | null;
 }
 
 export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   course,
-  courseId,
   spotsLeft,
   isMultiDayCourse,
   sessionLabel,
@@ -101,35 +150,30 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   generatedCourseWeeks,
   visibleWeeks,
   expandedItem,
-  sessionEdits,
-  savingSessionId,
   hasRealSessions,
   isMobile,
-  organizationId,
+  sessionEditHandlers,
   isUploadingQuickImage,
   quickImageInputRef,
   onShowMore,
   onExpandedItemChange,
-  onSessionEditChange,
-  onSessionEditCancel,
-  onSaveSession,
   onQuickImageUpload,
   onEditTime,
   onCancelCourse,
   onNavigateToSettings,
   kursplanRef,
-  formatDateRange,
 }) => {
+  const { sessionEdits, savingSessionId, onSessionEditChange, onSessionEditCancel, onSaveSession } = sessionEditHandlers;
   return (
     <div className="space-y-6">
       {/* Top Row: Enrollment & Logistics */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Enrollment Card (8 cols) */}
-        <div className="lg:col-span-8 rounded-3xl bg-white p-6 border border-gray-200">
+        <div className="lg:col-span-8 rounded-2xl bg-white p-6 border border-zinc-200">
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-text-tertiary" />
-              <span className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary">
+              <span className="text-xxs font-medium uppercase tracking-wider text-text-tertiary">
                 Påmelding
               </span>
             </div>
@@ -156,7 +200,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           </div>
           <div className="flex items-end gap-3 mb-2">
             <span className="text-2xl font-medium tracking-tight text-text-primary">
-              {course.enrolled}
+              {course.enrolled ?? 0}
             </span>
             <span className="text-sm text-muted-foreground mb-0.5">
               av {course.capacity} påmeldte
@@ -165,14 +209,14 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           {/* Progress Bar */}
           <div className="w-full bg-surface-elevated rounded-full h-2">
             <div
-              className="bg-text-primary h-2 rounded-full ios-ease"
+              className="bg-primary h-2 rounded-full ios-ease"
               style={{ width: `${course.capacity > 0 ? Math.max(2, Math.min((course.enrolled / course.capacity) * 100, 100)) : 0}%` }}
             />
           </div>
         </div>
 
         {/* Logistics Card (4 cols) */}
-        <div className="lg:col-span-4 rounded-3xl bg-white p-5 border border-gray-200 flex flex-col justify-center space-y-3">
+        <div className="lg:col-span-4 rounded-2xl bg-white p-5 border border-zinc-200 flex flex-col justify-center space-y-3">
           <div className="flex items-center gap-2.5">
             <Calendar className="h-4 w-4 text-text-tertiary shrink-0" />
             <div>
@@ -184,12 +228,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               )}
             </div>
           </div>
-          <div className="h-px bg-gray-100 w-full" />
+          <div className="h-px bg-zinc-100 w-full" />
           <div className="flex items-center gap-2.5">
             <MapPin className="h-4 w-4 text-text-tertiary shrink-0" />
             <p className="text-xs font-medium text-text-primary leading-none">{course.location}</p>
           </div>
-          <div className="h-px bg-gray-100 w-full" />
+          <div className="h-px bg-zinc-100 w-full" />
           <div className="flex items-center gap-2.5">
             <Clock className="h-4 w-4 text-text-tertiary shrink-0" />
             <p className="text-xs font-medium text-text-primary leading-none">{course.duration}</p>
@@ -202,7 +246,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         {/* Main Column: Description & Course Plan (8 cols) */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           {/* Description Card */}
-          <div className="rounded-3xl bg-white border border-gray-200 overflow-hidden">
+          <div className="rounded-2xl bg-white border border-zinc-200 overflow-hidden">
             {/* Course Image */}
             {course.imageUrl ? (
               <div className="h-48 overflow-hidden">
@@ -222,7 +266,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   className="hidden"
                 />
                 <div
-                  className="h-48 bg-surface border-b border-gray-100 flex items-center justify-center relative group cursor-pointer ios-ease hover:bg-surface-elevated"
+                  className="h-48 bg-surface border-b border-zinc-100 flex items-center justify-center relative group cursor-pointer ios-ease hover:bg-surface-elevated"
                   onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
                 >
                   {isUploadingQuickImage ? (
@@ -232,7 +276,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     </div>
                   ) : (
                     <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-gray-200 mb-2 group-hover:scale-105 ios-ease">
+                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-zinc-200 mb-2 group-hover:scale-105 ios-ease">
                         <Image className="h-4 w-4 text-text-tertiary" />
                       </div>
                       <p className="text-xs font-medium text-text-primary">Legg til forsidebilde</p>
@@ -257,12 +301,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-dashed border-gray-300 p-5 flex flex-col items-center justify-center text-center">
-                  <div className="bg-white p-2 rounded-lg border border-gray-200 mb-3">
+                <div className="bg-surface/30 rounded-2xl border border-dashed border-zinc-200 p-6 flex flex-col items-center justify-center text-center">
+                  <div className="bg-white p-2 rounded-xl border border-zinc-100 mb-3">
                     <Info className="h-4 w-4 text-text-tertiary" />
                   </div>
-                  <p className="text-xs text-text-primary font-medium mb-1">Ingen beskrivelse</p>
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <p className="text-sm text-text-primary font-medium mb-1">Ingen beskrivelse</p>
+                  <p className="text-xs text-muted-foreground mb-4">
                     Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
                   </p>
                   <Button variant="outline-soft" size="compact" onClick={onNavigateToSettings}>
@@ -272,7 +316,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               )}
 
               {/* Metadata Footer */}
-              <div className="flex items-center gap-6 mt-6 pt-5 border-t border-gray-100">
+              <div className="flex items-center gap-6 mt-6 pt-5 border-t border-zinc-100">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
                   <span>
@@ -285,17 +329,17 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
           {/* Course Plan - Only show for multi-day courses */}
           {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
-            <div ref={kursplanRef} className="rounded-3xl bg-white border border-gray-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <div ref={kursplanRef} className="rounded-2xl bg-white border border-zinc-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-zinc-100 flex justify-between items-center">
                 <h3 className="text-sm font-medium text-text-primary">
                   Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})
                 </h3>
-                <button className="text-sm text-muted-foreground hover:text-text-primary font-medium ios-ease">
+                <button className="cursor-pointer text-sm text-muted-foreground hover:text-text-primary font-medium ios-ease">
                   Rediger
                 </button>
               </div>
 
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-zinc-100">
                 <Accordion type="single" collapsible value={expandedItem} onValueChange={onExpandedItemChange}>
                   {generatedCourseWeeks.slice(0, visibleWeeks).map((week) => (
                     <AccordionItem
@@ -310,7 +354,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                         <div
                           className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${
                             week.isNext
-                              ? 'bg-gray-900 text-white'
+                              ? 'bg-zinc-900 text-white'
                               : 'bg-surface-elevated text-muted-foreground'
                           }`}
                         >
@@ -351,7 +395,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span>{week.time}</span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                            <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                             <span>{week.date}</span>
                           </div>
                         </div>
@@ -364,11 +408,11 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
                       <AccordionContent className="px-4 pb-4 pt-0">
                         <div className="pl-[72px] pt-2 space-y-4">
-                          <div className="h-px w-full bg-surface-elevated mb-4"></div>
+                          <div className="h-px w-full bg-zinc-100 mb-4"></div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
+                              <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
                                 Dato
                               </label>
                               <DatePicker
@@ -383,17 +427,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
+                              <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
                                 Tidspunkt
                               </label>
-                              <TimePicker
+                              <TimePicker24h
                                 value={sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
                                 onChange={(time) => onSessionEditChange(week.id, 'time', time)}
-                                date={sessionEdits[week.id]?.date || (week.originalDate ? new Date(week.originalDate) : undefined)}
-                                organizationId={organizationId}
-                                duration={course.durationMinutes || 60}
-                                excludeCourseId={courseId}
-                                placeholder={week.time.split(' - ')[0]}
                               />
                             </div>
                           </div>
@@ -459,7 +498,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         {/* Right Sidebar: Administration (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Admin Card */}
-          <div className="rounded-3xl bg-white p-6 border border-gray-200">
+          <div className="rounded-2xl bg-white p-6 border border-zinc-200">
             <h3 className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-4">
               Administrasjon
             </h3>
@@ -501,7 +540,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           </div>
 
           {/* Tips Card */}
-          <div className="rounded-3xl bg-white border border-gray-200 p-4">
+          <div className="rounded-2xl bg-white border border-zinc-200 p-4">
             <div className="flex gap-3">
               <Info className="h-4 w-4 text-text-tertiary shrink-0 mt-0.5" />
               <div>

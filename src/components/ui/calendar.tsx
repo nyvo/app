@@ -87,11 +87,11 @@ function CalendarDayButton({
         "text-text-secondary hover:bg-surface-elevated hover:text-text-primary",
         // Today indicator - subtle gray background
         isToday && !isSelected && "bg-surface-elevated text-text-primary font-medium",
-        // Selected state - dark fill
-        isSelected && "bg-text-primary text-white font-medium hover:bg-text-primary hover:text-white",
+        // Selected state - primary fill
+        isSelected && "bg-primary text-primary-foreground font-medium hover:bg-primary-soft hover:text-primary-foreground",
         // Range states
-        modifiers.range_start && "bg-text-primary text-white rounded-l-lg rounded-r-none",
-        modifiers.range_end && "bg-text-primary text-white rounded-r-lg rounded-l-none",
+        modifiers.range_start && "bg-primary text-primary-foreground rounded-l-lg rounded-r-none",
+        modifiers.range_end && "bg-primary text-primary-foreground rounded-r-lg rounded-l-none",
         modifiers.range_middle && "bg-secondary text-text-primary rounded-none",
         // Outside month
         modifiers.outside && "text-text-tertiary/40 hover:text-text-tertiary/60",

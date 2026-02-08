@@ -19,11 +19,6 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     label: 'Påmeldt',
     showIcon: false,
   },
-  waitlist: {
-    variant: 'warning', // Clearly visible: exception requiring attention
-    label: 'Venteliste',
-    showIcon: false,
-  },
   cancelled: {
     variant: 'neutral',
     label: 'Avbestilt',

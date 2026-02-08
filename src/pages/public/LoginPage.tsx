@@ -58,9 +58,9 @@ const LoginPage = () => {
     switch (field) {
       case 'email':
         if (!formData.email.trim()) {
-          newErrors.email = 'Skriv inn e-postadressen din';
+          newErrors.email = 'Skriv inn e-posten din';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Sjekk at e-postadressen er riktig';
+          newErrors.email = 'Sjekk at e-posten er riktig';
         } else {
           delete newErrors.email;
         }
@@ -81,9 +81,9 @@ const LoginPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-postadressen din';
+      newErrors.email = 'Skriv inn e-posten din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Sjekk at e-postadressen er riktig';
+      newErrors.email = 'Sjekk at e-posten er riktig';
     }
 
     if (!formData.password.trim()) {
@@ -115,6 +115,7 @@ const LoginPage = () => {
         } else {
           setErrors({ general: error.message });
         }
+        setFormData(prev => ({ ...prev, password: '' }));
         setIsSubmitting(false);
         return;
       }
@@ -122,15 +123,16 @@ const LoginPage = () => {
       // Sign in successful - navigate directly
       // The auth state will update in the background
       navigate('/teacher');
-    } catch (err) {
-      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
+    } catch {
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
+      setFormData(prev => ({ ...prev, password: '' }));
       setIsSubmitting(false);
     }
     // Don't reset isSubmitting on success - we're navigating away
   };
 
   return (
-    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -143,7 +145,7 @@ const LoginPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-semibold tracking-tighter text-text-primary">
@@ -272,12 +274,12 @@ const LoginPage = () => {
       {/* Simple Footer */}
       <footer className="py-6 text-center border-t border-border bg-white">
         <p className="text-xs text-text-tertiary">
-          Har du ikke en konto?{' '}
+          Har du ikke konto?{' '}
           <Link
             to="/signup"
             className="text-text-primary font-medium hover:underline"
           >
-            Registrer deg
+            Opprett konto
           </Link>
         </p>
       </footer>

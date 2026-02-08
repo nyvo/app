@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { CourseStyle, CourseType, CourseStatus, CourseLevel } from '@/types/database'
+import type { CourseType, CourseStatus, CourseLevel } from '@/types/database'
 
 // Internal type for the joined course query result
 interface CourseQueryResult {
@@ -18,8 +18,8 @@ interface CourseQueryResult {
   end_date: string | null
   image_url: string | null
   organization_id: string
-  style: CourseStyle | null
   organization: { name: string; slug: string } | null
+  instructor: { id: string; name: string | null; avatar_url: string | null } | null
 }
 
 // Next session info for ongoing courses
@@ -45,7 +45,6 @@ export interface PublicCourseWithDetails {
   start_date: string | null
   end_date: string | null
   image_url: string | null
-  style: CourseStyle | null
   organization_id: string
   spots_available: number
   organization: {
@@ -61,7 +60,6 @@ export interface PublicCourseWithDetails {
 }
 
 export interface PublicCoursesFilters {
-  styleId?: string
   level?: string
   fromDate?: string
   organizationSlug?: string
@@ -96,7 +94,6 @@ export async function fetchPublicCourses(
       end_date,
       image_url,
       organization_id,
-      style:course_styles(id, name, normalized_name, color),
       organization:organizations(name, slug),
       instructor:instructor_id(id, name, avatar_url)
     `, { count: filters?.limit ? 'exact' : undefined })
@@ -105,9 +102,6 @@ export async function fetchPublicCourses(
     .order('start_date', { ascending: true })
 
   // Apply filters
-  if (filters?.styleId) {
-    query = query.eq('style_id', filters.styleId)
-  }
   if (filters?.level) {
     query = query.eq('level', filters.level)
   }
@@ -116,6 +110,16 @@ export async function fetchPublicCourses(
   }
   if (filters?.organizationSlug) {
     query = query.eq('organization.slug', filters.organizationSlug)
+  }
+
+  // Apply past/active date filter in the DB query (not client-side) so pagination works correctly
+  const todayStr = new Date().toISOString().split('T')[0]
+  if (filters?.includePast) {
+    // Archive: courses whose end_date (or start_date if no end_date) is before today
+    query = query.or(`end_date.lt.${todayStr},and(end_date.is.null,start_date.lt.${todayStr})`)
+  } else {
+    // Active: courses whose end_date (or start_date if no end_date) is today or later, OR has no date
+    query = query.or(`end_date.gte.${todayStr},and(end_date.is.null,start_date.gte.${todayStr}),and(end_date.is.null,start_date.is.null)`)
   }
 
   // Apply pagination
@@ -153,6 +157,16 @@ export async function fetchPublicCourses(
       .in('course_id', courseIds)
       .order('session_date', { ascending: true })
   ])
+
+  // Check for batch query errors — if signups query failed, spots_available would be wrong
+  if (signupsResult.error) {
+    console.error('Error fetching signup counts:', signupsResult.error)
+    return { data: null, error: signupsResult.error as Error }
+  }
+  if (sessionsResult.error) {
+    console.error('Error fetching sessions:', sessionsResult.error)
+    return { data: null, error: sessionsResult.error as Error }
+  }
 
   // Build signup count map
   const signupCountMap: Record<string, number> = {}
@@ -210,7 +224,6 @@ export async function fetchPublicCourses(
       end_date: course.end_date,
       image_url: course.image_url,
       organization_id: course.organization_id,
-      style: course.style as unknown as CourseStyle | null,
       organization: course.organization as unknown as { name: string; slug: string } | null,
       instructor: course.instructor as unknown as { id: string; name: string | null; avatar_url: string | null } | null,
       spots_available: spotsAvailable,
@@ -218,22 +231,8 @@ export async function fetchPublicCourses(
     }
   })
 
-  // Filter courses by past/active status
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const filteredCourses = publicCourses.filter(course => {
-    const relevantDateStr = course.end_date || course.start_date
-    if (!relevantDateStr) return !filters?.includePast // No date = show in active, not in archive
-
-    const relevantDate = new Date(relevantDateStr)
-    relevantDate.setHours(23, 59, 59, 999) // End of day
-
-    const isPast = relevantDate < today
-    return filters?.includePast ? isPast : !isPast
-  })
-
-  return { data: filteredCourses, error: null, count: filteredCourses.length }
+  // Date filtering is now done in the DB query above, so pagination counts are correct
+  return { data: publicCourses, error: null, count: publicCourses.length }
 }
 
 // Fetch a single course by ID for public detail page
@@ -258,7 +257,6 @@ export async function fetchPublicCourseById(
       end_date,
       image_url,
       organization_id,
-      style:course_styles(id, name, normalized_name, color),
       organization:organizations(name, slug),
       instructor:instructor_id(id, name, avatar_url)
     `)
@@ -308,7 +306,6 @@ export async function fetchPublicCourseById(
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
     organization_id: typedCourse.organization_id,
-    style: typedCourse.style as CourseStyle | null,
     organization: typedCourse.organization,
     instructor: typedCourse.instructor || null,
     spots_available: spotsAvailable,
@@ -318,19 +315,3 @@ export async function fetchPublicCourseById(
   return { data: publicCourse, error: null }
 }
 
-// Fetch available course styles for filter dropdown
-export async function fetchPublicCourseStyles(): Promise<{
-  data: CourseStyle[] | null
-  error: Error | null
-}> {
-  const { data, error } = await supabase
-    .from('course_styles')
-    .select('*')
-    .order('name', { ascending: true })
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  return { data: data as CourseStyle[], error: null }
-}

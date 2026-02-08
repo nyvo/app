@@ -11,24 +11,16 @@ interface CoursesListProps {
 
 const getCourseColor = (type: CourseStyleType): string => {
   const colors: Record<CourseStyleType, string> = {
-    private: 'bg-course-private ring-2 ring-course-private-ring',
-    online: 'bg-course-online ring-2 ring-course-online-ring',
-    yin: 'bg-course-yin ring-2 ring-course-yin-ring',
-    meditation: 'bg-course-meditation ring-2 ring-course-meditation-ring',
-    vinyasa: 'bg-course-vinyasa ring-2 ring-course-vinyasa-ring',
     'course-series': 'bg-course-series ring-2 ring-course-series-ring',
+    'event': 'bg-muted ring-2 ring-border',
   };
   return colors[type] || 'bg-muted';
 };
 
 const getCourseStyleTypeLabel = (type: CourseStyleType): string => {
   const labels: Record<CourseStyleType, string> = {
-    private: 'Privat',
-    online: 'Online',
-    yin: 'Yin',
-    meditation: 'Meditasjon',
-    vinyasa: 'Vinyasa',
     'course-series': 'Kursrekke',
+    'event': 'Arrangement',
   };
   return labels[type] || type;
 };
@@ -63,8 +55,8 @@ const isToday = (dateString: string | undefined): boolean => {
 export const CoursesList = memo(function CoursesList({ courses }: CoursesListProps) {
   const [timeFilter, setTimeFilter] = useState<'today' | 'week'>('today');
 
-  // Filter courses based on toggle - "I dag" shows first 2, "Hele uken" shows all
-  const filteredCourses = timeFilter === 'today' ? courses.slice(0, 2) : courses;
+  // Filter courses based on toggle - "I dag" shows today's courses, "Hele uken" shows all
+  const filteredCourses = timeFilter === 'today' ? courses.filter(c => isToday(c.date)) : courses;
 
   // In week view, check if all courses are on the same day (then no need to show day)
   const showDayIndicator = useMemo(() => {
@@ -81,7 +73,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
   }, [timeFilter, filteredCourses]);
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white p-7 border border-gray-200 ios-ease hover:border-ring">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white p-7 border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-geist text-sm font-medium text-text-primary">Dine kurs</h3>
         <FilterTabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as 'today' | 'week')}>
@@ -91,13 +83,17 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredCourses.length === 0 ? (
-          <div className="col-span-full rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white border border-gray-200">
-            <div className="w-10 h-10 bg-white border border-border rounded-xl flex items-center justify-center mb-3">
+          <div className="col-span-full rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-surface/30 border border-dashed border-border">
+            <div className="w-10 h-10 bg-white border border-zinc-100 rounded-xl flex items-center justify-center mb-3">
               <CalendarPlus className="w-4 h-4 text-text-tertiary" />
             </div>
-            <h4 className="text-sm font-medium text-text-primary">Ingen planlagte kurs</h4>
+            <h4 className="text-sm font-medium text-text-primary">
+              {timeFilter === 'today' && courses.length > 0 ? 'Ingen kurs i dag' : 'Ingen planlagte kurs'}
+            </h4>
             <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto">
-              Publiser din første time eller workshop for å gjøre den synlig for kundene dine.
+              {timeFilter === 'today' && courses.length > 0
+                ? 'Du har ingen kurs planlagt for i dag.'
+                : 'Publiser din første time eller workshop for å gjøre den synlig for kundene dine.'}
             </p>
           </div>
         ) : (
@@ -132,7 +128,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
                 )}
                 <Link
                   to={`/teacher/courses/${course.id}`}
-                  className="flex-1 min-w-0 rounded-xl bg-gray-50 p-3.5 transition-all hover:bg-gray-100 cursor-pointer flex justify-between items-center group/card"
+                  className="flex-1 min-w-0 rounded-lg bg-zinc-50 border border-zinc-100 p-3.5 transition-all hover:bg-zinc-100 hover:border-zinc-200 cursor-pointer flex justify-between items-center group/card focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div

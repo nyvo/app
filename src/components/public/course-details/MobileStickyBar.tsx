@@ -7,8 +7,6 @@ export interface MobileStickyBarProps {
   isFull: boolean;
   isAlreadySignedUp: boolean;
   submitting: boolean;
-  joiningWaitlist: boolean;
-  currentWaitlistCount: number | null;
   isEnded: boolean;
   studioUrl: string;
 }
@@ -23,15 +21,13 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
   isFull,
   isAlreadySignedUp,
   submitting,
-  joiningWaitlist,
-  currentWaitlistCount,
   isEnded,
   studioUrl,
 }) => {
   const displayPrice = price || 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white/80 backdrop-blur-xl lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white/80 backdrop-blur-xl lg:hidden pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-lg items-center justify-between p-4">
         {isEnded ? (
           /* Course ended */
@@ -42,47 +38,46 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
                 Avsluttet
               </span>
             </div>
-            <Button asChild size="compact" variant="outline">
+            <Button asChild size="default" variant="outline">
               <a href={studioUrl}>Se kommende kurs</a>
             </Button>
           </>
+        ) : isFull ? (
+          null
         ) : (
           /* Price + Submit */
           <>
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground">
-                {isFull ? 'Venteliste' : 'Total pris'}
+                Total pris
               </span>
               <span className="font-geist text-xl font-medium text-text-primary">
-                {isFull ? 'Gratis' : `${displayPrice} kr`}
+                {displayPrice} kr
               </span>
             </div>
 
             {isAlreadySignedUp ? (
-              <Button size="compact" disabled>
+              <Button size="default" disabled>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Påmeldt
               </Button>
             ) : (
               <Button
                 className="flex items-center gap-2"
-                size="compact"
+                size="default"
                 type="submit"
                 form="booking-form"
-                disabled={submitting || joiningWaitlist}
+                disabled={submitting}
               >
-                {submitting || joiningWaitlist ? (
+                {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isFull ? 'Melder på...' : 'Behandler'}
+                    Behandler
                   </>
                 ) : (
                   <>
-                    {isFull ? 'Meld på' : 'Fullfør'}
-                    {isFull && currentWaitlistCount !== null && (
-                      <span className="text-xs opacity-70">(#{currentWaitlistCount + 1})</span>
-                    )}
-                    {!isFull && <ArrowRight className="h-4 w-4" />}
+                    Fullfør
+                    <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </Button>

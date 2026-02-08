@@ -8,8 +8,8 @@ interface CreateCheckoutParams {
   customerPhone?: string
   isDropIn?: boolean
   sessionId?: string
-  successUrl: string
-  cancelUrl: string
+  signupPackageId?: string
+  packageWeeks?: number
 }
 
 interface CheckoutResult {
@@ -23,23 +23,22 @@ interface CheckoutResult {
  */
 export async function createCheckoutSession(
   params: CreateCheckoutParams
-): Promise<{ data: CheckoutResult | null; error: string | null }> {
+): Promise<{ data: CheckoutResult | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
       body: params,
     })
 
     if (error) {
-      return { data: null, error: error.message || 'Failed to create checkout session' }
+      return { data: null, error: new Error(error.message || 'Failed to create checkout session') }
     }
 
     if (data?.error) {
-      return { data: null, error: data.error }
+      return { data: null, error: new Error(data.error) }
     }
 
     return { data: data as CheckoutResult, error: null }
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return { data: null, error: message }
+    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') }
   }
 }

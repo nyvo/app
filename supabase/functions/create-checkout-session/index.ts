@@ -2,6 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@17.3.1'
+import { handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
 
 const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
 if (!stripeKey) {
@@ -14,11 +15,9 @@ const stripe = new Stripe(stripeKey || '', {
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders()
 
 interface CheckoutRequest {
   courseId: string
@@ -28,25 +27,15 @@ interface CheckoutRequest {
   customerPhone?: string
   isDropIn?: boolean
   sessionId?: string // For drop-in to a specific session
-  successUrl: string
-  cancelUrl: string
   // Package selection
   signupPackageId?: string  // ID of the selected signup package
   packageWeeks?: number     // Number of weeks in the package
-  // Waitlist claim fields
-  claim_token?: string
-  signup_id?: string
-  // Alternative field names from ClaimSpotPage
-  course_id?: string
-  participant_name?: string
-  participant_email?: string
 }
 
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -60,41 +49,16 @@ Deno.serve(async (req: Request) => {
       customerPhone,
       isDropIn = false,
       sessionId,
-      successUrl,
-      cancelUrl,
       signupPackageId,
       packageWeeks,
-      claim_token,
-      signup_id,
-      // Support alternative field names
-      course_id: altCourseId,
-      participant_name,
-      participant_email,
     } = body
 
-    // Use alternative field names if primary ones not provided
-    const finalCourseId = courseId || altCourseId
-    const finalCustomerEmail = customerEmail || participant_email
-    const finalCustomerName = customerName || participant_name
-
-    // Check if this is a waitlist claim request
-    const isWaitlistClaim = !!claim_token && !!signup_id
-
-    // Validate required fields (different requirements for waitlist claims)
-    if (isWaitlistClaim) {
-      if (!finalCourseId || !finalCustomerEmail || !finalCustomerName) {
-        return new Response(
-          JSON.stringify({ error: 'Missing required fields for waitlist claim' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-    } else {
-      if (!finalCourseId || !organizationSlug || !finalCustomerEmail || !finalCustomerName) {
-        return new Response(
-          JSON.stringify({ error: 'Missing required fields' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
+    // Validate required fields
+    if (!courseId || !organizationSlug || !customerEmail || !customerName) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Fetch course with organization
@@ -110,7 +74,7 @@ Deno.serve(async (req: Request) => {
           stripe_onboarding_complete
         )
       `)
-      .eq('id', finalCourseId)
+      .eq('id', courseId)
       .single()
 
     if (courseError || !course) {
@@ -121,8 +85,8 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Verify organization slug matches (skip for waitlist claims which don't have slug)
-    if (!isWaitlistClaim && (!course.organization || course.organization.slug !== organizationSlug)) {
+    // Verify organization slug matches
+    if (!course.organization || course.organization.slug !== organizationSlug) {
       return new Response(
         JSON.stringify({ error: 'Course not found for this organization' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -136,7 +100,7 @@ Deno.serve(async (req: Request) => {
         .from('course_signup_packages')
         .select('id, price, weeks, label')
         .eq('id', signupPackageId)
-        .eq('course_id', finalCourseId)
+        .eq('course_id', courseId)
         .single()
 
       if (packageError || !packageData) {
@@ -146,46 +110,6 @@ Deno.serve(async (req: Request) => {
         )
       }
       selectedPackage = packageData
-    }
-
-    // For waitlist claims, validate the claim token
-    if (isWaitlistClaim) {
-      const { data: signup, error: signupError } = await supabase
-        .from('signups')
-        .select('id, offer_claim_token, offer_status, offer_expires_at')
-        .eq('id', signup_id)
-        .single()
-
-      if (signupError || !signup) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid signup' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      // Verify claim token matches
-      if (signup.offer_claim_token !== claim_token) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid claim token' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      // Check if already claimed
-      if (signup.offer_status === 'claimed') {
-        return new Response(
-          JSON.stringify({ error: 'Spot already claimed' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      // Check if expired
-      if (signup.offer_expires_at && new Date(signup.offer_expires_at) < new Date()) {
-        return new Response(
-          JSON.stringify({ error: 'Offer has expired' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
     }
 
     // Determine price - use package price if selected, otherwise course price
@@ -202,19 +126,15 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Check capacity (skip for waitlist claims - they already have a reserved spot)
-    if (!isWaitlistClaim) {
+    // Soft capacity check (real guard is in create_signup_if_available RPC)
+    if (course.max_participants) {
       const { count: currentSignups } = await supabase
         .from('signups')
         .select('*', { count: 'exact', head: true })
-        .eq('course_id', finalCourseId)
-        .in('status', ['confirmed', 'waitlist'])
+        .eq('course_id', courseId)
+        .eq('status', 'confirmed')
 
-      const spotsAvailable = course.max_participants
-        ? course.max_participants - (currentSignups || 0)
-        : true
-
-      if (spotsAvailable !== true && spotsAvailable <= 0) {
+      if ((currentSignups || 0) >= course.max_participants) {
         return new Response(
           JSON.stringify({ error: 'Course is full' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -225,20 +145,10 @@ Deno.serve(async (req: Request) => {
     // Prepare Stripe checkout session options
     const priceInOre = Math.round(price * 100) // Convert NOK to øre
 
-    // Determine URLs for waitlist claims
-    // Include organization_slug in success URL so the success page can redirect back to the studio
-    const orgSlug = organizationSlug || course.organization.slug
-    const finalSuccessUrl = isWaitlistClaim
-      ? `${Deno.env.get('SITE_URL') || 'http://localhost:5173'}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${orgSlug}`
-      : successUrl
-    const finalCancelUrl = isWaitlistClaim
-      ? `${Deno.env.get('SITE_URL') || 'http://localhost:5173'}/claim-spot/${claim_token}`
-      : cancelUrl
-
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       mode: 'payment',
-      customer_email: finalCustomerEmail,
+      customer_email: customerEmail,
       line_items: [
         {
           price_data: {
@@ -247,15 +157,13 @@ Deno.serve(async (req: Request) => {
               name: selectedPackage
                 ? `${course.title} - ${selectedPackage.label}`
                 : course.title,
-              description: isWaitlistClaim
-                ? `Venteliste-plass: ${course.title}`
-                : selectedPackage
-                  ? `${selectedPackage.label} - ${course.title}`
-                  : isDropIn
-                    ? `Drop-in: ${course.title}`
-                    : course.description || `Påmelding til ${course.title}`,
+              description: selectedPackage
+                ? `${selectedPackage.label} - ${course.title}`
+                : isDropIn
+                  ? `Drop-in: ${course.title}`
+                  : course.description || `Påmelding til ${course.title}`,
               metadata: {
-                course_id: finalCourseId,
+                course_id: courseId,
                 organization_id: course.organization.id,
               },
             },
@@ -265,24 +173,21 @@ Deno.serve(async (req: Request) => {
         },
       ],
       metadata: {
-        course_id: finalCourseId,
+        course_id: courseId,
         organization_id: course.organization.id,
         organization_slug: organizationSlug || course.organization.slug,
-        customer_name: finalCustomerName,
-        customer_email: finalCustomerEmail,
+        customer_name: customerName,
+        customer_email: customerEmail,
         customer_phone: customerPhone || '',
         is_drop_in: isDropIn.toString(),
         session_id: sessionId || '',
         // Package metadata for package-aware capacity
         signup_package_id: signupPackageId || '',
         package_weeks: packageWeeks?.toString() || '',
-        // Waitlist claim metadata
-        is_waitlist_claim: isWaitlistClaim.toString(),
-        claim_token: claim_token || '',
-        signup_id: signup_id || '',
       },
-      success_url: finalSuccessUrl,
-      cancel_url: finalCancelUrl,
+      // Construct redirect URLs server-side to prevent phishing via client-controlled URLs
+      success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${course.organization.slug}`,
+      cancel_url: `${siteUrl}/${course.organization.slug}`,
       locale: 'nb', // Norwegian
     }
 
@@ -316,16 +221,14 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         sessionId: checkoutSession.id,
         url: checkoutSession.url,
-        checkout_url: checkoutSession.url, // Alias for ClaimSpotPage compatibility
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Checkout session error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    const stack = error instanceof Error ? error.stack : undefined
     return new Response(
-      JSON.stringify({ error: message, stack }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

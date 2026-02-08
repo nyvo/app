@@ -2,7 +2,8 @@ import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { extractDayName, extractTimeFromSchedule } from '@/utils/dateFormatting';
+import { extractDayName } from '@/utils/dateFormatting';
+import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import type { Registration } from '@/types/dashboard';
 
 interface RegistrationsListProps {
@@ -43,7 +44,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
   }, [registrations]);
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white border border-gray-200 overflow-hidden ios-ease hover:border-ring">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 overflow-hidden ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
       {/* Card Header */}
       <div className="flex items-center justify-between p-5 sm:p-6 pb-3">
         <h3 className="font-geist text-sm font-medium text-text-primary">Siste påmeldinger</h3>
@@ -58,8 +59,8 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
       {displayedRegistrations.length === 0 ? (
         /* Empty State */
         <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-          <div className="flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl bg-white border border-gray-200">
-            <div className="w-10 h-10 bg-white border border-border rounded-xl flex items-center justify-center mb-3">
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl bg-surface/30 border border-dashed border-zinc-200">
+            <div className="w-10 h-10 bg-white border border-zinc-100 rounded-xl flex items-center justify-center mb-3">
               <UserPlus className="w-4 h-4 text-text-tertiary" />
             </div>
             <p className="text-sm font-medium text-text-primary">Ingen nye påmeldinger</p>
@@ -71,14 +72,14 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-2">
           {displayedRegistrations.map((registration) => {
             const dayName = extractDayName(registration.courseTime);
-            const startTime = extractTimeFromSchedule(registration.courseTime);
+            const startTime = extractTimeFromSchedule(registration.courseTime)?.time ?? '';
 
             return (
               <Link
                 key={registration.id}
                 to="/teacher/signups"
                 className={cn(
-                  "block p-3.5 rounded-2xl border border-gray-100 bg-surface/30 hover:bg-surface hover:border-gray-200 transition-colors relative overflow-hidden",
+                  "block p-3.5 rounded-lg border border-zinc-100 bg-surface/30 hover:bg-surface hover:border-zinc-200 transition-colors relative overflow-hidden focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none",
                   // Left accent for exception rows (payment failed, offer expiring, pending payment)
                   registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-warning"
                 )}

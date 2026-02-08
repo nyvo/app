@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { SignupStatus, PaymentStatus, OfferStatus } from '@/types/database';
+import type { SignupStatus, PaymentStatus } from '@/types/database';
 
 // Extended display type with exception tracking
 export interface SignupDisplay {
@@ -16,18 +16,17 @@ export interface SignupDisplay {
   status: SignupStatus;
   paymentStatus: PaymentStatus;
   note?: string;
-  // Additional fields for exceptions
-  waitlistPosition?: number;
-  offerStatus?: OfferStatus | null;
-  offerExpiresAt?: Date | null;
+  // Additional fields for teacher actions
+  stripePaymentIntentId?: string | null;
+  organizationId?: string;
   // Computed exception type
   exceptionType?: ExceptionType | null;
 }
 
-export type ExceptionType = 'payment_failed' | 'offer_expiring' | 'pending_payment';
+export type ExceptionType = 'payment_failed' | 'pending_payment';
 export type TimeFilter = 'today' | 'this_week' | 'upcoming';
 export type ModeFilter = 'active' | 'ended' | 'needs_attention';
-export type StatusFilter = 'all' | 'confirmed' | 'waitlist' | 'cancelled';
+export type StatusFilter = 'all' | 'confirmed' | 'cancelled';
 export type PaymentFilter = 'all' | 'paid' | 'refunded';
 
 export interface SignupGroup {
@@ -39,12 +38,10 @@ export interface SignupGroup {
   signups: {
     exceptions: SignupDisplay[];
     confirmed: SignupDisplay[];
-    waitlist: SignupDisplay[];
     cancelled: SignupDisplay[];
   };
   counts: {
     confirmed: number;
-    waitlist: number;
     cancelled: number;
     exceptions: number;
   };
@@ -54,22 +51,13 @@ export interface SignupGroup {
 // Exception priority (lower = higher priority)
 const EXCEPTION_PRIORITY: Record<ExceptionType, number> = {
   payment_failed: 1,
-  offer_expiring: 2,
-  pending_payment: 3,
+  pending_payment: 2,
 };
 
 function detectException(signup: SignupDisplay): ExceptionType | null {
   // Payment failed is highest priority
   if (signup.paymentStatus === 'failed') {
     return 'payment_failed';
-  }
-
-  // Offer expiring soon (within 24 hours)
-  if (signup.offerStatus === 'pending' && signup.offerExpiresAt) {
-    const hoursUntilExpiry = (signup.offerExpiresAt.getTime() - Date.now()) / (1000 * 60 * 60);
-    if (hoursUntilExpiry > 0 && hoursUntilExpiry < 24) {
-      return 'offer_expiring';
-    }
   }
 
   // Pending payment for confirmed signup
@@ -101,7 +89,6 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
   for (const [key, groupSignups] of groupMap) {
     const exceptions: SignupDisplay[] = [];
     const confirmed: SignupDisplay[] = [];
-    const waitlist: SignupDisplay[] = [];
     const cancelled: SignupDisplay[] = [];
 
     for (const signup of groupSignups) {
@@ -119,9 +106,6 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
         case 'confirmed':
           if (!exception) confirmed.push(annotatedSignup);
           break;
-        case 'waitlist':
-          if (!exception) waitlist.push(annotatedSignup);
-          break;
         case 'cancelled':
         case 'course_cancelled':
           cancelled.push(annotatedSignup);
@@ -136,9 +120,6 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
       return priorityA - priorityB;
     });
 
-    // Sort waitlist by position
-    waitlist.sort((a, b) => (a.waitlistPosition || 999) - (b.waitlistPosition || 999));
-
     // Sort confirmed/cancelled by name
     confirmed.sort((a, b) => a.participantName.localeCompare(b.participantName));
     cancelled.sort((a, b) => a.participantName.localeCompare(b.participantName));
@@ -151,11 +132,10 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
       courseTitle: firstSignup.className,
       classDate: firstSignup.classDateTime,
       classTime: firstSignup.classTime,
-      signups: { exceptions, confirmed, waitlist, cancelled },
+      signups: { exceptions, confirmed, cancelled },
       counts: {
-        confirmed: groupSignups.filter(s => s.status === 'confirmed').length,
-        waitlist: groupSignups.filter(s => s.status === 'waitlist').length,
-        cancelled: groupSignups.filter(s => s.status === 'cancelled' || s.status === 'course_cancelled').length,
+        confirmed: confirmed.length,
+        cancelled: cancelled.length,
         exceptions: exceptions.length,
       },
       hasExceptions: exceptions.length > 0,
@@ -225,8 +205,6 @@ function filterByStatus(signups: SignupDisplay[], status: StatusFilter): SignupD
   switch (status) {
     case 'confirmed':
       return signups.filter(s => s.status === 'confirmed');
-    case 'waitlist':
-      return signups.filter(s => s.status === 'waitlist');
     case 'cancelled':
       return signups.filter(s => s.status === 'cancelled' || s.status === 'course_cancelled');
     case 'all':
@@ -300,12 +278,10 @@ export function useGroupedSignups(
   const stats = useMemo(() => {
     const allExceptions = groups.reduce((sum, g) => sum + g.counts.exceptions, 0);
     const allConfirmed = groups.reduce((sum, g) => sum + g.counts.confirmed, 0);
-    const allWaitlist = groups.reduce((sum, g) => sum + g.counts.waitlist, 0);
     const allCancelled = groups.reduce((sum, g) => sum + g.counts.cancelled, 0);
     return {
       exceptions: allExceptions,
       confirmed: allConfirmed,
-      waitlist: allWaitlist,
       cancelled: allCancelled,
       groups: groups.length,
       totalExceptions, // Total across all data (for badge)
@@ -348,16 +324,10 @@ export const EXCEPTION_CONFIG: Record<ExceptionType, {
     textColor: 'text-status-error-text',
     borderColor: 'border-status-error-border',
   },
-  offer_expiring: {
-    label: 'Tilbud utløper snart',
-    bgColor: 'bg-status-waitlist-bg/30',
-    textColor: 'text-status-waitlist-text',
-    borderColor: 'border-status-waitlist-border',
-  },
   pending_payment: {
     label: 'Venter betaling',
-    bgColor: 'bg-gray-100/50',
-    textColor: 'text-gray-600',
-    borderColor: 'border-gray-300',
+    bgColor: 'bg-zinc-100/50',
+    textColor: 'text-zinc-600',
+    borderColor: 'border-zinc-300',
   },
 };

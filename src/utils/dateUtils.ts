@@ -86,34 +86,3 @@ export function formatDateNorwegian(date: Date, formatString: string = 'PPP'): s
   return format(date, formatString, { locale: nb });
 }
 
-/**
- * Check if two dates are the same day
- * @param date1 - First date
- * @param date2 - Second date
- * @returns True if both dates are the same day
- */
-export function isSameDay(date1: Date, date2: Date): boolean {
-  return date1.toDateString() === date2.toDateString();
-}
-
-/**
- * Add days to a date
- * @param date - The starting date
- * @param days - Number of days to add (can be negative)
- * @returns New date with days added
- */
-export function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-/**
- * Add weeks to a date
- * @param date - The starting date
- * @param weeks - Number of weeks to add (can be negative)
- * @returns New date with weeks added
- */
-export function addWeeks(date: Date, weeks: number): Date {
-  return addDays(date, weeks * 7);
-}

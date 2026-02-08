@@ -58,7 +58,7 @@ const StudentDashboardPage = () => {
       setUpcoming(upcomingRes.data || []);
       setPast(pastRes.data || []);
     } catch {
-      setError('Kunne ikke laste kursene. Prøv på nytt.');
+      setError('Kunne ikke hente kursene. Prøv igjen.');
     } finally {
       setIsLoading(false);
       hasLoadedRef.current = true;
@@ -74,7 +74,7 @@ const StudentDashboardPage = () => {
       <StudentDashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-text-tertiary mb-4" />
-          <p className="text-muted-foreground">Laster kurs</p>
+          <p className="text-muted-foreground">Henter kurs ...</p>
         </div>
       </StudentDashboardLayout>
     );
@@ -104,21 +104,21 @@ const StudentDashboardPage = () => {
           Mine kurs
         </h1>
         <p className="text-muted-foreground mt-1">
-          Dine påmeldinger.
+          Her finner du kursene dine.
         </p>
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-gray-200 rounded-none h-auto p-0 gap-8">
+        <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-zinc-200 rounded-none h-auto p-0 gap-8">
           <TabsTrigger 
             value="upcoming"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-text-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="past"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-text-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
           >
             Tidligere
           </TabsTrigger>
@@ -136,15 +136,15 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-white to-surface-elevated/50 rounded-xl border border-gray-200 overflow-hidden">
-              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gray-200/30 blur-3xl"></div>
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-white to-surface-elevated/50 rounded-2xl border border-zinc-200 overflow-hidden">
+              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-200/30 blur-3xl"></div>
               <div className="relative z-10">
                 <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
                   <CalendarX className="h-8 w-8 text-text-tertiary" />
                 </div>
                 <h3 className="text-lg font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
                 <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-                  Du har ingen planlagte kurs.
+                  Ingen kurs å vise.
                 </p>
                 <Button onClick={() => window.open('/', '_self')} variant="default">
                   Finn kurs
@@ -166,15 +166,15 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-surface/50 to-surface-elevated/30 rounded-xl border border-gray-200 overflow-hidden">
-              <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-gray-200/20 blur-3xl"></div>
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-surface/50 to-surface-elevated/30 rounded-2xl border border-zinc-200 overflow-hidden">
+              <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-zinc-200/20 blur-3xl"></div>
               <div className="relative z-10">
                 <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
                   <Clock className="h-8 w-8 text-text-tertiary" />
                 </div>
-                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen historikk</h3>
+                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
                 <p className="text-sm text-muted-foreground max-w-xs">
-                  Ingen tidligere kurs.
+                  Du har ikke deltatt på noen kurs ennå.
                 </p>
               </div>
             </div>

@@ -50,13 +50,13 @@ const DatePicker = ({
           type="button"
           disabled={disabled}
           className={cn(
-            // Base styles matching Input component
-            'h-11 w-full rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary',
+            // Base styles matching Input component - V2.3: rounded-lg for sharp, precise interactive elements
+            'h-11 w-full rounded-lg border border-zinc-300 bg-input-bg px-4 text-sm text-text-primary',
             'flex items-center justify-between',
             // Hover state matching Input
             'hover:border-ring ios-ease',
-            // Focus state matching Input
-            'focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white',
+            // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
+            'focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
             // Placeholder style when no value
             !value && 'text-text-tertiary',
             // Disabled state

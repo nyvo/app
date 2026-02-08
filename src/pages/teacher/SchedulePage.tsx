@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Filter, Users, CheckCircle2, CalendarDays, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, Filter, Users, CheckCircle2, CalendarDays, Menu } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Leaf } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
-import { useEmptyState } from '@/contexts/EmptyStateContext';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
+import { getShowEmptyState } from '@/lib/utils';
 import {
   getOsloTime,
   getWeekNumber,
@@ -17,7 +19,8 @@ import {
   generateWeekDays,
 } from '@/utils/dateUtils';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchCourses, fetchCourseSessions, type CourseWithStyle } from '@/services/courses';
+import { fetchCourses, fetchCourseSessions } from '@/services/courses';
+import type { Course } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import type { CourseSession } from '@/types/database';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,7 +37,6 @@ interface ScheduleEvent {
   instructor: string;
   instructorAvatar?: string;
   instructorInitials?: string;
-  styleColor?: string | null; // Color from database (course_styles.color)
   status?: 'completed' | 'upcoming' | 'active';
   signups: number;
   maxCapacity: number | null;
@@ -42,15 +44,11 @@ interface ScheduleEvent {
 
 const timeSlots = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
 
-// Default gray color for events without a style color
-// Using hex value for inline style compatibility (maps to gray-500/text-muted-foreground)
-const DEFAULT_EVENT_COLOR = '#6B7280';
-
 // Calculate end time from start time and duration
 const calculateEndTime = (startTime: string, durationMinutes: number): string => {
   const [hours, mins] = startTime.split(':').map(Number);
   const totalMinutes = hours * 60 + mins + durationMinutes;
-  const endHours = Math.floor(totalMinutes / 60);
+  const endHours = Math.floor(totalMinutes / 60) % 24;
   const endMins = totalMinutes % 60;
   return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
 };
@@ -84,36 +82,22 @@ const getEventStyle = (startTime: string, endTime: string) => {
   };
 };
 
-// Generate color styles from a base color (uses database color or default gray)
-// Returns inline styles for dynamic coloring based on course_styles.color
-const getEventColorStyles = (baseColor: string | null | undefined) => {
-  const color = baseColor || DEFAULT_EVENT_COLOR;
-  return {
-    // Inline styles for dynamic colors
-    accentBorderColor: color,
-    // We use neutral Tailwind classes for consistent look, accent color only on left border
-  };
-};
-
+// Returns inline styles for event accent border
 // Event Card Component
 // Uses database color for left accent border, neutral design system colors for everything else
 const EventCard = ({ event }: { event: ScheduleEvent }) => {
   const positionStyle = getEventStyle(event.startTime, event.endTime);
-  const { accentBorderColor } = getEventColorStyles(event.styleColor);
   const isCompleted = event.status === 'completed';
   const isActive = event.status === 'active';
 
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white border border-gray-200 border-l-4 p-2 hover:border-ring transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-      style={{
-        ...positionStyle,
-        borderLeftColor: accentBorderColor,
-      }}
+      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-200 p-2 hover:border-ring transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      style={positionStyle}
     >
       <div className="flex justify-between items-start">
-        <span className="text-tiny font-medium text-text-secondary">
+        <span className="text-xxs font-medium text-text-secondary">
           {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
         {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
@@ -127,22 +111,21 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         )}
       </div>
       <p className="text-xs font-medium text-text-primary mt-1 truncate">{event.title}</p>
-      <p className="text-tiny text-text-tertiary mt-0.5">{event.location}</p>
+      <p className="text-xxs text-text-tertiary mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            {event.instructorAvatar ? (
-              <img src={event.instructorAvatar} className="h-4 w-4 rounded-full ring-1 ring-border" alt="" />
-            ) : (
-              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-text-secondary text-[6px] font-medium text-white ring-1 ring-border">
-                {event.instructorInitials}
-              </div>
-            )}
-            <span className="text-tiny text-text-tertiary">{event.instructor}</span>
+            <UserAvatar
+              name={event.instructor}
+              src={event.instructorAvatar}
+              size="xxs"
+              ringClassName="ring-1 ring-border"
+            />
+            <span className="text-xxs text-text-tertiary">{event.instructor}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-3 w-3 text-text-tertiary" />
-            <span className="text-tiny text-text-tertiary">
+            <span className="text-xxs text-text-tertiary">
               {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
             </span>
           </div>
@@ -173,15 +156,13 @@ const DayColumn = ({ isToday, isWeekend, events: dayEvents }: { dayIndex: number
 
 // Mobile Event Card - optimized for touch with larger targets
 const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
-  const { accentBorderColor } = getEventColorStyles(event.styleColor);
   const isCompleted = event.status === 'completed';
   const isActive = event.status === 'active';
 
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`block rounded-xl bg-white border border-gray-200 border-l-4 p-4 hover:border-ring transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-      style={{ borderLeftColor: accentBorderColor }}
+      className={`block rounded-2xl bg-white border border-zinc-200 p-4 hover:border-ring transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -232,7 +213,7 @@ const MobileDayView = ({
   onRetry: () => void;
   showEmptyState: boolean;
   hasEventsThisWeek: boolean;
-  courses: CourseWithStyle[];
+  courses: Course[];
 }) => {
   const dayEvents = events[selectedDayIndex] || [];
   const selectedDay = weekDays[selectedDayIndex];
@@ -240,7 +221,7 @@ const MobileDayView = ({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Day Selector - Horizontal scroll */}
-      <div className="border-b border-gray-200 bg-white px-4 py-3 shrink-0">
+      <div className="border-b border-zinc-200 bg-white px-4 py-3 shrink-0">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {weekDays.map((day, index) => (
             <button
@@ -248,7 +229,7 @@ const MobileDayView = ({
               onClick={() => onDaySelect(index)}
               className={`flex flex-col items-center justify-center min-w-[52px] h-16 rounded-xl transition-all cursor-pointer ${
                 selectedDayIndex === index
-                  ? 'bg-text-primary text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : day.isToday
                   ? 'bg-surface-elevated text-text-primary border border-border'
                   : 'bg-surface hover:bg-surface-elevated text-text-secondary'
@@ -292,7 +273,7 @@ const MobileDayView = ({
               </p>
               <Button asChild size="compact" className="gap-2">
                 <Link to="/teacher/new-course">
-                  <Plus className="h-3.5 w-3.5" />
+                  <CalendarPlus className="h-3.5 w-3.5" />
                   Opprett kurs
                 </Link>
               </Button>
@@ -328,16 +309,16 @@ const MobileDayView = ({
 
 // Session with course data for transformation
 interface SessionWithCourse extends CourseSession {
-  course: CourseWithStyle;
+  course: Course;
 }
 
 export const SchedulePage = () => {
-  const { showEmptyState } = useEmptyState();
+  const showEmptyState = getShowEmptyState();
   const { currentOrganization, profile } = useAuth();
   const isMobile = useIsMobile();
 
   // Data fetching state
-  const [courses, setCourses] = useState<CourseWithStyle[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [sessions, setSessions] = useState<SessionWithCourse[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({}); // courseId -> count
   const [isLoading, setIsLoading] = useState(true);
@@ -493,7 +474,6 @@ export const SchedulePage = () => {
         location: session.course.location || 'Ikke angitt',
         instructor: profile?.name || 'Instruktør',
         instructorInitials: getInitials(profile?.name),
-        styleColor: session.course.style?.color, // Use database color, fallback handled in getEventColorStyles
         status: status,
         signups: signupsCounts[session.course.id] || 0,
         maxCapacity: session.course.max_participants,
@@ -556,25 +536,6 @@ export const SchedulePage = () => {
     return Object.values(currentEvents).some(dayEvents => dayEvents.length > 0);
   }, [currentEvents]);
 
-  // Get unique styles from active courses for the legend
-  const activeStyles = useMemo(() => {
-    const stylesMap = new Map<string, { name: string; color: string }>();
-
-    for (const course of courses) {
-      if (course.style?.name && course.style?.color) {
-        // Use style name as key to avoid duplicates
-        if (!stylesMap.has(course.style.name)) {
-          stylesMap.set(course.style.name, {
-            name: course.style.name,
-            color: course.style.color
-          });
-        }
-      }
-    }
-
-    return Array.from(stylesMap.values());
-  }, [courses]);
-
   // Navigation handlers (limit to ±52 weeks / 1 year)
   const goToPreviousWeek = () => setWeekOffset(prev => Math.max(prev - 1, -52));
   const goToNextWeek = () => setWeekOffset(prev => Math.min(prev + 1, 52));
@@ -584,16 +545,7 @@ export const SchedulePage = () => {
     <SidebarProvider>
       <TeacherSidebar />
       <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
-          {/* Mobile Header */}
-          <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-            <div className="flex items-center gap-3">
-              <Leaf className="h-5 w-5 text-primary" />
-              <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-            </div>
-            <SidebarTrigger>
-              <Menu className="h-6 w-6 text-muted-foreground" />
-            </SidebarTrigger>
-          </div>
+          <MobileTeacherHeader title="Timeplan" />
 
           {/* Schedule Toolbar */}
           <motion.header
@@ -601,7 +553,7 @@ export const SchedulePage = () => {
             initial="initial"
             animate="animate"
             transition={pageTransition}
-            className="flex flex-col gap-4 border-b border-gray-200 bg-surface px-6 py-5 shrink-0 z-20"
+            className="flex flex-col gap-4 border-b border-zinc-200 bg-surface px-6 py-5 shrink-0 z-20"
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
@@ -647,7 +599,7 @@ export const SchedulePage = () => {
                   className="gap-2"
                 >
                   <Link to="/teacher/new-course">
-                    <Plus className="h-3.5 w-3.5" />
+                    <CalendarPlus className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Nytt kurs</span>
                   </Link>
                 </Button>
@@ -656,33 +608,17 @@ export const SchedulePage = () => {
 
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-nowrap -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12">
-              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-gray-200 px-3 py-2 text-tiny font-medium text-text-secondary hover:bg-gray-50 hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-zinc-200 px-3 py-2 text-xxs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary ios-ease cursor-pointer">
                 <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-tiny font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xxs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Rom
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-tiny font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xxs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
                 Kurstype
               </button>
               {/* Dynamic style legend - only shows styles from active courses */}
-              {activeStyles.length > 0 && (
-                <div className="ml-auto hidden md:flex items-center gap-4">
-                  {activeStyles.map((style) => (
-                    <div key={style.name} className="flex items-center gap-1.5">
-                      <div
-                        className="h-2.5 w-2.5 rounded-sm border"
-                        style={{
-                          backgroundColor: `${style.color}20`,
-                          borderColor: `${style.color}40`
-                        }}
-                      />
-                      <span className="text-tiny text-muted-foreground">{style.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </motion.header>
 
@@ -731,8 +667,8 @@ export const SchedulePage = () => {
 
             {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-gray-900/5">
-                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-gray-200">
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-900/5">
+                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-zinc-200">
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-white border border-border">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
@@ -746,7 +682,7 @@ export const SchedulePage = () => {
                   </p>
                   <Button asChild size="compact" className="gap-2">
                     <Link to="/teacher/new-course">
-                      <Plus className="h-3.5 w-3.5" />
+                      <CalendarPlus className="h-3.5 w-3.5" />
                       Opprett nytt kurs
                     </Link>
                   </Button>
@@ -755,7 +691,7 @@ export const SchedulePage = () => {
             )}
 
             {/* Sticky Header (Days) */}
-            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-gray-200 bg-white min-w-[1040px]">
+            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-zinc-200 bg-white min-w-[1040px]">
               {/* Corner */}
               <div className="border-r border-border p-3 bg-surface"></div>
 
@@ -765,13 +701,13 @@ export const SchedulePage = () => {
                   key={day.name}
                   className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                 >
-                  <span className={`text-tiny font-medium uppercase tracking-wider ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
+                  <span className={`text-xxs font-medium uppercase tracking-wider ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
                     {day.name}
                   </span>
                   <span
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
                       day.isToday
-                        ? 'bg-text-primary text-white'
+                        ? 'bg-primary text-primary-foreground'
                         : day.isWeekend
                         ? 'text-text-tertiary group-hover:bg-surface-elevated'
                         : 'text-text-secondary group-hover:bg-surface-elevated'
@@ -792,16 +728,16 @@ export const SchedulePage = () => {
                   className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
                   style={{ top: `${currentTimePosition}px` }}
                 >
-                  <div className="w-[60px] text-right pr-2 text-tiny font-medium text-destructive">{currentTimeString}</div>
+                  <div className="w-[60px] text-right pr-2 text-xxs font-medium text-destructive">{currentTimeString}</div>
                   <div className="h-px flex-1 bg-destructive opacity-50"></div>
                   <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-destructive"></div>
                 </div>
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-gray-200 bg-surface text-tiny font-medium text-text-tertiary">
+              <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-tertiary">
                 {timeSlots.map((time) => (
-                  <div key={time} className="h-[100px] border-b border-gray-200/50 px-2 py-1">
+                  <div key={time} className="h-[100px] border-b border-zinc-200/50 px-2 py-1">
                     {time}
                   </div>
                 ))}

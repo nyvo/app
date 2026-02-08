@@ -5,6 +5,7 @@ import { Infinity, ArrowLeft, Loader2, Mail, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface FormData {
   email: string;
@@ -48,9 +49,9 @@ const ForgotPasswordPage = () => {
 
     if (field === 'email') {
       if (!formData.email.trim()) {
-        newErrors.email = 'Skriv inn e-postadressen din';
+        newErrors.email = 'Skriv inn e-posten din';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Sjekk at e-postadressen er riktig';
+        newErrors.email = 'Sjekk at e-posten er riktig';
       } else {
         delete newErrors.email;
       }
@@ -63,9 +64,9 @@ const ForgotPasswordPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-postadressen din';
+      newErrors.email = 'Skriv inn e-posten din';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Sjekk at e-postadressen er riktig';
+      newErrors.email = 'Sjekk at e-posten er riktig';
     }
 
     setErrors(newErrors);
@@ -85,16 +86,19 @@ const ForgotPasswordPage = () => {
       const { error } = await resetPassword(formData.email);
 
       if (error) {
-        setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
+        setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
         setIsSubmitting(false);
         return;
       }
 
       // Success - show confirmation message
+      toast.success('E-post sendt', {
+        description: 'Sjekk innboksen din for en lenke til tilbakestilling.',
+      });
       setEmailSent(true);
       setIsSubmitting(false);
     } catch (err) {
-      setErrors({ general: 'Noe gikk galt. Prøv på nytt.' });
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
       setIsSubmitting(false);
     }
   };
@@ -102,7 +106,7 @@ const ForgotPasswordPage = () => {
   // Success state - Email sent
   if (emailSent) {
     return (
-      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
         {/* Minimal Header */}
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24">
@@ -110,7 +114,7 @@ const ForgotPasswordPage = () => {
           </div>
           
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-semibold tracking-tighter text-text-primary">
@@ -147,7 +151,7 @@ const ForgotPasswordPage = () => {
             <div className="w-full space-y-4">
               <div className="p-4 rounded-lg bg-surface-elevated">
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  Sjekk søppelpost hvis du ikke finner den.
+                  Sjekk spam-mappen hvis du ikke finner den.
                 </p>
               </div>
 
@@ -190,7 +194,7 @@ const ForgotPasswordPage = () => {
 
   // Form state - Request reset
   return (
-    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-gray-200 selection:text-gray-900">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -203,7 +207,7 @@ const ForgotPasswordPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-gray-900 rounded-md flex items-center justify-center text-white shadow-sm">
+          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-semibold tracking-tighter text-text-primary">
@@ -227,7 +231,7 @@ const ForgotPasswordPage = () => {
               Glemt passord?
             </h1>
             <p className="text-text-secondary text-sm">
-              Skriv inn e-postadressen din, så sender vi deg en lenke.
+              Skriv inn e-posten din, så sender vi en lenke.
             </p>
           </div>
 

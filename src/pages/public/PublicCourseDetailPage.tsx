@@ -4,8 +4,6 @@ import {
   ChevronLeft,
   Leaf,
   Loader2,
-  CheckCircle2,
-  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -13,7 +11,6 @@ import { fetchCourseSessions } from '@/services/courses';
 import { checkCourseAvailability } from '@/services/signups';
 import { checkIfAlreadySignedUp } from '@/services/studentSignups';
 import { createCheckoutSession } from '@/services/checkout';
-import { joinWaitlist, getWaitlistCount } from '@/services/waitlist';
 import { toast } from 'sonner';
 import type { CourseSession } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,15 +79,9 @@ const PublicCourseDetailPage = () => {
   const [isAlreadySignedUp, setIsAlreadySignedUp] = useState(false);
 
   // Booking flow state
-  const [bookingSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [redirectingToPayment, setRedirectingToPayment] = useState(false);
 
-  // Waitlist state
-  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
-  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
-  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
-  const [currentWaitlistCount, setCurrentWaitlistCount] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -136,7 +127,7 @@ const PublicCourseDetailPage = () => {
       const { data, error } = await fetchPublicCourseById(courseId);
 
       if (error) {
-        setFetchError('Kunne ikke laste kurs');
+        setFetchError('Kunne ikke hente kurs');
         setLoading(false);
         return;
       }
@@ -154,10 +145,6 @@ const PublicCourseDetailPage = () => {
       if (!sessionsError && sessionsData) {
         setSessions(sessionsData);
       }
-
-      // Fetch waitlist count
-      const { count: waitlistCount } = await getWaitlistCount(courseId);
-      setCurrentWaitlistCount(waitlistCount);
 
       // Check if student is already signed up
       if (user && userType === 'student' && profile?.email) {
@@ -180,7 +167,7 @@ const PublicCourseDetailPage = () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('cancelled') === 'true') {
       toast.info('Betalingen ble avbrutt', {
-        description: 'Du kan prøve på nytt når du er klar.',
+        description: 'Du kan prøve igjen når du er klar.',
       });
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -292,33 +279,28 @@ const PublicCourseDetailPage = () => {
     const { available, error: availError } = await checkCourseAvailability(courseId);
 
     if (availError) {
-      toast.error('Kunne ikke sjekke tilgjengelighet. Prøv på nytt.');
-      toast.error('Kunne ikke sjekke tilgjengelighet');
+      toast.error('Kunne ikke sjekke tilgjengelighet. Prøv igjen.');
       setSubmitting(false);
       return;
     }
 
     if (available <= 0) {
       toast.error('Kurset er fullt.');
-      toast.error('Kurset er fullt');
       setSubmitting(false);
       return;
     }
 
-    // Create Stripe checkout session
-    const currentUrl = window.location.origin;
+    // Create Stripe checkout session (URLs are constructed server-side)
     const { data: checkoutData, error: checkoutError } = await createCheckoutSession({
       courseId,
       organizationSlug: slug,
       customerEmail: formData.email,
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
       customerPhone: formData.phone || undefined,
-      successUrl: `${currentUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${slug}`,
-      cancelUrl: `${currentUrl}/studio/${slug}/${courseId}?cancelled=true`,
     });
 
     if (checkoutError || !checkoutData) {
-      toast.error(checkoutError || 'Kunne ikke starte betaling. Prøv på nytt.');
+      toast.error(checkoutError?.message || 'Kunne ikke starte betaling. Prøv igjen.');
       setSubmitting(false);
       return;
     }
@@ -329,52 +311,9 @@ const PublicCourseDetailPage = () => {
       setRedirectingToPayment(true);
       window.location.href = checkoutData.url;
     } else {
-      toast.error('Kunne ikke gå til betaling. Prøv på nytt.');
+      toast.error('Kunne ikke gå til betaling. Prøv igjen.');
       setSubmitting(false);
     }
-  };
-
-  const handleJoinWaitlist = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate form first (same as regular booking)
-    setTouched({ firstName: true, lastName: true, email: true, termsAccepted: true });
-
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
-    }
-
-    if (!course || !courseId) return;
-
-    setJoiningWaitlist(true);
-
-    const isAuthStudent = user && userType === 'student';
-    const { data, error } = await joinWaitlist({
-      courseId,
-      organizationId: course.organization_id,
-      customerEmail: isAuthStudent ? (profile?.email || '') : formData.email,
-      customerName: isAuthStudent ? (profile?.name || '') : `${formData.firstName} ${formData.lastName}`.trim(),
-      customerPhone: isAuthStudent ? (profile?.phone || undefined) : (formData.phone || undefined)
-    });
-
-    if (error) {
-      toast.error(error);
-      setJoiningWaitlist(false);
-      return;
-    }
-
-    if (data) {
-      setWaitlistSuccess(true);
-      setWaitlistPosition(data.waitlist_position);
-      toast.success(`Du er nummer ${data.waitlist_position} på ventelisten.`);
-    }
-
-    setJoiningWaitlist(false);
   };
 
 
@@ -392,10 +331,10 @@ const PublicCourseDetailPage = () => {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
       <div className="min-h-screen w-full bg-surface">
-        <header className="border-b border-gray-200 bg-white">
+        <header className="border-b border-zinc-200 bg-white">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to={backUrl} className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="font-geist text-lg font-medium text-text-primary tracking-tight">Ease</span>
@@ -404,7 +343,7 @@ const PublicCourseDetailPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-3xl border border-destructive/30 bg-white p-12 text-center">
+            <div className="rounded-2xl border border-destructive/30 bg-white p-12 text-center">
               <p className="text-sm text-destructive mb-4">{fetchError || 'Kurset ble ikke funnet'}</p>
               <Button asChild variant="outline" size="compact">
                 <Link to={backUrl}>
@@ -412,186 +351,6 @@ const PublicCourseDetailPage = () => {
                   Tilbake til kurs
                 </Link>
               </Button>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Success state after booking
-  if (bookingSuccess) {
-    const dateInfo = formatCourseDate(course.start_date);
-    const time = extractTime(course.time_schedule);
-    const studioUrl = slug ? `/studio/${slug}` : '/';
-
-    return (
-      <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="border-b border-gray-200 bg-white sticky top-0 z-40">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-            <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200">
-                <Leaf className="h-5 w-5" />
-              </div>
-              <span className="font-geist text-lg font-medium text-text-primary tracking-tight">Ease</span>
-            </Link>
-          </div>
-        </header>
-        <main className="pt-24 px-4 sm:px-6 pb-24">
-          <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl bg-white p-8 md:p-12 border border-gray-200">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
-                <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
-              </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
-                Påmelding bekreftet!
-              </h1>
-              <p className="text-muted-foreground mb-8">
-                Du er nå påmeldt <span className="font-medium text-text-primary">{course.title}</span>.
-                {(user && userType === 'student' && profile?.email) ? (
-                  <> En bekreftelse er sendt til {profile.email}.</>
-                ) : (
-                  <> En bekreftelse er sendt til {formData.email}.</>
-                )}
-              </p>
-
-              <div className="rounded-xl bg-surface p-4 mb-8 text-left">
-                <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-3">Kursdetaljer</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Dato</span>
-                    <span className="font-medium text-text-primary">{dateInfo.fullDate}</span>
-                  </div>
-                  {time && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tid</span>
-                      <span className="font-medium text-text-primary">Kl {time}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sted</span>
-                    <span className="font-medium text-text-primary">{course.location || 'Ikke angitt'}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-border pt-2 mt-2">
-                    <span className="text-muted-foreground">Betalt</span>
-                    <span className="font-medium text-text-primary">{course.price || 0} kr</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {user && userType === 'student' ? (
-                  <>
-                    <Button asChild className="w-full" size="compact">
-                      <Link to="/student/dashboard">Mine påmeldinger</Link>
-                    </Button>
-                    <Button asChild variant="outline-soft" className="w-full" size="compact">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button asChild className="w-full" size="compact">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                    <p className="text-xs text-text-tertiary">
-                      <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary">
-                        Logg inn
-                      </Link>{' '}
-                      eller{' '}
-                      <Link to="/student/register" className="underline underline-offset-2 hover:text-text-primary">
-                        registrer deg
-                      </Link>{' '}
-                      for å se dine påmeldinger
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Waitlist success state
-  if (waitlistSuccess) {
-    const studioUrl = slug ? `/studio/${slug}` : '/';
-    const customerEmail = (user && userType === 'student' && profile?.email) ? profile.email : formData.email;
-
-    return (
-      <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="border-b border-gray-200 bg-white sticky top-0 z-40">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-            <Link to={studioUrl} className="flex items-center gap-3 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200">
-                <Leaf className="h-5 w-5" />
-              </div>
-              <span className="font-geist text-lg font-medium text-text-primary tracking-tight">Ease</span>
-            </Link>
-          </div>
-        </header>
-        <main className="pt-24 px-4 sm:px-6 pb-24">
-          <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-3xl bg-white p-8 md:p-12 border border-gray-200">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-status-waitlist-bg">
-                <span className="text-3xl font-bold text-status-waitlist-text">#{waitlistPosition}</span>
-              </div>
-
-              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
-                Du er på ventelisten
-              </h1>
-              <p className="text-muted-foreground mb-8">
-                Du har plass <span className="font-medium text-status-waitlist-text">#{waitlistPosition}</span> på ventelisten for{' '}
-                <span className="font-medium text-text-primary">{course.title}</span>.
-              </p>
-
-              <div className="rounded-xl bg-status-confirmed-bg border border-status-confirmed-border p-4 mb-8 text-left">
-                <h3 className="text-sm font-medium text-status-confirmed-text mb-2">Hva skjer videre?</h3>
-                <ul className="text-sm text-status-confirmed-text/90 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>Vi varsler deg på <strong>{customerEmail}</strong> når en plass blir ledig.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>Du har 24 timer på å bekrefte.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>Ingen betaling nå.</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="space-y-3">
-                {user && userType === 'student' ? (
-                  <>
-                    <Button asChild className="w-full" size="compact">
-                      <Link to="/student/dashboard">Mine påmeldinger</Link>
-                    </Button>
-                    <Button asChild variant="outline-soft" className="w-full" size="compact">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button asChild className="w-full" size="compact">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                    <p className="text-xs text-text-tertiary">
-                      <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary">
-                        Logg inn
-                      </Link>{' '}
-                      eller{' '}
-                      <Link to="/student/register" className="underline underline-offset-2 hover:text-text-primary">
-                        registrer deg
-                      </Link>{' '}
-                      for å se dine påmeldinger
-                    </p>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         </main>
@@ -655,8 +414,8 @@ const PublicCourseDetailPage = () => {
               <CourseDescription
                 description={course.description}
                 highlights={[
-                  'Egnet for alle nivåer med litt erfaring',
-                  'Matter og utstyr inkludert',
+                  'Passer for alle med litt erfaring',
+                  'Matte og utstyr er inkludert',
                   'Møt opp 10 minutter før start'
                 ]}
               />
@@ -680,12 +439,9 @@ const PublicCourseDetailPage = () => {
                 errors={errors}
                 touched={touched}
                 submitting={submitting}
-                joiningWaitlist={joiningWaitlist}
                 redirectingToPayment={redirectingToPayment}
-                currentWaitlistCount={currentWaitlistCount}
                 isAuthStudent={isAuthStudent}
                 onSubmit={handleSubmit}
-                onJoinWaitlist={handleJoinWaitlist}
                 onInputChange={handleInputChange}
                 onBlur={handleBlur}
               />
@@ -700,8 +456,6 @@ const PublicCourseDetailPage = () => {
         isFull={isFull}
         isAlreadySignedUp={isAlreadySignedUp}
         submitting={submitting}
-        joiningWaitlist={joiningWaitlist}
-        currentWaitlistCount={currentWaitlistCount}
         isEnded={isEnded}
         studioUrl={studioUrl}
       />

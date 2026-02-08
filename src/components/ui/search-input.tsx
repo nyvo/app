@@ -25,7 +25,7 @@ export const SearchInput = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel || placeholder}
-        className="h-10 w-full rounded-xl border border-border bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white ios-ease shadow-sm hover:border-ring"
+        className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-10 pr-4 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ios-ease hover:border-ring"
       />
     </div>
   );

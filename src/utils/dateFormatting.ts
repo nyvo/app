@@ -71,16 +71,6 @@ export function formatDateWithWeekday(dateStr: string | null | undefined): strin
 }
 
 /**
- * Extract time from a time schedule string
- * e.g., "Tirsdager, 18:00" -> "18:00"
- */
-export function extractTimeFromSchedule(schedule: string | null | undefined): string {
-  if (!schedule) return ''
-  const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
-  return timeMatch ? timeMatch[1] : ''
-}
-
-/**
  * Format a datetime for expiry display
  * e.g., "mandag 15. januar, 14:30"
  */

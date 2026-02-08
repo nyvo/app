@@ -8,13 +8,14 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
       type={type}
       data-slot="input"
       className={cn(
-        // Base styles matching design system
-        "h-11 w-full rounded-xl border border-border bg-input-bg px-4 text-sm text-text-primary",
+        // Base styles matching design system - V2.3: rounded-lg for sharp, precise interactive elements
+        "h-11 w-full rounded-lg border border-zinc-300 bg-input-bg px-4 text-sm text-text-primary",
         "placeholder:text-text-tertiary",
-        "focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white",
+        // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
+        "focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
         "hover:border-ring ios-ease",
         // Autofill styles - override browser's blue/yellow background
-        "autofill:bg-white autofill:shadow-[inset_0_0_0px_1000px_white]",
+        "autofill:bg-white",
         // File input styles
         "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
         // Disabled state

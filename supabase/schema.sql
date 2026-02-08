@@ -17,7 +17,7 @@ CREATE TYPE course_type AS ENUM ('course-series', 'event', 'online');
 CREATE TYPE course_status AS ENUM ('draft', 'upcoming', 'active', 'completed', 'cancelled');
 
 -- Signup status: booking state
-CREATE TYPE signup_status AS ENUM ('confirmed', 'waitlist', 'cancelled');
+CREATE TYPE signup_status AS ENUM ('confirmed', 'cancelled');
 
 -- Payment status: payment lifecycle
 CREATE TYPE payment_status AS ENUM ('pending', 'paid', 'failed', 'refunded');
@@ -178,7 +178,6 @@ CREATE TABLE signups (
 
   -- Booking details
   status signup_status NOT NULL DEFAULT 'confirmed',
-  waitlist_position INTEGER,
   is_drop_in BOOLEAN DEFAULT FALSE,
 
   -- For specific class in a course-series

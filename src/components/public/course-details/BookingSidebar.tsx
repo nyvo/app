@@ -14,12 +14,9 @@ export interface BookingSidebarProps {
   errors: Record<string, boolean>;
   touched: Record<string, boolean>;
   submitting: boolean;
-  joiningWaitlist: boolean;
   redirectingToPayment: boolean;
-  currentWaitlistCount: number | null;
   isAuthStudent: boolean;
   onSubmit: (e: React.FormEvent) => void;
-  onJoinWaitlist: (e: React.FormEvent) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onBlur: (field: string) => void;
 }
@@ -27,7 +24,6 @@ export interface BookingSidebarProps {
 /**
  * Booking sidebar - orchestrates two-step booking flow
  * Sticky on desktop, responsive on mobile
- * Handles both normal booking and waitlist flows
  */
 export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   course,
@@ -37,12 +33,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   errors,
   touched,
   submitting,
-  joiningWaitlist,
   redirectingToPayment,
-  currentWaitlistCount,
   isAuthStudent,
   onSubmit,
-  onJoinWaitlist,
   onInputChange,
   onBlur,
 }) => {
@@ -50,7 +43,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   return (
     <div className="sticky top-28">
       {/* Booking container */}
-      <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
         {/* Price header */}
         <PriceHeader
           price={course.price}
@@ -58,27 +51,29 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         />
 
         {/* Content */}
-        <form id="booking-form" onSubmit={isFull ? onJoinWaitlist : onSubmit} className="p-6 space-y-8">
+        <form id="booking-form" onSubmit={onSubmit} className="p-6 space-y-8">
           {/* Redirecting to payment state */}
           {redirectingToPayment ? (
             <div className="py-12 text-center">
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-text-primary" />
               <p className="text-sm font-medium text-text-primary">
-                Sender deg til betaling...
+                Går til betaling ...
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Vennligst vent
+                Vent litt
               </p>
             </div>
+          ) : isFull ? (
+            null
           ) : (
             <>
               {/* Step 1: Ticket Selection */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
-                    Trinn 1
+                    Steg 1
                   </span>
-                  <div className="h-px flex-1 bg-gray-200"></div>
+                  <div className="h-px flex-1 bg-zinc-200"></div>
                 </div>
                 <TicketSelector price={course.price} />
               </div>
@@ -87,15 +82,15 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
-                    Trinn 2
+                    Steg 2
                   </span>
-                  <div className="h-px flex-1 bg-gray-200"></div>
+                  <div className="h-px flex-1 bg-zinc-200"></div>
                 </div>
                 <StudentDetailsForm
                   formData={formData}
                   errors={errors}
                   touched={touched}
-                  submitting={submitting || joiningWaitlist}
+                  submitting={submitting}
                   isAuthStudent={isAuthStudent}
                   onChange={onInputChange}
                   onBlur={onBlur}
@@ -118,28 +113,17 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     size="compact"
                     type="submit"
                     className="w-full transition-all"
-                    disabled={submitting || joiningWaitlist}
+                    disabled={submitting}
                   >
-                    {submitting || joiningWaitlist ? (
+                    {submitting ? (
                       <span className="flex items-center justify-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        {isFull ? 'Melder på...' : 'Behandler'}
+                        Behandler
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-2">
-                        {isFull ? (
-                          <>
-                            Meld på venteliste
-                            {currentWaitlistCount !== null && (
-                              <span className="text-xs opacity-70">(#{currentWaitlistCount + 1})</span>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            Fullfør påmelding
-                            <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
+                        Fullfør påmelding
+                        <ArrowRight className="h-4 w-4" />
                       </span>
                     )}
                   </Button>
@@ -148,9 +132,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
 
               {/* Disclaimer */}
               <p className="text-center text-xxs text-text-tertiary -mt-2">
-                {isFull
-                  ? 'Ingen betaling nå. Vi varsler deg når plass blir ledig.'
-                  : 'Sikker betaling via Stripe. Ingen belastning før bekreftelse.'}
+                Sikker betaling. Du belastes ikke før bekreftelse.
               </p>
             </>
           )}

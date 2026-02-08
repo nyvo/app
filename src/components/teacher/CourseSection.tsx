@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CoursePreviewCard, CoursePreviewCardSkeleton } from './CoursePreviewCard';
-import type { DetailedCourse } from '@/data/mockData';
+import type { DetailedCourse } from '@/types/dashboard';
 
 interface CourseSectionProps {
   title: string;
@@ -127,7 +127,7 @@ export function ArchiveLink({ count, onClick, className }: ArchiveLinkProps) {
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between p-4 rounded-2xl border border-gray-200 bg-white/50 hover:bg-white hover:border-ring transition-all group",
+        "w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white/50 hover:bg-white hover:border-zinc-400 transition-all group",
         className
       )}
     >

@@ -182,7 +182,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
                 <Infinity className="w-4 h-4" />
               </div>
               <span className="text-xl font-semibold tracking-tight text-text-primary">Ease</span>
@@ -190,7 +190,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
           </div>
 
           {/* Card */}
-          <div className="bg-white rounded-2xl border border-border p-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6">
             <div className="text-center mb-6">
               <h1 className="text-lg font-semibold text-text-primary mb-1">
                 Opprett ditt studio
@@ -217,8 +217,8 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
                     w-full h-11 px-3.5 rounded-lg border bg-input-bg text-sm text-text-primary placeholder:text-text-tertiary
                     transition-all outline-none
                     ${orgNameError
-                      ? 'border-destructive focus:border-destructive focus:ring-4 focus:ring-destructive/20'
-                      : 'border-border hover:border-ring focus:border-ring focus:ring-4 focus:ring-border/30 focus:bg-white'
+                      ? 'border-destructive focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+                      : 'border-zinc-300 hover:border-ring focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
                     }
                   `}
                   placeholder="Mitt Yogastudio"
@@ -231,7 +231,7 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
               <button
                 type="submit"
                 disabled={isCheckingSlug || isCreatingOrg}
-                className="w-full h-11 bg-text-primary hover:bg-sidebar-foreground disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm ios-ease"
+                className="w-full h-11 bg-primary hover:bg-primary-soft disabled:bg-zinc-300 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ios-ease"
               >
                 {isCheckingSlug || isCreatingOrg ? (
                   <>

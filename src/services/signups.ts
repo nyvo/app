@@ -1,12 +1,12 @@
 import { supabase, typedFrom } from '@/lib/supabase'
-import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus } from '@/types/database'
+import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus, PaymentStatus } from '@/types/database'
 
 // Signup with joined course and profile data
 export interface SignupWithDetails extends Signup {
   course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
   // Exception detection fields (already on Signup, explicitly noted here)
-  // payment_status, offer_status, offer_expires_at are inherited from Signup
+  // payment_status is inherited from Signup
 }
 
 // Signup with profile for participants list
@@ -58,33 +58,38 @@ export async function fetchSignupsByCourse(
   return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
-// Get signup counts by status for a course
+// Get signup counts by status for a course using SQL counts (no row download)
 export async function fetchSignupStats(courseId: string): Promise<{
-  data: { confirmed: number; waitlist: number; cancelled: number } | null
+  data: { confirmed: number; cancelled: number } | null
   error: Error | null
 }> {
-  const { data, error } = await supabase
-    .from('signups')
-    .select('status')
-    .eq('course_id', courseId)
+  const [confirmedResult, cancelledResult] = await Promise.all([
+    supabase
+      .from('signups')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId)
+      .eq('status', 'confirmed'),
+    supabase
+      .from('signups')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId)
+      .in('status', ['cancelled', 'course_cancelled']),
+  ])
 
-  if (error) {
-    return { data: null, error: error as Error }
+  if (confirmedResult.error) {
+    return { data: null, error: confirmedResult.error as Error }
+  }
+  if (cancelledResult.error) {
+    return { data: null, error: cancelledResult.error as Error }
   }
 
-  const stats = {
-    confirmed: 0,
-    waitlist: 0,
-    cancelled: 0
+  return {
+    data: {
+      confirmed: confirmedResult.count || 0,
+      cancelled: cancelledResult.count || 0,
+    },
+    error: null,
   }
-
-  for (const signup of (data || []) as unknown as { status: string }[]) {
-    if (signup.status in stats) {
-      stats[signup.status as keyof typeof stats]++
-    }
-  }
-
-  return { data: stats, error: null }
 }
 
 // ============================================
@@ -128,7 +133,6 @@ export async function updateSignup(
 // Valid signup status transitions
 const validTransitions: Record<SignupStatus, SignupStatus[]> = {
   confirmed: ['cancelled', 'course_cancelled'],
-  waitlist: ['confirmed', 'cancelled', 'course_cancelled'],
   cancelled: [],
   course_cancelled: [],
 }
@@ -197,7 +201,10 @@ export async function fetchAllSignups(
   return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
-// Check course availability (spots remaining)
+// Check course availability (spots remaining).
+// NOTE: This is a point-in-time estimate, NOT an atomic reservation.
+// The real capacity guard is the `create_signup_if_available` RPC in the webhook.
+// Do not use this result to decide whether a signup should proceed — only for UI display.
 export async function checkCourseAvailability(
   courseId: string
 ): Promise<{ available: number; total: number; error: Error | null }> {
@@ -230,3 +237,76 @@ export async function checkCourseAvailability(
 
   return { available, total, error: null }
 }
+
+// ============================================
+// TEACHER ACTION FUNCTIONS
+// ============================================
+
+// Teacher-initiated cancellation with optional Stripe refund
+export async function teacherCancelSignup(
+  signupId: string,
+  options?: { refund?: boolean; reason?: string }
+): Promise<{ data: { success: boolean; refunded: boolean; message: string } | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('teacher-cancel-signup', {
+      body: {
+        signup_id: signupId,
+        refund: options?.refund ?? false,
+        reason: options?.reason,
+      }
+    })
+
+    if (error) {
+      return { data: null, error: new Error(error.message || 'Kunne ikke avmelde deltaker') }
+    }
+
+    if (data?.error) {
+      return { data: null, error: new Error(data.error) }
+    }
+
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Ukjent feil')
+    }
+  }
+}
+
+// Send a new payment link to a participant
+export async function sendPaymentLink(
+  signupId: string
+): Promise<{ data: { success: boolean; message: string } | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-payment-link', {
+      body: { signup_id: signupId }
+    })
+
+    if (error) {
+      return { data: null, error: new Error(error.message || 'Kunne ikke sende betalingslenke') }
+    }
+
+    if (data?.error) {
+      return { data: null, error: new Error(data.error) }
+    }
+
+    return { data, error: null }
+  } catch (err) {
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Ukjent feil')
+    }
+  }
+}
+
+// Mark a signup's payment as resolved (received outside Stripe)
+export async function markPaymentResolved(
+  signupId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await typedFrom('signups')
+    .update({ payment_status: 'paid' as PaymentStatus })
+    .eq('id', signupId)
+
+  return { error: error ? (error as Error) : null }
+}
+

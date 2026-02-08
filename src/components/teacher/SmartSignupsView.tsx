@@ -1,6 +1,7 @@
 import { Search, Calendar, Users, CheckCircle, Archive, AlertTriangle } from 'lucide-react';
 import { SignupGroup } from './SignupGroup';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import type { ExceptionActionHandlers } from './ExceptionActionMenu';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
 
 interface SmartSignupsViewProps {
@@ -8,7 +9,6 @@ interface SmartSignupsViewProps {
   stats: {
     exceptions: number;
     confirmed: number;
-    waitlist: number;
     cancelled: number;
     groups: number;
     totalExceptions: number; // Total across all data (for badge)
@@ -18,6 +18,8 @@ interface SmartSignupsViewProps {
   hasFilters?: boolean;
   mode?: ModeFilter;
   onClearFilters?: () => void;
+  actionHandlers?: ExceptionActionHandlers;
+  onToggleAttendance?: (signupId: string) => void;
 }
 
 // Get contextual empty state content based on mode and filter state
@@ -73,6 +75,8 @@ export function SmartSignupsView({
   hasFilters = false,
   mode = 'active',
   onClearFilters,
+  actionHandlers,
+  onToggleAttendance,
 }: SmartSignupsViewProps) {
   // Loading state
   if (isLoading) {
@@ -82,7 +86,7 @@ export function SmartSignupsView({
         {[1, 2, 3].map(i => (
           <div
             key={i}
-            className="rounded-3xl bg-white border border-gray-200 p-6 animate-pulse"
+            className="rounded-2xl bg-white border border-zinc-200 p-6 animate-pulse"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="h-4 w-48 bg-surface-elevated rounded" />
@@ -104,8 +108,8 @@ export function SmartSignupsView({
     const IconComponent = emptyState.icon;
 
     return (
-      <div className="rounded-3xl bg-white border border-gray-200 flex flex-col items-center justify-center p-12 text-center">
-        <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
+      <div className="rounded-2xl bg-white border border-zinc-200 flex flex-col items-center justify-center p-12 text-center">
+        <div className="mb-4 rounded-2xl bg-surface p-4 border border-zinc-100">
           <IconComponent className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
         </div>
         <h3 className="font-geist text-sm font-medium text-text-primary">
@@ -138,14 +142,6 @@ export function SmartSignupsView({
           <Users className="h-3.5 w-3.5 text-text-tertiary" />
           {stats.confirmed} påmeldt
         </span>
-        {stats.waitlist > 0 && (
-          <StatusIndicator
-            variant="warning"
-            mode="inline"
-            size="sm"
-            label={`${stats.waitlist} på venteliste`}
-          />
-        )}
         {stats.cancelled > 0 && (
           <span className="text-muted-foreground">
             {stats.cancelled} avbestilt
@@ -170,6 +166,8 @@ export function SmartSignupsView({
             key={group.key}
             group={group}
             defaultExpanded={group.hasExceptions}
+            actionHandlers={actionHandlers}
+            onToggleAttendance={onToggleAttendance}
           />
         ))}
       </div>

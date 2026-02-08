@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { formatCourseStartTime } from '@/utils/dateFormatting';
-import type { DetailedCourse } from '@/data/mockData';
+import type { DetailedCourse } from '@/types/dashboard';
 
 interface CoursePreviewCardProps {
   course: DetailedCourse;
@@ -66,11 +66,9 @@ function getTimeSignal(course: DetailedCourse): string {
 function getEnrollmentStatus(course: DetailedCourse): {
   text: string;
   isFull: boolean;
-  hasWaitlist: boolean;
   textClass: string;
 } {
   const isFull = course.participants >= course.maxParticipants;
-  const hasWaitlist = false; // Placeholder - would come from actual data
 
   // Always show enrollment numbers, "Fullt" badge will indicate if full
   const textClass = 'text-xs font-medium text-text-secondary';
@@ -78,7 +76,6 @@ function getEnrollmentStatus(course: DetailedCourse): {
   return {
     text: `${course.participants}/${course.maxParticipants}`,
     isFull: isFull,
-    hasWaitlist,
     textClass
   };
 }
@@ -92,10 +89,10 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 cursor-pointer bg-white",
+        "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 cursor-pointer bg-white hover:bg-zinc-50/50",
         urgency.isUrgent
           ? "border-amber-200 hover:border-amber-300"
-          : "border-border hover:border-ring"
+          : "border-zinc-200 hover:border-zinc-400"
       )}
       onClick={() => navigate(`/teacher/courses/${course.id}`)}
       role="article"
@@ -118,17 +115,17 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
           )}
         </div>
         <div className="flex items-center gap-2 text-xs text-text-tertiary">
+          {course.timeSchedule && (
+            <span className="truncate">
+              {course.timeSchedule}
+            </span>
+          )}
+          {course.timeSchedule && course.location && (
+            <span>·</span>
+          )}
           <span className="truncate">
             {course.location}
           </span>
-          {course.timeSchedule && (
-            <>
-              <span className="hidden sm:inline">·</span>
-              <span className="hidden sm:inline truncate">
-                {course.timeSchedule}
-              </span>
-            </>
-          )}
         </div>
       </div>
 
@@ -181,7 +178,7 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
  */
 export function CoursePreviewCardSkeleton() {
   return (
-    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-200 animate-pulse">
+    <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-zinc-200 animate-pulse">
       {/* Course info skeleton */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">
         <div className="h-4 w-48 bg-surface-elevated rounded" />

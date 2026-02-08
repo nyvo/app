@@ -51,15 +51,13 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup not found', 404)
     }
 
-    // Verify user owns this signup (either by user_id or by matching email)
-    const { data: userProfile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', authResult.userId)
-      .single()
-
+    // Verify user owns this signup by user_id only.
+    // Email-based matching is vulnerable: a user could change their profile email
+    // to match another participant's email and cancel their signup.
+    // For guest bookings (no user_id), use auth.users.email from the JWT instead.
+    const { data: { user: authUser } } = await supabase.auth.admin.getUserById(authResult.userId!)
     const isOwner = signup.user_id === authResult.userId ||
-                    signup.participant_email === userProfile?.email
+                    (signup.user_id === null && authUser?.email === signup.participant_email)
 
     if (!isOwner) {
       return errorResponse('You can only cancel your own signups', 403)
@@ -77,26 +75,25 @@ Deno.serve(async (req: Request) => {
     // Check 48-hour cancellation policy
     const course = signup.course as { title: string; start_date: string; time_schedule: string; location: string; organization_id: string } | null
 
-    // Determine the relevant date for cancellation check
+    // Determine the relevant date for cancellation check.
+    // Dates from the DB are date-only strings (YYYY-MM-DD) without timezone.
+    // Courses are in Norway (CET = UTC+1, CEST = UTC+2).
+    // We append the Norwegian timezone offset so the comparison is correct.
     let eventDate: Date | null = null
 
     if (signup.is_drop_in && signup.class_date) {
       // For drop-in, use the specific class date
-      eventDate = new Date(signup.class_date)
-      if (signup.class_time) {
-        const [hours, minutes] = signup.class_time.split(':').map(Number)
-        eventDate.setHours(hours, minutes, 0, 0)
-      }
+      const timeStr = signup.class_time || '09:00'
+      // Parse as Norwegian time by appending Europe/Oslo offset
+      eventDate = new Date(`${signup.class_date}T${timeStr}:00+01:00`)
     } else if (course?.start_date) {
       // For course series, use course start date
-      eventDate = new Date(course.start_date)
-      // Extract time from time_schedule if available
+      let timeStr = '09:00'
       if (course.time_schedule) {
-        const timeMatch = course.time_schedule.match(/(\d{1,2}):(\d{2})/)
-        if (timeMatch) {
-          eventDate.setHours(parseInt(timeMatch[1]), parseInt(timeMatch[2]), 0, 0)
-        }
+        const timeMatch = course.time_schedule.match(/(\d{1,2}:\d{2})/)
+        if (timeMatch) timeStr = timeMatch[1]
       }
+      eventDate = new Date(`${course.start_date}T${timeStr}:00+01:00`)
     }
 
     const now = new Date()
@@ -108,9 +105,10 @@ Deno.serve(async (req: Request) => {
 
     let refundResult = null
     let refundError = null
+    const refundAttempted = canGetRefund && !!signup.stripe_payment_intent_id && signup.payment_status === 'paid'
 
     // Process Stripe refund if eligible and has payment
-    if (canGetRefund && signup.stripe_payment_intent_id && signup.payment_status === 'paid') {
+    if (refundAttempted) {
       try {
         refundResult = await stripe.refunds.create({
           payment_intent: signup.stripe_payment_intent_id,
@@ -123,7 +121,21 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Update signup status
+    // If a refund was attempted but failed, do NOT cancel the signup.
+    // The participant keeps their spot so the teacher can retry manually.
+    if (refundAttempted && !refundResult) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          refunded: false,
+          refund_amount: 0,
+          message: `Refusjon feilet: ${refundError}. Påmeldingen er ikke endret.`,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Update signup status — only reach here if refund succeeded or was not needed
     const updateData: Record<string, unknown> = {
       status: 'cancelled',
       updated_at: new Date().toISOString(),
@@ -131,9 +143,6 @@ Deno.serve(async (req: Request) => {
 
     if (refundResult) {
       updateData.payment_status = 'refunded'
-    } else if (!canGetRefund) {
-      // Keep payment_status as 'paid' but mark as cancelled
-      // No refund due to 48h policy
     }
 
     const { error: updateError } = await supabase
@@ -144,30 +153,6 @@ Deno.serve(async (req: Request) => {
     if (updateError) {
       console.error('Error updating signup:', updateError)
       return errorResponse('Failed to update signup status', 500)
-    }
-
-    // If this was a confirmed signup, trigger waitlist promotion
-    if (signup.status === 'confirmed') {
-      try {
-        const promotionResponse = await fetch(`${supabaseUrl}/functions/v1/process-waitlist-promotion`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`
-          },
-          body: JSON.stringify({ course_id: signup.course_id })
-        })
-
-        if (promotionResponse.ok) {
-          const promotionResult = await promotionResponse.json()
-          console.log('Waitlist promotion triggered:', promotionResult)
-        } else {
-          console.log('No waitlist promotion needed or no one on waitlist')
-        }
-      } catch (promotionError) {
-        console.error('Error triggering waitlist promotion:', promotionError)
-        // Don't fail the refund if promotion fails
-      }
     }
 
     // Send cancellation confirmation email
@@ -250,15 +235,16 @@ Deno.serve(async (req: Request) => {
       console.error('Error sending cancellation email:', emailError)
     }
 
+    const refundSucceeded = !!refundResult
+
     return new Response(
       JSON.stringify({
         success: true,
-        refunded: canGetRefund && !!refundResult,
-        refund_amount: canGetRefund && signup.amount_paid ? signup.amount_paid : 0,
-        message: canGetRefund
+        refunded: refundSucceeded,
+        refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
+        message: canGetRefund && refundSucceeded
           ? 'Avmelding bekreftet. Refusjon vil bli behandlet.'
           : 'Avmelding bekreftet. Ingen refusjon grunnet 48-timers avbestillingsfrist.',
-        refund_error: refundError,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

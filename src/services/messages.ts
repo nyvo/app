@@ -24,32 +24,11 @@ interface ConversationWithMessages extends Conversation {
   messages: Message[]
 }
 
-// Fetch all conversations for an organization
-export async function fetchConversations(
-  organizationId: string
-): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
-  // Get conversations with their messages
-  const { data: conversations, error } = await supabase
-    .from('conversations')
-    .select(`
-      *,
-      messages(*)
-    `)
-    .eq('organization_id', organizationId)
-    .order('updated_at', { ascending: false })
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  if (!conversations || conversations.length === 0) {
-    return { data: [], error: null }
-  }
-
-  const typedConversations = conversations as unknown as ConversationWithMessages[]
-
-  // Get user profiles for conversations with user_id
-  const userIds = typedConversations
+// Shared: fetch profiles and map conversations to ConversationWithDetails
+async function mapConversationsToDetails(
+  conversations: ConversationWithMessages[]
+): Promise<ConversationWithDetails[]> {
+  const userIds = conversations
     .filter(c => c.user_id)
     .map(c => c.user_id as string)
 
@@ -69,8 +48,7 @@ export async function fetchConversations(
     }
   }
 
-  // Map conversations with details
-  const conversationsWithDetails: ConversationWithDetails[] = typedConversations.map(conv => {
+  return conversations.map(conv => {
     const messages = conv.messages || []
     const sortedMessages = [...messages].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -78,7 +56,6 @@ export async function fetchConversations(
     const lastMessage = sortedMessages[0] || null
     const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length
 
-    // Get participant info from profile or guest_email
     let participant = null
     if (conv.user_id && profilesMap[conv.user_id]) {
       const profile = profilesMap[conv.user_id]
@@ -103,8 +80,31 @@ export async function fetchConversations(
       unread_count: unreadCount
     }
   })
+}
 
-  return { data: conversationsWithDetails, error: null }
+// Fetch all conversations for an organization
+export async function fetchConversations(
+  organizationId: string
+): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
+  const { data: conversations, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      messages(*)
+    `)
+    .eq('organization_id', organizationId)
+    .order('updated_at', { ascending: false })
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+
+  if (!conversations || conversations.length === 0) {
+    return { data: [], error: null }
+  }
+
+  const result = await mapConversationsToDetails(conversations as unknown as ConversationWithMessages[])
+  return { data: result, error: null }
 }
 
 // Fetch messages for a specific conversation
@@ -269,26 +269,19 @@ export async function deleteConversation(
 export async function getUnreadCount(
   organizationId: string
 ): Promise<{ data: number; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('conversations')
-    .select(`
-      id,
-      messages!inner(is_read, is_outgoing)
-    `)
-    .eq('organization_id', organizationId)
+  // Use a count query instead of fetching all messages
+  const { count, error } = await supabase
+    .from('messages')
+    .select('id, conversation:conversations!inner(organization_id)', { count: 'exact', head: true })
+    .eq('conversations.organization_id', organizationId)
+    .eq('is_read', false)
+    .eq('is_outgoing', false)
 
   if (error) {
     return { data: 0, error: error as Error }
   }
 
-  // Count unread incoming messages across all conversations
-  let unreadCount = 0
-  for (const conv of (data || []) as unknown as { messages: { is_read: boolean; is_outgoing: boolean }[] }[]) {
-    const messages = (conv.messages as { is_read: boolean; is_outgoing: boolean }[]) || []
-    unreadCount += messages.filter(m => !m.is_read && !m.is_outgoing).length
-  }
-
-  return { data: unreadCount, error: null }
+  return { data: count || 0, error: null }
 }
 
 // Fetch recent conversations for dashboard widget
@@ -296,7 +289,6 @@ export async function fetchRecentConversations(
   organizationId: string,
   limit: number = 5
 ): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
-  // Fetch only recent conversations with a limit, sorted by update time
   const { data: conversations, error } = await supabase
     .from('conversations')
     .select(`
@@ -315,65 +307,10 @@ export async function fetchRecentConversations(
     return { data: [], error: null }
   }
 
-  const typedConversations = conversations as unknown as ConversationWithMessages[]
-
-  // Get user profiles for conversations with user_id
-  const userIds = typedConversations
-    .filter(c => c.user_id)
-    .map(c => c.user_id as string)
-
-  let profilesMap: Record<string, Profile> = {}
-  if (userIds.length > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('id', userIds)
-
-    if (profiles) {
-      const typedProfiles = profiles as unknown as Profile[]
-      profilesMap = typedProfiles.reduce((acc, p) => {
-        acc[p.id] = p
-        return acc
-      }, {} as Record<string, Profile>)
-    }
-  }
-
-  // Map conversations with details
-  const conversationsWithDetails: ConversationWithDetails[] = typedConversations.map(conv => {
-    const messages = conv.messages || []
-    const sortedMessages = [...messages].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )
-    const lastMessage = sortedMessages[0] || null
-    const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length
-
-    let participant = null
-    if (conv.user_id && profilesMap[conv.user_id]) {
-      const profile = profilesMap[conv.user_id]
-      participant = {
-        name: profile.name || profile.email || 'Ukjent',
-        email: profile.email || '',
-        avatar_url: profile.avatar_url
-      }
-    } else if (conv.guest_email) {
-      participant = {
-        name: conv.guest_email,
-        email: conv.guest_email,
-        avatar_url: null
-      }
-    }
-
-    return {
-      ...conv,
-      messages: sortedMessages,
-      participant,
-      last_message: lastMessage,
-      unread_count: unreadCount
-    }
-  })
+  const mapped = await mapConversationsToDetails(conversations as unknown as ConversationWithMessages[])
 
   // Sort by unread first, then by update time, and limit
-  const sorted = conversationsWithDetails
+  const sorted = mapped
     .sort((a, b) => b.unread_count - a.unread_count ||
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, limit)

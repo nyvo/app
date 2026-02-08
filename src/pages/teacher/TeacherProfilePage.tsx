@@ -253,7 +253,7 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
                     {/* Avatar Section */}
-                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
                                 <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar">
@@ -268,7 +268,7 @@ const TeacherProfilePage = () => {
                     </div>
 
                     {/* Personal Info Form */}
-                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Personlig Informasjon</h3>
                             {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
@@ -286,10 +286,10 @@ const TeacherProfilePage = () => {
                                     onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
                                     onBlur={() => handleBlur('firstName')}
                                     aria-invalid={!!errors.firstName}
-                                    className={`w-full h-11 rounded-xl border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                    className={`w-full h-11 rounded-lg border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
                                       errors.firstName
-                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
-                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
                                     }`}
                                 />
                                 {errors.firstName && touched.firstName && (
@@ -308,10 +308,10 @@ const TeacherProfilePage = () => {
                                     onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
                                     onBlur={() => handleBlur('lastName')}
                                     aria-invalid={!!errors.lastName}
-                                    className={`w-full h-11 rounded-xl border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                    className={`w-full h-11 rounded-lg border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
                                       errors.lastName
-                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
-                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
                                     }`}
                                 />
                                 {errors.lastName && touched.lastName && (
@@ -332,10 +332,10 @@ const TeacherProfilePage = () => {
                                         onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
                                         onBlur={() => handleBlur('email')}
                                         aria-invalid={!!errors.email}
-                                        className={`w-full h-11 rounded-xl border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease ${
+                                        className={`w-full h-11 rounded-lg border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
                                           errors.email
-                                            ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
-                                            : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                            ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+                                            : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
                                         }`}
                                     />
                                 </div>
@@ -356,7 +356,7 @@ const TeacherProfilePage = () => {
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
                                         placeholder="F.eks. Oslo"
-                                        className="w-full h-11 rounded-xl border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring"
+                                        className="w-full h-11 rounded-lg border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring"
                                     />
                                 </div>
                                 <p className="text-xs text-text-tertiary mt-1.5">Vises på din offentlige studioside.</p>
@@ -372,10 +372,10 @@ const TeacherProfilePage = () => {
                                     onBlur={() => handleBlur('studioDescription')}
                                     placeholder="Fortell litt om studioet ditt"
                                     aria-invalid={!!errors.studioDescription}
-                                    className={`w-full rounded-xl border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-4 ios-ease resize-none ${
+                                    className={`w-full rounded-lg border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease resize-none ${
                                       errors.studioDescription
-                                        ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20'
-                                        : 'border-border bg-input-bg focus:border-ring focus:ring-border/30 focus:bg-white hover:border-ring'
+                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
                                     }`}
                                 />
                                 <div className="flex justify-between text-xs mt-1.5">
@@ -395,7 +395,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
@@ -412,12 +412,12 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('newSignups')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-text-primary' : 'bg-surface-elevated'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Nye påmeldinger</span>
                                     <span
                                         aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${notifications.newSignups ? 'translate-x-5' : 'translate-x-0'}`}
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.newSignups ? 'translate-x-5' : 'translate-x-0'}`}
                                     />
                                 </button>
                             </div>
@@ -430,12 +430,12 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('cancellations')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-text-primary' : 'bg-surface-elevated'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Avbestillinger</span>
                                     <span
                                         aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${notifications.cancellations ? 'translate-x-5' : 'translate-x-0'}`}
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.cancellations ? 'translate-x-5' : 'translate-x-0'}`}
                                     />
                                 </button>
                             </div>
@@ -448,12 +448,12 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <button
                                     onClick={() => handleToggle('marketing')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-text-primary' : 'bg-surface-elevated'}`}
+                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-primary' : 'bg-surface-elevated'}`}
                                 >
                                     <span className="sr-only">Markedsføring</span>
                                     <span
                                         aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${notifications.marketing ? 'translate-x-5' : 'translate-x-0'}`}
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.marketing ? 'translate-x-5' : 'translate-x-0'}`}
                                     />
                                 </button>
                             </div>
@@ -465,7 +465,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="rounded-3xl bg-white p-6 md:p-8 border border-gray-200 ios-ease hover:border-ring">
+                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Passord & Sikkerhet</h3>
                         </div>

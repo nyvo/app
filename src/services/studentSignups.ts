@@ -1,10 +1,33 @@
 import { supabase, typedFrom } from '@/lib/supabase'
-import type { Signup, Course, CourseStyle } from '@/types/database'
+import type { Signup, Course } from '@/types/database'
+
+// Shared Supabase select string for student signup queries
+const SIGNUP_WITH_COURSE_SELECT = `
+  *,
+  course:courses!inner(
+    id,
+    title,
+    description,
+    course_type,
+    location,
+    time_schedule,
+    start_date,
+    end_date,
+    duration,
+    price,
+    image_url,
+    level,
+    instructor_id,
+    instructor:profiles!courses_instructor_id_fkey(
+      name,
+      avatar_url
+    )
+  )
+` as const
 
 // Student signup with full course and instructor details
 export interface StudentSignupWithCourse extends Signup {
   course: (Pick<Course, 'id' | 'title' | 'description' | 'course_type' | 'location' | 'time_schedule' | 'start_date' | 'end_date' | 'duration' | 'price' | 'image_url' | 'level' | 'instructor_id'> & {
-    style: CourseStyle | null
     instructor?: {
       name: string | null
       avatar_url: string | null
@@ -19,29 +42,7 @@ export async function fetchMySignups(
 ): Promise<{ data: StudentSignupWithCourse[] | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('signups')
-    .select(`
-      *,
-      course:courses!inner(
-        id,
-        title,
-        description,
-        course_type,
-        location,
-        time_schedule,
-        start_date,
-        end_date,
-        duration,
-        price,
-        image_url,
-        level,
-        instructor_id,
-        style:course_styles(*),
-        instructor:profiles!courses_instructor_id_fkey(
-          name,
-          avatar_url
-        )
-      )
-    `)
+    .select(SIGNUP_WITH_COURSE_SELECT)
     .or(`user_id.eq.${userId},participant_email.eq.${email}`)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
@@ -62,29 +63,7 @@ export async function fetchUpcomingSignups(
 
   const { data, error } = await supabase
     .from('signups')
-    .select(`
-      *,
-      course:courses!inner(
-        id,
-        title,
-        description,
-        course_type,
-        location,
-        time_schedule,
-        start_date,
-        end_date,
-        duration,
-        price,
-        image_url,
-        level,
-        instructor_id,
-        style:course_styles(*),
-        instructor:profiles!courses_instructor_id_fkey(
-          name,
-          avatar_url
-        )
-      )
-    `)
+    .select(SIGNUP_WITH_COURSE_SELECT)
     .or(`user_id.eq.${userId},participant_email.eq.${email}`)
     .eq('status', 'confirmed')
     .gte('courses.start_date', today)
@@ -113,29 +92,7 @@ export async function fetchPastSignups(
 
   const { data, error } = await supabase
     .from('signups')
-    .select(`
-      *,
-      course:courses!inner(
-        id,
-        title,
-        description,
-        course_type,
-        location,
-        time_schedule,
-        start_date,
-        end_date,
-        duration,
-        price,
-        image_url,
-        level,
-        instructor_id,
-        style:course_styles(*),
-        instructor:profiles!courses_instructor_id_fkey(
-          name,
-          avatar_url
-        )
-      )
-    `)
+    .select(SIGNUP_WITH_COURSE_SELECT)
     .or(`user_id.eq.${userId},participant_email.eq.${email}`)
     .eq('status', 'confirmed')
     .lt('courses.end_date', today)

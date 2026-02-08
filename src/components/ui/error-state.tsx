@@ -15,7 +15,7 @@ interface ErrorStateProps {
 const variantClasses = {
   default: 'flex flex-col items-center justify-center h-64 text-center',
   inline: 'flex flex-col items-center justify-center py-8 px-4 text-center',
-  card: 'flex flex-col items-center justify-center h-64 text-center rounded-3xl bg-white border border-gray-200',
+  card: 'flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white border border-zinc-200',
 }
 
 /**

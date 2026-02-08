@@ -178,13 +178,13 @@ export function ImageUpload({
             ${
               dragActive
                 ? 'border-ring bg-surface'
-                : 'border-border bg-input-bg hover:border-ring hover:bg-surface'
+                : 'border-zinc-300 bg-input-bg hover:border-ring hover:bg-surface'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-destructive' : ''}
           `}
         >
-          <div className="h-10 w-10 rounded-xl bg-white border border-border flex items-center justify-center shadow-sm">
+          <div className="h-10 w-10 rounded-xl bg-white border border-zinc-300 flex items-center justify-center">
             <ImagePlus className="h-5 w-5 text-text-tertiary" />
           </div>
           <div className="text-center">

@@ -38,7 +38,11 @@ export function useFormDraft<T extends object>(
   const [draft, setDraft] = useState<T | null>(null)
   const [hasDraft, setHasDraft] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isInitialLoadRef = useRef(true)
+  const latestDataRef = useRef<T | null>(null)
+  const storageKeyRef = useRef(storageKey)
+
+  // Keep storageKeyRef in sync
+  storageKeyRef.current = storageKey
 
   // Load draft from localStorage on mount
   useEffect(() => {
@@ -54,11 +58,13 @@ export function useFormDraft<T extends object>(
       // Clear corrupted data
       localStorage.removeItem(storageKey)
     }
-    isInitialLoadRef.current = false
   }, [storageKey])
 
   // Save draft to localStorage (debounced)
   const saveDraft = useCallback((data: T) => {
+    // Track latest data for flush on unmount
+    latestDataRef.current = data
+
     // Clear any pending save
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -79,6 +85,7 @@ export function useFormDraft<T extends object>(
       } catch (err) {
         logger.warn('[FormDraft] Failed to save draft:', err)
       }
+      latestDataRef.current = null
     }, debounceMs)
   }, [storageKey, debounceMs])
 
@@ -93,11 +100,25 @@ export function useFormDraft<T extends object>(
     }
   }, [storageKey])
 
-  // Cleanup timeout on unmount
+  // Flush pending save on unmount instead of discarding it
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+      }
+      // Write any pending data synchronously before unmount
+      const pendingData = latestDataRef.current
+      if (pendingData) {
+        try {
+          const hasContent = Object.values(pendingData).some(v =>
+            v !== '' && v !== null && v !== undefined
+          )
+          if (hasContent) {
+            localStorage.setItem(storageKeyRef.current, JSON.stringify(pendingData))
+          }
+        } catch (err) {
+          logger.warn('[FormDraft] Failed to flush draft on unmount:', err)
+        }
       }
     }
   }, [])
@@ -111,8 +132,6 @@ export function useFormDraft<T extends object>(
     saveDraft,
     /** Clear the draft from storage */
     clearDraft,
-    /** Whether initial load is complete */
-    isLoaded: !isInitialLoadRef.current,
   }
 }
 

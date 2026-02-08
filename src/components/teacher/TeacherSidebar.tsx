@@ -13,7 +13,9 @@ import {
   ChevronsRight
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
@@ -75,10 +77,10 @@ export const TeacherSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-gray-200 bg-white">
-      <SidebarHeader className={`pt-8 pb-10 ${isCollapsed ? 'px-4' : 'px-6'}`}>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className={`pt-8 pb-8 ${isCollapsed ? 'px-4' : 'px-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-2'}`}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-text-primary text-white shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none">
             <Leaf className="h-4 w-4" />
           </div>
           {!isCollapsed && (
@@ -92,7 +94,7 @@ export const TeacherSidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className={`${isCollapsed ? 'space-y-2 px-3' : 'space-y-1.5 px-6'}`}>
+            <SidebarMenu className={`${isCollapsed ? 'space-y-2 px-3' : 'space-y-1 px-6'}`}>
               <TooltipProvider delayDuration={0}>
                 {navigationItems.map((item) => {
                   const active = isActive(item.href);
@@ -100,14 +102,18 @@ export const TeacherSidebar = () => {
                     <SidebarMenuButton
                       asChild
                       isActive={active}
-                      className={
+                      className={cn(
+                        "transition-all duration-200",
                         active
-                          ? 'bg-surface border border-border/50 text-text-primary hover:bg-surface hover:text-text-primary'
-                          : 'text-text-secondary border border-transparent hover:bg-surface hover:text-text-primary ios-ease'
-                      }
+                          ? 'bg-white border border-zinc-200 text-text-primary'
+                          : 'text-text-secondary border border-transparent hover:bg-white/50 hover:text-text-primary'
+                      )}
                     >
                       <Link to={item.href} className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                        <item.icon className={`h-5 w-5 shrink-0 ${active ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`} />
+                        <item.icon className={cn(
+                          "h-4 w-4 shrink-0 transition-colors",
+                          active ? 'text-primary' : 'text-text-tertiary group-hover:text-text-secondary'
+                        )} />
                         {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
                       </Link>
                     </SidebarMenuButton>
@@ -135,10 +141,13 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
       {/* Collapse Toggle Button */}
-      <div className={`py-2 ${isCollapsed ? 'px-4' : 'px-6'}`}>
+      <div className={`py-2 px-6 mb-2`}>
         <button
           onClick={toggleSidebar}
-          className={`w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-surface hover:text-text-secondary transition-colors cursor-pointer ${isCollapsed ? 'p-2.5' : 'p-2'}`}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-white hover:text-text-secondary transition-all cursor-pointer border border-transparent hover:border-zinc-200 p-2",
+            isCollapsed && "px-0"
+          )}
           title={isCollapsed ? 'Utvid meny' : 'Skjul meny'}
         >
           {isCollapsed ? (
@@ -152,48 +161,61 @@ export const TeacherSidebar = () => {
         </button>
       </div>
 
-      <SidebarFooter className={`pb-8 pt-5 border-t border-surface-elevated ${isCollapsed ? 'px-4' : 'px-6'}`}>
-        <Popover open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
-          <PopoverTrigger asChild>
-            <button
-              className={`w-full group flex items-center rounded-xl p-2 text-left ios-ease cursor-pointer ${isCollapsed ? 'justify-center' : 'gap-3'} ${isProfileMenuOpen ? 'bg-surface' : 'hover:bg-gray-50'}`}
-            >
-              <div className="h-8 w-8 rounded-full bg-surface-elevated flex items-center justify-center overflow-hidden shrink-0 border border-border">
-                <img src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.name || 'User'}`} alt="User" className="h-full w-full object-cover" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 overflow-hidden">
-                  <p className="truncate text-sm font-medium text-text-primary">{profile?.name || 'Bruker'}</p>
-                  <p className="truncate text-xs text-text-tertiary">{userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}</p>
+      <SidebarFooter className={`pb-6 pt-4 border-t border-zinc-200 ${isCollapsed ? 'px-3' : 'px-6'}`}>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Popover open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
+              <PopoverTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className={cn(
+                    "w-full transition-all duration-200",
+                    isProfileMenuOpen ? "bg-white border border-zinc-200" : "hover:bg-white/50 border border-transparent"
+                  )}
+                >
+                  <UserAvatar
+                    name={profile?.name}
+                    src={profile?.avatar_url}
+                    size="sm"
+                    ringClassName="border border-zinc-200"
+                  />
+                  {!isCollapsed && (
+                    <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
+                      <p className="truncate text-sm font-medium text-text-primary leading-none mb-1">{profile?.name || 'Bruker'}</p>
+                      <p className="truncate text-[10px] text-text-tertiary uppercase tracking-wider font-medium leading-none">
+                        {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
+                      </p>
+                    </div>
+                  )}
+                </SidebarMenuButton>
+              </PopoverTrigger>
+              <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-2xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
+                <div className="flex flex-col gap-0.5">
+                  <Link
+                    to="/teacher/profile"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5 text-text-tertiary" />
+                    Innstillinger
+                  </Link>
+                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer">
+                    <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
+                    Hjelp & Support
+                  </button>
+                  <div className="my-1 border-t border-zinc-100"></div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="h-3.5 w-3.5 text-destructive" />
+                    Logg ut
+                  </button>
                 </div>
-              )}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-2xl border-border shadow-lg ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
-            <div className="flex flex-col gap-0.5">
-              <Link
-                to="/teacher/profile"
-                onClick={() => setIsProfileMenuOpen(false)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors"
-              >
-                <Settings className="h-3.5 w-3.5 text-text-tertiary" />
-                Innstillinger
-              </Link>
-              <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer">
-                <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
-                Hjelp & Support
-              </button>
-              <div className="my-1 border-t border-surface-elevated"></div>
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
-              >
-                <LogOut className="h-3.5 w-3.5 text-destructive" />
-                Logg ut
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
+              </PopoverContent>
+            </Popover>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

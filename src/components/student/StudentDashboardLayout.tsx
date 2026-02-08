@@ -7,10 +7,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { LogOut, User, Search } from 'lucide-react';
-import { getInitials } from '@/utils/stringUtils';
 
 interface StudentDashboardLayoutProps {
   children: React.ReactNode;
@@ -28,7 +27,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
@@ -63,12 +62,13 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 outline-none group">
-                  <Avatar className="h-10 w-10 border border-gray-200 transition-colors group-hover:border-gray-300">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-surface-elevated text-sm font-medium text-text-secondary">
-                      {profile?.name ? getInitials(profile.name) : '??'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    name={profile?.name}
+                    email={user?.email}
+                    src={profile?.avatar_url}
+                    size="lg"
+                    ringClassName="border border-zinc-200 transition-colors group-hover:border-zinc-300"
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -98,7 +98,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       </main>
 
       {/* Simple Footer */}
-      <footer className="border-t border-gray-200 bg-white py-8 mt-auto">
+      <footer className="border-t border-zinc-200 bg-white py-8 mt-auto">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
             Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-primary underline hover:text-text-secondary transition-colors">Kontakt support</a>

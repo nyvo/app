@@ -89,10 +89,10 @@ function SkeletonCard({ className, variant = 'default', ...props }: SkeletonCard
   return (
     <div
       className={cn(
-        'rounded-3xl border animate-pulse',
+        'rounded-2xl border animate-pulse',
         variant === 'dark'
-          ? 'bg-gray-900 border-gray-800'
-          : 'bg-white border-gray-200',
+          ? 'bg-zinc-900 border-zinc-800'
+          : 'bg-white border-zinc-200',
         className
       )}
       aria-hidden="true"
@@ -149,7 +149,7 @@ function SkeletonTableRow({
 }: SkeletonTableRowProps) {
   return (
     <tr
-      className={cn('border-b border-gray-100', className)}
+      className={cn('border-b border-zinc-100', className)}
       aria-hidden="true"
       {...props}
     >
@@ -215,7 +215,7 @@ function SkeletonStatsCard({
   return (
     <div
       className={cn(
-        'rounded-3xl bg-white border border-gray-200 p-6',
+        'rounded-2xl bg-white border border-zinc-200 p-6',
         className
       )}
       aria-hidden="true"
@@ -258,7 +258,7 @@ function SkeletonCourseCard({ className, ...props }: React.ComponentProps<'div'>
   return (
     <div
       className={cn(
-        'rounded-3xl bg-white border border-gray-200 p-6',
+        'rounded-2xl bg-white border border-zinc-200 p-6',
         className
       )}
       aria-hidden="true"

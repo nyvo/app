@@ -1,4 +1,4 @@
-export type CourseStyleType = 'private' | 'online' | 'yin' | 'meditation' | 'vinyasa' | 'course-series';
+export type CourseStyleType = 'course-series' | 'event';
 
 export interface UpcomingClass {
   id: string;
@@ -40,10 +40,10 @@ export interface TeacherStats {
   attendanceData: number[];
 }
 
-export type PaymentStatus = 'paid' | 'pending' | 'failed';
+export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
 
 // Status types (used by both Registration and Signup)
-export type SignupStatus = 'confirmed' | 'waitlist' | 'cancelled' | 'course_cancelled';
+export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled';
 
 export interface Registration {
   id: string;
@@ -80,8 +80,66 @@ export interface Signup {
   classTime: string;
   registeredAt: string;
   status: SignupStatus;
-  waitlistPosition?: number;
   paymentType: SignupPaymentType;
   paymentDetails?: string;
   note?: string;
+}
+
+// --- Types for Messages Page (moved from mockData.ts) ---
+export interface Conversation {
+  id: string;
+  name: string;
+  avatar?: string;
+  initials?: string;
+  lastMessage: string;
+  timestamp: string;
+  isOnline?: boolean;
+  unreadCount?: number;
+  isActive?: boolean;
+  isRead?: boolean;
+}
+
+export interface MessageDetail {
+  id: string;
+  conversationId: string;
+  content: string;
+  timestamp: string;
+  isOutgoing: boolean;
+  avatar?: string;
+  isRead?: boolean;
+}
+
+// --- Types for Courses Page (moved from mockData.ts) ---
+export type CourseType = 'kursrekke' | 'enkeltkurs';
+
+export interface Instructor {
+  name: string;
+  avatar?: string;
+  rating: number;
+  classesCount: number;
+}
+
+export interface DetailedCourse {
+  id: string;
+  title: string;
+  type: 'course-series' | 'event';
+  courseType: CourseType;
+  status: 'active' | 'upcoming' | 'completed' | 'draft' | 'cancelled';
+  location: string;
+  timeSchedule: string;
+  duration: string;
+  participants: number;
+  maxParticipants: number;
+  price: string;
+  progress?: number;
+  currentWeek?: number;
+  totalWeeks?: number;
+  startDate?: string;
+  endDate?: string;
+  completedDate?: string;
+  attendeeAvatars?: string[];
+  description?: string;
+  instructor?: Instructor;
+  level?: string;
+  imageUrl?: string | null;
 }

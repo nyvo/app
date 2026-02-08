@@ -1,4 +1,4 @@
-import { StickyNote } from 'lucide-react';
+import { StickyNote, AlertCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface NotePopoverProps {
@@ -13,15 +13,24 @@ export function NotePopover({ note, className }: NotePopoverProps) {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`inline-flex items-center justify-center h-8 w-8 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-elevated transition-colors ${className || ''}`}
+          className={`inline-flex items-center justify-center h-8 w-8 rounded-lg transition-colors ${
+            note.length > 0 ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' : 'text-text-tertiary hover:text-text-primary hover:bg-surface-elevated'
+          } ${className || ''}`}
           aria-label="Vis notater"
           title="Vis notater"
         >
-          <StickyNote className="h-4 w-4 shrink-0" />
+          {note.length > 0 ? (
+            <AlertCircle className="h-4 w-4 shrink-0" />
+          ) : (
+            <StickyNote className="h-4 w-4 shrink-0" />
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="center" side="top" className="w-56 p-3">
-        <p className="text-xs text-text-secondary leading-relaxed">{note}</p>
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary leading-relaxed">{note}</p>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -64,7 +64,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             aria-invalid={touched.firstName && errors.firstName}
           />
           {touched.firstName && errors.firstName && (
-            <p className="text-xs text-destructive mt-1">Fornavn er påkrevd</p>
+            <p className="text-xs text-destructive mt-1">Skriv inn fornavnet ditt</p>
           )}
         </div>
 
@@ -92,7 +92,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             aria-invalid={touched.lastName && errors.lastName}
           />
           {touched.lastName && errors.lastName && (
-            <p className="text-xs text-destructive mt-1">Etternavn er påkrevd</p>
+            <p className="text-xs text-destructive mt-1">Skriv inn etternavnet ditt</p>
           )}
         </div>
       </div>
@@ -103,7 +103,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           htmlFor="email"
           className="block text-xs font-medium text-text-secondary mb-1.5"
         >
-          E-postadresse
+          E-post
         </label>
         <div className="relative group">
           <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
@@ -126,7 +126,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         </div>
         {touched.email && errors.email && (
           <p className="text-xs text-destructive mt-1">
-            Ugyldig e-postadresse
+            Ugyldig e-post
           </p>
         )}
       </div>
@@ -156,7 +156,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           htmlFor="message"
           className="block text-xs font-medium text-text-secondary mb-1.5"
         >
-          Melding til instruktør <span className="text-muted-foreground">(valgfritt)</span>
+          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
         </label>
         <textarea
           id="message"
@@ -165,8 +165,8 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           onChange={onChange}
           disabled={submitting}
           rows={3}
-          className="block w-full rounded-lg border border-gray-200 bg-input-bg px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:ring-4 focus:ring-border/30 hover:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
-          placeholder="Har du noen spørsmål eller kommentarer?"
+          className="block w-full rounded-lg border border-zinc-300 bg-input-bg px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
+          placeholder="Noe instruktøren bør vite?"
         />
       </div>
 
@@ -179,7 +179,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           checked={formData.termsAccepted}
           onChange={onChange}
           disabled={submitting}
-          className={`h-4 w-4 rounded border-gray-300 text-text-primary focus:ring-text-primary ${
+          className={`h-4 w-4 rounded border-zinc-300 text-text-primary focus:ring-text-primary ${
             touched.termsAccepted && errors.termsAccepted
               ? 'border-destructive'
               : ''
@@ -195,13 +195,12 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           >
             vilkårene
           </Link>{' '}
-          og{' '}
-          <span className="text-muted-foreground">avbestillingsreglene (24t)</span>
+          for påmelding
         </label>
       </div>
       {touched.termsAccepted && errors.termsAccepted && (
         <p className="text-xs text-destructive -mt-2">
-          Du må godta vilkårene
+          Du må godta vilkårene for å gå videre
         </p>
       )}
     </div>

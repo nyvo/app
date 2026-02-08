@@ -43,8 +43,7 @@ CREATE OR REPLACE FUNCTION create_course_idempotent(
   p_start_date DATE DEFAULT NULL,
   p_end_date DATE DEFAULT NULL,
   p_instructor_id UUID DEFAULT NULL,
-  p_image_url TEXT DEFAULT NULL,
-  p_style_id UUID DEFAULT NULL
+  p_image_url TEXT DEFAULT NULL
 ) RETURNS JSON AS $$
 DECLARE
   v_existing_course RECORD;
@@ -89,8 +88,7 @@ BEGIN
     start_date,
     end_date,
     instructor_id,
-    image_url,
-    style_id
+    image_url
   ) VALUES (
     p_organization_id,
     p_idempotency_key,
@@ -110,8 +108,7 @@ BEGIN
     p_start_date,
     p_end_date,
     p_instructor_id,
-    p_image_url,
-    p_style_id
+    p_image_url
   )
   RETURNING id INTO v_new_course_id;
 

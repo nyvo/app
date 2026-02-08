@@ -2,7 +2,7 @@
 // Deployed: 2026-01-20 - using Stripe SDK constructEventAsync for verification
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno'
+import Stripe from 'npm:stripe@17.3.1'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2024-12-18.acacia',
@@ -29,17 +29,11 @@ async function verifyAndParseWebhook(body: string, signature: string, secret: st
 }
 
 Deno.serve(async (req: Request) => {
-  // Debug: Log webhook secret info (first 10 chars only for security)
-  const secretPrefix = webhookSecret ? webhookSecret.substring(0, 10) : 'NOT_SET'
-  console.log('Webhook secret prefix:', secretPrefix, '| Length:', webhookSecret?.length || 0)
-
   const signature = req.headers.get('stripe-signature')
 
   if (!signature) {
     return new Response('Missing stripe-signature header', { status: 400 })
   }
-
-  console.log('Received signature header:', signature.substring(0, 50) + '...')
 
   try {
     const body = await req.text()
@@ -54,25 +48,31 @@ Deno.serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // ============================================
-    // IDEMPOTENCY CHECK: Prevent duplicate processing
-    // Stripe may retry webhooks, so we track processed event IDs
+    // IDEMPOTENCY: Claim this event ID before doing any work.
+    // The processed_webhook_events table has a UNIQUE constraint on event_id.
+    // If two webhook deliveries race, only one INSERT succeeds.
     // ============================================
     const eventId = event.id
 
-    // Check if this event was already processed
-    const { data: existingEvent } = await supabase
+    const { error: claimError } = await supabase
       .from('processed_webhook_events')
-      .select('event_id, result')
-      .eq('event_id', eventId)
-      .single()
-
-    if (existingEvent) {
-      console.log(`Event ${eventId} already processed, skipping (idempotency)`)
-      return new Response(JSON.stringify({
-        status: 'already_processed',
+      .insert({
         event_id: eventId,
-        previous_result: existingEvent.result
-      }), { status: 200 })
+        event_type: event.type,
+        result: { status: 'processing' }
+      })
+
+    if (claimError) {
+      // UNIQUE violation means another invocation already claimed this event
+      if (claimError.code === '23505') {
+        console.log(`Event ${eventId} already claimed, skipping (idempotency)`)
+        return new Response(JSON.stringify({
+          status: 'already_processed',
+          event_id: eventId,
+        }), { status: 200 })
+      }
+      // Other DB error - log but continue processing (don't lose the event)
+      console.error('Warning: Could not claim event:', claimError)
     }
 
     // Process the event and track result
@@ -94,10 +94,6 @@ Deno.serve(async (req: Request) => {
         // Package metadata
         const signupPackageId = metadata.signup_package_id || null
         const packageWeeks = metadata.package_weeks ? parseInt(metadata.package_weeks, 10) : null
-        // Waitlist claim metadata
-        const isWaitlistClaim = metadata.is_waitlist_claim === 'true'
-        const claimToken = metadata.claim_token
-        const signupIdToClaim = metadata.signup_id
 
         // Validate all required metadata with detailed logging
         const missingFields: string[] = []
@@ -107,13 +103,24 @@ Deno.serve(async (req: Request) => {
         if (!customerName) missingFields.push('customer_name')
 
         if (missingFields.length > 0) {
-          console.error('Missing required metadata in checkout session:', {
+          console.error('CRITICAL: Missing required metadata in checkout session:', {
             sessionId: session.id,
             missingFields,
             metadata,
             customerEmail: session.customer_email,
           })
-          return new Response(`Missing metadata: ${missingFields.join(', ')}`, { status: 400 })
+          // Return 500 so Stripe retries — metadata may arrive on a subsequent attempt.
+          // Mark the idempotency record for manual review.
+          await supabase.from('processed_webhook_events')
+            .update({ result: { status: 'metadata_error', missing_fields: missingFields, session_id: session.id } })
+            .eq('event_id', eventId)
+            .catch(() => {})
+          // Delete the idempotency claim so retries can re-process
+          await supabase.from('processed_webhook_events')
+            .delete()
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response(`Missing metadata: ${missingFields.join(', ')}`, { status: 500 })
         }
 
         console.log('Processing checkout.session.completed:', {
@@ -123,150 +130,9 @@ Deno.serve(async (req: Request) => {
           customerEmail,
           customerName,
           isDropIn,
-          isWaitlistClaim,
           paymentIntent: session.payment_intent,
           amountTotal: session.amount_total,
         })
-
-        // Handle waitlist claim differently
-        if (isWaitlistClaim && signupIdToClaim) {
-          // Validate claim token and update existing signup
-          const { data: existingSignup, error: signupFetchError } = await supabase
-            .from('signups')
-            .select('id, offer_claim_token, offer_status, offer_expires_at')
-            .eq('id', signupIdToClaim)
-            .single()
-
-          if (signupFetchError || !existingSignup) {
-            console.error('Waitlist signup not found:', signupIdToClaim)
-            return new Response('Signup not found', { status: 400 })
-          }
-
-          // Verify claim token
-          if (existingSignup.offer_claim_token !== claimToken) {
-            console.error('Invalid claim token')
-            return new Response('Invalid claim token', { status: 400 })
-          }
-
-          // Check if already claimed
-          if (existingSignup.offer_status === 'claimed') {
-            console.log('Spot already claimed')
-            // Record and return early
-            await supabase.from('processed_webhook_events').insert({
-              event_id: eventId,
-              event_type: event.type,
-              result: { type: 'waitlist_claim', status: 'already_claimed' }
-            }).catch(() => {}) // Ignore errors
-            return new Response('OK', { status: 200 })
-          }
-
-          // Check if expired
-          if (existingSignup.offer_expires_at && new Date(existingSignup.offer_expires_at) < new Date()) {
-            console.error('Offer has expired')
-            return new Response('Offer expired', { status: 400 })
-          }
-
-          // Fetch receipt URL from the charge
-          let receiptUrl: string | null = null
-          if (session.payment_intent) {
-            try {
-              const charges = await stripe.charges.list({
-                payment_intent: session.payment_intent as string,
-                limit: 1
-              })
-              if (charges.data.length > 0 && charges.data[0].receipt_url) {
-                receiptUrl = charges.data[0].receipt_url
-              }
-            } catch (chargeError) {
-              console.error('Error fetching charge for receipt URL:', chargeError)
-            }
-          }
-
-          // Update the existing signup to confirmed
-          const { error: updateError } = await supabase
-            .from('signups')
-            .update({
-              status: 'confirmed',
-              offer_status: 'claimed',
-              payment_status: 'paid',
-              waitlist_position: null,
-              stripe_checkout_session_id: session.id,
-              stripe_payment_intent_id: session.payment_intent as string,
-              stripe_receipt_url: receiptUrl,
-              amount_paid: session.amount_total ? session.amount_total / 100 : null,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', signupIdToClaim)
-
-          if (updateError) {
-            console.error('Error updating waitlist signup:', updateError)
-            return new Response('Error updating signup', { status: 500 })
-          }
-
-          console.log(`Waitlist claim successful for signup ${signupIdToClaim}`)
-
-          // Track result for idempotency
-          processingResult = {
-            type: 'waitlist_claim',
-            signup_id: signupIdToClaim,
-            status: 'confirmed'
-          }
-
-          // Send confirmation email
-          try {
-            const { data: course } = await supabase
-              .from('courses')
-              .select('title, location, time_schedule, start_date')
-              .eq('id', courseId)
-              .single()
-
-            const { data: org } = await supabase
-              .from('organizations')
-              .select('name')
-              .eq('id', organizationId)
-              .single()
-
-            const formatDate = (dateStr: string | null): string => {
-              if (!dateStr) return ''
-              const date = new Date(dateStr)
-              return date.toLocaleDateString('nb-NO', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })
-            }
-
-            const extractTime = (schedule: string | null): string => {
-              if (!schedule) return ''
-              const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
-              return timeMatch ? timeMatch[1] : ''
-            }
-
-            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`
-              },
-              body: JSON.stringify({
-                to: customerEmail,
-                template: 'signup-confirmation',
-                templateData: {
-                  courseName: course?.title || 'Kurs',
-                  courseDate: formatDate(course?.start_date),
-                  courseTime: extractTime(course?.time_schedule),
-                  location: course?.location || '',
-                  organizationName: org?.name || 'Ease'
-                }
-              })
-            })
-          } catch (emailError) {
-            console.error('Error sending confirmation email:', emailError)
-          }
-
-          return new Response('OK', { status: 200 })
-        }
 
         // Check if signup already exists (idempotency for regular signups)
         const { data: existingSignups, error: idempotencyError } = await supabase
@@ -296,12 +162,110 @@ Deno.serve(async (req: Request) => {
           } catch (captureError) {
             console.error('Error capturing payment for existing signup:', captureError)
           }
-          // Record event before returning (signup already existed via payment_intent check)
-          await supabase.from('processed_webhook_events').insert({
-            event_id: eventId,
-            event_type: event.type,
-            result: { type: 'regular_signup', status: 'already_exists', existing_id: existingSignups[0].id }
-          }).catch(() => {}) // Ignore errors
+          // Update event record (claimed at start)
+          await supabase.from('processed_webhook_events')
+            .update({ result: { type: 'regular_signup', status: 'already_exists', existing_id: existingSignups[0].id } })
+            .eq('event_id', eventId)
+            .catch(() => {}) // Ignore errors
+          return new Response('OK', { status: 200 })
+        }
+
+        // ============================================
+        // PAYMENT LINK FLOW: Update existing signup instead of creating new one
+        // When a teacher sends a payment link, the checkout session has
+        // existing_signup_id in metadata. We update that signup's payment fields
+        // and capture the payment, rather than calling create_signup_if_available.
+        // ============================================
+        const existingSignupId = metadata.existing_signup_id
+        if (existingSignupId) {
+          console.log('Payment link flow - updating existing signup:', existingSignupId)
+
+          // Capture payment first
+          let receiptUrl: string | null = null
+          try {
+            const captured = await stripe.paymentIntents.capture(session.payment_intent as string)
+            if (captured.latest_charge) {
+              const charge = await stripe.charges.retrieve(captured.latest_charge as string)
+              receiptUrl = charge.receipt_url || null
+            }
+          } catch (captureError) {
+            console.error('CRITICAL: Payment capture failed for payment link signup:', captureError)
+            await supabase.from('signups')
+              .update({ payment_status: 'failed' })
+              .eq('id', existingSignupId)
+            processingResult = {
+              type: 'payment_link',
+              signup_id: existingSignupId,
+              status: 'capture_failed',
+              error: captureError instanceof Error ? captureError.message : 'Unknown'
+            }
+            await supabase.from('processed_webhook_events')
+              .update({ result: processingResult })
+              .eq('event_id', eventId)
+              .catch(() => {})
+            return new Response(JSON.stringify({ status: 'capture_failed' }), { status: 200 })
+          }
+
+          // Update existing signup with payment info
+          const { error: updateError } = await supabase
+            .from('signups')
+            .update({
+              stripe_checkout_session_id: session.id,
+              stripe_payment_intent_id: session.payment_intent as string,
+              stripe_receipt_url: receiptUrl,
+              payment_status: 'paid',
+              amount_paid: session.amount_total ? session.amount_total / 100 : null,
+              status: 'confirmed',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingSignupId)
+
+          if (updateError) {
+            console.error('Error updating existing signup for payment link:', updateError)
+            processingResult = { type: 'payment_link', signup_id: existingSignupId, status: 'update_failed', error: updateError.message }
+          } else {
+            console.log('Payment link signup updated successfully:', existingSignupId)
+            processingResult = { type: 'payment_link', signup_id: existingSignupId, status: 'confirmed' }
+          }
+
+          // Send confirmation email (non-blocking)
+          try {
+            const { data: course } = await supabase.from('courses').select('title, location, time_schedule, start_date').eq('id', courseId).single()
+            const { data: org } = await supabase.from('organizations').select('name').eq('id', organizationId).single()
+            const formatDate = (dateStr: string | null): string => {
+              if (!dateStr) return ''
+              const date = new Date(dateStr)
+              return date.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+            }
+            const extractTime = (schedule: string | null): string => {
+              if (!schedule) return ''
+              const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
+              return timeMatch ? timeMatch[1] : ''
+            }
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseServiceKey}` },
+              body: JSON.stringify({
+                to: customerEmail,
+                template: 'signup-confirmation',
+                templateData: {
+                  courseName: course?.title || 'Kurs',
+                  courseDate: formatDate(course?.start_date),
+                  courseTime: extractTime(course?.time_schedule),
+                  location: course?.location || '',
+                  organizationName: org?.name || 'Ease'
+                }
+              })
+            })
+          } catch (emailError) {
+            console.error('Error sending confirmation email for payment link:', emailError)
+          }
+
+          // Update idempotency record and return
+          await supabase.from('processed_webhook_events')
+            .update({ result: processingResult })
+            .eq('event_id', eventId)
+            .catch(() => {})
           return new Response('OK', { status: 200 })
         }
 
@@ -444,15 +408,26 @@ Deno.serve(async (req: Request) => {
               .eq('id', signupResult.signup_id)
           }
         } catch (captureError) {
-          // Payment capture failed - this is a critical error
-          // The signup was created but payment wasn't captured
+          // Payment capture failed - signup exists but payment not captured.
+          // Return 200 so Stripe does not retry into inconsistent state.
+          // The signup is marked 'failed' for manual reconciliation.
           console.error('CRITICAL: Payment capture failed after signup created:', captureError)
-          // Mark signup as payment failed
           await supabase
             .from('signups')
             .update({ payment_status: 'failed' })
             .eq('id', signupResult.signup_id)
-          return new Response('Payment capture failed', { status: 500 })
+          processingResult = {
+            type: 'regular_signup',
+            signup_id: signupResult.signup_id,
+            status: 'capture_failed',
+            error: captureError instanceof Error ? captureError.message : 'Unknown'
+          }
+          // Update idempotency record and return 200
+          await supabase.from('processed_webhook_events')
+            .update({ result: processingResult })
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response(JSON.stringify({ status: 'capture_failed' }), { status: 200 })
         }
 
         // Get course details for confirmation email
@@ -555,21 +530,36 @@ Deno.serve(async (req: Request) => {
 
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge
-        console.log(`Charge refunded: ${charge.id}`)
+        const isFullRefund = charge.amount_refunded >= charge.amount
+        console.log(`Charge refunded: ${charge.id}, full=${isFullRefund}, refunded=${charge.amount_refunded}/${charge.amount}`)
 
-        // Update signup to refunded/cancelled
-        const { error: updateError } = await supabase
-          .from('signups')
-          .update({
-            payment_status: 'refunded',
-            status: 'cancelled',
-          })
-          .eq('stripe_payment_intent_id', charge.payment_intent)
+        if (isFullRefund) {
+          // Full refund — cancel the signup
+          const { error: updateError } = await supabase
+            .from('signups')
+            .update({
+              payment_status: 'refunded',
+              status: 'cancelled',
+            })
+            .eq('stripe_payment_intent_id', charge.payment_intent)
 
-        if (updateError) {
-          console.error('Error updating signup for refund:', updateError)
+          if (updateError) {
+            console.error('Error updating signup for full refund:', updateError)
+          }
+        } else {
+          // Partial refund — keep signup confirmed, just note the partial refund
+          const { error: updateError } = await supabase
+            .from('signups')
+            .update({
+              payment_status: 'refunded',
+            })
+            .eq('stripe_payment_intent_id', charge.payment_intent)
+
+          if (updateError) {
+            console.error('Error updating signup for partial refund:', updateError)
+          }
         }
-        processingResult = { type: 'refund', charge_id: charge.id }
+        processingResult = { type: 'refund', charge_id: charge.id, full_refund: isFullRefund }
         break
       }
 
@@ -579,18 +569,16 @@ Deno.serve(async (req: Request) => {
     }
 
     // ============================================
-    // RECORD EVENT AS PROCESSED (idempotency)
+    // UPDATE EVENT WITH FINAL RESULT (claimed at start)
     // ============================================
     try {
-      await supabase.from('processed_webhook_events').insert({
-        event_id: eventId,
-        event_type: event.type,
-        result: processingResult
-      })
+      await supabase.from('processed_webhook_events')
+        .update({ result: processingResult })
+        .eq('event_id', eventId)
       console.log(`Recorded event ${eventId} as processed`)
     } catch (recordError) {
       // Don't fail if we can't record - the event was still processed
-      console.error('Warning: Could not record processed event:', recordError)
+      console.error('Warning: Could not update processed event:', recordError)
     }
 
     return new Response('OK', { status: 200 })

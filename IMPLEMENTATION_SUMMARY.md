@@ -32,7 +32,6 @@ This document summarizes all optimizations, security fixes, and improvements imp
 - Price/capacity must be positive
 - Email format validation
 - Date range validation
-- Waitlist position logic enforcement
 - **Impact**: Server-side validation that cannot be bypassed
 
 ---

@@ -1,6 +1,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { Resend } from 'npm:resend@4.0.0'
+import { escapeHtml } from '../_shared/auth.ts'
 
 const resendKey = Deno.env.get('RESEND_API_KEY')
 if (!resendKey) {
@@ -13,8 +14,9 @@ const resend = new Resend(resendKey || '')
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
 const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'Ease'
 
+const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || '*'
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -31,7 +33,10 @@ interface SendEmailRequest {
 
 // Email templates
 function getNewMessageTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
-  const { senderName, messagePreview, conversationUrl, organizationName } = data
+  const senderName = escapeHtml(data.senderName)
+  const messagePreview = escapeHtml(data.messagePreview)
+  const conversationUrl = encodeURI(data.conversationUrl || '')
+  const organizationName = escapeHtml(data.organizationName)
 
   return {
     subject: `Ny melding fra ${senderName}`,
@@ -94,7 +99,9 @@ ${organizationName || 'Ease'}
 }
 
 function getBookingFailedTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
-  const { courseName, reason, wasCharged } = data
+  const courseName = escapeHtml(data.courseName)
+  const reason = escapeHtml(data.reason)
+  const wasCharged = data.wasCharged
 
   return {
     subject: `Påmelding ikke gjennomført: ${courseName}`,
@@ -133,7 +140,7 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
       <p>Betalingsautorisasjonen har blitt kansellert, og ingen penger er trukket fra kontoen din.</p>
     </div>
 
-    <p>Hvis du fortsatt ønsker å delta, kan du prøve igjen eller melde deg på ventelisten for dette kurset.</p>
+    <p>Hvis du fortsatt ønsker å delta, kan du prøve igjen.</p>
 
     <div class="footer">
       <p>Hilsen,<br>Ease</p>
@@ -151,7 +158,7 @@ ${reason}
 
 Du har ikke blitt belastet. Betalingsautorisasjonen har blitt kansellert, og ingen penger er trukket fra kontoen din.
 
-Hvis du fortsatt ønsker å delta, kan du prøve igjen eller melde deg på ventelisten for dette kurset.
+Hvis du fortsatt ønsker å delta, kan du prøve igjen.
 
 Hilsen,
 Ease
@@ -160,7 +167,12 @@ Ease
 }
 
 function getSignupConfirmationTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
-  const { courseName, courseDate, courseTime, location, organizationName, courseUrl } = data
+  const courseName = escapeHtml(data.courseName)
+  const courseDate = escapeHtml(data.courseDate)
+  const courseTime = escapeHtml(data.courseTime)
+  const location = escapeHtml(data.location)
+  const organizationName = escapeHtml(data.organizationName)
+  const courseUrl = data.courseUrl ? encodeURI(data.courseUrl) : ''
 
   return {
     subject: `Bekreftelse: Du er påmeldt ${courseName}`,
@@ -234,10 +246,27 @@ ${organizationName || 'Ease'}
   }
 }
 
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+function verifyServiceRole(req: Request): boolean {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader) return false
+  const token = authHeader.replace('Bearer ', '')
+  return token === supabaseServiceKey
+}
+
 Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  // This is an internal-only function - require service role key
+  if (!verifyServiceRole(req)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 
   try {

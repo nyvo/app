@@ -1,9 +1,9 @@
 import { useState, useCallback } from 'react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { MapPin, Calendar, Clock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import {
   Tooltip,
@@ -39,8 +39,8 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   if (!course) return null;
 
   // Format Date & Time
-  const startDate = new Date(course.start_date || '');
-  const dateStr = format(startDate, 'd. MMMM yyyy', { locale: nb });
+  const startDate = course.start_date ? new Date(course.start_date) : null;
+  const dateStr = startDate && isValid(startDate) ? format(startDate, 'd. MMMM yyyy', { locale: nb }) : 'Dato ikke satt';
   const timeStr = course.time_schedule ? course.time_schedule.split(',')[1]?.trim() || course.time_schedule : '';
   
   // Check Cancellation
@@ -82,16 +82,22 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6 transition-all hover:border-gray-300">
+    <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6 transition-all hover:border-zinc-400">
       
       {/* Left: Date Box */}
-      <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-gray-100 shrink-0">
-        <span className="text-sm font-medium text-text-tertiary uppercase tracking-wide">
-          {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
-        </span>
-        <span className="text-3xl font-semibold text-text-primary">
-          {format(startDate, 'd')}
-        </span>
+      <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-zinc-100 shrink-0">
+        {startDate && isValid(startDate) ? (
+          <>
+            <span className="text-sm font-medium text-text-tertiary uppercase tracking-wide">
+              {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
+            </span>
+            <span className="text-3xl font-semibold text-text-primary">
+              {format(startDate, 'd')}
+            </span>
+          </>
+        ) : (
+          <span className="text-xs text-text-tertiary">—</span>
+        )}
       </div>
 
       {/* Center: Content */}
@@ -122,12 +128,11 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
 
         {course.instructor && (
           <div className="flex items-center gap-2 pt-1">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={course.instructor.avatar_url || undefined} />
-              <AvatarFallback className="text-[10px]">
-                {course.instructor.name?.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              name={course.instructor.name}
+              src={course.instructor.avatar_url}
+              size="xs"
+            />
             <span className="text-sm text-text-secondary">
               Med <span className="font-medium text-text-primary">{course.instructor.name}</span>
             </span>
@@ -136,7 +141,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-gray-100 w-full md:w-auto md:min-w-[140px]">
+      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-zinc-100 w-full md:w-auto md:min-w-[140px]">
          <Button 
            variant="outline-soft" 
            size="sm" 
@@ -163,11 +168,12 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
                </AlertDialogHeader>
                <AlertDialogFooter>
                  <AlertDialogCancel>Behold plassen</AlertDialogCancel>
-                 <AlertDialogAction 
+                 <AlertDialogAction
                    onClick={handleCancellation}
+                   disabled={isCancelling}
                    className="bg-destructive hover:bg-destructive/90 text-white border-none"
                  >
-                   {isCancelling ? 'Avbestiller' : 'Avbestill'}
+                   {isCancelling ? 'Avbestiller...' : 'Avbestill'}
                  </AlertDialogAction>
                </AlertDialogFooter>
              </AlertDialogContent>

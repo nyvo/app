@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker } from '@/components/ui/time-picker';
-import { DurationPicker } from '@/components/ui/duration-picker';
+import { TimePicker24h } from '@/components/course/time-picker-24h';
+import { DurationInput } from '@/components/course/duration-input';
 
 interface CourseSettingsTabProps {
   // General info
@@ -27,8 +27,6 @@ interface CourseSettingsTabProps {
   onTimeChange: (time: string) => void;
   settingsDuration: number | null;
   onDurationChange: (duration: number | null) => void;
-  organizationId?: string;
-  excludeCourseId?: string;
 
   // Capacity
   maxParticipants: number;
@@ -60,8 +58,6 @@ export const CourseSettingsTab = ({
   onTimeChange,
   settingsDuration,
   onDurationChange,
-  organizationId,
-  excludeCourseId,
   maxParticipants,
   onMaxParticipantsChange,
   currentEnrolled,
@@ -74,14 +70,14 @@ export const CourseSettingsTab = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
-      <div className="lg:col-span-2 bg-white rounded-xl border border-border p-6 h-full flex flex-col">
+      <div className="lg:col-span-2 bg-white rounded-2xl border border-zinc-200 p-6 h-full flex flex-col">
         <div className="mb-6">
           <h3 className="text-base font-medium text-text-primary">Generelt</h3>
         </div>
 
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Navn på kurs</label>
+            <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Navn på kurs</label>
             <Input
               type="text"
               value={settingsTitle}
@@ -90,10 +86,10 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Beskrivelse</label>
+            <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Beskrivelse</label>
             <textarea
               rows={6}
-              className="w-full p-3 rounded-xl border border-border text-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white bg-input-bg hover:border-ring ios-ease resize-none"
+              className="w-full p-3 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white bg-input-bg hover:border-zinc-400 ios-ease resize-none"
               value={settingsDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
             />
@@ -102,7 +98,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
-      <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-border p-6 flex flex-col h-full">
+      <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col h-full">
         <div className="mb-6">
           <h3 className="text-base font-medium text-text-primary">Kursbilde</h3>
         </div>
@@ -129,13 +125,13 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 3: Schedule - Span 1 */}
-      <div className="bg-white rounded-xl border border-border p-6 flex flex-col">
+      <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-base font-medium text-text-primary">Tidspunkt</h3>
         </div>
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Dato</label>
+            <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Dato</label>
             <DatePicker
               value={settingsDate}
               onChange={onDateChange}
@@ -143,29 +139,24 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="block text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Tidspunkt</label>
-            <TimePicker
+            <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Tidspunkt</label>
+            <TimePicker24h
               value={settingsTime}
               onChange={(time) => onTimeChange(time)}
-              date={settingsDate}
-              organizationId={organizationId}
-              duration={settingsDuration || 60}
-              excludeCourseId={excludeCourseId}
-              placeholder="Velg tid"
             />
           </div>
           <div>
-            <DurationPicker
+            <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Varighet</label>
+            <DurationInput
               value={settingsDuration}
               onChange={onDurationChange}
-              label="Varighet"
             />
           </div>
         </div>
       </div>
 
       {/* Tile 4: Capacity - Span 1 */}
-      <div className="bg-white rounded-xl border border-border p-6 flex flex-col">
+      <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-base font-medium text-text-primary">Kapasitet</h3>
         </div>
@@ -203,7 +194,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 5: Danger Zone - Span 3 */}
-      <div className="lg:col-span-3 rounded-xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
+      <div className="lg:col-span-3 rounded-2xl border border-status-error-border bg-status-error-bg/30 p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-sm font-medium text-status-error-text">Avlys kurs</h3>

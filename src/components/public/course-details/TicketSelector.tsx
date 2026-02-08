@@ -20,10 +20,10 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   return (
     <div className="space-y-3">
       {/* Standard ticket card */}
-      <div className="relative border-2 border-text-primary bg-surface/30 rounded-xl p-4 cursor-default">
+      <div className="relative border-2 border-primary bg-surface/30 rounded-2xl p-4 cursor-default">
         {/* Selected indicator */}
         <div className="absolute top-3 right-3">
-          <div className="h-5 w-5 rounded-full bg-text-primary flex items-center justify-center">
+          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
             <Check className="h-3 w-3 text-white" />
           </div>
         </div>

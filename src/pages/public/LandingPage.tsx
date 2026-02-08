@@ -6,7 +6,6 @@ import {
   CreditCard,
   Smartphone,
   ArrowRightLeft,
-  MessageSquare,
   Wind,
   Sun,
   Waves,
@@ -47,7 +46,7 @@ const LandingPage = () => {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center text-gray-900 shadow-sm">
+            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center text-zinc-900">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-semibold tracking-tighter text-white">
@@ -80,8 +79,8 @@ const LandingPage = () => {
             className="w-full h-full object-cover opacity-90"
           />
           {/* Subtle dark gradient overlay for text legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/60 via-gray-900/30 to-transparent mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/60 via-zinc-900/30 to-transparent mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/50 via-transparent to-transparent" />
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10 w-full grid lg:grid-cols-2 gap-12 items-center">
@@ -115,9 +114,9 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
-              className="text-base md:text-lg text-gray-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-16 font-normal"
+              className="text-base md:text-lg text-zinc-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-16 font-normal"
             >
-              Automatiser booking, betaling og ventelister. Alt på ett sted.
+              Automatiser booking og betaling. Alt på ett sted.
             </motion.p>
             
             <motion.div
@@ -129,7 +128,7 @@ const LandingPage = () => {
               <Button
                 asChild
                 size="lg"
-                className="px-6 text-base bg-white text-gray-900 hover:bg-gray-100 border-none"
+                className="px-6 text-base bg-white text-zinc-900 hover:bg-zinc-100 border-none"
               >
                 <Link to="/signup">Kom i gang</Link>
               </Button>
@@ -142,8 +141,8 @@ const LandingPage = () => {
               transition={{ delay: 0.5, duration: 1 }}
               className="border-t border-white/20 pt-8 pb-4 w-full"
             >
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-6">
-                Stolt brukt av ledende studioer
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-6">
+                Brukes av ledende studioer
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-60 transition-all duration-500 hover:opacity-100">
                 {[
@@ -170,13 +169,13 @@ const LandingPage = () => {
             transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.4 }}
             className="relative lg:absolute lg:-right-20 lg:w-[65%] xl:w-[60%] lg:top-1/2 lg:-translate-y-1/2 mt-12 lg:mt-0"
           >
-            <div className="relative bg-white rounded-xl shadow-2xl shadow-black/50 border border-white/10 ring-1 ring-black/5 overflow-hidden">
+            <div className="relative bg-white rounded-xl border border-white/20 ring-1 ring-zinc-200/50 overflow-hidden">
               {/* Toast Notification */}
               <motion.div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 1.2, duration: 0.5 }}
-                className="absolute top-8 right-8 z-20 bg-white rounded-lg shadow-md p-3 flex items-center gap-3 max-w-xs"
+                className="absolute top-8 right-8 z-20 bg-white rounded-lg border border-zinc-200 p-3 flex items-center gap-3 max-w-xs"
               >
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                   <span className="text-xs font-bold">Ny</span>
@@ -192,13 +191,13 @@ const LandingPage = () => {
               </motion.div>
 
               {/* Browser Bar */}
-              <div className="h-10 border-b border-gray-100 flex items-center px-4 bg-gray-50/50 backdrop-blur-md gap-2">
+              <div className="h-10 border-b border-zinc-100 flex items-center px-4 bg-zinc-50/50 backdrop-blur-md gap-2">
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300 border border-gray-400/30"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300 border border-gray-400/30"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-gray-300 border border-gray-400/30"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
                 </div>
-                <div className="ml-4 flex items-center gap-2 px-3 py-1 bg-white rounded-md shadow-sm">
+                <div className="ml-4 flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-zinc-100">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                   <span className="text-[10px] text-text-secondary font-medium tracking-tight">
                     ease.no/dashboard
@@ -248,29 +247,29 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="md:col-span-2 relative overflow-hidden rounded-3xl bg-white p-8 shadow-sm hover:shadow-md transition-all group"
+            className="md:col-span-2 relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group"
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 border border-gray-200 text-sm font-semibold text-text-primary">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
                   1
                 </div>
                 <h3 className="text-xl font-semibold text-text-primary">
-                  Planlegg timeplanen
+                  Sett opp timeplanen
                 </h3>
               </div>
               <p className="text-text-secondary text-base leading-relaxed mb-6">
-                Sett opp faste timer, workshops eller kursrekker. Systemet
-                håndterer gjentakelser og unntak automatisk.
+                Sett opp faste timer, workshops eller kursrekker. Gjentakelser
+                og unntak håndteres automatisk.
               </p>
             </div>
             {/* Abstract visual for step 1 */}
-            <div className="hidden md:block absolute right-0 bottom-0 w-1/2 h-3/4 bg-gray-50 rounded-tl-2xl border-t border-l border-gray-100 p-4 shadow-sm translate-y-4 translate-x-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-500">
+            <div className="hidden md:block absolute right-0 bottom-0 w-1/2 h-3/4 bg-zinc-50 rounded-tl-2xl border-t border-l border-zinc-100 p-4 translate-y-4 translate-x-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-500">
               <div className="space-y-3">
-                <div className="h-2 w-1/3 bg-gray-200 rounded-full"></div>
-                <div className="h-8 w-full bg-white rounded-lg shadow-sm"></div>
-                <div className="h-8 w-full bg-white rounded-lg shadow-sm"></div>
-                <div className="h-8 w-full bg-white rounded-lg shadow-sm opacity-50"></div>
+                <div className="h-2 w-1/3 bg-zinc-200 rounded-full"></div>
+                <div className="h-8 w-full bg-white rounded-lg border border-zinc-100"></div>
+                <div className="h-8 w-full bg-white rounded-lg border border-zinc-100"></div>
+                <div className="h-8 w-full bg-white rounded-lg border border-zinc-100 opacity-50"></div>
               </div>
             </div>
           </motion.div>
@@ -279,10 +278,10 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-3xl bg-white p-8 shadow-sm hover:shadow-md transition-all group flex flex-col"
+            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 border border-gray-200 text-sm font-semibold text-text-primary">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
                 2
               </div>
               <h3 className="text-xl font-semibold text-text-primary">
@@ -290,21 +289,21 @@ const LandingPage = () => {
               </h3>
             </div>
             <p className="text-text-secondary text-base leading-relaxed mb-8">
-              Send én lenke til elevene dine. De booker og betaler selv. Ingen
-              DM-er eller Vipps-krav.
+              Del én lenke med elevene. De booker og betaler selv. Ingen
+              DM-er eller manuelle Vipps-krav.
             </p>
             {/* Visual for Step 2 */}
-            <div className="mt-auto relative w-full h-64 bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center group-hover:bg-gray-100 transition-colors">
-              <div className="bg-white p-4 rounded-xl shadow-md max-w-[80%] transform rotate-[-2deg] group-hover:rotate-0 transition-transform duration-300">
+            <div className="mt-auto relative w-full h-64 bg-zinc-50 rounded-xl overflow-hidden flex items-center justify-center group-hover:bg-zinc-100 transition-colors">
+              <div className="bg-white p-4 rounded-xl border border-zinc-200 max-w-[80%] transform rotate-[-2deg] group-hover:rotate-0 transition-transform duration-300">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 bg-gray-100 rounded-full"></div>
+                  <div className="w-8 h-8 bg-zinc-100 rounded-full"></div>
                   <div className="flex-1">
-                    <div className="h-2 w-16 bg-gray-200 rounded-full mb-1"></div>
-                    <div className="h-1.5 w-10 bg-gray-100 rounded-full"></div>
+                    <div className="h-2 w-16 bg-zinc-200 rounded-full mb-1"></div>
+                    <div className="h-1.5 w-10 bg-zinc-100 rounded-full"></div>
                   </div>
                 </div>
-                <div className="h-2 w-full bg-gray-100 rounded-full mb-2"></div>
-                <div className="h-8 w-full bg-text-primary rounded-lg"></div>
+                <div className="h-2 w-full bg-zinc-100 rounded-full mb-2"></div>
+                <div className="h-8 w-full bg-primary rounded-lg"></div>
               </div>
             </div>
           </motion.div>
@@ -313,11 +312,11 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-3xl bg-white p-8 shadow-sm hover:shadow-md transition-all group flex flex-col"
+            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group flex flex-col"
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 border border-gray-200 text-sm font-semibold text-text-primary">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
                   3
                 </div>
                 <h3 className="text-xl font-semibold text-text-primary">
@@ -325,13 +324,13 @@ const LandingPage = () => {
                 </h3>
               </div>
               <p className="text-text-secondary text-base leading-relaxed">
-                Møt opp og gjør det du kan best. Systemet sender påminnelser og
-                kvitteringer automatisk til deltakerne.
+                Møt opp og gjør det du kan best. Påminnelser og
+                kvitteringer sendes automatisk.
               </p>
             </div>
             {/* Visual for Step 3 */}
-            <div className="mt-auto relative w-full bg-gray-50 rounded-xl border border-border p-6 flex flex-col gap-4">
-               <div className="bg-white p-3 rounded-xl border border-border shadow-sm flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
+            <div className="mt-auto relative w-full bg-zinc-50 rounded-xl border border-border p-6 flex flex-col gap-4">
+               <div className="bg-white p-3 rounded-xl border border-border flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                     <Check className="w-4 h-4" />
                   </div>
@@ -340,7 +339,7 @@ const LandingPage = () => {
                     <p className="text-[10px] text-text-secondary">til 12 deltakere</p>
                   </div>
                </div>
-               <div className="bg-white p-3 rounded-xl border border-border shadow-sm flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
+               <div className="bg-white p-3 rounded-xl border border-border flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                   </div>
@@ -370,10 +369,10 @@ const LandingPage = () => {
           className="mb-24 text-center max-w-2xl mx-auto"
         >
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-4 font-geist">
-            Kraftige funksjoner
+            Alt du trenger
           </h2>
           <p className="text-text-secondary text-lg">
-            Bygget for å håndtere hele driften.
+            Alt for å drive studioet ditt.
           </p>
         </motion.div>
 
@@ -382,11 +381,11 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="md:col-span-2 bg-white rounded-3xl border border-border p-8 md:p-12 shadow-sm overflow-hidden relative group"
+            className="md:col-span-2 bg-white rounded-2xl border border-zinc-200 p-8 md:p-12 overflow-hidden relative group"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium shadow-sm mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium mb-6">
                   <CreditCard className="w-3.5 h-3.5" /> Betaling
                 </div>
                 <h3 className="text-3xl font-semibold text-text-primary tracking-tight mb-4">
@@ -406,7 +405,7 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="relative">
-                <div className="bg-gray-50/50 rounded-2xl border border-border p-8 shadow-sm">
+                <div className="bg-zinc-50/50 rounded-2xl border border-border p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <p className="text-sm font-medium text-text-tertiary uppercase">
@@ -421,8 +420,8 @@ const LandingPage = () => {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-text-primary w-[70%]"></div>
+                    <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary w-[70%]"></div>
                     </div>
                     <div className="flex justify-between text-xs text-text-tertiary">
                       <span>01. Okt</span>
@@ -438,22 +437,22 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="bg-white rounded-3xl border border-border p-8 shadow-sm overflow-hidden relative group flex flex-col"
+            className="bg-white rounded-2xl border border-zinc-200 p-8 overflow-hidden relative group flex flex-col"
           >
             <div className="absolute top-4 right-4">
-              <span className="inline-flex items-center rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white">
+              <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white">
                 Studio
               </span>
             </div>
             <div className="mb-8 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium shadow-sm mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium mb-4">
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Regnskap
               </div>
               <h3 className="text-2xl font-semibold text-text-primary tracking-tight mb-3">
                 Regnskap uten hodepine.
               </h3>
               <p className="text-text-secondary">
-                Vi snakker direkte med Fiken. Hvert salg bokføres automatisk på riktig konto.
+                Integrert med Fiken. Hvert salg bokføres automatisk.
               </p>
             </div>
             <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-[#5239ba] flex items-center justify-center overflow-hidden">
@@ -465,50 +464,6 @@ const LandingPage = () => {
             </div>
           </motion.div>
 
-          {/* Feature 3: Waitlists (Small) */}
-          <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-3xl border border-border p-8 shadow-sm overflow-hidden relative group flex flex-col"
-          >
-            <div className="mb-8 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium shadow-sm mb-4">
-                <MessageSquare className="w-3.5 h-3.5" /> Ventelister
-              </div>
-              <h3 className="text-2xl font-semibold text-text-primary tracking-tight mb-3">
-                Alltid fulle timer.
-              </h3>
-              <p className="text-text-secondary">
-                Automatisk venteliste-system som fyller opp plasser når noen melder avbud.
-              </p>
-            </div>
-            <div className="mt-auto relative bg-gray-50 rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-                <h4 className="font-medium text-text-primary text-sm">
-                  Yin Yoga (Onsdag)
-                </h4>
-                <span className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-bold rounded uppercase">
-                  Fullt
-                </span>
-              </div>
-              <div className="space-y-2">
-                {[1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 p-2 bg-white rounded-lg border border-border/50 shadow-sm"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-medium text-text-secondary">
-                      #{i}
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-1.5 w-16 bg-gray-200 rounded-full mb-1"></div>
-                      <div className="h-1 w-10 bg-gray-100 rounded-full"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
         </div>
         </div>
       </section>
@@ -546,14 +501,14 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="bg-white p-8 rounded-3xl border border-border shadow-sm hover:shadow-lg hover:border-gray-300 transition-all h-full flex flex-col"
+            className="bg-white p-8 rounded-2xl border border-zinc-200 hover:border-zinc-400 transition-all h-full flex flex-col"
           >
             <div className="mb-6">
               <h3 className="text-xl font-bold text-text-primary tracking-tight">
                 Hobby
               </h3>
               <p className="text-sm text-text-secondary mt-2">
-                Perfekt for å teste systemet eller for små studioer.
+                For å teste, eller for mindre studioer.
               </p>
             </div>
             <div className="mb-8 pb-8 border-b border-border">
@@ -564,24 +519,24 @@ const LandingPage = () => {
                 <span className="text-text-secondary font-medium">/ md</span>
               </div>
               <p className="text-xs text-text-tertiary mt-2">
-                Ingen kredittkort kreves for start.
+                Ingen kort nødvendig.
               </p>
             </div>
             <ul className="space-y-4 mb-8 flex-1">
               <li className="flex items-start gap-3 text-sm text-text-secondary">
-                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
                 <span>Opptil 3 aktive kurs</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text-secondary">
-                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
                 <span>Ubegrenset booking</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text-secondary">
-                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
                 <span>Standard support</span>
@@ -590,7 +545,7 @@ const LandingPage = () => {
             <Button
               asChild
               variant="outline-soft"
-              className="w-full mt-auto h-12 rounded-xl"
+              className="w-full mt-auto h-12 rounded-lg"
             >
               <Link to="/signup?type=teacher">Start gratis</Link>
             </Button>
@@ -600,53 +555,47 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl relative overflow-hidden text-white h-full flex flex-col group"
+            className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 relative overflow-hidden text-white h-full flex flex-col group"
           >
-            <div className="absolute top-0 right-0 bg-gradient-to-bl from-gray-800 to-transparent w-40 h-40 rounded-bl-full opacity-50"></div>
+            <div className="absolute top-0 right-0 bg-gradient-to-bl from-zinc-800 to-transparent w-40 h-40 rounded-bl-full opacity-50"></div>
             <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
             <div className="mb-6 relative z-10">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-white tracking-tight">
                   Studio
                 </h3>
-                <span className="bg-white text-gray-900 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                <span className="bg-white text-zinc-900 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-zinc-200">
                   Mest populær
                 </span>
               </div>
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="text-sm text-zinc-400 mt-2">
                 For deg som driver et aktivt studio og vil automatisere alt.
               </p>
             </div>
-            <div className="mb-8 pb-8 border-b border-gray-800 relative z-10">
+            <div className="mb-8 pb-8 border-b border-zinc-800 relative z-10">
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-bold tracking-tight text-white">
                   499 kr
                 </span>
-                <span className="text-gray-400 font-medium">/ md</span>
+                <span className="text-zinc-400 font-medium">/ md</span>
               </div>
-              <p className="text-xs text-gray-500 mt-2">Ingen bindingstid.</p>
+              <p className="text-xs text-zinc-500 mt-2">Ingen bindingstid.</p>
             </div>
             <ul className="space-y-4 mb-8 relative z-10 flex-1">
-              <li className="flex items-start gap-3 text-sm text-gray-300">
-                <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-gray-700">
+              <li className="flex items-start gap-3 text-sm text-zinc-300">
+                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
                   <Check className="w-3 h-3 text-white" />
                 </div>
                 <span>Ubegrenset antall kurs & elever</span>
               </li>
-              <li className="flex items-start gap-3 text-sm text-gray-300">
-                <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-gray-700">
+              <li className="flex items-start gap-3 text-sm text-zinc-300">
+                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
                   <Check className="w-3 h-3 text-white" />
                 </div>
                 <span>Full Fiken-integrasjon (Regnskap)</span>
               </li>
-              <li className="flex items-start gap-3 text-sm text-gray-300">
-                <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-gray-700">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-                <span>SMS-varsling (Ventelister)</span>
-              </li>
-              <li className="flex items-start gap-3 text-sm text-gray-300">
-                <div className="w-5 h-5 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-gray-700">
+              <li className="flex items-start gap-3 text-sm text-zinc-300">
+                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
                   <Check className="w-3 h-3 text-white" />
                 </div>
                 <span>Eget design på booking-siden</span>
@@ -654,7 +603,7 @@ const LandingPage = () => {
             </ul>
             <Button
               asChild
-              className="w-full relative z-10 mt-auto h-12 rounded-xl bg-white text-gray-900 hover:bg-gray-100 border-none font-semibold shadow-lg shadow-white/10 hover:shadow-white/20 transition-all"
+              className="w-full relative z-10 mt-auto h-12 rounded-lg bg-white text-zinc-900 hover:bg-zinc-100 border-none font-semibold transition-all"
             >
               <Link to="/signup?type=studio">Velg Studio</Link>
             </Button>
@@ -676,7 +625,7 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
             <div className="md:col-span-5">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center text-white shadow-md">
+                <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
                   <Infinity className="w-4 h-4" />
                 </div>
                 <span className="text-xl font-bold tracking-tighter text-text-primary">

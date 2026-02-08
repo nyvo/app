@@ -44,7 +44,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </SkeletonCard>
 
       {/* Messages Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-2 rounded-3xl bg-white border border-gray-200 p-7">
+      <div className="col-span-1 md:col-span-3 lg:col-span-2 rounded-2xl bg-white border border-zinc-200 p-7">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <Skeleton className="h-5 w-24" />
@@ -60,7 +60,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Courses Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white border border-gray-200 p-7">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 p-7">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <Skeleton className="h-5 w-20" />
@@ -83,7 +83,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Registrations Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-3xl bg-white border border-gray-200 p-7">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 p-7">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <Skeleton className="h-5 w-32" />

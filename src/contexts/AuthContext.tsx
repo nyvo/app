@@ -165,8 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(initialSession)
         setUser(initialSession.user)
 
-        // Defer Supabase queries to avoid deadlock
-        setTimeout(async () => {
+        // Defer data loading to next microtask.
+        // Supabase's onAuthStateChange listener can fire synchronously during
+        // getSession(), causing a deadlock if we issue new Supabase queries
+        // inside the same call stack. queueMicrotask breaks the call stack
+        // while running before the next paint (unlike setTimeout).
+        queueMicrotask(async () => {
           if (!mounted) return
           try {
             await loadUserData(initialSession.user.id)
@@ -178,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setIsInitialized(true)
             }
           }
-        }, 0)
+        })
       } else {
         setIsLoading(false)
         setIsInitialized(true)
@@ -217,8 +221,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Only reload user data if this is a NEW user (actual login), not window focus
           if (!isSameUser) {
-            // Defer Supabase queries to avoid deadlock
-            setTimeout(async () => {
+            // Defer to next microtask to avoid Supabase client deadlock
+            // (see comment in getSession handler above)
+            queueMicrotask(async () => {
               if (!mounted) return
               setIsLoading(true)
               try {
@@ -228,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               } finally {
                 if (mounted) setIsLoading(false)
               }
-            }, 0)
+            })
           }
         }
       }

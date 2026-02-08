@@ -10,11 +10,10 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker } from '@/components/ui/time-picker';
-import { DurationPicker } from '@/components/ui/duration-picker';
+import { TimePicker24h } from '@/components/course/time-picker-24h';
+import { DurationInput } from '@/components/course/duration-input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
-import { Input } from '@/components/ui/input';
 
 type CourseType = 'series' | 'single';
 
@@ -38,6 +37,14 @@ interface SessionDate {
   isPrimary: boolean;
 }
 
+interface FieldRefs {
+  weeksRef: React.RefObject<HTMLButtonElement | null>;
+  eventDaysRef: React.RefObject<HTMLButtonElement | null>;
+  locationRef: React.RefObject<HTMLInputElement | null>;
+  priceRef: React.RefObject<HTMLInputElement | null>;
+  capacityRef: React.RefObject<HTMLInputElement | null>;
+}
+
 interface NewCourseScheduleSectionProps {
   courseType: CourseType;
   startDate: Date | undefined;
@@ -56,14 +63,9 @@ interface NewCourseScheduleSectionProps {
   errors: FormErrors;
   touched: Record<string, boolean>;
   submitAttempted: boolean;
-  organizationId: string | undefined;
 
-  // Refs
-  weeksRef: React.RefObject<HTMLButtonElement | null>;
-  eventDaysRef: React.RefObject<HTMLButtonElement | null>;
-  locationRef: React.RefObject<HTMLInputElement | null>;
-  priceRef: React.RefObject<HTMLInputElement | null>;
-  capacityRef: React.RefObject<HTMLInputElement | null>;
+  // Refs (grouped)
+  fieldRefs: FieldRefs;
 
   // Callbacks
   onStartDateChange: (date: Date | undefined) => void;
@@ -78,7 +80,6 @@ interface NewCourseScheduleSectionProps {
   onCapacityChange: (capacity: string) => void;
   onBlur: (field: string) => void;
   onTouchedChange: (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
-  showError: (field: keyof FormErrors) => string | false | undefined;
   updateSessionTime: (dayIndex: number, time: string) => void;
   resetSessionTime: (dayIndex: number) => void;
 }
@@ -101,12 +102,7 @@ function NewCourseScheduleSection({
   errors,
   touched,
   submitAttempted,
-  organizationId,
-  weeksRef,
-  eventDaysRef,
-  locationRef,
-  priceRef,
-  capacityRef,
+  fieldRefs,
   onStartDateChange,
   onStartTimeChange,
   onDurationChange,
@@ -119,12 +115,17 @@ function NewCourseScheduleSection({
   onCapacityChange,
   onBlur,
   onTouchedChange,
-  showError,
   updateSessionTime,
   resetSessionTime,
 }: NewCourseScheduleSectionProps) {
+  const { weeksRef, eventDaysRef, locationRef, priceRef, capacityRef } = fieldRefs;
+
+  // Determine whether to show error for a field based on touched state or submit attempt
+  const showError = (field: keyof FormErrors) => {
+    return (touched[field] || submitAttempted) && errors[field];
+  };
   return (
-    <section className="bg-white rounded-3xl border border-gray-200 overflow-hidden">
+    <section className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
       {/* Sub-section 1: Når skjer det? */}
       <div className="p-6 md:p-8">
         <h2 className="text-lg font-medium text-text-primary mb-5">Når skjer det?</h2>
@@ -160,18 +161,15 @@ function NewCourseScheduleSection({
           <label htmlFor="start-time" className="block text-xs font-medium text-muted-foreground mb-1.5">
             Starttid <span className="text-destructive">*</span>
           </label>
-          <TimePicker
+          <TimePicker24h
             id="start-time"
             value={startTime}
             onChange={(time) => {
               onStartTimeChange(time);
               onTouchedChange(prev => ({ ...prev, startTime: true }));
             }}
-            date={startDate}
-            organizationId={organizationId}
-            duration={duration || 60}
+            onBlur={() => onBlur('startTime')}
             error={!!showError('startTime')}
-            placeholder="Velg tid"
           />
           {showError('startTime') && (
             <p id="startTime-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
@@ -183,22 +181,27 @@ function NewCourseScheduleSection({
 
         {/* Duration */}
         <div className="col-span-1">
-          <DurationPicker
+          <label htmlFor="duration" className="block text-xs font-medium text-muted-foreground mb-1.5">
+            Varighet <span className="text-destructive">*</span>
+          </label>
+          <DurationInput
             id="duration"
             value={duration}
             onChange={(val) => {
               onDurationChange(val);
               onTouchedChange(prev => ({ ...prev, duration: true }));
             }}
-            label="Varighet"
-            required
-            presets={[30, 45, 60, 75, 90, 120]}
+            onBlur={() => onBlur('duration')}
             min={15}
             max={240}
-            step={5}
-            error={errors.duration}
-            showErrors={touched.duration || submitAttempted}
+            error={!!(showError('duration'))}
           />
+          {showError('duration') && (
+            <p id="duration-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+              <AlertCircle className="h-3 w-3" aria-hidden="true" />
+              {errors.duration}
+            </p>
+          )}
         </div>
 
         {/* Weeks/Days */}
@@ -217,8 +220,8 @@ function NewCourseScheduleSection({
                   aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                   aria-invalid={showError('weeks') ? 'true' : undefined}
                   aria-required="true"
-                  className={`flex items-center justify-between w-full h-10 rounded-xl border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                    showError('weeks') ? 'border-destructive' : 'border-border'
+                  className={`flex items-center justify-between w-full h-10 rounded-lg border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                    showError('weeks') ? 'border-destructive' : 'border-zinc-200'
                   }`}
                 >
                   <span className={weeks ? 'text-text-primary' : 'text-text-tertiary'}>{weeks || 'Velg'}</span>
@@ -238,7 +241,7 @@ function NewCourseScheduleSection({
                       }}
                       className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-normal transition-colors ${
                         weeks === week.toString()
-                          ? 'bg-text-primary text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'text-sidebar-foreground hover:bg-secondary hover:text-text-primary'
                       }`}
                     >
@@ -270,8 +273,8 @@ function NewCourseScheduleSection({
                   aria-describedby={showError('eventDays') ? 'eventDays-error' : undefined}
                   aria-invalid={showError('eventDays') ? 'true' : undefined}
                   aria-required="true"
-                  className={`flex items-center justify-between w-full h-10 rounded-xl border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                    showError('eventDays') ? 'border-destructive' : 'border-border'
+                  className={`flex items-center justify-between w-full h-10 rounded-lg border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                    showError('eventDays') ? 'border-destructive' : 'border-zinc-200'
                   }`}
                 >
                   <span className={eventDays ? 'text-text-primary' : 'text-text-tertiary'}>{eventDays || 'Velg'}</span>
@@ -291,7 +294,7 @@ function NewCourseScheduleSection({
                       }}
                       className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-normal transition-colors ${
                         eventDays === day.toString()
-                          ? 'bg-text-primary text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : 'text-sidebar-foreground hover:bg-secondary hover:text-text-primary'
                       }`}
                     >
@@ -321,7 +324,7 @@ function NewCourseScheduleSection({
 
         {/* Session Schedule Panel - Shows when single course has 2+ days */}
         {courseType === 'single' && parseInt(eventDays) >= 2 && startDate && startTime && (
-        <div className="bg-surface rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-300 mb-5">
+        <div className="bg-surface rounded-2xl p-4 animate-in fade-in slide-in-from-top-2 duration-300 mb-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <CalendarClock className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
@@ -335,10 +338,10 @@ function NewCourseScheduleSection({
             {sessionDates.map((session, index) => (
               <div
                 key={session.dayNumber}
-                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-lg ${
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-2xl ${
                   session.isPrimary
                     ? 'bg-white/50 text-text-tertiary'
-                    : 'bg-white border border-gray-200 ios-ease hover:border-ring'
+                    : 'bg-white border border-zinc-100 ios-ease hover:border-zinc-400'
                 }`}
               >
                 {/* Row 1 on mobile: Day + Date */}
@@ -369,25 +372,21 @@ function NewCourseScheduleSection({
                       {session.time}
                     </div>
                   ) : (
-                    <div className="w-24 sm:w-28">
-                      <Input
-                        type="time"
-                        value={session.time}
-                        onChange={(e) => {
-                          const time = e.target.value;
-                          if (time === startTime) {
-                            resetSessionTime(index);
-                          } else {
-                            updateSessionTime(index, time);
-                          }
-                        }}
-                        className={`h-8 text-sm ${
-                          sessionTimes[index]
-                            ? 'border-warning/30 ring-1 ring-warning/20'
-                            : ''
-                        }`}
-                      />
-                    </div>
+                    <TimePicker24h
+                      value={session.time}
+                      onChange={(time) => {
+                        if (time === startTime) {
+                          resetSessionTime(index);
+                        } else {
+                          updateSessionTime(index, time);
+                        }
+                      }}
+                      className={`h-8 ${
+                        sessionTimes[index]
+                          ? 'border-warning/30 ring-1 ring-warning/20'
+                          : ''
+                      }`}
+                    />
                   )}
 
                   {/* Primary label or reset button */}
@@ -398,7 +397,7 @@ function NewCourseScheduleSection({
                       <button
                         type="button"
                         onClick={() => resetSessionTime(index)}
-                        className="text-text-tertiary hover:text-destructive p-1 rounded-md transition-colors"
+                        className="text-text-tertiary hover:text-destructive p-1 rounded-lg transition-colors"
                         title="Tilbakestill"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -414,7 +413,7 @@ function NewCourseScheduleSection({
       </div>
 
       {/* Sub-section 2: Hvor? */}
-      <div className="p-6 md:p-8 border-t border-surface-elevated">
+      <div className="p-6 md:p-8 border-t border-zinc-100">
         <h2 className="text-lg font-medium text-text-primary mb-5">Hvor?</h2>
 
         {/* Location - uses same grid for alignment */}
@@ -435,8 +434,8 @@ function NewCourseScheduleSection({
                 aria-describedby={showError('location') ? 'location-error' : undefined}
                 aria-invalid={showError('location') ? 'true' : undefined}
                 aria-required="true"
-                className={`w-full h-10 rounded-xl border pl-9 pr-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                  showError('location') ? 'border-destructive' : 'border-border'
+                className={`w-full h-10 rounded-lg border pl-9 pr-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                  showError('location') ? 'border-destructive' : 'border-zinc-200'
                 }`}
               />
               <MapPin className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
@@ -452,7 +451,7 @@ function NewCourseScheduleSection({
       </div>
 
       {/* Sub-section 3: Påmelding */}
-      <div className="p-6 md:p-8 border-t border-surface-elevated">
+      <div className="p-6 md:p-8 border-t border-zinc-100">
         <h2 className="text-lg font-medium text-text-primary mb-5">Påmelding</h2>
 
         {/* Price & Capacity - uses same grid for alignment */}
@@ -476,8 +475,8 @@ function NewCourseScheduleSection({
                 aria-describedby={showError('price') ? 'price-error' : undefined}
                 aria-invalid={showError('price') ? 'true' : undefined}
                 aria-required="true"
-                className={`w-full h-10 rounded-xl border pl-3 pr-12 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                  showError('price') ? 'border-destructive' : 'border-border'
+                className={`w-full h-10 rounded-lg border pl-3 pr-12 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                  showError('price') ? 'border-destructive' : 'border-zinc-200'
                 }`}
               />
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
@@ -509,8 +508,8 @@ function NewCourseScheduleSection({
               aria-describedby={showError('capacity') ? 'capacity-error' : undefined}
               aria-invalid={showError('capacity') ? 'true' : undefined}
               aria-required="true"
-              className={`w-full h-10 rounded-xl border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:border-ring focus:outline-none focus:ring-4 focus:ring-border/30 focus:bg-white hover:border-ring ${
-                showError('capacity') ? 'border-destructive' : 'border-border'
+              className={`w-full h-10 rounded-lg border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
+                showError('capacity') ? 'border-destructive' : 'border-zinc-200'
               }`}
             />
             {showError('capacity') && (

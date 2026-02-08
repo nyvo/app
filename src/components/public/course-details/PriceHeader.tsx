@@ -38,7 +38,7 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
   const displayPrice = price !== null && price > 0 ? price : null;
 
   return (
-    <div className="px-6 py-5 border-b border-gray-100 bg-surface/50 flex justify-between items-center">
+    <div className="px-6 py-5 border-b border-zinc-100 bg-surface/50 flex justify-between items-center">
       <div>
         <span className="block text-xxs font-medium text-muted-foreground uppercase tracking-wider">
           Pris

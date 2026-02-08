@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { logger } from '@/lib/logger';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,20 +8,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
-import { fetchCourseById, updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession, type CourseWithStyle } from '@/services/courses';
-import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
-import { fetchCourseWaitlist, promoteFromWaitlist, removeFromWaitlist, triggerWaitlistPromotion, type WaitlistSignup } from '@/services/waitlist';
+import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
-import type { CourseSession } from '@/types/database';
-import { isTimeSlotBooked } from '@/components/ui/time-picker';
-import { fetchBookedTimesForDate } from '@/services/courses';
 import { formatDateNorwegian } from '@/utils/dateUtils';
 import type { PaymentStatus } from '@/components/ui/payment-badge';
 import type { SignupStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -31,112 +24,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCourseParticipantsSubscription } from '@/hooks/use-realtime-subscription';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 import { AddParticipantDialog } from '@/components/teacher/AddParticipantDialog';
 
 type Tab = 'overview' | 'participants' | 'settings';
-
-// Format date range for display (e.g., "17. jan – 7. feb 2025")
-function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
-  if (!startDate) return null;
-
-  const start = new Date(startDate);
-
-  // Validate start date
-  if (isNaN(start.getTime())) return null;
-
-  const end = endDate ? new Date(endDate) : null;
-
-  // Validate end date if provided
-  if (end && isNaN(end.getTime())) return null;
-
-  // Validate end is not before start
-  if (end && end.getTime() < start.getTime()) return null;
-
-  const formatDay = (date: Date) => date.getDate();
-  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
-  const formatYear = (date: Date) => date.getFullYear();
-
-  if (!end) {
-    // Single date - show full format
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
-  }
-
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = sameYear && start.getMonth() === end.getMonth();
-  const sameDay = sameMonth && start.getDate() === end.getDate();
-
-  // Same day - just show single date
-  if (sameDay) {
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
-  }
-
-  if (sameMonth) {
-    // Same month: "17. – 28. jan 2025"
-    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else if (sameYear) {
-    // Same year: "17. jan – 7. feb 2025"
-    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else {
-    // Different years: "17. des 2024 – 7. jan 2025"
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  }
-}
-
-// Helper to map database course to component format
-function mapCourseToComponentFormat(courseData: CourseWithStyle & { signups_count: number }) {
-  const priceNumber = courseData.price || 0;
-  const estimatedRevenue = priceNumber * courseData.signups_count;
-  const descriptionParts = courseData.description?.split('\n\n') || [''];
-
-  // Format duration
-  const formatDuration = () => {
-    if (courseData.total_weeks) return `${courseData.total_weeks} uker`;
-    if (courseData.duration) return `${courseData.duration} min`;
-    return '';
-  };
-
-  // Map course_type to courseType
-  const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
-    'course-series': 'kursrekke',
-    'event': 'enkeltkurs',
-    'online': 'enkeltkurs',
-  };
-
-  return {
-    title: courseData.title,
-    status: courseData.status,
-    date: courseData.time_schedule || '',
-    location: courseData.location || 'Ikke angitt',
-    enrolled: courseData.signups_count,
-    capacity: courseData.max_participants || 0,
-    price: priceNumber,
-    estimatedRevenue: estimatedRevenue,
-    description: descriptionParts[0] || '',
-    description2: descriptionParts[1] || '',
-    level: (() => {
-      switch (courseData.level) {
-        case 'nybegynner': return 'Nybegynner';
-        case 'viderekommen': return 'Viderekommen';
-        case 'alle': return 'Middels';
-        default: return 'Middels';
-      }
-    })(),
-    duration: formatDuration(),
-    durationMinutes: courseData.duration || 60,
-    courseType: courseTypeMap[courseData.course_type] || 'enkeltkurs',
-    totalWeeks: courseData.total_weeks || 0,
-    currentWeek: courseData.current_week || 0,
-    timeSchedule: courseData.time_schedule || '',
-    imageUrl: courseData.image_url || null,
-    startDate: courseData.start_date || null,
-    endDate: courseData.end_date || null,
-  };
-}
 
 const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -154,19 +49,22 @@ const CourseDetailPage = () => {
   const [settingsTime, setSettingsTime] = useState('09:00');
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
-  const prevSettingsDurationRef = useRef<number | null>(null);
-  // Refs to read current values in effects without triggering re-runs
-  const settingsTimeRef = useRef(settingsTime);
-  const settingsDateRef = useRef(settingsDate);
-  settingsTimeRef.current = settingsTime;
-  settingsDateRef.current = settingsDate;
   const kursplanRef = useRef<HTMLDivElement>(null);
 
-  // State for fetched course data
-  const [courseData, setCourseData] = useState<ReturnType<typeof mapCourseToComponentFormat> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [maxParticipants, setMaxParticipants] = useState(0);
+  // Data fetching, sessions, participants, and realtime subscription
+  const {
+    course: courseData,
+    sessions,
+    participants,
+    loading: isLoading,
+    participantsLoading,
+    error,
+    maxParticipants,
+    setCourse: setCourseData,
+    setSessions,
+    setMaxParticipants,
+    refetchParticipants,
+  } = useCourseDetail(id);
 
   // Settings form state
   const [settingsTitle, setSettingsTitle] = useState('');
@@ -184,27 +82,9 @@ const CourseDetailPage = () => {
   const quickImageInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingQuickImage, setIsUploadingQuickImage] = useState(false);
 
-  // Sessions state (for Kursplan)
-  const [sessions, setSessions] = useState<CourseSession[]>([]);
-  const [_sessionsLoading, setSessionsLoading] = useState(false);
+  // Session editing state (kept in page since it's UI-only)
   const [sessionEdits, setSessionEdits] = useState<Record<string, { date?: Date; time?: string }>>({});
   const [savingSessionId, setSavingSessionId] = useState<string | null>(null);
-
-  // Participants state (for Deltakere tab)
-  const [participants, setParticipants] = useState<SignupWithProfile[]>([]);
-  const [participantsLoading, setParticipantsLoading] = useState(false);
-
-  // Waitlist state
-  const [waitlist, setWaitlist] = useState<WaitlistSignup[]>([]);
-  const [waitlistLoading, setWaitlistLoading] = useState(false);
-  const [promotingId, setPromotingId] = useState<string | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-
-  // Waitlist promotion dialog (shown when capacity increases and there's a waitlist)
-  const [showPromotionDialog, setShowPromotionDialog] = useState(false);
-  const [originalCapacity, setOriginalCapacity] = useState<number | null>(null);
-  const [isPromotingWaitlist, setIsPromotingWaitlist] = useState(false);
-  const [newSpotsCount, setNewSpotsCount] = useState(0); // How many new spots were added
 
   // Cancel preview dialog state
   const [showCancelPreview, setShowCancelPreview] = useState(false);
@@ -212,251 +92,30 @@ const CourseDetailPage = () => {
   // Add participant dialog state
   const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
 
-  // Fetch course data from Supabase
+  // Initialize settings form state when course data loads
   useEffect(() => {
-    async function loadCourse() {
-      if (!id) {
-        setError('Ugyldig kurs-ID');
-        setIsLoading(false);
-        return;
-      }
+    if (!courseData) return;
 
-      setIsLoading(true);
-      setError(null);
+    setSettingsTitle(courseData.title);
+    setSettingsDescription(courseData.description || '');
+    setSettingsImageUrl(courseData.imageUrl);
 
-      try {
-        const { data, error: fetchError } = await fetchCourseById(id);
-
-        if (fetchError || !data) {
-          setError('Kurset ble ikke funnet');
-          return;
-        }
-
-        const mappedCourse = mapCourseToComponentFormat(data);
-        setCourseData(mappedCourse);
-        setMaxParticipants(mappedCourse.capacity);
-        setOriginalCapacity(mappedCourse.capacity);
-
-        // Initialize settings form state
-        setSettingsTitle(mappedCourse.title);
-        setSettingsDescription(mappedCourse.description || '');
-        setSettingsImageUrl(mappedCourse.imageUrl);
-
-        // Parse time from time_schedule (e.g., "Tirsdager, 18:00" -> "18:00")
-        const timeMatch = mappedCourse.timeSchedule.match(/(\d{1,2}:\d{2})/);
-        if (timeMatch) {
-          setSettingsTime(timeMatch[1]);
-        }
-
-        // Initialize duration
-        setSettingsDuration(mappedCourse.durationMinutes);
-
-        // Initialize start date
-        if (mappedCourse.startDate) {
-          setSettingsDate(new Date(mappedCourse.startDate));
-        }
-      } catch {
-        setError('En feil oppstod');
-      } finally {
-        setIsLoading(false);
-      }
+    // Parse time from time_schedule (e.g., "Tirsdager, 18:00" -> "18:00")
+    const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
+    if (timeMatch) {
+      setSettingsTime(timeMatch[1]);
     }
 
-    loadCourse();
-  }, [id]);
+    // Initialize duration
+    setSettingsDuration(courseData.durationMinutes);
 
-  // Fetch sessions when course is loaded
-  useEffect(() => {
-    async function loadSessions() {
-      if (!id || !courseData) return;
-
-      // Fetch sessions for both course series AND multi-day events
-      setSessionsLoading(true);
-      try {
-        const { data: sessionsData } = await fetchCourseSessions(id);
-        if (sessionsData) {
-          setSessions(sessionsData);
-        }
-      } catch (err) {
-        logger.error('Failed to load sessions:', err);
-      } finally {
-        setSessionsLoading(false);
-      }
+    // Initialize start date
+    if (courseData.startDate) {
+      setSettingsDate(new Date(courseData.startDate));
     }
-
-    loadSessions();
-  }, [id, courseData]);
-
-  // Fetch participants when course is loaded
-  useEffect(() => {
-    async function loadParticipants() {
-      if (!id) return;
-
-      setParticipantsLoading(true);
-      try {
-        const { data: participantsData, error } = await fetchSignupsByCourseWithProfiles(id);
-        if (error) {
-          return;
-        }
-        if (participantsData) {
-          setParticipants(participantsData);
-        }
-      } catch (err) {
-        logger.error('Failed to load participants:', err);
-      } finally {
-        setParticipantsLoading(false);
-      }
-    }
-
-    loadParticipants();
-  }, [id]);
-
-  // Fetch waitlist when course is loaded
-  useEffect(() => {
-    async function loadWaitlist() {
-      if (!id) return;
-
-      setWaitlistLoading(true);
-      try {
-        const { data: waitlistData, error } = await fetchCourseWaitlist(id);
-        if (error) {
-          return;
-        }
-        if (waitlistData) {
-          setWaitlist(waitlistData);
-        }
-      } catch (err) {
-        logger.error('Failed to load waitlist:', err);
-      } finally {
-        setWaitlistLoading(false);
-      }
-    }
-
-    loadWaitlist();
-  }, [id]);
-
-  // Real-time refetch for participants and waitlist
-  const refetchParticipantsAndWaitlist = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      const [participantsResult, waitlistResult] = await Promise.all([
-        fetchSignupsByCourseWithProfiles(id),
-        fetchCourseWaitlist(id)
-      ]);
-
-      if (participantsResult.data) {
-        setParticipants(participantsResult.data);
-      }
-      if (waitlistResult.data) {
-        setWaitlist(waitlistResult.data);
-      }
-    } catch {
-      // Silent fail for real-time updates
-    }
-  }, [id]);
-
-  // Subscribe to real-time updates for this course's participants and waitlist
-  useCourseParticipantsSubscription(id, refetchParticipantsAndWaitlist);
-
-  // Validate time when duration changes in settings (clear if conflict)
-  useEffect(() => {
-    // Skip if duration hasn't actually changed
-    if (prevSettingsDurationRef.current === settingsDuration) {
-      return;
-    }
-
-    const previousDuration = prevSettingsDurationRef.current;
-    prevSettingsDurationRef.current = settingsDuration;
-
-    // Skip on initial mount (when previous was null)
-    if (previousDuration === null) {
-      return;
-    }
-
-    // Read current values from refs to avoid stale closures
-    const currentTime = settingsTimeRef.current;
-    const currentDate = settingsDateRef.current;
-
-    // Skip validation if missing required data
-    if (!currentTime || !currentDate || !currentOrganization?.id || settingsDuration === null) {
-      return;
-    }
-
-    const validateTimeWithNewDuration = async () => {
-      try {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const { data: bookedSlots } = await fetchBookedTimesForDate(
-          currentOrganization.id,
-          dateStr,
-          id // Exclude current course from conflict check
-        );
-
-        const conflict = isTimeSlotBooked(currentTime, settingsDuration, bookedSlots || []);
-        if (conflict) {
-          setSettingsTime('');
-          toast.info('Valgt tidspunkt er ikke lenger ledig med ny varighet. Velg et nytt tidspunkt.');
-        }
-      } catch (err) {
-        logger.error('Error validating time slot:', err);
-      }
-    };
-
-    validateTimeWithNewDuration();
+  // Only run when courseData identity changes (initial load / refetch)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsDuration, currentOrganization?.id, id]);
-
-  // Handle promote from waitlist
-  const handlePromote = async (signupId: string) => {
-    // Check capacity before promoting
-    if (courseData && courseData.capacity > 0 && courseData.enrolled >= courseData.capacity) {
-      // Course is full - don't promote
-      setSaveError('Kurset er fullt. Kan ikke flytte flere fra ventelisten.');
-      setTimeout(() => setSaveError(null), 5000);
-      return;
-    }
-
-    setPromotingId(signupId);
-    try {
-      const { error } = await promoteFromWaitlist(signupId);
-      if (!error) {
-        toast.success('Deltaker flyttet fra venteliste');
-        // Refresh waitlist and participants
-        const { data: updatedWaitlist } = await fetchCourseWaitlist(id!);
-        if (updatedWaitlist) {
-          setWaitlist(updatedWaitlist);
-        }
-        // Also refresh participants to update enrolled count
-        const { data: participantsData } = await fetchSignupsByCourseWithProfiles(id!);
-        if (participantsData) {
-          setParticipants(participantsData);
-          // Update enrolled count in courseData
-          setCourseData(prev => prev ? { ...prev, enrolled: participantsData.length } : null);
-        }
-      } else {
-        toast.error('Kunne ikke flytte deltaker fra venteliste');
-      }
-    } finally {
-      setPromotingId(null);
-    }
-  };
-
-  // Handle remove from waitlist
-  const handleRemoveFromWaitlist = async (signupId: string) => {
-    setRemovingId(signupId);
-    try {
-      const { error } = await removeFromWaitlist(signupId);
-      if (!error) {
-        toast.success('Fjernet fra venteliste');
-        // Remove from local state
-        setWaitlist(prev => prev.filter(w => w.id !== signupId));
-      } else {
-        toast.error('Kunne ikke fjerne fra venteliste');
-      }
-    } finally {
-      setRemovingId(null);
-    }
-  };
+  }, [courseData]);
 
   // Handle save individual session
   const handleSaveSession = async (sessionId: string) => {
@@ -582,65 +241,12 @@ const CourseDetailPage = () => {
       } : null);
       setSettingsImageUrl(newImageUrl);
 
-      // Check if capacity increased and there are people on waitlist
-      const capacityIncreased = originalCapacity !== null && maxParticipants > originalCapacity;
-      const hasWaitlist = waitlist.length > 0;
-
-      if (capacityIncreased && hasWaitlist) {
-        // Calculate how many new spots were added
-        const addedSpots = maxParticipants - (originalCapacity || 0);
-        setNewSpotsCount(addedSpots);
-        // Show promotion dialog
-        setShowPromotionDialog(true);
-      } else {
-        toast.success('Endringer lagret');
-      }
-
-      // Update original capacity to the new value
-      setOriginalCapacity(maxParticipants);
+      toast.success('Endringer lagret');
     } catch {
       setSaveError('En feil oppstod');
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Handle promoting waitlist after capacity increase
-  const handlePromoteWaitlist = async () => {
-    if (!id) return;
-
-    setIsPromotingWaitlist(true);
-    try {
-      // Pass the number of new spots to promote up to that many people
-      const { data, error } = await triggerWaitlistPromotion(id, newSpotsCount);
-
-      if (error) {
-        toast.error(error);
-      } else if (data) {
-        const count = data.promoted_count || 0;
-        if (count > 0) {
-          toast.success(`Endringer lagret – tilbud sendt til ${count} ${count === 1 ? 'person' : 'personer'}`);
-        } else {
-          toast.success('Endringer lagret');
-        }
-        // Refresh waitlist to show updated status
-        const { data: waitlistData } = await fetchCourseWaitlist(id);
-        if (waitlistData) {
-          setWaitlist(waitlistData);
-        }
-      }
-    } catch {
-      toast.error('Kunne ikke sende tilbud til ventelisten');
-    } finally {
-      setIsPromotingWaitlist(false);
-      setShowPromotionDialog(false);
-    }
-  };
-
-  // Handle declining waitlist promotion
-  const handleDeclinePromotion = () => {
-    setShowPromotionDialog(false);
-    toast.success('Endringer lagret');
   };
 
   // Handle cancel course (with refunds and notifications)
@@ -841,25 +447,44 @@ const CourseDetailPage = () => {
   const spotsLeft = course.capacity - course.enrolled;
 
   // Map participants from database to display format
-  const displayParticipants = participants.map(signup => ({
+  const displayParticipants = useMemo(() => participants.map(signup => ({
     id: signup.id,
     name: signup.participant_name || signup.profile?.name || 'Ukjent',
     email: signup.participant_email || signup.profile?.email || '',
     status: signup.status as SignupStatus,
     paymentStatus: signup.payment_status as PaymentStatus,
     notes: signup.note || undefined,
-    receiptUrl: signup.stripe_receipt_url || undefined
-  }));
+    receiptUrl: signup.stripe_receipt_url || undefined,
+    attended: false, // Local state handled in CourseParticipantsTab if needed
+  })), [participants]);
+
+  // Attendance state (local UI state for now)
+  const [attendedParticipants, setAttendedParticipants] = useState<Set<string>>(new Set());
+
+  const handleToggleAttendance = (participantId: string) => {
+    setAttendedParticipants(prev => {
+      const next = new Set(prev);
+      if (next.has(participantId)) {
+        next.delete(participantId);
+      } else {
+        next.add(participantId);
+      }
+      return next;
+    });
+  };
 
   // Filter participants based on search and filters
-  const filteredParticipants = displayParticipants.filter((p) => {
+  const filteredParticipants = useMemo(() => displayParticipants.map(p => ({
+    ...p,
+    attended: attendedParticipants.has(p.id)
+  })).filter((p) => {
     const matchesSearch = searchQuery === '' ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchesPayment = paymentFilter === 'all' || p.paymentStatus === paymentFilter;
     return matchesSearch && matchesStatus && matchesPayment;
-  });
+  }), [displayParticipants, searchQuery, statusFilter, paymentFilter, attendedParticipants]);
 
   const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (paymentFilter !== 'all' ? 1 : 0);
 
@@ -880,7 +505,7 @@ const CourseDetailPage = () => {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
                 <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <a href="/teacher/courses" className="hover:text-text-primary ios-ease">Kurs</a>
+                  <a href="/teacher/courses" className="cursor-pointer hover:text-text-primary ios-ease">Kurs</a>
                   <ChevronRight className="h-3 w-3 text-text-tertiary" />
                   <span className="text-text-primary font-medium">{course.title}</span>
                 </nav>
@@ -911,7 +536,7 @@ const CourseDetailPage = () => {
                 role="tab"
                 aria-selected={activeTab === 'overview'}
                 onClick={() => setActiveTab('overview')}
-                className={`pb-3 text-sm font-medium ios-ease ${
+                className={`cursor-pointer pb-3 text-sm font-medium ios-ease ${
                   activeTab === 'overview'
                     ? 'text-text-primary border-b-2 border-text-primary'
                     : 'text-muted-foreground hover:text-text-primary'
@@ -923,7 +548,7 @@ const CourseDetailPage = () => {
                 role="tab"
                 aria-selected={activeTab === 'participants'}
                 onClick={() => setActiveTab('participants')}
-                className={`pb-3 text-sm font-medium ios-ease flex items-center gap-1.5 ${
+                className={`cursor-pointer pb-3 text-sm font-medium ios-ease flex items-center gap-1.5 ${
                   activeTab === 'participants'
                     ? 'text-text-primary border-b-2 border-text-primary'
                     : 'text-muted-foreground hover:text-text-primary'
@@ -938,7 +563,7 @@ const CourseDetailPage = () => {
                 role="tab"
                 aria-selected={activeTab === 'settings'}
                 onClick={() => setActiveTab('settings')}
-                className={`pb-3 text-sm font-medium ios-ease ${
+                className={`cursor-pointer pb-3 text-sm font-medium ios-ease ${
                   activeTab === 'settings'
                     ? 'text-text-primary border-b-2 border-text-primary'
                     : 'text-muted-foreground hover:text-text-primary'
@@ -967,7 +592,6 @@ const CourseDetailPage = () => {
               >
                 <CourseOverviewTab
                   course={course}
-                  courseId={id!}
                   organizationSlug={currentOrganization?.slug}
                   spotsLeft={spotsLeft}
                   isMultiDayCourse={isMultiDayCourse}
@@ -976,36 +600,36 @@ const CourseDetailPage = () => {
                   generatedCourseWeeks={generatedCourseWeeks}
                   visibleWeeks={visibleWeeks}
                   expandedItem={expandedItem}
-                  sessionEdits={sessionEdits}
-                  savingSessionId={savingSessionId}
                   hasRealSessions={hasRealSessions}
                   isMobile={isMobile}
-                  organizationId={currentOrganization?.id}
+                  sessionEditHandlers={{
+                    sessionEdits,
+                    savingSessionId,
+                    onSessionEditChange: (weekId, field, value) => {
+                      setSessionEdits(prev => ({
+                        ...prev,
+                        [weekId]: { ...prev[weekId], [field]: value }
+                      }));
+                    },
+                    onSessionEditCancel: (weekId) => {
+                      setSessionEdits(prev => {
+                        const newEdits = { ...prev };
+                        delete newEdits[weekId];
+                        return newEdits;
+                      });
+                      setExpandedItem(undefined);
+                    },
+                    onSaveSession: handleSaveSession,
+                  }}
                   isUploadingQuickImage={isUploadingQuickImage}
                   quickImageInputRef={quickImageInputRef}
                   onShowMore={handleShowMore}
                   onExpandedItemChange={setExpandedItem}
-                  onSessionEditChange={(weekId, field, value) => {
-                    setSessionEdits(prev => ({
-                      ...prev,
-                      [weekId]: { ...prev[weekId], [field]: value }
-                    }));
-                  }}
-                  onSessionEditCancel={(weekId) => {
-                    setSessionEdits(prev => {
-                      const newEdits = { ...prev };
-                      delete newEdits[weekId];
-                      return newEdits;
-                    });
-                    setExpandedItem(undefined);
-                  }}
-                  onSaveSession={handleSaveSession}
                   onQuickImageUpload={handleQuickImageUpload}
                   onEditTime={handleEditTime}
                   onCancelCourse={() => setShowCancelPreview(true)}
                   onNavigateToSettings={() => setActiveTab('settings')}
                   kursplanRef={kursplanRef}
-                  formatDateRange={formatDateRange}
                 />
               </motion.div>
             )}
@@ -1031,13 +655,8 @@ const CourseDetailPage = () => {
                   participantsLoading={participantsLoading}
                   activeFiltersCount={activeFiltersCount}
                   onClearFilters={clearFilters}
-                  waitlist={waitlist}
-                  waitlistLoading={waitlistLoading}
-                  promotingId={promotingId}
-                  removingId={removingId}
-                  onPromote={handlePromote}
-                  onRemoveFromWaitlist={handleRemoveFromWaitlist}
                   onOpenAddDialog={() => setAddParticipantDialogOpen(true)}
+                  onToggleAttendance={handleToggleAttendance}
                 />
 
                 {/* Add Participant Dialog */}
@@ -1046,7 +665,7 @@ const CourseDetailPage = () => {
                   onOpenChange={setAddParticipantDialogOpen}
                   courseId={id!}
                   organizationId={currentOrganization?.id || ''}
-                  onSuccess={refetchParticipantsAndWaitlist}
+                  onSuccess={refetchParticipants}
                 />
               </motion.div>
             )}
@@ -1088,8 +707,6 @@ const CourseDetailPage = () => {
                   onTimeChange={setSettingsTime}
                   settingsDuration={settingsDuration}
                   onDurationChange={setSettingsDuration}
-                  organizationId={currentOrganization?.id}
-                  excludeCourseId={id}
                   maxParticipants={maxParticipants}
                   onMaxParticipantsChange={setMaxParticipants}
                   currentEnrolled={courseData?.enrolled || 0}
@@ -1106,40 +723,6 @@ const CourseDetailPage = () => {
           </div>
         </div>
       </main>
-
-      {/* Waitlist Promotion Dialog */}
-      <AlertDialog open={showPromotionDialog} onOpenChange={setShowPromotionDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Send tilbud til ventelisten?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {(() => {
-                const toPromote = Math.min(newSpotsCount, waitlist.length);
-                if (toPromote === waitlist.length) {
-                  return `Du har økt kapasiteten med ${newSpotsCount} ${newSpotsCount === 1 ? 'plass' : 'plasser'}. ${waitlist.length} ${waitlist.length === 1 ? 'person venter' : 'personer venter'} på ventelisten.`;
-                } else {
-                  return `Du har økt kapasiteten med ${newSpotsCount} ${newSpotsCount === 1 ? 'plass' : 'plasser'}. ${toPromote} av ${waitlist.length} på ventelisten kan få tilbud.`;
-                }
-              })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleDeclinePromotion} disabled={isPromotingWaitlist}>
-              Ikke nå
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handlePromoteWaitlist} disabled={isPromotingWaitlist}>
-              {isPromotingWaitlist ? (
-                <>
-                  <Spinner size="md" className="mr-2" />
-                  Sender
-                </>
-              ) : (
-                `Send tilbud (${Math.min(newSpotsCount, waitlist.length)})`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>

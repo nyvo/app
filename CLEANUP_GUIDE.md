@@ -42,7 +42,6 @@ A logger utility exists at `src/lib/logger.ts` with `logger.debug()`, `logger.in
 | `src/services/publicCourses.ts` | 6 | Response casting |
 | `src/contexts/AuthContext.tsx` | 2 | `.from('profiles') as any`, `.rpc as any` |
 | `src/services/organizations.ts` | 1 | `.from('organizations') as any` |
-| `src/services/waitlist.ts` | 1 | `.from('signups') as any` |
 | `src/pages/teacher/CoursesPage.tsx` | 1 | `.from('signups') as any` |
 
 ### Fix approach

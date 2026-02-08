@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
@@ -34,6 +34,8 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
 ) {
   const channelRef = useRef<RealtimeChannel | null>(null)
   const callbackRef = useRef(callback)
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const retryCountRef = useRef(0)
 
   // Keep callback ref updated
   useEffect(() => {
@@ -47,52 +49,79 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+      retryCountRef.current = 0
       return
     }
 
     const { table, schema = 'public', event = '*', filter } = config
+    const MAX_RETRIES = 5
 
-    // Create unique channel name
-    const channelName = `${table}-${filter || 'all'}-${Date.now()}`
-
-    // Build the subscription config
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subscriptionConfig: any = {
-      event,
-      schema,
-      table,
-    }
-
-    if (filter) {
-      subscriptionConfig.filter = filter
-    }
-
-    // Create channel and subscribe
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        subscriptionConfig,
-        (payload: RealtimePostgresChangesPayload<T>) => {
-          callbackRef.current(payload)
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          logger.debug(`[Realtime] Subscribed to ${table}${filter ? ` (${filter})` : ''}`)
-        } else if (status === 'CHANNEL_ERROR') {
-          logger.error(`[Realtime] Error subscribing to ${table}`)
-        }
-      })
-
-    channelRef.current = channel
-
-    // Cleanup on unmount or config change
-    return () => {
+    function subscribe() {
+      // Clean up previous channel before creating a new one
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
+
+      const channelName = `${table}-${filter || 'all'}-${Date.now()}`
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const subscriptionConfig: any = {
+        event,
+        schema,
+        table,
+      }
+
+      if (filter) {
+        subscriptionConfig.filter = filter
+      }
+
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          subscriptionConfig,
+          (payload: RealtimePostgresChangesPayload<T>) => {
+            callbackRef.current(payload)
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            logger.debug(`[Realtime] Subscribed to ${table}${filter ? ` (${filter})` : ''}`)
+            retryCountRef.current = 0
+          } else if (status === 'CHANNEL_ERROR') {
+            logger.error(`[Realtime] Error subscribing to ${table}`)
+            if (retryCountRef.current < MAX_RETRIES) {
+              const delay = Math.min(1000 * 2 ** retryCountRef.current, 30000)
+              retryCountRef.current++
+              logger.debug(`[Realtime] Retrying ${table} in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`)
+              retryTimeoutRef.current = setTimeout(subscribe, delay)
+            } else {
+              logger.error(`[Realtime] Max retries reached for ${table}, giving up`)
+            }
+          }
+        })
+
+      channelRef.current = channel
+    }
+
+    subscribe()
+
+    // Cleanup on unmount or config change
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+      retryCountRef.current = 0
     }
   }, [config.table, config.schema, config.event, config.filter, enabled])
 }
@@ -116,10 +145,16 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
  *   !!orgId
  * )
  */
+/**
+ * Hook for subscribing to multiple tables at once.
+ * Accepts an explicit `key` string to control when subscriptions are re-created,
+ * avoiding the fragile JSON.stringify(configs) pattern.
+ */
 export function useMultiTableSubscription(
   configs: SubscriptionConfig[],
   callback: () => void,
-  enabled: boolean = true
+  enabled: boolean = true,
+  key?: string
 ) {
   const channelsRef = useRef<RealtimeChannel[]>([])
   const callbackRef = useRef(callback)
@@ -129,12 +164,8 @@ export function useMultiTableSubscription(
     callbackRef.current = callback
   }, [callback])
 
-  // Memoize configs to prevent unnecessary re-subscriptions
-  const configsKey = JSON.stringify(configs)
-
   useEffect(() => {
     if (!enabled || configs.length === 0) {
-      // Cleanup existing subscriptions if disabled
       channelsRef.current.forEach(channel => {
         supabase.removeChannel(channel)
       })
@@ -142,21 +173,13 @@ export function useMultiTableSubscription(
       return
     }
 
-    // Create channels for each config
     const channels = configs.map((config, index) => {
       const { table, schema = 'public', event = '*', filter } = config
       const channelName = `multi-${table}-${index}-${Date.now()}`
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const subscriptionConfig: any = {
-        event,
-        schema,
-        table,
-      }
-
-      if (filter) {
-        subscriptionConfig.filter = filter
-      }
+      const subscriptionConfig: any = { event, schema, table }
+      if (filter) subscriptionConfig.filter = filter
 
       return supabase
         .channel(channelName)
@@ -172,7 +195,6 @@ export function useMultiTableSubscription(
 
     channelsRef.current = channels
 
-    // Cleanup on unmount or config change
     return () => {
       channelsRef.current.forEach(channel => {
         supabase.removeChannel(channel)
@@ -180,7 +202,7 @@ export function useMultiTableSubscription(
       channelsRef.current = []
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configsKey, enabled])
+  }, [key, enabled])
 }
 
 /**
@@ -199,41 +221,15 @@ export function useDashboardSubscription(
   organizationId: string | undefined,
   onUpdate: () => void
 ) {
-  const stableCallback = useCallback(onUpdate, [onUpdate])
-
   useMultiTableSubscription(
     [
       { table: 'signups', filter: `organization_id=eq.${organizationId}` },
       { table: 'courses', filter: `organization_id=eq.${organizationId}` },
       { table: 'conversations', filter: `organization_id=eq.${organizationId}` },
     ],
-    stableCallback,
-    !!organizationId
-  )
-}
-
-/**
- * Hook for waitlist position real-time updates.
- * Useful for students watching their waitlist position.
- *
- * @param courseId - The course to watch
- * @param onUpdate - Callback when waitlist changes
- *
- * @example
- * useWaitlistSubscription(courseId, () => {
- *   refetchWaitlistPosition()
- * })
- */
-export function useWaitlistSubscription(
-  courseId: string | undefined,
-  onUpdate: () => void
-) {
-  const stableCallback = useCallback(onUpdate, [onUpdate])
-
-  useRealtimeSubscription(
-    { table: 'signups', filter: `course_id=eq.${courseId}` },
-    stableCallback,
-    !!courseId
+    onUpdate,
+    !!organizationId,
+    organizationId // primitive key instead of JSON.stringify
   )
 }
 
@@ -254,12 +250,9 @@ export function useStudentSignupsSubscription(
   userId: string | undefined,
   onUpdate: () => void
 ) {
-  const stableCallback = useCallback(onUpdate, [onUpdate])
-
-  // Subscribe to signups for this user
   useRealtimeSubscription(
     { table: 'signups', filter: `user_id=eq.${userId}` },
-    stableCallback,
+    onUpdate,
     !!userId
   )
 }
@@ -269,19 +262,16 @@ export function useStudentSignupsSubscription(
  * Useful for teachers viewing their course detail page.
  *
  * @param courseId - The course to watch
- * @param onUpdate - Callback when signups or waitlist changes
+ * @param onUpdate - Callback when signups change
  */
 export function useCourseParticipantsSubscription(
   courseId: string | undefined,
   onUpdate: () => void
 ) {
-  const stableCallback = useCallback(onUpdate, [onUpdate])
-
-  useMultiTableSubscription(
-    [
-      { table: 'signups', filter: `course_id=eq.${courseId}` },
-    ],
-    stableCallback,
+  // Single table - use useRealtimeSubscription directly instead of multi-table
+  useRealtimeSubscription(
+    { table: 'signups', filter: `course_id=eq.${courseId}` },
+    onUpdate,
     !!courseId
   )
 }

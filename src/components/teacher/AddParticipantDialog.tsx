@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
-import { fetchCourseWaitlist } from '@/services/waitlist';
+
 import type { SignupInsert } from '@/types/database';
 
 interface AddParticipantDialogProps {
@@ -152,7 +152,11 @@ export function AddParticipantDialog({
     try {
       // Re-check capacity to handle race condition
       const { available } = await checkCourseAvailability(courseId);
-      const finalStatus = available <= 0 ? 'waitlist' : 'confirmed';
+      if (available <= 0) {
+        setSubmitError('Kurset er fullt. Kan ikke legge til flere deltakere.');
+        setIsSubmitting(false);
+        return;
+      }
 
       const signupData: SignupInsert = {
         organization_id: organizationId,
@@ -161,17 +165,9 @@ export function AddParticipantDialog({
         participant_email: formData.email.trim(),
         participant_phone: formData.phone.trim() || null,
         note: formData.note.trim() || null,
-        status: finalStatus,
+        status: 'confirmed',
         payment_status: paymentMarked,
       };
-
-      // Calculate waitlist position if needed
-      if (finalStatus === 'waitlist') {
-        const { data: waitlist } = await fetchCourseWaitlist(courseId);
-        const maxPosition =
-          waitlist?.reduce((max, entry) => Math.max(max, entry.waitlist_position || 0), 0) || 0;
-        signupData.waitlist_position = maxPosition + 1;
-      }
 
       const { error } = await createSignup(signupData);
 
@@ -185,10 +181,7 @@ export function AddParticipantDialog({
       setIsSubmitting(false);
       onOpenChange(false);
       onSuccess(); // Trigger refresh
-
-      const successMessage =
-        finalStatus === 'confirmed' ? 'Deltaker lagt til' : 'Deltaker lagt til på venteliste';
-      toast.success(successMessage);
+      toast.success('Deltaker lagt til');
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'En feil oppstod');
       setIsSubmitting(false);
@@ -213,17 +206,17 @@ export function AddParticipantDialog({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Info banner if full */}
             {isFull && (
-              <div className="flex items-start gap-2 p-3 bg-status-info-bg rounded-xl border border-status-info-border">
+              <div className="flex items-start gap-2 p-3 bg-status-info-bg rounded-2xl border border-status-info-border">
                 <Info className="h-4 w-4 text-status-info-text shrink-0 mt-0.5" />
                 <p className="text-sm text-text-secondary">
-                  Kurset er fullt. Deltakeren legges automatisk til på ventelisten.
+                  Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
                 </p>
               </div>
             )}
 
             {/* Error banner */}
             {submitError && (
-              <div className="rounded-xl border border-destructive/30 bg-status-error-bg p-4">
+              <div className="rounded-2xl border border-destructive/30 bg-status-error-bg p-4">
                 <p className="text-sm text-status-error-text">{submitError}</p>
               </div>
             )}
@@ -380,7 +373,7 @@ export function AddParticipantDialog({
                 placeholder="Skriv en beskjed"
                 rows={3}
                 disabled={isSubmitting}
-                className="block w-full rounded-xl border border-border bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:border-ring focus:bg-white focus:outline-none focus:ring-4 focus:ring-border/30 hover:border-ring ios-ease resize-none disabled:opacity-50"
+                className="block w-full rounded-lg border border-zinc-300 bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring ios-ease resize-none disabled:opacity-50"
               />
               <p className="text-xs text-text-tertiary mt-1.5">Synlig kun for instruktør</p>
             </div>
@@ -393,7 +386,7 @@ export function AddParticipantDialog({
               <div
                 role="radiogroup"
                 aria-labelledby="payment-label"
-                className="flex gap-1 p-1 bg-surface-elevated rounded-xl"
+                className="flex gap-1 p-1 bg-surface-elevated rounded-lg"
               >
                 {[
                   { value: 'pending' as const, label: 'Ikke betalt' },
@@ -406,9 +399,9 @@ export function AddParticipantDialog({
                     aria-checked={paymentMarked === option.value}
                     onClick={() => setPaymentMarked(option.value)}
                     disabled={isSubmitting}
-                    className={`flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 ${
+                    className={`cursor-pointer flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 disabled:cursor-not-allowed ${
                       paymentMarked === option.value
-                        ? 'bg-white text-text-primary shadow-sm'
+                            ? 'bg-white text-text-primary'
                         : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
@@ -434,8 +427,6 @@ export function AddParticipantDialog({
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     Legger til...
                   </>
-                ) : isFull ? (
-                  'Legg til på venteliste'
                 ) : (
                   'Legg til deltaker'
                 )}

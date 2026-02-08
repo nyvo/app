@@ -29,9 +29,9 @@ const variantConfig: Record<IndicatorVariant, {
     border: 'border-status-confirmed-border',
   },
   warning: {
-    bg: 'bg-status-waitlist-bg',
-    text: 'text-status-waitlist-text',
-    border: 'border-status-waitlist-border',
+    bg: 'bg-status-warning-bg',
+    text: 'text-status-warning-text',
+    border: 'border-status-warning-border',
     defaultIcon: Clock,
   },
   error: {
@@ -181,7 +181,7 @@ export function StatusIndicator({
         borderRadiusClass,
         modeStyles.padding,
         sizeStyles.fontSize,
-        variant === 'critical' && 'shadow-sm',
+        variant === 'critical' && '',
         className
       )}
     >

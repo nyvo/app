@@ -21,6 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
@@ -44,7 +45,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FilterTabs, FilterTab } from "@/components/ui/filter-tabs"
-import { getInitials } from '@/utils/stringUtils'
+import { UserAvatar } from '@/components/ui/user-avatar'
+
 import { formatMessageTimestamp } from '@/utils/dateFormatting'
 
 const MessagesPage = () => {
@@ -310,16 +312,7 @@ const MessagesPage = () => {
       <TeacherSidebar />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
-        {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            <Leaf className="h-5 w-5 text-primary" />
-            <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-          </div>
-          <SidebarTrigger>
-            <Menu className="h-6 w-6 text-muted-foreground" />
-          </SidebarTrigger>
-        </div>
+        <MobileTeacherHeader title="Meldinger" />
 
         {/* Messages Layout: Split View */}
         <motion.div
@@ -330,7 +323,7 @@ const MessagesPage = () => {
           className="flex h-full w-full overflow-hidden"
         >
           {/* Conversation List (Left Panel) */}
-          <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-gray-200 bg-surface">
+          <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-zinc-200 bg-surface">
             {/* List Header */}
             <div className="p-5 pb-2">
               <div className="flex items-center justify-between mb-4">
@@ -373,38 +366,28 @@ const MessagesPage = () => {
                 </div>
               ) : (
                 filteredConversations.map((conversation) => {
-                  const initials = conversation.participant?.name
-                    ? getInitials(conversation.participant.name)
-                    : conversation.participant?.email?.slice(0, 2).toUpperCase() || '??';
-
                   return (
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left group relative ${
+                  className={`w-full flex items-start gap-3 p-3 rounded-2xl transition-all text-left group relative ${
                     activeConversation?.id === conversation.id && !isComposing
-                      ? 'bg-white border border-gray-200'
+                      ? 'bg-white border border-zinc-200'
                       : conversation.is_read
-                      ? 'hover:bg-white hover:border hover:border-gray-200 opacity-70 hover:opacity-100'
-                      : 'hover:bg-white hover:border hover:border-gray-200'
+                      ? 'hover:bg-white hover:border hover:border-zinc-200 opacity-70 hover:opacity-100'
+                      : 'hover:bg-white hover:border hover:border-zinc-200'
                   }`}
                 >
                   <div className="relative shrink-0">
-                    {conversation.participant?.avatar_url ? (
-                      <img
-                        src={conversation.participant.avatar_url}
-                        alt="Avatar"
-                        className={`h-10 w-10 rounded-full object-cover ${
-                          activeConversation?.id !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''
-                        }`}
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-border flex items-center justify-center text-muted-foreground text-xs font-medium">
-                        {initials}
-                      </div>
-                    )}
+                    <UserAvatar
+                      name={conversation.participant?.name}
+                      email={conversation.participant?.email}
+                      src={conversation.participant?.avatar_url}
+                      size="lg"
+                      className={activeConversation?.id !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
+                    />
                     {conversation.unread_count > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-text-primary text-xxs font-medium text-white border-2 border-surface">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-surface">
                         {conversation.unread_count}
                       </span>
                     )}
@@ -439,10 +422,10 @@ const MessagesPage = () => {
                     </p>
                   </div>
                   {conversation.unread_count > 0 && (
-                    <div className="h-2 w-2 rounded-full bg-text-primary shrink-0 mt-2" />
+                    <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
                   )}
                   {activeConversation?.id === conversation.id && !isComposing && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-text-primary" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-primary" />
                   )}
                 </button>
               );
@@ -456,7 +439,7 @@ const MessagesPage = () => {
             {/* Composing New Message View */}
             {isComposing ? (
               <div className="flex-1 flex flex-col h-full bg-surface">
-                 <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-surface/90 backdrop-blur-sm z-10">
+                 <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
@@ -492,7 +475,7 @@ const MessagesPage = () => {
 
                   <div className="space-y-3">
                     <label className="text-xs font-medium text-muted-foreground ml-1">Melding</label>
-                    <div className="rounded-2xl bg-white p-3 border border-gray-200 focus-within:ring-4 focus-within:ring-border/30 focus-within:border-ring transition-all">
+                    <div className="rounded-2xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white transition-all">
                         <textarea
                           rows={8}
                           value={newMessageBody}
@@ -549,7 +532,7 @@ const MessagesPage = () => {
             ) : (
               <>
                 {/* Regular Chat Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-surface/90 backdrop-blur-sm z-10">
+            <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button
                   className="md:hidden text-muted-foreground hover:text-text-primary mr-1"
@@ -560,25 +543,16 @@ const MessagesPage = () => {
                 </button>
 
                     {activeConversation && (() => {
-                      const name = activeConversation.participant?.name?.trim();
-                      const email = activeConversation.participant?.email;
-                      const initials = name
-                        ? getInitials(name)
-                        : email?.slice(0, 2).toUpperCase() || '?';
                       return (
                       <>
                 <div className="relative">
-                          {activeConversation.participant?.avatar_url ? (
-                  <img
-                              src={activeConversation.participant.avatar_url}
-                    alt="Avatar"
-                    className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                  <UserAvatar
+                    name={activeConversation.participant?.name}
+                    email={activeConversation.participant?.email}
+                    src={activeConversation.participant?.avatar_url}
+                    size="lg"
+                    ringClassName="ring-2 ring-white"
                   />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-border flex items-center justify-center text-muted-foreground text-xs font-medium ring-2 ring-white shadow-sm">
-                              {initials}
-                            </div>
-                  )}
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-text-primary">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
@@ -646,10 +620,6 @@ const MessagesPage = () => {
               </div>
 
                       {currentMessages.map((message) => {
-                        const participantInitials = activeConversation.participant?.name
-                          ? getInitials(activeConversation.participant.name)
-                          : activeConversation.participant?.email?.slice(0, 2).toUpperCase() || '??';
-
                         return (
                 <div
                   key={message.id}
@@ -658,26 +628,24 @@ const MessagesPage = () => {
                   }`}
                 >
                           {message.is_outgoing ? (
-                            <div className="h-8 w-8 rounded-full bg-text-primary flex items-center justify-center text-surface-elevated text-xxs font-medium mb-1">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xxs font-medium mb-1 shrink-0">
                                 Du
                             </div>
-                          ) : activeConversation.participant?.avatar_url ? (
-                  <img
-                    src={activeConversation.participant.avatar_url}
-                    alt="Avatar"
-                              className="h-8 w-8 rounded-full object-cover mb-1 opacity-80 group-hover:opacity-100 transition-opacity"
-                            />
                           ) : (
-                            <div className="h-8 w-8 rounded-full bg-border flex items-center justify-center text-muted-foreground text-xxs font-medium mb-1">
-                              {participantInitials}
-                            </div>
+                            <UserAvatar
+                              name={activeConversation.participant?.name}
+                              email={activeConversation.participant?.email}
+                              src={activeConversation.participant?.avatar_url}
+                              size="sm"
+                              className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity"
+                            />
                           )}
 
                   <div className={`flex flex-col gap-1 ${message.is_outgoing ? 'items-end' : ''}`}>
                     <div
-                      className={`px-4 py-3 rounded-2xl shadow-sm ${
+                      className={`px-4 py-3 rounded-2xl ${
                         message.is_outgoing
-                          ? 'bg-text-primary text-surface-elevated rounded-br-sm shadow-md'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
                           : 'bg-white rounded-bl-sm'
                       }`}
                     >
@@ -709,7 +677,7 @@ const MessagesPage = () => {
 
             {/* Input Area */}
             <div className="p-6 pt-2 bg-surface">
-              <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-gray-200 focus-within:ring-4 focus-within:ring-border/30 focus-within:border-ring transition-all relative">
+              <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white transition-all relative">
                 <textarea
                   rows={1}
                   placeholder="Skriv en melding"

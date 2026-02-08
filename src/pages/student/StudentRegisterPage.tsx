@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { linkGuestBookingsToUser } from '@/services/studentSignups';
+import { toast } from 'sonner';
 
 const StudentRegisterPage = () => {
   const navigate = useNavigate();
@@ -58,10 +59,10 @@ const StudentRegisterPage = () => {
     }
 
     if (!email.trim()) {
-      newErrors.email = 'Skriv inn e-postadressen din';
+      newErrors.email = 'Skriv inn e-posten din';
       isValid = false;
     } else if (!validateEmail(email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Ugyldig e-post';
       isValid = false;
     }
 
@@ -91,7 +92,7 @@ const StudentRegisterPage = () => {
     const newErrors = { ...errors };
 
     if (field === 'email' && email.trim() && !validateEmail(email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Ugyldig e-post';
     } else if (field === 'email' && validateEmail(email)) {
       delete newErrors.email;
     }
@@ -141,17 +142,21 @@ const StudentRegisterPage = () => {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          setRegisterError('Denne e-posten er allerede i bruk');
+          setRegisterError('E-posten er allerede registrert');
         } else {
-          setRegisterError('Kontoen ble ikke opprettet. Prøv på nytt.');
+          setRegisterError('Kontoen ble ikke opprettet. Prøv igjen.');
         }
         setIsLoading(false);
         return;
       }
 
+      toast.success('Konto opprettet', {
+        description: 'Sjekk e-posten din for å bekrefte kontoen.',
+      });
+
       // Navigation will happen automatically via useEffect when userType is set
-    } catch (err) {
-      setRegisterError('Noe gikk galt. Prøv på nytt.');
+    } catch {
+      setRegisterError('Noe gikk galt. Prøv igjen.');
       setIsLoading(false);
     }
   };
@@ -162,7 +167,7 @@ const StudentRegisterPage = () => {
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-transparent">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
           <Link to="/courses" className="flex items-center gap-3 cursor-pointer">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-gray-200 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200 text-primary">
               <Leaf className="h-5 w-5" />
             </div>
             <span className="font-geist text-lg font-medium text-text-primary tracking-tight">
@@ -176,14 +181,14 @@ const StudentRegisterPage = () => {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12 pt-24">
         <div className="w-full max-w-[400px] space-y-6">
           {/* Registration Card */}
-          <div className="rounded-3xl bg-white p-8 border border-gray-200">
+          <div className="rounded-2xl bg-white p-8 border border-zinc-200">
             {/* Title */}
             <div className="text-center mb-8">
               <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
                 Opprett konto
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Hold oversikt og book enkelt
+                Se timene dine og book enkelt
               </p>
             </div>
 
@@ -199,7 +204,7 @@ const StudentRegisterPage = () => {
               {/* Full Name */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                  Fullt navn <span className="text-status-error-text">*</span>
+                  Navn <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
                   <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.fullName ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
@@ -221,7 +226,7 @@ const StudentRegisterPage = () => {
               {/* Email */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                  E-postadresse <span className="text-status-error-text">*</span>
+                  E-post <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
                   <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.email ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
@@ -267,7 +272,7 @@ const StudentRegisterPage = () => {
               {/* Confirm Password */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                  Bekreft passord <span className="text-status-error-text">*</span>
+                  Gjenta passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
                   <CheckCircle2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.confirmPassword ? 'text-status-error-text' : confirmPassword && password === confirmPassword ? 'text-status-confirmed-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
@@ -290,7 +295,7 @@ const StudentRegisterPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full rounded-xl bg-text-primary px-4 py-3 text-sm font-medium text-surface-elevated ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
                 {isLoading ? (
                   <>
@@ -318,9 +323,9 @@ const StudentRegisterPage = () => {
             {/* Vipps Button */}
             <Button
               type="button"
-              className="w-full rounded-xl bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease active:scale-[0.98]"
+              className="w-full rounded-lg bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease active:scale-[0.98]"
             >
-              Registrer med
+              Opprett konto med
               <img
                 src="/badges/vipps login.svg"
                 alt="Vipps"

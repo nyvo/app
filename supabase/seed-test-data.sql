@@ -20,7 +20,7 @@ DECLARE
   -- Course IDs
   c_active_full UUID := uuid_generate_v4();
   c_active_available UUID := uuid_generate_v4();
-  c_active_waitlist UUID := uuid_generate_v4();
+  c_active_full2 UUID := uuid_generate_v4();
   c_upcoming UUID := uuid_generate_v4();
   c_draft UUID := uuid_generate_v4();
   c_completed UUID := uuid_generate_v4();
@@ -29,11 +29,6 @@ DECLARE
   c_free UUID := uuid_generate_v4();
   c_dropin UUID := uuid_generate_v4();
   c_payment_issues UUID := uuid_generate_v4();
-  -- Style IDs
-  s_vinyasa UUID;
-  s_hatha UUID;
-  s_yin UUID;
-  s_ashtanga UUID;
   -- Package IDs
   pkg_full UUID := uuid_generate_v4();
   pkg_half UUID := uuid_generate_v4();
@@ -55,68 +50,52 @@ BEGIN
   RAISE NOTICE 'Using org_id: %, user_id: %', v_org_id, v_user_id;
 
   -- ============================================
-  -- 1. COURSE STYLES
-  -- ============================================
-  INSERT INTO course_styles (name, normalized_name, color)
-  VALUES
-    ('Vinyasa Flow', 'vinyasa', '#8B5CF6'),
-    ('Hatha', 'hatha', '#3B82F6'),
-    ('Yin Yoga', 'yin', '#10B981'),
-    ('Ashtanga', 'ashtanga', '#F59E0B')
-  ON CONFLICT (normalized_name) DO NOTHING;
-
-  SELECT id INTO s_vinyasa FROM course_styles WHERE normalized_name = 'vinyasa';
-  SELECT id INTO s_hatha FROM course_styles WHERE normalized_name = 'hatha';
-  SELECT id INTO s_yin FROM course_styles WHERE normalized_name = 'yin';
-  SELECT id INTO s_ashtanga FROM course_styles WHERE normalized_name = 'ashtanga';
-
-  -- ============================================
-  -- 2. COURSES - ALL SCENARIOS
+  -- 1. COURSES - ALL SCENARIOS
   -- ============================================
 
   -- SCENARIO 1: Active course, FULL (no spots left) - MONDAYS 18:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id, style_id)
-  VALUES (c_active_full, v_org_id, 'Vinyasa Flow - Mandager', 'Dynamisk vinyasa-klasse med fokus på pust og flyt. Passer for deg som liker bevegelse og ønsker å bygge styrke og fleksibilitet.', 'course-series', 'active', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Mandager 18:00-19:15', 75, 3, 2400.00, true, 350.00, 8, 4, (date_trunc('week', CURRENT_DATE - INTERVAL '28 days'))::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '49 days')::DATE, v_user_id, s_vinyasa);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id)
+  VALUES (c_active_full, v_org_id, 'Vinyasa Flow - Mandager', 'Dynamisk vinyasa-klasse med fokus på pust og flyt. Passer for deg som liker bevegelse og ønsker å bygge styrke og fleksibilitet.', 'course-series', 'active', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Mandager 18:00-19:15', 75, 3, 2400.00, true, 350.00, 8, 4, (date_trunc('week', CURRENT_DATE - INTERVAL '28 days'))::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '49 days')::DATE, v_user_id);
 
   -- SCENARIO 2: Active course, has available spots - WEDNESDAYS 10:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id, style_id)
-  VALUES (c_active_available, v_org_id, 'Hatha Yoga - Onsdager', 'Rolig og grunnleggende hatha-klasse. Perfekt for nybegynnere som vil lære grunnstillingene.', 'course-series', 'active', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Onsdager 10:00-11:00', 60, 12, 1800.00, false, NULL, 8, 3, (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE, v_user_id, s_hatha);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id)
+  VALUES (c_active_available, v_org_id, 'Hatha Yoga - Onsdager', 'Rolig og grunnleggende hatha-klasse. Perfekt for nybegynnere som vil lære grunnstillingene.', 'course-series', 'active', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Onsdager 10:00-11:00', 60, 12, 1800.00, false, NULL, 8, 3, (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE, v_user_id);
 
-  -- SCENARIO 3: Active course with waitlist - TUESDAYS 06:30
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id, style_id)
-  VALUES (c_active_waitlist, v_org_id, 'Ashtanga Mysore', 'Tradisjonell Ashtanga Mysore-praksis. Individuell veiledning i ditt eget tempo.', 'course-series', 'active', 'viderekommen', 'Studio 1, Parkveien 5, Oslo', 'Tirsdager 06:30-08:30', 120, 4, 3200.00, false, NULL, 10, 5, (date_trunc('week', CURRENT_DATE - INTERVAL '35 days') + INTERVAL '1 day')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '35 days') + INTERVAL '64 days')::DATE, v_user_id, s_ashtanga);
+  -- SCENARIO 3: Active course, FULL (4/4 spots taken) - TUESDAYS 06:30
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, current_week, start_date, end_date, instructor_id)
+  VALUES (c_active_full2, v_org_id, 'Ashtanga Mysore', 'Tradisjonell Ashtanga Mysore-praksis. Individuell veiledning i ditt eget tempo.', 'course-series', 'active', 'viderekommen', 'Studio 1, Parkveien 5, Oslo', 'Tirsdager 06:30-08:30', 120, 4, 3200.00, false, NULL, 10, 5, (date_trunc('week', CURRENT_DATE - INTERVAL '35 days') + INTERVAL '1 day')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '35 days') + INTERVAL '64 days')::DATE, v_user_id);
 
   -- SCENARIO 4: Upcoming course (not started yet) - FRIDAYS 17:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id, style_id)
-  VALUES (c_upcoming, v_org_id, 'Yin Yoga - Nybegynnerkurs', 'Et rolig og meditativt nybegynnerkurs i yin yoga. Lær å slappe av og strekke dypt.', 'course-series', 'upcoming', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '39 days')::DATE, v_user_id, s_yin);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id)
+  VALUES (c_upcoming, v_org_id, 'Yin Yoga - Nybegynnerkurs', 'Et rolig og meditativt nybegynnerkurs i yin yoga. Lær å slappe av og strekke dypt.', 'course-series', 'upcoming', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '39 days')::DATE, v_user_id);
 
   -- SCENARIO 5: Draft course (not published) - SATURDAYS 11:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id, style_id)
-  VALUES (c_draft, v_org_id, 'Yoga for Gravide', 'Tilpasset yoga for gravide i alle trimestere.', 'course-series', 'draft', 'alle', 'Studio 2, Parkveien 5, Oslo', 'Lørdager 11:00-12:00', 60, 8, 2000.00, 8, CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '86 days', v_user_id, s_hatha);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id)
+  VALUES (c_draft, v_org_id, 'Yoga for Gravide', 'Tilpasset yoga for gravide i alle trimestere.', 'course-series', 'draft', 'alle', 'Studio 2, Parkveien 5, Oslo', 'Lørdager 11:00-12:00', 60, 8, 2000.00, 8, CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '86 days', v_user_id);
 
   -- SCENARIO 6: Completed course - WEDNESDAYS 18:00 (far in past)
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, current_week, start_date, end_date, instructor_id, style_id)
-  VALUES (c_completed, v_org_id, 'Vinyasa Grunnkurs - Høst 2025', 'Grunnkurs i vinyasa flow som ble avsluttet forrige sesong.', 'course-series', 'completed', 'nybegynner', 'Studio 1, Parkveien 5, Oslo', 'Onsdager 18:00-19:15', 75, 10, 2200.00, 8, 8, (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '2 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '51 days')::DATE, v_user_id, s_vinyasa);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, current_week, start_date, end_date, instructor_id)
+  VALUES (c_completed, v_org_id, 'Vinyasa Grunnkurs - Forrige Sesong', 'Grunnkurs i vinyasa flow som ble avsluttet forrige sesong.', 'course-series', 'completed', 'nybegynner', 'Studio 1, Parkveien 5, Oslo', 'Onsdager 18:00-19:15', 75, 10, 2200.00, 8, 8, (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '2 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '51 days')::DATE, v_user_id);
 
   -- SCENARIO 7: Cancelled course
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id, style_id)
-  VALUES (c_cancelled, v_org_id, 'Aerial Yoga Intro', 'Introduksjonskurs til aerial yoga. Avlyst grunnet for få påmeldinger.', 'course-series', 'cancelled', 'alle', 'Studio 3, Parkveien 5, Oslo', 'Søndager 14:00-15:30', 90, 8, 2800.00, 6, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '32 days', v_user_id, NULL);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id)
+  VALUES (c_cancelled, v_org_id, 'Aerial Yoga Intro', 'Introduksjonskurs til aerial yoga. Avlyst grunnet for få påmeldinger.', 'course-series', 'cancelled', 'alle', 'Studio 3, Parkveien 5, Oslo', 'Søndager 14:00-15:30', 90, 8, 2800.00, 6, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '32 days', v_user_id);
 
   -- SCENARIO 8: Single event (not course-series) - SATURDAY 19:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id, style_id)
-  VALUES (c_event, v_org_id, 'Full Moon Yoga Workshop', 'Spesiell fullmåne-workshop med meditasjon, pranayama og forsiktig flow. Ta med matte og teppe.', 'event', 'upcoming', 'alle', 'Friluftshuset, Frognerparken, Oslo', 'Lørdag 19:00-21:00', 120, 25, 450.00, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE, v_user_id, s_yin);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id)
+  VALUES (c_event, v_org_id, 'Full Moon Yoga Workshop', 'Spesiell fullmåne-workshop med meditasjon, pranayama og forsiktig flow. Ta med matte og teppe.', 'event', 'upcoming', 'alle', 'Friluftshuset, Frognerparken, Oslo', 'Lørdag 19:00-21:00', 120, 25, 450.00, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE, v_user_id);
 
   -- SCENARIO 9: Free course (no price) - SUNDAY 10:00
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id, style_id)
-  VALUES (c_free, v_org_id, 'Gratis Prøvetime - Hatha', 'Gratis introduksjonstime for nye elever. Kom og prøv yoga hos oss!', 'event', 'upcoming', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Søndag 10:00-11:00', 60, 20, NULL, (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE, v_user_id, s_hatha);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id)
+  VALUES (c_free, v_org_id, 'Gratis Prøvetime - Hatha', 'Gratis introduksjonstime for nye elever. Kom og prøv yoga hos oss!', 'event', 'upcoming', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Søndag 10:00-11:00', 60, 20, NULL, (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE, (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE, v_user_id);
 
   -- SCENARIO 10: Drop-in only course - no sessions generated (drop-in based)
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, start_date, end_date, instructor_id, style_id)
-  VALUES (c_dropin, v_org_id, 'Open Flow - Drop-in', 'Åpen vinyasa-klasse for alle nivåer. Kom når det passer deg!', 'course-series', 'active', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Mandager 12:00-13:00', 60, 18, NULL, true, 200.00, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', v_user_id, s_vinyasa);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, start_date, end_date, instructor_id)
+  VALUES (c_dropin, v_org_id, 'Open Flow - Drop-in', 'Åpen vinyasa-klasse for alle nivåer. Kom når det passer deg!', 'course-series', 'active', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Mandager 12:00-13:00', 60, 18, NULL, true, 200.00, CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE + INTERVAL '60 days', v_user_id);
 
   -- SCENARIO 11: Course with payment issues - THURSDAYS 19:30
-  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, current_week, start_date, end_date, instructor_id, style_id)
-  VALUES (c_payment_issues, v_org_id, 'Yin & Meditasjon - Torsdager', 'Dyp yin yoga med guidet meditasjon. Rolig og restorative.', 'course-series', 'active', 'alle', 'Studio 2, Parkveien 5, Oslo', 'Torsdager 19:30-20:45', 75, 8, 2400.00, 8, 2, (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '3 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '52 days')::DATE, v_user_id, s_yin);
+  INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, current_week, start_date, end_date, instructor_id)
+  VALUES (c_payment_issues, v_org_id, 'Yin & Meditasjon - Torsdager', 'Dyp yin yoga med guidet meditasjon. Rolig og restorative.', 'course-series', 'active', 'alle', 'Studio 2, Parkveien 5, Oslo', 'Torsdager 19:30-20:45', 75, 8, 2400.00, 8, 2, (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '3 days')::DATE, (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '52 days')::DATE, v_user_id);
 
   -- ============================================
   -- 3. COURSE SESSIONS
@@ -129,7 +108,7 @@ BEGIN
   -- Course weekday assignments:
   --   Vinyasa (active full)    → Monday    18:00-19:15
   --   Hatha (active available) → Wednesday 10:00-11:00
-  --   Ashtanga (waitlist)      → Tuesday   06:30-08:30
+  --   Ashtanga (full)          → Tuesday   06:30-08:30
   --   Yin upcoming             → Friday    17:00-18:15
   --   Completed Vinyasa        → Wednesday 18:00-19:15 (in the past, no overlap)
   --   Payment issues (Yin)     → Thursday  19:30-20:45
@@ -165,11 +144,11 @@ BEGIN
     );
   END LOOP;
 
-  -- Sessions for waitlist course (10 weeks, on week 5) - TUESDAYS 06:30
+  -- Sessions for full course 2 (10 weeks, on week 5) - TUESDAYS 06:30
   FOR i IN 1..10 LOOP
     INSERT INTO course_sessions (course_id, session_number, session_date, start_time, end_time, status)
     VALUES (
-      c_active_waitlist,
+      c_active_full2,
       i,
       (date_trunc('week', CURRENT_DATE - INTERVAL '35 days') + INTERVAL '1 day' + (i-1) * INTERVAL '7 days')::DATE,
       '06:30',
@@ -253,25 +232,13 @@ BEGIN
     (v_org_id, c_active_available, 'Lars Pettersen', 'lars.pettersen@example.com', '97890123', 'confirmed', 'paid', 1800.00),
     (v_org_id, c_active_available, 'Kari Haugen', 'kari.haugen@example.com', '98901234', 'confirmed', 'paid', 1800.00);
 
-  -- === WAITLIST COURSE (4/4 confirmed + 3 on waitlist) ===
-  -- Confirmed participants
+  -- === FULL COURSE 2 (4/4 spots taken) ===
   INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, amount_paid)
   VALUES
-    (v_org_id, c_active_waitlist, 'Nora Kristiansen', 'nora.k@example.com', 'confirmed', 'paid', 3200.00),
-    (v_org_id, c_active_waitlist, 'Anders Moe', 'anders.moe@example.com', 'confirmed', 'paid', 3200.00),
-    (v_org_id, c_active_waitlist, 'Tuva Eriksen', 'tuva.eriksen@example.com', 'confirmed', 'paid', 3200.00),
-    (v_org_id, c_active_waitlist, 'Oscar Bakke', 'oscar.bakke@example.com', 'confirmed', 'paid', 3200.00);
-
-  -- Waitlist entries
-  INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, waitlist_position)
-  VALUES
-    (v_org_id, c_active_waitlist, 'Ella Svendsen', 'ella.svendsen@example.com', 'waitlist', 'pending', 1),
-    (v_org_id, c_active_waitlist, 'Magnus Dahl', 'magnus.dahl@example.com', 'waitlist', 'pending', 2);
-
-  -- Waitlist entry (third in line)
-  INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, waitlist_position)
-  VALUES
-    (v_org_id, c_active_waitlist, 'Ingrid Holm', 'ingrid.holm@example.com', 'waitlist', 'pending', 3);
+    (v_org_id, c_active_full2, 'Nora Kristiansen', 'nora.k@example.com', 'confirmed', 'paid', 3200.00),
+    (v_org_id, c_active_full2, 'Anders Moe', 'anders.moe@example.com', 'confirmed', 'paid', 3200.00),
+    (v_org_id, c_active_full2, 'Tuva Eriksen', 'tuva.eriksen@example.com', 'confirmed', 'paid', 3200.00),
+    (v_org_id, c_active_full2, 'Oscar Bakke', 'oscar.bakke@example.com', 'confirmed', 'paid', 3200.00);
 
   -- === UPCOMING COURSE (3 pre-signups) ===
   INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, amount_paid)
@@ -343,10 +310,6 @@ BEGIN
   INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, amount_paid, note)
   VALUES (v_org_id, c_payment_issues, 'Emilia Haug', 'emilia.haug@example.com', 'confirmed', 'paid', 2400.00, 'Har skade i høyre skulder - trenger tilpasninger');
 
-  -- Waitlist entry
-  INSERT INTO signups (organization_id, course_id, participant_name, participant_email, status, payment_status, waitlist_position)
-  VALUES (v_org_id, c_payment_issues, 'Viktor Nes', 'viktor.nes@example.com', 'waitlist', 'pending', 1);
-
   -- ============================================
   -- 6. CONVERSATIONS & MESSAGES
   -- ============================================
@@ -383,16 +346,16 @@ BEGIN
   RAISE NOTICE 'Test scenarios created:';
   RAISE NOTICE '  1. Active + FULL (3/3)          - Vinyasa Flow - Mandager';
   RAISE NOTICE '  2. Active + available (5/12)     - Hatha Yoga - Onsdager';
-  RAISE NOTICE '  3. Active + WAITLIST (4/4 + 3)   - Ashtanga Mysore';
+  RAISE NOTICE '  3. Active + FULL (4/4)           - Ashtanga Mysore';
   RAISE NOTICE '  4. Upcoming (3 pre-signups)      - Yin Yoga Nybegynnerkurs';
   RAISE NOTICE '  5. Draft (not published)         - Yoga for Gravide';
-  RAISE NOTICE '  6. Completed (historical)        - Vinyasa Grunnkurs Høst';
+  RAISE NOTICE '  6. Completed (historical)        - Vinyasa Grunnkurs Forrige Sesong';
   RAISE NOTICE '  7. Cancelled (refunded)          - Aerial Yoga Intro';
   RAISE NOTICE '  8. Single event (7 signups)      - Full Moon Workshop';
   RAISE NOTICE '  9. Free course (no payment)      - Gratis Prøvetime';
   RAISE NOTICE ' 10. Drop-in only                  - Open Flow Drop-in';
   RAISE NOTICE ' 11. Payment issues (mixed)        - Yin & Meditasjon';
   RAISE NOTICE '';
-  RAISE NOTICE 'Also created: 3 conversations with messages, 4 course styles';
+  RAISE NOTICE 'Also created: 3 conversations with messages';
 
 END $$;

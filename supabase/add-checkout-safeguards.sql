@@ -5,7 +5,7 @@
 -- This query shows all duplicates that would block the unique index:
 -- SELECT course_id, participant_email, COUNT(*), array_agg(id) as signup_ids
 -- FROM signups
--- WHERE status IN ('confirmed', 'waitlist')
+-- WHERE status = 'confirmed'
 -- GROUP BY course_id, participant_email
 -- HAVING COUNT(*) > 1;
 
@@ -16,7 +16,7 @@ WITH duplicates AS (
     ORDER BY created_at DESC
   ) as rn
   FROM signups
-  WHERE status IN ('confirmed', 'waitlist')
+  WHERE status = 'confirmed'
 )
 UPDATE signups
 SET status = 'cancelled',
@@ -26,10 +26,10 @@ WHERE id IN (
 );
 
 -- 1. Partial unique index to prevent duplicate active signups per email per course
--- Only applies to 'confirmed' and 'waitlist' statuses (cancelled signups can be duplicated)
+-- Only applies to 'confirmed' status (cancelled signups can be duplicated)
 CREATE UNIQUE INDEX IF NOT EXISTS unique_active_signup_per_course_email
 ON signups (course_id, participant_email)
-WHERE status IN ('confirmed', 'waitlist');
+WHERE status = 'confirmed';
 
 -- 2. Atomic signup creation function with row locking
 -- This function:
@@ -73,7 +73,7 @@ BEGIN
     );
   END IF;
 
-  -- Count current confirmed signups (waitlist doesn't count against capacity)
+  -- Count current confirmed signups
   SELECT COUNT(*) INTO v_current_count
   FROM signups
   WHERE course_id = p_course_id AND status = 'confirmed';
