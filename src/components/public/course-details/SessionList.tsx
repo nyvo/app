@@ -93,11 +93,11 @@ export const SessionList: React.FC<SessionListProps> = ({
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
-        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-surface/30 hover:bg-surface/50 transition-colors group"
+        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 group"
       >
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-medium text-text-primary">Økter</h2>
-          <span className="text-xs font-medium text-muted-foreground px-2.5 py-1 rounded-full bg-white">
+          <span className="text-xs font-medium text-text-secondary px-2.5 py-1 rounded-full bg-white">
             {sessions.length} {sessions.length === 1 ? 'økt' : 'økter'}
           </span>
         </div>
@@ -132,7 +132,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                 className={`snap-start shrink-0 w-64 md:w-auto rounded-2xl border p-4 transition-all ${
                   isNextSession
                     ? 'ring-2 ring-status-confirmed-border border-transparent bg-white'
-                    : 'border-zinc-200 bg-surface/30 hover:border-zinc-300'
+                    : 'border-zinc-200 bg-white hover:border-zinc-400'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -140,10 +140,10 @@ export const SessionList: React.FC<SessionListProps> = ({
                     <div className="text-sm font-medium text-text-primary">
                       Økt {session.session_number}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs text-text-secondary mt-1">
                       {formatDate(session.session_date)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-text-secondary">
                       {formatTime(session.start_time)}
                       {session.end_time && ` - ${formatTime(session.end_time)}`}
                     </div>
@@ -158,7 +158,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                 </div>
 
                 {session.notes && (
-                  <p className="text-xs text-muted-foreground mt-3 line-clamp-2">
+                  <p className="text-xs text-text-secondary mt-3 line-clamp-2">
                     {session.notes}
                   </p>
                 )}

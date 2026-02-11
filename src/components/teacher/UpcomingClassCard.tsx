@@ -10,7 +10,7 @@ interface UpcomingClassCardProps {
 export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
-      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border ios-ease hover:border-zinc-400">
+      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
         <div className="relative flex h-full flex-col justify-center p-6 sm:p-9 z-10">
           {/* Main content */}
           <div className="max-w-md">
@@ -90,10 +90,12 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
               {classData.capacity > 0 ? `${classData.attendees}/${classData.capacity}` : `${classData.attendees} påmeldt`}
             </span>
           </div>
-          <span className="flex items-center gap-2 h-9 sm:h-10 rounded-lg bg-white px-2.5 sm:px-3 py-2 text-xxs sm:text-xs font-medium text-text-primary group-hover:bg-surface-elevated ios-ease shrink-0 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none">
-            Gå til kurs
-            <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-          </span>
+          <Button asChild variant="outline-soft" size="compact" className="bg-white border-white/20 text-text-primary group-hover:bg-surface-elevated">
+            <span>
+              Gå til kurs
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </Button>
         </div>
       </div>
     </Link>

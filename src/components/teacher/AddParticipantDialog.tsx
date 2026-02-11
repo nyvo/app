@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Info, Loader2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 
@@ -200,7 +202,7 @@ export function AddParticipantDialog({
 
         {isCheckingCapacity ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Spinner size="lg" className="text-muted-foreground" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -365,7 +367,7 @@ export function AddParticipantDialog({
               <label htmlFor="note" className="block text-xs font-medium text-muted-foreground mb-1.5">
                 Kommentar <span className="text-text-tertiary font-normal">(valgfritt)</span>
               </label>
-              <textarea
+              <Textarea
                 id="note"
                 name="note"
                 value={formData.note}
@@ -373,7 +375,6 @@ export function AddParticipantDialog({
                 placeholder="Skriv en beskjed"
                 rows={3}
                 disabled={isSubmitting}
-                className="block w-full rounded-lg border border-zinc-300 bg-input-bg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring ios-ease resize-none disabled:opacity-50"
               />
               <p className="text-xs text-text-tertiary mt-1.5">Synlig kun for instruktør</p>
             </div>
@@ -386,7 +387,7 @@ export function AddParticipantDialog({
               <div
                 role="radiogroup"
                 aria-labelledby="payment-label"
-                className="flex gap-1 p-1 bg-surface-elevated rounded-lg"
+                className="flex gap-1 border-b border-border"
               >
                 {[
                   { value: 'pending' as const, label: 'Ikke betalt' },
@@ -399,10 +400,10 @@ export function AddParticipantDialog({
                     aria-checked={paymentMarked === option.value}
                     onClick={() => setPaymentMarked(option.value)}
                     disabled={isSubmitting}
-                    className={`cursor-pointer flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`cursor-pointer flex-1 py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
                       paymentMarked === option.value
-                            ? 'bg-white text-text-primary'
-                        : 'text-text-secondary hover:text-text-primary'
+                            ? 'border-text-primary text-text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-text-primary'
                     }`}
                   >
                     {option.label}
@@ -421,15 +422,8 @@ export function AddParticipantDialog({
               >
                 Avbryt
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Legger til...
-                  </>
-                ) : (
-                  'Legg til deltaker'
-                )}
+              <Button type="submit" loading={isSubmitting} loadingText="Legger til...">
+                Legg til deltaker
               </Button>
             </DialogFooter>
           </form>

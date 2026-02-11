@@ -37,7 +37,7 @@ export const CourseMetaGrid: React.FC<CourseMetaGridProps> = ({
           {time} {duration && <span className="text-base">({formatDuration(duration)})</span>}
         </div>
         {dateInfo && (
-          <div className="text-xs text-muted-foreground mt-3">
+          <div className="text-xs text-text-secondary mt-3">
             {dateInfo.dayName}, {dateOnly}
           </div>
         )}

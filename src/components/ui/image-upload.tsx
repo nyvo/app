@@ -178,7 +178,7 @@ export function ImageUpload({
             ${
               dragActive
                 ? 'border-ring bg-surface'
-                : 'border-zinc-300 bg-input-bg hover:border-ring hover:bg-surface'
+                : 'border-zinc-300 bg-input-bg hover:border-ring hover:bg-zinc-50'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-destructive' : ''}

@@ -1,5 +1,17 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
+
+// Register custom @theme font-size tokens so tailwind-merge treats them as
+// font-size utilities, not text-color. Without this, `text-xxs` and e.g.
+// `text-status-confirmed-text` would be seen as the same group and the
+// last one would strip the first.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      'font-size': ['text-xxs', 'text-small'],
+    },
+  },
+})
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))

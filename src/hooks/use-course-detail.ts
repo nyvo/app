@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { fetchCourseById, fetchCourseSessions } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
-import { useCourseParticipantsSubscription } from '@/hooks/use-realtime-subscription';
+import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import type { Course, CourseSession } from '@/types/database';
 
 // Helper to map database course to component format
@@ -187,7 +187,11 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   }, [courseId]);
 
   // Subscribe to real-time updates for this course's participants
-  useCourseParticipantsSubscription(courseId, refetchParticipants);
+  useRealtimeSubscription(
+    { table: 'signups', filter: `course_id=eq.${courseId}` },
+    refetchParticipants,
+    !!courseId
+  );
 
   const refetch = useCallback(() => {
     setRefetchKey(prev => prev + 1);

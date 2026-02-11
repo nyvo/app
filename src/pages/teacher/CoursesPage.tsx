@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CalendarPlus,
-  Leaf,
-  Menu,
   Calendar,
   Archive,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -354,7 +352,7 @@ const CoursesPage = () => {
               <div className="h-full overflow-y-auto custom-scrollbar pb-8">
                 {searchResults.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white border border-zinc-200">
-                    <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
+                    <div className="mb-4 rounded-full bg-surface p-4 border border-zinc-100">
                        <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                     </div>
                     <h3 className="font-geist text-sm font-medium text-text-primary">Ingen kurs funnet</h3>
@@ -413,7 +411,7 @@ const CoursesPage = () => {
                     {completedCourses.length > 0 ? (
                       <section className="space-y-3">
                         <div className="flex items-center gap-3">
-                          <h2 className="text-sm font-medium text-text-primary uppercase tracking-wide flex items-center gap-2">
+                          <h2 className="text-sm font-medium text-text-primary uppercase tracking-wider flex items-center gap-2">
                             <Archive className="h-4 w-4" />
                             Arkiv
                           </h2>

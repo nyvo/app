@@ -20,10 +20,9 @@ interface SignupGroupProps {
   group: SignupGroupType;
   defaultExpanded?: boolean;
   actionHandlers?: ExceptionActionHandlers;
-  onToggleAttendance?: (signupId: string) => void;
 }
 
-export function SignupGroup({ group, defaultExpanded = false, actionHandlers, onToggleAttendance }: SignupGroupProps) {
+export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: SignupGroupProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded || group.hasExceptions);
 
   const totalActive = group.counts.confirmed;
@@ -33,7 +32,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers, on
       {/* Group Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-colors text-left"
+        className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between cursor-pointer hover:bg-zinc-50 smooth-transition text-left"
         aria-expanded={isExpanded}
         aria-controls={`group-content-${group.key}`}
       >
@@ -112,7 +111,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers, on
               </h4>
               <div className="space-y-1">
                 {group.signups.confirmed.map(signup => (
-                  <ParticipantRow key={signup.id} signup={signup} onToggleAttendance={onToggleAttendance} />
+                  <ParticipantRow key={signup.id} signup={signup} />
                 ))}
               </div>
             </div>
@@ -167,15 +166,10 @@ function ExceptionRow({ signup, actionHandlers }: { signup: SignupDisplay; actio
   );
 }
 
-interface ParticipantRowProps {
-  signup: SignupDisplay;
-  onToggleAttendance?: (signupId: string) => void;
-}
-
 // Standard participant row
-function ParticipantRow({ signup, onToggleAttendance }: ParticipantRowProps) {
+function ParticipantRow({ signup }: { signup: SignupDisplay }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-secondary/50 transition-colors">
+    <div className="flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-zinc-50 smooth-transition">
       <UserAvatar
         name={signup.participantName}
         email={signup.participantEmail}
@@ -185,22 +179,6 @@ function ParticipantRow({ signup, onToggleAttendance }: ParticipantRowProps) {
         <p className="text-sm font-medium text-text-primary truncate">{signup.participantName}</p>
         <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
       </div>
-      {/* Attendance check-in */}
-      <button
-        onClick={() => onToggleAttendance?.(signup.id)}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all",
-          signup.attended
-            ? "bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border"
-            : "bg-surface text-text-tertiary border border-zinc-200 hover:border-zinc-300"
-        )}
-      >
-        <div className={cn(
-          "h-1 w-1 rounded-full",
-          signup.attended ? "bg-status-confirmed-text" : "bg-text-tertiary"
-        )} />
-        {signup.attended ? 'Til stede' : 'Sjekk inn'}
-      </button>
       {/* Payment badge: exception-only (paid is silent by default) */}
       <PaymentBadge status={signup.paymentStatus} size="sm" />
       <NotePopover note={signup.note} />

@@ -71,20 +71,6 @@ export function formatDateWithWeekday(dateStr: string | null | undefined): strin
 }
 
 /**
- * Format a datetime for expiry display
- * e.g., "mandag 15. januar, 14:30"
- */
-export function formatExpiryDateTime(date: Date): string {
-  return date.toLocaleString('nb-NO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-/**
  * Format a date range
  * e.g., "15. jan - 22. jan 2024"
  */

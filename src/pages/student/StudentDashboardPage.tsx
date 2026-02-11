@@ -4,9 +4,10 @@ import { fetchUpcomingSignups, fetchPastSignups, type StudentSignupWithCourse } 
 import { StudentDashboardLayout } from '@/components/student/StudentDashboardLayout';
 import { BookingCard } from '@/components/student/BookingCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, CalendarX, Clock } from 'lucide-react';
+import { CalendarX, Clock } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { useStudentSignupsSubscription } from '@/hooks/use-realtime-subscription';
+import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 
 const StudentDashboardPage = () => {
   const { user } = useAuth();
@@ -34,7 +35,11 @@ const StudentDashboardPage = () => {
   }, [user?.id, user?.email]);
 
   // Subscribe to real-time updates for this student's signups
-  useStudentSignupsSubscription(user?.id, refetchData);
+  useRealtimeSubscription(
+    { table: 'signups', filter: `user_id=eq.${user?.id}` },
+    refetchData,
+    !!user?.id
+  );
 
   // Initial data load
   const loadData = useCallback(async () => {
@@ -73,7 +78,7 @@ const StudentDashboardPage = () => {
     return (
       <StudentDashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-text-tertiary mb-4" />
+          <Spinner size="xl" className="mb-4" />
           <p className="text-muted-foreground">Henter kurs ...</p>
         </div>
       </StudentDashboardLayout>

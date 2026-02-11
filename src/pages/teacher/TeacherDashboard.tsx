@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Leaf, Menu, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
@@ -24,7 +25,7 @@ import { fetchRecentConversations, type ConversationWithDetails } from '@/servic
 import { getInitials } from '@/utils/stringUtils';
 import { formatRelativeTimePast } from '@/utils/dateFormatting';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
-import { useDashboardSubscription } from '@/hooks/use-realtime-subscription';
+import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
   CourseStyleType as DashboardCourseType,
@@ -294,7 +295,16 @@ const TeacherDashboard = () => {
   }, [currentOrganization?.id]);
 
   // Subscribe to real-time updates for dashboard data
-  useDashboardSubscription(currentOrganization?.id, refetchDashboardData);
+  useMultiTableSubscription(
+    [
+      { table: 'signups', filter: `organization_id=eq.${currentOrganization?.id}` },
+      { table: 'courses', filter: `organization_id=eq.${currentOrganization?.id}` },
+      { table: 'conversations', filter: `organization_id=eq.${currentOrganization?.id}` },
+    ],
+    refetchDashboardData,
+    !!currentOrganization?.id,
+    currentOrganization?.id
+  );
 
   // Initial data fetch
   useEffect(() => {
@@ -358,24 +368,16 @@ const TeacherDashboard = () => {
       <TeacherSidebar />
 
       <main className="flex-1 overflow-y-auto bg-surface h-screen">
-          <div className="flex md:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-30">
-            <div className="flex items-center gap-3">
-              <Leaf className="h-5 w-5 text-primary" />
-              <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-            </div>
-            <SidebarTrigger>
-              <Menu className="h-6 w-6 text-muted-foreground" />
-            </SidebarTrigger>
-          </div>
+          <MobileTeacherHeader title="Oversikt" />
 
-          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-12">
+          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-10 lg:py-8">
             <motion.div
               variants={pageVariants}
               initial="initial"
               animate="animate"
               transition={pageTransition}
             >
-              <header className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
                   <p className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">

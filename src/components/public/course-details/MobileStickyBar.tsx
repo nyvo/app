@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export interface MobileStickyBarProps {
   price: number | null;
@@ -33,13 +34,13 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
           /* Course ended */
           <>
             <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">Status</span>
+              <span className="text-xs text-text-tertiary">Status</span>
               <span className="font-geist text-base font-medium text-text-tertiary">
                 Avsluttet
               </span>
             </div>
             <Button asChild size="default" variant="outline">
-              <a href={studioUrl}>Se kommende kurs</a>
+              <Link to={studioUrl}>Se kommende kurs</Link>
             </Button>
           </>
         ) : isFull ? (
@@ -48,7 +49,7 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
           /* Price + Submit */
           <>
             <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-text-tertiary">
                 Total pris
               </span>
               <span className="font-geist text-xl font-medium text-text-primary">
@@ -67,19 +68,11 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
                 size="default"
                 type="submit"
                 form="booking-form"
-                disabled={submitting}
+                loading={submitting}
+                loadingText="Behandler"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Behandler
-                  </>
-                ) : (
-                  <>
-                    Fullfør
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                Fullfør
+                <ArrowRight className="h-4 w-4" />
               </Button>
             )}
           </>

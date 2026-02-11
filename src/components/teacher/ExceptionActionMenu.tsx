@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { MoreHorizontal, Link, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Link, CheckCircle, XCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,12 +53,12 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-elevated transition-colors text-text-tertiary hover:text-text-secondary flex-shrink-0"
+            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-50 smooth-transition text-text-tertiary hover:text-text-secondary flex-shrink-0"
             aria-label="Handlinger"
             disabled={loading}
           >
             {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spinner size="md" />
             ) : (
               <MoreHorizontal className="h-4 w-4" />
             )}

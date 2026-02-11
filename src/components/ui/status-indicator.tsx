@@ -152,8 +152,8 @@ export function StatusIndicator({
         aria-label={finalAriaLabel}
         className={cn(
           'inline-flex items-center gap-1 font-medium',
-          config.text,
           sizeStyles.fontSize,
+          config.text,
           className
         )}
       >
@@ -176,11 +176,11 @@ export function StatusIndicator({
       className={cn(
         'inline-flex items-center gap-1 font-medium',
         config.bg + modeStyles.bgOpacity,
-        config.text,
         modeStyles.showBorder && `border ${config.border}`,
         borderRadiusClass,
         modeStyles.padding,
         sizeStyles.fontSize,
+        config.text,
         variant === 'critical' && '',
         className
       )}

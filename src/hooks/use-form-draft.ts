@@ -134,19 +134,3 @@ export function useFormDraft<T extends object>(
     clearDraft,
   }
 }
-
-/**
- * Serialize a Date to ISO string for storage
- */
-export function serializeDate(date: Date | undefined): string | undefined {
-  return date?.toISOString()
-}
-
-/**
- * Deserialize an ISO string back to Date
- */
-export function deserializeDate(isoString: string | undefined): Date | undefined {
-  if (!isoString) return undefined
-  const date = new Date(isoString)
-  return isNaN(date.getTime()) ? undefined : date
-}

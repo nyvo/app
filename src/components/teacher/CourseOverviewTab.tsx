@@ -5,7 +5,6 @@ import {
   Users,
   ChevronDown,
   ChevronUp,
-  BarChart2,
   Clock,
   Mail,
   Info,
@@ -20,7 +19,9 @@ import {
   AccordionItem,
 } from '@/components/ui/accordion';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker24h } from '@/components/course/time-picker-24h';
+import { Input } from '@/components/ui/input';
+import { TimePicker } from '@/components/ui/time-picker';
+import { cn } from '@/lib/utils';
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
@@ -188,12 +189,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     label="Fullt"
                   />
                 ) : (
-                  <StatusIndicator
-                    variant="neutral"
-                    mode="badge"
-                    size="sm"
-                    label={`${spotsLeft} ${spotsLeft === 1 ? 'plass' : 'plasser'} igjen`}
-                  />
+                  <span className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-xxs font-medium text-text-secondary">
+                    {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
+                  </span>
                 )}
               </div>
             )}
@@ -266,7 +264,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   className="hidden"
                 />
                 <div
-                  className="h-48 bg-surface border-b border-zinc-100 flex items-center justify-center relative group cursor-pointer ios-ease hover:bg-surface-elevated"
+                  className="h-48 bg-surface border-b border-zinc-100 flex items-center justify-center relative group cursor-pointer smooth-transition hover:bg-zinc-50"
                   onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
                 >
                   {isUploadingQuickImage ? (
@@ -276,7 +274,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     </div>
                   ) : (
                     <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-zinc-200 mb-2 group-hover:scale-105 ios-ease">
+                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-zinc-200 mb-2 group-hover:scale-105 smooth-transition">
                         <Image className="h-4 w-4 text-text-tertiary" />
                       </div>
                       <p className="text-xs font-medium text-text-primary">Legg til forsidebilde</p>
@@ -315,15 +313,6 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               )}
 
-              {/* Metadata Footer */}
-              <div className="flex items-center gap-6 mt-6 pt-5 border-t border-zinc-100">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <BarChart2 className="h-3.5 w-3.5 text-text-tertiary" />
-                  <span>
-                    Nivå: <span className="font-medium text-text-primary">{course.level}</span>
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -334,7 +323,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <h3 className="text-sm font-medium text-text-primary">
                   Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})
                 </h3>
-                <button className="cursor-pointer text-sm text-muted-foreground hover:text-text-primary font-medium ios-ease">
+                <button onClick={onEditTime} className="cursor-pointer text-sm text-muted-foreground hover:text-text-primary font-medium smooth-transition">
                   Rediger
                 </button>
               </div>
@@ -348,18 +337,18 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                       className="border-0"
                     >
                       <div
-                        className="p-4 flex items-center gap-4 hover:bg-surface ios-ease group cursor-pointer"
+                        className="p-4 flex items-center gap-4 hover:bg-zinc-50 smooth-transition group cursor-pointer"
                         onClick={() => onExpandedItemChange(expandedItem === week.id ? undefined : week.id)}
                       >
                         <div
                           className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${
                             week.isNext
                               ? 'bg-zinc-900 text-white'
-                              : 'bg-surface-elevated text-muted-foreground'
+                              : 'bg-white border border-zinc-200 text-muted-foreground'
                           }`}
                         >
                           <span
-                            className={`text-[10px] uppercase font-medium tracking-wider ${
+                            className={`text-xxs uppercase font-medium tracking-wider ${
                               week.isNext ? 'opacity-80' : 'opacity-70'
                             }`}
                           >
@@ -400,7 +389,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                           </div>
                         </div>
                         <ChevronDown
-                          className={`h-4 w-4 text-text-tertiary group-hover:text-muted-foreground ios-ease ${
+                          className={`h-4 w-4 text-text-tertiary group-hover:text-muted-foreground smooth-transition ${
                             expandedItem === week.id ? 'rotate-180' : ''
                           }`}
                         />
@@ -430,7 +419,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                               <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
                                 Tidspunkt
                               </label>
-                              <TimePicker24h
+                              <TimePicker
                                 value={sessionEdits[week.id]?.time || week.time.split(' - ')[0]}
                                 onChange={(time) => onSessionEditChange(week.id, 'time', time)}
                               />
@@ -475,7 +464,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 {generatedCourseWeeks.length > (isMobile ? 1 : 3) && (
                   <button
                     onClick={onShowMore}
-                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary ios-ease"
+                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary smooth-transition"
                   >
                     {visibleWeeks >= generatedCourseWeeks.length ? (
                       <>
@@ -499,7 +488,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         <div className="lg:col-span-4 space-y-6">
           {/* Admin Card */}
           <div className="rounded-2xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-[11px] font-medium uppercase tracking-wider text-text-tertiary mb-4">
+            <h3 className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-4">
               Administrasjon
             </h3>
             <div className="mb-5">
@@ -540,12 +529,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           </div>
 
           {/* Tips Card */}
-          <div className="rounded-2xl bg-white border border-zinc-200 p-4">
+          <div className="rounded-2xl bg-status-info-bg border border-status-info-border p-4">
             <div className="flex gap-3">
-              <Info className="h-4 w-4 text-text-tertiary shrink-0 mt-0.5" />
+              <Info className="h-4 w-4 text-status-info-text shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-xs font-medium text-text-primary">Tips for synlighet</h4>
-                <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                <h4 className="text-xs font-medium text-status-info-text">Tips for synlighet</h4>
+                <p className="text-xs text-status-info-text/70 mt-1 leading-snug">
                   Legg til bilde og beskrivelse for å gjøre kurset mer attraktivt.
                 </p>
               </div>

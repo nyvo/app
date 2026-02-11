@@ -81,21 +81,33 @@ The "Zinc" scale provides the cool, professional feel required for a modern SaaS
 
 > **V2.2 Rule:** Inputs use `border-zinc-300` (darker) so they appear "cut into" the page surface. Cards use `border-zinc-200` (lighter).
 
-### Status Colors
-| Status | Background | Border | Text | Hex Values |
-|--------|------------|--------|------|------------|
-| Confirmed | `bg-status-confirmed-bg` | `border-status-confirmed-border` | `text-status-confirmed-text` | #dcfce7 / #bbf7d0 / #15803d |
-| Warning | `bg-status-warning-bg` | `border-status-warning-border` | `text-status-warning-text` | #fef3c7 / #fcd34d / #92400e |
-| Cancelled | `bg-status-cancelled-bg` | `border-status-cancelled-border` | `text-status-cancelled-text` | #E4E4E7 / #D4D4D8 / #52525B |
-| Error | `bg-status-error-bg` | `border-status-error-border` | `text-status-error-text` | #fee2e2 / #fecaca / #dc2626 |
-| Info | `bg-status-info-bg` | `border-status-info-border` | `text-status-info-text` | #dbeafe / #bfdbfe / #1d4ed8 |
+### Status Colors (Semantic Colorways)
+
+All status colors reference Tailwind's built-in palette via CSS custom properties. Never use raw hex — always use these semantic tokens.
+
+| Colorway | Tailwind Source | Tokens (bg / border / text) | When to Use |
+|----------|----------------|----------------------------|-------------|
+| **Success** (green) | `green-100/200/700` | `status-confirmed-*` | Confirmed enrollments, completed actions, positive states ("Påmeldt", "Fullført", "Betalt") |
+| **Warning** (amber) | `amber-100/300/800` | `status-warning-*` | Pending actions, awaiting attention ("Venter betaling", "Kommende") |
+| **Error** (red) | `red-100/200/600` | `status-error-*` | Failed actions, destructive states ("Betaling feilet", "Avlyst") |
+| **Info** (blue) | `blue-100/200/700` | `status-info-*` | Tips, informational callouts, neutral guidance ("Tips for synlighet", help text) |
+| **Neutral** (zinc) | `zinc-200/300/600` | `status-cancelled-*` | Inactive/past states, de-emphasized items ("Avbestilt", "Kurs avlyst", "Refundert") |
+
+#### Usage Rules
+1. **Badges/pills**: Use via `<StatusIndicator>`, `<StatusBadge>`, or `<PaymentBadge>` components.
+2. **Callout cards**: Apply tokens directly — `bg-status-info-bg border border-status-info-border` with `text-status-info-text` for icon/title and `text-status-info-text/70` for body text.
+3. **Danger zones**: Use `status-error-*` tokens for cancel/delete sections.
+4. **Never rely on color alone**: Always pair with a text label or icon for accessibility.
 
 ### Feedback Colors
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `bg-success` / `text-success` | #22C55E | Success states |
-| `bg-warning` / `text-warning` | #F97316 | Warning states |
-| `bg-destructive` / `text-destructive` | #EF4444 | Error/destructive |
+
+Single-tone semantic colors for icons, text accents, and button states. These also reference Tailwind's palette.
+
+| Token | Tailwind Source | Usage |
+|-------|----------------|-------|
+| `bg-success` / `text-success` | `green-500` | Inline success indicators, icons |
+| `bg-warning` / `text-warning` | `orange-500` | Inline warning indicators, icons |
+| `bg-destructive` / `text-destructive` | `red-500` | Error text, destructive button backgrounds |
 
 ### Growth/Trend Colors
 | Token | Hex | Usage |
@@ -204,7 +216,7 @@ className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm fon
 
 #### Secondary/Outline Button - Standard
 ```tsx
-className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-text-primary hover:bg-gray-50 ios-ease active:scale-[0.98]"
+className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-text-primary hover:bg-zinc-50 ios-ease active:scale-[0.98]"
 ```
 
 #### Ghost Button
@@ -244,13 +256,13 @@ The `<Button>` component supports these variants and sizes:
 
 #### Standard Card (Border-Defined)
 ```tsx
-className="rounded-2xl bg-white p-7 border border-gray-200 ios-ease hover:border-gray-400"
+className="rounded-2xl bg-white p-7 border border-zinc-200 ios-ease hover:border-zinc-400"
 ```
-> **Usage:** Dashboard cards, stats, list containers. White cards "pop" against the Stone-100 page background.
+> **Usage:** Dashboard cards, stats, list containers. White cards "pop" against the Zinc-100 page background.
 
 #### Hero Card (Dark)
 ```tsx
-className="relative rounded-2xl bg-gray-900 text-white border border-gray-800 ios-ease hover:border-gray-700"
+className="relative rounded-2xl bg-zinc-900 text-white border border-zinc-800 ios-ease hover:border-zinc-700"
 ```
 
 ### Tables (Data Density)
@@ -258,7 +270,7 @@ To maximize vertical space in the dashboard, we use tight borders and specific c
 
 #### Table Header Row
 ```tsx
-className="flex items-center border-b border-gray-100 bg-surface/50 px-6 py-3"
+className="flex items-center border-b border-zinc-100 bg-surface/50 px-6 py-3"
 ```
 
 #### Table Header Text
@@ -269,7 +281,7 @@ className="text-xxs font-medium uppercase tracking-wider text-text-secondary"
 
 #### Table Row
 ```tsx
-className="group hover:bg-gray-50/50 transition-colors"
+className="group hover:bg-zinc-50/50 transition-colors"
 ```
 
 #### Table Cell
@@ -279,8 +291,8 @@ className="py-4 px-6"
 
 ### Form Inputs
 
-> **IMPORTANT:** Always use the shadcn `<Input>` component.
-> **V2.2:** Inputs use `border-gray-300` to appear "cut into" the surface (darker than card borders).
+> **IMPORTANT:** Always use the shared `<Input>`, `<Textarea>`, and `<Checkbox>` components.
+> **V2.2:** Inputs use `border-zinc-300` to appear "cut into" the surface (darker than card borders).
 
 #### Form Field Labels
 ```tsx
@@ -301,6 +313,30 @@ import { Input } from '@/components/ui/input';
 </div>
 ```
 
+#### Textarea
+```tsx
+import { Textarea } from '@/components/ui/textarea';
+
+// Basic usage - matches Input styling (border-zinc-300, focus ring, ios-ease)
+<Textarea placeholder="Skriv her..." />
+
+// With rows override
+<Textarea rows={5} placeholder="Beskrivelse..." />
+```
+> **Note:** Default `resize-none` and `min-h-[80px]`. Override via `className` if needed. Uses `aria-invalid` for error state styling.
+
+#### Checkbox
+```tsx
+import { Checkbox } from '@/components/ui/checkbox';
+
+// Basic usage
+<label className="flex items-center gap-2">
+  <Checkbox checked={agreed} onChange={handleChange} />
+  <span className="text-sm text-text-secondary">Jeg godtar vilkårene</span>
+</label>
+```
+> **Note:** Uses `accent-primary` for checked color. Supports `aria-invalid` for error states.
+
 #### Search Input
 ```tsx
 import { SearchInput } from '@/components/ui/search-input';
@@ -311,6 +347,64 @@ import { SearchInput } from '@/components/ui/search-input';
   placeholder="Søk..."
   aria-label="Søk"
 />
+```
+
+#### Form Validation Hook
+```tsx
+import { useFormValidation } from '@/hooks/use-form-validation';
+
+const { formData, errors, touched, handleChange, handleBlur, validateForm, resetForm } =
+  useFormValidation({
+    initialValues: { email: '', password: '' },
+    rules: {
+      email: { validate: (v) => (!v ? 'E-post er påkrevd' : undefined) },
+      password: { validate: (v) => (v.length < 6 ? 'Minimum 6 tegn' : undefined) },
+    },
+  });
+```
+> **Usage:** All auth pages (login, signup, forgot/reset password) use this hook. Supports cross-field validation via the `formData` parameter in each rule's `validate` function.
+
+### Loading & Spinners
+
+#### Spinner Component
+```tsx
+import { Spinner } from '@/components/ui/spinner';
+
+// Standalone spinner (default: md)
+<Spinner />
+<Spinner size="xs" />  // h-3 w-3
+<Spinner size="sm" />  // h-3.5 w-3.5
+<Spinner size="md" />  // h-4 w-4
+<Spinner size="lg" />  // h-6 w-6
+<Spinner size="xl" />  // h-8 w-8
+```
+
+#### Button Loading States
+```tsx
+import { Button } from '@/components/ui/button';
+
+// Shows spinner + existing children
+<Button loading={isSubmitting}>Lagre</Button>
+
+// Shows spinner + custom loading text
+<Button loading={isSubmitting} loadingText="Lagrer...">Lagre</Button>
+```
+> **Rule:** Use Button's `loading` prop for async button states. Use standalone `<Spinner>` for page/section loading. Never use raw `<Loader2 className="animate-spin" />`.
+
+#### Page & Section Loaders
+```tsx
+import { PageLoader } from '@/components/ui/page-loader';
+import { SectionLoader } from '@/components/ui/section-loader';
+
+// Full page loading
+<PageLoader message="Laster..." />
+<PageLoader variant="fullscreen" />  // h-screen
+<PageLoader variant="overlay" />     // Absolute overlay
+
+// Section loading (within cards/panels)
+<SectionLoader size="sm" />   // h-24
+<SectionLoader size="md" />   // h-40
+<SectionLoader size="lg" />   // h-64
 ```
 
 ### Badges & Status Indicators
@@ -332,28 +426,86 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 <StatusIndicator variant="warning" mode="inline" label="Venter" />
 ```
 
----
+#### StatusBadge (Convenience Wrapper)
+Maps signup/course statuses to StatusIndicator variants automatically.
+```tsx
+import { StatusBadge } from '@/components/ui/status-badge';
+
+// Signup statuses: confirmed, cancelled, course_cancelled
+<StatusBadge status="confirmed" />
+
+// Course statuses: active, upcoming, completed
+<StatusBadge status="upcoming" size="sm" />
+```
+
+#### PaymentBadge (Convenience Wrapper)
+Maps payment statuses with configurable visibility ("silence is success" pattern).
+```tsx
+import { PaymentBadge } from '@/components/ui/payment-badge';
+
+// Default: paid renders nothing (exceptions-only)
+<PaymentBadge status="paid" />        // → null
+<PaymentBadge status="pending" />     // → warning badge
+
+// Show all statuses including paid
+<PaymentBadge status="paid" visibility="always" />
+```
 
 ## Interaction Design
 
-### Focus States (V2.2 Elevated Contrast - Softened)
+### Hover & Interaction Patterns (V2.5)
+
+**Philosophy:** Hover states should be subtle, non-disruptive, and aligned with the "Zen" aesthetic. They provide confirmation of interactivity without creating visual noise.
+
+#### 1. Container Hover (Standard Cards)
+Used for interactive cards, stats, and major dashboard containers.
+- **Classes:** `ios-ease hover:border-zinc-400 hover:bg-zinc-50/50`
+- **Logic:** Border darkens (`zinc-200` → `zinc-400`) and background gets a very subtle fill.
+- **Transition:** `ios-ease` (0.3s) for a fluid, premium feel.
+
+#### 2. Row/List Item Hover
+Used for table rows, list items, and nested interactive elements.
+- **Classes:** `smooth-transition hover:bg-zinc-50`
+- **Logic:** Background-only fill. No border change to keep nested lists clean.
+- **Transition:** `smooth-transition` (0.2s) for a snappier, responsive feel.
+
+#### 3. Hero/Featured Hover (Dark)
+Used for featured cards or dark-themed containers.
+- **Classes:** `ios-ease hover:border-zinc-700 hover:bg-zinc-800/50`
+- **Logic:** Border and background shift within the dark scale.
+- **Transition:** `ios-ease` (0.3s).
+
+#### 4. Action Hover (Buttons & Links)
+Used for primary/secondary buttons and standalone links.
+- **Classes:** `smooth-transition hover:scale-[1.02] active:scale-[0.98]`
+- **Logic:** Subtle scaling effect to communicate "pressability".
+- **Transition:** `smooth-transition` (0.2s).
+
+#### 5. State-Specific Hover (Urgency)
+Used for cards with specific status (e.g., urgent, warning).
+- **Classes:** `hover:border-[color]-300 hover:bg-zinc-50/50`
+- **Logic:** Border shifts to a muted version of the state color.
+
+---
+
+### Focus States (V2.4 Zinc)
 
 > **DEPRECATED:** `ring-4` and `ring-border/30`. These look dated and fuzzy.
 >
-> **NEW STANDARD:** Use a crisp 2px offset ring with soft stone color for a calm, sophisticated highlight.
+> **STANDARD:** Use a crisp 2px offset ring with soft zinc color for a calm, sophisticated highlight.
 
 #### Standard Focus Ring
 ```tsx
 // For inputs, buttons, and interactive elements
-// Ring color: stone-400/60 (stone-400 at 60% opacity)
-// Border shifts to gray-400 when focused
-className="focus:outline-none focus:border-gray-400 focus-visible:ring-2 focus-visible:ring-stone-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+// Ring color: zinc-400/50 (zinc-400 at 50% opacity)
+// Border shifts to zinc-400 when focused
+className="focus:outline-none focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
 ```
 
 #### Focus-Within (for compound inputs like TimePicker, DurationInput)
 ```tsx
 // When the focus state needs to apply to a container
-className="focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-stone-400/60 focus-within:ring-offset-2 focus-within:ring-offset-white"
+className="focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white"
 ```
 
 #### Error State Focus
@@ -362,7 +514,7 @@ className="focus-within:border-gray-400 focus-within:ring-2 focus-within:ring-st
 className="focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-white"
 ```
 
-**Logic:** This creates a sharp 2px gap of white space between the input and a soft stone-colored ring. The `stone-400/60` provides a calm, sophisticated highlight that guides the user without creating too much visual weight - perfect for the "Ease" aesthetic.
+**Logic:** This creates a sharp 2px gap of white space between the input and a soft zinc-colored ring. The `zinc-400/50` provides a calm, sophisticated highlight that guides the user without creating too much visual weight - perfect for the "Ease" aesthetic.
 
 ### Transition Utilities
 
@@ -398,8 +550,8 @@ Scrollbars are globally styled to be non-intrusive.
 | Property | Value |
 |----------|-------|
 | Width | 4px |
-| Thumb | `#D6D3D1` (Stone-300) |
-| Thumb Hover | `#A8A29E` (Stone-400) |
+| Thumb | `#D4D4D8` (Zinc-300) |
+| Thumb Hover | `#A1A1AA` (Zinc-400) |
 | Track | transparent |
 
 ```tsx
@@ -414,15 +566,15 @@ className="custom-scrollbar"
 
 ## Notifications (Sonner)
 
-Our toasts follow a "Stone Dark" theme to stand out against the light dashboard.
+Our toasts follow a "Zinc Dark" theme to stand out against the light dashboard.
 
 | Element | Color | Hex |
 |---------|-------|-----|
-| Background | Stone-700 | #44403C |
-| Border | Stone-600 | #57534E |
-| Title | Stone-50 | #FAFAF9 |
-| Description | Stone-200 | #E7E5E4 |
-| Action Button | Stone-100 bg / Stone-700 text | #F5F5F4 / #44403C |
+| Background | Zinc-700 | #3F3F46 |
+| Border | Zinc-600 | #52525B |
+| Title | Zinc-50 | #FAFAFA |
+| Description | Zinc-200 | #E4E4E7 |
+| Action Button | Zinc-100 bg / Zinc-700 text | #F4F4F5 / #3F3F46 |
 
 **Icon Colors by Type:**
 - Success: `#22C55E`
@@ -509,14 +661,14 @@ className="text-ring group-hover:text-text-tertiary"
 ## Empty States
 
 ### Design Principles
-1. Use solid `border-gray-200` (no dashed borders)
+1. Use solid `border-zinc-200` (no dashed borders)
 2. Gradient backgrounds: `bg-gradient-to-br from-white to-surface-elevated/50`
 3. Soft blur decorations with `blur-2xl` or `blur-3xl`
 
 ### Pattern
 ```tsx
-<div className="relative rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-surface-elevated/50 p-6 overflow-hidden">
-  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gray-200/50 blur-2xl"></div>
+<div className="relative rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-surface-elevated/50 p-6 overflow-hidden">
+  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-200/50 blur-2xl"></div>
   <div className="relative z-10">
     <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
       Klar til å planlegge din første time?
@@ -534,12 +686,12 @@ className="text-ring group-hover:text-text-tertiary"
 
 ### Active Nav Item
 ```tsx
-className="bg-white border border-gray-200 text-text-primary"
+className="bg-white border border-zinc-200 text-text-primary"
 ```
 
 ### Inactive Nav Item
 ```tsx
-className="text-text-secondary border border-transparent hover:bg-gray-50 hover:text-text-primary ios-ease"
+className="text-text-secondary border border-transparent hover:bg-zinc-50 hover:text-text-primary ios-ease"
 ```
 
 ---
@@ -584,24 +736,118 @@ Standard UI text:
 
 ---
 
-## Token → Hex Reference (V2.4 - Shadowless)
+## Framer Motion Variants
+
+Shared animation presets live in `src/lib/motion.ts`. They respect `prefers-reduced-motion`.
+
+| Export | Movement | Duration | Usage |
+|--------|----------|----------|-------|
+| `pageVariants` + `pageTransition` | 4px translateY + fade | 180ms | Dashboard page transitions |
+| `tabVariants` + `tabTransition` | 3px translateY + fade | 140ms | Tab content switching |
+| `authPageVariants` + `authPageTransition` | 20px translateY + fade | 500ms | Auth pages (login, signup, reset) |
+
+```tsx
+import { motion } from 'framer-motion';
+import { pageVariants, pageTransition } from '@/lib/motion';
+
+<motion.div
+  variants={pageVariants}
+  initial="initial"
+  animate="animate"
+  exit="exit"
+  transition={pageTransition}
+>
+  {/* page content */}
+</motion.div>
+```
+
+---
+
+## Component Catalog
+
+Complete inventory of `src/components/ui/` — 37 components.
+
+### Core Form Primitives
+| Component | File | Description |
+|-----------|------|-------------|
+| `<Button>` | `button.tsx` | 7 variants, 7 sizes, loading/loadingText props |
+| `<Input>` | `input.tsx` | Text input with zinc-300 border, focus ring, autofill override |
+| `<Textarea>` | `textarea.tsx` | Multiline input, matches Input styling |
+| `<Checkbox>` | `checkbox.tsx` | Native checkbox with accent-primary, focus ring |
+| `<Label>` | `label.tsx` | Form label |
+| `<SearchInput>` | `search-input.tsx` | Input with built-in search icon |
+| `<ImageUpload>` | `image-upload.tsx` | Drag-and-drop image uploader with preview |
+| `<DatePicker>` | `date-picker.tsx` | Calendar-based date picker (Radix Popover + Calendar) |
+| `<Calendar>` | `calendar.tsx` | Month calendar grid |
+
+### Feedback & Loading
+| Component | File | Description |
+|-----------|------|-------------|
+| `<Spinner>` | `spinner.tsx` | Animated spinner, sizes: xs/sm/md/lg/xl |
+| `<PageLoader>` | `page-loader.tsx` | Full-page spinner, variants: default/fullscreen/overlay |
+| `<SectionLoader>` | `section-loader.tsx` | Section spinner, sizes: sm/md/lg |
+| `<Skeleton>` | `skeleton.tsx` | Content placeholder shimmer |
+| `<EmptyState>` | `empty-state.tsx` | Icon + title + description + optional action |
+| `<EmptyStateToggle>` | `EmptyStateToggle.tsx` | Toggle-based empty state |
+| `<ErrorState>` | `error-state.tsx` | Error display with retry button, variants: default/inline/card |
+
+### Status & Badges
+| Component | File | Description |
+|-----------|------|-------------|
+| `<StatusIndicator>` | `status-indicator.tsx` | Core badge: 5 variants, 3 modes (badge/inline/text-icon), 3 sizes |
+| `<StatusBadge>` | `status-badge.tsx` | Convenience wrapper mapping signup/course statuses |
+| `<PaymentBadge>` | `payment-badge.tsx` | Payment status with visibility control |
+
+### Layout & Navigation
+| Component | File | Description |
+|-----------|------|-------------|
+| `<Sidebar>` | `sidebar.tsx` | App sidebar with mobile responsive behavior |
+| `<Tabs>` | `tabs.tsx` | Radix tabs |
+| `<FilterTabs>` | `filter-tabs.tsx` | Custom tabs with 3 variants: default/contained/pill |
+| `<Accordion>` | `accordion.tsx` | Radix accordion |
+| `<Separator>` | `separator.tsx` | Horizontal/vertical divider |
+| `<Breadcrumb>` | `breadcrumb.tsx` | Navigation breadcrumb |
+| `<Collapsible>` | `collapsible.tsx` | Radix collapsible |
+
+### Overlays & Dialogs
+| Component | File | Description |
+|-----------|------|-------------|
+| `<Dialog>` | `dialog.tsx` | Radix modal dialog |
+| `<AlertDialog>` | `alert-dialog.tsx` | Radix confirmation dialog |
+| `<Sheet>` | `sheet.tsx` | Slide-out panel (mobile drawer) |
+| `<Popover>` | `popover.tsx` | Radix popover |
+| `<DropdownMenu>` | `dropdown-menu.tsx` | Radix dropdown |
+| `<Tooltip>` | `tooltip.tsx` | Radix tooltip |
+
+### Specialized
+| Component | File | Description |
+|-----------|------|-------------|
+| `<Avatar>` | `avatar.tsx` | User avatar with fallback |
+| `<UserAvatar>` | `user-avatar.tsx` | Extended avatar with initials/role |
+| `<InfoTooltip>` | `info-tooltip.tsx` | Info icon with tooltip |
+| `<NotePopover>` | `note-popover.tsx` | Note editing popover |
+| `<ShareCoursePopover>` | `share-course-popover.tsx` | Course sharing popover |
+
+---
+
+## Token → Hex Reference (V2.4 - Shadowless Zinc)
 
 ```
-Stone Scale (Neutral UI):
-#FAFAF9 → bg-gray-50 / bg-white (cards, sidebar)
-#F5F5F4 → bg-gray-100 / bg-surface (PAGE FLOOR)
-#E7E5E4 → bg-gray-200 / bg-surface-elevated / border-gray-200 (CARDS)
-#D6D3D1 → bg-gray-300 / ring / border-gray-300 (INPUTS)
-#A8A29E → text-gray-400 / text-text-tertiary
-#78716C → text-gray-500 / text-muted-foreground
-#57534E → text-gray-600 / text-text-secondary
-#44403C → text-gray-700
-#292524 → bg-gray-800 / bg-primary-soft (hover)
-#1C1917 → bg-gray-900 / text-text-primary / bg-primary (BUTTONS)
+Zinc Scale (Neutral UI):
+#FAFAFA → zinc-50 / bg-white (cards, sidebar)
+#F4F4F5 → zinc-100 / bg-surface (PAGE FLOOR)
+#E4E4E7 → zinc-200 / bg-surface-elevated / border-zinc-200 (CARDS)
+#D4D4D8 → zinc-300 / ring / border-zinc-300 (INPUTS)
+#A1A1AA → zinc-400 / text-text-tertiary
+#71717A → zinc-500 / text-muted-foreground
+#52525B → zinc-600 / text-text-secondary
+#3F3F46 → zinc-700
+#27272A → zinc-800 / bg-primary-soft (hover)
+#09090B → zinc-950 / text-text-primary / bg-primary (BUTTONS)
 
 Brand Accent (Dark Primary):
-#1C1917 → bg-primary (buttons, brand actions)
-#292524 → bg-primary-soft (hover)
+#09090B → bg-primary (buttons, brand actions)
+#18181B → bg-primary-soft (hover)
 #FEF3C7 → bg-primary-muted (selected backgrounds)
 
 Feedback:
@@ -610,11 +856,11 @@ Feedback:
 #EF4444 → bg-destructive / text-destructive
 
 Status Colors:
-Confirmed: #dcfce7 bg, #bbf7d0 border, #15803d text
-Warning: #fef3c7 bg, #fcd34d border, #92400e text
-Cancelled: #E7E5E4 bg, #D6D3D1 border, #57534E text
-Error: #fee2e2 bg, #fecaca border, #dc2626 text
-Info: #dbeafe bg, #bfdbfe border, #1d4ed8 text
+Confirmed: #DCFCE7 bg, #BBF7D0 border, #15803D text
+Warning: #FEF3C7 bg, #FCD34D border, #92400E text
+Cancelled: #E4E4E7 bg, #D4D4D8 border, #52525B text
+Error: #FEE2E2 bg, #FECACA border, #DC2626 text
+Info: #DBEAFE bg, #BFDBFE border, #1D4ED8 text
 
 Shadows (V2.4 - Disabled):
 none

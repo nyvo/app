@@ -28,7 +28,7 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
           messages.map((message) => (
           <div
             key={message.id}
-            className="group flex items-center gap-3.5 p-3 rounded-lg hover:bg-zinc-50 cursor-pointer transition-colors focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
+            className="group flex items-center gap-3.5 p-3 rounded-lg hover:bg-zinc-50 cursor-pointer smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
           >
             <div className="relative flex-shrink-0">
               <UserAvatar

@@ -63,7 +63,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="cursor-pointer text-text-tertiary hover:text-text-primary hover:bg-surface p-1 rounded-lg transition-colors"
+              className="cursor-pointer text-text-tertiary hover:text-text-primary hover:bg-zinc-50 p-1 rounded-lg smooth-transition"
             >
               <X className="h-4 w-4" />
             </button>
@@ -76,12 +76,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Twitter */}
             <button
               onClick={() => handleShare('twitter')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
                 <Twitter className="h-[18px] w-[18px] text-muted-foreground group-hover:text-text-primary stroke-[1.5]" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
                 Twitter
               </span>
             </button>
@@ -89,12 +89,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* LinkedIn */}
             <button
               onClick={() => handleShare('linkedin')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
                 <Linkedin className="h-[18px] w-[18px] text-muted-foreground group-hover:text-blue-600 stroke-[1.5]" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
                 LinkedIn
               </span>
             </button>
@@ -102,12 +102,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Facebook */}
             <button
               onClick={() => handleShare('facebook')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
                 <Facebook className="h-[18px] w-[18px] text-muted-foreground group-hover:text-blue-500 stroke-[1.5]" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
                 Facebook
               </span>
             </button>
@@ -115,12 +115,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Email */}
             <button
               onClick={() => handleShare('email')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
                 <Mail className="h-[18px] w-[18px] text-muted-foreground group-hover:text-text-primary stroke-[1.5]" />
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
                 E-post
               </span>
             </button>
@@ -147,7 +147,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
               className={`cursor-pointer flex items-center gap-1.5 border px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shrink-0 ${
                 copied
                   ? 'bg-green-50 border-green-200 text-green-700'
-                  : 'bg-white border-border hover:border-ring hover:bg-surface text-text-secondary'
+                  : 'bg-white border-border hover:border-ring hover:bg-zinc-50 text-text-secondary'
               }`}
             >
               {copied ? (

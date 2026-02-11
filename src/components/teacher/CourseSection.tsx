@@ -127,7 +127,7 @@ export function ArchiveLink({ count, onClick, className }: ArchiveLinkProps) {
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white/50 hover:bg-white hover:border-zinc-400 transition-all group",
+        "w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white/50 hover:bg-zinc-50/50 hover:border-zinc-400 ios-ease group",
         className
       )}
     >

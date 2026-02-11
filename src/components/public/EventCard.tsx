@@ -39,7 +39,7 @@ export const EventCard = ({
 
   return (
     <Link to={`/studio/${studioSlug}/${course.id}`} className="block">
-      <div className="group relative rounded-2xl bg-white border border-zinc-200 p-5 ios-ease hover:border-zinc-400 cursor-pointer">
+      <div className="group relative rounded-2xl bg-white border border-zinc-200 p-5 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 cursor-pointer">
         {/* Availability badge — pinned to top-right edge */}
         <div className="absolute -top-2.5 right-4">
           <StatusIndicator
@@ -60,7 +60,7 @@ export const EventCard = ({
               <div className="text-lg font-medium text-text-primary leading-tight">
                 {getDateDay(eventDate)}
               </div>
-              <div className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider mt-0.5">
+              <div className="text-xxs font-medium text-text-tertiary uppercase tracking-wider mt-0.5">
                 {getDateMonthShort(eventDate)}
               </div>
             </div>
@@ -72,7 +72,7 @@ export const EventCard = ({
 
           {/* Zone 2: Course details */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-medium text-text-primary group-hover:text-sidebar-foreground transition-colors truncate">
+            <h3 className="text-lg font-medium text-text-primary transition-colors truncate">
               {course.title}
             </h3>
             {metaItems.length > 0 && (

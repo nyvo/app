@@ -1,78 +1,33 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { Infinity, ArrowLeft, Loader2, Mail, CheckCircle2 } from 'lucide-react';
+import { Infinity, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { authPageVariants, authPageTransition } from '@/lib/motion';
+import { useFormValidation } from '@/hooks/use-form-validation';
 import { toast } from 'sonner';
-
-interface FormData {
-  email: string;
-}
-
-interface FormErrors {
-  email?: string;
-  general?: string;
-}
-
-const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const { resetPassword } = useAuth();
 
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    email: '',
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm, resetForm } =
+    useFormValidation({
+      initialValues: { email: '' },
+      rules: {
+        email: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn e-posten din'
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Sjekk at e-posten er riktig'
+            return undefined
+          },
+        },
+      },
+    });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-
-  // Form handlers
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleBlur = (field: keyof FormData) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    validateField(field);
-  };
-
-  const validateField = (field: keyof FormData) => {
-    const newErrors: FormErrors = { ...errors };
-
-    if (field === 'email') {
-      if (!formData.email.trim()) {
-        newErrors.email = 'Skriv inn e-posten din';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Sjekk at e-posten er riktig';
-      } else {
-        delete newErrors.email;
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-posten din';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Sjekk at e-posten er riktig';
-    }
-
-    setErrors(newErrors);
-    setTouched({ email: true });
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,10 +69,10 @@ const ForgotPasswordPage = () => {
           </div>
           
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-text-primary">
+            <span className="text-lg font-medium tracking-tighter text-text-primary">
               Ease
             </span>
           </Link>
@@ -128,9 +83,10 @@ const ForgotPasswordPage = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: easing }}
+            variants={authPageVariants}
+            initial="initial"
+            animate="animate"
+            transition={authPageTransition}
             className="w-full flex flex-col items-center"
           >
             {/* Success Icon */}
@@ -139,7 +95,7 @@ const ForgotPasswordPage = () => {
             </div>
 
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+              <h1 className="text-2xl font-medium tracking-tight text-text-primary">
                 Sjekk e-posten din
               </h1>
               <p className="text-text-secondary text-sm">
@@ -165,9 +121,7 @@ const ForgotPasswordPage = () => {
               <button
                 onClick={() => {
                   setEmailSent(false);
-                  setFormData({ email: '' });
-                  setErrors({});
-                  setTouched({});
+                  resetForm();
                 }}
                 className="w-full text-sm text-text-tertiary hover:text-text-primary transition-colors"
               >
@@ -178,7 +132,7 @@ const ForgotPasswordPage = () => {
         </main>
 
         {/* Simple Footer */}
-        <footer className="py-6 text-center border-t border-border bg-white">
+        <footer className="py-6 text-center border-t border-border bg-surface">
           <p className="text-xs text-text-tertiary">
             <Link
               to="/login"
@@ -207,10 +161,10 @@ const ForgotPasswordPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
@@ -221,13 +175,14 @@ const ForgotPasswordPage = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: easing }}
+          variants={authPageVariants}
+          initial="initial"
+          animate="animate"
+          transition={authPageTransition}
           className="w-full flex flex-col items-center"
         >
           <div className="text-center mb-8 space-y-2 w-full">
-            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            <h1 className="text-2xl font-medium tracking-tight text-text-primary">
               Glemt passord?
             </h1>
             <p className="text-text-secondary text-sm">
@@ -250,7 +205,7 @@ const ForgotPasswordPage = () => {
                   type="email"
                   id="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleChange('email', e.target.value)}
                   onBlur={() => handleBlur('email')}
                   className={`pl-10 ${
                     touched.email && errors.email
@@ -274,24 +229,18 @@ const ForgotPasswordPage = () => {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              loading={isSubmitting}
+              loadingText="Sender"
               className="w-full h-11 mt-2"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Sender
-                </>
-              ) : (
-                'Send lenke'
-              )}
+              Send lenke
             </Button>
           </form>
         </motion.div>
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-border bg-white">
+      <footer className="py-6 text-center border-t border-border bg-surface">
         <p className="text-xs text-text-tertiary">
           Husker du passordet ditt?{' '}
           <Link

@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { motion } from 'framer-motion';
 import {
-  Leaf,
-  Menu,
   Search,
   ChevronLeft,
   MoreHorizontal,
@@ -18,7 +16,7 @@ import {
 } from 'lucide-react';
 import { SectionLoader } from '@/components/ui/section-loader';
 import { Spinner } from '@/components/ui/spinner';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -374,8 +372,8 @@ const MessagesPage = () => {
                     activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border border-zinc-200'
                       : conversation.is_read
-                      ? 'hover:bg-white hover:border hover:border-zinc-200 opacity-70 hover:opacity-100'
-                      : 'hover:bg-white hover:border hover:border-zinc-200'
+                      ? 'hover:bg-zinc-50 hover:border hover:border-zinc-200 opacity-70 hover:opacity-100'
+                      : 'hover:bg-zinc-50 hover:border hover:border-zinc-200'
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -387,7 +385,7 @@ const MessagesPage = () => {
                       className={activeConversation?.id !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
                     />
                     {conversation.unread_count > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-surface">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground border-2 border-surface">
                         {conversation.unread_count}
                       </span>
                     )}
@@ -396,13 +394,13 @@ const MessagesPage = () => {
                     <div className="flex items-center justify-between mb-0.5">
                       <span
                         className={`text-sm font-medium ${
-                          conversation.is_read ? 'text-sidebar-foreground' : 'text-text-primary'
+                          conversation.is_read ? 'text-text-secondary' : 'text-text-primary'
                         }`}
                       >
                         {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                       </span>
                       <span
-                        className={`text-xxs ${
+                        className={`text-xs ${
                           conversation.is_read ? 'text-text-tertiary' : 'text-muted-foreground'
                         }`}
                       >
@@ -614,7 +612,7 @@ const MessagesPage = () => {
                     <>
               {/* Time Separator */}
               <div className="flex justify-center">
-                <span className="text-xxs font-medium text-text-tertiary bg-surface-elevated px-3 py-1 rounded-full uppercase tracking-wide">
+                <span className="text-xxs font-medium text-text-tertiary bg-surface-elevated px-3 py-1 rounded-full uppercase tracking-wider">
                   I dag
                 </span>
               </div>
@@ -628,7 +626,7 @@ const MessagesPage = () => {
                   }`}
                 >
                           {message.is_outgoing ? (
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xxs font-medium mb-1 shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-[10px] font-medium mb-1 shrink-0">
                                 Du
                             </div>
                           ) : (
@@ -651,14 +649,14 @@ const MessagesPage = () => {
                     >
                       <p
                         className={`text-sm leading-relaxed ${
-                          message.is_outgoing ? 'font-light' : 'text-sidebar-foreground'
+                          message.is_outgoing ? 'font-light' : 'text-text-primary'
                         }`}
                       >
                         {message.content}
                       </p>
                     </div>
                     <span
-                      className={`text-xxs text-text-tertiary flex items-center gap-1 ${
+                      className={`text-xs text-text-tertiary flex items-center gap-1 ${
                         message.is_outgoing ? 'pr-1' : 'pl-1'
                       }`}
                     >
@@ -744,7 +742,7 @@ const MessagesPage = () => {
                       </Button>
                 </div>
               </div>
-              <p className="text-xxs text-text-tertiary text-center mt-3">
+              <p className="text-xs text-text-tertiary text-center mt-3">
                 Trykk <span className="font-medium text-muted-foreground">Enter</span> for å sende
               </p>
             </div>

@@ -21,7 +21,6 @@ interface DisplayParticipant {
   paymentStatus: PaymentStatus;
   notes?: string;
   receiptUrl?: string;
-  attended?: boolean;
 }
 
 interface CourseParticipantsTabProps {
@@ -36,7 +35,6 @@ interface CourseParticipantsTabProps {
   activeFiltersCount: number;
   onClearFilters: () => void;
   onOpenAddDialog: () => void;
-  onToggleAttendance?: (participantId: string) => void;
 }
 
 export const CourseParticipantsTab = ({
@@ -51,7 +49,6 @@ export const CourseParticipantsTab = ({
   activeFiltersCount,
   onClearFilters,
   onOpenAddDialog,
-  onToggleAttendance,
 }: CourseParticipantsTabProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -72,7 +69,7 @@ export const CourseParticipantsTab = ({
                 <Filter className="h-3.5 w-3.5" />
                 Filter
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-xxs font-medium text-primary-foreground flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -103,7 +100,7 @@ export const CourseParticipantsTab = ({
                   <div
                     role="radiogroup"
                     aria-labelledby="status-label"
-                    className="flex gap-1 p-1 bg-surface rounded-lg"
+                    className="flex gap-1 border-b border-border"
                   >
                     {([
                       { value: 'confirmed', label: 'Påmeldt' },
@@ -114,10 +111,10 @@ export const CourseParticipantsTab = ({
                         role="radio"
                         aria-checked={statusFilter === option.value}
                         onClick={() => onStatusFilterChange(statusFilter === option.value ? 'all' : option.value)}
-                        className={`flex-1 rounded-lg py-1.5 px-3 text-xs font-medium smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none ${
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none -mb-px border-b-2 ${
                           statusFilter === option.value
-                            ? 'bg-white text-text-primary'
-                            : 'text-text-secondary hover:text-text-primary'
+                            ? 'border-text-primary text-text-primary'
+                            : 'border-transparent text-muted-foreground hover:text-text-primary'
                         }`}
                       >
                         {option.label}
@@ -141,7 +138,7 @@ export const CourseParticipantsTab = ({
                         role="radio"
                         aria-checked={paymentFilter === option.value}
                         onClick={() => onPaymentFilterChange(paymentFilter === option.value ? 'all' : option.value)}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-surface smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
                       >
                         <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           paymentFilter === option.value
@@ -165,8 +162,8 @@ export const CourseParticipantsTab = ({
 
               {/* Result count footer */}
               <div className="px-4 py-2.5 border-t border-border bg-surface/50">
-                <p className="text-xxs text-muted-foreground">
-                  <span className="font-medium text-text-primary">{filteredParticipants.length}</span> {filteredParticipants.length === 1 ? 'resultat' : 'resultater'}
+                <p className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
+                  <span className="text-text-primary">{filteredParticipants.length}</span> {filteredParticipants.length === 1 ? 'resultat' : 'resultater'}
                 </p>
               </div>
             </PopoverContent>
@@ -188,7 +185,7 @@ export const CourseParticipantsTab = ({
                 statusFilter === 'confirmed' ? 'Påmeldt' :
                 'Avbestilt'
               }`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-ring smooth-transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-zinc-400 smooth-transition"
             >
               Status: {
                 statusFilter === 'confirmed' ? 'Påmeldt' :
@@ -201,7 +198,7 @@ export const CourseParticipantsTab = ({
             <button
               onClick={() => onPaymentFilterChange('all')}
               aria-label={`Fjern filter: Betaling ${paymentFilter === 'paid' ? 'Betalt' : 'Venter'}`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-ring smooth-transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-zinc-400 smooth-transition"
             >
               Betaling: {paymentFilter === 'paid' ? 'Betalt' : 'Venter'}
               <X className="h-3 w-3" />
@@ -223,7 +220,6 @@ export const CourseParticipantsTab = ({
             <thead>
               <tr className="border-b border-zinc-100 bg-surface/50">
                 <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-auto">Navn</th>
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-32">Oppmøte</th>
                 <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-32">Status</th>
                 <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-40">Betaling</th>
                 <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-20">Kvittering</th>
@@ -254,7 +250,7 @@ export const CourseParticipantsTab = ({
                 </tr>
               ) : (
                 filteredParticipants.map((participant) => (
-                  <tr key={participant.id} className="group hover:bg-secondary transition-colors">
+                  <tr key={participant.id} className="group hover:bg-zinc-50 smooth-transition">
                     {/* Navn */}
                     <td className="py-3 px-6">
                       <div className="flex items-center gap-3">
@@ -264,24 +260,6 @@ export const CourseParticipantsTab = ({
                           <p className="text-xs text-muted-foreground">{participant.email}</p>
                         </div>
                       </div>
-                    </td>
-                    {/* Oppmøte (attendance) */}
-                    <td className="py-3 px-6">
-                      <button
-                        onClick={() => onToggleAttendance?.(participant.id)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xxs font-medium transition-all",
-                          participant.attended
-                            ? "bg-status-confirmed-bg text-status-confirmed-text border border-status-confirmed-border"
-                            : "bg-surface text-text-tertiary border border-zinc-200 hover:border-zinc-300"
-                        )}
-                      >
-                        <div className={cn(
-                          "h-1.5 w-1.5 rounded-full",
-                          participant.attended ? "bg-status-confirmed-text" : "bg-text-tertiary"
-                        )} />
-                        {participant.attended ? 'Til stede' : 'Sjekk inn'}
-                      </button>
                     </td>
                     {/* Status (signup) */}
                     <td className="py-3 px-6">
@@ -298,7 +276,7 @@ export const CourseParticipantsTab = ({
                           href={participant.receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-elevated transition-colors"
+                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-zinc-50 smooth-transition"
                           aria-label="Åpne kvittering"
                           title="Åpne kvittering"
                         >

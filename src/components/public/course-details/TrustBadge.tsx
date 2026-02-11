@@ -13,7 +13,7 @@ export const TrustBadge: React.FC = () => {
         <ShieldCheck className="h-4 w-4 shrink-0 text-text-primary mt-0.5" />
         <div className="space-y-0.5">
           <p className="text-xs font-medium text-text-primary">Sikker betaling</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
+          <p className="text-xs text-text-secondary leading-relaxed">
             Vi aksepterer Vipps, Visa og Mastercard.
           </p>
         </div>

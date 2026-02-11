@@ -2,10 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, Loader2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
+import { CheckCircle2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 
 interface SignupDetails {
   id: string;
@@ -127,12 +129,6 @@ const CheckoutSuccessPage = () => {
     return `${days[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`;
   };
 
-  // Extract time from time_schedule
-  const extractTime = (timeSchedule: string | null): string => {
-    if (!timeSchedule) return '';
-    const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
-    return match ? match[1] : '';
-  };
 
   if (loading) {
     // Show progressive feedback based on how long we've been waiting
@@ -152,10 +148,10 @@ const CheckoutSuccessPage = () => {
       <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
         <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg">
-            <Loader2 className="h-8 w-8 animate-spin text-status-info-text" aria-hidden="true" />
+            <Spinner size="xl" className="text-status-info-text" />
           </div>
           <p className="text-base font-medium text-text-primary mb-2">{getLoadingMessage()}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-text-secondary">
             Bekrefter med banken. Ikke lukk denne siden.
           </p>
           {attemptCount > 8 && (
@@ -190,7 +186,7 @@ const CheckoutSuccessPage = () => {
               <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
                 Noe gikk galt
               </h1>
-              <p className="text-muted-foreground mb-8">{error}</p>
+              <p className="text-text-secondary mb-8">{error}</p>
               <Button asChild>
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
@@ -249,7 +245,7 @@ const CheckoutSuccessPage = () => {
               <h1 className="font-geist text-xl md:text-2xl font-medium text-text-primary mb-2">
                 Kurset ble fullt
               </h1>
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-text-secondary mb-6">
                 Kurset ble fullt før betalingen gikk gjennom.
               </p>
               <Button asChild>
@@ -291,7 +287,7 @@ const CheckoutSuccessPage = () => {
                 Betaling fullført
               </h1>
 
-              <div className="text-muted-foreground mb-6 text-base leading-relaxed">
+              <div className="text-text-secondary mb-6 text-base leading-relaxed">
                 {signup ? (
                   <p>Du er påmeldt <span className="font-medium text-text-primary">{signup.course.title}</span>.</p>
                 ) : (
@@ -356,15 +352,15 @@ const CheckoutSuccessPage = () => {
                 </h3>
 
                 <div className="space-y-5 relative z-10">
-                  <div className="pb-5 border-b border-zinc-100">
-                    <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
+                  <div className="pb-5 border-b border-zinc-200">
+                    <span className="block text-xs text-text-secondary mb-1">Kurs</span>
                     <span className="block font-medium text-lg text-text-primary">{signup.course.title}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {signup.course.start_date && (
                       <div>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <span className="flex items-center gap-1.5 text-xs text-text-secondary mb-1">
                           <Calendar className="h-3.5 w-3.5" /> Dato
                         </span>
                         <span className="font-medium text-text-primary text-sm">
@@ -375,11 +371,11 @@ const CheckoutSuccessPage = () => {
                     
                     {signup.course.time_schedule && (
                       <div>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <span className="flex items-center gap-1.5 text-xs text-text-secondary mb-1">
                           <Clock className="h-3.5 w-3.5" /> Tid
                         </span>
                         <span className="font-medium text-text-primary text-sm">
-                          Kl {extractTime(signup.course.time_schedule)}
+                          Kl {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
                         </span>
                       </div>
                     )}
@@ -387,7 +383,7 @@ const CheckoutSuccessPage = () => {
 
                   {signup.course.location && (
                     <div>
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <span className="flex items-center gap-1.5 text-xs text-text-secondary mb-1">
                         <MapPin className="h-3.5 w-3.5" /> Sted
                       </span>
                       <span className="font-medium text-text-primary text-sm">{signup.course.location}</span>
@@ -395,10 +391,10 @@ const CheckoutSuccessPage = () => {
                   )}
 
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-xs text-text-secondary">
                       <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
-                    <span className="font-bold text-xl text-text-primary">{signup.amount_paid} kr</span>
+                    <span className="font-medium text-xl text-text-primary">{signup.amount_paid} kr</span>
                   </div>
                 </div>
               </div>

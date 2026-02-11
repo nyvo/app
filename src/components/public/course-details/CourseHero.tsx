@@ -16,7 +16,7 @@ export const CourseHero: React.FC<CourseHeroProps> = ({ title, description }) =>
         {title}
       </h1>
       {description && (
-        <p className="text-lg text-muted-foreground font-light leading-relaxed">
+        <p className="text-lg text-text-secondary font-light leading-relaxed">
           {description}
         </p>
       )}

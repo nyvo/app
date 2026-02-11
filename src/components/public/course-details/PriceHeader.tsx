@@ -38,9 +38,9 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
   const displayPrice = price !== null && price > 0 ? price : null;
 
   return (
-    <div className="px-6 py-5 border-b border-zinc-100 bg-surface/50 flex justify-between items-center">
+    <div className="px-6 py-5 border-b border-zinc-200 bg-surface/50 flex justify-between items-center">
       <div>
-        <span className="block text-xxs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="block text-xxs font-medium text-text-tertiary uppercase tracking-wider">
           Pris
         </span>
         <div className="flex items-baseline gap-1 mt-1">
@@ -49,7 +49,7 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
               <span className="text-2xl font-medium text-text-primary">
                 {displayPrice} kr
               </span>
-              <span className="text-sm text-muted-foreground font-normal">/ time</span>
+              <span className="text-sm text-text-tertiary font-normal">/ time</span>
             </>
           ) : (
             <span className="text-2xl font-medium text-status-confirmed-text">Gratis</span>

@@ -15,7 +15,7 @@ interface StatusConfig {
 const statusConfig: Record<BadgeStatus, StatusConfig> = {
   // Signup statuses
   confirmed: {
-    variant: 'neutral', // De-emphasized: default state, not an exception
+    variant: 'success',
     label: 'Påmeldt',
     showIcon: false,
   },

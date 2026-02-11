@@ -31,17 +31,17 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
         <div className="pr-8">
           <div className="flex items-baseline gap-2 mb-1">
             <span className="text-base font-medium text-text-primary">Standard</span>
-            <span className="text-sm text-muted-foreground">•</span>
+            <span className="text-sm text-text-secondary">•</span>
             <span className="text-base font-medium text-text-primary">{displayPrice} kr</span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-secondary">
             Per time
           </p>
         </div>
       </div>
 
       {/* Student pricing coming soon hint */}
-      <p className="text-xxs text-text-tertiary text-center">
+      <p className="text-xs text-text-tertiary text-center">
         Studentrabatt kommer snart
       </p>
     </div>

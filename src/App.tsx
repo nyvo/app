@@ -10,7 +10,7 @@ const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const SignupsPage = lazy(() => import('./pages/teacher/SignupsPage'));
 const MessagesPage = lazy(() => import('./pages/teacher/MessagesPage'));
-const NewCoursePage = lazy(() => import('./pages/teacher/NewCoursePage'));
+const CreateCoursePage = lazy(() => import('./pages/teacher/CreateCoursePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
@@ -24,6 +24,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
+const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
 
 const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
 const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
@@ -50,6 +51,7 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+            <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 {/* Studio/Organization Public Routes */}
             <Route path="/studio/:slug" element={<PublicCoursesPage />} />
             <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
@@ -61,7 +63,7 @@ const App = () => {
             <Route path="/teacher/schedule" element={<ProtectedRoute requiredUserType="teacher"><SchedulePage /></ProtectedRoute>} />
             <Route path="/teacher/signups" element={<ProtectedRoute requiredUserType="teacher"><SignupsPage /></ProtectedRoute>} />
             <Route path="/teacher/messages" element={<ProtectedRoute requiredUserType="teacher"><MessagesPage /></ProtectedRoute>} />
-            <Route path="/teacher/new-course" element={<ProtectedRoute requiredUserType="teacher"><NewCoursePage /></ProtectedRoute>} />
+            <Route path="/teacher/new-course" element={<ProtectedRoute requiredUserType="teacher"><CreateCoursePage /></ProtectedRoute>} />
             <Route path="/teacher/profile" element={<ProtectedRoute requiredUserType="teacher"><TeacherProfilePage /></ProtectedRoute>} />
 
             {/* Student Routes */}

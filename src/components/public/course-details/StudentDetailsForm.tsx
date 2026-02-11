@@ -1,5 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -137,7 +139,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           htmlFor="phone"
           className="block text-xs font-medium text-text-secondary mb-1.5"
         >
-          Telefon <span className="text-muted-foreground">(valgfritt)</span>
+          Telefon <span className="text-text-secondary">(valgfritt)</span>
         </label>
         <Input
           type="tel"
@@ -156,34 +158,27 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           htmlFor="message"
           className="block text-xs font-medium text-text-secondary mb-1.5"
         >
-          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
+          Beskjed til instruktør <span className="text-text-secondary">(valgfritt)</span>
         </label>
-        <textarea
+        <Textarea
           id="message"
           name="message"
           value={formData.message}
           onChange={onChange}
           disabled={submitting}
           rows={3}
-          className="block w-full rounded-lg border border-zinc-300 bg-input-bg px-3 py-2.5 text-sm text-text-primary placeholder:text-text-tertiary focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-colors"
           placeholder="Noe instruktøren bør vite?"
         />
       </div>
 
       {/* Terms checkbox */}
       <div className="flex items-center gap-2.5 mt-4">
-        <input
+        <Checkbox
           id="termsAccepted"
           name="termsAccepted"
-          type="checkbox"
           checked={formData.termsAccepted}
           onChange={onChange}
           disabled={submitting}
-          className={`h-4 w-4 rounded border-zinc-300 text-text-primary focus:ring-text-primary ${
-            touched.termsAccepted && errors.termsAccepted
-              ? 'border-destructive'
-              : ''
-          }`}
           aria-invalid={touched.termsAccepted && errors.termsAccepted}
         />
         <label htmlFor="termsAccepted" className="text-xs text-text-secondary">

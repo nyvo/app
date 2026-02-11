@@ -1,32 +1,35 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Infinity, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Infinity, ArrowLeft, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { supabase } from '@/lib/supabase';
-
-interface FormData {
-  password: string;
-  confirmPassword: string;
-}
-
-interface FormErrors {
-  password?: string;
-  confirmPassword?: string;
-  general?: string;
-}
-
-const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { authPageVariants, authPageTransition } from '@/lib/motion';
+import { useFormValidation } from '@/hooks/use-form-validation';
 
 const ResetPasswordPage = () => {
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    password: '',
-    confirmPassword: '',
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateField, validateForm } =
+    useFormValidation({
+      initialValues: { password: '', confirmPassword: '' },
+      rules: {
+        password: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn et passord'
+            if (value.length < 8) return 'Passordet må ha minst 8 tegn'
+            return undefined
+          },
+        },
+        confirmPassword: {
+          validate: (value, fd) => {
+            if (!value.trim()) return 'Gjenta passordet'
+            if (fd.password !== value) return 'Passordene er ikke like'
+            return undefined
+          },
+        },
+      },
+    });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,72 +52,13 @@ const ResetPasswordPage = () => {
     checkSession();
   }, []);
 
-  // Form handlers
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+  // Custom password change handler: also re-validate confirmPassword
+  const handlePasswordChange = (value: string) => {
+    handleChange('password', value);
+    if (touched.confirmPassword) {
+      // Re-validate confirmPassword after React processes the password state update
+      setTimeout(() => validateField('confirmPassword'), 0);
     }
-  };
-
-  const handleBlur = (field: keyof FormData) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    validateField(field);
-  };
-
-  const validateField = (field: keyof FormData) => {
-    const newErrors: FormErrors = { ...errors };
-
-    switch (field) {
-      case 'password':
-        if (!formData.password.trim()) {
-          newErrors.password = 'Skriv inn et passord';
-        } else if (formData.password.length < 8) {
-          newErrors.password = 'Passordet må ha minst 8 tegn';
-        } else {
-          delete newErrors.password;
-        }
-        // Re-validate confirm password if it's been touched
-        if (touched.confirmPassword && formData.confirmPassword) {
-          if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passordene er ikke like';
-          } else {
-            delete newErrors.confirmPassword;
-          }
-        }
-        break;
-      case 'confirmPassword':
-        if (!formData.confirmPassword.trim()) {
-          newErrors.confirmPassword = 'Gjenta passordet';
-        } else if (formData.password !== formData.confirmPassword) {
-          newErrors.confirmPassword = 'Passordene er ikke like';
-        } else {
-          delete newErrors.confirmPassword;
-        }
-        break;
-    }
-
-    setErrors(newErrors);
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.password.trim()) {
-      newErrors.password = 'Skriv inn et passord';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Passordet må ha minst 8 tegn';
-    }
-
-    if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Gjenta passordet';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passordene er ikke like';
-    }
-
-    setErrors(newErrors);
-    setTouched({ password: true, confirmPassword: true });
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,7 +97,7 @@ const ResetPasswordPage = () => {
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -166,9 +110,10 @@ const ResetPasswordPage = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: easing }}
+            variants={authPageVariants}
+            initial="initial"
+            animate="animate"
+            transition={authPageTransition}
             className="w-full flex flex-col items-center"
           >
             <div className="text-center mb-8 space-y-4 w-full">
@@ -206,7 +151,7 @@ const ResetPasswordPage = () => {
         </main>
 
         {/* Simple Footer */}
-        <footer className="py-6 text-center border-t border-border bg-white">
+        <footer className="py-6 text-center border-t border-border bg-surface">
           <p className="text-xs text-text-tertiary">
             Trenger du hjelp?
           </p>
@@ -219,7 +164,7 @@ const ResetPasswordPage = () => {
   if (isValidSession === null) {
     return (
       <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-text-tertiary" />
+        <Spinner size="xl" />
       </div>
     );
   }
@@ -232,7 +177,7 @@ const ResetPasswordPage = () => {
         <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
           <div className="w-24"></div>
           <Link to="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -245,9 +190,10 @@ const ResetPasswordPage = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: easing }}
+            variants={authPageVariants}
+            initial="initial"
+            animate="animate"
+            transition={authPageTransition}
             className="w-full flex flex-col items-center"
           >
             {/* Success Icon */}
@@ -278,7 +224,7 @@ const ResetPasswordPage = () => {
         </main>
 
         {/* Simple Footer */}
-        <footer className="py-6 text-center border-t border-border bg-white">
+        <footer className="py-6 text-center border-t border-border bg-surface">
           <p className="text-xs text-text-tertiary">
             <Link
               to="/login"
@@ -307,7 +253,7 @@ const ResetPasswordPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="text-lg font-medium tracking-tighter text-text-primary">
@@ -321,9 +267,10 @@ const ResetPasswordPage = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: easing }}
+          variants={authPageVariants}
+          initial="initial"
+          animate="animate"
+          transition={authPageTransition}
           className="w-full flex flex-col items-center"
         >
           <div className="text-center mb-8 space-y-2 w-full">
@@ -349,7 +296,7 @@ const ResetPasswordPage = () => {
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   onBlur={() => handleBlur('password')}
                   className={`pr-10 ${
                     touched.password && errors.password
@@ -388,7 +335,7 @@ const ResetPasswordPage = () => {
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
                   onBlur={() => handleBlur('confirmPassword')}
                   className={`pr-10 ${
                     touched.confirmPassword && errors.confirmPassword
@@ -431,24 +378,18 @@ const ResetPasswordPage = () => {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              loading={isSubmitting}
+              loadingText="Oppdaterer"
               className="w-full h-11 mt-2"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Oppdaterer
-                </>
-              ) : (
-                'Oppdater passord'
-              )}
+              Oppdater passord
             </Button>
           </form>
         </motion.div>
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-border bg-white">
+      <footer className="py-6 text-center border-t border-border bg-surface">
         <p className="text-xs text-text-tertiary">
           Husker du passordet ditt?{' '}
           <Link

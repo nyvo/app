@@ -55,24 +55,24 @@
   --radius: 1rem;
 
   /* Feedback Colors */
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FAFAFA;
-  --color-success: #22C55E;
-  --color-success-foreground: #FAFAFA;
-  --color-warning: #F97316;
-  --color-warning-foreground: #FAFAFA;
+  --color-destructive: var(--color-red-500);
+  --color-destructive-foreground: var(--color-zinc-50);
+  --color-success: var(--color-green-500);
+  --color-success-foreground: var(--color-zinc-50);
+  --color-warning: var(--color-orange-500);
+  --color-warning-foreground: var(--color-zinc-50);
 
   /* Course Type Colors */
-  --color-course-series: #2DD4BF;
-  --color-course-series-ring: #99F6E4;
+  --color-course-series: var(--color-teal-400);
+  --color-course-series-ring: var(--color-teal-200);
 
   /* Third-party Brand Colors */
   --color-vipps: #FF5B24;
   --color-vipps-hover: #E84E1B;
 
   /* Growth/Positive Indicator */
-  --color-growth-bg: #F0FDF4;
-  --color-growth-text: #15803D;
+  --color-growth-bg: var(--color-green-50);
+  --color-growth-text: var(--color-green-700);
 
   /* Sidebar Colors - White surface for clean navigation */
   --color-sidebar: #FFFFFF;
@@ -102,30 +102,30 @@
   --color-primary-darker: #09090B;
   --color-primary-accent: #18181B;
 
-  /* Status: Confirmed (green-100/200/700) */
-  --color-status-confirmed-bg: #DCFCE7;
-  --color-status-confirmed-border: #BBF7D0;
-  --color-status-confirmed-text: #15803D;
+  /* Status: Confirmed (green) */
+  --color-status-confirmed-bg: var(--color-green-100);
+  --color-status-confirmed-border: var(--color-green-200);
+  --color-status-confirmed-text: var(--color-green-800);
 
-  /* Status: Warning (amber-100/300/800) */
-  --color-status-warning-bg: #FEF3C7;
-  --color-status-warning-border: #FCD34D;
-  --color-status-warning-text: #92400E;
+  /* Status: Warning (amber) */
+  --color-status-warning-bg: var(--color-amber-100);
+  --color-status-warning-border: var(--color-amber-300);
+  --color-status-warning-text: var(--color-amber-900);
 
-  /* Status: Cancelled (Zinc-200/300/600) */
-  --color-status-cancelled-bg: #E4E4E7;
-  --color-status-cancelled-border: #D4D4D8;
-  --color-status-cancelled-text: #52525B;
+  /* Status: Cancelled (zinc) */
+  --color-status-cancelled-bg: var(--color-zinc-200);
+  --color-status-cancelled-border: var(--color-zinc-300);
+  --color-status-cancelled-text: var(--color-zinc-700);
 
-  /* Status: Error (red-100/200/600) */
-  --color-status-error-bg: #FEE2E2;
-  --color-status-error-border: #FECACA;
-  --color-status-error-text: #DC2626;
+  /* Status: Error (red) */
+  --color-status-error-bg: var(--color-red-100);
+  --color-status-error-border: var(--color-red-200);
+  --color-status-error-text: var(--color-red-700);
 
-  /* Status: Info (blue-100/200/700) - for check-ins, info badges */
-  --color-status-info-bg: #DBEAFE;
-  --color-status-info-border: #BFDBFE;
-  --color-status-info-text: #1D4ED8;
+  /* Status: Info (blue) - for check-ins, info badges */
+  --color-status-info-bg: var(--color-blue-100);
+  --color-status-info-border: var(--color-blue-200);
+  --color-status-info-text: var(--color-blue-700);
 
   /* Font Families */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -224,19 +224,6 @@
   .font-geist {
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
     letter-spacing: -0.02em;
-  }
-
-  /* Custom Text Utilities */
-  .text-small {
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  /* V2.2: text-xxs labels include tracking-wider for readability */
-  .text-xxs {
-    font-size: 11px;
-    line-height: 1.45;
-    letter-spacing: 0.05em;
   }
 
   /* Transition Utilities */

@@ -4,7 +4,7 @@ import type { Variants, Transition } from 'framer-motion';
 const ease: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
 
 // Check for reduced motion preference
-export const prefersReducedMotion =
+const prefersReducedMotion =
   typeof window !== 'undefined'
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
@@ -43,45 +43,15 @@ export const tabTransition: Transition = {
 };
 
 // ============================================
-// LIST ITEM TRANSITION
+// AUTH PAGE TRANSITION
 // ============================================
-// Opacity + 2px translate, 150ms - no stagger, no spring
-export const listItemVariants: Variants = {
-  initial: { opacity: 0, y: 2 },
+// Snappy fade-up for single-form auth pages, 500ms
+export const authPageVariants: Variants = {
+  initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0 },
 };
 
-export const listItemTransition: Transition = {
-  duration: dur(150),
-  ease,
-};
-
-// ============================================
-// DRAWER/MODAL TRANSITION
-// ============================================
-// Slide in from right + fade, 260ms
-export const drawerVariants: Variants = {
-  initial: { opacity: 0, x: '100%' },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: '100%' },
-};
-
-export const drawerTransition: Transition = {
-  duration: dur(260),
-  ease,
-};
-
-// ============================================
-// FADE ONLY (for simple content swaps)
-// ============================================
-export const fadeVariants: Variants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-};
-
-export const fadeTransition: Transition = {
-  duration: dur(150),
-  ease,
+export const authPageTransition: Transition = {
+  duration: dur(500),
+  ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
 };

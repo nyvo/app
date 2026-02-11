@@ -7,30 +7,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  Search,
   Filter,
   ChevronDown,
   Calendar,
-  Leaf,
-  Menu,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  LayoutGrid,
-  List,
   AlertCircle
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
-import { SkeletonTableRows } from '@/components/ui/skeleton';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
-import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import type { SignupStatus } from '@/components/ui/status-badge';
+import type { PaymentStatus } from '@/components/ui/payment-badge';
 import { SearchInput } from '@/components/ui/search-input';
-import { NotePopover } from '@/components/ui/note-popover';
 import { SmartSignupsView } from '@/components/teacher/SmartSignupsView';
 import { toast } from 'sonner';
 import {
@@ -50,13 +40,7 @@ import {
   type PaymentFilter,
 } from '@/hooks/use-grouped-signups';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-
-// Sort types
-type SortField = 'classDateTime' | 'registeredAt' | null;
-type SortDirection = 'asc' | 'desc';
-type ViewMode = 'smart' | 'table';
 
 // Format date for display
 function formatDate(dateString: string | null): string {
@@ -87,95 +71,6 @@ function formatRelativeDate(dateString: string): string {
   const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
   return `${date.getDate()}. ${months[date.getMonth()]}`;
 }
-
-// Sortable column header component
-const SortableHeader = ({
-  label,
-  field,
-  currentSort,
-  currentDirection,
-  onSort,
-}: {
-  label: string;
-  field: SortField;
-  currentSort: SortField;
-  currentDirection: SortDirection;
-  onSort: (field: SortField) => void;
-}) => {
-  const isActive = currentSort === field;
-
-  return (
-    <button
-      onClick={() => onSort(field)}
-      className="flex items-center gap-1.5 group text-xxs font-medium uppercase tracking-wide text-muted-foreground hover:text-text-primary transition-colors"
-    >
-      {label}
-      <span className={`transition-colors ${isActive ? 'text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
-        {isActive ? (
-          currentDirection === 'asc' ? (
-            <ArrowUp className="h-3.5 w-3.5" />
-          ) : (
-            <ArrowDown className="h-3.5 w-3.5" />
-          )
-        ) : (
-          <ArrowUpDown className="h-3.5 w-3.5" />
-        )}
-      </span>
-    </button>
-  );
-};
-
-// Primary Mode Tabs (Aktive / Avsluttet / Krever handling)
-const ModeTabs = ({
-  value,
-  onChange,
-  exceptionCount,
-}: {
-  value: ModeFilter;
-  onChange: (value: ModeFilter) => void;
-  exceptionCount: number;
-}) => {
-  const tabs: Array<{ value: ModeFilter; label: string; hasWarning?: boolean }> = [
-    { value: 'active', label: 'Aktive' },
-    { value: 'ended', label: 'Avsluttet' },
-    { value: 'needs_attention', label: 'Krever handling', hasWarning: true },
-  ];
-
-  return (
-    <div className="flex gap-1 p-1 bg-surface-elevated rounded-lg">
-      {tabs.map(tab => (
-        <button
-          key={tab.value}
-          onClick={() => onChange(tab.value)}
-          className={cn(
-            'flex items-center gap-1.5 rounded-lg py-2 px-4 text-xs font-medium transition-all whitespace-nowrap',
-            value === tab.value
-              ? 'bg-white text-text-primary'
-              : 'text-muted-foreground hover:text-text-primary'
-          )}
-        >
-          {tab.hasWarning && (
-            <AlertCircle className={cn(
-              'h-3.5 w-3.5',
-              value === tab.value ? 'text-status-error-text' : 'text-status-error-text'
-            )} />
-          )}
-          {tab.label}
-          {tab.hasWarning && exceptionCount > 0 && (
-            <span className={cn(
-              'px-1.5 py-0.5 rounded-full text-xxs font-medium',
-              value === tab.value
-                ? 'bg-status-error-bg text-status-error-text'
-                : 'bg-status-error-bg text-status-error-text'
-            )}>
-              {exceptionCount}
-            </span>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-};
 
 // Time dropdown filter (secondary - demoted from segmented control)
 const TimeDropdown = ({
@@ -258,78 +153,19 @@ const StatusDropdown = ({
   );
 };
 
-// View toggle component
-const ViewToggle = ({
-  value,
-  onChange,
-}: {
-  value: ViewMode;
-  onChange: (value: ViewMode) => void;
-}) => {
-  return (
-    <div className="flex items-center gap-1 bg-surface-elevated rounded-lg p-1">
-      <button
-        onClick={() => onChange('smart')}
-        className={cn(
-          'p-2 rounded-md transition-colors',
-          value === 'smart' ? 'bg-white text-text-primary' : 'text-text-tertiary hover:text-text-primary'
-        )}
-        aria-label="Oversiktsvisning"
-        title="Oversikt (gruppert)"
-      >
-        <LayoutGrid className="h-4 w-4" />
-      </button>
-      <button
-        onClick={() => onChange('table')}
-        className={cn(
-          'p-2 rounded-md transition-colors',
-          value === 'table' ? 'bg-white text-text-primary' : 'text-text-tertiary hover:text-text-primary'
-        )}
-        aria-label="Tabellvisning"
-        title="Alle påmeldinger (tabell)"
-      >
-        <List className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
-  const isMobile = useIsMobile();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // View state
-  const [viewMode, setViewMode] = useState<ViewMode>('smart');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filters state (shared between views)
+  // Filters state
   const [modeFilter, setModeFilter] = useState<ModeFilter>('active');
   const [timeFilter, setTimeFilter] = useState<TimeFilter | null>('upcoming');
-  const [statusFilterSmart, setStatusFilterSmart] = useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
-  const [classFilter, setClassFilter] = useState<string>('Alle');
-
-  // Attendance state (local UI state for now)
-  const [attendedSignups, setAttendedSignups] = useState<Set<string>>(new Set());
-
-  const handleToggleAttendance = (signupId: string) => {
-    setAttendedSignups(prev => {
-      const next = new Set(prev);
-      if (next.has(signupId)) {
-        next.delete(signupId);
-      } else {
-        next.add(signupId);
-      }
-      return next;
-    });
-  };
-
-  // Table view sort state
-  const [sortField, setSortField] = useState<SortField>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -355,7 +191,7 @@ export const SignupsPage = () => {
     loadSignups();
   }, [loadSignups]);
 
-  // Transform signups to display format (shared between views)
+  // Transform signups to display format
   const displaySignups: SignupDisplay[] = useMemo(() => {
     return signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
@@ -376,56 +212,47 @@ export const SignupsPage = () => {
         status: signup.status as SignupStatus,
         paymentStatus: signup.payment_status as PaymentStatus,
         note: signup.note || undefined,
-        attended: attendedSignups.has(signup.id),
-        // Additional fields for teacher actions
         stripePaymentIntentId: signup.stripe_payment_intent_id || null,
         organizationId: signup.organization_id,
       };
     });
   }, [signups]);
 
-  // Use grouped signups hook for smart view
+  // Use grouped signups hook
   const { groups, stats, hasActiveFilters } = useGroupedSignups(displaySignups, {
     modeFilter,
     timeFilter,
-    statusFilter: statusFilterSmart,
+    statusFilter,
     paymentFilter,
     searchQuery,
   });
 
   // Reset secondary filters when switching modes
-  // Each mode has appropriate default time filter
   const handleModeChange = (newMode: ModeFilter) => {
     setModeFilter(newMode);
 
-    // Set appropriate time filter default per mode
     if (newMode === 'active') {
-      setTimeFilter('upcoming'); // Aktive → default "Kommende"
+      setTimeFilter('upcoming');
     } else if (newMode === 'needs_attention') {
-      setTimeFilter(null); // Krever handling → default "Alle"
+      setTimeFilter(null);
     } else if (newMode === 'ended') {
-      setTimeFilter(null); // Avsluttet → no time filter (hidden)
+      setTimeFilter(null);
     }
 
-    // Reset other filters to defaults
-    setStatusFilterSmart('all');
+    setStatusFilter('all');
     setPaymentFilter('all');
   };
 
-  // Determine if time filter should be visible based on mode
-  // Hidden for "ended" (not applicable) and "needs_attention" (search-only)
   const showTimeFilter = modeFilter === 'active';
 
-  // Get the appropriate default time filter for current mode
   const getDefaultTimeFilter = (): TimeFilter | null => {
     if (modeFilter === 'active') return 'upcoming';
-    return null; // needs_attention and ended default to null (Alle)
+    return null;
   };
 
-  // Clear all secondary filters (reset to mode-appropriate defaults)
   const clearFilters = () => {
     setTimeFilter(getDefaultTimeFilter());
-    setStatusFilterSmart('all');
+    setStatusFilter('all');
     setPaymentFilter('all');
     setSearchQuery('');
   };
@@ -463,70 +290,6 @@ export const SignupsPage = () => {
     },
   }), [loadSignups]);
 
-  // Get unique class names for filter dropdown (table view)
-  const uniqueClassNames = useMemo(() => {
-    const names = new Set(displaySignups.map(s => s.className));
-    return Array.from(names).sort();
-  }, [displaySignups]);
-
-  // Handle sort toggle (table view)
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  // Filtered and sorted signups for table view
-  const filteredAndSortedSignups = useMemo(() => {
-    let result = displaySignups;
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (signup) =>
-          signup.participantName.toLowerCase().includes(query) ||
-          signup.participantEmail.toLowerCase().includes(query)
-      );
-    }
-
-    // Filter by status
-    if (statusFilterSmart !== 'all') {
-      if (statusFilterSmart === 'confirmed') {
-        result = result.filter(s => s.status === 'confirmed');
-      } else if (statusFilterSmart === 'cancelled') {
-        result = result.filter(s => s.status === 'cancelled');
-      }
-    }
-
-    // Filter by class
-    if (classFilter !== 'Alle') {
-      result = result.filter(s => s.className === classFilter);
-    }
-
-    // Sort if a sort field is selected
-    if (sortField) {
-      result = [...result].sort((a, b) => {
-        let comparison = 0;
-
-        if (sortField === 'classDateTime') {
-          comparison = a.classDateTime.getTime() - b.classDateTime.getTime();
-        } else if (sortField === 'registeredAt') {
-          comparison = a.registeredAtDate.getTime() - b.registeredAtDate.getTime();
-        }
-
-        return sortDirection === 'asc' ? comparison : -comparison;
-      });
-    }
-
-    return result;
-  }, [displaySignups, searchQuery, sortField, sortDirection, statusFilterSmart, classFilter]);
-
-  // hasActiveFilters comes from the hook and tracks all secondary filters
-
   return (
     <SidebarProvider>
       <TeacherSidebar />
@@ -541,346 +304,92 @@ export const SignupsPage = () => {
           transition={pageTransition}
           className="flex flex-col gap-6 px-8 py-8 shrink-0"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
-              <p className="text-sm text-muted-foreground mt-1">Oversikt over studenter og bookinger.</p>
-            </div>
-            <ViewToggle value={viewMode} onChange={setViewMode} />
+          <div>
+            <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
+            <p className="text-sm text-muted-foreground mt-1">Oversikt over studenter og bookinger.</p>
           </div>
 
           {/* Filters Bar */}
-          {viewMode === 'smart' ? (
-            /* Smart View Filters - Single Tab Row + Secondary Dropdowns */
-            <div className="flex flex-col gap-5">
-              {/* Primary Mode Tabs - ONE tab row only */}
-              <ModeTabs
-                value={modeFilter}
-                onChange={handleModeChange}
-                exceptionCount={stats.totalExceptions}
-              />
+          <div className="flex flex-col gap-5">
+            {/* Primary Mode Tabs */}
+            <FilterTabs value={modeFilter} onValueChange={(v) => handleModeChange(v as ModeFilter)}>
+              <FilterTab value="active">Aktive</FilterTab>
+              <FilterTab value="ended">Avsluttet</FilterTab>
+              <FilterTab value="needs_attention" className="flex items-center gap-1.5">
+                <AlertCircle className={cn(
+                  'h-3.5 w-3.5',
+                  modeFilter === 'needs_attention' ? 'text-status-error-text' : 'text-zinc-400'
+                )} />
+                Krever handling
+                {stats.totalExceptions > 0 && (
+                  <span className={cn(
+                    'px-1.5 py-0.5 rounded-full text-xxs font-medium uppercase tracking-wider',
+                    modeFilter === 'needs_attention'
+                      ? 'bg-status-error-bg text-status-error-text'
+                      : 'bg-zinc-100 text-zinc-500'
+                  )}>
+                    {stats.totalExceptions}
+                  </span>
+                )}
+              </FilterTab>
+            </FilterTabs>
 
-              {/* Secondary Filters Row - visually distinct from tabs */}
-              <div className="flex flex-col md:flex-row gap-3 md:items-center">
-                {/* Search is visually strongest among secondary controls */}
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Søk etter navn eller e-post"
-                  aria-label="Søk etter deltakere"
-                  className="flex-1 max-w-xs"
-                />
-                {/* Secondary filters - lightweight and optional */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Time filter: only shown for Aktive and Krever handling modes */}
-                  {showTimeFilter && (
-                    <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
-                  )}
-                  {/* Status/Payment filters hidden in "Krever handling" mode (all items are payment issues) */}
-                  {modeFilter !== 'needs_attention' && (
-                    <StatusDropdown value={statusFilterSmart} onChange={setStatusFilterSmart} />
-                  )}
-
-                  {/* Clear filters button - only when filters deviate from defaults */}
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearFilters}
-                      className="text-xs text-muted-foreground hover:text-text-primary underline underline-offset-2 ml-2"
-                    >
-                      Nullstill
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Table View Filters */
-            <div className="flex flex-col md:flex-row gap-3">
+            {/* Secondary Filters Row */}
+            <div className="flex flex-col md:flex-row gap-3 md:items-center">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Søk etter navn eller e-post"
                 aria-label="Søk etter deltakere"
-                className="flex-1 max-w-md"
+                className="flex-1 max-w-xs"
               />
-              <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer ${statusFilterSmart !== 'all' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
-                      <Filter className="h-3.5 w-3.5" />
-                      Status: {statusFilterSmart === 'all' ? 'Alle' : statusFilterSmart === 'confirmed' ? 'Påmeldt' : 'Avbestilt'}
-                      <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {[
-                      { value: 'all', label: 'Alle' },
-                      { value: 'confirmed', label: 'Påmeldt' },
-                      { value: 'cancelled', label: 'Avbestilt' }
-                    ].map((status) => (
-                      <DropdownMenuItem key={status.value} onClick={() => setStatusFilterSmart(status.value as StatusFilter)}>
-                        {status.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex items-center gap-2 flex-wrap">
+                {showTimeFilter && (
+                  <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
+                )}
+                {modeFilter !== 'needs_attention' && (
+                  <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
+                )}
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className={`flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer ${classFilter !== 'Alle' ? 'bg-white text-text-primary border-border' : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'}`}>
-                      Kurs: {classFilter}
-                      <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => setClassFilter('Alle')}>Alle</DropdownMenuItem>
-                    {uniqueClassNames.map((className) => (
-                      <DropdownMenuItem key={className} onClick={() => setClassFilter(className)}>
-                        {className}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-muted-foreground hover:text-text-primary underline underline-offset-2 ml-2"
+                  >
+                    Nullstill
+                  </button>
+                )}
               </div>
             </div>
-          )}
+          </div>
         </motion.header>
 
         {/* Content Area */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
-          {viewMode === 'smart' ? (
-            /* Smart Grouped View */
-            <div className="h-full overflow-auto custom-scrollbar">
-              {error ? (
-                <ErrorState
-                  title="Kunne ikke laste påmeldinger"
-                  message={error}
-                  onRetry={loadSignups}
-                  className="rounded-2xl bg-white border border-zinc-200"
-                />
-              ) : (
-                <SmartSignupsView
-                  groups={groups}
-                  stats={stats}
-                  isLoading={loading}
-                  isEmpty={displaySignups.length === 0}
-                  hasFilters={hasActiveFilters}
-                  mode={modeFilter}
-                  onClearFilters={clearFilters}
-                  actionHandlers={actionHandlers}
-                  onToggleAttendance={handleToggleAttendance}
-                />
-              )}
-            </div>
-          ) : (
-            /* Table View */
-            <div className="h-full rounded-2xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
-              {/* Loading State */}
-              {loading ? (
-                <div className="overflow-auto flex-1" role="status" aria-live="polite" aria-label="Laster påmeldinger">
-                  <span className="sr-only">Henter påmeldinger</span>
-                  <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-white border-b border-zinc-200 z-10">
-                      <tr>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '20%' }}>Deltaker</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '22%' }}>Kurs & Tid</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Påmeldt</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Status</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Betaling</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground text-center" style={{ width: '8%' }}>Notat</th>
-                      </tr>
-                    </thead>
-                    <SkeletonTableRows rows={8} columns={6} hasAvatar={true} />
-                  </table>
-                </div>
-              ) : error ? (
-                /* Error State */
-                <ErrorState
-                  title="Kunne ikke laste påmeldinger"
-                  message={error}
-                  onRetry={loadSignups}
-                  className="flex-1 bg-white"
-                />
-              ) : filteredAndSortedSignups.length === 0 ? (
-                /* Empty State or No Results */
-                <>
-                  {/* Table Header for empty state - hidden on mobile */}
-                  <div className="hidden md:block border-b border-zinc-200 bg-surface/50 px-6 py-3">
-                    <div className="flex items-center">
-                      <div className="flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground">Deltaker</div>
-                      <div className="flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground">Kurs & Tid</div>
-                      <div className="flex-1 text-xxs font-medium uppercase tracking-wide text-muted-foreground">Påmeldt</div>
-                      <div className="flex-1 text-xxs font-medium uppercase tracking-wide text-muted-foreground">Status</div>
-                      <div className="flex-1 text-xxs font-medium uppercase tracking-wide text-muted-foreground">Betaling</div>
-                      <div className="w-12 text-xxs font-medium uppercase tracking-wide text-muted-foreground text-center">Notat</div>
-                      <div className="w-12"></div>
-                    </div>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 text-center bg-white">
-                    <div className="mb-4 rounded-full bg-surface p-4 border border-surface-elevated">
-                      <Search className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
-                    </div>
-                    <h3 className="font-geist text-sm font-medium text-text-primary">
-                      {displaySignups.length === 0 ? 'Ingen påmeldinger ennå' : 'Ingen resultater'}
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {displaySignups.length === 0
-                        ? 'Påmeldinger vil vises her når studenter melder seg på kurs.'
-                        : 'Prøv å søke etter et annet navn eller e-post'}
-                    </p>
-                  </div>
-                </>
-              ) : isMobile ? (
-                /* Mobile Card Layout */
-                <div className="flex-1 overflow-auto custom-scrollbar divide-y divide-zinc-200 bg-white">
-                  {filteredAndSortedSignups.map((signup) => (
-                    <div key={signup.id} className="p-4 hover:bg-secondary transition-colors">
-                      {/* Row 1: Avatar + Name + Status */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <UserAvatar
-                            name={signup.participantName}
-                            email={signup.participantEmail}
-                            size="md"
-                          />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-text-primary truncate">{signup.participantName}</p>
-                            <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <NotePopover note={signup.note} />
-                        </div>
-                      </div>
-
-                      {/* Row 2: Course info */}
-                      <div className="mb-3 pl-[44px]">
-                        <p className="text-sm font-medium text-text-primary truncate">{signup.className}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <Calendar className="h-3 w-3 text-text-tertiary flex-shrink-0" />
-                          <span className="text-xs text-muted-foreground">
-                            {signup.classDate}{signup.classTime && `, ${signup.classTime}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Row 3: Badges + Date */}
-                      <div className="flex items-center justify-between pl-[44px]">
-                        <div className="flex items-center gap-2">
-                          <StatusBadge status={signup.status} size="sm" />
-                          {/* Payment badge: exception-only (paid is silent by default) */}
-                          <PaymentBadge status={signup.paymentStatus} size="sm" />
-                        </div>
-                        <span className="text-xs text-text-tertiary">{signup.registeredAt}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* Desktop Table Layout */
-                <div className="overflow-auto flex-1 custom-scrollbar">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-white border-b border-zinc-200 z-10">
-                      <tr>
-                        <th className="py-3 px-6 flex-[2] text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '20%' }}>Deltaker</th>
-                        <th className="py-3 px-6" style={{ width: '22%' }}>
-                          <SortableHeader
-                            label="Kurs & Tid"
-                            field="classDateTime"
-                            currentSort={sortField}
-                            currentDirection={sortDirection}
-                            onSort={handleSort}
-                          />
-                        </th>
-                        <th className="py-3 px-6" style={{ width: '14%' }}>
-                          <SortableHeader
-                            label="Påmeldt"
-                            field="registeredAt"
-                            currentSort={sortField}
-                            currentDirection={sortDirection}
-                            onSort={handleSort}
-                          />
-                        </th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Status</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground" style={{ width: '14%' }}>Betaling</th>
-                        <th className="py-3 px-6 text-xxs font-medium uppercase tracking-wide text-muted-foreground text-center" style={{ width: '8%' }}>Notat</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-surface-elevated bg-white">
-                      {filteredAndSortedSignups.map((signup) => (
-                      <tr key={signup.id} className="group hover:bg-secondary transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            <UserAvatar
-                              name={signup.participantName}
-                              email={signup.participantEmail}
-                              size="md"
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-text-primary">{signup.participantName}</p>
-                              <p className="text-xs text-muted-foreground">{signup.participantEmail}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-text-primary">{signup.className}</span>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <Calendar className="h-3 w-3 text-text-tertiary" />
-                              <span className="text-xs text-muted-foreground">
-                                {signup.classDate}{signup.classTime && `, ${signup.classTime}`}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <span className="text-sm text-text-secondary">{signup.registeredAt}</span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <StatusBadge status={signup.status} />
-                        </td>
-                        <td className="py-4 px-6">
-                          {/* Payment badge: exception-only (paid is silent by default) */}
-                          <PaymentBadge status={signup.paymentStatus} />
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <NotePopover note={signup.note} />
-                        </td>
-                      </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Results Footer */}
-              <div className="border-t border-border bg-surface/50 px-6 py-3">
-                <span className="text-xxs text-muted-foreground">
-                  Viser <span className="font-medium text-text-primary">{filteredAndSortedSignups.length}</span> av <span className="font-medium text-text-primary">{displaySignups.length}</span> resultater
-                  {searchQuery && <span className="ml-1">(filtrert)</span>}
-                </span>
-              </div>
-            </div>
-          )}
+          <div className="h-full overflow-auto custom-scrollbar">
+            {error ? (
+              <ErrorState
+                title="Kunne ikke laste påmeldinger"
+                message={error}
+                onRetry={loadSignups}
+                className="rounded-2xl bg-white border border-zinc-200"
+              />
+            ) : (
+              <SmartSignupsView
+                groups={groups}
+                stats={stats}
+                isLoading={loading}
+                isEmpty={displaySignups.length === 0}
+                hasFilters={hasActiveFilters}
+                mode={modeFilter}
+                onClearFilters={clearFilters}
+                actionHandlers={actionHandlers}
+              />
+            )}
+          </div>
         </div>
       </main>
 
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--color-border);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: var(--color-ring);
-        }
-      `}</style>
     </SidebarProvider>
   );
 };

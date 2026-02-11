@@ -89,7 +89,7 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-200 cursor-pointer bg-white hover:bg-zinc-50/50",
+        "group flex items-center gap-4 p-4 rounded-2xl border ios-ease cursor-pointer bg-white hover:bg-zinc-50/50",
         urgency.isUrgent
           ? "border-amber-200 hover:border-amber-300"
           : "border-zinc-200 hover:border-zinc-400"
@@ -180,29 +180,20 @@ export function CoursePreviewCardSkeleton() {
   return (
     <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-zinc-200 animate-pulse">
       {/* Course info skeleton */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="h-4 w-48 bg-surface-elevated rounded" />
         <div className="h-3 w-32 bg-surface-elevated rounded" />
       </div>
 
-      {/* Time signal skeleton */}
-      <div className="shrink-0 hidden sm:block">
-        <div className="h-4 w-16 bg-surface-elevated rounded" />
+      {/* Attendance + week skeleton */}
+      <div className="shrink-0 hidden sm:flex items-center gap-1.5">
+        <div className="h-4 w-10 bg-surface-elevated rounded" />
+        <div className="h-3 w-1 bg-surface-elevated rounded" />
+        <div className="h-3 w-16 bg-surface-elevated rounded" />
       </div>
 
-      {/* Enrollment skeleton */}
-      <div className="shrink-0">
-        <div className="h-4 w-12 bg-surface-elevated rounded" />
-      </div>
-
-      {/* Status skeleton */}
-      <div className="shrink-0">
-        <div className="h-6 w-16 bg-surface-elevated rounded-full" />
-      </div>
-
-      {/* Actions skeleton */}
-      <div className="shrink-0 flex items-center gap-1">
-        <div className="h-8 w-8 bg-surface-elevated rounded-full" />
+      {/* Chevron skeleton */}
+      <div className="shrink-0 ml-2">
         <div className="h-4 w-4 bg-surface-elevated rounded" />
       </div>
     </div>

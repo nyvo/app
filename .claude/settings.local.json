@@ -50,7 +50,12 @@
       "Bash(powershell -File:*)",
       "Bash(node:*)",
       "Bash(powershell:*)",
-      "Bash(/tmp/replace-gray.ps1 << 'PSEOF'\n$count = 0\nGet-ChildItem -Path \"c:\\\\Users\\\\krist\\\\Documents\\\\app\\\\src\" -Recurse -Include \"*.tsx\",\"*.ts\" | ForEach-Object {\n    $content = Get-Content $_.FullName -Raw\n    if \\($content -match 'gray-'\\) {\n        $newContent = $content -replace 'gray-', 'zinc-'\n        Set-Content -Path $_.FullName -Value $newContent -NoNewline\n        Write-Output $_.FullName\n        $count++\n    }\n}\nWrite-Output \"\"\nWrite-Output \"Total files modified: $count\"\nPSEOF)"
+      "Bash(/tmp/replace-gray.ps1 << 'PSEOF'\n$count = 0\nGet-ChildItem -Path \"c:\\\\Users\\\\krist\\\\Documents\\\\app\\\\src\" -Recurse -Include \"*.tsx\",\"*.ts\" | ForEach-Object {\n    $content = Get-Content $_.FullName -Raw\n    if \\($content -match 'gray-'\\) {\n        $newContent = $content -replace 'gray-', 'zinc-'\n        Set-Content -Path $_.FullName -Value $newContent -NoNewline\n        Write-Output $_.FullName\n        $count++\n    }\n}\nWrite-Output \"\"\nWrite-Output \"Total files modified: $count\"\nPSEOF)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:tailscan.com)",
+      "WebFetch(domain:htmlcolorcodes.com)",
+      "Bash(Select-String \"status-confirmed-text\")",
+      "Bash(npx @tailwindcss/cli:*)"
     ],
     "deny": [],
     "ask": []

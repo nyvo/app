@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import {
   ChevronLeft,
   Leaf,
-  Loader2,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchCourseSessions } from '@/services/courses';
@@ -321,7 +321,7 @@ const PublicCourseDetailPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-surface flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-text-primary" />
+        <Spinner size="xl" />
       </div>
     );
   }
@@ -331,10 +331,10 @@ const PublicCourseDetailPage = () => {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
       <div className="min-h-screen w-full bg-surface">
-        <header className="border-b border-zinc-200 bg-white">
+        <header className="border-b border-zinc-200 bg-surface">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link to={backUrl} className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface border border-zinc-100">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="font-geist text-lg font-medium text-text-primary tracking-tight">Ease</span>

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ChevronRight, ExternalLink, Info } from 'lucide-react';
+import { ExternalLink, Info } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
 import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
@@ -294,6 +296,27 @@ const CourseDetailPage = () => {
     };
   }, [participants]);
 
+  // Map participants from database to display format
+  const displayParticipants = useMemo(() => participants.map(signup => ({
+    id: signup.id,
+    name: signup.participant_name || signup.profile?.name || 'Ukjent',
+    email: signup.participant_email || signup.profile?.email || '',
+    status: signup.status as SignupStatus,
+    paymentStatus: signup.payment_status as PaymentStatus,
+    notes: signup.note || undefined,
+    receiptUrl: signup.stripe_receipt_url || undefined,
+  })), [participants]);
+
+  // Filter participants based on search and filters
+  const filteredParticipants = useMemo(() => displayParticipants.filter((p) => {
+    const matchesSearch = searchQuery === '' ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+    const matchesPayment = paymentFilter === 'all' || p.paymentStatus === paymentFilter;
+    return matchesSearch && matchesStatus && matchesPayment;
+  }), [displayParticipants, searchQuery, statusFilter, paymentFilter]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -446,46 +469,6 @@ const CourseDetailPage = () => {
 
   const spotsLeft = course.capacity - course.enrolled;
 
-  // Map participants from database to display format
-  const displayParticipants = useMemo(() => participants.map(signup => ({
-    id: signup.id,
-    name: signup.participant_name || signup.profile?.name || 'Ukjent',
-    email: signup.participant_email || signup.profile?.email || '',
-    status: signup.status as SignupStatus,
-    paymentStatus: signup.payment_status as PaymentStatus,
-    notes: signup.note || undefined,
-    receiptUrl: signup.stripe_receipt_url || undefined,
-    attended: false, // Local state handled in CourseParticipantsTab if needed
-  })), [participants]);
-
-  // Attendance state (local UI state for now)
-  const [attendedParticipants, setAttendedParticipants] = useState<Set<string>>(new Set());
-
-  const handleToggleAttendance = (participantId: string) => {
-    setAttendedParticipants(prev => {
-      const next = new Set(prev);
-      if (next.has(participantId)) {
-        next.delete(participantId);
-      } else {
-        next.add(participantId);
-      }
-      return next;
-    });
-  };
-
-  // Filter participants based on search and filters
-  const filteredParticipants = useMemo(() => displayParticipants.map(p => ({
-    ...p,
-    attended: attendedParticipants.has(p.id)
-  })).filter((p) => {
-    const matchesSearch = searchQuery === '' ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-    const matchesPayment = paymentFilter === 'all' || p.paymentStatus === paymentFilter;
-    return matchesSearch && matchesStatus && matchesPayment;
-  }), [displayParticipants, searchQuery, statusFilter, paymentFilter, attendedParticipants]);
-
   const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (paymentFilter !== 'all' ? 1 : 0);
 
   const clearFilters = () => {
@@ -504,11 +487,19 @@ const CourseDetailPage = () => {
             {/* Breadcrumbs & Actions */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
               <div>
-                <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                  <a href="/teacher/courses" className="cursor-pointer hover:text-text-primary ios-ease">Kurs</a>
-                  <ChevronRight className="h-3 w-3 text-text-tertiary" />
-                  <span className="text-text-primary font-medium">{course.title}</span>
-                </nav>
+                <Breadcrumb className="mb-1">
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/teacher/courses">Kurs</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>{course.title}</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
                 <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                   {course.title}
                 </h1>
@@ -531,47 +522,16 @@ const CourseDetailPage = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-8" role="tablist">
-              <button
-                role="tab"
-                aria-selected={activeTab === 'overview'}
-                onClick={() => setActiveTab('overview')}
-                className={`cursor-pointer pb-3 text-sm font-medium ios-ease ${
-                  activeTab === 'overview'
-                    ? 'text-text-primary border-b-2 border-text-primary'
-                    : 'text-muted-foreground hover:text-text-primary'
-                }`}
-              >
-                Oversikt
-              </button>
-              <button
-                role="tab"
-                aria-selected={activeTab === 'participants'}
-                onClick={() => setActiveTab('participants')}
-                className={`cursor-pointer pb-3 text-sm font-medium ios-ease flex items-center gap-1.5 ${
-                  activeTab === 'participants'
-                    ? 'text-text-primary border-b-2 border-text-primary'
-                    : 'text-muted-foreground hover:text-text-primary'
-                }`}
-              >
+            <FilterTabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+              <FilterTab value="overview">Oversikt</FilterTab>
+              <FilterTab value="participants" className="flex items-center gap-1.5">
                 Deltakere
                 <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs text-muted-foreground">
                   {course.enrolled}
                 </span>
-              </button>
-              <button
-                role="tab"
-                aria-selected={activeTab === 'settings'}
-                onClick={() => setActiveTab('settings')}
-                className={`cursor-pointer pb-3 text-sm font-medium ios-ease ${
-                  activeTab === 'settings'
-                    ? 'text-text-primary border-b-2 border-text-primary'
-                    : 'text-muted-foreground hover:text-text-primary'
-                }`}
-              >
-                Innstillinger
-              </button>
-            </div>
+              </FilterTab>
+              <FilterTab value="settings">Innstillinger</FilterTab>
+            </FilterTabs>
           </div>
         </header>
 
@@ -656,7 +616,7 @@ const CourseDetailPage = () => {
                   activeFiltersCount={activeFiltersCount}
                   onClearFilters={clearFilters}
                   onOpenAddDialog={() => setAddParticipantDialogOpen(true)}
-                  onToggleAttendance={handleToggleAttendance}
+
                 />
 
                 {/* Add Participant Dialog */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, CheckCircle2, Leaf, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, CheckCircle2, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
@@ -294,17 +294,11 @@ const StudentRegisterPage = () => {
               {/* Main Action */}
               <Button
                 type="submit"
-                disabled={isLoading}
+                loading={isLoading}
+                loadingText="Oppretter konto"
                 className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Oppretter konto
-                  </>
-                ) : (
-                  'Opprett konto'
-                )}
+                Opprett konto
               </Button>
             </form>
 

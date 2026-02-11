@@ -38,11 +38,6 @@ export function getMondayOfWeek(date: Date): Date {
  */
 export const DAY_NAMES_NO = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
 
-/**
- * Day name abbreviations in English
- */
-export const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-
 export interface WeekDay {
   name: string;
   date: number;

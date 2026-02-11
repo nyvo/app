@@ -4,26 +4,24 @@ import { toast } from 'sonner';
 import { nb } from 'date-fns/locale';
 import { addDays, format } from 'date-fns';
 import {
-  Leaf,
-  Menu,
   Layers,
   CalendarDays,
   Check,
   ArrowRight,
-  ChevronRight,
   AlertCircle,
-  Loader2,
   X,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, type SessionTimeOverride } from '@/services/courses';
 import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { NewCourseScheduleSection } from '@/components/teacher/NewCourseScheduleSection';
-import { useFormDraft, serializeDate, deserializeDate } from '@/hooks/use-form-draft';
+import { useFormDraft } from '@/hooks/use-form-draft';
 import type { CourseType as DBCourseType } from '@/types/database';
 
 type CourseType = 'series' | 'single';
@@ -97,7 +95,10 @@ const NewCoursePage = () => {
     if (draft && !draftLoaded) {
       setCourseType(draft.courseType || 'series');
       setTitle(draft.title || '');
-      setStartDate(deserializeDate(draft.startDate));
+      if (draft.startDate) {
+        const parsed = new Date(draft.startDate);
+        if (!isNaN(parsed.getTime())) setStartDate(parsed);
+      }
       setStartTime(draft.startTime || '');
       setDuration(draft.duration ?? 60);
       setWeeks(draft.weeks || '');
@@ -123,7 +124,7 @@ const NewCoursePage = () => {
     saveDraft({
       courseType,
       title,
-      startDate: serializeDate(startDate),
+      startDate: startDate?.toISOString(),
       startTime,
       duration,
       weeks,
@@ -460,13 +461,19 @@ const NewCoursePage = () => {
         {/* Header / Breadcrumbs - Sticky */}
         <header className="bg-white border-b border-zinc-100 sticky top-0 z-10 shrink-0">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4">
-            <nav className="flex items-center text-xxs text-muted-foreground mb-2 space-x-2">
-              <Link to="/teacher/schedule" className="hover:text-text-primary cursor-pointer transition-colors">
-                Timeplan
-              </Link>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-text-primary font-medium">Nytt kurs</span>
-            </nav>
+            <Breadcrumb className="mb-2">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to="/teacher/schedule">Timeplan</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Nytt kurs</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             <div className="flex justify-between items-end">
               <div>
                 <h1 className="text-2xl font-medium text-text-primary tracking-tight">
@@ -500,7 +507,7 @@ const NewCoursePage = () => {
                     className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
                       courseType === 'series'
                         ? 'border-2 border-ring bg-surface-elevated'
-                        : 'border border-zinc-100 bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        : 'border border-zinc-200 bg-white hover:bg-zinc-50/50 hover:border-zinc-400 opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -547,7 +554,7 @@ const NewCoursePage = () => {
                     className={`relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
                       courseType === 'single'
                         ? 'border-2 border-ring bg-surface-elevated'
-                        : 'border border-zinc-100 bg-input-bg hover:bg-surface hover:border-ring opacity-80 hover:opacity-100'
+                        : 'border border-zinc-200 bg-white hover:bg-zinc-50/50 hover:border-zinc-400 opacity-80 hover:opacity-100'
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -597,12 +604,12 @@ const NewCoursePage = () => {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 {/* Left Column: Title, Style, Description */}
                 <div className="md:col-span-7 space-y-5">
-                  {/* Title */}
+                  {/* Title labels */}
                   <div>
-                    <label htmlFor="course-title" className="block text-xxs font-medium text-muted-foreground mb-1.5">
+                    <label htmlFor="course-title" className="block text-xs font-medium text-muted-foreground mb-1.5">
                       Tittel <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       ref={titleRef}
                       id="course-title"
                       type="text"
@@ -613,9 +620,10 @@ const NewCoursePage = () => {
                       aria-describedby={showError('title') ? 'title-error' : undefined}
                       aria-invalid={showError('title') ? 'true' : undefined}
                       aria-required="true"
-                      className={`w-full h-10 rounded-lg border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                        showError('title') ? 'border-destructive' : 'border-zinc-200'
-                      }`}
+                      className={cn(
+                        "w-full h-11",
+                        showError('title') && "border-destructive focus-visible:ring-destructive"
+                      )}
                     />
                     {showError('title') && (
                       <p id="title-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
@@ -627,17 +635,17 @@ const NewCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="course-description" className="block text-xxs font-medium text-muted-foreground mb-1.5">
+                    <label htmlFor="course-description" className="block text-xs font-medium text-muted-foreground mb-1.5">
                       Beskrivelse
-                      <span className="ml-2 text-xxs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
-                    <textarea
+                    <Textarea
                       id="course-description"
                       placeholder="Legg til en kort beskrivelse"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       maxLength={DESCRIPTION_MAX_LENGTH}
-                      className="min-h-[120px] w-full rounded-lg border border-zinc-200 px-3 py-2.5 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 resize-none"
+                      className="min-h-[120px]"
                     />
                     <div className="flex justify-end mt-1.5">
                       <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-text-tertiary'}`}>
@@ -649,9 +657,9 @@ const NewCoursePage = () => {
 
                 {/* Right Column: Image Upload */}
                 <div className="md:col-span-5 flex flex-col">
-                  <label className="block text-xxs font-medium text-muted-foreground mb-1.5">
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">
                     Kursbilde
-                    <span className="ml-2 text-xxs font-normal text-muted-foreground">Valgfritt</span>
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                   </label>
                   <div className="flex-1">
                     <ImageUpload
@@ -766,20 +774,12 @@ const NewCoursePage = () => {
                 <Button
                   size="compact"
                   onClick={handlePublish}
-                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                  loadingText="Oppretter"
                   aria-describedby={isSubmitting ? 'submit-status' : undefined}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                      <span id="submit-status">Oppretter</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Publiser</span>
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </>
-                  )}
+                  <span>Publiser</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </div>

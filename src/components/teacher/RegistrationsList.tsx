@@ -50,7 +50,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         <h3 className="font-geist text-sm font-medium text-text-primary">Siste påmeldinger</h3>
         <Link
           to="/teacher/signups"
-          className="text-xs font-medium text-text-tertiary hover:text-text-primary transition-colors"
+          className="text-xs font-medium text-text-tertiary hover:text-text-primary smooth-transition"
         >
           Se alle
         </Link>
@@ -79,7 +79,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
                 key={registration.id}
                 to="/teacher/signups"
                 className={cn(
-                  "block p-3.5 rounded-lg border border-zinc-100 bg-surface/30 hover:bg-surface hover:border-zinc-200 transition-colors relative overflow-hidden focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none",
+                  "block p-3.5 rounded-lg border border-zinc-100 bg-surface/30 hover:bg-zinc-50 smooth-transition relative overflow-hidden focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none",
                   // Left accent for exception rows (payment failed, offer expiring, pending payment)
                   registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-warning"
                 )}

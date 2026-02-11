@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase, typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { Profile, Organization, OrgMemberRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 
@@ -52,29 +52,6 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
     .single()
 
   if (error) {
-    // If profile doesn't exist (e.g., after password reset), create it
-    if (error.code === 'PGRST116') {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        const { data: newProfile, error: insertError } = await typedFrom('profiles')
-          .insert({
-            id: userId,
-            email: user.email || '',
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-          })
-          .select()
-          .single()
-
-        if (insertError) {
-          logger.error('Error creating profile:', insertError)
-          return null
-        }
-
-        return newProfile
-      }
-    }
-
     logger.error('Error fetching profile:', error)
     return null
   }
@@ -125,8 +102,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   organizationsRef.current = organizations
 
   // Load user data (profile + organizations)
-  const loadUserData = useCallback(async (userId: string) => {
+  // Returns false if the user no longer exists server-side (stale session)
+  const loadUserData = useCallback(async (userId: string): Promise<boolean> => {
+    // Verify user still exists server-side (getSession only reads cached JWT)
+    const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser()
+    if (userError || !verifiedUser) {
+      logger.error('User no longer exists server-side, signing out')
+      await supabase.auth.signOut()
+      return false
+    }
+
     const userProfile = await fetchProfileData(userId)
+    if (!userProfile) {
+      // Profile doesn't exist — user data was deleted. Sign out the stale session.
+      logger.error('Profile not found for authenticated user, signing out')
+      await supabase.auth.signOut()
+      return false
+    }
     setProfile(userProfile)
 
     const { organizations: orgs, memberships } = await fetchOrganizationsData(userId)
@@ -151,6 +143,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setUserType('student')
     }
+
+    return true
   }, [])
 
   // Initialize auth and listen for changes
@@ -333,6 +327,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganizations((prev) => [...prev, org])
     setCurrentOrganization(org)
     setUserRole('owner')
+    setUserType('teacher')
     localStorage.setItem('currentOrganizationId', org.id)
 
     return { organization: org, error: null }

@@ -10,10 +10,18 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker24h } from '@/components/course/time-picker-24h';
-import { DurationInput } from '@/components/course/duration-input';
+import { Input } from '@/components/ui/input';
+import { TimePicker } from '@/components/ui/time-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { cn } from '@/lib/utils';
 
 type CourseType = 'series' | 'single';
 
@@ -161,7 +169,7 @@ function NewCourseScheduleSection({
           <label htmlFor="start-time" className="block text-xs font-medium text-muted-foreground mb-1.5">
             Starttid <span className="text-destructive">*</span>
           </label>
-          <TimePicker24h
+          <TimePicker
             id="start-time"
             value={startTime}
             onChange={(time) => {
@@ -184,18 +192,31 @@ function NewCourseScheduleSection({
           <label htmlFor="duration" className="block text-xs font-medium text-muted-foreground mb-1.5">
             Varighet <span className="text-destructive">*</span>
           </label>
-          <DurationInput
-            id="duration"
-            value={duration}
-            onChange={(val) => {
-              onDurationChange(val);
+          <Select
+            value={duration?.toString() || ""}
+            onValueChange={(val) => {
+              onDurationChange(parseInt(val));
               onTouchedChange(prev => ({ ...prev, duration: true }));
             }}
-            onBlur={() => onBlur('duration')}
-            min={15}
-            max={240}
-            error={!!(showError('duration'))}
-          />
+          >
+            <SelectTrigger
+              id="duration"
+              onBlur={() => onBlur('duration')}
+              className={cn(
+                "w-full h-11 bg-input-bg",
+                showError('duration') ? "border-destructive" : "border-zinc-300"
+              )}
+            >
+              <SelectValue placeholder="Velg" />
+            </SelectTrigger>
+            <SelectContent>
+              {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
+                <SelectItem key={mins} value={mins.toString()}>
+                  {mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} t ${mins % 60 > 0 ? `${mins % 60} min` : ''}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {showError('duration') && (
             <p id="duration-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
               <AlertCircle className="h-3 w-3" aria-hidden="true" />
@@ -220,8 +241,8 @@ function NewCourseScheduleSection({
                   aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                   aria-invalid={showError('weeks') ? 'true' : undefined}
                   aria-required="true"
-                  className={`flex items-center justify-between w-full h-10 rounded-lg border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                    showError('weeks') ? 'border-destructive' : 'border-zinc-200'
+                  className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-text-primary text-sm bg-input-bg text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ios-ease ${
+                    showError('weeks') ? 'border-destructive' : 'border-zinc-300'
                   }`}
                 >
                   <span className={weeks ? 'text-text-primary' : 'text-text-tertiary'}>{weeks || 'Velg'}</span>
@@ -273,8 +294,8 @@ function NewCourseScheduleSection({
                   aria-describedby={showError('eventDays') ? 'eventDays-error' : undefined}
                   aria-invalid={showError('eventDays') ? 'true' : undefined}
                   aria-required="true"
-                  className={`flex items-center justify-between w-full h-10 rounded-lg border px-3 text-text-primary text-sm bg-input-bg transition-all text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                    showError('eventDays') ? 'border-destructive' : 'border-zinc-200'
+                  className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-text-primary text-sm bg-input-bg text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ios-ease ${
+                    showError('eventDays') ? 'border-destructive' : 'border-zinc-300'
                   }`}
                 >
                   <span className={eventDays ? 'text-text-primary' : 'text-text-tertiary'}>{eventDays || 'Velg'}</span>
@@ -372,7 +393,7 @@ function NewCourseScheduleSection({
                       {session.time}
                     </div>
                   ) : (
-                    <TimePicker24h
+                    <TimePicker
                       value={session.time}
                       onChange={(time) => {
                         if (time === startTime) {
@@ -381,11 +402,12 @@ function NewCourseScheduleSection({
                           updateSessionTime(index, time);
                         }
                       }}
-                      className={`h-8 ${
+                      className={cn(
+                        "h-8 w-32",
                         sessionTimes[index]
                           ? 'border-warning/30 ring-1 ring-warning/20'
                           : ''
-                      }`}
+                      )}
                     />
                   )}
 
@@ -423,7 +445,7 @@ function NewCourseScheduleSection({
               Sted <span className="text-destructive">*</span>
             </label>
             <div className="relative">
-              <input
+              <Input
                 ref={locationRef}
                 id="location"
                 type="text"
@@ -434,9 +456,10 @@ function NewCourseScheduleSection({
                 aria-describedby={showError('location') ? 'location-error' : undefined}
                 aria-invalid={showError('location') ? 'true' : undefined}
                 aria-required="true"
-                className={`w-full h-10 rounded-lg border pl-9 pr-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                  showError('location') ? 'border-destructive' : 'border-zinc-200'
-                }`}
+                className={cn(
+                  "w-full h-11 pl-9",
+                  showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                )}
               />
               <MapPin className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
             </div>
@@ -460,10 +483,10 @@ function NewCourseScheduleSection({
           <div className="col-span-1">
             <label htmlFor="price" className="block text-xs font-medium text-muted-foreground mb-1.5">
               Pris <span className="text-destructive">*</span>
-              <span className="ml-2 text-xxs font-normal text-muted-foreground">per person</span>
+              <span className="ml-2 text-xs font-normal text-muted-foreground">per person</span>
             </label>
             <div className="relative">
-              <input
+              <Input
                 ref={priceRef}
                 id="price"
                 type="number"
@@ -475,9 +498,10 @@ function NewCourseScheduleSection({
                 aria-describedby={showError('price') ? 'price-error' : undefined}
                 aria-invalid={showError('price') ? 'true' : undefined}
                 aria-required="true"
-                className={`w-full h-10 rounded-lg border pl-3 pr-12 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                  showError('price') ? 'border-destructive' : 'border-zinc-200'
-                }`}
+                className={cn(
+                  "w-full h-11 pr-12",
+                  showError('price') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                )}
               />
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                 <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>NOK</span>
@@ -496,7 +520,7 @@ function NewCourseScheduleSection({
             <label htmlFor="capacity" className="block text-xs font-medium text-muted-foreground mb-1.5">
               Maks antall <span className="text-destructive">*</span>
             </label>
-            <input
+            <Input
               ref={capacityRef}
               id="capacity"
               type="number"
@@ -508,9 +532,10 @@ function NewCourseScheduleSection({
               aria-describedby={showError('capacity') ? 'capacity-error' : undefined}
               aria-invalid={showError('capacity') ? 'true' : undefined}
               aria-required="true"
-              className={`w-full h-10 rounded-lg border px-3 text-text-primary placeholder:text-text-tertiary text-sm bg-input-bg transition-all focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ${
-                showError('capacity') ? 'border-destructive' : 'border-zinc-200'
-              }`}
+              className={cn(
+                "w-full h-11",
+                showError('capacity') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+              )}
             />
             {showError('capacity') && (
               <p id="capacity-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">

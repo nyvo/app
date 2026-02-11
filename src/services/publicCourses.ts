@@ -140,7 +140,6 @@ export async function fetchPublicCourses(
 
   const courses = coursesData as unknown as CourseQueryResult[]
   const courseIds = courses.map(c => c.id)
-  const todayStr = new Date().toISOString().split('T')[0]
 
   // Batch fetch signups and sessions in parallel (2 queries instead of 4)
   const [signupsResult, sessionsResult] = await Promise.all([

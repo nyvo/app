@@ -1,10 +1,12 @@
 import * as React from "react"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface FilterTabsContextValue {
   value: string
   onValueChange: (value: string) => void
   variant: "default" | "contained" | "pill"
+  layoutId: string
 }
 
 const FilterTabsContext = React.createContext<FilterTabsContextValue | undefined>(undefined)
@@ -28,13 +30,17 @@ interface FilterTabsProps {
 
 const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
   ({ value, onValueChange, children, className, variant = "default" }, ref) => {
+    const layoutId = React.useId()
+
     return (
-      <FilterTabsContext.Provider value={{ value, onValueChange, variant }}>
+      <FilterTabsContext.Provider value={{ value, onValueChange, variant, layoutId }}>
         <div
           ref={ref}
           className={cn(
-            "flex items-center",
-            variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-lg" : "gap-2",
+            "flex items-center relative",
+            variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-lg"
+              : variant === "pill" ? "gap-1.5"
+              : "gap-1 border-b border-border",
             className
           )}
           role="tablist"
@@ -63,7 +69,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-primary text-primary-foreground rounded-lg"
+            ? "bg-white text-text-primary rounded-lg border border-zinc-400"
             : "bg-white text-muted-foreground hover:text-text-primary rounded-lg border border-border"
         case "contained":
           return isActive
@@ -71,8 +77,8 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
             : "bg-transparent text-text-secondary hover:text-text-primary"
         default:
           return isActive
-            ? "bg-white text-text-primary border border-border"
-            : "bg-transparent text-text-secondary border border-transparent hover:text-text-primary hover:bg-surface-elevated"
+            ? "text-text-primary"
+            : "text-muted-foreground hover:text-text-primary"
       }
     }
 
@@ -84,16 +90,25 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         aria-selected={isActive}
         onClick={() => context.onValueChange(value)}
         className={cn(
-          "shrink-0 h-10 px-4 py-2.5 text-sm font-medium ios-ease cursor-pointer transition-colors",
-          // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
+          "relative shrink-0 font-medium ios-ease cursor-pointer transition-colors",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-          "rounded-lg",
-          variant !== "pill" && "text-xs px-3 py-2",
+          variant === "default"
+            ? "text-xs px-3 py-2 -mb-px"
+            : variant === "pill"
+              ? "text-xs px-3 py-1.5 rounded-lg"
+              : "text-xs px-3 py-2 rounded-lg h-10",
           getStyles(),
           className
         )}
       >
         {children}
+        {variant === "default" && isActive && (
+          <motion.div
+            layoutId={context.layoutId}
+            className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-primary"
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
+        )}
       </button>
     )
   }

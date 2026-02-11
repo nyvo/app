@@ -73,10 +73,10 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
   }, [timeFilter, filteredCourses]);
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white p-7 border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white p-6 border border-zinc-200 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-geist text-sm font-medium text-text-primary">Dine kurs</h3>
-        <FilterTabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as 'today' | 'week')}>
+        <FilterTabs variant="pill" value={timeFilter} onValueChange={(v) => setTimeFilter(v as 'today' | 'week')}>
           <FilterTab value="today">I dag</FilterTab>
           <FilterTab value="week">Hele uken</FilterTab>
         </FilterTabs>
@@ -116,7 +116,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
                           className="mb-0.5"
                         />
                       ) : (
-                        <span className="block text-xxs font-medium uppercase tracking-wide text-text-tertiary">
+                        <span className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary">
                           {dayName}
                         </span>
                       )
@@ -128,7 +128,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
                 )}
                 <Link
                   to={`/teacher/courses/${course.id}`}
-                  className="flex-1 min-w-0 rounded-lg bg-zinc-50 border border-zinc-100 p-3.5 transition-all hover:bg-zinc-100 hover:border-zinc-200 cursor-pointer flex justify-between items-center group/card focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
+                  className="flex-1 min-w-0 rounded-lg bg-zinc-50 border border-zinc-100 p-3.5 smooth-transition hover:bg-zinc-50 cursor-pointer flex justify-between items-center group/card focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div

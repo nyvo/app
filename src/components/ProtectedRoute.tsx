@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, type UserType } from '@/contexts/AuthContext';
-import { Loader2, Infinity } from 'lucide-react';
+import { Infinity } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Spinner } from '@/components/ui/spinner';
@@ -15,17 +15,6 @@ function LoadingScreen({ message = 'Laster' }: { message?: string }) {
       </div>
     </div>
   );
-}
-
-// Generate URL-friendly slug from organization name
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[æ]/g, 'ae')
-    .replace(/[ø]/g, 'o')
-    .replace(/[å]/g, 'a')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 }
 
 // Check if slug is available
@@ -51,11 +40,6 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
   const [orgCreationError, setOrgCreationError] = useState<string | null>(null);
   const orgCreationAttempted = useRef(false);
 
-  // State for inline org creation form
-  const [orgName, setOrgName] = useState('');
-  const [orgNameError, setOrgNameError] = useState<string | null>(null);
-  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
-
   // Handle pending organization creation after signup
   useEffect(() => {
     if (!user || currentOrganization || orgCreationAttempted.current || isCreatingOrg) return;
@@ -68,7 +52,13 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
 
     const createPendingOrg = async () => {
       try {
-        const { name, slug } = JSON.parse(pendingOrgData);
+        const { name, slug, email: pendingEmail } = JSON.parse(pendingOrgData);
+
+        // Cross-account safety: verify the pending org belongs to this user
+        if (pendingEmail && user.email !== pendingEmail) {
+          localStorage.removeItem('pendingOrganization');
+          return;
+        }
 
         // Check slug availability before creating
         const isAvailable = await checkSlugAvailable(slug);
@@ -92,46 +82,6 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
     createPendingOrg();
   }, [user, currentOrganization, createOrganization, isCreatingOrg]);
 
-  // Handle inline org creation
-  const handleCreateOrg = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!orgName.trim()) {
-      setOrgNameError('Skriv inn et navn');
-      return;
-    }
-
-    const slug = generateSlug(orgName);
-    if (!slug) {
-      setOrgNameError('Skriv inn et gyldig navn');
-      return;
-    }
-
-    setIsCheckingSlug(true);
-    setOrgNameError(null);
-
-    try {
-      // Check slug availability
-      const isAvailable = await checkSlugAvailable(slug);
-      if (!isAvailable) {
-        setOrgNameError('Dette navnet er opptatt');
-        setIsCheckingSlug(false);
-        return;
-      }
-
-      setIsCreatingOrg(true);
-      const { error } = await createOrganization(orgName.trim(), slug);
-      if (error) {
-        setOrgCreationError(error.message);
-      }
-    } catch {
-      setOrgCreationError('Kunne ikke opprette organisasjonen');
-    } finally {
-      setIsCheckingSlug(false);
-      setIsCreatingOrg(false);
-    }
-  };
-
   // Loading states - return null to avoid double loader (App Suspense handles it)
   if (isLoading || !isInitialized) {
     return null;
@@ -143,14 +93,9 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // Check if user type matches requirement
-  if (requiredUserType && userType !== requiredUserType) {
-    // Wrong user type - redirect to appropriate dashboard
-    const redirectPath = userType === 'student' ? '/student/dashboard' : '/teacher';
-    return <Navigate to={redirectPath} replace />;
-  }
-
-  if (isCreatingOrg || (requireOrganization && !currentOrganization && localStorage.getItem('pendingOrganization'))) {
+  // Pending org creation: show loading BEFORE userType check
+  // (newly confirmed users have no org yet → userType='student', but they have pendingOrganization)
+  if (isCreatingOrg || (!currentOrganization && localStorage.getItem('pendingOrganization'))) {
     return <LoadingScreen message="Setter opp kontoen din" />;
   }
 
@@ -174,7 +119,44 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
     );
   }
 
-  // No organization state - show inline form
+  // Check if user type matches requirement (safe now — pendingOrg handled above)
+  if (requiredUserType && userType !== requiredUserType) {
+    // Student route accessed by teacher → redirect to teacher dashboard
+    if (requiredUserType === 'student' && userType === 'teacher') {
+      return <Navigate to="/teacher" replace />;
+    }
+    // Teacher route accessed by non-teacher → teacher-side error, NEVER redirect to student
+    return (
+      <div className="min-h-screen w-full bg-surface flex items-center justify-center">
+        <div className="w-full max-w-sm px-4">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+                <Infinity className="w-4 h-4" />
+              </div>
+              <span className="text-xl font-semibold tracking-tight text-text-primary">Ease</span>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
+            <h1 className="text-lg font-semibold text-text-primary mb-1">
+              Ingen tilgang
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              Du har ikke tilgang til denne siden. Logg inn med riktig konto.
+            </p>
+            <button
+              onClick={() => signOut()}
+              className="text-sm text-muted-foreground hover:text-text-primary ios-ease"
+            >
+              Logg ut
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No organization fallback — simplified error message
   if (requireOrganization && !currentOrganization) {
     return (
       <div className="min-h-screen w-full bg-surface flex items-center justify-center">
@@ -190,68 +172,19 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
           </div>
 
           {/* Card */}
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-            <div className="text-center mb-6">
-              <h1 className="text-lg font-semibold text-text-primary mb-1">
-                Opprett ditt studio
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Du trenger et studio for å komme i gang.
-              </p>
-            </div>
-
-            <form onSubmit={handleCreateOrg} className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="orgName" className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Navn på studioet
-                </label>
-                <input
-                  type="text"
-                  id="orgName"
-                  value={orgName}
-                  onChange={(e) => {
-                    setOrgName(e.target.value);
-                    setOrgNameError(null);
-                  }}
-                  className={`
-                    w-full h-11 px-3.5 rounded-lg border bg-input-bg text-sm text-text-primary placeholder:text-text-tertiary
-                    transition-all outline-none
-                    ${orgNameError
-                      ? 'border-destructive focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                      : 'border-zinc-300 hover:border-ring focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                    }
-                  `}
-                  placeholder="Mitt Yogastudio"
-                />
-                {orgNameError && (
-                  <p className="text-xs text-destructive">{orgNameError}</p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={isCheckingSlug || isCreatingOrg}
-                className="w-full h-11 bg-primary hover:bg-primary-soft disabled:bg-zinc-300 disabled:cursor-not-allowed text-primary-foreground text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ios-ease"
-              >
-                {isCheckingSlug || isCreatingOrg ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {isCheckingSlug ? 'Sjekker' : 'Oppretter'}
-                  </>
-                ) : (
-                  'Opprett'
-                )}
-              </button>
-            </form>
-
-            <div className="mt-4 pt-4 border-t border-border">
-              <button
-                onClick={() => signOut()}
-                className="w-full text-sm text-muted-foreground hover:text-text-primary ios-ease"
-              >
-                Logg ut
-              </button>
-            </div>
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
+            <h1 className="text-lg font-semibold text-text-primary mb-1">
+              Oppsettet ble ikke fullført
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              Vi kunne ikke opprette virksomheten din. Prøv å logge inn på nytt, eller kontakt support.
+            </p>
+            <button
+              onClick={() => signOut()}
+              className="text-sm text-muted-foreground hover:text-text-primary ios-ease"
+            >
+              Logg ut og prøv igjen
+            </button>
           </div>
         </div>
       </div>

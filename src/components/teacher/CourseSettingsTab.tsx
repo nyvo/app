@@ -2,10 +2,18 @@ import { Plus, Minus, Info } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker24h } from '@/components/course/time-picker-24h';
-import { DurationInput } from '@/components/course/duration-input';
+import { TimePicker } from '@/components/ui/time-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface CourseSettingsTabProps {
   // General info
@@ -87,9 +95,8 @@ export const CourseSettingsTab = ({
 
           <div>
             <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Beskrivelse</label>
-            <textarea
+            <Textarea
               rows={6}
-              className="w-full p-3 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white bg-input-bg hover:border-zinc-400 ios-ease resize-none"
               value={settingsDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
             />
@@ -140,17 +147,28 @@ export const CourseSettingsTab = ({
           </div>
           <div>
             <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Tidspunkt</label>
-            <TimePicker24h
+            <TimePicker
               value={settingsTime}
               onChange={(time) => onTimeChange(time)}
             />
           </div>
           <div>
             <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">Varighet</label>
-            <DurationInput
-              value={settingsDuration}
-              onChange={onDurationChange}
-            />
+            <Select
+              value={settingsDuration?.toString() || ""}
+              onValueChange={(val) => onDurationChange(parseInt(val))}
+            >
+              <SelectTrigger className="w-full h-11 bg-input-bg border-zinc-300">
+                <SelectValue placeholder="Velg" />
+              </SelectTrigger>
+              <SelectContent>
+                {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
+                  <SelectItem key={mins} value={mins.toString()}>
+                    {mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} t ${mins % 60 > 0 ? `${mins % 60} min` : ''}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

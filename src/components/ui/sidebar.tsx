@@ -543,7 +543,7 @@ const sidebarMenuButtonVariants = cva(
       size: {
         default: "text-sm",
         sm: "text-xs py-2",
-        lg: "text-sm py-3 group-data-[collapsible=icon]:!p-0",
+        lg: "text-sm py-3 group-data-[collapsible=icon]:!size-11 group-data-[collapsible=icon]:!p-1.5 group-data-[collapsible=icon]:justify-center",
       },
     },
     defaultVariants: {

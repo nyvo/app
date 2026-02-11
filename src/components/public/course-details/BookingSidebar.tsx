@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import { PriceHeader } from './PriceHeader';
 import { TicketSelector } from './TicketSelector';
@@ -55,11 +56,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
           {/* Redirecting to payment state */}
           {redirectingToPayment ? (
             <div className="py-12 text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-text-primary" />
+              <Spinner size="xl" className="mx-auto mb-4 text-text-primary" />
               <p className="text-sm font-medium text-text-primary">
                 Går til betaling ...
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-text-secondary mt-1">
                 Vent litt
               </p>
             </div>
@@ -113,25 +114,19 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     size="compact"
                     type="submit"
                     className="w-full transition-all"
-                    disabled={submitting}
+                    loading={submitting}
+                    loadingText="Behandler"
                   >
-                    {submitting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Behandler
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center gap-2">
-                        Fullfør påmelding
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    )}
+                    <span className="flex items-center justify-center gap-2">
+                      Fullfør påmelding
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
                   </Button>
                 )}
               </div>
 
               {/* Disclaimer */}
-              <p className="text-center text-xxs text-text-tertiary -mt-2">
+              <p className="text-center text-xs text-text-tertiary -mt-2">
                 Sikker betaling. Du belastes ikke før bekreftelse.
               </p>
             </>

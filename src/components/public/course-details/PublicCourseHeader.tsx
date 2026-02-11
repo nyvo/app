@@ -30,7 +30,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
   const studioUrl = `/studio/${organizationSlug}`;
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-100">
+    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
@@ -50,7 +50,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           {/* Back button (desktop only) */}
           <Link
             to={studioUrl}
-            className="hidden sm:flex items-center gap-1 text-muted-foreground hover:text-text-primary transition-colors text-xs font-medium ios-ease"
+            className="hidden sm:flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors text-xs font-medium ios-ease"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
             Tilbake til timeplan
@@ -99,7 +99,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/login"
-              className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
+              className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               Logg inn
             </Link>

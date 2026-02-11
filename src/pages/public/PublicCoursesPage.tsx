@@ -3,11 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import {
   MapPin,
   Leaf,
-  Loader2,
   User,
   LogOut,
   BookOpen,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { CourseCard } from '@/components/public/CourseCard';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -150,12 +150,12 @@ const PublicCoursesPage = () => {
   const isEmpty = !loading && courses.length === 0 && organization;
 
   return (
-    <div className="min-h-screen w-full bg-white text-sidebar-foreground overflow-x-hidden font-sans">
+    <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
       {/* Minimal Navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-zinc-100/50">
+      <nav className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-zinc-200">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface border border-zinc-200 group-hover:border-zinc-300 transition-colors">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface border border-zinc-100 group-hover:border-zinc-400 transition-colors">
               <Leaf className="h-4 w-4 text-text-primary" />
             </div>
             <span className="text-sm font-medium tracking-tight text-text-primary">Ease</span>
@@ -194,7 +194,7 @@ const PublicCoursesPage = () => {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" />
+            <Spinner size="lg" />
           </div>
         )}
 
@@ -202,7 +202,7 @@ const PublicCoursesPage = () => {
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <h3 className="text-lg font-medium text-text-primary mb-2">{error}</h3>
-            <Button asChild variant="link" className="text-muted-foreground">
+            <Button asChild variant="link" className="text-text-tertiary">
               <Link to="/">Gå til forsiden</Link>
             </Button>
           </div>
@@ -255,7 +255,7 @@ const PublicCoursesPage = () => {
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-gradient-to-br from-white to-surface-elevated/50">
                 <p className="text-sm font-medium text-text-primary">Ingen aktive kurs</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-text-tertiary mt-1">
                   Det er ingen planlagte kurs for øyeblikket.
                 </p>
               </div>

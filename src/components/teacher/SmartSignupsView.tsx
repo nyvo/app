@@ -19,7 +19,6 @@ interface SmartSignupsViewProps {
   mode?: ModeFilter;
   onClearFilters?: () => void;
   actionHandlers?: ExceptionActionHandlers;
-  onToggleAttendance?: (signupId: string) => void;
 }
 
 // Get contextual empty state content based on mode and filter state
@@ -76,7 +75,6 @@ export function SmartSignupsView({
   mode = 'active',
   onClearFilters,
   actionHandlers,
-  onToggleAttendance,
 }: SmartSignupsViewProps) {
   // Loading state
   if (isLoading) {
@@ -167,7 +165,6 @@ export function SmartSignupsView({
             group={group}
             defaultExpanded={group.hasExceptions}
             actionHandlers={actionHandlers}
-            onToggleAttendance={onToggleAttendance}
           />
         ))}
       </div>

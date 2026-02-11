@@ -1,35 +1,36 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Infinity, ArrowLeft, Loader2 } from 'lucide-react';
+import { Infinity, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface FormData {
-  email: string;
-  password: string;
-}
-
-interface FormErrors {
-  email?: string;
-  password?: string;
-  general?: string;
-}
-
-const easing: [number, number, number, number] = [0.16, 1, 0.3, 1];
+import { authPageVariants, authPageTransition } from '@/lib/motion';
+import { useFormValidation } from '@/hooks/use-form-validation';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { signIn, user, isLoading: authLoading } = useAuth();
 
-  // Form state
-  const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { formData, errors, touched, setFormData, setErrors, handleChange, handleBlur, validateForm } =
+    useFormValidation({
+      initialValues: { email: '', password: '' },
+      rules: {
+        email: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn e-posten din'
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Sjekk at e-posten er riktig'
+            return undefined
+          },
+        },
+        password: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn passordet ditt'
+            return undefined
+          },
+        },
+      },
+    });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
@@ -38,62 +39,6 @@ const LoginPage = () => {
       navigate('/teacher');
     }
   }, [user, authLoading, navigate]);
-
-  // Form handlers
-  const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleBlur = (field: keyof FormData) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    validateField(field);
-  };
-
-  const validateField = (field: keyof FormData) => {
-    const newErrors: FormErrors = { ...errors };
-
-    switch (field) {
-      case 'email':
-        if (!formData.email.trim()) {
-          newErrors.email = 'Skriv inn e-posten din';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          newErrors.email = 'Sjekk at e-posten er riktig';
-        } else {
-          delete newErrors.email;
-        }
-        break;
-      case 'password':
-        if (!formData.password.trim()) {
-          newErrors.password = 'Skriv inn passordet ditt';
-        } else {
-          delete newErrors.password;
-        }
-        break;
-    }
-
-    setErrors(newErrors);
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-posten din';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Sjekk at e-posten er riktig';
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = 'Skriv inn passordet ditt';
-    }
-
-    setErrors(newErrors);
-    setTouched({ email: true, password: true });
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +56,8 @@ const LoginPage = () => {
         if (error.message.includes('Invalid login credentials')) {
           setErrors({ general: 'E-post eller passord stemmer ikke' });
         } else if (error.message.includes('Email not confirmed')) {
-          setErrors({ general: 'Bekreft e-posten din før du logger inn' });
+          navigate('/confirm-email', { state: { email: formData.email } });
+          return;
         } else {
           setErrors({ general: error.message });
         }
@@ -145,10 +91,10 @@ const LoginPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
@@ -159,13 +105,14 @@ const LoginPage = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: easing }}
+          variants={authPageVariants}
+          initial="initial"
+          animate="animate"
+          transition={authPageTransition}
           className="w-full flex flex-col items-center"
         >
           <div className="text-center mb-8 space-y-2 w-full">
-            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            <h1 className="text-2xl font-medium tracking-tight text-text-primary">
               Velkommen tilbake
             </h1>
             <p className="text-text-secondary text-sm">
@@ -186,7 +133,7 @@ const LoginPage = () => {
                 type="email"
                 id="email"
                 value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
+                onChange={(e) => handleChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
                 className={`
                   ${
@@ -222,7 +169,7 @@ const LoginPage = () => {
                 type="password"
                 id="password"
                 value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
+                onChange={(e) => handleChange('password', e.target.value)}
                 onBlur={() => handleBlur('password')}
                 className={`
                   ${
@@ -255,24 +202,18 @@ const LoginPage = () => {
 
             <Button
               type="submit"
-              disabled={isSubmitting}
+              loading={isSubmitting}
+              loadingText="Logger inn"
               className="w-full h-11 mt-2"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Logger inn
-                </>
-              ) : (
-                'Logg inn'
-              )}
+              Logg inn
             </Button>
           </form>
         </motion.div>
       </main>
 
       {/* Simple Footer */}
-      <footer className="py-6 text-center border-t border-border bg-white">
+      <footer className="py-6 text-center border-t border-border bg-surface">
         <p className="text-xs text-text-tertiary">
           Har du ikke konto?{' '}
           <Link

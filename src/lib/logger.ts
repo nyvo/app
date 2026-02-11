@@ -39,19 +39,4 @@ export const logger = {
   error: (...args: unknown[]) => {
     console.error(...args);
   },
-
-  /**
-   * Group logging (development only)
-   */
-  group: (label: string) => {
-    if (isDev) {
-      console.group(label);
-    }
-  },
-
-  groupEnd: () => {
-    if (isDev) {
-      console.groupEnd();
-    }
-  },
 };

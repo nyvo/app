@@ -49,7 +49,7 @@ const LandingPage = () => {
             <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center text-zinc-900">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-semibold tracking-tighter text-white">
+            <span className="text-lg font-medium tracking-tighter text-white">
               Ease
             </span>
           </div>
@@ -104,7 +104,7 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
-              className="text-4xl md:text-6xl font-semibold tracking-tighter leading-tight text-white mb-10 font-geist"
+              className="text-4xl md:text-6xl font-medium tracking-tighter leading-tight text-white mb-10 font-geist"
             >
               Det moderne operativsystemet <br className="hidden md:block" />
               <span className="text-blue-100">for yogastudioer.</span>
@@ -153,7 +153,7 @@ const LandingPage = () => {
                 ].map((brand) => (
                   <span
                     key={brand.name}
-                    className="text-lg font-bold tracking-tighter text-white flex items-center gap-2"
+                    className="text-lg font-medium tracking-tighter text-white flex items-center gap-2"
                   >
                     <brand.icon className="w-4 h-4" /> {brand.name}
                   </span>
@@ -178,13 +178,13 @@ const LandingPage = () => {
                 className="absolute top-8 right-8 z-20 bg-white rounded-lg border border-zinc-200 p-3 flex items-center gap-3 max-w-xs"
               >
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                  <span className="text-xs font-bold">Ny</span>
+                  <span className="text-xs font-medium">Ny</span>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-text-primary">
                     Ny påmelding mottatt
                   </p>
-                  <p className="text-[10px] text-text-secondary">
+                  <p className="text-xxs text-text-secondary">
                     Yin Yoga • Akkurat nå
                   </p>
                 </div>
@@ -228,7 +228,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16 max-w-2xl mx-auto"
         >
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
             Hvordan det fungerer
           </h2>
           <p className="text-text-secondary text-lg">
@@ -251,10 +251,10 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-text-primary">
                   1
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">
+                <h3 className="text-xl font-medium text-text-primary">
                   Sett opp timeplanen
                 </h3>
               </div>
@@ -281,10 +281,10 @@ const LandingPage = () => {
             className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-text-primary">
                 2
               </div>
-              <h3 className="text-xl font-semibold text-text-primary">
+              <h3 className="text-xl font-medium text-text-primary">
                 Del lenken
               </h3>
             </div>
@@ -316,10 +316,10 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-semibold text-text-primary">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-text-primary">
                   3
                 </div>
-                <h3 className="text-xl font-semibold text-text-primary">
+                <h3 className="text-xl font-medium text-text-primary">
                   Undervis
                 </h3>
               </div>
@@ -329,23 +329,23 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Visual for Step 3 */}
-            <div className="mt-auto relative w-full bg-zinc-50 rounded-xl border border-border p-6 flex flex-col gap-4">
-               <div className="bg-white p-3 rounded-xl border border-border flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
+            <div className="mt-auto relative w-full bg-zinc-50 rounded-xl border border-zinc-200 p-6 flex flex-col gap-4">
+               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-text-primary">Påminnelse sendt</p>
-                    <p className="text-[10px] text-text-secondary">til 12 deltakere</p>
+                    <p className="text-xxs text-text-secondary">til 12 deltakere</p>
                   </div>
                </div>
-               <div className="bg-white p-3 rounded-xl border border-border flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
+               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-text-primary">Oppmøte registrert</p>
-                    <p className="text-[10px] text-text-secondary">Automatisk</p>
+                    <p className="text-xxs text-text-secondary">Automatisk</p>
                   </div>
                </div>
             </div>
@@ -368,7 +368,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="mb-24 text-center max-w-2xl mx-auto"
         >
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
             Alt du trenger
           </h2>
           <p className="text-text-secondary text-lg">
@@ -385,10 +385,10 @@ const LandingPage = () => {
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-text-primary text-xs font-medium mb-6">
                   <CreditCard className="w-3.5 h-3.5" /> Betaling
                 </div>
-                <h3 className="text-3xl font-semibold text-text-primary tracking-tight mb-4">
+                <h3 className="text-3xl font-medium text-text-primary tracking-tight mb-4">
                   Inntekter på autopilot.
                 </h3>
                 <p className="text-text-secondary text-lg leading-relaxed mb-8">
@@ -405,13 +405,13 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="relative">
-                <div className="bg-zinc-50/50 rounded-2xl border border-border p-8">
+                <div className="bg-zinc-50/50 rounded-2xl border border-zinc-200 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <p className="text-sm font-medium text-text-tertiary uppercase">
                         Total omsetning
                       </p>
-                      <p className="text-3xl font-bold text-text-primary mt-1">
+                      <p className="text-3xl font-medium text-text-primary mt-1">
                         42.500 kr
                       </p>
                     </div>
@@ -439,16 +439,11 @@ const LandingPage = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="bg-white rounded-2xl border border-zinc-200 p-8 overflow-hidden relative group flex flex-col"
           >
-            <div className="absolute top-4 right-4">
-              <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white">
-                Studio
-              </span>
-            </div>
             <div className="mb-8 relative z-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-border text-text-primary text-xs font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-text-primary text-xs font-medium mb-4">
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Regnskap
               </div>
-              <h3 className="text-2xl font-semibold text-text-primary tracking-tight mb-3">
+              <h3 className="text-2xl font-medium text-text-primary tracking-tight mb-3">
                 Regnskap uten hodepine.
               </h3>
               <p className="text-text-secondary">
@@ -482,7 +477,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
             Enkel prismodell
           </h2>
           <p className="text-text-secondary mb-3">
@@ -495,25 +490,24 @@ const LandingPage = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto"
+          className="max-w-lg mx-auto"
         >
-          {/* Free/Hobby */}
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="bg-white p-8 rounded-2xl border border-zinc-200 hover:border-zinc-400 transition-all h-full flex flex-col"
+            className="bg-white p-8 rounded-2xl border border-zinc-200 hover:border-zinc-400 transition-all flex flex-col"
           >
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-text-primary tracking-tight">
-                Hobby
+              <h3 className="text-xl font-medium text-text-primary tracking-tight">
+                Gratis
               </h3>
               <p className="text-sm text-text-secondary mt-2">
-                For å teste, eller for mindre studioer.
+                Alt du trenger for å komme i gang.
               </p>
             </div>
-            <div className="mb-8 pb-8 border-b border-border">
+            <div className="mb-8 pb-8 border-b border-zinc-200">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight text-text-primary">
+                <span className="text-4xl font-medium tracking-tight text-text-primary">
                   0 kr
                 </span>
                 <span className="text-text-secondary font-medium">/ md</span>
@@ -527,7 +521,7 @@ const LandingPage = () => {
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
-                <span>Opptil 3 aktive kurs</span>
+                <span>Ubegrenset antall kurs og elever</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text-secondary">
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -539,73 +533,20 @@ const LandingPage = () => {
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
-                <span>Standard support</span>
+                <span>Fiken-integrasjon (Regnskap)</span>
               </li>
-            </ul>
-            <Button
-              asChild
-              variant="outline-soft"
-              className="w-full mt-auto h-12 rounded-lg"
-            >
-              <Link to="/signup?type=teacher">Start gratis</Link>
-            </Button>
-          </motion.div>
-
-          {/* Studio */}
-          <motion.div
-            variants={fadeInUp}
-            transition={{ duration: 0.6 }}
-            className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 relative overflow-hidden text-white h-full flex flex-col group"
-          >
-            <div className="absolute top-0 right-0 bg-gradient-to-bl from-zinc-800 to-transparent w-40 h-40 rounded-bl-full opacity-50"></div>
-            <div className="absolute inset-0 bg-grain opacity-[0.03] mix-blend-overlay"></div>
-            <div className="mb-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white tracking-tight">
-                  Studio
-                </h3>
-                <span className="bg-white text-zinc-900 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-zinc-200">
-                  Mest populær
-                </span>
-              </div>
-              <p className="text-sm text-zinc-400 mt-2">
-                For deg som driver et aktivt studio og vil automatisere alt.
-              </p>
-            </div>
-            <div className="mb-8 pb-8 border-b border-zinc-800 relative z-10">
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight text-white">
-                  499 kr
-                </span>
-                <span className="text-zinc-400 font-medium">/ md</span>
-              </div>
-              <p className="text-xs text-zinc-500 mt-2">Ingen bindingstid.</p>
-            </div>
-            <ul className="space-y-4 mb-8 relative z-10 flex-1">
-              <li className="flex items-start gap-3 text-sm text-zinc-300">
-                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-                <span>Ubegrenset antall kurs & elever</span>
-              </li>
-              <li className="flex items-start gap-3 text-sm text-zinc-300">
-                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-                <span>Full Fiken-integrasjon (Regnskap)</span>
-              </li>
-              <li className="flex items-start gap-3 text-sm text-zinc-300">
-                <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center flex-shrink-0 mt-0.5 border border-zinc-700">
-                  <Check className="w-3 h-3 text-white" />
+              <li className="flex items-start gap-3 text-sm text-text-secondary">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-text-primary" />
                 </div>
                 <span>Eget design på booking-siden</span>
               </li>
             </ul>
             <Button
               asChild
-              className="w-full relative z-10 mt-auto h-12 rounded-lg bg-white text-zinc-900 hover:bg-zinc-100 border-none font-semibold transition-all"
+              className="w-full mt-auto h-12 rounded-lg"
             >
-              <Link to="/signup?type=studio">Velg Studio</Link>
+              <Link to="/signup">Kom i gang</Link>
             </Button>
           </motion.div>
         </motion.div>
@@ -625,10 +566,10 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
             <div className="md:col-span-5">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
                   <Infinity className="w-4 h-4" />
                 </div>
-                <span className="text-xl font-bold tracking-tighter text-text-primary">
+                <span className="text-xl font-medium tracking-tighter text-text-primary">
                   Ease
                 </span>
               </div>
@@ -641,7 +582,7 @@ const LandingPage = () => {
               </div>
             </div>
             <div className="md:col-span-2 md:col-start-7">
-              <h4 className="font-semibold text-text-primary mb-6 text-sm">
+              <h4 className="font-medium text-text-primary mb-6 text-sm">
                 Produkt
               </h4>
               <ul className="space-y-4 text-sm text-text-secondary">
@@ -663,7 +604,7 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="font-semibold text-text-primary mb-6 text-sm">
+              <h4 className="font-medium text-text-primary mb-6 text-sm">
                 Selskap
               </h4>
               <ul className="space-y-4 text-sm text-text-secondary">
@@ -685,7 +626,7 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="font-semibold text-text-primary mb-6 text-sm">
+              <h4 className="font-medium text-text-primary mb-6 text-sm">
                 Juridisk
               </h4>
               <ul className="space-y-4 text-sm text-text-secondary">

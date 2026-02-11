@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
 
 export interface InstructorCardProps {
@@ -35,7 +36,7 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({ instructor }) =>
       <div className="flex-1 min-w-0">
         <div className="text-base font-medium text-text-primary">{name}</div>
         {role && (
-          <div className="text-sm text-muted-foreground mt-0.5">
+          <div className="text-sm text-text-secondary mt-0.5">
             {role}
           </div>
         )}
@@ -43,12 +44,12 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({ instructor }) =>
 
       {/* Profile link (if available) */}
       {profileUrl && (
-        <a
-          href={profileUrl}
-          className="text-sm font-medium text-text-primary hover:text-muted-foreground ios-ease shrink-0"
+        <Link
+          to={profileUrl}
+          className="text-sm font-medium text-text-primary hover:text-text-secondary ios-ease shrink-0"
         >
-          View Profile
-        </a>
+          Se profil
+        </Link>
       )}
     </div>
   );

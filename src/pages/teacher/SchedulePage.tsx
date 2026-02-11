@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, CalendarPlus, Filter, Users, CheckCircle2, CalendarDays, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, Filter, Users, CheckCircle2, CalendarDays } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
-import { Leaf } from 'lucide-react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -93,11 +92,11 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-200 p-2 hover:border-ring transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-300 p-2 hover:border-zinc-400 transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
-        <span className="text-xxs font-medium text-text-secondary">
+        <span className="text-xs font-medium text-text-secondary">
           {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
         {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
@@ -111,7 +110,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         )}
       </div>
       <p className="text-xs font-medium text-text-primary mt-1 truncate">{event.title}</p>
-      <p className="text-xxs text-text-tertiary mt-0.5">{event.location}</p>
+      <p className="text-xs text-text-tertiary mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -121,11 +120,11 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
               size="xxs"
               ringClassName="ring-1 ring-border"
             />
-            <span className="text-xxs text-text-tertiary">{event.instructor}</span>
+            <span className="text-xs text-text-tertiary">{event.instructor}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-3 w-3 text-text-tertiary" />
-            <span className="text-xxs text-text-tertiary">
+            <span className="text-xs text-text-tertiary">
               {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
             </span>
           </div>
@@ -162,7 +161,7 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`block rounded-2xl bg-white border border-zinc-200 p-4 hover:border-ring transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`block rounded-2xl bg-white border border-zinc-200 p-4 hover:border-zinc-400 transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -232,7 +231,7 @@ const MobileDayView = ({
                   ? 'bg-primary text-primary-foreground'
                   : day.isToday
                   ? 'bg-surface-elevated text-text-primary border border-border'
-                  : 'bg-surface hover:bg-surface-elevated text-text-secondary'
+                  : 'bg-surface hover:bg-zinc-50 text-text-secondary'
               }`}
             >
               <span className="text-xs font-medium uppercase tracking-wide">
@@ -608,14 +607,14 @@ export const SchedulePage = () => {
 
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-nowrap -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12">
-              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-zinc-200 px-3 py-2 text-xxs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-zinc-200 px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
                 <Filter className="h-3.5 w-3.5" />
                 Instruktør: Alle
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xxs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
                 Rom
               </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xxs font-medium text-text-secondary hover:border-text-tertiary hover:text-text-primary ios-ease cursor-pointer">
+              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
                 Kurstype
               </button>
               {/* Dynamic style legend - only shows styles from active courses */}
@@ -667,7 +666,7 @@ export const SchedulePage = () => {
 
             {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-zinc-900/5">
+              <div className="absolute inset-0 z-30 flex items-center justify-center bg-surface/30">
                 <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-zinc-200">
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-white border border-border">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
@@ -709,8 +708,8 @@ export const SchedulePage = () => {
                       day.isToday
                         ? 'bg-primary text-primary-foreground'
                         : day.isWeekend
-                        ? 'text-text-tertiary group-hover:bg-surface-elevated'
-                        : 'text-text-secondary group-hover:bg-surface-elevated'
+                        ? 'text-text-tertiary group-hover:bg-zinc-50'
+                        : 'text-text-secondary group-hover:bg-zinc-50'
                     }`}
                   >
                     {day.date}

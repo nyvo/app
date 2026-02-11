@@ -10,7 +10,8 @@ import {
   HelpCircle,
   LogOut,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  ChevronsUpDown
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -84,7 +85,7 @@ export const TeacherSidebar = () => {
             <Leaf className="h-4 w-4" />
           </div>
           {!isCollapsed && (
-            <span className="font-geist text-base font-medium text-text-primary tracking-tight select-none">
+            <span className="font-geist text-base font-medium text-text-primary tracking-tight select-none leading-none">
               Ease
             </span>
           )}
@@ -103,16 +104,16 @@ export const TeacherSidebar = () => {
                       asChild
                       isActive={active}
                       className={cn(
-                        "transition-all duration-200",
+                        "!transition-none",
                         active
                           ? 'bg-white border border-zinc-200 text-text-primary'
-                          : 'text-text-secondary border border-transparent hover:bg-white/50 hover:text-text-primary'
+                          : 'text-text-secondary border border-transparent'
                       )}
                     >
                       <Link to={item.href} className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
                         <item.icon className={cn(
-                          "h-4 w-4 shrink-0 transition-colors",
-                          active ? 'text-primary' : 'text-text-tertiary group-hover:text-text-secondary'
+                          "h-4 w-4 shrink-0",
+                          active ? 'text-primary' : 'text-text-tertiary'
                         )} />
                         {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
                       </Link>
@@ -145,7 +146,7 @@ export const TeacherSidebar = () => {
         <button
           onClick={toggleSidebar}
           className={cn(
-            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-white hover:text-text-secondary transition-all cursor-pointer border border-transparent hover:border-zinc-200 p-2",
+            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-zinc-50 hover:text-text-secondary smooth-transition cursor-pointer border border-transparent hover:border-zinc-200 p-2",
             isCollapsed && "px-0"
           )}
           title={isCollapsed ? 'Utvid meny' : 'Skjul meny'}
@@ -170,7 +171,8 @@ export const TeacherSidebar = () => {
                   size="lg"
                   className={cn(
                     "w-full transition-all duration-200",
-                    isProfileMenuOpen ? "bg-white border border-zinc-200" : "hover:bg-white/50 border border-transparent"
+                    "bg-white border border-zinc-200",
+                    !isProfileMenuOpen && "hover:border-zinc-400"
                   )}
                 >
                   <UserAvatar
@@ -180,26 +182,33 @@ export const TeacherSidebar = () => {
                     ringClassName="border border-zinc-200"
                   />
                   {!isCollapsed && (
-                    <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
-                      <p className="truncate text-sm font-medium text-text-primary leading-none mb-1">{profile?.name || 'Bruker'}</p>
-                      <p className="truncate text-[10px] text-text-tertiary uppercase tracking-wider font-medium leading-none">
-                        {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
-                      </p>
-                    </div>
+                    <>
+                      <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
+                        <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || 'Bruker'}</p>
+                        <p className="truncate text-xs text-muted-foreground leading-none">
+                          {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
+                        </p>
+                      </div>
+                      <ChevronsUpDown className="h-4 w-4 text-text-tertiary shrink-0" />
+                    </>
                   )}
                 </SidebarMenuButton>
               </PopoverTrigger>
               <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-2xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
                 <div className="flex flex-col gap-0.5">
+                  <div className="px-2 py-1.5 mb-1 border-b border-zinc-100">
+                    <p className="text-sm font-medium text-text-primary truncate">{profile?.name}</p>
+                    <p className="text-xxs font-medium text-text-tertiary tracking-wider truncate lowercase">{profile?.email}</p>
+                  </div>
                   <Link
                     to="/teacher/profile"
                     onClick={() => setIsProfileMenuOpen(false)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary transition-colors"
                   >
                     <Settings className="h-3.5 w-3.5 text-text-tertiary" />
                     Innstillinger
                   </Link>
-                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-colors cursor-pointer">
+                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary transition-colors cursor-pointer">
                     <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
                     Hjelp & Support
                   </button>

@@ -5,13 +5,14 @@ import {
   Bell,
   Shield,
   Mail,
+  MapPin,
   Leaf,
-  Menu,
-  MapPin
+  Menu
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -253,7 +254,7 @@ const TeacherProfilePage = () => {
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
                     {/* Avatar Section */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
                                 <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar">
@@ -268,7 +269,7 @@ const TeacherProfilePage = () => {
                     </div>
 
                     {/* Personal Info Form */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Personlig Informasjon</h3>
                             {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
@@ -365,18 +366,13 @@ const TeacherProfilePage = () => {
                             {/* Studio Description */}
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Om studioet</label>
-                                <textarea
+                                <Textarea
                                     rows={4}
                                     value={studioDescription}
                                     onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
                                     onBlur={() => handleBlur('studioDescription')}
                                     placeholder="Fortell litt om studioet ditt"
                                     aria-invalid={!!errors.studioDescription}
-                                    className={`w-full rounded-lg border px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease resize-none ${
-                                      errors.studioDescription
-                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
-                                    }`}
                                 />
                                 <div className="flex justify-between text-xs mt-1.5">
                                     {errors.studioDescription && touched.studioDescription ? (
@@ -395,7 +391,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
@@ -465,7 +461,7 @@ const TeacherProfilePage = () => {
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 ios-ease hover:border-zinc-400">
+                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Passord & Sikkerhet</h3>
                         </div>
