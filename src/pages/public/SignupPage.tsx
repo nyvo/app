@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Infinity, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { useFormValidation } from '@/hooks/use-form-validation';
@@ -293,9 +294,9 @@ const SignupPage = () => {
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <Alert variant="destructive" size="sm" icon={false}>
                 <p className="text-xs text-destructive">{errors.general}</p>
-              </div>
+              </Alert>
             )}
 
             <Button

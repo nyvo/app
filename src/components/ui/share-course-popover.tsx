@@ -57,7 +57,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-sm font-medium text-text-primary tracking-tight">Del dette kurset</h3>
-              <p className="text-xs text-muted-foreground mt-1 font-normal">
+              <p className="text-xs text-text-secondary mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>
             </div>
@@ -76,12 +76,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Twitter */}
             <button
               onClick={() => handleShare('twitter')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             >
-              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
-                <Twitter className="h-[18px] w-[18px] text-muted-foreground group-hover:text-text-primary stroke-[1.5]" />
+              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring smooth-transition">
+                <Twitter className="h-4 w-4 text-text-secondary group-hover:text-text-primary stroke-[1.5]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-text-secondary group-hover:text-text-secondary">
                 Twitter
               </span>
             </button>
@@ -89,12 +89,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* LinkedIn */}
             <button
               onClick={() => handleShare('linkedin')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             >
-              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
-                <Linkedin className="h-[18px] w-[18px] text-muted-foreground group-hover:text-blue-600 stroke-[1.5]" />
+              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring smooth-transition">
+                <Linkedin className="h-4 w-4 text-text-secondary group-hover:text-blue-600 stroke-[1.5]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-text-secondary group-hover:text-text-secondary">
                 LinkedIn
               </span>
             </button>
@@ -102,12 +102,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Facebook */}
             <button
               onClick={() => handleShare('facebook')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             >
-              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
-                <Facebook className="h-[18px] w-[18px] text-muted-foreground group-hover:text-blue-500 stroke-[1.5]" />
+              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring smooth-transition">
+                <Facebook className="h-4 w-4 text-text-secondary group-hover:text-blue-500 stroke-[1.5]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-text-secondary group-hover:text-text-secondary">
                 Facebook
               </span>
             </button>
@@ -115,12 +115,12 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Email */}
             <button
               onClick={() => handleShare('email')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus:outline-none focus:ring-2 focus:ring-border"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             >
-              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring transition-all">
-                <Mail className="h-[18px] w-[18px] text-muted-foreground group-hover:text-text-primary stroke-[1.5]" />
+              <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white group-hover:border-ring smooth-transition">
+                <Mail className="h-4 w-4 text-text-secondary group-hover:text-text-primary stroke-[1.5]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-text-secondary">
+              <span className="text-xs font-medium text-text-secondary group-hover:text-text-secondary">
                 E-post
               </span>
             </button>
@@ -132,7 +132,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
         {/* Copy Link Section */}
         <div className="px-5 py-4">
           <label className="text-xs font-medium text-text-secondary mb-2 block">Kurslenke</label>
-          <div className="flex items-center gap-2 p-1.5 bg-surface-elevated border border-border rounded-lg focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white transition-all">
+          <div className="flex items-center gap-2 p-1.5 bg-surface-elevated border border-border rounded-lg focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white smooth-transition">
             <div className="pl-2 text-text-tertiary">
               <LinkIcon className="h-3.5 w-3.5" />
             </div>
@@ -140,20 +140,20 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
               type="text"
               value={courseUrl}
               readOnly
-              className="bg-transparent border-none text-xs text-muted-foreground w-full focus:ring-0 px-1 py-1 font-mono truncate select-all outline-none"
+              className="bg-transparent border-none text-xs text-text-secondary w-full focus:ring-0 px-1 py-1 font-mono truncate select-all outline-none"
             />
             <button
               onClick={handleCopy}
-              className={`cursor-pointer flex items-center gap-1.5 border px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 shrink-0 ${
+              className={`cursor-pointer flex items-center gap-1.5 border px-3 py-1.5 rounded-lg text-xs font-medium smooth-transition shrink-0 ${
                 copied
-                  ? 'bg-green-50 border-green-200 text-green-700'
+                  ? 'bg-status-confirmed-bg border-status-confirmed-border text-status-confirmed-text'
                   : 'bg-white border-border hover:border-ring hover:bg-zinc-50 text-text-secondary'
               }`}
             >
               {copied ? (
                 <>
-                  <Check className="h-3 w-3 text-green-600" />
-                  <span className="text-green-700">Kopiert</span>
+                  <Check className="h-3 w-3 text-status-confirmed-text" />
+                  <span className="text-status-confirmed-text">Kopiert</span>
                 </>
               ) : (
                 <span>Kopier</span>
@@ -165,10 +165,10 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
         {/* Footer - Access Info */}
         <div className="bg-surface border-t border-border px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Offentlig tilgjengelig</span>
+            <span className="text-xs text-text-secondary">Offentlig tilgjengelig</span>
           </div>
 
-          <button className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-text-primary flex items-center gap-1 transition-colors">
+          <button className="cursor-pointer text-xs font-medium text-text-secondary hover:text-text-primary flex items-center gap-1 transition-colors">
             Innstillinger
             <ChevronRight className="h-3 w-3" />
           </button>

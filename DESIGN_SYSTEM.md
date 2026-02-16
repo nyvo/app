@@ -136,7 +136,7 @@ Refined to ensure high data density remains legible.
 
 | Class | Size | Line Height | Usage |
 |-------|------|-------------|-------|
-| `text-xxs` | 11px | 16px | Uppercase labels, small badges, toast descriptions. **V2.2: Includes `tracking-wider` (0.05em)** |
+| `text-xxs` | 11px | 16px | Small badges, toast descriptions |
 | `text-xs` | 12px | 16px | Meta text, secondary info, badges |
 | `text-small` | 13px | 18px | Dense lists, table data, toast titles |
 | `text-sm` | 14px | 20px | **Main UI Workhorse**. Standard body, inputs |
@@ -164,7 +164,7 @@ Refined to ensure high data density remains legible.
 
 #### Page Headers
 ```tsx
-<p className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">
+<p className="text-xs font-medium text-text-tertiary mb-2">
   Oversikt
 </p>
 <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
@@ -195,33 +195,35 @@ Refined to ensure high data density remains legible.
 
 #### Micro-labels
 ```tsx
-<span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
+<span className="text-xs font-medium text-text-tertiary">
   Label
 </span>
 ```
-> **Note:** Use `text-xxs` (11px) with `tracking-wider` for all uppercase micro-labels.
+> **Note:** Labels use sentence case and `text-xs` (12px) for a visually quiet style. No uppercase or tracking-wider.
 
 ---
 
 ## Components
 
-### Buttons
+### Buttons (V2.6 - Shadowless Zinc)
 
-> **V2.3 Geometry Rule:** Buttons and inputs use `rounded-lg` (8px). Only status badges, avatars, and pill variants use `rounded-full`. Cards use `rounded-2xl` (16px).
+> **V2.6 Geometry:** Buttons use `rounded-xl` (12px) for softer corners. Inputs keep `rounded-lg` (8px). Cards use `rounded-2xl` (16px).
 
-#### Primary Button (Dark) - Standard
+**Philosophy:** Buttons stay shadowless. The primary button uses a vertical gradient (`from-zinc-800 to-zinc-950`) with three layers of edge definition: outer ring (`ring-1 ring-black/5`), border (`border-zinc-700/70`), and an inner white ring via `after:` pseudo-element (`after:ring-1 after:ring-white/10`). This creates depth without box-shadow. Hover shifts the gradient and border one step lighter. Icons inside buttons use `opacity-70` for a muted, refined look.
+
+#### Primary Button (Dark)
 ```tsx
-className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary-soft ios-ease active:scale-[0.98]"
+className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 text-white border border-zinc-700/70 ring-1 ring-black/5 hover:from-zinc-700 hover:to-zinc-900 hover:border-zinc-600/80 after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/10 after:pointer-events-none transition-all duration-200 active:scale-[0.98] [&_svg]:opacity-70"
 ```
 
-#### Secondary/Outline Button - Standard
+#### Outline Button
 ```tsx
-className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-text-primary hover:bg-zinc-50 ios-ease active:scale-[0.98]"
+className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200 active:scale-[0.98]"
 ```
 
 #### Ghost Button
 ```tsx
-className="rounded-lg px-3 py-2 text-xxs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary smooth-transition"
+className="rounded-xl px-3 py-2 text-xxs font-medium text-muted-foreground hover:bg-surface-elevated hover:text-text-primary transition-all duration-200"
 ```
 
 #### Icon Sizes in Buttons
@@ -234,35 +236,42 @@ className="rounded-lg px-3 py-2 text-xxs font-medium text-muted-foreground hover
 The `<Button>` component supports these variants and sizes:
 
 **Variants:**
-- `default` - Dark primary button (#1C1917)
-- `outline` - Light with invert hover
-- `outline-soft` - Light with soft hover (text-text-secondary)
-- `secondary` - Elevated background
-- `ghost` - No background, hover reveals
-- `destructive` - Red danger button
+- `default` - Dark gradient (zinc-800→zinc-950), border-zinc-700/70, ring-1 ring-black/5 outer edge, after: ring-white/10 inner glow, hover lightens gradient + border
+- `outline` - White with zinc-200 border, hover → zinc-50 bg + zinc-300 border
+- `outline-soft` - White with zinc-200 border, text-secondary → text-primary on hover
+- `secondary` - Surface-elevated bg with border
+- `ghost` - No background or border, hover reveals bg
+- `destructive` - Red bg with border, hover darkens
 - `link` - Text only with underline on hover
 
 **Sizes:**
-- `default` - Standard (h-10, px-5, text-sm)
-- `compact` - Refined smaller (h-10, px-3, text-xxs, rounded-lg)
-- `sm` - Small (h-9, px-4, text-xs)
-- `lg` - Large (h-12, px-6)
-- `pill` - Pill shape
-- `icon` / `icon-sm` - Icon-only buttons
+- `default` - Standard (h-10, px-5, text-sm, rounded-xl)
+- `compact` - Refined smaller (h-10, px-3, text-xs, rounded-xl)
+- `xs` - Extra small (h-8, px-3, text-xs, rounded-lg)
+- `sm` - Small (h-9, px-4, text-xs, rounded-xl)
+- `lg` - Large (h-12, px-6, rounded-xl)
+- `pill` - Pill shape (rounded-full)
+- `icon` / `icon-sm` - Icon-only (rounded-full)
 
 ### Cards
 
 > **V2.3 Geometry Rule:** All cards use `rounded-2xl` (16px) for a structured, premium feel.
 
-#### Standard Card (Border-Defined)
+#### Standard Card (Static)
 ```tsx
-className="rounded-2xl bg-white p-7 border border-zinc-200 ios-ease hover:border-zinc-400"
+className="rounded-2xl bg-white p-7 border border-zinc-200"
 ```
-> **Usage:** Dashboard cards, stats, list containers. White cards "pop" against the Zinc-100 page background.
+> **Usage:** Dashboard cards, stats, list containers. White cards "pop" against the Zinc-100 page background. No hover effect — cards are static containers.
+
+#### Clickable Card
+```tsx
+className="rounded-2xl bg-white p-5 border border-zinc-200 smooth-transition hover:bg-zinc-50/50 cursor-pointer"
+```
+> **Usage:** Course cards, schedule items — anything that navigates on click. Background-only hover.
 
 #### Hero Card (Dark)
 ```tsx
-className="relative rounded-2xl bg-zinc-900 text-white border border-zinc-800 ios-ease hover:border-zinc-700"
+className="relative rounded-2xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50"
 ```
 
 ### Tables (Data Density)
@@ -275,9 +284,9 @@ className="flex items-center border-b border-zinc-100 bg-surface/50 px-6 py-3"
 
 #### Table Header Text
 ```tsx
-className="text-xxs font-medium uppercase tracking-wider text-text-secondary"
+className="text-xs font-medium text-text-secondary"
 ```
-> **Note:** Use `font-medium` (not `font-semibold`) for table headers. Use `text-text-secondary` for improved contrast.
+> **Note:** Use `font-medium` (not `font-semibold`) for table headers. Sentence case, no uppercase. Use `text-text-secondary` for improved contrast.
 
 #### Table Row
 ```tsx
@@ -296,7 +305,7 @@ className="py-4 px-6"
 
 #### Form Field Labels
 ```tsx
-className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5"
+className="block text-xs font-medium text-text-tertiary mb-1.5"
 ```
 
 #### Text Input
@@ -453,27 +462,29 @@ import { PaymentBadge } from '@/components/ui/payment-badge';
 
 ## Interaction Design
 
-### Hover & Interaction Patterns (V2.5)
+### Hover & Interaction Patterns (V2.6)
 
-**Philosophy:** Hover states should be subtle, non-disruptive, and aligned with the "Zen" aesthetic. They provide confirmation of interactivity without creating visual noise.
+**Philosophy:** Only add hover effects to elements that are actually clickable. Static display cards (stats, container wrappers, info cards) should **not** have hover effects. Hover feedback is reserved for confirming interactivity — not decorating the UI.
 
-#### 1. Container Hover (Standard Cards)
-Used for interactive cards, stats, and major dashboard containers.
-- **Classes:** `ios-ease hover:border-zinc-400 hover:bg-zinc-50/50`
-- **Logic:** Border darkens (`zinc-200` → `zinc-400`) and background gets a very subtle fill.
-- **Transition:** `ios-ease` (0.3s) for a fluid, premium feel.
+**Rule:** Never change both border and background on hover. Pick one. Background-only shifts are preferred for a calmer feel.
+
+#### 1. Clickable Card Hover
+Used for cards that navigate somewhere (course cards, schedule items, participant rows).
+- **Classes:** `smooth-transition hover:bg-zinc-50/50`
+- **Logic:** Background-only fill. No border change.
+- **Transition:** `smooth-transition` (0.2s).
 
 #### 2. Row/List Item Hover
 Used for table rows, list items, and nested interactive elements.
 - **Classes:** `smooth-transition hover:bg-zinc-50`
 - **Logic:** Background-only fill. No border change to keep nested lists clean.
-- **Transition:** `smooth-transition` (0.2s) for a snappier, responsive feel.
+- **Transition:** `smooth-transition` (0.2s).
 
-#### 3. Hero/Featured Hover (Dark)
-Used for featured cards or dark-themed containers.
-- **Classes:** `ios-ease hover:border-zinc-700 hover:bg-zinc-800/50`
-- **Logic:** Border and background shift within the dark scale.
-- **Transition:** `ios-ease` (0.3s).
+#### 3. Dark Card Hover
+Used for clickable dark-themed cards (e.g., hero/featured course card).
+- **Classes:** `smooth-transition hover:bg-zinc-800/50`
+- **Logic:** Background shift within the dark scale. No border change.
+- **Transition:** `smooth-transition` (0.2s).
 
 #### 4. Action Hover (Buttons & Links)
 Used for primary/secondary buttons and standalone links.
@@ -481,10 +492,8 @@ Used for primary/secondary buttons and standalone links.
 - **Logic:** Subtle scaling effect to communicate "pressability".
 - **Transition:** `smooth-transition` (0.2s).
 
-#### 5. State-Specific Hover (Urgency)
-Used for cards with specific status (e.g., urgent, warning).
-- **Classes:** `hover:border-[color]-300 hover:bg-zinc-50/50`
-- **Logic:** Border shifts to a muted version of the state color.
+#### 5. Static Cards (No Hover)
+Stats cards, container wrappers (CoursesList, MessagesList, RegistrationsList), info cards, and any non-clickable card should have **no hover effect**. Just `border border-zinc-200`.
 
 ---
 
@@ -566,21 +575,24 @@ className="custom-scrollbar"
 
 ## Notifications (Sonner)
 
-Our toasts follow a "Zinc Dark" theme to stand out against the light dashboard.
+Toasts use a **neutral card** for all types. Only the icon carries the status color.
 
-| Element | Color | Hex |
-|---------|-------|-----|
-| Background | Zinc-700 | #3F3F46 |
-| Border | Zinc-600 | #52525B |
-| Title | Zinc-50 | #FAFAFA |
-| Description | Zinc-200 | #E4E4E7 |
-| Action Button | Zinc-100 bg / Zinc-700 text | #F4F4F5 / #3F3F46 |
+| Element | Token | Usage |
+|---------|-------|-------|
+| Background | `var(--color-card)` | White card, same as UI cards |
+| Border | `var(--color-border)` | Zinc-200, consistent card definition |
+| Title | `var(--color-text-primary)` | Zinc-950, strong readability |
+| Description | `var(--color-muted-foreground)` | Zinc-500, secondary text |
+| Action Button | `var(--color-primary)` bg / `var(--color-primary-foreground)` text | Dark primary button |
+| Cancel Button | `var(--color-border)` border / `var(--color-muted-foreground)` text | Subtle outline |
 
-**Icon Colors by Type:**
-- Success: `#22C55E`
-- Error: `#EF4444`
-- Warning: `#F97316`
-- Info: `#3B82F6`
+**Icon Colors by Type (only the icon changes):**
+- Success: `var(--color-green-600)`
+- Error: `var(--color-red-600)`
+- Warning: `var(--color-amber-600)`
+- Info: `var(--color-blue-600)`
+
+**Layout:** `padding: 10px 12px`, `gap: 8px`, `border-radius: 12px`, `box-shadow: none`.
 
 ---
 

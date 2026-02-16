@@ -283,7 +283,7 @@ const CoursesPage = () => {
                 <div>
                     <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine Kurs</h1>
                     {!showCoursesEmptyState && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-text-secondary mt-1">
                         {(() => {
                             const activeCount = courses.filter(c => c.status === 'active').length;
                             const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
@@ -356,13 +356,13 @@ const CoursesPage = () => {
                        <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
                     </div>
                     <h3 className="font-geist text-sm font-medium text-text-primary">Ingen kurs funnet</h3>
-                    <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+                    <p className="mt-1 text-xs text-text-secondary max-w-xs">
                        Prøv et annet søkeord eller fjern søket for å se alle kurs.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground mb-4">
+                    <p className="text-xs text-text-secondary mb-4">
                       {searchResults.length} resultat{searchResults.length !== 1 ? 'er' : ''} for «{searchQuery}»
                     </p>
                     {searchResults.map((course) => (
@@ -398,7 +398,7 @@ const CoursesPage = () => {
                     {/* Empty state when no active courses */}
                     {kursrekker.length === 0 && arrangementer.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-text-secondary">
                           Ingen aktive eller kommende kurs.
                           {completedCourses.length > 0 && ' Se arkivet for fullførte kurs.'}
                         </p>
@@ -411,11 +411,11 @@ const CoursesPage = () => {
                     {completedCourses.length > 0 ? (
                       <section className="space-y-3">
                         <div className="flex items-center gap-3">
-                          <h2 className="text-sm font-medium text-text-primary uppercase tracking-wider flex items-center gap-2">
+                          <h2 className="text-lg font-medium text-text-primary flex items-center gap-2">
                             <Archive className="h-4 w-4" />
                             Arkiv
                           </h2>
-                          <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-white text-xs font-medium text-text-primary">
                             {completedCourses.length}
                           </span>
                         </div>
@@ -431,7 +431,7 @@ const CoursesPage = () => {
                       </section>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-text-secondary">
                           Ingen fullførte kurs i arkivet.
                         </p>
                       </div>

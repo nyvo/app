@@ -55,7 +55,9 @@
       "WebFetch(domain:tailscan.com)",
       "WebFetch(domain:htmlcolorcodes.com)",
       "Bash(Select-String \"status-confirmed-text\")",
-      "Bash(npx @tailwindcss/cli:*)"
+      "Bash(npx @tailwindcss/cli:*)",
+      "Bash(npx vite:*)",
+      "Bash(del \"c:\\\\Users\\\\krist\\\\Documents\\\\app\\\\src\\\\pages\\\\teacher\\\\NewCoursePage.tsx\")"
     ],
     "deny": [],
     "ask": []

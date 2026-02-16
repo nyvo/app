@@ -152,6 +152,7 @@ export interface Database {
           instructor_id: string | null
           image_url: string | null
           idempotency_key: string | null
+          practical_info: Json | null
           created_at: string
           updated_at: string
         }
@@ -177,6 +178,7 @@ export interface Database {
           instructor_id?: string | null
           image_url?: string | null
           idempotency_key?: string | null
+          practical_info?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -202,6 +204,7 @@ export interface Database {
           instructor_id?: string | null
           image_url?: string | null
           idempotency_key?: string | null
+          practical_info?: Json | null
           created_at?: string
           updated_at?: string
         }

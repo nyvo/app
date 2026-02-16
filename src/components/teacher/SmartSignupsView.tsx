@@ -1,6 +1,5 @@
-import { Search, Calendar, Users, CheckCircle, Archive, AlertTriangle } from 'lucide-react';
+import { Search, Calendar, Users, CheckCircle, Archive } from 'lucide-react';
 import { SignupGroup } from './SignupGroup';
-import { StatusIndicator } from '@/components/ui/status-indicator';
 import type { ExceptionActionHandlers } from './ExceptionActionMenu';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
 
@@ -79,7 +78,7 @@ export function SmartSignupsView({
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-4" role="status" aria-live="polite">
+      <div className="space-y-5" role="status" aria-live="polite">
         <span className="sr-only">Henter påmeldinger</span>
         {[1, 2, 3].map(i => (
           <div
@@ -113,13 +112,13 @@ export function SmartSignupsView({
         <h3 className="font-geist text-sm font-medium text-text-primary">
           {emptyState.title}
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+        <p className="mt-1 text-xs text-text-secondary max-w-sm">
           {emptyState.description}
         </p>
         {emptyState.showClearAction && onClearFilters && (
           <button
             onClick={onClearFilters}
-            className="mt-4 text-xs text-muted-foreground hover:text-text-primary underline underline-offset-2 transition-colors"
+            className="mt-4 text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 transition-colors"
           >
             Nullstill filtre
           </button>
@@ -129,9 +128,9 @@ export function SmartSignupsView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Summary stats bar */}
-      <div className="flex items-center gap-6 px-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-6 px-2 text-xs text-text-secondary">
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-text-tertiary" />
           {stats.groups} {stats.groups === 1 ? 'økt' : 'økter'}
@@ -141,24 +140,14 @@ export function SmartSignupsView({
           {stats.confirmed} påmeldt
         </span>
         {stats.cancelled > 0 && (
-          <span className="text-muted-foreground">
+          <span className="text-text-secondary">
             {stats.cancelled} avbestilt
           </span>
-        )}
-        {stats.exceptions > 0 && (
-          <StatusIndicator
-            variant="critical"
-            mode="text-icon"
-            size="sm"
-            label={`${stats.exceptions} krever handling`}
-            icon={AlertTriangle}
-            ariaLabel={`${stats.exceptions} påmeldinger krever handling`}
-          />
         )}
       </div>
 
       {/* Groups list */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {groups.map(group => (
           <SignupGroup
             key={group.key}

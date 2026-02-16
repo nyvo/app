@@ -4,17 +4,6 @@
  */
 
 /**
- * Format a date for local storage (YYYY-MM-DD)
- * Avoids timezone issues by using local date components
- */
-export function formatLocalDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-/**
  * Format a date string to Norwegian long format
  * e.g., "mandag 15. januar 2024"
  */
@@ -33,7 +22,7 @@ export function formatDateLong(dateStr: string | null | undefined): string {
  * Format a date string to Norwegian medium format
  * e.g., "15. januar 2024"
  */
-export function formatDateMedium(dateStr: string | null | undefined): string {
+function formatDateMedium(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('nb-NO', {
@@ -47,119 +36,13 @@ export function formatDateMedium(dateStr: string | null | undefined): string {
  * Format a date string to Norwegian short format
  * e.g., "15. jan"
  */
-export function formatDateShort(dateStr: string | null | undefined): string {
+function formatDateShort(dateStr: string | null | undefined): string {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('nb-NO', {
     day: 'numeric',
     month: 'short'
   })
-}
-
-/**
- * Format a date string to show weekday and date
- * e.g., "mandag 15. januar"
- */
-export function formatDateWithWeekday(dateStr: string | null | undefined): string {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('nb-NO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  })
-}
-
-/**
- * Format a date range
- * e.g., "15. jan - 22. jan 2024"
- */
-export function formatDateRange(
-  startDateStr: string | null | undefined,
-  endDateStr: string | null | undefined
-): string {
-  if (!startDateStr) return ''
-  if (!endDateStr || startDateStr === endDateStr) {
-    return formatDateMedium(startDateStr)
-  }
-
-  const startDate = new Date(startDateStr)
-  const endDate = new Date(endDateStr)
-
-  // Same month and year
-  if (
-    startDate.getMonth() === endDate.getMonth() &&
-    startDate.getFullYear() === endDate.getFullYear()
-  ) {
-    return `${startDate.getDate()}. - ${endDate.toLocaleDateString('nb-NO', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })}`
-  }
-
-  // Same year
-  if (startDate.getFullYear() === endDate.getFullYear()) {
-    return `${startDate.toLocaleDateString('nb-NO', {
-      day: 'numeric',
-      month: 'short'
-    })} - ${endDate.toLocaleDateString('nb-NO', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })}`
-  }
-
-  // Different years
-  return `${formatDateMedium(startDateStr)} - ${formatDateMedium(endDateStr)}`
-}
-
-/**
- * Get relative time description
- * e.g., "i dag", "i morgen", "om 3 dager"
- */
-export function getRelativeTimeDescription(dateStr: string | null | undefined): string {
-  if (!dateStr) return ''
-
-  const date = new Date(dateStr)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  date.setHours(0, 0, 0, 0)
-
-  const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) return 'i dag'
-  if (diffDays === 1) return 'i morgen'
-  if (diffDays === -1) return 'i går'
-  if (diffDays > 1 && diffDays <= 7) return `om ${diffDays} dager`
-  if (diffDays < -1 && diffDays >= -7) return `${Math.abs(diffDays)} dager siden`
-
-  return formatDateShort(dateStr)
-}
-
-/**
- * Check if a date is in the past
- */
-export function isDateInPast(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false
-  const date = new Date(dateStr)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return date < today
-}
-
-/**
- * Check if a date is today
- */
-export function isDateToday(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false
-  const date = new Date(dateStr)
-  const today = new Date()
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  )
 }
 
 /**

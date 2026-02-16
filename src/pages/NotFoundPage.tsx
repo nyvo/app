@@ -12,10 +12,10 @@ const NotFoundPage = () => {
         </div>
         
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-zinc-900 rounded-md flex items-center justify-center text-white">
+          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-semibold tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tighter text-text-primary">
             Ease
           </span>
         </Link>
@@ -28,13 +28,13 @@ const NotFoundPage = () => {
         <div className="text-center max-w-md">
           {/* 404 Number */}
           <div className="mb-6">
-            <span className="text-8xl md:text-9xl font-bold text-zinc-100 select-none">
+            <span className="text-8xl md:text-9xl font-medium text-zinc-100 select-none">
               404
             </span>
           </div>
 
           {/* Message */}
-          <h1 className="text-2xl font-semibold tracking-tight text-text-primary mb-3">
+          <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-3">
             Siden ble ikke funnet
           </h1>
           <p className="text-text-secondary text-sm mb-8">

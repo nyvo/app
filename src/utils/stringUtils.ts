@@ -19,18 +19,3 @@ export function getInitials(name: string | null | undefined): string {
     .slice(0, 2)
 }
 
-/**
- * Truncate text to a maximum length with ellipsis
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text
-  return text.slice(0, maxLength - 1) + '…'
-}
-
-/**
- * Capitalize the first letter of a string
- */
-export function capitalizeFirst(text: string): string {
-  if (!text) return ''
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}

@@ -92,8 +92,8 @@ const LandingPage = () => {
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-info-bg opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-status-info-text"></span>
               </span>
               <span className="text-xs font-medium text-white/90">
                 Nå tilgjengelig for alle studioer
@@ -141,10 +141,10 @@ const LandingPage = () => {
               transition={{ delay: 0.5, duration: 1 }}
               className="border-t border-white/20 pt-8 pb-4 w-full"
             >
-              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-6">
+              <p className="text-xs font-medium text-zinc-400 mb-6">
                 Brukes av ledende studioer
               </p>
-              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-60 transition-all duration-500 hover:opacity-100">
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-60 ios-ease hover:opacity-100">
                 {[
                   { icon: Wind, name: 'PAUSE' },
                   { icon: Sun, name: 'ROM' },
@@ -177,7 +177,7 @@ const LandingPage = () => {
                 transition={{ delay: 1.2, duration: 0.5 }}
                 className="absolute top-8 right-8 z-20 bg-white rounded-lg border border-zinc-200 p-3 flex items-center gap-3 max-w-xs"
               >
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <div className="w-8 h-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text">
                   <span className="text-xs font-medium">Ny</span>
                 </div>
                 <div>
@@ -199,7 +199,7 @@ const LandingPage = () => {
                 </div>
                 <div className="ml-4 flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-zinc-100">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span className="text-[10px] text-text-secondary font-medium tracking-tight">
+                  <span className="text-xxs text-text-secondary font-medium tracking-tight">
                     ease.no/dashboard
                   </span>
                 </div>
@@ -247,7 +247,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="md:col-span-2 relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group"
+            className="md:col-span-2 relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group"
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
@@ -278,7 +278,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group flex flex-col"
+            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-text-primary">
@@ -312,7 +312,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 transition-all group flex flex-col"
+            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
@@ -331,7 +331,7 @@ const LandingPage = () => {
             {/* Visual for Step 3 */}
             <div className="mt-auto relative w-full bg-zinc-50 rounded-xl border border-zinc-200 p-6 flex flex-col gap-4">
                <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                  <div className="w-8 h-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text">
                     <Check className="w-4 h-4" />
                   </div>
                   <div>
@@ -340,8 +340,8 @@ const LandingPage = () => {
                   </div>
                </div>
                <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                     <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                  <div className="w-8 h-8 rounded-full bg-status-info-bg flex items-center justify-center text-status-info-text">
+                     <div className="w-1.5 h-1.5 rounded-full bg-status-info-text" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-text-primary">Oppmøte registrert</p>
@@ -408,7 +408,7 @@ const LandingPage = () => {
                 <div className="bg-zinc-50/50 rounded-2xl border border-zinc-200 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
-                      <p className="text-sm font-medium text-text-tertiary uppercase">
+                      <p className="text-sm font-medium text-text-secondary">
                         Total omsetning
                       </p>
                       <p className="text-3xl font-medium text-text-primary mt-1">
@@ -450,7 +450,7 @@ const LandingPage = () => {
                 Integrert med Fiken. Hvert salg bokføres automatisk.
               </p>
             </div>
-            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-[#5239ba] flex items-center justify-center overflow-hidden">
+            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-partner-fiken flex items-center justify-center overflow-hidden">
               <img
                 src="/badges/fiken-hovedlogo.svg"
                 alt="Fiken"
@@ -495,7 +495,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="bg-white p-8 rounded-2xl border border-zinc-200 hover:border-zinc-400 transition-all flex flex-col"
+            className="bg-white p-8 rounded-2xl border border-zinc-200 flex flex-col"
           >
             <div className="mb-6">
               <h3 className="text-xl font-medium text-text-primary tracking-tight">

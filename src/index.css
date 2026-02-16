@@ -69,6 +69,7 @@
   /* Third-party Brand Colors */
   --color-vipps: #FF5B24;
   --color-vipps-hover: #E84E1B;
+  --color-partner-fiken: #5239ba;
 
   /* Growth/Positive Indicator */
   --color-growth-bg: var(--color-green-50);
@@ -103,27 +104,27 @@
   --color-primary-accent: #18181B;
 
   /* Status: Confirmed (green) */
-  --color-status-confirmed-bg: var(--color-green-100);
+  --color-status-confirmed-bg: var(--color-green-50);
   --color-status-confirmed-border: var(--color-green-200);
   --color-status-confirmed-text: var(--color-green-800);
 
   /* Status: Warning (amber) */
-  --color-status-warning-bg: var(--color-amber-100);
-  --color-status-warning-border: var(--color-amber-300);
+  --color-status-warning-bg: var(--color-amber-50);
+  --color-status-warning-border: var(--color-amber-200);
   --color-status-warning-text: var(--color-amber-900);
 
   /* Status: Cancelled (zinc) */
-  --color-status-cancelled-bg: var(--color-zinc-200);
+  --color-status-cancelled-bg: var(--color-zinc-100);
   --color-status-cancelled-border: var(--color-zinc-300);
   --color-status-cancelled-text: var(--color-zinc-700);
 
   /* Status: Error (red) */
-  --color-status-error-bg: var(--color-red-100);
+  --color-status-error-bg: var(--color-red-50);
   --color-status-error-border: var(--color-red-200);
   --color-status-error-text: var(--color-red-700);
 
   /* Status: Info (blue) - for check-ins, info badges */
-  --color-status-info-bg: var(--color-blue-100);
+  --color-status-info-bg: var(--color-blue-50);
   --color-status-info-border: var(--color-blue-200);
   --color-status-info-text: var(--color-blue-700);
 
@@ -220,6 +221,19 @@
 }
 
 @layer components {
+  /* Focus Ring - DS standard for interactive elements */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    --tw-ring-offset-width: 2px;
+    --tw-ring-offset-color: white;
+    --tw-ring-color: rgba(161, 161, 170, 0.4);
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  }
+
   /* Font Utility Classes */
   .font-geist {
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -304,70 +318,67 @@
   }
 }
 
-/* Sonner Toast - Dark Zinc Theme
+/* Sonner Toast - Neutral Card + Colored Icon
+   One neutral card for all types. Only the icon carries the status color.
    NOTE: These styles are OUTSIDE @layer components to ensure they override
    Sonner's injected styles which are not layered */
 [data-sonner-toaster] {
   --border-radius: 12px;
 }
 
-/* High Specificity Overrides */
+/* All toasts — neutral card (zinc-50 bg, zinc-200 border, dark text) */
 html body [data-sonner-toast] {
-  /* Override internal variables */
-  --normal-bg: #3F3F46;
-  --normal-border: #52525B;
-  --normal-text: #F4F4F5;
+  --normal-bg: var(--color-card);
+  --normal-border: var(--color-border);
+  --normal-text: var(--color-text-primary);
 
   font-family: 'Geist Sans', system-ui, -apple-system, sans-serif !important;
-  background-color: #3F3F46 !important; /* Zinc-700 - cool dark */
-  border: 1px solid #52525B !important; /* Zinc-600 - subtle contrast border */
+  background-color: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
   border-radius: 12px !important;
-  color: #F4F4F5 !important; /* Zinc-100 - bright but not white */
+  color: var(--color-text-primary) !important;
   box-shadow: none !important;
+  padding: 10px 12px !important;
+  gap: 8px !important;
 }
 
 html body [data-sonner-toast] [data-title] {
-  color: #FAFAFA !important; /* Zinc-50 for better readability */
+  color: var(--color-text-primary) !important;
   font-weight: 500 !important;
   font-size: 13px !important;
 }
 
 html body [data-sonner-toast] [data-description] {
-  color: #E4E4E7 !important; /* Zinc-200 - brighter secondary text */
+  color: var(--color-muted-foreground) !important;
   font-size: 12px !important;
+  font-weight: 400 !important;
 }
 
-/* Toast icon styling */
+/* Icon sizing */
 html body [data-sonner-toast] [data-icon] svg {
   width: 16px !important;
   height: 16px !important;
 }
 
-/* Success toast icon */
+/* Icon colors — only the icon changes per type */
 html body [data-sonner-toast][data-type="success"] [data-icon] svg {
-  color: #22C55E !important; /* success green */
+  color: var(--color-green-600) !important;
 }
-
-/* Error toast icon */
 html body [data-sonner-toast][data-type="error"] [data-icon] svg {
-  color: #EF4444 !important; /* destructive red */
+  color: var(--color-red-600) !important;
 }
-
-/* Info toast icon */
-html body [data-sonner-toast][data-type="info"] [data-icon] svg {
-  color: #3B82F6 !important; /* info blue */
-}
-
-/* Warning toast icon */
 html body [data-sonner-toast][data-type="warning"] [data-icon] svg {
-  color: #F97316 !important; /* warning orange */
+  color: var(--color-amber-600) !important;
+}
+html body [data-sonner-toast][data-type="info"] [data-icon] svg {
+  color: var(--color-blue-600) !important;
 }
 
-/* Main Action Button */
+/* Main Action Button — dark on light */
 html body [data-sonner-toast] [data-button]:not([data-cancel]) {
-  background-color: #F4F4F5 !important; /* Zinc-100 - light on dark */
-  color: #3F3F46 !important; /* Zinc-700 */
-  border: 1px solid #F4F4F5 !important;
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-foreground) !important;
+  border: 1px solid var(--color-primary) !important;
   border-radius: 8px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -376,14 +387,14 @@ html body [data-sonner-toast] [data-button]:not([data-cancel]) {
 }
 
 html body [data-sonner-toast] [data-button]:not([data-cancel]):hover {
-  background-color: #E4E4E7 !important; /* Zinc-200 */
+  background-color: var(--color-primary-soft) !important;
 }
 
-/* Cancel Button - Subtle */
+/* Cancel Button — subtle outline */
 html body [data-sonner-toast] [data-cancel] {
-  color: #D4D4D8 !important; /* Zinc-300 */
+  color: var(--color-muted-foreground) !important;
   background-color: transparent !important;
-  border: 1px solid #52525B !important; /* Zinc-600 */
+  border: 1px solid var(--color-border) !important;
   border-radius: 8px !important;
   font-weight: 500 !important;
   font-size: 12px !important;
@@ -392,7 +403,7 @@ html body [data-sonner-toast] [data-cancel] {
 }
 
 html body [data-sonner-toast] [data-cancel]:hover {
-  color: #F4F4F5 !important;
-  background-color: #52525B !important; /* Zinc-600 */
-  border-color: #71717A !important;
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-input) !important;
 }

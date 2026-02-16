@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -12,7 +12,9 @@ import {
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +48,25 @@ const TeacherProfilePage = () => {
       setCity(currentOrganization.city || '');
     }
   }, [profile, currentOrganization]);
+
+  // Dirty state tracking
+  const isDirty = useMemo(() => {
+    if (!profile) return false;
+    const nameParts = profile.name?.split(' ') || [];
+    const origFirst = nameParts[0] || '';
+    const origLast = nameParts.slice(1).join(' ') || '';
+    const origEmail = profile.email || '';
+    const origDesc = currentOrganization?.description || '';
+    const origCity = currentOrganization?.city || '';
+
+    return (
+      firstName !== origFirst ||
+      lastName !== origLast ||
+      email !== origEmail ||
+      studioDescription !== origDesc ||
+      city !== origCity
+    );
+  }, [profile, currentOrganization, firstName, lastName, email, studioDescription, city]);
 
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -211,7 +232,7 @@ const TeacherProfilePage = () => {
              <span className="font-geist text-base font-medium text-text-primary">Ease</span>
           </div>
           <SidebarTrigger>
-            <Menu className="h-6 w-6 text-muted-foreground" />
+            <Menu className="h-6 w-6 text-text-secondary" />
           </SidebarTrigger>
         </div>
 
@@ -228,7 +249,7 @@ const TeacherProfilePage = () => {
                 <h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-2">
                     Innstillinger
                 </h1>
-                <p className="text-sm text-muted-foreground">Administrer din profil, varslinger og konto.</p>
+                <p className="text-sm text-text-secondary">Administrer din profil, varslinger og konto.</p>
             </header>
 
             {/* Tabs Navigation */}
@@ -257,13 +278,13 @@ const TeacherProfilePage = () => {
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                             <div className="relative group">
-                                <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-4 ring-sidebar">
+                                <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-2 ring-zinc-200">
                                   {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
                                 </div>
                             </div>
                             <div className="flex-1 text-center md:text-left">
                                 <h3 className="font-geist text-lg font-medium text-text-primary">Profilbilde</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Profilbildeopplasting kommer snart.</p>
+                                <p className="text-sm text-text-secondary mt-1">Profilbildeopplasting kommer snart.</p>
                             </div>
                         </div>
                     </div>
@@ -272,26 +293,20 @@ const TeacherProfilePage = () => {
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Personlig Informasjon</h3>
-                            {/* <button className="text-sm font-medium text-primary-accent hover:text-primary">Lagre endringer</button> */}
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* First Name */}
                             <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
                                   Fornavn <span className="text-status-error-text">*</span>
                                 </label>
-                                <input
+                                <Input
                                     type="text"
                                     value={firstName}
                                     onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
                                     onBlur={() => handleBlur('firstName')}
                                     aria-invalid={!!errors.firstName}
-                                    className={`w-full h-11 rounded-lg border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
-                                      errors.firstName
-                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
-                                    }`}
                                 />
                                 {errors.firstName && touched.firstName && (
                                   <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.firstName}</p>
@@ -300,20 +315,15 @@ const TeacherProfilePage = () => {
 
                             {/* Last Name */}
                             <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
                                   Etternavn <span className="text-status-error-text">*</span>
                                 </label>
-                                <input
+                                <Input
                                     type="text"
                                     value={lastName}
                                     onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
                                     onBlur={() => handleBlur('lastName')}
                                     aria-invalid={!!errors.lastName}
-                                    className={`w-full h-11 rounded-lg border px-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
-                                      errors.lastName
-                                        ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                                        : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
-                                    }`}
                                 />
                                 {errors.lastName && touched.lastName && (
                                   <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.lastName}</p>
@@ -322,22 +332,18 @@ const TeacherProfilePage = () => {
 
                             {/* Email */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
                                   E-postadresse <span className="text-status-error-text">*</span>
                                 </label>
-                                <div className="relative">
-                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'}`} />
-                                    <input
+                                <div className="relative group">
+                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
+                                    <Input
                                         type="email"
                                         value={email}
                                         onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
                                         onBlur={() => handleBlur('email')}
                                         aria-invalid={!!errors.email}
-                                        className={`w-full h-11 rounded-lg border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease ${
-                                          errors.email
-                                            ? 'border-status-error-text bg-status-error-bg focus-visible:ring-2 focus-visible:ring-status-error-text focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-                                            : 'border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring'
-                                        }`}
+                                        className="pl-10"
                                     />
                                 </div>
                                 {errors.email && touched.email ? (
@@ -349,15 +355,15 @@ const TeacherProfilePage = () => {
 
                             {/* City */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">By / Sted</label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" />
-                                    <input
+                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">By / Sted</label>
+                                <div className="relative group">
+                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+                                    <Input
                                         type="text"
                                         value={city}
                                         onChange={(e) => setCity(e.target.value)}
                                         placeholder="F.eks. Oslo"
-                                        className="w-full h-11 rounded-lg border pl-10 pr-4 text-sm text-text-primary placeholder-text-tertiary focus:outline-none ios-ease border-zinc-300 bg-input-bg focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-ring"
+                                        className="pl-10"
                                     />
                                 </div>
                                 <p className="text-xs text-text-tertiary mt-1.5">Vises på din offentlige studioside.</p>
@@ -365,7 +371,7 @@ const TeacherProfilePage = () => {
 
                             {/* Studio Description */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Om studioet</label>
+                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">Om studioet</label>
                                 <Textarea
                                     rows={4}
                                     value={studioDescription}
@@ -394,8 +400,8 @@ const TeacherProfilePage = () => {
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="mb-6">
                             <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
-                            <p className="text-sm text-muted-foreground mt-1">Velg hvordan og når du vil bli kontaktet.</p>
-                            <p className="text-xs text-muted-foreground mt-2 italic">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
+                            <p className="text-sm text-text-secondary mt-1">Velg hvordan og når du vil bli kontaktet.</p>
+                            <p className="text-xs text-text-secondary mt-2 italic">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
                         </div>
 
                         <div className="divide-y divide-surface-elevated">
@@ -404,54 +410,39 @@ const TeacherProfilePage = () => {
                             <div className="flex items-center justify-between py-4">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
-                                    <span className="text-xs text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
+                                    <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
                                 </div>
-                                <button
-                                    onClick={() => handleToggle('newSignups')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.newSignups ? 'bg-primary' : 'bg-surface-elevated'}`}
-                                >
-                                    <span className="sr-only">Nye påmeldinger</span>
-                                    <span
-                                        aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.newSignups ? 'translate-x-5' : 'translate-x-0'}`}
-                                    />
-                                </button>
+                                <Switch
+                                    checked={notifications.newSignups}
+                                    onCheckedChange={() => handleToggle('newSignups')}
+                                    aria-label="Nye påmeldinger"
+                                />
                             </div>
 
                             {/* Item 2 */}
                             <div className="flex items-center justify-between py-4">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
-                                    <span className="text-xs text-muted-foreground">Send e-post umiddelbart ved avbestilling (under 24t).</span>
+                                    <span className="text-xs text-text-secondary">Send e-post umiddelbart ved avbestilling (under 24t).</span>
                                 </div>
-                                <button
-                                    onClick={() => handleToggle('cancellations')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.cancellations ? 'bg-primary' : 'bg-surface-elevated'}`}
-                                >
-                                    <span className="sr-only">Avbestillinger</span>
-                                    <span
-                                        aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.cancellations ? 'translate-x-5' : 'translate-x-0'}`}
-                                    />
-                                </button>
+                                <Switch
+                                    checked={notifications.cancellations}
+                                    onCheckedChange={() => handleToggle('cancellations')}
+                                    aria-label="Avbestillinger"
+                                />
                             </div>
 
                             {/* Item 3 */}
                             <div className="flex items-center justify-between py-4">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-text-primary">Markedsføring</span>
-                                    <span className="text-xs text-muted-foreground">Nyheter, tips og oppdateringer fra Ease på e-post.</span>
+                                    <span className="text-xs text-text-secondary">Nyheter, tips og oppdateringer fra Ease på e-post.</span>
                                 </div>
-                                <button
-                                    onClick={() => handleToggle('marketing')}
-                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${notifications.marketing ? 'bg-primary' : 'bg-surface-elevated'}`}
-                                >
-                                    <span className="sr-only">Markedsføring</span>
-                                    <span
-                                        aria-hidden="true"
-                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white ring-0 transition duration-200 ease-in-out ${notifications.marketing ? 'translate-x-5' : 'translate-x-0'}`}
-                                    />
-                                </button>
+                                <Switch
+                                    checked={notifications.marketing}
+                                    onCheckedChange={() => handleToggle('marketing')}
+                                    aria-label="Markedsføring"
+                                />
                             </div>
                         </div>
                     </div>
@@ -471,7 +462,7 @@ const TeacherProfilePage = () => {
                             <Shield className="h-6 w-6 text-text-tertiary" />
                           </div>
                           <p className="text-sm font-medium text-text-primary mb-1">Sikkerhetsinnstillinger kommer snart</p>
-                          <p className="text-xs text-muted-foreground max-w-[280px]">
+                          <p className="text-xs text-text-secondary max-w-[280px]">
                             Passordendring og to-faktor autentisering vil være tilgjengelig i en fremtidig oppdatering.
                           </p>
                         </div>
@@ -487,7 +478,7 @@ const TeacherProfilePage = () => {
                     size="compact"
                     className="flex-1 md:flex-none justify-center"
                     onClick={handleSave}
-                    disabled={isSaving}
+                    disabled={isSaving || !isDirty}
                   >
                       {isSaving ? 'Lagrer' : 'Lagre endringer'}
                   </Button>
@@ -501,4 +492,3 @@ const TeacherProfilePage = () => {
 };
 
 export default TeacherProfilePage;
-

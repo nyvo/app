@@ -69,7 +69,7 @@ export const CourseParticipantsTab = ({
                 <Filter className="h-3.5 w-3.5" />
                 Filter
                 {activeFiltersCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary text-xxs font-medium text-primary-foreground flex items-center justify-center">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -83,7 +83,7 @@ export const CourseParticipantsTab = ({
                   <button
                     onClick={onClearFilters}
                     aria-label="Nullstill alle filtre"
-                    className="text-xs font-medium text-muted-foreground hover:text-text-primary smooth-transition"
+                    className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
                   >
                     Nullstill alle
                   </button>
@@ -94,7 +94,7 @@ export const CourseParticipantsTab = ({
               <div className="p-4 space-y-5">
                 {/* Status: Segmented Control */}
                 <div>
-                  <p id="status-label" className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">
+                  <p id="status-label" className="text-xs font-medium text-text-tertiary mb-2">
                     Status
                   </p>
                   <div
@@ -114,7 +114,7 @@ export const CourseParticipantsTab = ({
                         className={`flex-1 py-1.5 px-3 text-xs font-medium smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none -mb-px border-b-2 ${
                           statusFilter === option.value
                             ? 'border-text-primary text-text-primary'
-                            : 'border-transparent text-muted-foreground hover:text-text-primary'
+                            : 'border-transparent text-text-secondary hover:text-text-primary'
                         }`}
                       >
                         {option.label}
@@ -125,7 +125,7 @@ export const CourseParticipantsTab = ({
 
                 {/* Payment: Radio Group */}
                 <div>
-                  <p id="payment-label" className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">
+                  <p id="payment-label" className="text-xs font-medium text-text-tertiary mb-2">
                     Betaling
                   </p>
                   <div role="radiogroup" aria-labelledby="payment-label" className="space-y-1">
@@ -162,7 +162,7 @@ export const CourseParticipantsTab = ({
 
               {/* Result count footer */}
               <div className="px-4 py-2.5 border-t border-border bg-surface/50">
-                <p className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
+                <p className="text-xs font-medium text-text-tertiary">
                   <span className="text-text-primary">{filteredParticipants.length}</span> {filteredParticipants.length === 1 ? 'resultat' : 'resultater'}
                 </p>
               </div>
@@ -206,7 +206,7 @@ export const CourseParticipantsTab = ({
           )}
           <button
             onClick={onClearFilters}
-            className="text-xs font-medium text-muted-foreground hover:text-text-primary smooth-transition"
+            className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
           >
             Nullstill alle
           </button>
@@ -219,11 +219,11 @@ export const CourseParticipantsTab = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-zinc-100 bg-surface/50">
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-auto">Navn</th>
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-32">Status</th>
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-40">Betaling</th>
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider w-20">Kvittering</th>
-                <th className="py-2.5 px-6 text-xxs font-medium text-text-tertiary uppercase tracking-wider text-right w-20">Notater</th>
+                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-auto">Navn</th>
+                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-32">Status</th>
+                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-40">Betaling</th>
+                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-20">Kvittering</th>
+                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary text-right w-20">Notater</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -237,7 +237,7 @@ export const CourseParticipantsTab = ({
               ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center">
-                    <p className="text-sm text-muted-foreground">Ingen deltakere funnet</p>
+                    <p className="text-sm text-text-secondary">Ingen deltakere funnet</p>
                     {activeFiltersCount > 0 && (
                       <button
                         onClick={onClearFilters}
@@ -257,7 +257,7 @@ export const CourseParticipantsTab = ({
                         <UserAvatar name={participant.name} email={participant.email} size="sm" />
                         <div>
                           <p className="text-sm font-medium text-text-primary">{participant.name}</p>
-                          <p className="text-xs text-muted-foreground">{participant.email}</p>
+                          <p className="text-xs text-text-secondary">{participant.email}</p>
                         </div>
                       </div>
                     </td>

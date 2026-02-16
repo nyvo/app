@@ -89,10 +89,10 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 p-4 rounded-2xl border ios-ease cursor-pointer bg-white hover:bg-zinc-50/50",
+        "group flex items-center gap-4 p-4 rounded-2xl border smooth-transition cursor-pointer bg-white hover:bg-zinc-50/50",
         urgency.isUrgent
-          ? "border-amber-200 hover:border-amber-300"
-          : "border-zinc-200 hover:border-zinc-400"
+          ? "border-amber-200"
+          : "border-zinc-200"
       )}
       onClick={() => navigate(`/teacher/courses/${course.id}`)}
       role="article"
@@ -167,7 +167,7 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
 
       {/* Chevron - navigation affordance */}
       <div className="shrink-0 flex items-center ml-2">
-        <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
+        <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-text-secondary group-hover:translate-x-0.5 smooth-transition" />
       </div>
     </div>
   );

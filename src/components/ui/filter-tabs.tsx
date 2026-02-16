@@ -69,8 +69,8 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-white text-text-primary rounded-lg border border-zinc-400"
-            : "bg-white text-muted-foreground hover:text-text-primary rounded-lg border border-border"
+            ? "bg-zinc-100 text-text-primary rounded-lg"
+            : "text-text-secondary hover:text-text-primary hover:bg-zinc-50 rounded-lg"
         case "contained":
           return isActive
             ? "bg-white text-text-primary"
@@ -78,7 +78,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         default:
           return isActive
             ? "text-text-primary"
-            : "text-muted-foreground hover:text-text-primary"
+            : "text-text-secondary hover:text-text-primary"
       }
     }
 

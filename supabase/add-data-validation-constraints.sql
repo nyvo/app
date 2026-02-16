@@ -41,20 +41,20 @@ ALTER TABLE signups
   ADD CONSTRAINT check_amount_paid_non_negative
   CHECK (amount_paid >= 0);
 
--- Email format validation for guest signups
+-- Email format validation for participant signups
 ALTER TABLE signups
-  ADD CONSTRAINT check_guest_email_format
+  ADD CONSTRAINT check_participant_email_format
   CHECK (
-    guest_email IS NULL OR
-    guest_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'
+    participant_email IS NULL OR
+    participant_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'
   );
 
--- Either user_id OR guest fields must be present (not both)
+-- Either user_id OR participant fields must be present
 ALTER TABLE signups
-  ADD CONSTRAINT check_user_or_guest_data
+  ADD CONSTRAINT check_user_or_participant_data
   CHECK (
     (user_id IS NOT NULL) OR
-    (guest_name IS NOT NULL AND guest_email IS NOT NULL)
+    (participant_name IS NOT NULL AND participant_email IS NOT NULL)
   );
 
 -- ============================================

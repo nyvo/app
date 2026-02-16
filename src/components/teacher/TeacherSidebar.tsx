@@ -198,7 +198,7 @@ export const TeacherSidebar = () => {
                 <div className="flex flex-col gap-0.5">
                   <div className="px-2 py-1.5 mb-1 border-b border-zinc-100">
                     <p className="text-sm font-medium text-text-primary truncate">{profile?.name}</p>
-                    <p className="text-xxs font-medium text-text-tertiary tracking-wider truncate lowercase">{profile?.email}</p>
+                    <p className="text-xxs font-medium text-text-tertiary truncate">{profile?.email}</p>
                   </div>
                   <Link
                     to="/teacher/profile"

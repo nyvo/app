@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { CheckCircle2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
@@ -227,17 +228,14 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto max-w-lg text-center">
             <div className="rounded-2xl bg-white p-8 md:p-12 border border-zinc-200">
               {/* Most important message first - no charge */}
-              <div className="bg-status-confirmed-bg border-2 border-status-confirmed-border rounded-2xl p-5 mb-6">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <CheckCircle2 className="h-5 w-5 text-status-confirmed-text" />
-                  <p className="text-base text-status-confirmed-text font-medium">
-                    Ingen belastning
-                  </p>
+              <Alert variant="success" className="p-5 mb-6 justify-center text-center">
+                <div>
+                  <AlertTitle variant="success" className="text-base mb-2">Ingen belastning</AlertTitle>
+                  <AlertDescription variant="success" className="text-sm">
+                    Du er ikke belastet.
+                  </AlertDescription>
                 </div>
-                <p className="text-sm text-status-confirmed-text/80">
-                  Du er ikke belastet.
-                </p>
-              </div>
+              </Alert>
 
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
                 <AlertCircle className="h-6 w-6 text-amber-700" />
@@ -296,21 +294,18 @@ const CheckoutSuccessPage = () => {
               </div>
 
               {/* Email confirmation notice */}
-              <div className="rounded-2xl bg-status-info-bg border border-status-info-border p-4 mb-8 text-left">
-                <div className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-status-info-text mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <div>
-                    <p className="text-sm font-medium text-status-info-text">Bekreftelse sendt</p>
-                    <p className="text-xs text-status-info-text/80 mt-0.5">
-                      {signup ? (
-                        <>Kvittering sendt til <span className="font-medium">{signup.participant_email}</span>.</>
-                      ) : (
-                        <>Kvittering sendt til e-postadressen du oppga.</>
-                      )}
-                    </p>
-                  </div>
+              <Alert variant="info" icon={Mail} className="mb-8 text-left">
+                <div>
+                  <AlertTitle variant="info" className="text-sm">Bekreftelse sendt</AlertTitle>
+                  <AlertDescription variant="info">
+                    {signup ? (
+                      <>Kvittering sendt til <span className="font-medium">{signup.participant_email}</span>.</>
+                    ) : (
+                      <>Kvittering sendt til e-postadressen du oppga.</>
+                    )}
+                  </AlertDescription>
                 </div>
-              </div>
+              </Alert>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 {user && userType === 'student' ? (
@@ -347,7 +342,7 @@ const CheckoutSuccessPage = () => {
                 {/* Decorative background element */}
                 <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
 
-                <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-6 relative z-10">
+                <h3 className="text-xs font-medium text-text-secondary mb-6 relative z-10">
                   Kvittering
                 </h3>
 

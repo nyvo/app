@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Infinity, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { useFormValidation } from '@/hooks/use-form-validation';
@@ -187,7 +188,7 @@ const LoginPage = () => {
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <Alert variant="destructive" size="sm" icon={false}>
                 <p className="text-xs text-destructive">{errors.general}</p>
                 {errors.general === 'E-post eller passord stemmer ikke' && (
                   <Link
@@ -197,7 +198,7 @@ const LoginPage = () => {
                     Tilbakestill passord
                   </Link>
                 )}
-              </div>
+              </Alert>
             )}
 
             <Button

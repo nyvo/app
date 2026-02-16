@@ -9,7 +9,6 @@ export interface StudentDetailsFormData {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
   message: string;
   termsAccepted: boolean;
 }
@@ -131,25 +130,6 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             Ugyldig e-post
           </p>
         )}
-      </div>
-
-      {/* Phone (optional) */}
-      <div>
-        <label
-          htmlFor="phone"
-          className="block text-xs font-medium text-text-secondary mb-1.5"
-        >
-          Telefon <span className="text-text-secondary">(valgfritt)</span>
-        </label>
-        <Input
-          type="tel"
-          id="phone"
-          name="phone"
-          value={formData.phone}
-          onChange={onChange}
-          disabled={submitting}
-          placeholder="+47 123 45 678"
-        />
       </div>
 
       {/* Message (optional) */}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Infinity, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { useFormValidation } from '@/hooks/use-form-validation';
@@ -105,11 +106,11 @@ const ForgotPasswordPage = () => {
             </div>
 
             <div className="w-full space-y-4">
-              <div className="p-4 rounded-lg bg-surface-elevated">
+              <Alert variant="neutral" size="sm" icon={false}>
                 <p className="text-xs text-text-secondary leading-relaxed">
                   Sjekk spam-mappen hvis du ikke finner den.
                 </p>
-              </div>
+              </Alert>
 
               <Button
                 onClick={() => navigate('/login')}
@@ -222,9 +223,9 @@ const ForgotPasswordPage = () => {
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <Alert variant="destructive" size="sm" icon={false}>
                 <p className="text-xs text-destructive">{errors.general}</p>
-              </div>
+              </Alert>
             )}
 
             <Button

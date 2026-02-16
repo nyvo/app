@@ -44,7 +44,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
   }, [registrations]);
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 overflow-hidden ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+    <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 overflow-hidden">
       {/* Card Header */}
       <div className="flex items-center justify-between p-5 sm:p-6 pb-3">
         <h3 className="font-geist text-sm font-medium text-text-primary">Siste påmeldinger</h3>
@@ -59,7 +59,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
       {displayedRegistrations.length === 0 ? (
         /* Empty State */
         <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-          <div className="flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl bg-surface/30 border border-dashed border-zinc-200">
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center rounded-2xl bg-surface/30 border border-zinc-200">
             <div className="w-10 h-10 bg-white border border-zinc-100 rounded-xl flex items-center justify-center mb-3">
               <UserPlus className="w-4 h-4 text-text-tertiary" />
             </div>
@@ -95,7 +95,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
                 </div>
 
                 {/* Line 2: Day + Time · Course + Icon */}
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                <p className="flex items-center gap-1.5 text-xs text-text-secondary mt-1">
                   <Calendar className="h-3 w-3 text-text-tertiary flex-shrink-0" />
                   <span className="truncate">
                     {dayName}{startTime && ` kl. ${startTime}`}

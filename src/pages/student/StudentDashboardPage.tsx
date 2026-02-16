@@ -79,7 +79,7 @@ const StudentDashboardPage = () => {
       <StudentDashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <Spinner size="xl" className="mb-4" />
-          <p className="text-muted-foreground">Henter kurs ...</p>
+          <p className="text-text-secondary">Henter kurs ...</p>
         </div>
       </StudentDashboardLayout>
     );
@@ -93,7 +93,7 @@ const StudentDashboardPage = () => {
             <CalendarX className="h-8 w-8 text-status-error-text" />
           </div>
           <h2 className="text-xl font-medium text-text-primary mb-2">Noe gikk galt</h2>
-          <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
+          <p className="text-text-secondary mb-6 max-w-md">{error}</p>
           <Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>
         </div>
       </StudentDashboardLayout>
@@ -108,7 +108,7 @@ const StudentDashboardPage = () => {
         <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
           Mine kurs
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-text-secondary mt-1">
           Her finner du kursene dine.
         </p>
       </div>
@@ -117,13 +117,13 @@ const StudentDashboardPage = () => {
         <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-zinc-200 rounded-none h-auto p-0 gap-8">
           <TabsTrigger 
             value="upcoming"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary ios-ease"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-text-primary transition-all"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary ios-ease"
           >
             Tidligere
           </TabsTrigger>
@@ -141,14 +141,13 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-white to-surface-elevated/50 rounded-2xl border border-zinc-200 overflow-hidden">
-              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-200/30 blur-3xl"></div>
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-zinc-200 overflow-hidden">
               <div className="relative z-10">
                 <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
                   <CalendarX className="h-8 w-8 text-text-tertiary" />
                 </div>
                 <h3 className="text-lg font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
-                <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+                <p className="text-sm text-text-secondary mb-6 max-w-xs">
                   Ingen kurs å vise.
                 </p>
                 <Button onClick={() => window.open('/', '_self')} variant="default">
@@ -171,14 +170,13 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-gradient-to-br from-surface/50 to-surface-elevated/30 rounded-2xl border border-zinc-200 overflow-hidden">
-              <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-zinc-200/20 blur-3xl"></div>
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-zinc-200 overflow-hidden">
               <div className="relative z-10">
                 <div className="rounded-full bg-surface-elevated p-4 mb-4 mx-auto inline-flex">
                   <Clock className="h-8 w-8 text-text-tertiary" />
                 </div>
                 <h3 className="text-lg font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
-                <p className="text-sm text-muted-foreground max-w-xs">
+                <p className="text-sm text-text-secondary max-w-xs">
                   Du har ikke deltatt på noen kurs ennå.
                 </p>
               </div>

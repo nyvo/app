@@ -174,7 +174,7 @@ export function ImageUpload({
           className={`
             relative h-full rounded-xl border border-dashed
             flex flex-col items-center justify-center gap-3 cursor-pointer
-            transition-all
+            smooth-transition
             ${
               dragActive
                 ? 'border-ring bg-surface'

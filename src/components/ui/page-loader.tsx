@@ -27,7 +27,7 @@ function PageLoader({
       <div className="text-center">
         <Spinner size="xl" className="mx-auto" />
         {message && (
-          <p className="mt-4 text-sm text-muted-foreground">{message}</p>
+          <p className="mt-4 text-sm text-text-secondary">{message}</p>
         )}
         <span className="sr-only">{message || 'Laster'}</span>
       </div>

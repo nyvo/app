@@ -40,17 +40,17 @@ export function CourseSection({
       {/* Section header - static, no accordion */}
       <div>
         <div className="flex items-center gap-3">
-          <h2 className="text-sm font-medium text-text-primary uppercase tracking-wide">
+          <h2 className="text-lg font-medium text-text-primary">
             {title}
           </h2>
           {showCount && (
-            <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
+            <span className="px-2.5 py-0.5 rounded-lg bg-white text-xs font-medium text-text-primary">
               {courses.length}
             </span>
           )}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-sm text-text-secondary mt-0.5">
             {subtitle}
           </p>
         )}
@@ -69,7 +69,7 @@ export function CourseSection({
         {hasMore && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="w-full py-2 text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors flex items-center justify-center gap-1"
+            className="w-full py-2 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center justify-center gap-1"
           >
             {showAll ? (
               <>
@@ -127,19 +127,19 @@ export function ArchiveLink({ count, onClick, className }: ArchiveLinkProps) {
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white/50 hover:bg-zinc-50/50 hover:border-zinc-400 ios-ease group",
+        "w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white/50 hover:bg-zinc-50/50 smooth-transition group",
         className
       )}
     >
       <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-text-secondary">
           Arkiv
         </span>
-        <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs font-medium text-muted-foreground">
+        <span className="px-2.5 py-0.5 rounded-lg bg-white text-xs font-medium text-text-primary">
           {count} fullførte kurs
         </span>
       </div>
-      <ChevronDown className="h-4 w-4 text-text-tertiary group-hover:text-muted-foreground transition-colors" />
+      <ChevronDown className="h-4 w-4 text-text-tertiary group-hover:text-text-secondary transition-colors" />
     </button>
   );
 }

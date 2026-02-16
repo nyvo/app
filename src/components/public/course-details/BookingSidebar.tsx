@@ -64,14 +64,12 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 Vent litt
               </p>
             </div>
-          ) : isFull ? (
-            null
           ) : (
-            <>
+            <div className={`space-y-6 ${isFull ? 'opacity-40 pointer-events-none select-none' : ''}`}>
               {/* Step 1: Ticket Selection */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
+                  <span className="text-xs font-medium text-text-tertiary">
                     Steg 1
                   </span>
                   <div className="h-px flex-1 bg-zinc-200"></div>
@@ -82,7 +80,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               {/* Step 2: Your Details */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">
+                  <span className="text-xs font-medium text-text-tertiary">
                     Steg 2
                   </span>
                   <div className="h-px flex-1 bg-zinc-200"></div>
@@ -98,38 +96,38 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 />
               </div>
 
-              {/* Submit button */}
-              <div className="pt-2">
-                {isAlreadySignedUp ? (
-                  <Button
-                    size="compact"
-                    className="w-full"
-                    disabled
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Du er påmeldt
-                  </Button>
-                ) : (
-                  <Button
-                    size="compact"
-                    type="submit"
-                    className="w-full transition-all"
-                    loading={submitting}
-                    loadingText="Behandler"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      Fullfør påmelding
-                      <ArrowRight className="h-4 w-4" />
-                    </span>
-                  </Button>
-                )}
-              </div>
-
-              {/* Disclaimer */}
-              <p className="text-center text-xs text-text-tertiary -mt-2">
-                Sikker betaling. Du belastes ikke før bekreftelse.
-              </p>
-            </>
+              {/* Submit button & disclaimer - hidden when full (header badge is sufficient) */}
+              {!isFull && (
+                <div className="space-y-3">
+                  {isAlreadySignedUp ? (
+                    <Button
+                      size="compact"
+                      className="w-full"
+                      disabled
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Du er påmeldt
+                    </Button>
+                  ) : (
+                    <Button
+                      size="compact"
+                      type="submit"
+                      className="w-full"
+                      loading={submitting}
+                      loadingText="Behandler"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        Fullfør påmelding
+                        <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </Button>
+                  )}
+                  <p className="text-center text-xs text-text-tertiary">
+                    Sikker betaling. Du belastes ikke før bekreftelse.
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </form>
       </div>

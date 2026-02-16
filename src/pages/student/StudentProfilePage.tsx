@@ -14,7 +14,7 @@ const StudentProfilePage = () => {
           <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
             Min profil
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-text-secondary mt-1">
             Kontoinformasjon
           </p>
         </div>
@@ -28,7 +28,7 @@ const StudentProfilePage = () => {
                 <User className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
                   Navn
                 </label>
                 <p className="text-base text-text-primary font-medium">
@@ -43,7 +43,7 @@ const StudentProfilePage = () => {
                 <Mail className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
                   E-post
                 </label>
                 <p className="text-base text-text-primary">
@@ -58,7 +58,7 @@ const StudentProfilePage = () => {
                 <Phone className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
                   Telefon
                 </label>
                 <p className="text-base text-text-primary">
@@ -73,7 +73,7 @@ const StudentProfilePage = () => {
                 <Calendar className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-tertiary uppercase tracking-wider mb-1">
+                <label className="block text-xs font-medium text-text-secondary mb-1">
                   Medlem siden
                 </label>
                 <p className="text-base text-text-primary">
@@ -86,7 +86,7 @@ const StudentProfilePage = () => {
 
           </div>
           
-          <div className="px-6 py-4 bg-surface/30 border-t border-zinc-200 text-xs text-muted-foreground">
+          <div className="px-6 py-4 bg-surface/30 border-t border-zinc-200 text-xs text-text-secondary">
             Ta kontakt hvis du trenger å endre noe.
           </div>
         </div>

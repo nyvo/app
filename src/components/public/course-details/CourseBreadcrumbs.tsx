@@ -16,7 +16,7 @@ export const CourseBreadcrumbs: React.FC<CourseBreadcrumbsProps> = ({
     <div className="flex flex-wrap items-center gap-2">
       {/* Date badge with icon */}
       {date && (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-200 text-xxs font-medium text-text-secondary uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-200 text-xxs font-medium text-text-secondary">
           <Calendar className="h-3 w-3" />
           {date}
         </span>

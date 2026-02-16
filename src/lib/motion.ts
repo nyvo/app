@@ -55,3 +55,32 @@ export const authPageTransition: Transition = {
   duration: dur(500),
   ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
 };
+
+// ============================================
+// FULL-SCREEN PREVIEW OVERLAY
+// ============================================
+// Slide-up from bottom, 280ms open / 200ms close
+const iosEase: [number, number, number, number] = [0.25, 1, 0.5, 1];
+
+export const previewOverlayVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+export const previewOverlayTransition: Transition = {
+  duration: dur(200),
+  ease,
+};
+
+export const previewContentVariants: Variants = {
+  initial: { y: '100%' },
+  animate: { y: 0 },
+  exit: { y: '100%' },
+};
+
+export const previewContentTransition: Transition = {
+  duration: dur(280),
+  ease: iosEase,
+};
+

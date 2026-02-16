@@ -14,6 +14,7 @@ import { createCheckoutSession } from '@/services/checkout';
 import { toast } from 'sonner';
 import type { CourseSession } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
 
 // Import new components
 import { PublicCourseHeader } from '@/components/public/course-details/PublicCourseHeader';
@@ -87,7 +88,6 @@ const PublicCourseDetailPage = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
     message: '',
     termsAccepted: false
   });
@@ -296,7 +296,6 @@ const PublicCourseDetailPage = () => {
       organizationSlug: slug,
       customerEmail: formData.email,
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
-      customerPhone: formData.phone || undefined,
     });
 
     if (checkoutError || !checkoutData) {
@@ -413,11 +412,7 @@ const PublicCourseDetailPage = () => {
               {/* Description */}
               <CourseDescription
                 description={course.description}
-                highlights={[
-                  'Passer for alle med litt erfaring',
-                  'Matte og utstyr er inkludert',
-                  'Møt opp 10 minutter før start'
-                ]}
+                highlights={practicalInfoToHighlights(course.practical_info)}
               />
 
               {/* Sessions (if course series) */}

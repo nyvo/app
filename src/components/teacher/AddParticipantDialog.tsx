@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 
 import type { SignupInsert } from '@/types/database';
@@ -202,25 +202,24 @@ export function AddParticipantDialog({
 
         {isCheckingCapacity ? (
           <div className="flex items-center justify-center py-8">
-            <Spinner size="lg" className="text-muted-foreground" />
+            <Spinner size="lg" className="text-text-secondary" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Info banner if full */}
             {isFull && (
-              <div className="flex items-start gap-2 p-3 bg-status-info-bg rounded-2xl border border-status-info-border">
-                <Info className="h-4 w-4 text-status-info-text shrink-0 mt-0.5" />
+              <Alert variant="info" size="sm">
                 <p className="text-sm text-text-secondary">
                   Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
                 </p>
-              </div>
+              </Alert>
             )}
 
             {/* Error banner */}
             {submitError && (
-              <div className="rounded-2xl border border-destructive/30 bg-status-error-bg p-4">
+              <Alert variant="error" icon={false}>
                 <p className="text-sm text-status-error-text">{submitError}</p>
-              </div>
+              </Alert>
             )}
 
             {/* Form fields */}
@@ -229,7 +228,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="firstName"
-                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                  className="block text-xs font-medium text-text-secondary mb-1.5"
                 >
                   Fornavn <span className="text-destructive">*</span>
                 </label>
@@ -268,7 +267,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="lastName"
-                  className="block text-xs font-medium text-muted-foreground mb-1.5"
+                  className="block text-xs font-medium text-text-secondary mb-1.5"
                 >
                   Etternavn <span className="text-destructive">*</span>
                 </label>
@@ -306,7 +305,7 @@ export function AddParticipantDialog({
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="email" className="block text-xs font-medium text-text-secondary mb-1.5">
                 E-postadresse <span className="text-destructive">*</span>
               </label>
               <Input
@@ -344,7 +343,7 @@ export function AddParticipantDialog({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="phone" className="block text-xs font-medium text-text-secondary mb-1.5">
                 Telefonnummer <span className="text-text-tertiary font-normal">(valgfritt)</span>
               </label>
               <Input
@@ -364,7 +363,7 @@ export function AddParticipantDialog({
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="block text-xs font-medium text-muted-foreground mb-1.5">
+              <label htmlFor="note" className="block text-xs font-medium text-text-secondary mb-1.5">
                 Kommentar <span className="text-text-tertiary font-normal">(valgfritt)</span>
               </label>
               <Textarea
@@ -381,7 +380,7 @@ export function AddParticipantDialog({
 
             {/* Payment Toggle */}
             <div>
-              <p id="payment-label" className="text-xs font-medium text-muted-foreground mb-2">
+              <p id="payment-label" className="text-xs font-medium text-text-secondary mb-2">
                 Betalingsstatus
               </p>
               <div
@@ -403,7 +402,7 @@ export function AddParticipantDialog({
                     className={`cursor-pointer flex-1 py-1.5 px-3 text-xs font-medium smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
                       paymentMarked === option.value
                             ? 'border-text-primary text-text-primary'
-                        : 'border-transparent text-muted-foreground hover:text-text-primary'
+                        : 'border-transparent text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     {option.label}

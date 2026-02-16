@@ -36,7 +36,7 @@ function SectionLoader({
     >
       <Spinner size={spinnerSizes[size]} />
       {message && (
-        <p className="mt-3 text-xs text-muted-foreground">{message}</p>
+        <p className="mt-3 text-xs text-text-secondary">{message}</p>
       )}
       <span className="sr-only">{message || 'Laster'}</span>
     </div>

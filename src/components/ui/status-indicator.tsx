@@ -24,31 +24,31 @@ const variantConfig: Record<IndicatorVariant, {
   defaultIcon?: React.ComponentType<{ className?: string }>;
 }> = {
   success: {
-    bg: 'bg-status-confirmed-bg',
-    text: 'text-status-confirmed-text',
-    border: 'border-status-confirmed-border',
+    bg: 'bg-green-100',
+    text: 'text-green-800',
+    border: 'border-green-200',
   },
   warning: {
-    bg: 'bg-status-warning-bg',
-    text: 'text-status-warning-text',
-    border: 'border-status-warning-border',
+    bg: 'bg-amber-100',
+    text: 'text-amber-900',
+    border: 'border-amber-200',
     defaultIcon: Clock,
   },
   error: {
-    bg: 'bg-status-error-bg',
-    text: 'text-status-error-text',
-    border: 'border-status-error-border',
+    bg: 'bg-red-100',
+    text: 'text-red-700',
+    border: 'border-red-200',
     defaultIcon: XCircle,
   },
   neutral: {
-    bg: 'bg-status-cancelled-bg',
-    text: 'text-status-cancelled-text',
-    border: 'border-status-cancelled-border',
+    bg: 'bg-zinc-50',
+    text: 'text-zinc-700',
+    border: 'border-zinc-200',
   },
   critical: {
-    bg: 'bg-status-error-bg',
-    text: 'text-status-error-text',
-    border: 'border-status-error-border',
+    bg: 'bg-red-100',
+    text: 'text-red-700',
+    border: 'border-red-200',
     defaultIcon: AlertTriangle,
   },
 };
@@ -68,7 +68,7 @@ const modeConfig: Record<IndicatorMode, {
   inline: {
     borderRadius: 'rounded-md',
     padding: 'px-1.5 py-0.5',
-    bgOpacity: '/50',
+    bgOpacity: '/70',
     showBorder: false,
   },
   'text-icon': {

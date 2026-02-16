@@ -801,7 +801,7 @@ export async function generateCourseSessions(
         status: s.status,
         notes: s.notes,
       }))
-      await typedFrom('course_sessions').insert(rollbackSessions).catch(rollbackErr => {
+      await typedFrom('course_sessions').insert(rollbackSessions).catch((rollbackErr: unknown) => {
         console.error('CRITICAL: Rollback of course sessions failed:', rollbackErr)
       })
     }

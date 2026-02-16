@@ -3,13 +3,14 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, Info } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { formatDateNorwegian } from '@/utils/dateUtils';
@@ -32,6 +33,9 @@ import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 import { AddParticipantDialog } from '@/components/teacher/AddParticipantDialog';
+import type { AudienceLevel, EquipmentInfo, PracticalInfo } from '@/types/practicalInfo';
+import type { Json } from '@/types/database';
+import { ARRIVAL_MINUTES_MAX, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
 
 type Tab = 'overview' | 'participants' | 'settings';
 
@@ -77,6 +81,12 @@ const CourseDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Practical info state
+  const [settingsAudienceLevel, setSettingsAudienceLevel] = useState<AudienceLevel | ''>('');
+  const [settingsEquipment, setSettingsEquipment] = useState<EquipmentInfo | ''>('');
+  const [settingsArrivalMinutes, setSettingsArrivalMinutes] = useState('');
+  const [settingsCustomBullets, setSettingsCustomBullets] = useState<string[]>([]);
+
   // Delete state
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -87,6 +97,40 @@ const CourseDetailPage = () => {
   // Session editing state (kept in page since it's UI-only)
   const [sessionEdits, setSessionEdits] = useState<Record<string, { date?: Date; time?: string }>>({});
   const [savingSessionId, setSavingSessionId] = useState<string | null>(null);
+
+  // Dirty state tracking for settings tab
+  const isSettingsDirty = useMemo(() => {
+    if (!courseData) return false;
+
+    if (settingsTitle !== courseData.title) return true;
+    if (settingsDescription !== (courseData.description || '')) return true;
+    if (settingsImageUrl !== courseData.imageUrl) return true;
+    if (settingsImageFile !== null) return true;
+    if (imageToDelete !== null) return true;
+    if (maxParticipants !== courseData.capacity) return true;
+    if (settingsDuration !== courseData.durationMinutes) return true;
+
+    // Compare date
+    const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
+    const currDate = settingsDate ? settingsDate.toDateString() : '';
+    if (currDate !== origDate) return true;
+
+    // Compare time
+    const origTimeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
+    const origTime = origTimeMatch ? origTimeMatch[1] : '';
+    if (settingsTime !== origTime) return true;
+
+    // Compare practical info
+    const pi = courseData.practicalInfo;
+    if (settingsAudienceLevel !== (pi?.audience_level || '')) return true;
+    if (settingsEquipment !== (pi?.equipment || '')) return true;
+    if (settingsArrivalMinutes !== (pi?.arrival_minutes_before?.toString() || '')) return true;
+    const origBullets = pi?.custom_bullets || [];
+    if (settingsCustomBullets.length !== origBullets.length) return true;
+    if (settingsCustomBullets.some((b, i) => b !== origBullets[i])) return true;
+
+    return false;
+  }, [courseData, settingsTitle, settingsDescription, settingsImageUrl, settingsImageFile, imageToDelete, maxParticipants, settingsDuration, settingsDate, settingsTime, settingsAudienceLevel, settingsEquipment, settingsArrivalMinutes, settingsCustomBullets]);
 
   // Cancel preview dialog state
   const [showCancelPreview, setShowCancelPreview] = useState(false);
@@ -115,6 +159,13 @@ const CourseDetailPage = () => {
     if (courseData.startDate) {
       setSettingsDate(new Date(courseData.startDate));
     }
+
+    // Initialize practical info
+    const pi = courseData.practicalInfo;
+    setSettingsAudienceLevel(pi?.audience_level || '');
+    setSettingsEquipment(pi?.equipment || '');
+    setSettingsArrivalMinutes(pi?.arrival_minutes_before?.toString() || '');
+    setSettingsCustomBullets(pi?.custom_bullets || []);
   // Only run when courseData identity changes (initial load / refetch)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseData]);
@@ -197,6 +248,20 @@ const CourseDetailPage = () => {
         timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${settingsTime}`;
       }
 
+      // Build practical_info from settings state
+      const practicalInfo: PracticalInfo = {};
+      if (settingsAudienceLevel) practicalInfo.audience_level = settingsAudienceLevel;
+      if (settingsEquipment) practicalInfo.equipment = settingsEquipment;
+      const arrivalNum = parseInt(settingsArrivalMinutes);
+      if (!isNaN(arrivalNum) && arrivalNum > 0 && arrivalNum <= ARRIVAL_MINUTES_MAX) {
+        practicalInfo.arrival_minutes_before = arrivalNum;
+      }
+      const filteredBullets = settingsCustomBullets
+        .filter(b => b.trim())
+        .map(b => b.trim().slice(0, CUSTOM_BULLET_MAX_LENGTH));
+      if (filteredBullets.length > 0) practicalInfo.custom_bullets = filteredBullets;
+      const hasPracticalInfo = Object.keys(practicalInfo).length > 0;
+
       const updateData = {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
@@ -204,6 +269,7 @@ const CourseDetailPage = () => {
         time_schedule: timeSchedule,
         image_url: newImageUrl,
         duration: settingsDuration,
+        practical_info: hasPracticalInfo ? (practicalInfo as unknown as Json) : null,
       };
 
       const { error: updateError } = await updateCourse(id, updateData);
@@ -240,6 +306,7 @@ const CourseDetailPage = () => {
         timeSchedule: timeSchedule || prev.timeSchedule,
         imageUrl: newImageUrl,
         durationMinutes: settingsDuration || prev.durationMinutes,
+        practicalInfo: hasPracticalInfo ? practicalInfo : null,
       } : null);
       setSettingsImageUrl(newImageUrl);
 
@@ -337,7 +404,7 @@ const CourseDetailPage = () => {
         <main className="flex-1 flex items-center justify-center h-screen bg-surface">
           <div className="text-center">
             <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight mb-2">Kurs ikke funnet</h1>
-            <p className="text-muted-foreground">{error || `Kurset med ID "${id}" finnes ikke.`}</p>
+            <p className="text-text-secondary">{error || `Kurset med ID "${id}" finnes ikke.`}</p>
           </div>
         </main>
       </SidebarProvider>
@@ -526,7 +593,7 @@ const CourseDetailPage = () => {
               <FilterTab value="overview">Oversikt</FilterTab>
               <FilterTab value="participants" className="flex items-center gap-1.5">
                 Deltakere
-                <span className="px-2 py-0.5 rounded-full bg-surface-elevated text-xs text-muted-foreground">
+                <span className="px-2.5 py-0.5 rounded-lg bg-zinc-100 text-xs font-medium text-text-primary">
                   {course.enrolled}
                 </span>
               </FilterTab>
@@ -670,8 +737,17 @@ const CourseDetailPage = () => {
                   maxParticipants={maxParticipants}
                   onMaxParticipantsChange={setMaxParticipants}
                   currentEnrolled={courseData?.enrolled || 0}
+                  settingsAudienceLevel={settingsAudienceLevel}
+                  onAudienceLevelChange={setSettingsAudienceLevel}
+                  settingsEquipment={settingsEquipment}
+                  onEquipmentChange={setSettingsEquipment}
+                  settingsArrivalMinutes={settingsArrivalMinutes}
+                  onArrivalMinutesChange={setSettingsArrivalMinutes}
+                  settingsCustomBullets={settingsCustomBullets}
+                  onCustomBulletsChange={setSettingsCustomBullets}
                   refundPreview={refundPreview}
                   onCancelCourse={() => setShowCancelPreview(true)}
+                  isDirty={isSettingsDirty}
                   saveError={saveError}
                   onSave={handleSaveSettings}
                   onCancel={() => setActiveTab('overview')}
@@ -686,68 +762,67 @@ const CourseDetailPage = () => {
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avlys kurs</AlertDialogTitle>
-            <AlertDialogDescription asChild>
+        <AlertDialogContent className="gap-0 p-0 overflow-hidden ring-1 ring-black/5 ios-ease">
+          {/* Modal body */}
+          <div className="p-7 space-y-6">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Avlys kurs</AlertDialogTitle>
+              <AlertDialogDescription>
+                {refundPreview.count > 0
+                  ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet på e-post.`
+                  : 'Kurset vil bli avlyst.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            {/* Participants list */}
+            {refundPreview.count > 0 && (
               <div className="space-y-4">
-                {refundPreview.count > 0 ? (
-                  <>
-                    <p>
-                      {refundPreview.count} deltaker{refundPreview.count !== 1 ? 'e' : ''} vil
-                      bli refundert totalt <strong>{refundPreview.totalAmount} kr</strong>
-                    </p>
+                <div>
+                  <span className="block text-xs font-medium text-text-tertiary mb-2">
+                    Refunderes
+                  </span>
+                  <div className="rounded-2xl border border-zinc-200 bg-surface/50 overflow-hidden max-h-[200px] overflow-y-auto">
+                    {refundPreview.participants.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className={cn(
+                          'flex items-center justify-between px-6 py-4',
+                          i < refundPreview.participants.length - 1 && 'border-b border-zinc-100'
+                        )}
+                      >
+                        <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
+                        <span className="text-sm text-text-secondary tabular-nums">{p.amount_paid} kr</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-                    {/* Participant list */}
-                    <div className="max-h-[200px] overflow-y-auto border border-border rounded-lg">
-                      {refundPreview.participants.map((p) => (
-                        <div key={p.id} className="flex justify-between px-3 py-2 border-b border-border last:border-b-0">
-                          <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
-                          <span className="text-sm text-muted-foreground">{p.amount_paid} kr</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      Alle deltakere vil bli varslet på e-post.
-                    </p>
-                  </>
-                ) : (
-                  <p>Ingen betalende deltakere å refundere. Kurset vil bli avlyst.</p>
-                )}
-
-                {/* Tip about editing instead */}
-                <div className="flex items-start gap-2 p-3 bg-surface-elevated rounded-lg">
-                  <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <p className="text-sm text-muted-foreground">
-                    <strong className="text-text-secondary">Tips:</strong> Du kan også endre dato, tid eller andre detaljer i innstillinger uten å avlyse kurset.
-                  </p>
+                {/* Refund total */}
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-medium text-text-tertiary">Totalt refusjon</span>
+                  <span className="text-lg font-medium text-text-primary tabular-nums">{refundPreview.totalAmount} kr</span>
                 </div>
               </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            )}
+          </div>
+
+          {/* Frosted footer */}
+          <AlertDialogFooter className="border-t border-zinc-200 bg-white/80 backdrop-blur-md p-6 flex-row justify-end gap-3 sm:space-x-0">
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
-              variant="destructive"
+              variant="outline-soft"
+              className="bg-status-error-bg border-status-error-border text-status-error-text hover:bg-status-error-bg/80"
               onClick={(e) => {
                 e.preventDefault();
                 handleDeleteCourse();
               }}
               disabled={isDeleting}
+              loading={isDeleting}
+              loadingText={refundPreview.count > 0
+                ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}`
+                : 'Avlyser'}
             >
-              {isDeleting ? (
-                <>
-                  <Spinner size="md" className="mr-2" />
-                  {refundPreview.count > 0
-                    ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}`
-                    : 'Avlyser'}
-                </>
-              ) : (
-                refundPreview.count > 0
-                  ? `Avlys kurs og refunder ${refundPreview.totalAmount} kr`
-                  : 'Avlys kurs'
-              )}
+              Avlys kurs
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -35,24 +35,7 @@ import type {
   Message as DashboardMessage,
 } from '@/types/dashboard';
 
-// Map database course to dashboard Course format (fallback when no sessions)
-function mapCourseForDashboard(course: CourseDB): DashboardCourse {
-  const styleType = course.course_type;
-
-  // Create subtitle from location or course type
-  const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
-
-  return {
-    id: course.id,
-    title: course.title,
-    subtitle,
-    time: extractTimeFromSchedule(course.time_schedule)?.time ?? '',
-    type: styleType as DashboardCourseType,
-    date: course.start_date || undefined,
-  };
-}
-
-// Map session + course to dashboard Course format (preferred - has actual session date)
+// Map session + course to dashboard Course format (has actual session date)
 function mapSessionForDashboard(session: CourseSession, course: CourseDB): DashboardCourse {
   const styleType = course.course_type;
   const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
@@ -210,22 +193,18 @@ const TeacherDashboard = () => {
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
     messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
   ) {
-    // Process courses - prefer week sessions (has actual dates) over raw courses
+    // Process courses - use week sessions (has actual session dates for this week)
+    const hasAnyCourses = (coursesResult.data && coursesResult.data.length > 0) ||
+      (weekSessionsResult.data && weekSessionsResult.data.length > 0);
+    setHasCourses(!!hasAnyCourses);
+
     if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
-      setHasCourses(true);
       const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
         mapSessionForDashboard(session, course)
       );
       setDashboardCourses(sessionCourses);
-    } else if (coursesResult.data && coursesResult.data.length > 0) {
-      setHasCourses(true);
-      const activeCourses = coursesResult.data
-        .filter(c => c.status === 'active' || c.status === 'upcoming')
-        .slice(0, 6)
-        .map(mapCourseForDashboard);
-      setDashboardCourses(activeCourses);
     } else {
-      setHasCourses(false);
+      // No sessions this week — show empty state in the courses card
       setDashboardCourses([]);
     }
 
@@ -379,7 +358,7 @@ const TeacherDashboard = () => {
             >
               <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-2">Oversikt</p>
+                  <p className="text-xs font-medium text-text-tertiary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                     {getTimeBasedGreeting()}, {userName}
                   </h1>
@@ -407,7 +386,7 @@ const TeacherDashboard = () => {
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
                   <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste dashboard</h3>
-                  <p className="text-xs text-muted-foreground max-w-xs mb-4">{loadError}</p>
+                  <p className="text-xs text-text-secondary max-w-xs mb-4">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
@@ -421,10 +400,10 @@ const TeacherDashboard = () => {
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {/* Primary Action Card - Minimal Style */}
-                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
                     <div className="relative flex h-full flex-col justify-center z-10 p-9">
                       <div className="max-w-md">
-                        <div className="mb-6 rounded-xl bg-surface border border-zinc-100 p-3 w-fit">
+                        <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
                           <Plus className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
                         </div>
                         <h2 className="font-geist text-2xl md:text-3xl font-medium tracking-tight mb-2 text-text-primary leading-tight">

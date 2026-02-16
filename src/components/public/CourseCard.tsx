@@ -49,7 +49,7 @@ export const CourseCard = ({
 
   return (
     <Link to={`/studio/${studioSlug}/${course.id}`} className="block">
-      <div className="group relative rounded-2xl bg-white border border-zinc-200 p-5 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 cursor-pointer">
+      <div className="group relative rounded-2xl bg-white border border-zinc-200 p-5 smooth-transition hover:bg-zinc-50/50 cursor-pointer">
         {/* Availability badge — pinned to top-right edge */}
         <div className="absolute -top-2.5 right-4">
           <StatusIndicator
@@ -70,7 +70,7 @@ export const CourseCard = ({
               <div className="text-lg font-medium text-text-primary leading-tight">
                 {getDateDay(displayDate)}
               </div>
-              <div className="text-xxs font-medium text-text-tertiary uppercase tracking-wider mt-0.5">
+              <div className="text-xxs font-medium text-text-tertiary mt-0.5">
                 {getDateMonthShort(displayDate)}
               </div>
             </div>

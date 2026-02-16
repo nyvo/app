@@ -82,16 +82,16 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6 transition-all hover:border-zinc-400">
+    <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* Left: Date Box */}
       <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-zinc-100 shrink-0">
         {startDate && isValid(startDate) ? (
           <>
-            <span className="text-sm font-medium text-text-tertiary uppercase tracking-wide">
+            <span className="text-sm font-medium text-text-tertiary">
               {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
             </span>
-            <span className="text-3xl font-semibold text-text-primary">
+            <span className="text-3xl font-medium text-text-primary">
               {format(startDate, 'd')}
             </span>
           </>
@@ -171,7 +171,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
                  <AlertDialogAction
                    onClick={handleCancellation}
                    disabled={isCancelling}
-                   className="bg-destructive hover:bg-destructive/90 text-white border-none"
+                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-none"
                  >
                    {isCancelling ? 'Avbestiller...' : 'Avbestill'}
                  </AlertDialogAction>

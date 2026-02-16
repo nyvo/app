@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { linkGuestBookingsToUser } from '@/services/studentSignups';
 import { logger } from '@/lib/logger';
@@ -17,13 +18,12 @@ const StudentLoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Redirect already-authenticated students to their dashboard
-  // Teachers stay on this page — student login is not for teacher accounts
+  // Redirect already-authenticated users to their dashboard
   useEffect(() => {
     if (user && userType === 'student') {
       navigate('/student/dashboard', { replace: true });
     } else if (user && userType === 'teacher') {
-      navigate('/login', { replace: true });
+      navigate('/teacher', { replace: true });
     }
   }, [user, userType, navigate]);
 
@@ -140,7 +140,7 @@ const StudentLoginPage = () => {
               <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
                 Velkommen tilbake
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-text-secondary">
                 Logg inn for å se timene dine
               </p>
             </div>
@@ -149,14 +149,14 @@ const StudentLoginPage = () => {
             <form className="space-y-5" onSubmit={handleSubmit}>
               {/* Login Error */}
               {loginError && (
-                <div className="rounded-xl bg-status-error-bg border border-status-error-text/20 p-3">
+                <Alert variant="error" size="sm" icon={false}>
                   <p className="text-xs text-status-error-text font-medium">{loginError}</p>
-                </div>
+                </Alert>
               )}
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   E-post <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -180,7 +180,7 @@ const StudentLoginPage = () => {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -202,7 +202,7 @@ const StudentLoginPage = () => {
                 <div className="flex justify-end pt-1">
                   <Link
                     to="/forgot-password"
-                    className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
+                    className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
                   >
                     Glemt passord?
                   </Link>
@@ -226,7 +226,7 @@ const StudentLoginPage = () => {
                 <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-xs font-medium text-text-tertiary uppercase tracking-wide">
+                <span className="bg-white px-2 text-xs font-medium text-text-tertiary">
                   Eller
                 </span>
               </div>
@@ -248,7 +248,7 @@ const StudentLoginPage = () => {
 
           {/* Sign Up Footer */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               Har du ikke konto?{' '}
               <Link
                 to="/student/register"

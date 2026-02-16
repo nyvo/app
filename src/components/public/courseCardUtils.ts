@@ -42,13 +42,6 @@ export function getDateMonthShort(dateStr: string): string {
     .replace('.', '');
 }
 
-// Extract short weekday from date string (e.g. "fre")
-export function getDateWeekdayShort(dateStr: string): string {
-  return new Date(dateStr)
-    .toLocaleDateString('nb-NO', { weekday: 'short' })
-    .replace('.', '');
-}
-
 // Get the display date for an event (prefers next_session, falls back to start_date)
 export function getEventDisplayDate(
   nextSession: { session_date: string } | null,
@@ -95,30 +88,3 @@ export function extractFullDayFromSchedule(schedule: string | null): string | nu
   return null;
 }
 
-// Extract short day name from schedule (e.g. "Mandager, 18:00" → "Man")
-export function extractDayFromSchedule(schedule: string | null): string | null {
-  if (!schedule) return null;
-  const lower = schedule.toLowerCase();
-  const days: [string, string][] = [
-    ['mandag', 'Man'],
-    ['tirsdag', 'Tir'],
-    ['onsdag', 'Ons'],
-    ['torsdag', 'Tor'],
-    ['fredag', 'Fre'],
-    ['lørdag', 'Lør'],
-    ['søndag', 'Søn'],
-  ];
-  for (const [day, short] of days) {
-    if (lower.includes(day)) return short;
-  }
-  return null;
-}
-
-// Format level for display
-export function formatLevel(level: string | null): string | null {
-  if (!level) return null;
-  if (level === 'alle') return 'Alle nivåer';
-  if (level === 'nybegynner') return 'Nybegynner';
-  if (level === 'viderekommen') return 'Viderekommen';
-  return level;
-}

@@ -4,6 +4,7 @@ import { fetchCourseById, fetchCourseSessions } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import type { Course, CourseSession } from '@/types/database';
+import type { PracticalInfo } from '@/types/practicalInfo';
 
 // Helper to map database course to component format
 export function mapCourseToComponentFormat(courseData: Course & { signups_count: number }) {
@@ -53,6 +54,7 @@ export function mapCourseToComponentFormat(courseData: Course & { signups_count:
     imageUrl: courseData.image_url || null,
     startDate: courseData.start_date || null,
     endDate: courseData.end_date || null,
+    practicalInfo: (courseData.practical_info as unknown as PracticalInfo | null) ?? null,
   };
 }
 

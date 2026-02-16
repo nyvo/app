@@ -56,22 +56,22 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
           </div>
           {/* Desktop: horizontal layout */}
           <div className="hidden md:flex items-center gap-4 mt-1.5">
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
               <Calendar className="h-3.5 w-3.5 text-text-tertiary" />
               {formatGroupDate(group.classDate)}{group.classTime && `, ${group.classTime}`}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
               <Users className="h-3.5 w-3.5 text-text-tertiary" />
               {group.counts.confirmed} påmeldt
             </span>
           </div>
           {/* Mobile: stacked layout */}
           <div className="flex md:hidden flex-col gap-1 mt-1.5">
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
               <Calendar className="h-3.5 w-3.5 text-text-tertiary flex-shrink-0" />
               {formatGroupDate(group.classDate)}{group.classTime && `, ${group.classTime}`}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
               <Users className="h-3.5 w-3.5 text-text-tertiary flex-shrink-0" />
               {group.counts.confirmed} påmeldt
             </span>
@@ -90,12 +90,8 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
         <div id={`group-content-${group.key}`} className="border-t border-zinc-100">
           {/* Exceptions Section */}
           {group.signups.exceptions.length > 0 && (
-            <div className="px-4 py-3 md:px-6 bg-surface/30">
-              <h4 role="alert" className="text-xxs font-medium uppercase tracking-wider text-status-error-text mb-3 flex items-center gap-1.5">
-                <AlertTriangle className="h-3 w-3" />
-                Krever handling ({group.signups.exceptions.length})
-              </h4>
-              <div className="space-y-2">
+            <div className="px-4 py-2 md:px-6">
+              <div className="divide-y divide-zinc-100">
                 {group.signups.exceptions.map(signup => (
                   <ExceptionRow key={signup.id} signup={signup} actionHandlers={actionHandlers} />
                 ))}
@@ -105,11 +101,11 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 
           {/* Confirmed Section */}
           {group.signups.confirmed.length > 0 && (
-            <div className="px-4 py-3 md:px-6">
-              <h4 className="text-xxs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+            <div className={cn("px-4 py-2 md:px-6", group.signups.exceptions.length > 0 && "border-t border-zinc-100")}>
+              <h4 className="text-xs font-medium text-text-secondary mb-2">
                 Påmeldt ({group.signups.confirmed.length})
               </h4>
-              <div className="space-y-1">
+              <div className="divide-y divide-zinc-100">
                 {group.signups.confirmed.map(signup => (
                   <ParticipantRow key={signup.id} signup={signup} />
                 ))}
@@ -119,11 +115,11 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 
           {/* Cancelled Section */}
           {group.signups.cancelled.length > 0 && (
-            <div className="px-4 py-3 md:px-6 border-t border-zinc-100 bg-surface/30">
-              <h4 className="text-xxs font-medium uppercase tracking-wider text-muted-foreground mb-3">
+            <div className="px-4 py-2 md:px-6 border-t border-zinc-100">
+              <h4 className="text-xs font-medium text-text-secondary mb-2">
                 Avbestilt ({group.signups.cancelled.length})
               </h4>
-              <div className="space-y-1">
+              <div className="divide-y divide-zinc-100">
                 {group.signups.cancelled.map(signup => (
                   <CancelledRow key={signup.id} signup={signup} />
                 ))}
@@ -134,7 +130,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
           {/* Empty state */}
           {totalActive === 0 && group.signups.exceptions.length === 0 && (
             <div className="px-4 py-8 md:px-6 text-center">
-              <p className="text-sm text-muted-foreground">Ingen aktive påmeldinger</p>
+              <p className="text-sm text-text-secondary">Ingen aktive påmeldinger</p>
             </div>
           )}
         </div>
@@ -146,18 +142,18 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 // Exception row with action menu
 function ExceptionRow({ signup, actionHandlers }: { signup: SignupDisplay; actionHandlers?: ExceptionActionHandlers }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg">
+    <div className="flex items-center gap-3 py-1.5">
       <UserAvatar
         name={signup.participantName}
         email={signup.participantEmail}
-        size="sm"
+        size="xs"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{signup.participantName}</p>
-        <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+        <p className="text-xs text-text-secondary truncate">{signup.participantEmail}</p>
       </div>
       {/* Payment badge: exception-only (paid is silent by default) */}
-      <PaymentBadge status={signup.paymentStatus} size="sm" />
+      <PaymentBadge status={signup.paymentStatus} size="sm" mode="text-icon" />
       <NotePopover note={signup.note} />
       {actionHandlers && signup.exceptionType && (
         <ExceptionActionMenu signup={signup} handlers={actionHandlers} />
@@ -169,18 +165,18 @@ function ExceptionRow({ signup, actionHandlers }: { signup: SignupDisplay; actio
 // Standard participant row
 function ParticipantRow({ signup }: { signup: SignupDisplay }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-1 rounded-lg hover:bg-zinc-50 smooth-transition">
+    <div className="flex items-center gap-3 py-1.5">
       <UserAvatar
         name={signup.participantName}
         email={signup.participantEmail}
-        size="sm"
+        size="xs"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{signup.participantName}</p>
-        <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+        <p className="text-xs text-text-secondary truncate">{signup.participantEmail}</p>
       </div>
       {/* Payment badge: exception-only (paid is silent by default) */}
-      <PaymentBadge status={signup.paymentStatus} size="sm" />
+      <PaymentBadge status={signup.paymentStatus} size="sm" mode="text-icon" />
       <NotePopover note={signup.note} />
     </div>
   );
@@ -189,19 +185,19 @@ function ParticipantRow({ signup }: { signup: SignupDisplay }) {
 // Cancelled row with muted styling
 function CancelledRow({ signup }: { signup: SignupDisplay }) {
   return (
-    <div className="flex items-center gap-3 py-2 px-1 rounded-lg opacity-70" aria-disabled="true">
+    <div className="flex items-center gap-3 py-1.5 opacity-70" aria-disabled="true">
       <UserAvatar
         name={signup.participantName}
         email={signup.participantEmail}
-        size="sm"
+        size="xs"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-secondary truncate line-through">{signup.participantName}</p>
-        <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+        <p className="text-xs text-text-secondary truncate">{signup.participantEmail}</p>
       </div>
       <StatusBadge status={signup.status} size="sm" />
       {/* Payment badge: exception-only (paid is silent by default) */}
-      <PaymentBadge status={signup.paymentStatus} size="sm" />
+      <PaymentBadge status={signup.paymentStatus} size="sm" mode="text-icon" />
       <NotePopover note={signup.note} />
     </div>
   );

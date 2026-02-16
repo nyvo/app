@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, CheckCircle2, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { linkGuestBookingsToUser } from '@/services/studentSignups';
 import { toast } from 'sonner';
@@ -187,7 +188,7 @@ const StudentRegisterPage = () => {
               <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
                 Opprett konto
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm text-text-secondary">
                 Se timene dine og book enkelt
               </p>
             </div>
@@ -196,14 +197,14 @@ const StudentRegisterPage = () => {
             <form className="space-y-4" onSubmit={handleSubmit}>
               {/* Registration Error */}
               {registerError && (
-                <div className="rounded-xl bg-status-error-bg border border-status-error-text/20 p-3">
+                <Alert variant="error" size="sm" icon={false}>
                   <p className="text-xs text-status-error-text font-medium">{registerError}</p>
-                </div>
+                </Alert>
               )}
 
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Navn <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -225,7 +226,7 @@ const StudentRegisterPage = () => {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   E-post <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -247,7 +248,7 @@ const StudentRegisterPage = () => {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -271,7 +272,7 @@ const StudentRegisterPage = () => {
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">
                   Gjenta passord <span className="text-status-error-text">*</span>
                 </label>
                 <div className="relative group">
@@ -308,7 +309,7 @@ const StudentRegisterPage = () => {
                 <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-xs font-medium text-text-tertiary uppercase tracking-wide">
+                <span className="bg-white px-2 text-xs font-medium text-text-tertiary">
                   Eller
                 </span>
               </div>
@@ -330,7 +331,7 @@ const StudentRegisterPage = () => {
 
           {/* Login Footer */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-secondary">
               Har du allerede en konto?{' '}
               <Link
                 to="/student/login"

@@ -1,5 +1,5 @@
 import { XCircle } from 'lucide-react';
-import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
+import { StatusIndicator, type IndicatorVariant, type IndicatorMode, type IndicatorSize } from './status-indicator';
 
 export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
 export type PaymentVisibility = 'always' | 'exceptions';
@@ -36,6 +36,7 @@ const paymentConfig: Record<PaymentStatus, PaymentConfig> = {
 interface PaymentBadgeProps {
   status: PaymentStatus;
   size?: 'sm' | 'md';
+  mode?: IndicatorMode;
   customLabel?: string;
   className?: string;
   /**
@@ -61,6 +62,7 @@ interface PaymentBadgeProps {
 export function PaymentBadge({
   status,
   size = 'md',
+  mode = 'badge',
   customLabel,
   className,
   visibility = 'exceptions',
@@ -79,7 +81,7 @@ export function PaymentBadge({
   return (
     <StatusIndicator
       variant={config.variant}
-      mode="badge"
+      mode={mode}
       size={indicatorSize}
       label={label}
       icon={config.showIcon ? XCircle : undefined}

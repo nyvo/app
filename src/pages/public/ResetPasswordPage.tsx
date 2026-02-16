@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Infinity, ArrowLeft, CheckCircle2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import { supabase } from '@/lib/supabase';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
@@ -371,9 +372,9 @@ const ResetPasswordPage = () => {
 
             {/* General Error */}
             {errors.general && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <Alert variant="destructive" size="sm" icon={false}>
                 <p className="text-xs text-destructive">{errors.general}</p>
-              </div>
+              </Alert>
             )}
 
             <Button

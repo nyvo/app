@@ -13,10 +13,10 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
     return (
       <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
         {/* Active Students - Empty State */}
-        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden group ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden">
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-muted-foreground">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-text-secondary">
                 <UserCheck className="h-5 w-5 text-text-tertiary" />
               </div>
             </div>
@@ -30,10 +30,10 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         </div>
 
         {/* Attendance - Empty State with Mock Chart */}
-        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden group ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+        <div className="relative h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 overflow-hidden">
           <div className="relative z-10 flex flex-col justify-between h-full">
             <div className="flex items-center justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-muted-foreground">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-text-secondary">
                 <BarChart2 className="h-5 w-5 text-text-tertiary" />
               </div>
             </div>
@@ -51,12 +51,12 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
 
   return (
     <div className="col-span-1 md:col-span-1 lg:col-span-1 space-y-6">
-      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 flex flex-col justify-between group">
+      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 flex flex-col justify-between">
         <div className="flex items-center justify-between">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-muted-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface border border-zinc-100 text-text-secondary">
             <UserCheck className="h-5 w-5 text-text-secondary" />
           </div>
-          <span className="text-xxs font-medium text-text-tertiary uppercase tracking-wider">Denne uken</span>
+          <span className="text-xs font-medium text-text-tertiary">Denne uken</span>
         </div>
         <div className="flex flex-col">
           <span className="text-sm text-text-secondary font-normal">Aktive studenter</span>
@@ -68,7 +68,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         </div>
       </div>
 
-      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 flex flex-col justify-between group">
+      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 flex flex-col justify-between group">
         <div>
           <p className="text-sm text-text-secondary font-normal">Oppmøte</p>
           <div className="flex items-end gap-2 mt-1">

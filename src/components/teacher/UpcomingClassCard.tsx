@@ -10,12 +10,12 @@ interface UpcomingClassCardProps {
 export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
-      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border ios-ease hover:border-zinc-400 hover:bg-zinc-50/50">
+      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
         <div className="relative flex h-full flex-col justify-center p-6 sm:p-9 z-10">
           {/* Main content */}
           <div className="max-w-md">
             <div className="mb-6">
-              <div className="mb-6 rounded-xl bg-surface border border-zinc-100 p-3 w-fit">
+              <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
                 <Calendar className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
               </div>
               <h2 className="font-geist text-xl sm:text-2xl font-medium tracking-tight text-text-primary mb-2">
@@ -43,12 +43,12 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   return (
     <Link
       to={`/teacher/courses/${classData.id}`}
-      className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-zinc-900 text-white border border-zinc-800 ios-ease hover:border-zinc-700 hover:bg-zinc-800/50 cursor-pointer block"
+      className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50 cursor-pointer block"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 z-0"></div>
       <div className="absolute inset-0 bg-grain opacity-[0.35] mix-blend-overlay pointer-events-none z-0"></div>
 
-      <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl transition-all duration-1000 group-hover:bg-white/10 z-0"></div>
+      <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/5 blur-3xl ios-ease group-hover:bg-white/10 z-0"></div>
 
       <div className="relative flex h-full flex-col justify-between z-10 p-6 sm:p-9">
         <div className="flex items-start justify-between gap-2">

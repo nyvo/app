@@ -62,7 +62,7 @@ export function TimePicker({
         id={id}
         onBlur={onBlur}
         className={cn(
-          "w-full h-11 bg-input-bg transition-all",
+          "w-full h-11 bg-input-bg",
           error ? "border-destructive" : "border-zinc-300",
           className
         )}

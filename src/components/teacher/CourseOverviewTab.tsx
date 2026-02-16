@@ -13,15 +13,14 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
 } from '@/components/ui/accordion';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Input } from '@/components/ui/input';
 import { TimePicker } from '@/components/ui/time-picker';
-import { cn } from '@/lib/utils';
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
@@ -174,7 +173,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-text-tertiary" />
-              <span className="text-xxs font-medium uppercase tracking-wider text-text-tertiary">
+              <span className="text-xs font-medium text-text-tertiary">
                 Påmelding
               </span>
             </div>
@@ -200,16 +199,18 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             <span className="text-2xl font-medium tracking-tight text-text-primary">
               {course.enrolled ?? 0}
             </span>
-            <span className="text-sm text-muted-foreground mb-0.5">
+            <span className="text-sm text-text-secondary mb-0.5">
               av {course.capacity} påmeldte
             </span>
           </div>
           {/* Progress Bar */}
-          <div className="w-full bg-surface-elevated rounded-full h-2">
-            <div
-              className="bg-primary h-2 rounded-full ios-ease"
-              style={{ width: `${course.capacity > 0 ? Math.max(2, Math.min((course.enrolled / course.capacity) * 100, 100)) : 0}%` }}
-            />
+          <div className="w-full bg-surface-elevated rounded-full h-2 overflow-hidden">
+            {course.enrolled > 0 && course.capacity > 0 && (
+              <div
+                className="bg-primary h-2 rounded-full ios-ease"
+                style={{ width: `${Math.min((course.enrolled / course.capacity) * 100, 100)}%` }}
+              />
+            )}
           </div>
         </div>
 
@@ -222,7 +223,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
               </p>
               {course.date && formatDateRange(course.startDate, course.endDate) && (
-                <p className="text-xs text-muted-foreground mt-0.5">{course.date}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{course.date}</p>
               )}
             </div>
           </div>
@@ -255,7 +256,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 />
               </div>
             ) : (
-              <>
+              <div className="p-6 pb-0">
                 <input
                   ref={quickImageInputRef}
                   type="file"
@@ -264,24 +265,24 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   className="hidden"
                 />
                 <div
-                  className="h-48 bg-surface border-b border-zinc-100 flex items-center justify-center relative group cursor-pointer smooth-transition hover:bg-zinc-50"
+                  className="h-40 bg-surface/30 rounded-2xl border border-zinc-200 flex items-center justify-center group cursor-pointer smooth-transition hover:bg-zinc-50/50"
                   onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
                 >
                   {isUploadingQuickImage ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-2 text-text-secondary">
                       <Spinner size="sm" />
                       <span className="text-xs font-medium">Laster opp...</span>
                     </div>
                   ) : (
                     <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-zinc-200 mb-2 group-hover:scale-105 smooth-transition">
+                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-zinc-200 mb-2 group-hover:scale-[1.02] smooth-transition">
                         <Image className="h-4 w-4 text-text-tertiary" />
                       </div>
                       <p className="text-xs font-medium text-text-primary">Legg til forsidebilde</p>
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             )}
 
             {/* Description Content */}
@@ -299,12 +300,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="bg-surface/30 rounded-2xl border border-dashed border-zinc-200 p-6 flex flex-col items-center justify-center text-center">
-                  <div className="bg-white p-2 rounded-xl border border-zinc-100 mb-3">
+                <div className="bg-surface/30 rounded-2xl border border-zinc-200 p-6 flex flex-col items-center justify-center text-center">
+                  <div className="bg-white p-2 rounded-xl border border-zinc-200 mb-3">
                     <Info className="h-4 w-4 text-text-tertiary" />
                   </div>
                   <p className="text-sm text-text-primary font-medium mb-1">Ingen beskrivelse</p>
-                  <p className="text-xs text-muted-foreground mb-4">
+                  <p className="text-xs text-text-secondary mb-4">
                     Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
                   </p>
                   <Button variant="outline-soft" size="compact" onClick={onNavigateToSettings}>
@@ -323,7 +324,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <h3 className="text-sm font-medium text-text-primary">
                   Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})
                 </h3>
-                <button onClick={onEditTime} className="cursor-pointer text-sm text-muted-foreground hover:text-text-primary font-medium smooth-transition">
+                <button onClick={onEditTime} className="cursor-pointer text-sm text-text-secondary hover:text-text-primary font-medium smooth-transition">
                   Rediger
                 </button>
               </div>
@@ -341,15 +342,15 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                         onClick={() => onExpandedItemChange(expandedItem === week.id ? undefined : week.id)}
                       >
                         <div
-                          className={`w-14 h-14 rounded-lg flex flex-col items-center justify-center shrink-0 ${
+                          className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0 ${
                             week.isNext
-                              ? 'bg-zinc-900 text-white'
-                              : 'bg-white border border-zinc-200 text-muted-foreground'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-white border border-zinc-200 text-text-secondary'
                           }`}
                         >
                           <span
-                            className={`text-xxs uppercase font-medium tracking-wider ${
-                              week.isNext ? 'opacity-80' : 'opacity-70'
+                            className={`text-xs font-medium ${
+                              week.isNext ? 'opacity-90' : 'opacity-80'
                             }`}
                           >
                             {sessionLabel}
@@ -362,7 +363,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className={`text-sm font-medium ${week.status === 'completed' ? 'text-muted-foreground line-through' : 'text-text-primary'}`}>
+                            <h4 className={`text-sm font-medium ${week.status === 'completed' ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
                               {week.title}
                             </h4>
                             {week.isNext && (
@@ -382,14 +383,14 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                               />
                             )}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-text-secondary">
                             <span>{week.time}</span>
                             <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                             <span>{week.date}</span>
                           </div>
                         </div>
                         <ChevronDown
-                          className={`h-4 w-4 text-text-tertiary group-hover:text-muted-foreground smooth-transition ${
+                          className={`h-4 w-4 text-text-tertiary group-hover:text-text-secondary smooth-transition ${
                             expandedItem === week.id ? 'rotate-180' : ''
                           }`}
                         />
@@ -401,7 +402,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
+                              <label className="block text-xs font-medium text-text-tertiary mb-1.5">
                                 Dato
                               </label>
                               <DatePicker
@@ -416,7 +417,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-1.5">
+                              <label className="block text-xs font-medium text-text-tertiary mb-1.5">
                                 Tidspunkt
                               </label>
                               <TimePicker
@@ -426,10 +427,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-start gap-2 p-3 rounded-lg bg-surface text-xs text-muted-foreground">
-                            <Info className="h-4 w-4 shrink-0 mt-0.5 text-text-tertiary" />
-                            <p>Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
-                          </div>
+                          <Alert variant="neutral" size="sm" icon={Info}>
+                            <p className="text-xs text-text-secondary">Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
+                          </Alert>
 
                           <div className="flex justify-end gap-2 pt-2">
                             <Button
@@ -464,7 +464,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 {generatedCourseWeeks.length > (isMobile ? 1 : 3) && (
                   <button
                     onClick={onShowMore}
-                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary smooth-transition"
+                    className="flex w-full items-center justify-center gap-2 py-4 text-xs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary smooth-transition"
                   >
                     {visibleWeeks >= generatedCourseWeeks.length ? (
                       <>
@@ -488,16 +488,16 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         <div className="lg:col-span-4 space-y-6">
           {/* Admin Card */}
           <div className="rounded-2xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-xxs font-medium uppercase tracking-wider text-text-tertiary mb-4">
+            <h3 className="text-xs font-medium text-text-tertiary mb-4">
               Administrasjon
             </h3>
             <div className="mb-5">
-              <span className="text-xs text-muted-foreground block mb-1">Pris per deltaker</span>
+              <span className="text-xs text-text-secondary block mb-1">Pris per deltaker</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-xl font-medium text-text-primary tracking-tight">
                   {course.price}
                 </span>
-                <span className="text-xs font-medium text-muted-foreground">NOK</span>
+                <span className="text-xs font-medium text-text-secondary">NOK</span>
               </div>
             </div>
             <div className="space-y-3">
@@ -529,17 +529,14 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           </div>
 
           {/* Tips Card */}
-          <div className="rounded-2xl bg-status-info-bg border border-status-info-border p-4">
-            <div className="flex gap-3">
-              <Info className="h-4 w-4 text-status-info-text shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-medium text-status-info-text">Tips for synlighet</h4>
-                <p className="text-xs text-status-info-text/70 mt-1 leading-snug">
-                  Legg til bilde og beskrivelse for å gjøre kurset mer attraktivt.
-                </p>
-              </div>
+          <Alert variant="info">
+            <div>
+              <AlertTitle variant="info">Tips for synlighet</AlertTitle>
+              <AlertDescription variant="info">
+                Legg til bilde og beskrivelse for å gjøre kurset mer attraktivt.
+              </AlertDescription>
             </div>
-          </div>
+          </Alert>
         </div>
       </div>
     </div>

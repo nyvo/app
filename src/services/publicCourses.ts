@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import type { CourseType, CourseStatus, CourseLevel } from '@/types/database'
+import type { CourseType, CourseStatus, CourseLevel, Json } from '@/types/database'
+import type { PracticalInfo } from '@/types/practicalInfo'
 
 // Internal type for the joined course query result
 interface CourseQueryResult {
@@ -18,6 +19,7 @@ interface CourseQueryResult {
   end_date: string | null
   image_url: string | null
   organization_id: string
+  practical_info: Json | null
   organization: { name: string; slug: string } | null
   instructor: { id: string; name: string | null; avatar_url: string | null } | null
 }
@@ -46,6 +48,7 @@ export interface PublicCourseWithDetails {
   end_date: string | null
   image_url: string | null
   organization_id: string
+  practical_info: PracticalInfo | null
   spots_available: number
   organization: {
     name: string
@@ -94,6 +97,7 @@ export async function fetchPublicCourses(
       end_date,
       image_url,
       organization_id,
+      practical_info,
       organization:organizations(name, slug),
       instructor:instructor_id(id, name, avatar_url)
     `, { count: filters?.limit ? 'exact' : undefined })
@@ -223,6 +227,7 @@ export async function fetchPublicCourses(
       end_date: course.end_date,
       image_url: course.image_url,
       organization_id: course.organization_id,
+      practical_info: (course.practical_info as unknown as PracticalInfo) || null,
       organization: course.organization as unknown as { name: string; slug: string } | null,
       instructor: course.instructor as unknown as { id: string; name: string | null; avatar_url: string | null } | null,
       spots_available: spotsAvailable,
@@ -256,6 +261,7 @@ export async function fetchPublicCourseById(
       end_date,
       image_url,
       organization_id,
+      practical_info,
       organization:organizations(name, slug),
       instructor:instructor_id(id, name, avatar_url)
     `)
@@ -305,6 +311,7 @@ export async function fetchPublicCourseById(
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
     organization_id: typedCourse.organization_id,
+    practical_info: (typedCourse.practical_info as unknown as PracticalInfo) || null,
     organization: typedCourse.organization,
     instructor: typedCourse.instructor || null,
     spots_available: spotsAvailable,

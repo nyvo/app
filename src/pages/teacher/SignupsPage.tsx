@@ -306,7 +306,7 @@ export const SignupsPage = () => {
         >
           <div>
             <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
-            <p className="text-sm text-muted-foreground mt-1">Oversikt over studenter og bookinger.</p>
+            <p className="text-sm text-text-secondary mt-1">Oversikt over studenter og bookinger.</p>
           </div>
 
           {/* Filters Bar */}
@@ -323,7 +323,7 @@ export const SignupsPage = () => {
                 Krever handling
                 {stats.totalExceptions > 0 && (
                   <span className={cn(
-                    'px-1.5 py-0.5 rounded-full text-xxs font-medium uppercase tracking-wider',
+                    'px-1.5 py-0.5 rounded-full text-xxs font-medium',
                     modeFilter === 'needs_attention'
                       ? 'bg-status-error-bg text-status-error-text'
                       : 'bg-zinc-100 text-zinc-500'
@@ -354,7 +354,7 @@ export const SignupsPage = () => {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="text-xs text-muted-foreground hover:text-text-primary underline underline-offset-2 ml-2"
+                    className="text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 ml-2"
                   >
                     Nullstill
                   </button>

@@ -41,7 +41,7 @@ export const CoursesEmptyState = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-text-primary">Kursrekker</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-text-secondary mt-0.5">
                 Faste ukentlige kurs som går over flere uker
               </p>
             </div>
@@ -52,7 +52,7 @@ export const CoursesEmptyState = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-text-primary">Arrangementer</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-text-secondary mt-0.5">
                 Workshops og enkeltarrangementer
               </p>
             </div>

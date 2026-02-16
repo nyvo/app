@@ -31,7 +31,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="font-geist text-xl font-bold text-text-primary tracking-tight">
+            <Link to="/" className="font-geist text-xl font-medium text-text-primary tracking-tight">
               Ease
             </Link>
             
@@ -74,7 +74,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm">
                   <p className="font-medium text-text-primary">{profile?.name || 'Student'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/student/profile')} className="cursor-pointer">
@@ -100,7 +100,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       {/* Simple Footer */}
       <footer className="border-t border-zinc-200 bg-white py-8 mt-auto">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-text-secondary">
             Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-primary underline hover:text-text-secondary transition-colors">Kontakt support</a>
           </p>
         </div>

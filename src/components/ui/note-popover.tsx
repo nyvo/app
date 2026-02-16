@@ -14,7 +14,7 @@ export function NotePopover({ note, className }: NotePopoverProps) {
       <PopoverTrigger asChild>
         <button
           className={`inline-flex items-center justify-center h-8 w-8 rounded-lg transition-colors ${
-            note.length > 0 ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' : 'text-text-tertiary hover:text-text-primary hover:bg-surface-elevated'
+            note.length > 0 ? 'text-status-warning-text hover:text-status-warning-text/90 hover:bg-status-warning-bg' : 'text-text-tertiary hover:text-text-primary hover:bg-surface-elevated'
           } ${className || ''}`}
           aria-label="Vis notater"
           title="Vis notater"
@@ -28,7 +28,7 @@ export function NotePopover({ note, className }: NotePopoverProps) {
       </PopoverTrigger>
       <PopoverContent align="center" side="top" className="w-56 p-3">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+          <AlertCircle className="h-3.5 w-3.5 text-status-warning-text shrink-0 mt-0.5" />
           <p className="text-xs text-text-secondary leading-relaxed">{note}</p>
         </div>
       </PopoverContent>

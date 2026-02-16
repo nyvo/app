@@ -93,7 +93,7 @@ export const SessionList: React.FC<SessionListProps> = ({
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
-        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white ios-ease hover:border-zinc-400 hover:bg-zinc-50/50 group"
+        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white smooth-transition hover:bg-zinc-50/50 group"
       >
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-medium text-text-primary">Økter</h2>
@@ -129,10 +129,10 @@ export const SessionList: React.FC<SessionListProps> = ({
             return (
               <div
                 key={session.id}
-                className={`snap-start shrink-0 w-64 md:w-auto rounded-2xl border p-4 transition-all ${
+                className={`snap-start shrink-0 w-64 md:w-auto rounded-2xl border p-4 ios-ease ${
                   isNextSession
                     ? 'ring-2 ring-status-confirmed-border border-transparent bg-white'
-                    : 'border-zinc-200 bg-white hover:border-zinc-400'
+                    : 'border-zinc-200 bg-white'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">

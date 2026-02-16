@@ -92,7 +92,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-300 p-2 hover:border-zinc-400 transition-all cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-300 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
@@ -101,7 +101,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         </span>
         {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
         {isActive && (
-          <span className="inline-flex items-center rounded-full bg-success px-1.5 py-0.5 text-[8px] font-medium text-white">
+          <span className="inline-flex items-center rounded-full bg-success px-1.5 py-0.5 text-xxs font-medium text-success-foreground">
             Start
           </span>
         )}
@@ -161,7 +161,7 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`block rounded-2xl bg-white border border-zinc-200 p-4 hover:border-zinc-400 transition-all cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`block rounded-2xl bg-white border border-zinc-200 p-4 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -170,7 +170,7 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
               {formatTime(event.startTime)} - {formatTime(event.endTime)}
             </span>
             {isActive && (
-              <span className="inline-flex items-center rounded-full bg-success px-2 py-0.5 text-xs font-medium text-white">
+              <span className="inline-flex items-center rounded-full bg-success px-2 py-0.5 text-xs font-medium text-success-foreground">
                 Pågår
               </span>
             )}
@@ -226,7 +226,7 @@ const MobileDayView = ({
             <button
               key={day.name}
               onClick={() => onDaySelect(index)}
-              className={`flex flex-col items-center justify-center min-w-[52px] h-16 rounded-xl transition-all cursor-pointer ${
+              className={`flex flex-col items-center justify-center min-w-[52px] h-16 rounded-xl smooth-transition cursor-pointer ${
                 selectedDayIndex === index
                   ? 'bg-primary text-primary-foreground'
                   : day.isToday
@@ -234,7 +234,7 @@ const MobileDayView = ({
                   : 'bg-surface hover:bg-zinc-50 text-text-secondary'
               }`}
             >
-              <span className="text-xs font-medium uppercase tracking-wide">
+              <span className="text-xs font-medium">
                 {day.name.slice(0, 3)}
               </span>
               <span className="text-lg font-medium mt-0.5">{day.date}</span>
@@ -254,7 +254,7 @@ const MobileDayView = ({
                 <CalendarDays className="h-7 w-7 text-destructive" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Noe gikk galt</h3>
-              <p className="text-xs text-muted-foreground mb-4">{error}</p>
+              <p className="text-xs text-text-secondary mb-4">{error}</p>
               <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
@@ -265,7 +265,7 @@ const MobileDayView = ({
                 <CalendarDays className="h-7 w-7 text-text-tertiary" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Ingen timer denne uken</h3>
-              <p className="text-xs text-muted-foreground mb-4">
+              <p className="text-xs text-text-secondary mb-4">
                 {courses.length === 0
                   ? 'Opprett et kurs for å komme i gang.'
                   : 'Ingen planlagte timer denne uken.'}
@@ -287,7 +287,7 @@ const MobileDayView = ({
               <h3 className="text-sm font-medium text-text-primary mb-1">
                 Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
               </h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Velg en annen dag for å se timer.
               </p>
             </div>
@@ -558,7 +558,7 @@ export const SchedulePage = () => {
               <div className="flex items-center gap-3">
                 <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Timeplan</h1>
                 <div className="h-4 w-px bg-border"></div>
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -654,7 +654,7 @@ export const SchedulePage = () => {
                   <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
                     Noe gikk galt
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="text-sm text-text-secondary mb-6">
                     {error}
                   </p>
                   <Button onClick={loadScheduleData} size="compact" className="gap-2">
@@ -674,7 +674,7 @@ export const SchedulePage = () => {
                   <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
                     Ingen timer denne uken
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="text-sm text-text-secondary mb-6">
                     {courses.length === 0
                       ? 'Du har ingen kurs ennå. Opprett et nytt kurs for å komme i gang.'
                       : 'Det er ingen planlagte timer denne uken. Naviger til en annen uke eller opprett et nytt kurs.'}
@@ -700,7 +700,7 @@ export const SchedulePage = () => {
                   key={day.name}
                   className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                 >
-                  <span className={`text-xxs font-medium uppercase tracking-wider ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-muted-foreground'}`}>
+                  <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>
                     {day.name}
                   </span>
                   <span

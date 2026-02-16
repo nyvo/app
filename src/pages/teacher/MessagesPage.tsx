@@ -13,6 +13,7 @@ import {
   X,
   Archive,
   ArchiveRestore,
+  Trash2,
 } from 'lucide-react';
 import { SectionLoader } from '@/components/ui/section-loader';
 import { Spinner } from '@/components/ui/spinner';
@@ -22,6 +23,7 @@ import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { SearchInput } from '@/components/ui/search-input';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -40,6 +42,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FilterTabs, FilterTab } from "@/components/ui/filter-tabs"
@@ -360,7 +363,7 @@ const MessagesPage = () => {
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
                   <p className="text-sm font-medium text-text-primary">Ingen meldinger</p>
-                  <p className="text-xs text-muted-foreground mt-1">Ingen treff med dette filteret.</p>
+                  <p className="text-xs text-text-secondary mt-1">Ingen treff med dette filteret.</p>
                 </div>
               ) : (
                 filteredConversations.map((conversation) => {
@@ -368,7 +371,7 @@ const MessagesPage = () => {
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-2xl transition-all text-left group relative ${
+                  className={`w-full flex items-start gap-3 p-3 rounded-2xl ios-ease text-left group relative ${
                     activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border border-zinc-200'
                       : conversation.is_read
@@ -385,7 +388,7 @@ const MessagesPage = () => {
                       className={activeConversation?.id !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
                     />
                     {conversation.unread_count > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground border-2 border-surface">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-surface">
                         {conversation.unread_count}
                       </span>
                     )}
@@ -394,14 +397,16 @@ const MessagesPage = () => {
                     <div className="flex items-center justify-between mb-0.5">
                       <span
                         className={`text-sm font-medium ${
-                          conversation.is_read ? 'text-text-secondary' : 'text-text-primary'
+                          activeConversation?.id === conversation.id && !isComposing
+                            ? 'text-text-primary'
+                            : conversation.is_read ? 'text-text-secondary' : 'text-text-primary'
                         }`}
                       >
                         {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                       </span>
                       <span
                         className={`text-xs ${
-                          conversation.is_read ? 'text-text-tertiary' : 'text-muted-foreground'
+                          conversation.is_read ? 'text-text-tertiary' : 'text-text-secondary'
                         }`}
                       >
                         {formatMessageTimestamp(conversation.updated_at)}
@@ -413,7 +418,7 @@ const MessagesPage = () => {
                           ? 'text-text-primary font-medium'
                           : activeConversation?.id === conversation.id
                           ? 'text-text-secondary font-medium'
-                          : 'text-muted-foreground'
+                          : 'text-text-secondary'
                       }`}
                     >
                       {conversation.last_message?.content || 'Ingen meldinger'}
@@ -421,9 +426,6 @@ const MessagesPage = () => {
                   </div>
                   {conversation.unread_count > 0 && (
                     <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
-                  )}
-                  {activeConversation?.id === conversation.id && !isComposing && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-primary" />
                   )}
                 </button>
               );
@@ -441,7 +443,7 @@ const MessagesPage = () => {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
-                        className="md:hidden text-muted-foreground hover:text-text-primary mr-1 cursor-pointer"
+                        className="md:hidden text-text-secondary hover:text-text-primary mr-1 cursor-pointer"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
@@ -457,7 +459,7 @@ const MessagesPage = () => {
 
                 <div className="p-6 space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground ml-1">Til</label>
+                    <label className="text-xs font-medium text-text-secondary ml-1">Til</label>
                     <div className="relative group">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
                         <Input
@@ -472,14 +474,14 @@ const MessagesPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-xs font-medium text-muted-foreground ml-1">Melding</label>
-                    <div className="rounded-2xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white transition-all">
-                        <textarea
+                    <label className="text-xs font-medium text-text-secondary ml-1">Melding</label>
+                    <div className="rounded-2xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white ios-ease">
+                        <Textarea
                           rows={8}
                           value={newMessageBody}
                           onChange={(e) => setNewMessageBody(e.target.value)}
                           placeholder="Skriv meldingen din her"
-                          className="w-full resize-none bg-transparent px-1 py-1 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none custom-scrollbar"
+                          className="border-0 bg-transparent px-1 py-1 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 hover:border-transparent min-h-0 custom-scrollbar"
                         />
                         <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-elevated">
                            <div className="flex items-center gap-1">
@@ -533,7 +535,7 @@ const MessagesPage = () => {
             <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button
-                  className="md:hidden text-muted-foreground hover:text-text-primary mr-1"
+                  className="md:hidden text-text-secondary hover:text-text-primary mr-1"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake til samtaler"
                 >
@@ -554,7 +556,7 @@ const MessagesPage = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-text-primary">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-text-secondary">
                             {activeConversation.participant?.email || 'Student'}
                           </p>
                         </div>
@@ -571,27 +573,26 @@ const MessagesPage = () => {
                 </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                          className="cursor-pointer"
-                          onClick={handleArchiveConversation}
-                        >
+                        <DropdownMenuItem onClick={handleArchiveConversation}>
                           {activeConversation?.archived ? (
                             <>
-                              <ArchiveRestore className="mr-2 h-4 w-4" />
+                              <ArchiveRestore />
                               Gjenopprett samtale
                             </>
                           ) : (
                             <>
-                              <Archive className="mr-2 h-4 w-4" />
+                              <Archive />
                               Arkiver samtale
                             </>
                           )}
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
+                          className="text-destructive focus:text-destructive focus:bg-destructive/5 [&_svg]:text-destructive"
                           onClick={handleDeleteConversation}
                         >
-                           Slett samtale
+                          <Trash2 />
+                          Slett samtale
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -612,7 +613,7 @@ const MessagesPage = () => {
                     <>
               {/* Time Separator */}
               <div className="flex justify-center">
-                <span className="text-xxs font-medium text-text-tertiary bg-surface-elevated px-3 py-1 rounded-full uppercase tracking-wider">
+                <span className="text-xxs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
                   I dag
                 </span>
               </div>
@@ -626,7 +627,7 @@ const MessagesPage = () => {
                   }`}
                 >
                           {message.is_outgoing ? (
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-[10px] font-medium mb-1 shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xxs font-medium mb-1 shrink-0">
                                 Du
                             </div>
                           ) : (
@@ -675,8 +676,8 @@ const MessagesPage = () => {
 
             {/* Input Area */}
             <div className="p-6 pt-2 bg-surface">
-              <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white transition-all relative">
-                <textarea
+              <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white ios-ease relative">
+                <Textarea
                   rows={1}
                   placeholder="Skriv en melding"
                   aria-label="Skriv en melding"
@@ -689,7 +690,7 @@ const MessagesPage = () => {
                     }
                   }}
                   disabled={!activeConversation || sendingMessage}
-                  className="w-full resize-none bg-transparent px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none custom-scrollbar max-h-32 min-h-[44px]"
+                  className="border-0 bg-transparent px-3 py-2 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 hover:border-transparent max-h-32 min-h-[44px]"
                 />
 
                     <div className="flex items-center justify-between px-2 pb-1">
@@ -743,7 +744,7 @@ const MessagesPage = () => {
                 </div>
               </div>
               <p className="text-xs text-text-tertiary text-center mt-3">
-                Trykk <span className="font-medium text-muted-foreground">Enter</span> for å sende
+                Trykk <span className="font-medium text-text-secondary">Enter</span> for å sende
               </p>
             </div>
               </>

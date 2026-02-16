@@ -19,6 +19,8 @@ interface DatePickerProps {
   disabled?: boolean
   error?: boolean
   id?: string
+  /** Earliest selectable date. Days before this are greyed out. */
+  fromDate?: Date
 }
 
 const DatePicker = ({
@@ -29,7 +31,8 @@ const DatePicker = ({
   className,
   disabled,
   error,
-  id
+  id,
+  fromDate
 }: DatePickerProps) => {
   const [open, setOpen] = useState(false)
 
@@ -81,6 +84,7 @@ const DatePicker = ({
             setOpen(false)
           }}
           locale={nb}
+          disabled={fromDate ? { before: fromDate } : undefined}
         />
       </PopoverContent>
     </Popover>

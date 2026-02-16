@@ -11,7 +11,7 @@ function LoadingScreen({ message = 'Laster' }: { message?: string }) {
     <div className="min-h-screen w-full bg-surface flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
         <Spinner size="xl" />
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm text-text-secondary">{message}</p>
       </div>
     </div>
   );
@@ -131,22 +131,22 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
         <div className="w-full max-w-sm px-4">
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                 <Infinity className="w-4 h-4" />
               </div>
-              <span className="text-xl font-semibold tracking-tight text-text-primary">Ease</span>
+              <span className="text-xl font-medium tracking-tight text-text-primary">Ease</span>
             </div>
           </div>
           <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
-            <h1 className="text-lg font-semibold text-text-primary mb-1">
+            <h1 className="text-lg font-medium text-text-primary mb-1">
               Ingen tilgang
             </h1>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-text-secondary mb-4">
               Du har ikke tilgang til denne siden. Logg inn med riktig konto.
             </p>
             <button
               onClick={() => signOut()}
-              className="text-sm text-muted-foreground hover:text-text-primary ios-ease"
+              className="text-sm text-text-secondary hover:text-text-primary ios-ease"
             >
               Logg ut
             </button>
@@ -164,24 +164,24 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center text-white">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                 <Infinity className="w-4 h-4" />
               </div>
-              <span className="text-xl font-semibold tracking-tight text-text-primary">Ease</span>
+              <span className="text-xl font-medium tracking-tight text-text-primary">Ease</span>
             </div>
           </div>
 
           {/* Card */}
           <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
-            <h1 className="text-lg font-semibold text-text-primary mb-1">
+            <h1 className="text-lg font-medium text-text-primary mb-1">
               Oppsettet ble ikke fullført
             </h1>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-text-secondary mb-4">
               Vi kunne ikke opprette virksomheten din. Prøv å logge inn på nytt, eller kontakt support.
             </p>
             <button
               onClick={() => signOut()}
-              className="text-sm text-muted-foreground hover:text-text-primary ios-ease"
+              className="text-sm text-text-secondary hover:text-text-primary ios-ease"
             >
               Logg ut og prøv igjen
             </button>
