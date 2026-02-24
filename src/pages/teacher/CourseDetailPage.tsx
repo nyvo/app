@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, CreditCard } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { createStripeConnectLink } from '@/services/stripe-connect';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
@@ -56,6 +57,7 @@ const CourseDetailPage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const kursplanRef = useRef<HTMLDivElement>(null);
+  const [connectingStripe, setConnectingStripe] = useState(false);
 
   // Data fetching, sessions, participants, and realtime subscription
   const {
@@ -587,6 +589,38 @@ const CourseDetailPage = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Stripe warning banner */}
+            {!currentOrganization?.stripe_onboarding_complete && (
+              <div className="mb-4 rounded-xl border border-zinc-200 bg-surface px-4 py-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
+                  <p className="text-sm text-text-secondary">
+                    Kurset er ikke bookbart ennå — koble til Stripe for å motta betalinger.
+                  </p>
+                </div>
+                <Button
+                  variant="outline-soft"
+                  size="xs"
+                  className="shrink-0"
+                  loading={connectingStripe}
+                  loadingText="Koble til"
+                  onClick={async () => {
+                    if (!currentOrganization?.id) return;
+                    setConnectingStripe(true);
+                    const { data, error } = await createStripeConnectLink(currentOrganization.id);
+                    if (error || !data?.url) {
+                      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+                      setConnectingStripe(false);
+                      return;
+                    }
+                    window.location.href = data.url;
+                  }}
+                >
+                  Koble til
+                </Button>
+              </div>
+            )}
 
             {/* Tabs */}
             <FilterTabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>

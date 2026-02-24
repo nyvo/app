@@ -20,7 +20,7 @@ interface CourseQueryResult {
   image_url: string | null
   organization_id: string
   practical_info: Json | null
-  organization: { name: string; slug: string } | null
+  organization: { name: string; slug: string; stripe_onboarding_complete: boolean } | null
   instructor: { id: string; name: string | null; avatar_url: string | null } | null
 }
 
@@ -53,6 +53,7 @@ export interface PublicCourseWithDetails {
   organization: {
     name: string
     slug: string
+    stripe_onboarding_complete: boolean
   } | null
   instructor: {
     id: string
@@ -98,7 +99,7 @@ export async function fetchPublicCourses(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug),
+      organization:organizations(name, slug, stripe_onboarding_complete),
       instructor:instructor_id(id, name, avatar_url)
     `, { count: filters?.limit ? 'exact' : undefined })
     .neq('status', 'draft')
@@ -228,7 +229,7 @@ export async function fetchPublicCourses(
       image_url: course.image_url,
       organization_id: course.organization_id,
       practical_info: (course.practical_info as unknown as PracticalInfo) || null,
-      organization: course.organization as unknown as { name: string; slug: string } | null,
+      organization: course.organization as unknown as { name: string; slug: string; stripe_onboarding_complete: boolean } | null,
       instructor: course.instructor as unknown as { id: string; name: string | null; avatar_url: string | null } | null,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
@@ -262,7 +263,7 @@ export async function fetchPublicCourseById(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug),
+      organization:organizations(name, slug, stripe_onboarding_complete),
       instructor:instructor_id(id, name, avatar_url)
     `)
     .eq('id', courseId)

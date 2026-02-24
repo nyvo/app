@@ -10,6 +10,7 @@ export interface MobileStickyBarProps {
   submitting: boolean;
   isEnded: boolean;
   studioUrl: string;
+  stripeConnected?: boolean;
 }
 
 /**
@@ -24,13 +25,19 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
   submitting,
   isEnded,
   studioUrl,
+  stripeConnected = true,
 }) => {
   const displayPrice = price || 0;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white/80 backdrop-blur-xl lg:hidden pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-lg items-center justify-between p-4">
-        {isEnded ? (
+        {!stripeConnected ? (
+          /* Stripe not connected */
+          <p className="text-sm text-text-secondary text-center w-full py-1">
+            Påmelding er ikke tilgjengelig ennå.
+          </p>
+        ) : isEnded ? (
           /* Course ended */
           <>
             <div className="flex flex-col">

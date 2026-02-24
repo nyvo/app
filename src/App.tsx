@@ -14,7 +14,7 @@ const CreateCoursePage = lazy(() => import('./pages/teacher/CreateCoursePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
-
+const StripeCallbackPage = lazy(() => import('./pages/teacher/StripeCallbackPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
@@ -65,6 +65,7 @@ const App = () => {
             <Route path="/teacher/messages" element={<ProtectedRoute requiredUserType="teacher"><MessagesPage /></ProtectedRoute>} />
             <Route path="/teacher/new-course" element={<ProtectedRoute requiredUserType="teacher"><CreateCoursePage /></ProtectedRoute>} />
             <Route path="/teacher/profile" element={<ProtectedRoute requiredUserType="teacher"><TeacherProfilePage /></ProtectedRoute>} />
+            <Route path="/teacher/stripe-callback" element={<ProtectedRoute requiredUserType="teacher"><StripeCallbackPage /></ProtectedRoute>} />
 
             {/* Student Routes */}
             <Route path="/student/login" element={<StudentLoginPage />} />

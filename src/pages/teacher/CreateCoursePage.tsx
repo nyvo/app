@@ -17,11 +17,13 @@ import {
   Leaf,
   Menu,
   Plus,
+  CreditCard,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { createStripeConnectLink } from '@/services/stripe-connect';
 import { createCourse, updateCourse } from '@/services/courses';
 import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -189,6 +191,21 @@ const CreateCoursePage = () => {
       saveDraftCallback();
     }
   }, [saveDraftCallback, draftLoaded, draft, hasDraft]);
+
+  const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
+
+  const [connectingStripe, setConnectingStripe] = useState(false);
+  const handleConnectStripe = async () => {
+    if (!currentOrganization?.id) return;
+    setConnectingStripe(true);
+    const { data, error } = await createStripeConnectLink(currentOrganization.id);
+    if (error || !data?.url) {
+      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+      setConnectingStripe(false);
+      return;
+    }
+    window.location.href = data.url;
+  };
 
   // Refs for scroll-to-error and content area (scroll to top on step change)
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -512,6 +529,27 @@ const CreateCoursePage = () => {
               transition={pageTransition}
               className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-10"
             >
+              {!isStripeConnected && (
+                <div className="mb-6 rounded-xl border border-zinc-200 bg-surface px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
+                    <p className="text-sm text-text-secondary">
+                      Koble til Stripe for å publisere kurset og motta betalinger.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline-soft"
+                    size="xs"
+                    onClick={handleConnectStripe}
+                    className="shrink-0"
+                    loading={connectingStripe}
+                    loadingText="Koble til"
+                  >
+                    Koble til
+                  </Button>
+                </div>
+              )}
               {submitAttempted && !isFormValid && (
                 <div className="mb-6 rounded-xl border border-destructive/30 bg-status-error-bg px-4 py-3 text-sm text-status-error-text" role="alert">
                   Fyll ut de påkrevde feltene. Gå tilbake til redigering for å rette opp.
@@ -1122,7 +1160,7 @@ const CreateCoursePage = () => {
                     loading={isSubmitting}
                     loadingText="Oppretter"
                   >
-                    <span>Publiser kurs</span>
+                    <span>{isStripeConnected ? 'Publiser kurs' : 'Lagre kurs'}</span>
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Button>
                 </>
@@ -1159,7 +1197,7 @@ const CreateCoursePage = () => {
                         onClick={() => setShowReviewView(true)}
                         disabled={isSubmitting || !isFormValid}
                       >
-                        <span>Sjekk og publiser</span>
+                        <span>{isStripeConnected ? 'Sjekk og publiser' : 'Sjekk og lagre'}</span>
                         <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
                       {!isFormValid && (

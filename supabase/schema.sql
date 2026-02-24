@@ -549,7 +549,7 @@ BEGIN
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1))
+    COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'name'), ''), '')
   );
   RETURN NEW;
 END;
@@ -561,27 +561,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
 -- ============================================
--- FUNCTION: Create organization for new teacher
+-- FUNCTION: Ensure organization for user (idempotent)
 -- ============================================
-
-CREATE OR REPLACE FUNCTION create_organization_for_user(
-  org_name TEXT,
-  org_slug TEXT,
-  user_id UUID
-)
-RETURNS UUID AS $$
-DECLARE
-  new_org_id UUID;
-BEGIN
-  -- Create the organization
-  INSERT INTO organizations (name, slug)
-  VALUES (org_name, org_slug)
-  RETURNING id INTO new_org_id;
-
-  -- Add user as owner
-  INSERT INTO org_members (organization_id, user_id, role)
-  VALUES (new_org_id, user_id, 'owner');
-
-  RETURN new_org_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- Defined via migration. See ensure_organization_for_user(p_org_name TEXT, p_org_slug TEXT).
+-- Uses auth.uid() server-side, SECURITY DEFINER, returns TABLE.

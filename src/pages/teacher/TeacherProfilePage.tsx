@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -7,7 +7,10 @@ import {
   Mail,
   MapPin,
   Leaf,
-  Menu
+  Menu,
+  CreditCard,
+  ExternalLink,
+  CheckCircle2,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -19,6 +22,7 @@ import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
+import { createStripeConnectLink, createStripeDashboardLink } from '@/services/stripe-connect';
 import { typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -205,6 +209,39 @@ const TeacherProfilePage = () => {
     setIsSaving(false);
   };
 
+  // Stripe handlers
+  const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
+  const [stripeLoading, setStripeLoading] = useState(false);
+
+  const handleStripeAction = useCallback(async () => {
+    if (!currentOrganization?.id) return;
+    setStripeLoading(true);
+    if (isStripeConnected) {
+      const { data, error } = await createStripeDashboardLink(currentOrganization.id);
+      if (error || !data?.url) {
+        // Account deleted/deauthorized on Stripe's side — refresh to show setup flow
+        if (error?.message === 'STRIPE_ACCOUNT_INVALID') {
+          await refreshOrganizations();
+          toast.error('Stripe-kontoen er ikke lenger aktiv. Koble til på nytt.');
+        } else {
+          toast.error(error?.message || 'Kunne ikke åpne Stripe-dashbordet');
+        }
+        setStripeLoading(false);
+        return;
+      }
+      window.open(data.url, '_blank');
+      setStripeLoading(false);
+    } else {
+      const { data, error } = await createStripeConnectLink(currentOrganization.id);
+      if (error || !data?.url) {
+        toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+        setStripeLoading(false);
+        return;
+      }
+      window.location.href = data.url;
+    }
+  }, [currentOrganization?.id, isStripeConnected, refreshOrganizations]);
+
   // State for notification toggles
   const [notifications, setNotifications] = useState({
     newSignups: true,
@@ -246,7 +283,7 @@ const TeacherProfilePage = () => {
 
             {/* Header Section */}
             <header className="mb-8">
-                <h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-2">
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
                     Innstillinger
                 </h1>
                 <p className="text-sm text-text-secondary">Administrer din profil, varslinger og konto.</p>
@@ -283,7 +320,7 @@ const TeacherProfilePage = () => {
                                 </div>
                             </div>
                             <div className="flex-1 text-center md:text-left">
-                                <h3 className="font-geist text-lg font-medium text-text-primary">Profilbilde</h3>
+                                <h3 className="text-sm font-medium text-text-primary">Profilbilde</h3>
                                 <p className="text-sm text-text-secondary mt-1">Profilbildeopplasting kommer snart.</p>
                             </div>
                         </div>
@@ -291,15 +328,15 @@ const TeacherProfilePage = () => {
 
                     {/* Personal Info Form */}
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-geist text-base font-medium text-text-primary">Personlig Informasjon</h3>
+                        <div className="mb-6 border-b border-zinc-100 pb-2">
+                            <h3 className="text-sm font-medium text-text-secondary">Personlig informasjon</h3>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* First Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-                                  Fornavn <span className="text-status-error-text">*</span>
+                                <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                  Fornavn <span className="text-destructive">*</span>
                                 </label>
                                 <Input
                                     type="text"
@@ -309,14 +346,14 @@ const TeacherProfilePage = () => {
                                     aria-invalid={!!errors.firstName}
                                 />
                                 {errors.firstName && touched.firstName && (
-                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.firstName}</p>
+                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.firstName}</p>
                                 )}
                             </div>
 
                             {/* Last Name */}
                             <div>
-                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-                                  Etternavn <span className="text-status-error-text">*</span>
+                                <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                  Etternavn <span className="text-destructive">*</span>
                                 </label>
                                 <Input
                                     type="text"
@@ -326,17 +363,17 @@ const TeacherProfilePage = () => {
                                     aria-invalid={!!errors.lastName}
                                 />
                                 {errors.lastName && touched.lastName && (
-                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.lastName}</p>
+                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.lastName}</p>
                                 )}
                             </div>
 
                             {/* Email */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">
-                                  E-postadresse <span className="text-status-error-text">*</span>
+                                <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                  E-postadresse <span className="text-destructive">*</span>
                                 </label>
                                 <div className="relative group">
-                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-status-error-text' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
+                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
                                     <Input
                                         type="email"
                                         value={email}
@@ -347,7 +384,7 @@ const TeacherProfilePage = () => {
                                     />
                                 </div>
                                 {errors.email && touched.email ? (
-                                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.email}</p>
+                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                                 ) : (
                                   <p className="text-xs text-text-tertiary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                                 )}
@@ -355,7 +392,7 @@ const TeacherProfilePage = () => {
 
                             {/* City */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">By / Sted</label>
+                                <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
                                 <div className="relative group">
                                     <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
                                     <Input
@@ -371,7 +408,7 @@ const TeacherProfilePage = () => {
 
                             {/* Studio Description */}
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-tertiary mb-1.5">Om studioet</label>
+                                <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
                                 <Textarea
                                     rows={4}
                                     value={studioDescription}
@@ -382,13 +419,59 @@ const TeacherProfilePage = () => {
                                 />
                                 <div className="flex justify-between text-xs mt-1.5">
                                     {errors.studioDescription && touched.studioDescription ? (
-                                      <span className="text-status-error-text font-medium">{errors.studioDescription}</span>
+                                      <span className="text-destructive font-medium">{errors.studioDescription}</span>
                                     ) : (
                                       <span className="text-text-tertiary">Vises på din offentlige studioside.</span>
                                     )}
-                                    <span className={studioDescription.length > 500 ? 'text-status-error-text font-medium' : 'text-text-tertiary'}>{studioDescription.length}/500</span>
+                                    <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-tertiary'}>{studioDescription.length}/500</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Stripe Section */}
+                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
+                        <div className="mb-6 border-b border-zinc-100 pb-2">
+                            <h3 className="text-sm font-medium text-text-secondary">Betalinger</h3>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isStripeConnected ? 'bg-status-confirmed-bg' : 'bg-surface-elevated'}`}>
+                                    {isStripeConnected ? (
+                                        <CheckCircle2 className="h-5 w-5 text-success stroke-[1.5]" />
+                                    ) : (
+                                        <CreditCard className="h-5 w-5 text-text-tertiary stroke-[1.5]" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-text-primary">
+                                        {isStripeConnected ? 'Stripe er koblet til' : 'Stripe er ikke koblet til'}
+                                    </p>
+                                    <p className="text-xs text-text-secondary mt-0.5">
+                                        {isStripeConnected
+                                            ? 'Du kan se utbetalinger og administrere bankkonto i Stripe.'
+                                            : 'Koble til Stripe for å motta betalinger fra kursene dine.'}
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline-soft"
+                                size="compact"
+                                className="shrink-0"
+                                onClick={handleStripeAction}
+                                loading={stripeLoading}
+                                loadingText={isStripeConnected ? 'Åpner...' : 'Koble til'}
+                            >
+                                {isStripeConnected ? (
+                                    <>
+                                        Se utbetalinger
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                    </>
+                                ) : (
+                                    'Koble til Stripe'
+                                )}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -398,8 +481,8 @@ const TeacherProfilePage = () => {
             {activeTab === 'notifications' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="mb-6">
-                            <h3 className="font-geist text-base font-medium text-text-primary">Varslingsinnstillinger</h3>
+                        <div className="mb-6 border-b border-zinc-100 pb-2">
+                            <h3 className="text-sm font-medium text-text-secondary">Varslingsinnstillinger</h3>
                             <p className="text-sm text-text-secondary mt-1">Velg hvordan og når du vil bli kontaktet.</p>
                             <p className="text-xs text-text-secondary mt-2 italic">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
                         </div>
@@ -453,8 +536,8 @@ const TeacherProfilePage = () => {
             {activeTab === 'security' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                      <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-geist text-base font-medium text-text-primary">Passord & Sikkerhet</h3>
+                        <div className="mb-6 border-b border-zinc-100 pb-2">
+                            <h3 className="text-sm font-medium text-text-secondary">Passord & sikkerhet</h3>
                         </div>
 
                         <div className="flex flex-col items-center justify-center py-8 text-center">

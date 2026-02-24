@@ -384,13 +384,18 @@ export interface Database {
       }
     }
     Functions: {
-      create_organization_for_user: {
+      ensure_organization_for_user: {
         Args: {
-          org_name: string
-          org_slug: string
-          user_id: string
+          p_org_name: string
+          p_org_slug: string
         }
-        Returns: string
+        Returns: {
+          org_id: string
+          org_slug: string
+          org_name: string
+          member_role: OrgMemberRole
+          was_created: boolean
+        }[]
       }
     }
     Enums: {

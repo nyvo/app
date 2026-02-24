@@ -59,7 +59,7 @@ The "Zinc" scale provides the cool, professional feel required for a modern SaaS
 | Token | Hex | Usage |
 |-------|-----|-------|
 | `text-text-primary` | #09090B | Headings, primary text (deeper contrast) |
-| `text-text-secondary` | #71717A | Body text, secondary content (cooler) |
+| `text-text-secondary` | #52525B | Body text, secondary content (cooler) |
 | `text-text-tertiary` | #A1A1AA | Tertiary text, timestamps, placeholders |
 | `text-muted-foreground` | #71717A | Muted text, descriptions |
 
@@ -305,7 +305,7 @@ className="py-4 px-6"
 
 #### Form Field Labels
 ```tsx
-className="block text-xs font-medium text-text-tertiary mb-1.5"
+className="block text-xs font-medium text-text-primary mb-1.5"
 ```
 
 #### Text Input

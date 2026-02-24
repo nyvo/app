@@ -453,6 +453,7 @@ const PublicCourseDetailPage = () => {
         submitting={submitting}
         isEnded={isEnded}
         studioUrl={studioUrl}
+        stripeConnected={course.organization?.stripe_onboarding_complete !== false}
       />
     </div>
   );

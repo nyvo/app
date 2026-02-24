@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,6 +10,7 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
+import { SetupChecklist } from '@/components/teacher/SetupChecklist';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
@@ -17,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSetupProgress } from '@/hooks/use-setup-progress';
+import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
 import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
@@ -172,9 +176,11 @@ function formatSessionDate(sessionDate: string): string {
   });
 }
 
+const STRIPE_CHECK_THROTTLE_MS = 6 * 60 * 60 * 1000; // 6 hours
+
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
-  const { currentOrganization, profile } = useAuth();
+  const { currentOrganization, profile, refreshOrganizations } = useAuth();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[]>([]);
   const [upcomingClass, setUpcomingClass] = useState<UpcomingClass | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -183,6 +189,49 @@ const TeacherDashboard = () => {
   const [hasCourses, setHasCourses] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+
+  // Stripe Connect handler
+  const [connectingStripe, setConnectingStripe] = useState(false);
+  const handleConnectStripe = useCallback(async () => {
+    if (!currentOrganization?.id) return;
+    setConnectingStripe(true);
+    const { data, error } = await createStripeConnectLink(currentOrganization.id);
+    if (error || !data?.url) {
+      logger.error('Failed to create Stripe Connect link:', error);
+      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+      setConnectingStripe(false);
+      return;
+    }
+    window.location.href = data.url;
+  }, [currentOrganization?.id]);
+
+  // Setup progress
+  const { steps, completedCount, totalCount, isSetupComplete } = useSetupProgress({
+    currentOrganization,
+    hasCourses,
+    onConnectStripe: handleConnectStripe,
+  });
+
+  // Stripe auto-check (self-heal for missed callbacks)
+  useEffect(() => {
+    const org = currentOrganization;
+    if (!org?.id || !org.stripe_account_id || org.stripe_onboarding_complete) return;
+
+    const lastCheck = sessionStorage.getItem('lastStripeCheck');
+    if (lastCheck && Date.now() - Number(lastCheck) < STRIPE_CHECK_THROTTLE_MS) return;
+
+    let isActive = true;
+    (async () => {
+      const { data } = await checkStripeStatus(org.id);
+      if (!isActive) return;
+      sessionStorage.setItem('lastStripeCheck', Date.now().toString());
+      if (data?.onboardingComplete) {
+        await refreshOrganizations();
+      }
+    })();
+
+    return () => { isActive = false; };
+  }, [currentOrganization?.id, currentOrganization?.stripe_account_id, currentOrganization?.stripe_onboarding_complete, refreshOrganizations]);
 
   // Shared processing: takes the 5 parallel fetch results and updates all dashboard state.
   // Callers handle loading/error state themselves; this function is pure data processing + setters.
@@ -340,7 +389,7 @@ const TeacherDashboard = () => {
   }, [currentOrganization?.id]);
 
   // Get user's first name for greeting
-  const userName = profile?.name?.split(' ')[0] || 'bruker';
+  const userName = profile?.name?.split(' ')[0] || currentOrganization?.name || 'bruker';
 
   return (
     <SidebarProvider>
@@ -395,6 +444,14 @@ const TeacherDashboard = () => {
                     <RefreshCw className="h-3.5 w-3.5" />
                     Prøv på nytt
                   </Button>
+                </div>
+              ) : !isSetupComplete ? (
+                // Setup incomplete — show checklist in hero position
+                <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
+                  <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} loadingStepId={connectingStripe ? 'stripe' : undefined} />
+                  <MessagesList messages={messages} />
+                  <CoursesList courses={dashboardCourses} />
+                  <RegistrationsList registrations={registrations} />
                 </div>
               ) : (showEmptyState || !hasCourses) ? (
                 // Empty state - no courses yet (or dev toggle active)

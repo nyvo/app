@@ -5,18 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormValidation } from '@/hooks/use-form-validation';
 import { linkGuestBookingsToUser } from '@/services/studentSignups';
 import { logger } from '@/lib/logger';
 
 const StudentLoginPage = () => {
   const navigate = useNavigate();
   const { signIn, user, profile, userType } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { formData, errors, touched, setErrors, setFormData, handleChange, handleBlur, validateForm } =
+    useFormValidation({
+      initialValues: { email: '', password: '' },
+      rules: {
+        email: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn e-posten din';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Ugyldig e-post';
+            return undefined;
+          },
+        },
+        password: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn passordet ditt';
+            return undefined;
+          },
+        },
+      },
+    });
 
   // Redirect already-authenticated users to their dashboard
   useEffect(() => {
@@ -42,75 +58,29 @@ const StudentLoginPage = () => {
     linkBookings();
   }, [user?.id, profile?.email]);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, boolean> = {};
-    let isValid = true;
-
-    if (!email.trim()) {
-      newErrors.email = true;
-      isValid = false;
-    } else if (!validateEmail(email)) {
-      newErrors.email = true;
-      isValid = false;
-    }
-
-    if (!password.trim()) {
-      newErrors.password = true;
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    // Validate on blur
-    if (field === 'email' && email.trim() && !validateEmail(email)) {
-      setErrors(prev => ({ ...prev, email: true }));
-    }
-  };
-
-  const clearError = (field: string) => {
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: false }));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ email: true, password: true });
-    setLoginError(null);
 
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-      }
-      return;
-    }
+    if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsSubmitting(true);
+    setErrors({});
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(formData.email, formData.password);
 
       if (error) {
-        setLoginError('Feil e-post eller passord');
-        setIsLoading(false);
+        setErrors({ general: 'Feil e-post eller passord' });
+        setFormData(prev => ({ ...prev, password: '' }));
+        setIsSubmitting(false);
         return;
       }
 
-      // Success - clear loading state and let useEffect handle navigation
-      setIsLoading(false);
+      // Success - let useEffect handle navigation when userType is set
     } catch {
-      setLoginError('Noe gikk galt. Prøv igjen.');
-      setIsLoading(false);
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
+      setFormData(prev => ({ ...prev, password: '' }));
+      setIsSubmitting(false);
     }
   };
 
@@ -148,55 +118,51 @@ const StudentLoginPage = () => {
             {/* Form */}
             <form className="space-y-5" onSubmit={handleSubmit}>
               {/* Login Error */}
-              {loginError && (
-                <Alert variant="error" size="sm" icon={false}>
-                  <p className="text-xs text-status-error-text font-medium">{loginError}</p>
+              {errors.general && (
+                <Alert variant="destructive" size="sm" icon={false}>
+                  <p className="text-xs text-destructive font-medium">{errors.general}</p>
                 </Alert>
               )}
 
               {/* Email */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  E-post <span className="text-status-error-text">*</span>
+                  E-post <span className="text-destructive">*</span>
                 </label>
                 <div className="relative group">
-                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.email ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
+                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${touched.email && errors.email ? 'text-destructive' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="email"
                     placeholder="navn@eksempel.no"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
-                    aria-invalid={errors.email}
-                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
+                    className={`pl-10 ${touched.email && errors.email ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive' : ''}`}
                   />
                 </div>
-                {errors.email && touched.email && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">
-                    {!email.trim() ? 'Skriv inn e-posten din' : 'Ugyldig e-post'}
-                  </p>
+                {touched.email && errors.email && (
+                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                 )}
               </div>
 
               {/* Password */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Passord <span className="text-status-error-text">*</span>
+                  Passord <span className="text-destructive">*</span>
                 </label>
                 <div className="relative group">
-                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.password ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
+                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${touched.password && errors.password ? 'text-destructive' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
+                    value={formData.password}
+                    onChange={(e) => handleChange('password', e.target.value)}
                     onBlur={() => handleBlur('password')}
-                    aria-invalid={errors.password}
-                    className={`pl-10 ${errors.password ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
+                    className={`pl-10 ${touched.password && errors.password ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive' : ''}`}
                   />
                 </div>
-                {errors.password && touched.password && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">Skriv inn passordet ditt</p>
+                {touched.password && errors.password && (
+                  <p className="text-xs text-destructive font-medium mt-1.5">Skriv inn passordet ditt</p>
                 )}
                 {/* Forgot Password Link */}
                 <div className="flex justify-end pt-1">
@@ -212,9 +178,9 @@ const StudentLoginPage = () => {
               {/* Main Action */}
               <Button
                 type="submit"
-                loading={isLoading}
+                loading={isSubmitting}
                 loadingText="Logger inn"
-                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-11"
               >
                 Logg inn
               </Button>

@@ -52,7 +52,7 @@ const navigationItems = [
 export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, profile, userRole } = useAuth();
+  const { signOut, profile, userRole, currentOrganization } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
@@ -184,7 +184,7 @@ export const TeacherSidebar = () => {
                   {!isCollapsed && (
                     <>
                       <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
-                        <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || 'Bruker'}</p>
+                        <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || currentOrganization?.name || 'Bruker'}</p>
                         <p className="truncate text-xs text-muted-foreground leading-none">
                           {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                         </p>
@@ -197,7 +197,7 @@ export const TeacherSidebar = () => {
               <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-2xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
                 <div className="flex flex-col gap-0.5">
                   <div className="px-2 py-1.5 mb-1 border-b border-zinc-100">
-                    <p className="text-sm font-medium text-text-primary truncate">{profile?.name}</p>
+                    <p className="text-sm font-medium text-text-primary truncate">{profile?.name || currentOrganization?.name}</p>
                     <p className="text-xxs font-medium text-text-tertiary truncate">{profile?.email}</p>
                   </div>
                   <Link

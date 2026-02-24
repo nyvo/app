@@ -1,24 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, CheckCircle2, Leaf } from 'lucide-react';
+import { User, Mail, Lock, Leaf, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormValidation } from '@/hooks/use-form-validation';
 import { linkGuestBookingsToUser } from '@/services/studentSignups';
-import { toast } from 'sonner';
 
 const StudentRegisterPage = () => {
   const navigate = useNavigate();
   const { signUp, user, userType } = useAuth();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm } =
+    useFormValidation({
+      initialValues: { fullName: '', email: '', password: '' },
+      rules: {
+        fullName: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn navnet ditt';
+            return undefined;
+          },
+        },
+        email: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn e-posten din';
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Ugyldig e-post';
+            return undefined;
+          },
+        },
+        password: {
+          validate: (value) => {
+            if (!value.trim()) return 'Skriv inn et passord';
+            if (value.length < 8) return 'Passord må være minst 8 tegn';
+            return undefined;
+          },
+        },
+      },
+    });
 
   // Redirect already-authenticated users to their appropriate dashboard
   useEffect(() => {
@@ -34,131 +54,44 @@ const StudentRegisterPage = () => {
   // Link guest bookings after user is created
   useEffect(() => {
     async function linkBookings() {
-      if (!user?.id || !email) return;
+      if (!user?.id || !formData.email) return;
 
       try {
-        await linkGuestBookingsToUser(user.id, email);
+        await linkGuestBookingsToUser(user.id, formData.email);
       } catch {
         // Silent fail - guest booking linking is not critical
       }
     }
 
     linkBookings();
-  }, [user?.id, email]);
-
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Skriv inn navnet ditt';
-      isValid = false;
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'Skriv inn e-posten din';
-      isValid = false;
-    } else if (!validateEmail(email)) {
-      newErrors.email = 'Ugyldig e-post';
-      isValid = false;
-    }
-
-    if (!password.trim()) {
-      newErrors.password = 'Skriv inn et passord';
-      isValid = false;
-    } else if (password.length < 8) {
-      newErrors.password = 'Minst 8 tegn';
-      isValid = false;
-    }
-
-    if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Gjenta passordet';
-      isValid = false;
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passordene er ikke like';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    const newErrors = { ...errors };
-
-    if (field === 'email' && email.trim() && !validateEmail(email)) {
-      newErrors.email = 'Ugyldig e-post';
-    } else if (field === 'email' && validateEmail(email)) {
-      delete newErrors.email;
-    }
-
-    if (field === 'confirmPassword' && confirmPassword.trim() && password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passordene er ikke like';
-    } else if (field === 'confirmPassword' && password === confirmPassword && confirmPassword.trim()) {
-      delete newErrors.confirmPassword;
-    }
-
-    if (field === 'password' && password.trim() && password.length < 8) {
-      newErrors.password = 'Minst 8 tegn';
-    } else if (field === 'password' && password.length >= 8) {
-      delete newErrors.password;
-    }
-
-    setErrors(newErrors);
-  };
-
-  const clearError = (field: string) => {
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
+  }, [user?.id, formData.email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ fullName: true, email: true, password: true, confirmPassword: true });
-    setRegisterError(null);
 
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-      }
-      return;
-    }
+    if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsSubmitting(true);
+    setErrors({});
 
     try {
-      const { error } = await signUp(email, password, fullName);
+      const { error } = await signUp(formData.email, formData.password, formData.fullName);
 
       if (error) {
         if (error.message.includes('already registered')) {
-          setRegisterError('E-posten er allerede registrert');
+          setErrors({ email: 'E-posten er allerede registrert' });
         } else {
-          setRegisterError('Kontoen ble ikke opprettet. Prøv igjen.');
+          setErrors({ general: 'Kontoen ble ikke opprettet. Prøv igjen.' });
         }
-        setIsLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
-      toast.success('Konto opprettet', {
-        description: 'Sjekk e-posten din for å bekrefte kontoen.',
-      });
-
-      // Navigation will happen automatically via useEffect when userType is set
+      // Email confirmation is disabled — session is created immediately.
+      // Navigation will happen via useEffect when userType is set.
     } catch {
-      setRegisterError('Noe gikk galt. Prøv igjen.');
-      setIsLoading(false);
+      setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
+      setIsSubmitting(false);
     }
   };
 
@@ -196,108 +129,86 @@ const StudentRegisterPage = () => {
             {/* Form */}
             <form className="space-y-4" onSubmit={handleSubmit}>
               {/* Registration Error */}
-              {registerError && (
-                <Alert variant="error" size="sm" icon={false}>
-                  <p className="text-xs text-status-error-text font-medium">{registerError}</p>
+              {errors.general && (
+                <Alert variant="destructive" size="sm" icon={false}>
+                  <p className="text-xs text-destructive font-medium">{errors.general}</p>
                 </Alert>
               )}
 
               {/* Full Name */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Navn <span className="text-status-error-text">*</span>
+                  Navn <span className="text-destructive">*</span>
                 </label>
                 <div className="relative group">
-                  <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.fullName ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
+                  <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${touched.fullName && errors.fullName ? 'text-destructive' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="text"
                     placeholder="Ola Nordmann"
-                    value={fullName}
-                    onChange={(e) => { setFullName(e.target.value); clearError('fullName'); }}
+                    value={formData.fullName}
+                    onChange={(e) => handleChange('fullName', e.target.value)}
                     onBlur={() => handleBlur('fullName')}
-                    aria-invalid={!!errors.fullName}
-                    className={`pl-10 ${errors.fullName ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
+                    className={`pl-10 ${touched.fullName && errors.fullName ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive' : ''}`}
                   />
                 </div>
-                {errors.fullName && touched.fullName && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.fullName}</p>
+                {touched.fullName && errors.fullName && (
+                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.fullName}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  E-post <span className="text-status-error-text">*</span>
+                  E-post <span className="text-destructive">*</span>
                 </label>
                 <div className="relative group">
-                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.email ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
+                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${touched.email && errors.email ? 'text-destructive' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="email"
                     placeholder="navn@eksempel.no"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                    value={formData.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
-                    aria-invalid={!!errors.email}
-                    className={`pl-10 ${errors.email ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
+                    className={`pl-10 ${touched.email && errors.email ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive' : ''}`}
                   />
                 </div>
-                {errors.email && touched.email && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.email}</p>
+                {touched.email && errors.email && (
+                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                 )}
               </div>
 
               {/* Password */}
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Passord <span className="text-status-error-text">*</span>
+                  Passord <span className="text-destructive">*</span>
                 </label>
                 <div className="relative group">
-                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.password ? 'text-status-error-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
+                  <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${touched.password && errors.password ? 'text-destructive' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); clearError('password'); }}
+                    value={formData.password}
+                    onChange={(e) => handleChange('password', e.target.value)}
                     onBlur={() => handleBlur('password')}
-                    aria-invalid={!!errors.password}
-                    className={`pl-10 ${errors.password ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : ''}`}
+                    className={`pl-10 ${touched.password && errors.password ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive' : ''}`}
                   />
                 </div>
-                {errors.password && touched.password ? (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.password}</p>
+                {touched.password && errors.password ? (
+                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.password}</p>
                 ) : (
-                  <p className="text-xs text-text-tertiary mt-1.5">Minst 8 tegn</p>
-                )}
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                  Gjenta passord <span className="text-status-error-text">*</span>
-                </label>
-                <div className="relative group">
-                  <CheckCircle2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none transition-colors ${errors.confirmPassword ? 'text-status-error-text' : confirmPassword && password === confirmPassword ? 'text-status-confirmed-text' : 'text-text-tertiary group-focus-within:text-text-primary'}`} />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
-                    onBlur={() => handleBlur('confirmPassword')}
-                    aria-invalid={!!errors.confirmPassword}
-                    className={`pl-10 ${errors.confirmPassword ? 'border-status-error-text bg-status-error-bg focus:border-status-error-text focus:ring-status-error-text/20' : confirmPassword && password === confirmPassword ? 'border-status-confirmed-text bg-status-confirmed-bg' : ''}`}
-                  />
-                </div>
-                {errors.confirmPassword && touched.confirmPassword && (
-                  <p className="text-xs text-status-error-text font-medium mt-1.5">{errors.confirmPassword}</p>
+                  <p className={`text-xs flex items-center gap-1 mt-1.5 ${formData.password.length >= 8 ? 'text-success' : 'text-text-tertiary'}`}>
+                    {formData.password.length >= 8 && <Check className="w-3 h-3" />}
+                    Minst 8 tegn
+                  </p>
                 )}
               </div>
 
               {/* Main Action */}
               <Button
                 type="submit"
-                loading={isLoading}
+                loading={isSubmitting}
                 loadingText="Oppretter konto"
-                className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground ios-ease active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                className="w-full h-11 mt-2"
               >
                 Opprett konto
               </Button>

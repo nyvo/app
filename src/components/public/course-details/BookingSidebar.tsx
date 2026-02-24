@@ -52,6 +52,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         />
 
         {/* Content */}
+        {course.organization?.stripe_onboarding_complete === false ? (
+          <div className="p-6">
+            <p className="text-sm text-text-secondary text-center py-6">
+              Påmelding er ikke tilgjengelig ennå.
+            </p>
+          </div>
+        ) : (
         <form id="booking-form" onSubmit={onSubmit} className="p-6 space-y-8">
           {/* Redirecting to payment state */}
           {redirectingToPayment ? (
@@ -130,6 +137,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             </div>
           )}
         </form>
+        )}
       </div>
     </div>
   );

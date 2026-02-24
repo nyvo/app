@@ -36,7 +36,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ error: Error | null }>
 
   // Organization methods
-  createOrganization: (name: string, slug: string) => Promise<{ organization: Organization | null; error: Error | null }>
+  ensureOrganization: (name: string, slug: string) => Promise<{ organization: Organization | null; error: Error | null }>
   switchOrganization: (organizationId: string) => void
   refreshOrganizations: () => Promise<void>
 }
@@ -247,6 +247,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganizations(orgs)
 
     if (currentOrgRef.current) {
+      // Update currentOrganization with fresh data (e.g. after Stripe onboarding)
+      const freshOrg = orgs.find((o) => o.id === currentOrgRef.current?.id)
+      if (freshOrg) {
+        setCurrentOrganization(freshOrg)
+      }
       const membership = memberships.find((m) => m.organization?.id === currentOrgRef.current?.id)
       setUserRole(membership?.role || null)
     }
@@ -291,42 +296,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
   }, [])
 
-  // Create organization
-  const createOrganization = useCallback(async (name: string, slug: string) => {
-    if (!userRef.current) {
-      return { organization: null, error: new Error('Must be logged in') }
-    }
-
-    // typedFrom doesn't cover RPC — use targeted cast for DB function call
+  // Ensure organization exists (idempotent — safe to call multiple times)
+  // No userRef guard — the RPC uses auth.uid() server-side, and the Supabase
+  // client has the session JWT immediately after signUp(), even before React
+  // state (userRef) is updated via onAuthStateChange.
+  const ensureOrganization = useCallback(async (name: string, slug: string) => {
+    // Call hardened RPC — no user_id param, uses auth.uid() server-side
     const { data, error } = await (supabase.rpc as unknown as (
       fn: string, args: Record<string, string>
-    ) => ReturnType<typeof supabase.rpc>)('create_organization_for_user', {
-      org_name: name,
-      org_slug: slug,
-      user_id: userRef.current.id,
+    ) => ReturnType<typeof supabase.rpc>)('ensure_organization_for_user', {
+      p_org_name: name,
+      p_org_slug: slug,
     })
 
     if (error) {
       return { organization: null, error: error as Error }
     }
 
-    const orgId = data as string
+    // RPC returns TABLE rows as array
+    const rows = data as Array<{
+      org_id: string
+      org_slug: string
+      org_name: string
+      member_role: OrgMemberRole
+      was_created: boolean
+    }>
 
-    const { data: orgData, error: fetchError } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', orgId)
-      .single()
-
-    if (fetchError || !orgData) {
-      return { organization: null, error: (fetchError as Error) || new Error('Organization not found') }
+    if (!rows || rows.length === 0) {
+      return { organization: null, error: new Error('No organization returned') }
     }
 
-    const org = orgData as Organization
+    const row = rows[0]
 
-    setOrganizations((prev) => [...prev, org])
+    // Build Organization object from RPC response
+    // Fields not returned by RPC get safe defaults — full data loads on next refresh
+    const org: Organization = {
+      id: row.org_id,
+      slug: row.org_slug,
+      name: row.org_name,
+      description: null,
+      logo_url: null,
+      email: null,
+      phone: null,
+      address: null,
+      city: null,
+      postal_code: null,
+      stripe_account_id: null,
+      stripe_onboarding_complete: false,
+      fiken_company_slug: null,
+      settings: {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    setOrganizations((prev) => {
+      // Avoid duplicates if org already existed
+      if (prev.some((o) => o.id === org.id)) return prev
+      return [...prev, org]
+    })
     setCurrentOrganization(org)
-    setUserRole('owner')
+    setUserRole(row.member_role)
     setUserType('teacher')
     localStorage.setItem('currentOrganizationId', org.id)
 
@@ -378,7 +407,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
-    createOrganization,
+    ensureOrganization,
     switchOrganization,
     refreshOrganizations
   }), [
@@ -395,7 +424,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
-    createOrganization,
+    ensureOrganization,
     switchOrganization,
     refreshOrganizations
   ])

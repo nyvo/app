@@ -5,25 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { useFormValidation } from '@/hooks/use-form-validation';
+
+/** Generate URL-friendly slug from organization name */
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[æ]/g, 'ae')
+    .replace(/[ø]/g, 'o')
+    .replace(/[å]/g, 'a')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 const SignupPage = () => {
   const navigate = useNavigate();
-  const { signUp, user, isLoading: authLoading } = useAuth();
+  const { signUp, ensureOrganization, user, isLoading: authLoading, currentOrganization } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
-      initialValues: { fullName: '', email: '', password: '', organizationName: '' },
+      initialValues: { email: '', password: '', studioName: '' },
       rules: {
-        fullName: {
-          validate: (value) => {
-            if (!value.trim()) return 'Skriv inn navnet ditt'
-            return undefined
-          },
-        },
         email: {
           validate: (value) => {
             if (!value.trim()) return 'Skriv inn e-posten din'
@@ -38,42 +42,21 @@ const SignupPage = () => {
             return undefined
           },
         },
-        organizationName: {
+        studioName: {
           validate: (value) => {
-            if (!value.trim()) return 'Skriv inn virksomhetsnavnet'
+            if (!value.trim()) return 'Skriv inn navnet på studioet'
             return undefined
           },
         },
       },
     });
 
-  // Redirect if already logged in (wait for auth to finish loading first)
+  // Redirect if already logged in with org
   useEffect(() => {
-    if (user && !authLoading) {
-      navigate('/teacher');
+    if (user && !authLoading && currentOrganization) {
+      navigate('/teacher', { replace: true });
     }
-  }, [user, authLoading, navigate]);
-
-  // Generate URL-friendly slug from organization name
-  const generateSlug = (name: string): string => {
-    return name
-      .toLowerCase()
-      .replace(/[æ]/g, 'ae')
-      .replace(/[ø]/g, 'o')
-      .replace(/[å]/g, 'a')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
-
-  // Check if slug is available
-  const checkSlugAvailable = async (slug: string): Promise<boolean> => {
-    const { data } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('slug', slug)
-      .maybeSingle();
-    return !data;
-  };
+  }, [user, authLoading, currentOrganization, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,21 +67,11 @@ const SignupPage = () => {
     setErrors({});
 
     try {
-      // Step 1: Check if organization slug is available
-      const slug = generateSlug(formData.organizationName);
-      const isSlugAvailable = await checkSlugAvailable(slug);
-
-      if (!isSlugAvailable) {
-        setErrors({ organizationName: 'Dette navnet er allerede i bruk' });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Step 2: Sign up the user
+      // Step 1: Create user account
       const { error: signUpError } = await signUp(
         formData.email,
         formData.password,
-        formData.fullName
+        formData.studioName.trim()
       );
 
       if (signUpError) {
@@ -111,19 +84,21 @@ const SignupPage = () => {
         return;
       }
 
-      // Step 3: Store org details for creation after email confirmation + login
-      // Email confirmation is ON — no session exists yet, so org creation
-      // happens in ProtectedRoute on first authenticated visit.
-      localStorage.setItem('pendingOrganization', JSON.stringify({
-        name: formData.organizationName,
-        slug,
-        email: formData.email,
-      }));
-      navigate('/confirm-email', { state: { email: formData.email } });
+      // Step 2: Create organization (idempotent RPC)
+      const slug = generateSlug(formData.studioName);
+      const { error: orgError } = await ensureOrganization(formData.studioName.trim(), slug);
+
+      if (orgError) {
+        setErrors({ general: 'Kontoen ble opprettet, men studioet kunne ikke opprettes. Prøv å logge inn.' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 3: Navigate to teacher dashboard
+      navigate('/teacher', { replace: true });
 
     } catch {
       setErrors({ general: 'Noe gikk galt. Prøv igjen.' });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -164,7 +139,7 @@ const SignupPage = () => {
               Opprett din konto
             </h2>
             <p className="text-text-secondary text-sm">
-              Fyll ut for å komme i gang.
+              Opprett konto og kom i gang med studioet ditt.
             </p>
           </div>
 
@@ -172,33 +147,37 @@ const SignupPage = () => {
             className="w-full max-w-sm space-y-5"
             onSubmit={handleSubmit}
           >
-            {/* Full Name */}
+            {/* Studio Name */}
             <div className="space-y-1.5">
               <label
-                htmlFor="name"
+                htmlFor="studioName"
                 className="block text-xs font-medium text-text-secondary"
               >
-                Navn
+                Navn på studio eller virksomhet
               </label>
               <Input
                 type="text"
-                id="name"
-                value={formData.fullName}
+                id="studioName"
+                value={formData.studioName}
                 onChange={(e) =>
-                  handleChange('fullName', e.target.value)
+                  handleChange('studioName', e.target.value)
                 }
-                onBlur={() => handleBlur('fullName')}
+                onBlur={() => handleBlur('studioName')}
                 className={`
                   ${
-                    touched.fullName && errors.fullName
+                    touched.studioName && errors.studioName
                       ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
                       : ''
                   }
                 `}
-                placeholder="Ola Nordmann"
+                placeholder="F.eks. Yoga med Ola"
               />
-              {touched.fullName && errors.fullName && (
-                <p className="text-xs text-destructive">{errors.fullName}</p>
+              {touched.studioName && errors.studioName ? (
+                <p className="text-xs text-destructive">{errors.studioName}</p>
+              ) : (
+                <p className="text-xs text-text-tertiary">
+                  Vises på din offentlige side. Du kan endre det senere.
+                </p>
               )}
             </div>
 
@@ -257,39 +236,13 @@ const SignupPage = () => {
                 `}
                 placeholder="••••••••"
               />
-              {touched.password && errors.password && (
+              {touched.password && errors.password ? (
                 <p className="text-xs text-destructive">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Organization Name */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="organizationName"
-                className="block text-xs font-medium text-text-secondary"
-              >
-                Navn på virksomhet
-              </label>
-              <Input
-                type="text"
-                id="organizationName"
-                value={formData.organizationName}
-                onChange={(e) =>
-                  handleChange('organizationName', e.target.value)
-                }
-                onBlur={() => handleBlur('organizationName')}
-                className={`
-                  ${
-                    touched.organizationName && errors.organizationName
-                      ? 'border-destructive focus:border-destructive focus:ring-1 focus:ring-destructive'
-                      : ''
-                  }
-                `}
-                placeholder="F.eks. Ola Nordmann Yoga"
-              />
-              {touched.organizationName && errors.organizationName && (
-                <p className="text-xs text-destructive">{errors.organizationName}</p>
-              )}
+              ) : formData.password.length < 8 ? (
+                <p className="text-xs text-text-tertiary">
+                  Minst 8 tegn
+                </p>
+              ) : null}
             </div>
 
             {/* General Error */}
