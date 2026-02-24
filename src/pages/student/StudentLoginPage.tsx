@@ -201,7 +201,7 @@ const StudentLoginPage = () => {
             {/* Vipps Button */}
             <Button
               type="button"
-              className="w-full rounded-lg bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease active:scale-[0.98]"
+              className="w-full rounded-lg bg-vipps px-4 py-3 text-sm font-medium text-white hover:bg-vipps-hover ios-ease"
             >
               Logg inn med
               <img

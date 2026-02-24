@@ -213,12 +213,12 @@ Refined to ensure high data density remains legible.
 
 #### Primary Button (Dark)
 ```tsx
-className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 text-white border border-zinc-700/70 ring-1 ring-black/5 hover:from-zinc-700 hover:to-zinc-900 hover:border-zinc-600/80 after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/10 after:pointer-events-none transition-all duration-200 active:scale-[0.98] [&_svg]:opacity-70"
+className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-b from-zinc-800 to-zinc-950 text-white border border-zinc-700/70 ring-1 ring-black/5 hover:from-zinc-700 hover:to-zinc-900 hover:border-zinc-600/80 after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/10 after:pointer-events-none transition-all duration-200 [&_svg]:opacity-70"
 ```
 
 #### Outline Button
 ```tsx
-className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200 active:scale-[0.98]"
+className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200"
 ```
 
 #### Ghost Button
@@ -488,8 +488,8 @@ Used for clickable dark-themed cards (e.g., hero/featured course card).
 
 #### 4. Action Hover (Buttons & Links)
 Used for primary/secondary buttons and standalone links.
-- **Classes:** `smooth-transition hover:scale-[1.02] active:scale-[0.98]`
-- **Logic:** Subtle scaling effect to communicate "pressability".
+- **Classes:** Color/background shifts only (e.g., `hover:from-zinc-700 hover:to-zinc-900` for primary, `hover:bg-zinc-50` for outline).
+- **Logic:** Color-based feedback. No scale or translate — states change color or fill, not size or position.
 - **Transition:** `smooth-transition` (0.2s).
 
 #### 5. Static Cards (No Hover)
@@ -546,12 +546,13 @@ className="transition-colors"
 ```
 
 ### Hover Effects
+> **Rule:** Hover and active states use color or fill changes only — never scale, translate, or rotate. See DESIGN_LANGUAGE.md §6: "Active states change color or fill, not size or position."
+
 | Effect | Class |
 |--------|-------|
-| Button scale | `hover:scale-[1.02] active:scale-[0.98]` |
-| Card scale | `hover:scale-[1.005]` |
-| Arrow translate | `hover:translate-x-1` |
-| Chevron | `group-hover:translate-x-0.5` |
+| Color shift | `hover:text-text-primary` / `group-hover:text-text-secondary` |
+| Background fill | `hover:bg-zinc-50` / `hover:bg-zinc-50/50` |
+| Border shift | `hover:border-zinc-300` |
 
 ### Scrollbars
 Scrollbars are globally styled to be non-intrusive.
@@ -598,23 +599,13 @@ Toasts use a **neutral card** for all types. Only the icon carries the status co
 
 ## Special Effects
 
-### Grain Texture
-```tsx
-className="bg-grain opacity-[0.2] mix-blend-overlay"
-```
-Apply to dark cards for subtle texture.
-
-### Glass Morphism
-```tsx
-className="backdrop-blur-md bg-white/10 border border-white/10"
-```
-Used for badges on dark backgrounds.
-
-### Frosted Glass Footer
+### Frosted Glass (Structural Only)
 ```tsx
 className="p-6 border-t border-border bg-white/80 backdrop-blur-md z-10"
 ```
-Used for sticky action bars.
+Used for sticky action bars and fixed headers where content scrolls behind. This is structural (legibility), not decorative.
+
+> **Rule:** `backdrop-blur` is only used on sticky/fixed navigation and action bars. Never use blur, grain, or glass effects for decorative purposes (badges, card accents, empty states).
 
 ### Safe Areas (iOS)
 ```tsx
@@ -674,21 +665,18 @@ className="text-ring group-hover:text-text-tertiary"
 
 ### Design Principles
 1. Use solid `border-zinc-200` (no dashed borders)
-2. Gradient backgrounds: `bg-gradient-to-br from-white to-surface-elevated/50`
-3. Soft blur decorations with `blur-2xl` or `blur-3xl`
+2. Flat white background — no gradients or blur decorations
+3. Calm, inviting copy that explains what to do next
 
 ### Pattern
 ```tsx
-<div className="relative rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-surface-elevated/50 p-6 overflow-hidden">
-  <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-zinc-200/50 blur-2xl"></div>
-  <div className="relative z-10">
-    <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
-      Klar til å planlegge din første time?
-    </h2>
-    <p className="text-sm text-text-secondary">
-      Opprett en yogaøkt og bygg din timeplan.
-    </p>
-  </div>
+<div className="rounded-2xl border border-zinc-200 bg-white p-6">
+  <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+    Klar til å planlegge din første time?
+  </h2>
+  <p className="text-sm text-text-secondary">
+    Opprett en yogaøkt og bygg din timeplan.
+  </p>
 </div>
 ```
 

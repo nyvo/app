@@ -388,8 +388,8 @@ const TeacherDashboard = () => {
     };
   }, [currentOrganization?.id]);
 
-  // Get user's first name for greeting
-  const userName = profile?.name?.split(' ')[0] || currentOrganization?.name || 'bruker';
+  // Personal name (first word) if set, otherwise fall back to org name
+  const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
 
   return (
     <SidebarProvider>
@@ -409,7 +409,7 @@ const TeacherDashboard = () => {
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-text-tertiary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
-                    {getTimeBasedGreeting()}, {userName}
+                    {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
                 </div>
                 {/* Only show button when we have courses (not in empty state) */}

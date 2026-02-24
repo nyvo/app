@@ -275,7 +275,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     </div>
                   ) : (
                     <div className="text-center">
-                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-zinc-200 mb-2 group-hover:scale-[1.02] smooth-transition">
+                      <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-zinc-200 mb-2 smooth-transition">
                         <Image className="h-4 w-4 text-text-tertiary" />
                       </div>
                       <p className="text-xs font-medium text-text-primary">Legg til forsidebilde</p>

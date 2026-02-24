@@ -338,15 +338,12 @@ const CheckoutSuccessPage = () => {
 
             {/* Right Column: Order Details */}
             {signup && (
-              <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200 relative overflow-hidden">
-                {/* Decorative background element */}
-                <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-
-                <h3 className="text-xs font-medium text-text-secondary mb-6 relative z-10">
+              <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
+                <h3 className="text-xs font-medium text-text-secondary mb-6">
                   Kvittering
                 </h3>
 
-                <div className="space-y-5 relative z-10">
+                <div className="space-y-5">
                   <div className="pb-5 border-b border-zinc-200">
                     <span className="block text-xs text-text-secondary mb-1">Kurs</span>
                     <span className="block font-medium text-lg text-text-primary">{signup.course.title}</span>

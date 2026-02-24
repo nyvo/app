@@ -84,7 +84,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
               key={index}
               className={`w-1/6 rounded-t-sm ${
                 index === 4 ? 'bg-primary' : index === 3 ? 'bg-zinc-300 group-hover:bg-zinc-400' : 'bg-surface-elevated group-hover:bg-zinc-300'
-              } transition-colors ${index === 0 ? 'delay-75' : index === 1 ? 'delay-100' : index === 2 ? 'delay-150' : index === 3 ? 'delay-200' : index === 5 ? 'delay-300' : ''}`}
+              } transition-colors`}
               style={{ height: `${value}%` }}
               aria-label={`Day ${index + 1}: ${value}% attendance`}
             />

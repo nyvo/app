@@ -167,7 +167,7 @@ export function CoursePreviewCard({ course, showUrgency = true }: CoursePreviewC
 
       {/* Chevron - navigation affordance */}
       <div className="shrink-0 flex items-center ml-2">
-        <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-text-secondary group-hover:translate-x-0.5 smooth-transition" />
+        <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-text-secondary smooth-transition" />
       </div>
     </div>
   );

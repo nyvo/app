@@ -88,13 +88,10 @@ const LandingPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1], delay: 0 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0 }}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-info-bg opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-status-info-text"></span>
-              </span>
+              <span className="h-2 w-2 rounded-full bg-status-info-text"></span>
               <span className="text-xs font-medium text-white/90">
                 Nå tilgjengelig for alle studioer
               </span>
@@ -103,17 +100,17 @@ const LandingPage = () => {
             <motion.h1
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
               className="text-4xl md:text-6xl font-medium tracking-tighter leading-tight text-white mb-10 font-geist"
             >
               Det moderne operativsystemet <br className="hidden md:block" />
-              <span className="text-blue-100">for yogastudioer.</span>
+              <span className="text-zinc-200">for yogastudioer.</span>
             </motion.h1>
             
             <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.2 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
               className="text-base md:text-lg text-zinc-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-16 font-normal"
             >
               Automatiser booking og betaling. Alt på ett sted.
@@ -122,7 +119,7 @@ const LandingPage = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.25, 1, 0.5, 1], delay: 0.3 }}
+              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
               className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8 mb-16"
             >
               <Button
@@ -138,13 +135,13 @@ const LandingPage = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
               className="border-t border-white/20 pt-8 pb-4 w-full"
             >
               <p className="text-xs font-medium text-zinc-400 mb-6">
                 Brukes av ledende studioer
               </p>
-              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-60 ios-ease hover:opacity-100">
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-70">
                 {[
                   { icon: Wind, name: 'PAUSE' },
                   { icon: Sun, name: 'ROM' },
@@ -166,7 +163,7 @@ const LandingPage = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.9, ease: [0.25, 1, 0.5, 1], delay: 0.4 }}
+            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
             className="relative lg:absolute lg:-right-20 lg:w-[65%] xl:w-[60%] lg:top-1/2 lg:-translate-y-1/2 mt-12 lg:mt-0"
           >
             <div className="relative bg-white rounded-xl border border-white/20 ring-1 ring-zinc-200/50 overflow-hidden">
@@ -174,7 +171,7 @@ const LandingPage = () => {
               <motion.div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.5 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
                 className="absolute top-8 right-8 z-20 bg-white rounded-lg border border-zinc-200 p-3 flex items-center gap-3 max-w-xs"
               >
                 <div className="w-8 h-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text">
@@ -264,7 +261,7 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Abstract visual for step 1 */}
-            <div className="hidden md:block absolute right-0 bottom-0 w-1/2 h-3/4 bg-zinc-50 rounded-tl-2xl border-t border-l border-zinc-100 p-4 translate-y-4 translate-x-4 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-500">
+            <div className="hidden md:block absolute right-0 bottom-0 w-1/2 h-3/4 bg-zinc-50 rounded-tl-2xl border-t border-l border-zinc-100 p-4 translate-y-4 translate-x-4">
               <div className="space-y-3">
                 <div className="h-2 w-1/3 bg-zinc-200 rounded-full"></div>
                 <div className="h-8 w-full bg-white rounded-lg border border-zinc-100"></div>
@@ -294,7 +291,7 @@ const LandingPage = () => {
             </p>
             {/* Visual for Step 2 */}
             <div className="mt-auto relative w-full h-64 bg-zinc-50 rounded-xl overflow-hidden flex items-center justify-center group-hover:bg-zinc-100 transition-colors">
-              <div className="bg-white p-4 rounded-xl border border-zinc-200 max-w-[80%] transform rotate-[-2deg] group-hover:rotate-0 transition-transform duration-300">
+              <div className="bg-white p-4 rounded-xl border border-zinc-200 max-w-[80%]">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-zinc-100 rounded-full"></div>
                   <div className="flex-1">
@@ -330,7 +327,7 @@ const LandingPage = () => {
             </div>
             {/* Visual for Step 3 */}
             <div className="mt-auto relative w-full bg-zinc-50 rounded-xl border border-zinc-200 p-6 flex flex-col gap-4">
-               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:translate-x-1 transition-transform duration-500">
+               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text">
                     <Check className="w-4 h-4" />
                   </div>
@@ -339,7 +336,7 @@ const LandingPage = () => {
                     <p className="text-xxs text-text-secondary">til 12 deltakere</p>
                   </div>
                </div>
-               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3 transform group-hover:-translate-x-1 transition-transform duration-500 delay-100">
+               <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-status-info-bg flex items-center justify-center text-status-info-text">
                      <div className="w-1.5 h-1.5 rounded-full bg-status-info-text" />
                   </div>
@@ -655,7 +652,7 @@ const LandingPage = () => {
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span className="text-xs font-medium text-text-secondary">
                   Systemet er operativt
                 </span>

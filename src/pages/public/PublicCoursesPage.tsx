@@ -253,7 +253,7 @@ const PublicCoursesPage = () => {
 
             {/* Unified Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-gradient-to-br from-white to-surface-elevated/50">
+              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-white">
                 <p className="text-sm font-medium text-text-primary">Ingen aktive kurs</p>
                 <p className="text-xs text-text-tertiary mt-1">
                   Det er ingen planlagte kurs for øyeblikket.
