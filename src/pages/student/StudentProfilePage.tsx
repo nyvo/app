@@ -11,7 +11,7 @@ const StudentProfilePage = () => {
     <StudentDashboardLayout>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="display-heading text-2xl font-medium text-text-primary">
             Min profil
           </h1>
           <p className="text-text-secondary mt-1">
@@ -19,7 +19,7 @@ const StudentProfilePage = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
+        <div className="bg-white rounded-3xl border border-zinc-200/60 overflow-hidden">
           <div className="p-6 space-y-6">
             
             {/* Name */}
@@ -32,7 +32,7 @@ const StudentProfilePage = () => {
                   Navn
                 </label>
                 <p className="text-base text-text-primary font-medium">
-                  {profile?.name || 'Ikke registrert'}
+                  {profile?.name || 'Ikke angitt'}
                 </p>
               </div>
             </div>
@@ -62,7 +62,7 @@ const StudentProfilePage = () => {
                   Telefon
                 </label>
                 <p className="text-base text-text-primary">
-                  {profile?.phone || 'Ikke registrert'}
+                  {profile?.phone || 'Ikke angitt'}
                 </p>
               </div>
             </div>
@@ -86,7 +86,7 @@ const StudentProfilePage = () => {
 
           </div>
           
-          <div className="px-6 py-4 bg-surface/30 border-t border-zinc-200 text-xs text-text-secondary">
+          <div className="px-6 py-4 bg-surface-elevated border-t border-zinc-200 text-xs text-text-secondary">
             Ta kontakt hvis du trenger å endre noe.
           </div>
         </div>

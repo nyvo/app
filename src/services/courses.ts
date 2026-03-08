@@ -1,4 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type {
   Course,
   CourseInsert,
@@ -336,14 +337,14 @@ function formatLocalDate(date: Date): string {
 // Logs a warning and falls back to '09:00' when the regex does not match.
 function parseStartTime(timeSchedule: string | null | undefined): string {
   if (!timeSchedule) {
-    console.warn(
+    logger.warn(
       '[courses] parseStartTime: time_schedule is empty/null — defaulting to "09:00"'
     )
     return '09:00'
   }
   const match = timeSchedule.match(/(\d{1,2}:\d{2})/)
   if (!match) {
-    console.warn(
+    logger.warn(
       `[courses] parseStartTime: could not extract time from "${timeSchedule}" — defaulting to "09:00"`
     )
     return '09:00'
@@ -569,7 +570,7 @@ export async function cancelCourse(
   } catch (err) {
     return {
       data: null,
-      error: err instanceof Error ? err : new Error('Unknown error')
+      error: err instanceof Error ? err : new Error('Ukjent feil')
     }
   }
 }
@@ -750,6 +751,106 @@ export async function fetchWeekSessions(organizationId: string, limit = 6): Prom
   return { data: results, error: null }
 }
 
+// Type for session schedule table rows (teacher admin view)
+export interface SessionScheduleRow {
+  sessionId: string
+  courseId: string
+  courseTitle: string
+  courseType: 'course-series' | 'event' | 'online'
+  sessionDate: string        // YYYY-MM-DD
+  startTime: string          // HH:MM
+  endTime: string            // HH:MM (calculated from duration if null)
+  location: string
+  price: number | null
+  signupsCount: number
+  maxParticipants: number | null
+  courseStatus: string
+  courseStartDate: string | null
+}
+
+// Fetch upcoming sessions for the teacher schedule table view
+export async function fetchScheduleSessions(organizationId: string): Promise<{
+  data: SessionScheduleRow[] | null
+  error: Error | null
+}> {
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+  const { data: sessionsData, error: sessionsError } = await supabase
+    .from('course_sessions')
+    .select(`
+      *,
+      course:courses!inner(
+        *
+      )
+    `)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .neq('course.status', 'completed')
+    .gte('session_date', todayStr)
+    .eq('status', 'upcoming')
+    .order('session_date', { ascending: true })
+    .order('start_time', { ascending: true })
+
+  if (sessionsError) {
+    return { data: null, error: sessionsError as Error }
+  }
+
+  if (!sessionsData || sessionsData.length === 0) {
+    return { data: [], error: null }
+  }
+
+  const typedResults = sessionsData as unknown as SessionWithFullCourseJoin[]
+
+  // Collect unique course IDs for signup counts
+  const courseIds = [...new Set(typedResults.map(s => s.course.id))]
+
+  // Fetch signup counts per course
+  const { data: signupsData } = await typedFrom('signups')
+    .select('course_id')
+    .in('course_id', courseIds)
+    .eq('status', 'confirmed')
+
+  const signupsCounts: Record<string, number> = {}
+  ;(signupsData as { course_id: string }[] | null)?.forEach(s => {
+    signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1
+  })
+
+  // Map to SessionScheduleRow
+  const rows: SessionScheduleRow[] = typedResults.map(session => {
+    const course = session.course as Course
+    const startTime = (session.start_time || '').slice(0, 5)
+    let endTime = session.end_time?.slice(0, 5) || ''
+
+    // Calculate end_time from duration if missing
+    if (!endTime && course.duration) {
+      const startMinutes = timeToMinutes(startTime)
+      const endMinutes = startMinutes + course.duration
+      const h = Math.floor(endMinutes / 60)
+      const m = endMinutes % 60
+      endTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+    }
+
+    return {
+      sessionId: session.id,
+      courseId: course.id,
+      courseTitle: course.title,
+      courseType: course.course_type as 'course-series' | 'event' | 'online',
+      sessionDate: session.session_date,
+      startTime,
+      endTime,
+      location: course.location || '',
+      price: course.price,
+      signupsCount: signupsCounts[course.id] || 0,
+      maxParticipants: course.max_participants,
+      courseStatus: course.status,
+      courseStartDate: course.start_date,
+    }
+  })
+
+  return { data: rows, error: null }
+}
+
 // Generate sessions for an existing course (useful for updating week count)
 export async function generateCourseSessions(
   courseId: string,
@@ -802,7 +903,7 @@ export async function generateCourseSessions(
         notes: s.notes,
       }))
       await typedFrom('course_sessions').insert(rollbackSessions).catch((rollbackErr: unknown) => {
-        console.error('CRITICAL: Rollback of course sessions failed:', rollbackErr)
+        logger.error('CRITICAL: Rollback of course sessions failed:', rollbackErr)
       })
     }
     return { error: error as Error }

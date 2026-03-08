@@ -6,16 +6,12 @@ import {
   CreditCard,
   Smartphone,
   ArrowRightLeft,
-  Wind,
-  Sun,
-  Waves,
-  Flower2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Animation variants
+// Animation variants — used only for scroll-based sections below the fold
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 6 },
   visible: { opacity: 1, y: 0 },
 };
 
@@ -29,189 +25,61 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const LandingPage = () => {
   return (
-    <div className="overflow-x-hidden bg-surface text-text-primary font-geist antialiased">
+    <div className="theme-public overflow-x-hidden bg-public-sand text-text-primary font-geist antialiased">
       {/* Navigation */}
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-        className="absolute top-0 w-full z-50 bg-transparent border-none"
-      >
+      <nav className="absolute top-0 w-full z-50 bg-transparent border-none">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white rounded-md flex items-center justify-center text-zinc-900">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-medium tracking-tighter text-white">
+            <span className="text-lg font-medium tracking-tighter text-text-primary">
               Ease
             </span>
           </div>
           <div className="flex items-center gap-8">
-            <a href="#pricing" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
+            <a href="#pricing" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
               Pris
             </a>
-            <Link to="/contact" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
+            <a href="mailto:hei@ease.no" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
               Kontakt
-            </Link>
-            <Link to="/login" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
+            </a>
+            <Link to="/login" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
               Logg inn
             </Link>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden bg-white">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 z-0"
-        >
-          <img
-            src="/Artdirected_nordic_coastal_2k_202601142245.jpeg"
-            alt="Nordic coastal landscape"
-            className="w-full h-full object-cover opacity-90"
-          />
-          {/* Subtle dark gradient overlay for text legibility */}
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/60 via-zinc-900/30 to-transparent mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/50 via-transparent to-transparent" />
-        </div>
+      <section className="relative min-h-screen flex items-center pt-32 pb-20 md:pt-48 md:pb-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6 w-full">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="display-heading text-4xl md:text-6xl font-medium leading-tight text-text-primary mb-8">
+              Påmelding og betaling <br className="hidden md:block" />
+              for yogastudioer.
+            </h1>
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10 w-full grid lg:grid-cols-2 gap-12 items-center">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6"
-            >
-              <span className="h-2 w-2 rounded-full bg-status-info-text"></span>
-              <span className="text-xs font-medium text-white/90">
-                Nå tilgjengelig for alle studioer
-              </span>
-            </motion.div>
-            
-            <motion.h1
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.05 }}
-              className="text-4xl md:text-6xl font-medium tracking-tighter leading-tight text-white mb-10 font-geist"
-            >
-              Det moderne operativsystemet <br className="hidden md:block" />
-              <span className="text-zinc-200">for yogastudioer.</span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.1 }}
-              className="text-base md:text-lg text-zinc-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-16 font-normal"
-            >
-              Automatiser booking og betaling. Alt på ett sted.
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8 mb-16"
-            >
-              <Button
-                asChild
-                size="lg"
-                className="px-6 text-base bg-white text-zinc-900 hover:bg-zinc-100 border-none"
-              >
-                <Link to="/signup">Kom i gang</Link>
-              </Button>
-            </motion.div>
+            <p className="text-base md:text-lg text-text-secondary leading-relaxed mb-8 font-normal">
+              Automatiser påmeldinger, betaling og regnskap. Alt på ett sted.
+            </p>
 
-            {/* Social Proof */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              className="border-t border-white/20 pt-8 pb-4 w-full"
+            <Button
+              asChild
+              size="lg"
+              className="px-6 text-base"
             >
-              <p className="text-xs font-medium text-zinc-400 mb-6">
-                Brukes av ledende studioer
-              </p>
-              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 md:gap-12 opacity-70">
-                {[
-                  { icon: Wind, name: 'PAUSE' },
-                  { icon: Sun, name: 'ROM' },
-                  { icon: Waves, name: 'FLYT' },
-                  { icon: Flower2, name: 'KJERNE' },
-                ].map((brand) => (
-                  <span
-                    key={brand.name}
-                    className="text-lg font-medium tracking-tighter text-white flex items-center gap-2"
-                  >
-                    <brand.icon className="w-4 h-4" /> {brand.name}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
+              <Link to="/signup">Start gratis</Link>
+            </Button>
           </div>
-
-          {/* Dashboard Preview - Anchored Right */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1], delay: 0.15 }}
-            className="relative lg:absolute lg:-right-20 lg:w-[65%] xl:w-[60%] lg:top-1/2 lg:-translate-y-1/2 mt-12 lg:mt-0"
-          >
-            <div className="relative bg-white rounded-xl border border-white/20 ring-1 ring-zinc-200/50 overflow-hidden">
-              {/* Toast Notification */}
-              <motion.div
-                initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-                className="absolute top-8 right-8 z-20 bg-white rounded-lg border border-zinc-200 p-3 flex items-center gap-3 max-w-xs"
-              >
-                <div className="w-8 h-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text">
-                  <span className="text-xs font-medium">Ny</span>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-text-primary">
-                    Ny påmelding mottatt
-                  </p>
-                  <p className="text-xxs text-text-secondary">
-                    Yin Yoga • Akkurat nå
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Browser Bar */}
-              <div className="h-10 border-b border-zinc-100 flex items-center px-4 bg-zinc-50/50 backdrop-blur-md gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 border border-zinc-400/30"></div>
-                </div>
-                <div className="ml-4 flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-zinc-100">
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span className="text-xxs text-text-secondary font-medium tracking-tight">
-                    ease.no/dashboard
-                  </span>
-                </div>
-              </div>
-
-              {/* Screenshot */}
-              <img
-                src="/Screenshot_10.png"
-                alt="Ease dashboard preview"
-                className="w-full h-auto"
-              />
-            </div>
-          </motion.div>
         </div>
-        
       </section>
 
       {/* How It Works */}
@@ -225,7 +93,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16 max-w-2xl mx-auto"
         >
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
             Hvordan det fungerer
           </h2>
           <p className="text-text-secondary text-lg">
@@ -256,7 +124,7 @@ const LandingPage = () => {
                 </h3>
               </div>
               <p className="text-text-secondary text-base leading-relaxed mb-6">
-                Sett opp faste timer, workshops eller kursrekker. Gjentakelser
+                Sett opp faste timer, arrangementer eller kursrekker. Gjentakelser
                 og unntak håndteres automatisk.
               </p>
             </div>
@@ -286,11 +154,11 @@ const LandingPage = () => {
               </h3>
             </div>
             <p className="text-text-secondary text-base leading-relaxed mb-8">
-              Del én lenke med elevene. De booker og betaler selv. Ingen
-              DM-er eller manuelle Vipps-krav.
+              Del én lenke med elevene. De melder seg på og betaler selv. Ingen
+              meldinger frem og tilbake.
             </p>
             {/* Visual for Step 2 */}
-            <div className="mt-auto relative w-full h-64 bg-zinc-50 rounded-xl overflow-hidden flex items-center justify-center group-hover:bg-zinc-100 transition-colors">
+            <div className="mt-auto relative w-full h-64 bg-zinc-50 rounded-xl overflow-hidden flex items-center justify-center">
               <div className="bg-white p-4 rounded-xl border border-zinc-200 max-w-[80%]">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 bg-zinc-100 rounded-full"></div>
@@ -341,7 +209,7 @@ const LandingPage = () => {
                      <div className="w-1.5 h-1.5 rounded-full bg-status-info-text" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-text-primary">Oppmøte registrert</p>
+                    <p className="text-xs font-medium text-text-primary">Oppmøte bekreftet</p>
                     <p className="text-xxs text-text-secondary">Automatisk</p>
                   </div>
                </div>
@@ -365,7 +233,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="mb-24 text-center max-w-2xl mx-auto"
         >
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
             Alt du trenger
           </h2>
           <p className="text-text-secondary text-lg">
@@ -390,11 +258,11 @@ const LandingPage = () => {
                 </h3>
                 <p className="text-text-secondary text-lg leading-relaxed mb-8">
                   Slipp fakturaer og manuell oppfølging. Pengene kommer inn når
-                  kunden booker.
+                  deltakeren melder seg på.
                 </p>
                 <div className="flex gap-6">
                   <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
-                    <Smartphone className="w-4 h-4 text-text-tertiary" /> Vipps og Kort
+                    <Smartphone className="w-4 h-4 text-text-tertiary" /> Vipps og kort
                   </div>
                   <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
                     <Check className="w-4 h-4 text-text-tertiary" /> Automatiske kvitteringer
@@ -409,11 +277,11 @@ const LandingPage = () => {
                         Total omsetning
                       </p>
                       <p className="text-3xl font-medium text-text-primary mt-1">
-                        42.500 kr
+                        42 500 kr
                       </p>
                     </div>
                     <div className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                      +12%
+                      +12 %
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -421,8 +289,8 @@ const LandingPage = () => {
                       <div className="h-full bg-primary w-[70%]"></div>
                     </div>
                     <div className="flex justify-between text-xs text-text-tertiary">
-                      <span>01. Okt</span>
-                      <span>31. Okt</span>
+                      <span>1. okt</span>
+                      <span>31. okt</span>
                     </div>
                   </div>
                 </div>
@@ -474,7 +342,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tight text-text-primary mb-4 font-geist">
+          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
             Enkel prismodell
           </h2>
           <p className="text-text-secondary mb-3">
@@ -505,9 +373,9 @@ const LandingPage = () => {
             <div className="mb-8 pb-8 border-b border-zinc-200">
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-medium tracking-tight text-text-primary">
-                  0 kr
+                  Gratis
                 </span>
-                <span className="text-text-secondary font-medium">/ md</span>
+                <span className="text-text-secondary font-medium">/ mnd</span>
               </div>
               <p className="text-xs text-text-tertiary mt-2">
                 Ingen kort nødvendig.
@@ -524,26 +392,32 @@ const LandingPage = () => {
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
-                <span>Ubegrenset booking</span>
+                <span>Nettbetaling med Vipps og kort</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text-secondary">
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
-                <span>Fiken-integrasjon (Regnskap)</span>
+                <span>Automatiske påminnelser til elever</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text-secondary">
                 <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Check className="w-3 h-3 text-text-primary" />
                 </div>
-                <span>Eget design på booking-siden</span>
+                <span>Fiken-integrasjon for regnskap</span>
+              </li>
+              <li className="flex items-start gap-3 text-sm text-text-secondary">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check className="w-3 h-3 text-text-primary" />
+                </div>
+                <span>Egen påmeldingsside med ditt design</span>
               </li>
             </ul>
             <Button
               asChild
-              className="w-full mt-auto h-12 rounded-lg"
+              className="w-full mt-auto h-12"
             >
-              <Link to="/signup">Kom i gang</Link>
+              <Link to="/signup">Start gratis</Link>
             </Button>
           </motion.div>
         </motion.div>
@@ -571,8 +445,8 @@ const LandingPage = () => {
                 </span>
               </div>
               <p className="text-text-secondary text-sm leading-relaxed max-w-sm mb-6">
-                Det komplette operativsystemet for moderne yogastudioer. <br />
-                Bygget i Oslo med ❤️ for bevegelse.
+                Påmelding og betaling for yogastudioer. <br />
+                Bygget i Oslo.
               </p>
               <div className="flex items-center gap-4 opacity-60">
                 {/* Social icons could go here */}
@@ -594,9 +468,9 @@ const LandingPage = () => {
                   </a>
                 </li>
                 <li>
-                  <Link to="/changelog" className="hover:text-text-primary transition-colors">
+                  <span className="text-text-tertiary cursor-default">
                     Oppdateringer
-                  </Link>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -611,9 +485,9 @@ const LandingPage = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/contact" className="hover:text-text-primary transition-colors">
+                  <a href="mailto:hei@ease.no" className="hover:text-text-primary transition-colors">
                     Kontakt
-                  </Link>
+                  </a>
                 </li>
                 <li>
                   <Link to="/careers" className="hover:text-text-primary transition-colors">
@@ -648,7 +522,7 @@ const LandingPage = () => {
 
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs text-text-tertiary">
-              © 2024 Ease AS. Alle rettigheter reservert.
+              © {new Date().getFullYear()} Ease AS. Alle rettigheter reservert.
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">

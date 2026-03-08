@@ -11,9 +11,9 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4"
       role="status"
       aria-live="polite"
-      aria-label="Laster dashboard"
+      aria-label="Laster oversikten"
     >
-      <span className="sr-only">Laster dashboardinnhold</span>
+      <span className="sr-only">Laster innhold</span>
 
       {/* Upcoming Class Card */}
       <SkeletonCard className="col-span-1 md:col-span-2 lg:col-span-2 h-[360px] p-6 sm:p-9">

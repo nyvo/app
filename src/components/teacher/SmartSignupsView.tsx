@@ -37,8 +37,8 @@ function getEmptyStateContent(mode: ModeFilter, hasFilters: boolean) {
     case 'active':
       return {
         icon: Calendar,
-        title: 'Ingen kommende påmeldinger',
-        description: 'Kommende påmeldinger vises her.',
+        title: 'Ingen nye påmeldinger',
+        description: 'Nye påmeldinger vises her.',
         showClearAction: false,
       };
     case 'ended':

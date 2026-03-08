@@ -51,8 +51,8 @@ const StripeCallbackPage = () => {
       if (data?.onboardingComplete) {
         setState('success');
         await refreshOrganizations();
-        toast.success('Stripe er koblet til!');
-        navigate('/teacher', { replace: true });
+        toast.success('Betalinger er klare');
+        navigate('/teacher?stripe=success', { replace: true });
       } else {
         // Retry once after 2s — Stripe status may not be immediate
         await new Promise((r) => setTimeout(r, 2000));
@@ -60,8 +60,8 @@ const StripeCallbackPage = () => {
         if (retry.data?.onboardingComplete) {
           setState('success');
           await refreshOrganizations();
-          toast.success('Stripe er koblet til!');
-          navigate('/teacher', { replace: true });
+          toast.success('Betalinger er klare');
+          navigate('/teacher?stripe=success', { replace: true });
         } else {
           setState('incomplete');
         }
@@ -107,10 +107,10 @@ const StripeCallbackPage = () => {
                 <Spinner size="md" />
               </div>
               <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
-                Verifiserer Stripe-tilkobling...
+                Bekrefter betalingsoppsettet
               </h1>
               <p className="text-text-secondary text-sm">
-                Vennligst vent mens vi bekrefter oppsettet ditt.
+                Vent mens vi bekrefter oppsettet ditt.
               </p>
             </>
           )}
@@ -121,22 +121,22 @@ const StripeCallbackPage = () => {
                 <AlertCircle className="w-5 h-5 text-status-warning-text" />
               </div>
               <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
-                Stripe-oppsettet er ikke fullført
+                Betalingsoppsettet er ikke fullført
               </h1>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                Det ser ut som Stripe-registreringen ikke ble fullført. Du kan prøve igjen eller gå tilbake til dashboardet.
+                Det ser ut som oppsettet hos Stripe ikke ble fullført. Du kan prøve igjen eller gå tilbake til oversikten.
               </p>
               <div className="w-full space-y-3">
                 <Button
                   onClick={handleRetry}
                   loading={isRetrying}
-                  loadingText="Starter Stripe..."
+                  loadingText="Sender deg til Stripe …"
                   className="w-full h-11"
                 >
                   Prøv igjen
                 </Button>
                 <Button asChild variant="outline-soft" className="w-full h-11">
-                  <Link to="/teacher">Tilbake til dashboard</Link>
+                  <Link to="/teacher">Tilbake til oversikten</Link>
                 </Button>
               </div>
             </>
@@ -151,19 +151,19 @@ const StripeCallbackPage = () => {
                 Noe gikk galt
               </h1>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                {errorMessage || 'Kunne ikke verifisere Stripe-tilkoblingen. Prøv igjen.'}
+                {errorMessage || 'Kunne ikke bekrefte betalingsoppsettet. Prøv igjen.'}
               </p>
               <div className="w-full space-y-3">
                 <Button
                   onClick={handleRetry}
                   loading={isRetrying}
-                  loadingText="Starter Stripe..."
+                  loadingText="Sender deg til Stripe …"
                   className="w-full h-11"
                 >
                   Prøv igjen
                 </Button>
                 <Button asChild variant="outline-soft" className="w-full h-11">
-                  <Link to="/teacher">Tilbake til dashboard</Link>
+                  <Link to="/teacher">Tilbake til oversikten</Link>
                 </Button>
               </div>
             </>
@@ -175,10 +175,10 @@ const StripeCallbackPage = () => {
                 <CheckCircle2 className="w-5 h-5 text-status-confirmed-text" />
               </div>
               <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
-                Stripe er koblet til!
+                Betalinger er klare
               </h1>
               <p className="text-text-secondary text-sm">
-                Sender deg til dashboardet...
+                Sender deg til oversikten
               </p>
             </>
           )}

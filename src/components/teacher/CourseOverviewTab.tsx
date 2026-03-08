@@ -173,7 +173,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-text-tertiary" />
-              <span className="text-xs font-medium text-text-tertiary">
+              <span className="text-xs font-medium text-text-secondary">
                 Påmelding
               </span>
             </div>
@@ -215,7 +215,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         </div>
 
         {/* Logistics Card (4 cols) */}
-        <div className="lg:col-span-4 rounded-2xl bg-white p-5 border border-zinc-200 flex flex-col justify-center space-y-3">
+        <div className="lg:col-span-4 rounded-2xl bg-white p-6 border border-zinc-200 flex flex-col justify-center space-y-3">
           <div className="flex items-center gap-2.5">
             <Calendar className="h-4 w-4 text-text-tertiary shrink-0" />
             <div>
@@ -287,7 +287,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
             {/* Description Content */}
             <div className="p-6">
-              <h3 className="text-sm font-medium text-text-primary mb-2">Om timen</h3>
+              <h3 className="text-sm font-medium text-text-primary mb-2">Om kurset</h3>
               {course.description ? (
                 <div className="max-w-lg">
                   <p className="text-sm text-text-secondary leading-relaxed mb-4">
@@ -324,7 +324,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <h3 className="text-sm font-medium text-text-primary">
                   Kursplan ({generatedCourseWeeks.length} {sessionLabelPlural})
                 </h3>
-                <button onClick={onEditTime} className="cursor-pointer text-sm text-text-secondary hover:text-text-primary font-medium smooth-transition">
+                <button onClick={onEditTime} className="cursor-pointer text-xs text-text-secondary hover:text-text-primary font-medium smooth-transition">
                   Rediger
                 </button>
               </div>
@@ -397,12 +397,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                       </div>
 
                       <AccordionContent className="px-4 pb-4 pt-0">
-                        <div className="pl-[72px] pt-2 space-y-4">
+                        <div className="pl-4 sm:pl-[72px] pt-2 space-y-4">
                           <div className="h-px w-full bg-zinc-100 mb-4"></div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-medium text-text-tertiary mb-1.5">
+                              <label className="block text-xs font-medium text-text-secondary mb-1.5">
                                 Dato
                               </label>
                               <DatePicker
@@ -417,7 +417,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                             </div>
 
                             <div>
-                              <label className="block text-xs font-medium text-text-tertiary mb-1.5">
+                              <label className="block text-xs font-medium text-text-secondary mb-1.5">
                                 Tidspunkt
                               </label>
                               <TimePicker
@@ -488,16 +488,22 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         <div className="lg:col-span-4 space-y-6">
           {/* Admin Card */}
           <div className="rounded-2xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-xs font-medium text-text-tertiary mb-4">
+            <h3 className="text-xs font-medium text-text-secondary mb-4">
               Administrasjon
             </h3>
             <div className="mb-5">
               <span className="text-xs text-text-secondary block mb-1">Pris per deltaker</span>
               <div className="flex items-baseline gap-1">
-                <span className="text-xl font-medium text-text-primary tracking-tight">
-                  {course.price}
-                </span>
-                <span className="text-xs font-medium text-text-secondary">NOK</span>
+                {course.price > 0 ? (
+                  <>
+                    <span className="text-xl font-medium text-text-primary tracking-tight">
+                      {course.price}
+                    </span>
+                    <span className="text-xs font-medium text-text-secondary">kr</span>
+                  </>
+                ) : (
+                  <span className="text-xl font-medium text-text-primary tracking-tight">Gratis</span>
+                )}
               </div>
             </div>
             <div className="space-y-3">
@@ -520,7 +526,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               <Button
                 variant="outline-soft"
                 size="compact"
-                className="w-full mt-4 text-destructive hover:bg-red-50 hover:border-red-200"
+                className="w-full mt-4 text-destructive hover:bg-red-50"
                 onClick={onCancelCourse}
               >
                 Avlys kurs
@@ -528,15 +534,21 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             </div>
           </div>
 
-          {/* Tips Card */}
-          <Alert variant="info">
-            <div>
-              <AlertTitle variant="info">Tips for synlighet</AlertTitle>
-              <AlertDescription variant="info">
-                Legg til bilde og beskrivelse for å gjøre kurset mer attraktivt.
-              </AlertDescription>
-            </div>
-          </Alert>
+          {/* Tips Card — only when image or description is missing */}
+          {(!course.imageUrl || !course.description) && (
+            <Alert variant="info">
+              <div>
+                <AlertTitle variant="info">Tips for synlighet</AlertTitle>
+                <AlertDescription variant="info">
+                  {!course.imageUrl && !course.description
+                    ? 'Legg til bilde og beskrivelse så deltakerne vet hva kurset handler om.'
+                    : !course.imageUrl
+                      ? 'Legg til et forsidebilde så kurset blir lettere å finne.'
+                      : 'Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.'}
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
         </div>
       </div>
     </div>

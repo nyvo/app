@@ -28,7 +28,7 @@ export async function createStripeConnectLink(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Failed to create Stripe Connect link') }
+      return { data: null, error: new Error(error.message || 'Kunne ikke opprette Stripe-kobling') }
     }
 
     if (data?.error) {
@@ -37,7 +37,7 @@ export async function createStripeConnectLink(
 
     return { data: data as ConnectLinkResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') }
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
   }
 }
 
@@ -54,7 +54,7 @@ export async function createStripeDashboardLink(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Failed to create Stripe dashboard link') }
+      return { data: null, error: new Error(error.message || 'Kunne ikke opprette Stripe-lenke') }
     }
 
     if (data?.error) {
@@ -63,7 +63,7 @@ export async function createStripeDashboardLink(
 
     return { data: data as ConnectLinkResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') }
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
   }
 }
 
@@ -80,7 +80,7 @@ export async function checkStripeStatus(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Failed to check Stripe status') }
+      return { data: null, error: new Error(error.message || 'Kunne ikke sjekke Stripe-status') }
     }
 
     if (data?.error) {
@@ -89,6 +89,6 @@ export async function checkStripeStatus(
 
     return { data: data as StripeStatusResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') }
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
   }
 }

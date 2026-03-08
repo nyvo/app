@@ -20,6 +20,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+/** Validate URL scheme to prevent javascript: / data: injection in href attributes */
+function safeUrl(url: string): string {
+  if (!url) return ''
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return ''
+    return encodeURI(url)
+  } catch {
+    return ''
+  }
+}
+
 interface SendEmailRequest {
   to: string
   subject: string
@@ -35,7 +47,7 @@ interface SendEmailRequest {
 function getNewMessageTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
   const senderName = escapeHtml(data.senderName)
   const messagePreview = escapeHtml(data.messagePreview)
-  const conversationUrl = encodeURI(data.conversationUrl || '')
+  const conversationUrl = safeUrl(data.conversationUrl || '')
   const organizationName = escapeHtml(data.organizationName)
 
   return {
@@ -77,7 +89,7 @@ function getNewMessageTemplate(data: Record<string, string>): { subject: string;
 
     <div class="footer">
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
-      <p style="font-size: 12px;">Du mottar denne e-posten fordi du er registrert hos ${organizationName || 'oss'}.</p>
+      <p style="font-size: 12px;">Du mottar denne e-posten fordi du har en konto hos ${organizationName || 'oss'}.</p>
     </div>
   </div>
 </body>
@@ -90,7 +102,7 @@ Du har mottatt en ny melding fra ${senderName}:
 
 "${messagePreview}..."
 
-Klikk her for å svare: ${conversationUrl}
+Svar her: ${conversationUrl}
 
 Hilsen,
 ${organizationName || 'Ease'}
@@ -104,7 +116,7 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
   const wasCharged = data.wasCharged
 
   return {
-    subject: `Påmelding ikke gjennomført: ${courseName}`,
+    subject: `Påmelding ikke fullført: ${courseName}`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -131,13 +143,13 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
 
     <p>Hei,</p>
 
-    <p>Vi beklager, men din påmelding til <strong>${courseName}</strong> kunne ikke gjennomføres.</p>
+    <p>Vi beklager, men din påmelding til <strong>${courseName}</strong> kunne ikke fullføres.</p>
 
     <p>${reason}</p>
 
     <div class="info-box">
       <p><strong>Du har ikke blitt belastet.</strong></p>
-      <p>Betalingsautorisasjonen har blitt kansellert, og ingen penger er trukket fra kontoen din.</p>
+      <p>Ingen penger er trukket fra kontoen din.</p>
     </div>
 
     <p>Hvis du fortsatt ønsker å delta, kan du prøve igjen.</p>
@@ -152,11 +164,11 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
     text: `
 Hei,
 
-Vi beklager, men din påmelding til ${courseName} kunne ikke gjennomføres.
+Vi beklager, men din påmelding til ${courseName} kunne ikke fullføres.
 
 ${reason}
 
-Du har ikke blitt belastet. Betalingsautorisasjonen har blitt kansellert, og ingen penger er trukket fra kontoen din.
+Du har ikke blitt belastet. Ingen penger er trukket fra kontoen din.
 
 Hvis du fortsatt ønsker å delta, kan du prøve igjen.
 
@@ -172,7 +184,7 @@ function getSignupConfirmationTemplate(data: Record<string, string>): { subject:
   const courseTime = escapeHtml(data.courseTime)
   const location = escapeHtml(data.location)
   const organizationName = escapeHtml(data.organizationName)
-  const courseUrl = data.courseUrl ? encodeURI(data.courseUrl) : ''
+  const courseUrl = safeUrl(data.courseUrl || '')
 
   return {
     subject: `Bekreftelse: Du er påmeldt ${courseName}`,

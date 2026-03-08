@@ -114,6 +114,38 @@ export function extractDayName(schedule: string | null | undefined): string | nu
 }
 
 /**
+ * Format a session date as abbreviated day + date + month
+ * e.g., "2024-10-14" → "Man 14. Okt"
+ * Uses timezone-safe date parsing.
+ */
+export function formatSessionDate(dateStr: string): string {
+  if (!dateStr) return ''
+  // Parse as local date to avoid UTC drift
+  const parts = dateStr.split('-')
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  if (isNaN(date.getTime())) return ''
+
+  const dayNames = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør']
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des']
+
+  const dayName = dayNames[date.getDay()]
+  const day = date.getDate()
+  const month = monthNames[date.getMonth()]
+
+  return `${dayName} ${day}. ${month}`
+}
+
+/**
+ * Format a time range from start and end times
+ * e.g., ("17:30", "18:45") → "17:30 - 18:45"
+ */
+export function formatTimeRange(startTime: string, endTime: string): string {
+  if (!startTime) return ''
+  if (!endTime) return startTime
+  return `${startTime}–${endTime}`
+}
+
+/**
  * Format course start time with scalable time-based display logic.
  *
  * For upcoming courses:

@@ -104,12 +104,12 @@ export const CourseSettingsTab = ({
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
       <div className="lg:col-span-2 bg-white rounded-2xl border border-zinc-200 p-6 h-full flex flex-col">
         <div className="mb-6">
-          <h3 className="text-base font-medium text-text-primary">Generelt</h3>
+          <h3 className="text-sm font-medium text-text-primary">Generelt</h3>
         </div>
 
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Navn på kurs</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
             <Input
               type="text"
               value={settingsTitle}
@@ -118,7 +118,7 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Beskrivelse</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
             <Textarea
               rows={6}
               value={settingsDescription}
@@ -131,7 +131,7 @@ export const CourseSettingsTab = ({
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
       <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col h-full">
         <div className="mb-6">
-          <h3 className="text-base font-medium text-text-primary">Kursbilde</h3>
+          <h3 className="text-sm font-medium text-text-primary">Kursbilde</h3>
         </div>
         <div className="flex-1 min-h-[200px] flex flex-col">
           <div className="flex-1 relative rounded-lg overflow-hidden bg-input-bg">
@@ -158,11 +158,11 @@ export const CourseSettingsTab = ({
       {/* Tile 3: Schedule - Span 1 */}
       <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-base font-medium text-text-primary">Tidspunkt</h3>
+          <h3 className="text-sm font-medium text-text-primary">Tidspunkt</h3>
         </div>
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Dato</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Dato</label>
             <DatePicker
               value={settingsDate}
               onChange={onDateChange}
@@ -170,14 +170,14 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Tidspunkt</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Tidspunkt</label>
             <TimePicker
               value={settingsTime}
               onChange={(time) => onTimeChange(time)}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Varighet</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Varighet</label>
             <Select
               value={settingsDuration?.toString() || ""}
               onValueChange={(val) => onDurationChange(parseInt(val))}
@@ -200,7 +200,7 @@ export const CourseSettingsTab = ({
       {/* Tile 4: Capacity - Span 1 */}
       <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-base font-medium text-text-primary">Kapasitet</h3>
+          <h3 className="text-sm font-medium text-text-primary">Kapasitet</h3>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
@@ -238,13 +238,13 @@ export const CourseSettingsTab = ({
       {/* Tile 5: Practical Info - Span 3 */}
       <div className="lg:col-span-3 bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-base font-medium text-text-primary">Praktisk info</h3>
+          <h3 className="text-sm font-medium text-text-primary">Praktisk info</h3>
           <p className="text-xs text-text-secondary mt-1">Hjelp elevene dine med å komme forberedt</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           {/* Audience Level - Segmented pills (single-select) */}
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-2.5">Nivå</label>
+            <label className="block text-xs font-medium text-text-primary mb-2.5">Nivå</label>
             <div className="flex flex-wrap gap-2">
               {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
                 <button
@@ -262,14 +262,14 @@ export const CourseSettingsTab = ({
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-text-tertiary mt-1.5">
+            <p className="text-[11px] text-text-secondary mt-1.5">
               Velg det laveste nivået som passer.
             </p>
           </div>
 
           {/* Equipment - Radio buttons (single factual statement) */}
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-2.5">Utstyr</label>
+            <label className="block text-xs font-medium text-text-primary mb-2.5">Utstyr</label>
             <RadioGroup
               value={settingsEquipment}
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
@@ -285,7 +285,7 @@ export const CourseSettingsTab = ({
 
           {/* Arrival - Dropdown select */}
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Oppmøte før start</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
@@ -305,7 +305,7 @@ export const CourseSettingsTab = ({
 
           {/* Custom Bullets */}
           <div>
-            <label className="block text-xs font-medium text-text-tertiary mb-1.5">Egne punkter</label>
+            <label className="block text-xs font-medium text-text-primary mb-1.5">Egne punkter</label>
             <div className="space-y-2">
               {settingsCustomBullets.map((bullet, i) => (
                 <div key={i} className="flex items-center gap-2">

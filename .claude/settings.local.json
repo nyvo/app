@@ -57,9 +57,36 @@
       "Bash(Select-String \"status-confirmed-text\")",
       "Bash(npx @tailwindcss/cli:*)",
       "Bash(npx vite:*)",
-      "Bash(del \"c:\\\\Users\\\\krist\\\\Documents\\\\app\\\\src\\\\pages\\\\teacher\\\\NewCoursePage.tsx\")"
+      "Bash(del \"c:\\\\Users\\\\krist\\\\Documents\\\\app\\\\src\\\\pages\\\\teacher\\\\NewCoursePage.tsx\")",
+      "WebFetch(domain:whereby.com)",
+      "WebFetch(domain:fiken.no)",
+      "WebFetch(domain:www.tripletex.no)",
+      "WebFetch(domain:www.superside.com)",
+      "WebFetch(domain:www.ardoq.com)",
+      "WebFetch(domain:www.cognite.com)",
+      "WebFetch(domain:oda.com)",
+      "WebFetch(domain:spond.com)",
+      "WebFetch(domain:dune.com)",
+      "WebFetch(domain:www.hologram.no)",
+      "WebFetch(domain:www.spond.com)",
+      "WebFetch(domain:hologram.no)",
+      "Bash(python -m pip --version)",
+      "Bash(python -m pip install uv)",
+      "Bash(python -m uv sync)",
+      "Bash(python -m uv run python -c \"import browser_use; print\\(''browser-use imported OK''\\)\")",
+      "Bash(python -m uv tool run browser-use install)",
+      "Bash(python -m uv run playwright install chromium)",
+      "Bash(python -m uv run python -m playwright install chromium)",
+      "Bash(python -m uv add playwright)",
+      "Bash(python -m uv run python -c \"from browser_use import Agent, BrowserSession, ChatGoogle; print\\(''All imports OK''\\)\")",
+      "Bash(python -m uv run python -c \"from config import GEMINI_API_KEY; print\\(f''Key length: {len\\(GEMINI_API_KEY\\) if GEMINI_API_KEY else 0}''\\); print\\(f''Key starts with: {GEMINI_API_KEY[:10] if GEMINI_API_KEY else \"\"EMPTY\"\"}...''\\)\")",
+      "Bash(python -m uv run python -c \"from config import GEMINI_API_KEY; print\\(f''Key length: {len\\(GEMINI_API_KEY\\) if GEMINI_API_KEY else 0}''\\); print\\(f''Starts with: {GEMINI_API_KEY[:8]}...'' if GEMINI_API_KEY else ''EMPTY''\\)\")",
+      "Bash(python -m uv run python -c \":*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx playwright test --list)"
     ],
     "deny": [],
     "ask": []
   }
 }
+

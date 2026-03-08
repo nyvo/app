@@ -30,6 +30,258 @@
 
 ---
 
+## Surface Hierarchy
+
+### Principle
+
+Every surface in the UI has a semantic role. Surfaces form a three-tier hierarchy from recessive to emphatic. This hierarchy replaces ad-hoc background color choices with intentional, enforceable tokens.
+
+Dark surfaces are **semantic emphasis** — they signal importance within the light UI. They are not a theme, mode, or decorative choice. A dark card says "this matters right now."
+
+```
+┌─────────────────────────────────────────────────────┐
+│  bg-canvas  (Zinc-100 #F4F4F5)                      │
+│  The floor. Recedes. Everything sits on top of this. │
+│                                                      │
+│  ┌─────────────────────────────────────────────┐     │
+│  │  bg-surface  (White #FFFFFF)                 │     │
+│  │  Default content. Cards, panels, lists.      │     │
+│  │  Pops against canvas via border contrast.    │     │
+│  └─────────────────────────────────────────────┘     │
+│                                                      │
+│  ┌─────────────────────────────────────────────┐     │
+│  │  bg-surface-emphasis  (Zinc-900 #09090B)     │     │
+│  │  High-emphasis. Demands attention.            │     │
+│  │  Inverted text. Used sparingly.               │     │
+│  └─────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────┘
+
+Depth (recessive → emphatic):
+  canvas ──→ surface ──→ surface-emphasis
+  (floor)    (content)    (attention)
+```
+
+### Token Definitions
+
+#### `bg-canvas` — Application Background
+
+| Property | Value |
+|----------|-------|
+| **Color** | `#F4F4F5` (Zinc-100) |
+| **CSS variable** | `--color-surface` (existing) |
+| **Purpose** | The neutral "floor" that all content sits on. It recedes so that surfaces pop. |
+
+**When to use:**
+- Page-level background behind all cards and content
+- Full-bleed areas outside the content well
+- Behind scrollable content regions
+
+**When NOT to use:**
+- Never as a card or container background (too low-contrast against itself)
+- Never for interactive elements or form fields
+
+**Text tokens on canvas:**
+- Allowed: `text-text-primary`, `text-text-secondary`, `text-muted-foreground`
+- Avoid: `text-text-tertiary` (insufficient contrast against Zinc-100)
+
+---
+
+#### `bg-surface` — Default Content Surface
+
+| Property | Value |
+|----------|-------|
+| **Color** | `#FFFFFF` (White) |
+| **CSS variable** | `--color-card` (existing) |
+| **Border** | `border-zinc-200` required for definition |
+| **Radius** | `rounded-2xl` (16px) |
+| **Purpose** | The standard container for content. White cards "pop" against the canvas floor. This is the workhorse surface for all data display, forms, and navigation. |
+
+**When to use:**
+- Dashboard cards, stats panels, list containers
+- Form containers, settings panels
+- Sidebar navigation
+- Table containers
+- Modal and dialog content areas
+- Empty states
+
+**When NOT to use:**
+- Never stack `bg-surface` on `bg-surface` (white on white has no definition)
+- Never use without a border — an unbounded white surface has no hierarchy
+
+**Text tokens on surface:**
+- Allowed: `text-text-primary`, `text-text-secondary`, `text-text-tertiary`, `text-muted-foreground`
+- All standard text tokens have sufficient contrast on white
+
+---
+
+#### `bg-surface-emphasis` — High-Emphasis Surface
+
+| Property | Value |
+|----------|-------|
+| **Color** | `#09090B` (Zinc-900), optionally with gradient `from-zinc-800 to-zinc-900` |
+| **CSS variable** | Uses `bg-zinc-900` or gradient directly |
+| **Border** | `border-zinc-800` for subtle edge definition |
+| **Radius** | `rounded-2xl` (16px), matching standard cards |
+| **Purpose** | A dark surface that demands attention within the light UI. Used sparingly to create a clear focal point — the one thing the user should notice first. |
+
+**When to use:**
+- **Onboarding/setup cards** — "Kom i gang" checklist, first-run guidance
+- **Hero cards** — the single most important card on a dashboard (e.g., next upcoming class)
+- **Grouped call-to-action blocks** — a block of related actions that need to stand out as a unit
+- **Critical attention moments** — time-sensitive or high-priority information that requires immediate notice
+
+**When NOT to use:**
+- Never for standard data display (tables, lists, stats)
+- Never for more than one card per viewport — emphasis is lost when repeated
+- Never as a section background or page-level region
+- Never for decorative purposes — dark is semantic, not aesthetic
+- Never for form containers or settings panels
+- Never for navigation surfaces (sidebar, tabs)
+
+**Inner-element color map on emphasis:**
+
+When a container uses `bg-surface-emphasis`, every nested element must use the inverted palette below. Standard light-mode tokens (`text-text-primary`, `border-zinc-200`, `bg-white`) are invalid inside emphasis surfaces unless explicitly listed.
+
+| Element | Token | Zinc equivalent | Notes |
+|---------|-------|----------------|-------|
+| **Primary text** | `text-white` | — | Headings, titles, key values |
+| **Secondary text** | `text-zinc-400` | #A1A1AA | Descriptions, metadata, timestamps |
+| **Muted/struck text** | `text-zinc-500` | #71717A | Finished checklist items (pair with `line-through`) |
+| **Icons (structural)** | `text-zinc-500` | #71717A | Lucide icons beside text. Alternatively `opacity-70` on the icon element |
+| **Icons (semantic)** | `text-success`, `text-destructive` | — | Status icons keep their semantic color unchanged |
+| **Sub-cards / list items** | `bg-zinc-700/20 border border-zinc-700 rounded-xl` | — | Lighter wash on dark surface. The `/20` creates visible lift against zinc-900 |
+| **Badges / pills** | `bg-zinc-700/20 border border-zinc-700` with `text-white` | — | Status pills inside hero cards. Same wash as sub-cards |
+| **Dot indicators** | Original semantic color (e.g., `bg-success`) | — | Small dots keep their color for meaning |
+| **Buttons (primary action)** | `bg-white text-zinc-900 border-zinc-300` | — | Inverted — white button on dark surface |
+| **Buttons (hover)** | `hover:bg-zinc-100` | #F4F4F5 | Subtle darken on the white button |
+| **Dividers** | `border-zinc-700` | #3F3F46 | Not `border-zinc-200` — must be visible but subtle on dark |
+| **Focus rings** | `ring-zinc-400 ring-offset-zinc-900` | — | Ring offset must match the dark surface, not white |
+
+> **Sub-card rule:** Use `bg-zinc-700/20` for inset containers — the low-opacity lighter zinc creates a visible lift against the zinc-900 parent while letting the gradient bleed through. Avoid `bg-zinc-800` (too close in value, sub-cards disappear) and fully opaque backgrounds (hard seams against gradients).
+
+**Hover on emphasis surfaces:**
+- Container-level: `hover:bg-zinc-800/50` (background shift only)
+- Sub-card items: no hover, or `hover:bg-zinc-700/50` for interactive rows
+- Never use `hover:bg-zinc-50` or other light hovers on dark surfaces
+
+> **One-per-viewport rule:** If a dashboard has a `bg-surface-emphasis` hero card, no other card in the visible viewport should also use emphasis. The power of emphasis comes from scarcity.
+
+### Correct Usage Examples
+
+#### 1. Setup Checklist (Onboarding)
+```tsx
+// bg-surface-emphasis — first-run guidance demands attention
+<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7">
+  <h2 className="text-xl font-medium text-white">Kom i gang</h2>
+  <p className="text-sm text-zinc-400">Fullfør disse stegene for å publisere.</p>
+
+  {/* Sub-card: bg-zinc-700/20 + border-zinc-700 */}
+  <div className="rounded-xl bg-zinc-700/20 border border-zinc-700 px-4 py-3 flex items-center gap-4">
+    <StepIcon className="h-5 w-5 text-zinc-500" />          {/* structural icon */}
+    <span className="text-sm font-medium text-white">Opprett et kurs</span>
+    <Button variant="outline-soft" size="xs"
+      className="bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100">
+      Start
+    </Button>
+  </div>
+</div>
+```
+> Correct: Onboarding is a temporary, high-priority state. Emphasis signals "do this first." Inner elements use zinc tokens, not white-opacity values.
+
+#### 2. Upcoming Class Hero Card (Dashboard)
+```tsx
+// bg-surface-emphasis — the single most important item on the dashboard
+<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7 smooth-transition hover:bg-zinc-800/50 cursor-pointer">
+  <p className="text-xs text-zinc-400">Neste time</p>
+  <h2 className="text-2xl font-medium text-white">Morgenyoga</h2>
+  <p className="text-sm text-zinc-400">I dag kl. 08:00 · 12 påmeldte</p>
+</div>
+```
+> Correct: One hero card per dashboard. Navigates to the class detail.
+
+#### 3. Stats Card (Standard Data)
+```tsx
+// bg-surface — stats are standard content, not emphasis
+<div className="rounded-2xl bg-white border border-zinc-200 p-6">
+  <p className="text-xs font-medium text-text-tertiary">Aktive studenter</p>
+  <p className="text-2xl font-medium text-text-primary">47</p>
+</div>
+```
+> Correct: Stats recede. They are reference data, not calls to action.
+
+#### 4. Modal Content
+```tsx
+// bg-surface — modals are standard content containers
+<DialogContent className="rounded-2xl bg-white border border-zinc-200">
+  <DialogHeader>
+    <DialogTitle className="text-text-primary">Legg til deltaker</DialogTitle>
+  </DialogHeader>
+  {/* form fields */}
+</DialogContent>
+```
+> Correct: Modals use `bg-surface`. The overlay provides sufficient emphasis; the modal itself stays neutral.
+
+#### 5. Selected Radio Card (Interactive State)
+```tsx
+// bg-surface-emphasis applied to a small interactive element, not a card
+<div className={cn(
+  "rounded-xl border p-4",
+  selected ? "bg-zinc-900 border-zinc-900 text-white" : "bg-white border-zinc-200"
+)}>
+  <span className={selected ? "text-white" : "text-text-primary"}>Kursrekke</span>
+</div>
+```
+> Correct: Dark as a selection indicator on a form control is a valid use of emphasis at the element level.
+
+### Misuse Examples
+
+#### 1. Dark Table Container
+```tsx
+// WRONG — tables are standard data display, never emphasis
+<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-6">
+  <table>
+    <thead><tr><th className="text-zinc-400">Navn</th></tr></thead>
+    <tbody>{/* rows */}</tbody>
+  </table>
+</div>
+```
+> Why it's wrong: Tables are reference content. Dark surfaces impair scanability and create false urgency. Use `bg-surface` (white) for all tabular data.
+
+#### 2. Multiple Dark Cards in One Viewport
+```tsx
+// WRONG — two emphasis cards compete for attention
+<div className="grid grid-cols-2 gap-6">
+  <div className="rounded-2xl bg-zinc-900 text-white p-7">Hero Card A</div>
+  <div className="rounded-2xl bg-zinc-900 text-white p-7">Hero Card B</div>
+</div>
+```
+> Why it's wrong: Emphasis is lost when repeated. If everything is important, nothing is. Use emphasis for one card; make the other `bg-surface`.
+
+#### 3. Dark Settings Panel
+```tsx
+// WRONG — settings are routine content, not attention-demanding
+<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7">
+  <h2 className="text-white">Kursinnstillinger</h2>
+  <Input className="bg-zinc-800 border-zinc-700" />
+</div>
+```
+> Why it's wrong: Dark surfaces invert the entire form contract (input borders, focus rings, label colors). Settings are calm, persistent UI — they should recede, not demand attention.
+
+### Relationship to Existing Tokens
+
+The surface hierarchy aligns with existing tokens as follows:
+
+| Surface | Existing Token | Role |
+|---------|---------------|------|
+| `bg-canvas` | `bg-surface` (Zinc-100) | Page floor — **note: the existing `bg-surface` CSS var maps to canvas** |
+| `bg-surface` | `bg-white` / `--color-card` | Content containers |
+| `bg-surface-emphasis` | `bg-zinc-900` | Attention surfaces |
+| `bg-surface-elevated` | `bg-surface-elevated` (Zinc-200) | Secondary surfaces, inputs (unchanged) |
+
+> **Migration note:** The existing `--color-surface` CSS variable (`#F4F4F5`) maps to what this framework calls `bg-canvas`. The naming divergence is historical. When referencing surfaces in code, use the class names (`bg-white`, `bg-zinc-900`) directly. The semantic framework above is for decision-making, not a CSS rename.
+
+---
+
 ## Quick Reference: Design Tokens
 
 ### Zinc Scale (Neutral UI)
@@ -90,7 +342,7 @@ All status colors reference Tailwind's built-in palette via CSS custom propertie
 | **Success** (green) | `green-100/200/700` | `status-confirmed-*` | Confirmed enrollments, completed actions, positive states ("Påmeldt", "Fullført", "Betalt") |
 | **Warning** (amber) | `amber-100/300/800` | `status-warning-*` | Pending actions, awaiting attention ("Venter betaling", "Kommende") |
 | **Error** (red) | `red-100/200/600` | `status-error-*` | Failed actions, destructive states ("Betaling feilet", "Avlyst") |
-| **Info** (blue) | `blue-100/200/700` | `status-info-*` | Tips, informational callouts, neutral guidance ("Tips for synlighet", help text) |
+| **Info** (blue) | `blue-100/200/900` | `status-info-*` | Tips, informational callouts, neutral guidance ("Tips for synlighet", help text) |
 | **Neutral** (zinc) | `zinc-200/300/600` | `status-cancelled-*` | Inactive/past states, de-emphasized items ("Avbestilt", "Kurs avlyst", "Refundert") |
 
 #### Usage Rules
@@ -98,6 +350,7 @@ All status colors reference Tailwind's built-in palette via CSS custom propertie
 2. **Callout cards**: Apply tokens directly — `bg-status-info-bg border border-status-info-border` with `text-status-info-text` for icon/title and `text-status-info-text/70` for body text.
 3. **Danger zones**: Use `status-error-*` tokens for cancel/delete sections.
 4. **Never rely on color alone**: Always pair with a text label or icon for accessibility.
+5. **Text/icon darkness**: The `*-text` token for each colorway should use the darkest available shade (e.g., `blue-900` for info, `amber-800` for warning) so that icon and text read as near-black on the tinted background. Avoid mid-range shades like `blue-700` — they look too saturated and pull attention away from the content.
 
 ### Feedback Colors
 
@@ -218,7 +471,7 @@ className="relative inline-flex items-center gap-2 rounded-xl bg-gradient-to-b f
 
 #### Outline Button
 ```tsx
-className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 hover:border-zinc-300 transition-all duration-200"
+className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 transition-all duration-200"
 ```
 
 #### Ghost Button
@@ -237,7 +490,7 @@ The `<Button>` component supports these variants and sizes:
 
 **Variants:**
 - `default` - Dark gradient (zinc-800→zinc-950), border-zinc-700/70, ring-1 ring-black/5 outer edge, after: ring-white/10 inner glow, hover lightens gradient + border
-- `outline` - White with zinc-200 border, hover → zinc-50 bg + zinc-300 border
+- `outline` - White with zinc-200 border, hover → zinc-50 bg
 - `outline-soft` - White with zinc-200 border, text-secondary → text-primary on hover
 - `secondary` - Surface-elevated bg with border
 - `ghost` - No background or border, hover reveals bg
@@ -860,7 +1113,163 @@ Confirmed: #DCFCE7 bg, #BBF7D0 border, #15803D text
 Warning: #FEF3C7 bg, #FCD34D border, #92400E text
 Cancelled: #E4E4E7 bg, #D4D4D8 border, #52525B text
 Error: #FEE2E2 bg, #FECACA border, #DC2626 text
-Info: #DBEAFE bg, #BFDBFE border, #1D4ED8 text
+Info: #DBEAFE bg, #BFDBFE border, #1E3A5F text
 
 Shadows (V2.4 - Disabled):
 none
+
+Public Theme (Sand + Sage):
+#F9F8F6 → bg-public-sand (PUBLIC PAGE FLOOR)
+#F3F1ED → bg-public-sand-deep (elevated surfaces)
+#6B7F6E → bg-public-sage (sage accent buttons)
+#5A6E5D → bg-public-sage-hover (sage hover)
+#E8EDE9 → bg-public-sage-light (soft sage bg)
+#FFFFFF → text-public-sage-foreground (button text)
+```
+
+---
+
+## Public Theme (Student / Public Pages)
+
+### Activation
+
+Wrap page content in `.theme-public` class. This overrides semantic tokens so that `bg-surface` resolves to warm sand instead of cool zinc. Teacher dashboard pages are unaffected.
+
+```tsx
+<div className="theme-public min-h-screen bg-public-sand">
+  {/* page content */}
+</div>
+```
+
+### Scope
+
+- **Applies to:** Landing page, PublicCoursesPage, PublicCourseDetailPage, Student Dashboard, Student Profile, Student auth pages (login, register, forgot/reset password, confirm email)
+- **Does NOT apply to:** Teacher dashboard, teacher auth pages, admin pages
+
+### Color Tokens
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `public-sand` | `#F9F8F6` | Page floor (warm sand) |
+| `public-sand-deep` | `#F3F1ED` | Elevated surfaces, empty state icon backgrounds |
+| `public-sage` | `#6B7F6E` | Primary accent — buttons, brand moments |
+| `public-sage-hover` | `#5A6E5D` | Button hover state |
+| `public-sage-light` | `#E8EDE9` | Soft sage background |
+| `public-sage-foreground` | `#FFFFFF` | Text on sage buttons |
+| `public-border` | `rgba(228,228,231,0.6)` | Softer card borders |
+| `public-border-hover` | `rgba(161,161,170,0.5)` | Border hover state |
+
+### Token Overrides (via `.theme-public`)
+
+When `.theme-public` is active, these semantic tokens are remapped:
+
+| Semantic Token | Default (Dashboard) | Public Override |
+|---------------|---------------------|-----------------|
+| `--color-background` | `#F4F4F5` (Zinc-100) | `#F9F8F6` (Sand) |
+| `--color-surface` | `#F4F4F5` (Zinc-100) | `#F9F8F6` (Sand) |
+| `--color-surface-elevated` | `#E4E4E7` (Zinc-200) | `#F3F1ED` (Sand Deep) |
+
+### Typography
+
+**Serif font:** DM Serif Display (loaded via Google Fonts CDN).
+
+**Rule:** DM Serif Display is used **only** on `h1` and `h2` display headings. All body text, subtitles, descriptions, labels, and smaller headings (`h3`–`h6`) remain Geist Sans.
+
+| Utility | Effect | Usage |
+|---------|--------|-------|
+| `.display-heading` | DM Serif Display + `letter-spacing: -0.02em` + `text-wrap: balance` | h1 and h2 on public/student pages |
+| `.font-serif` | DM Serif Display only (no tracking/balance) | Decorative use (e.g., fallback initials) |
+
+```tsx
+// h1 — serif
+<h1 className="display-heading text-4xl font-medium text-text-primary">
+  Booking og betaling for yogastudioer.
+</h1>
+
+// h2 — serif
+<h2 className="display-heading text-2xl font-medium text-text-primary">
+  Kursrekker
+</h2>
+
+// h3 — stays sans-serif
+<h3 className="text-lg font-medium text-text-primary">
+  Step Title
+</h3>
+
+// body — stays sans-serif
+<p className="text-sm text-text-secondary">Description text.</p>
+```
+
+### Surfaces
+
+| Element | Dashboard | Public |
+|---------|-----------|--------|
+| Page floor | `bg-surface` (`#F4F4F5`) | `bg-public-sand` (`#F9F8F6`) |
+| Card radius | `rounded-2xl` (16px) | `rounded-3xl` (24px) |
+| Card border | `border-zinc-200` | `border-zinc-200/60` |
+| Page max-width | `max-w-5xl` | `max-w-6xl` |
+
+### Navigation
+
+Public/student pages use a centered navigation bar (not sidebar):
+- `bg-white/80 backdrop-blur-md` for glass effect
+- `border-b border-zinc-200/60` softer border
+- `max-w-6xl mx-auto` width constraint
+
+### Button Variants
+
+**Primary:** `variant="public"` — sage green pill button for public-facing CTAs.
+
+```tsx
+<Button variant="public" size="sm">Meld deg på</Button>
+```
+
+- Background: `bg-public-sage` → hover `bg-public-sage-hover`
+- Text: `text-public-sage-foreground` (white)
+- Shape: `rounded-full` (pill)
+- Border: `border-public-sage/80`
+
+**Secondary:** `variant="public-outline"` — outlined sage pill for secondary actions.
+
+```tsx
+<Button variant="public-outline" size="sm">Se detaljer</Button>
+```
+
+- Background: `bg-white` → hover `bg-public-sage-light`
+- Text: `text-public-sage` (sage green)
+- Shape: `rounded-full` (pill)
+- Border: `border-public-sage/30` → hover `border-public-sage/50`
+
+### PublicCourseCard Component
+
+Vertical card for course browsing with large image area:
+
+```tsx
+import { PublicCourseCard } from '@/components/public/PublicCourseCard';
+
+<PublicCourseCard
+  course={course}
+  studioSlug={slug}
+  isSignedUp={false}
+/>
+```
+
+- `rounded-3xl` with `border-zinc-200/60`
+- `aspect-[4/3]` image area (serif initial fallback when no image)
+- `p-8` content padding
+- Uses `variant="public"` button for CTA
+
+### EmptyState Variant
+
+The `<EmptyState>` component supports `variant="public"`:
+
+```tsx
+<EmptyState
+  variant="public"
+  icon={CalendarX}
+  title="Ingen kommende kurs"
+  description="Ingen kurs å vise."
+/>
+```
+
+When `variant="public"`: serif title via `.display-heading`, icon background uses `bg-public-sand-deep`.

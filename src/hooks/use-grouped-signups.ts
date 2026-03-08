@@ -21,6 +21,8 @@ export interface SignupDisplay {
   organizationId?: string;
   // Computed exception type
   exceptionType?: ExceptionType | null;
+  // Course lifecycle: whether the course has ended (end_date passed or status completed/cancelled)
+  courseEnded?: boolean;
 }
 
 export type ExceptionType = 'payment_failed' | 'pending_payment';
@@ -126,6 +128,12 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
 
     const firstSignup = groupSignups[0];
 
+    // Count confirmed signups that have exceptions separately —
+    // they are still confirmed, just with payment issues
+    const confirmedExceptions = exceptions.filter(
+      e => e.status === 'confirmed'
+    ).length;
+
     groups.push({
       key,
       courseId: firstSignup.courseId,
@@ -134,7 +142,7 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
       classTime: firstSignup.classTime,
       signups: { exceptions, confirmed, cancelled },
       counts: {
-        confirmed: confirmed.length,
+        confirmed: confirmed.length + confirmedExceptions,
         cancelled: cancelled.length,
         exceptions: exceptions.length,
       },
@@ -175,23 +183,20 @@ function filterByTime(signups: SignupDisplay[], filter: TimeFilter | null): Sign
 }
 
 function filterByMode(signups: SignupDisplay[], mode: ModeFilter): SignupDisplay[] {
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
   switch (mode) {
     case 'active':
-      // Active = upcoming/current sessions, exclude cancelled
+      // Active = course not ended, signup not cancelled
       return signups.filter(s =>
-        s.classDateTime >= todayStart &&
+        !s.courseEnded &&
         s.status !== 'cancelled' &&
         s.status !== 'course_cancelled'
       );
     case 'ended':
-      // Ended = cancelled or past sessions
+      // Ended = course has ended, or signup cancelled
       return signups.filter(s =>
+        s.courseEnded ||
         s.status === 'cancelled' ||
-        s.status === 'course_cancelled' ||
-        s.classDateTime < todayStart
+        s.status === 'course_cancelled'
       );
     case 'needs_attention':
       // Items needing attention (exceptions)
@@ -288,25 +293,15 @@ export function useGroupedSignups(
     };
   }, [groups, totalExceptions]);
 
-  // Check if any filters are applied beyond mode-specific defaults
-  // Defaults per mode:
-  //   - active: timeFilter = 'upcoming'
-  //   - needs_attention: timeFilter = null (Alle)
-  //   - ended: timeFilter = null (hidden, not applicable)
+  // Check if any filters are applied beyond defaults (all default to null/all)
   const hasActiveFilters = useMemo(() => {
-    // Determine the default time filter for current mode
-    const isTimeFilterDefault =
-      (modeFilter === 'active' && timeFilter === 'upcoming') ||
-      (modeFilter === 'needs_attention' && timeFilter === null) ||
-      (modeFilter === 'ended' && timeFilter === null);
-
     return (
-      !isTimeFilterDefault ||
+      timeFilter !== null ||
       statusFilter !== 'all' ||
       paymentFilter !== 'all' ||
       searchQuery.trim() !== ''
     );
-  }, [modeFilter, timeFilter, statusFilter, paymentFilter, searchQuery]);
+  }, [timeFilter, statusFilter, paymentFilter, searchQuery]);
 
   return { groups, filteredSignups, stats, hasActiveFilters };
 }
@@ -327,7 +322,7 @@ export const EXCEPTION_CONFIG: Record<ExceptionType, {
   pending_payment: {
     label: 'Venter betaling',
     bgColor: 'bg-zinc-100/50',
-    textColor: 'text-zinc-600',
+    textColor: 'text-text-secondary',
     borderColor: 'border-zinc-300',
   },
 };

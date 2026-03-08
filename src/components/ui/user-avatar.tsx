@@ -99,7 +99,7 @@ export function UserAvatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-full bg-zinc-200 text-zinc-500 shrink-0',
+        'flex items-center justify-center rounded-full bg-surface-elevated text-muted-foreground shrink-0',
         config.container,
         ringClassName,
         className,

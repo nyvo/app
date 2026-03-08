@@ -50,7 +50,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         <h3 className="font-geist text-sm font-medium text-text-primary">Siste påmeldinger</h3>
         <Link
           to="/teacher/signups"
-          className="text-xs font-medium text-text-tertiary hover:text-text-primary smooth-transition"
+          className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
         >
           Se alle
         </Link>

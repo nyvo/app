@@ -33,7 +33,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: Error | null }>
+  resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
 
   // Organization methods
   ensureOrganization: (name: string, slug: string) => Promise<{ organization: Organization | null; error: Error | null }>
@@ -273,10 +273,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
-  // Reset password
-  const resetPassword = useCallback(async (email: string) => {
+  // Reset password — redirectTo defaults to teacher reset route.
+  // Student pages pass their own redirectTo for context isolation.
+  const resetPassword = useCallback(async (email: string, redirectTo?: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectTo || `${window.location.origin}/reset-password`,
     })
     return { error: error as Error | null }
   }, [])
@@ -323,7 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }>
 
     if (!rows || rows.length === 0) {
-      return { organization: null, error: new Error('No organization returned') }
+      return { organization: null, error: new Error('Kunne ikke opprette studio. Prøv igjen.') }
     }
 
     const row = rows[0]
@@ -417,7 +418,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isInitialized,
     userType,
-    currentOrganization?.id,
+    currentOrganization,
     organizationsKey,
     userRole,
     signUp,

@@ -37,7 +37,7 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
         <div
           ref={ref}
           className={cn(
-            "flex items-center relative",
+            "flex items-center relative overflow-x-auto no-scrollbar",
             variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-lg"
               : variant === "pill" ? "gap-1.5"
               : "gap-1 border-b border-border",

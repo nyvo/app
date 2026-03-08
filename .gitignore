@@ -23,3 +23,18 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-state/
+
+# Stripe CLI
+stripe-cli/
+stripe-cli.zip
+
+# Supabase CLI temp
+supabase/.temp/
+
+# MCP config (contains tokens)
+.mcp.json

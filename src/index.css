@@ -1,5 +1,6 @@
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/mono/index.css');
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/sans/index.css');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -126,7 +127,7 @@
   /* Status: Info (blue) - for check-ins, info badges */
   --color-status-info-bg: var(--color-blue-50);
   --color-status-info-border: var(--color-blue-200);
-  --color-status-info-text: var(--color-blue-700);
+  --color-status-info-text: var(--color-blue-900);
 
   /* Font Families */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -156,6 +157,26 @@
 
   /* Dark Card Gradient - for stat cards and dark UI elements */
   --gradient-dark-card: linear-gradient(to bottom right, #27272A, #09090B);
+
+  /* ============================================
+     PUBLIC THEME TOKENS
+     Warm sand + sage palette for public/student pages
+     ============================================ */
+
+  /* Public Color Scale */
+  --color-public-sand: #F9F8F6;
+  --color-public-sand-deep: #F3F1ED;
+  --color-public-sage: #6B7F6E;
+  --color-public-sage-hover: #5A6E5D;
+  --color-public-sage-light: #E8EDE9;
+  --color-public-sage-foreground: #FFFFFF;
+
+  /* Public Borders - warmer, softer */
+  --color-public-border: rgba(228, 228, 231, 0.6);
+  --color-public-border-hover: rgba(161, 161, 170, 0.5);
+
+  /* Serif Font */
+  --font-family-serif: 'DM Serif Display', 'Georgia', serif;
 }
 
 @layer base {
@@ -292,6 +313,30 @@
 
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  /* ============================================
+     PUBLIC THEME OVERRIDES
+     Applied via .theme-public wrapper class
+     ============================================ */
+
+  /* Public context — overrides semantic tokens when active */
+  .theme-public {
+    --color-background: var(--color-public-sand);
+    --color-surface: var(--color-public-sand);
+    --color-surface-elevated: var(--color-public-sand-deep);
+  }
+
+  /* Serif heading utility */
+  .font-serif {
+    font-family: var(--font-family-serif);
+  }
+
+  /* Display heading — serif for h1/h2 only, not body or subtitles */
+  .display-heading {
+    font-family: var(--font-family-serif);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
   /* Touch-friendly minimum tap targets */

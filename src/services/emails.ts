@@ -24,7 +24,7 @@ export async function sendEmail(
   }
 ): Promise<SendEmailResult> {
   if (!isValidEmail(to)) {
-    return { success: false, error: `Invalid email address: ${to}` }
+    return { success: false, error: `Ugyldig e-postadresse: ${to}` }
   }
 
   try {
@@ -46,7 +46,7 @@ export async function sendEmail(
     return { success: true, messageId: data?.messageId }
   } catch (err) {
     logger.error('Email send exception:', err)
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+    return { success: false, error: err instanceof Error ? err.message : 'Ukjent feil' }
   }
 }
 
@@ -60,7 +60,7 @@ export async function sendNewMessageNotification(
   replyTo?: string
 ): Promise<SendEmailResult> {
   if (!isValidEmail(recipientEmail)) {
-    return { success: false, error: `Invalid email address: ${recipientEmail}` }
+    return { success: false, error: `Ugyldig e-postadresse: ${recipientEmail}` }
   }
 
   try {
@@ -86,7 +86,7 @@ export async function sendNewMessageNotification(
     return { success: true, messageId: data?.messageId }
   } catch (err) {
     logger.error('New message notification exception:', err)
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+    return { success: false, error: err instanceof Error ? err.message : 'Ukjent feil' }
   }
 }
 
@@ -103,7 +103,7 @@ export async function sendSignupConfirmation(
   }
 ): Promise<SendEmailResult> {
   if (!isValidEmail(recipientEmail)) {
-    return { success: false, error: `Invalid email address: ${recipientEmail}` }
+    return { success: false, error: `Ugyldig e-postadresse: ${recipientEmail}` }
   }
 
   try {
@@ -130,6 +130,6 @@ export async function sendSignupConfirmation(
     return { success: true, messageId: data?.messageId }
   } catch (err) {
     logger.error('Signup confirmation exception:', err)
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+    return { success: false, error: err instanceof Error ? err.message : 'Ukjent feil' }
   }
 }

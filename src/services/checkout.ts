@@ -30,7 +30,7 @@ export async function createCheckoutSession(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Failed to create checkout session') }
+      return { data: null, error: new Error(error.message || 'Kunne ikke opprette betalingsøkt') }
     }
 
     if (data?.error) {
@@ -39,6 +39,6 @@ export async function createCheckoutSession(
 
     return { data: data as CheckoutResult, error: null }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') }
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
   }
 }

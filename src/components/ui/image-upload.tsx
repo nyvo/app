@@ -139,7 +139,7 @@ export function ImageUpload({
       {displayUrl ? (
         // Image preview state
         <div className="relative group h-full">
-          <div className="relative h-full rounded-xl overflow-hidden border border-border bg-surface-elevated">
+          <div className="relative h-full rounded-2xl overflow-hidden border border-border bg-surface-elevated">
             <img src={displayUrl} alt="Kursbilde" className="w-full h-full object-cover" />
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -172,13 +172,13 @@ export function ImageUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
-            relative h-full rounded-xl border border-dashed
+            relative h-full rounded-2xl border
             flex flex-col items-center justify-center gap-3 cursor-pointer
             smooth-transition
             ${
               dragActive
                 ? 'border-ring bg-surface'
-                : 'border-zinc-300 bg-input-bg hover:border-ring hover:bg-zinc-50'
+                : 'border-zinc-300 bg-input-bg hover:border-ring'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-destructive' : ''}
@@ -191,7 +191,7 @@ export function ImageUpload({
             <p className="text-sm font-medium text-text-primary">
               {dragActive ? 'Slipp for å laste opp' : 'Legg til bilde'}
             </p>
-            <p className="text-xs text-text-tertiary mt-1">Dra og slipp eller klikk</p>
+            <p className="text-xs text-text-tertiary mt-1">Dra og slipp, eller velg fil</p>
           </div>
         </div>
       )}

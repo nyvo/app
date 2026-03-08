@@ -1,19 +1,19 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
-  Archive,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseSection, CourseSectionSkeleton } from '@/components/teacher/CourseSection';
-import { CoursePreviewCard } from '@/components/teacher/CoursePreviewCard';
+import { SessionScheduleTable, SessionScheduleTableSkeleton } from '@/components/teacher/SessionScheduleTable';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
@@ -21,155 +21,60 @@ import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
+import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
 import { typedFrom } from '@/lib/supabase';
-import type { DetailedCourse } from '@/types/dashboard';
-
-// Helper to map database course to DetailedCourse format
-function mapCourseToDetailedCourse(course: Course, signupsCount: number): DetailedCourse {
-  // Map course_type to courseType
-  const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
-    'course-series': 'kursrekke',
-    'event': 'enkeltkurs',
-    'online': 'enkeltkurs',
-  };
-
-  const styleType = course.course_type;
-
-  // Format duration
-  const formatDuration = () => {
-    if (course.total_weeks) return `${course.total_weeks} uker`;
-    if (course.duration) return `${course.duration} min`;
-    return '';
-  };
-
-  // Format price
-  const formatPrice = () => {
-    if (!course.price) return 'Gratis';
-    return `${course.price.toLocaleString('nb-NO')} NOK`;
-  };
-
-  // Calculate progress for active courses
-  const progress = course.total_weeks && course.current_week
-    ? Math.round((course.current_week / course.total_weeks) * 100)
-    : undefined;
-
-  return {
-    id: course.id,
-    title: course.title,
-    type: styleType as DetailedCourse['type'],
-    courseType: courseTypeMap[course.course_type] || 'enkeltkurs',
-    status: course.status,
-    location: course.location || 'Ikke angitt',
-    timeSchedule: course.time_schedule || '',
-    duration: formatDuration(),
-    participants: signupsCount,
-    maxParticipants: course.max_participants || 0,
-    price: formatPrice(),
-    progress,
-    currentWeek: course.current_week || undefined,
-    totalWeeks: course.total_weeks || undefined,
-    startDate: course.start_date || undefined,
-    endDate: course.end_date || undefined,
-    description: course.description || undefined,
-    level: course.level ? course.level.charAt(0).toUpperCase() + course.level.slice(1) : undefined,
-    imageUrl: course.image_url,
-  };
-}
 
 /**
- * Get day of week normalized to Monday=0, Sunday=6.
- * Parses the Norwegian day name from timeSchedule (e.g. "Mandager 18:00-19:15").
- * Falls back to startDate if timeSchedule doesn't contain a recognized day.
+ * Maps a Course to a SessionScheduleRow shape for display in the table.
  */
-const DAY_NAME_ORDER: Record<string, number> = {
-  mandag: 0, mandager: 0,
-  tirsdag: 1, tirsdager: 1,
-  onsdag: 2, onsdager: 2,
-  torsdag: 3, torsdager: 3,
-  fredag: 4, fredager: 4,
-  lørdag: 5, lørdager: 5,
-  søndag: 6, søndager: 6,
-};
+function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRow {
+  // Extract start time from time_schedule (e.g. "Mandager 18:00-19:15" → "18:00")
+  const timeMatch = course.time_schedule?.match(/(\d{2}:\d{2})/);
+  const startTime = timeMatch ? timeMatch[1] : '';
 
-function getDayOfWeek(timeSchedule: string | undefined, startDate: string | undefined): number {
-  // Try parsing day name from timeSchedule first
-  if (timeSchedule) {
-    const firstWord = timeSchedule.split(/\s/)[0].toLowerCase();
-    const dayIndex = DAY_NAME_ORDER[firstWord];
-    if (dayIndex !== undefined) return dayIndex;
+  // Calculate end time from start + duration
+  let endTime = '';
+  if (startTime && course.duration) {
+    const [h, m] = startTime.split(':').map(Number);
+    const totalMin = h * 60 + m + course.duration;
+    endTime = `${Math.floor(totalMin / 60).toString().padStart(2, '0')}:${(totalMin % 60).toString().padStart(2, '0')}`;
+  }
+  // Try second time from time_schedule (e.g. "18:00-19:15")
+  if (!endTime) {
+    const endMatch = course.time_schedule?.match(/\d{2}:\d{2}-(\d{2}:\d{2})/);
+    if (endMatch) endTime = endMatch[1];
   }
 
-  // Fallback to startDate
-  if (!startDate) return 7;
-  const date = new Date(startDate);
-  if (isNaN(date.getTime())) return 7;
-  const day = date.getDay();
-  return day === 0 ? 6 : day - 1;
-}
-
-/**
- * Sorting logic for courses based on time relevance.
- *
- * Primary sort: Status priority (active > upcoming > rest)
- * Secondary sort (kursrekker only): Day of week (Monday to Sunday)
- * Tertiary sort: Start date (soonest first)
- * Quaternary sort: Series progression or alphabetical
- *
- * Note: Urgency is shown visually but doesn't affect sort order.
- * This keeps the list predictable while still highlighting issues.
- */
-function sortCourses(courses: DetailedCourse[], type: 'kursrekke' | 'enkeltkurs'): DetailedCourse[] {
-  return [...courses].sort((a, b) => {
-    // Status priority: active courses first, then upcoming
-    const statusOrder: Record<string, number> = {
-      active: 0,
-      upcoming: 1,
-      draft: 2,
-      completed: 3,
-      cancelled: 4,
-    };
-    const statusDiff = (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
-    if (statusDiff !== 0) return statusDiff;
-
-    // For kursrekker: sort by day of week (Monday to Sunday)
-    if (type === 'kursrekke') {
-      const dayA = getDayOfWeek(a.timeSchedule, a.startDate);
-      const dayB = getDayOfWeek(b.timeSchedule, b.startDate);
-      if (dayA !== dayB) return dayA - dayB;
-    }
-
-    // Then by start date (soonest first)
-    if (a.startDate && b.startDate) {
-      const dateA = new Date(a.startDate);
-      const dateB = new Date(b.startDate);
-      const dateDiff = dateA.getTime() - dateB.getTime();
-      if (dateDiff !== 0) return dateDiff;
-    }
-
-    // For active series: earlier in progression is higher priority
-    if (type === 'kursrekke' && a.status === 'active' && b.status === 'active') {
-      const progressA = a.currentWeek && a.totalWeeks ? a.currentWeek / a.totalWeeks : 1;
-      const progressB = b.currentWeek && b.totalWeeks ? b.currentWeek / b.totalWeeks : 1;
-      if (progressA !== progressB) return progressA - progressB;
-    }
-
-    // Alphabetical as tiebreaker
-    return a.title.localeCompare(b.title, 'nb-NO');
-  });
+  return {
+    sessionId: course.id,
+    courseId: course.id,
+    courseTitle: course.title,
+    courseType: course.course_type as 'course-series' | 'event' | 'online',
+    sessionDate: course.start_date || course.created_at.slice(0, 10),
+    startTime,
+    endTime,
+    location: course.location || '',
+    price: course.price,
+    signupsCount,
+    maxParticipants: course.max_participants,
+    courseStatus: course.status,
+    courseStartDate: course.start_date,
+  };
 }
 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [courses, setCourses] = useState<DetailedCourse[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewFilter, setViewFilter] = useState<'active' | 'archive'>('active');
 
   // Fetch courses from Supabase
-  const loadCourses = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!currentOrganization?.id) {
       setIsLoading(false);
       return;
@@ -179,43 +84,37 @@ const CoursesPage = () => {
     setError(null);
 
     try {
-      const { data: coursesData, error: fetchError } = await fetchCourses(currentOrganization.id);
+      const coursesResult = await fetchCourses(currentOrganization.id);
 
-      if (fetchError) {
-        setError('Kunne ikke hente kurs. Sjekk nettilkoblingen.');
+      if (coursesResult.error) {
+        setError('Kunne ikke hente kurs. Sjekk nettilkoblingen og prøv på nytt.');
         return;
       }
 
-      if (!coursesData || coursesData.length === 0) {
-        setCourses([]);
-        return;
-      }
+      const coursesData = coursesResult.data || [];
+      setCourses(coursesData);
 
-      // Fetch signups count for each course
+      // Fetch signups count for all courses
       const courseIds = coursesData.map(c => c.id);
-      const { data: signupsData, error: signupsError } = await typedFrom('signups')
-        .select('course_id')
-        .in('course_id', courseIds)
-        .eq('status', 'confirmed');
 
-      if (signupsError) {
-        console.error('Failed to fetch signups counts:', signupsError);
+      if (courseIds.length > 0) {
+        const { data: signupsData, error: signupsError } = await typedFrom('signups')
+          .select('course_id')
+          .in('course_id', courseIds)
+          .eq('status', 'confirmed');
+
+        if (signupsError) {
+          logger.error('Failed to fetch signups counts:', signupsError);
+        }
+
+        const counts: Record<string, number> = {};
+        (signupsData as { course_id: string }[] | null)?.forEach(s => {
+          counts[s.course_id] = (counts[s.course_id] || 0) + 1;
+        });
+        setSignupsCounts(counts);
       }
-
-      // Count signups per course
-      const signupsCounts: Record<string, number> = {};
-      (signupsData as { course_id: string }[] | null)?.forEach(s => {
-        signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1;
-      });
-
-      // Map to DetailedCourse format
-      const mappedCourses = coursesData.map(course =>
-        mapCourseToDetailedCourse(course, signupsCounts[course.id] || 0)
-      );
-
-      setCourses(mappedCourses);
     } catch {
-      setError('Kunne ikke laste inn kurs.');
+      setError('Kunne ikke laste inn kurs. Prøv på nytt.');
     } finally {
       setIsLoading(false);
     }
@@ -223,45 +122,55 @@ const CoursesPage = () => {
 
   // Initial load
   useEffect(() => {
-    loadCourses();
-  }, [loadCourses]);
+    loadData();
+  }, [loadData]);
 
-  // Filter and group courses
-  const { kursrekker, arrangementer, completedCourses, searchResults } = useMemo(() => {
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      const filtered = courses.filter(course =>
-        course.title.toLowerCase().includes(query) ||
-        course.location.toLowerCase().includes(query)
-      );
+  // Active courses (not completed)
+  const activeCourses = useMemo(
+    () => courses.filter(c => c.status !== 'completed'),
+    [courses]
+  );
 
-      // Return flat search results (no grouping)
-      return {
-        kursrekker: [],
-        arrangementer: [],
-        completedCourses: [],
-        searchResults: filtered,
-      };
-    }
+  // Completed courses for archive
+  const completedCourses = useMemo(
+    () => courses.filter(c => c.status === 'completed'),
+    [courses]
+  );
 
-    // Smart default: show active and upcoming courses, archive completed
-    const activeCourses = courses.filter(c => c.status !== 'completed');
-    const completed = courses.filter(c => c.status === 'completed');
+  // Map to table rows
+  const activeRows = useMemo(
+    () => activeCourses.map(c => mapCourseToRow(c, signupsCounts[c.id] || 0)),
+    [activeCourses, signupsCounts]
+  );
 
-    // Group by course type
-    const series = activeCourses.filter(c => c.courseType === 'kursrekke');
-    const events = activeCourses.filter(c => c.courseType === 'enkeltkurs');
+  const archiveRows = useMemo(
+    () => completedCourses.map(c => mapCourseToRow(c, signupsCounts[c.id] || 0)),
+    [completedCourses, signupsCounts]
+  );
 
-    return {
-      kursrekker: sortCourses(series, 'kursrekke'),
-      arrangementer: sortCourses(events, 'enkeltkurs'),
-      completedCourses: completed,
-      searchResults: [],
-    };
-  }, [courses, searchQuery]);
+  // Filter by search
+  const filteredActiveRows = useMemo(() => {
+    if (!searchQuery.trim()) return activeRows;
+    const query = searchQuery.toLowerCase().trim();
+    return activeRows.filter(r =>
+      r.courseTitle.toLowerCase().includes(query) ||
+      r.location.toLowerCase().includes(query)
+    );
+  }, [activeRows, searchQuery]);
 
-  // Show empty state if no courses after loading (or dev toggle active)
+  const filteredArchiveRows = useMemo(() => {
+    if (!searchQuery.trim()) return archiveRows;
+    const query = searchQuery.toLowerCase().trim();
+    return archiveRows.filter(r =>
+      r.courseTitle.toLowerCase().includes(query) ||
+      r.location.toLowerCase().includes(query)
+    );
+  }, [archiveRows, searchQuery]);
+
+  // Course count summary
+  const activeCount = courses.filter(c => c.status === 'active').length;
+  const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
+
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
@@ -269,7 +178,7 @@ const CoursesPage = () => {
       <TeacherSidebar />
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
 
-        <MobileTeacherHeader title="Mine Kurs" />
+        <MobileTeacherHeader title="Mine kurs" />
 
         {/* Header Area & Controls */}
         <motion.div
@@ -281,12 +190,10 @@ const CoursesPage = () => {
         >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine Kurs</h1>
+                    <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine kurs</h1>
                     {!showCoursesEmptyState && (
                       <p className="text-sm text-text-secondary mt-1">
                         {(() => {
-                            const activeCount = courses.filter(c => c.status === 'active').length;
-                            const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
                             const parts = [];
                             if (activeCount > 0) parts.push(`${activeCount} aktive`);
                             if (upcomingCount > 0) parts.push(`${upcomingCount} kommende`);
@@ -325,118 +232,62 @@ const CoursesPage = () => {
             )}
         </motion.div>
 
-        {/* Course List / Empty State */}
+        {/* Content */}
         <div className="flex-1 overflow-hidden px-8 pb-8">
             {isLoading ? (
               <div
-                className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8"
+                className="h-full overflow-y-auto custom-scrollbar pb-8"
                 role="status"
                 aria-live="polite"
                 aria-label="Laster kurs"
               >
                 <span className="sr-only">Henter kurs</span>
-                <CourseSectionSkeleton count={3} />
-                <CourseSectionSkeleton count={2} />
+                <SessionScheduleTableSkeleton />
               </div>
             ) : error ? (
               <ErrorState
                 title="Kunne ikke laste kurs"
                 message={error}
-                onRetry={loadCourses}
+                onRetry={loadData}
                 variant="card"
               />
             ) : showCoursesEmptyState ? (
               <CoursesEmptyState />
-            ) : searchQuery ? (
-              // Search results - flat list
+            ) : viewFilter === 'active' ? (
               <div className="h-full overflow-y-auto custom-scrollbar pb-8">
-                {searchResults.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white border border-zinc-200">
-                    <div className="mb-4 rounded-full bg-surface p-4 border border-zinc-100">
-                       <Calendar className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
-                    </div>
-                    <h3 className="font-geist text-sm font-medium text-text-primary">Ingen kurs funnet</h3>
-                    <p className="mt-1 text-xs text-text-secondary max-w-xs">
-                       Prøv et annet søkeord eller fjern søket for å se alle kurs.
-                    </p>
-                  </div>
+                {searchQuery && filteredActiveRows.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title="Ingen kurs funnet"
+                    description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
+                  />
+                ) : filteredActiveRows.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title="Ingen aktive kurs"
+                    description="Opprett et kurs for å komme i gang."
+                    action={
+                      <Button asChild size="sm">
+                        <Link to="/teacher/new-course">Opprett kurs</Link>
+                      </Button>
+                    }
+                  />
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-xs text-text-secondary mb-4">
-                      {searchResults.length} resultat{searchResults.length !== 1 ? 'er' : ''} for «{searchQuery}»
-                    </p>
-                    {searchResults.map((course) => (
-                      <CoursePreviewCard
-                        key={course.id}
-                        course={course}
-                      />
-                    ))}
-                  </div>
+                  <SessionScheduleTable sessions={filteredActiveRows} />
                 )}
               </div>
             ) : (
-              // Grouped view
-              <div className="h-full overflow-y-auto custom-scrollbar pb-8 space-y-8">
-                {viewFilter === 'active' ? (
-                  <>
-                    {/* Kursrekker (Series) */}
-                    <CourseSection
-                      title="Kursrekker"
-                      subtitle="Faste ukentlige kurs"
-                      courses={kursrekker}
-                      maxVisible={5}
-                    />
-
-                    {/* Arrangementer (Events) */}
-                    <CourseSection
-                      title="Arrangementer"
-                      subtitle="Workshops og enkeltarrangementer"
-                      courses={arrangementer}
-                      maxVisible={5}
-                    />
-
-                    {/* Empty state when no active courses */}
-                    {kursrekker.length === 0 && arrangementer.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-sm text-text-secondary">
-                          Ingen aktive eller kommende kurs.
-                          {completedCourses.length > 0 && ' Se arkivet for fullførte kurs.'}
-                        </p>
-                      </div>
-                    )}
-                  </>
+              <div className="h-full overflow-y-auto custom-scrollbar pb-8">
+                {filteredArchiveRows.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title={searchQuery ? 'Ingen fullførte kurs funnet' : 'Ingen fullførte kurs'}
+                    description={searchQuery
+                      ? 'Prøv et annet søkeord eller fjern søket.'
+                      : 'Fullførte kurs vil vises her.'}
+                  />
                 ) : (
-                  <>
-                    {/* Archive view */}
-                    {completedCourses.length > 0 ? (
-                      <section className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-lg font-medium text-text-primary flex items-center gap-2">
-                            <Archive className="h-4 w-4" />
-                            Arkiv
-                          </h2>
-                          <span className="px-2.5 py-0.5 rounded-lg bg-white text-xs font-medium text-text-primary">
-                            {completedCourses.length}
-                          </span>
-                        </div>
-                        <div className="space-y-2">
-                          {completedCourses.map((course) => (
-                            <CoursePreviewCard
-                              key={course.id}
-                              course={course}
-                              showUrgency={false}
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-sm text-text-secondary">
-                          Ingen fullførte kurs i arkivet.
-                        </p>
-                      </div>
-                    )}
-                  </>
+                  <SessionScheduleTable sessions={filteredArchiveRows} />
                 )}
               </div>
             )}

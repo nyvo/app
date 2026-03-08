@@ -30,8 +30,8 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
   const studioUrl = `/studio/${organizationSlug}`;
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200/60">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
           to={studioUrl}
@@ -53,7 +53,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
             className="hidden sm:flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors text-xs font-medium ios-ease"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
-            Tilbake til timeplan
+            Tilbake til kurs
           </Link>
 
           {/* Divider */}
@@ -83,7 +83,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
                       <BookOpen className="h-4 w-4" />
-                      <span>Dashboard</span>
+                      <span>Oversikt</span>
                     </Link>
                   </DropdownMenuItem>
                 )}

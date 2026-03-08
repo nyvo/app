@@ -47,10 +47,10 @@ export function useSetupProgress({
       },
       {
         id: 'stripe',
-        title: 'Koble til Stripe',
-        description: 'Motta betalinger direkte til din konto.',
+        title: 'Sett opp betalinger',
+        description: 'Knytt kontoen din til Stripe, så du kan motta betaling fra elever.',
         isComplete: !!org?.stripe_onboarding_complete,
-        actionLabel: 'Koble til',
+        actionLabel: 'Sett opp',
         actionOnClick: onConnectStripe,
         icon: CreditCard,
       },

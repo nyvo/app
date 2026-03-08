@@ -109,7 +109,7 @@ const CheckoutSuccessPage = () => {
           // The org slug is available from the URL parameter for redirect
           setBookingFailed(true);
           if (!toastShownRef.current) {
-            toast.info('Påmeldingen kunne ikke fullføres');
+            toast.error('Påmeldingen kunne ikke fullføres. Prøv igjen.');
             toastShownRef.current = true;
           }
           setLoading(false);
@@ -123,11 +123,11 @@ const CheckoutSuccessPage = () => {
 
   // Format date for display
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return 'Ikke satt';
+    if (!dateString) return 'Ikke angitt';
     const date = new Date(dateString);
     const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
     const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-    return `${days[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`;
+    return `${days[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
   };
 
 
@@ -139,14 +139,14 @@ const CheckoutSuccessPage = () => {
       } else if (attemptCount <= 6) {
         return 'Behandler betaling';
       } else if (attemptCount <= 10) {
-        return 'Nesten klar';
+        return 'Vent litt';
       } else {
         return 'Dette tar litt tid';
       }
     };
 
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center font-geist">
+      <div className="theme-public min-h-screen w-full bg-public-sand flex items-center justify-center font-geist">
         <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg">
             <Spinner size="xl" className="text-status-info-text" />
@@ -156,7 +156,7 @@ const CheckoutSuccessPage = () => {
             Bekrefter med banken. Ikke lukk denne siden.
           </p>
           {attemptCount > 8 && (
-            <p className="text-xs text-text-tertiary mt-4">
+            <p className="text-xs text-text-secondary mt-4">
               Du får beskjed når betalingen er klar.
             </p>
           )}
@@ -167,11 +167,11 @@ const CheckoutSuccessPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200 bg-surface/90 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+      <div className="theme-public min-h-screen w-full bg-public-sand font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200/60 bg-white/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200/60 text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
@@ -180,15 +180,15 @@ const CheckoutSuccessPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-2xl border border-destructive/30 bg-white p-8 md:p-12">
+            <div className="rounded-3xl border border-destructive/30 bg-white p-8 md:p-12">
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="font-geist text-2xl md:text-3xl font-medium text-text-primary mb-3">
+              <h1 className="display-heading text-2xl md:text-3xl font-medium text-text-primary mb-3">
                 Noe gikk galt
               </h1>
               <p className="text-text-secondary mb-8">{error}</p>
-              <Button asChild>
+              <Button asChild variant="public">
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
                   Til forsiden
@@ -213,11 +213,11 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/studio/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-surface font-geist">
-        <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200 bg-surface/90 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+      <div className="theme-public min-h-screen w-full bg-public-sand font-geist">
+        <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200/60 bg-white/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to={failedStudioUrl} className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200/60 text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
               <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
@@ -226,7 +226,7 @@ const CheckoutSuccessPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <div className="rounded-2xl bg-white p-8 md:p-12 border border-zinc-200">
+            <div className="rounded-3xl bg-white p-8 md:p-12 border border-zinc-200/60">
               {/* Most important message first - no charge */}
               <Alert variant="success" className="p-5 mb-6 justify-center text-center">
                 <div>
@@ -240,13 +240,13 @@ const CheckoutSuccessPage = () => {
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
                 <AlertCircle className="h-6 w-6 text-amber-700" />
               </div>
-              <h1 className="font-geist text-xl md:text-2xl font-medium text-text-primary mb-2">
+              <h1 className="display-heading text-xl md:text-2xl font-medium text-text-primary mb-2">
                 Kurset ble fullt
               </h1>
               <p className="text-sm text-text-secondary mb-6">
                 Kurset ble fullt før betalingen gikk gjennom.
               </p>
-              <Button asChild>
+              <Button asChild variant="public">
                 <Link to={failedStudioUrl}>
                   Se andre kurs
                 </Link>
@@ -259,11 +259,11 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-surface font-geist">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200 bg-surface/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+    <div className="theme-public min-h-screen w-full bg-public-sand font-geist">
+      <header className="fixed top-0 left-0 right-0 z-40 border-b border-zinc-200/60 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to={studioUrl} className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white border border-zinc-200/60 text-primary">
               <Leaf className="h-5 w-5" />
             </div>
             <span className="text-lg font-medium text-text-primary tracking-tight">Ease</span>
@@ -281,7 +281,7 @@ const CheckoutSuccessPage = () => {
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
 
-              <h1 className="font-geist text-3xl md:text-4xl font-medium text-text-primary mb-4">
+              <h1 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
                 Betaling fullført
               </h1>
 
@@ -310,22 +310,22 @@ const CheckoutSuccessPage = () => {
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 {user && userType === 'student' ? (
                   <>
-                    <Button asChild size="default" className="w-full sm:w-auto">
+                    <Button asChild variant="public" size="default" className="w-full sm:w-auto">
                       <Link to="/student/dashboard">
                         <BookOpen className="h-4 w-4 mr-2" />
                         Mine kurs
                       </Link>
                     </Button>
-                    <Button asChild variant="outline-soft" size="default" className="w-full sm:w-auto">
+                    <Button asChild variant="public-outline" size="default" className="w-full sm:w-auto">
                       <Link to={studioUrl}>Se flere kurs</Link>
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Button asChild size="default" className="w-full sm:w-auto">
+                    <Button asChild variant="public" size="default" className="w-full sm:w-auto">
                       <Link to={studioUrl}>Se flere kurs</Link>
                     </Button>
-                    <div className="flex items-center justify-center sm:justify-start pt-2 sm:pt-0 sm:pl-4 text-xs text-text-tertiary">
+                    <div className="flex items-center justify-center sm:justify-start pt-2 sm:pt-0 sm:pl-4 text-xs text-text-secondary">
                       <span>
                         <Link to="/student/login" className="underline underline-offset-2 hover:text-text-primary">Logg inn</Link>
                         {' '}for å se kursene dine
@@ -338,13 +338,9 @@ const CheckoutSuccessPage = () => {
 
             {/* Right Column: Order Details */}
             {signup && (
-              <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                <h3 className="text-xs font-medium text-text-secondary mb-6">
-                  Kvittering
-                </h3>
-
+              <div className="rounded-3xl bg-white p-6 md:p-8 border border-zinc-200/60">
                 <div className="space-y-5">
-                  <div className="pb-5 border-b border-zinc-200">
+                  <div className="pb-5 border-b border-zinc-200/60">
                     <span className="block text-xs text-text-secondary mb-1">Kurs</span>
                     <span className="block font-medium text-lg text-text-primary">{signup.course.title}</span>
                   </div>
@@ -367,7 +363,7 @@ const CheckoutSuccessPage = () => {
                           <Clock className="h-3.5 w-3.5" /> Tid
                         </span>
                         <span className="font-medium text-text-primary text-sm">
-                          Kl {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
+                          kl. {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
                         </span>
                       </div>
                     )}
@@ -386,7 +382,7 @@ const CheckoutSuccessPage = () => {
                     <span className="flex items-center gap-1.5 text-xs text-text-secondary">
                       <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
-                    <span className="font-medium text-xl text-text-primary">{signup.amount_paid} kr</span>
+                    <span className="font-medium text-xl text-text-primary">{signup.amount_paid.toLocaleString('nb-NO')} kr</span>
                   </div>
                 </div>
               </div>

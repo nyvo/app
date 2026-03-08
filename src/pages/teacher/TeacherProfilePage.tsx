@@ -219,13 +219,7 @@ const TeacherProfilePage = () => {
     if (isStripeConnected) {
       const { data, error } = await createStripeDashboardLink(currentOrganization.id);
       if (error || !data?.url) {
-        // Account deleted/deauthorized on Stripe's side — refresh to show setup flow
-        if (error?.message === 'STRIPE_ACCOUNT_INVALID') {
-          await refreshOrganizations();
-          toast.error('Stripe-kontoen er ikke lenger aktiv. Koble til på nytt.');
-        } else {
-          toast.error(error?.message || 'Kunne ikke åpne Stripe-dashbordet');
-        }
+        toast.error(error?.message || 'Kunne ikke åpne Stripe-oversikten');
         setStripeLoading(false);
         return;
       }
@@ -309,7 +303,7 @@ const TeacherProfilePage = () => {
 
             {/* Tab Content: Profile */}
             {activeTab === 'profile' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
 
                     {/* Avatar Section */}
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
@@ -386,7 +380,7 @@ const TeacherProfilePage = () => {
                                 {errors.email && touched.email ? (
                                   <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                                 ) : (
-                                  <p className="text-xs text-text-tertiary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                                  <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                                 )}
                             </div>
 
@@ -403,7 +397,7 @@ const TeacherProfilePage = () => {
                                         className="pl-10"
                                     />
                                 </div>
-                                <p className="text-xs text-text-tertiary mt-1.5">Vises på din offentlige studioside.</p>
+                                <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
                             </div>
 
                             {/* Studio Description */}
@@ -421,7 +415,7 @@ const TeacherProfilePage = () => {
                                     {errors.studioDescription && touched.studioDescription ? (
                                       <span className="text-destructive font-medium">{errors.studioDescription}</span>
                                     ) : (
-                                      <span className="text-text-tertiary">Vises på din offentlige studioside.</span>
+                                      <span className="text-text-secondary">Vises på din offentlige studioside.</span>
                                     )}
                                     <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-tertiary'}>{studioDescription.length}/500</span>
                                 </div>
@@ -446,12 +440,12 @@ const TeacherProfilePage = () => {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-text-primary">
-                                        {isStripeConnected ? 'Stripe er koblet til' : 'Stripe er ikke koblet til'}
+                                        {isStripeConnected ? 'Betalinger er satt opp' : 'Betalinger er ikke satt opp'}
                                     </p>
                                     <p className="text-xs text-text-secondary mt-0.5">
                                         {isStripeConnected
-                                            ? 'Du kan se utbetalinger og administrere bankkonto i Stripe.'
-                                            : 'Koble til Stripe for å motta betalinger fra kursene dine.'}
+                                            ? 'Du kan se utbetalinger og administrere bankkonto via Stripe.'
+                                            : 'Knytt kontoen din til Stripe, så du kan motta betaling fra elever.'}
                                     </p>
                                 </div>
                             </div>
@@ -461,7 +455,7 @@ const TeacherProfilePage = () => {
                                 className="shrink-0"
                                 onClick={handleStripeAction}
                                 loading={stripeLoading}
-                                loadingText={isStripeConnected ? 'Åpner...' : 'Koble til'}
+                                loadingText={isStripeConnected ? 'Åpner...' : 'Sender deg til Stripe …'}
                             >
                                 {isStripeConnected ? (
                                     <>
@@ -469,7 +463,7 @@ const TeacherProfilePage = () => {
                                         <ExternalLink className="h-3.5 w-3.5" />
                                     </>
                                 ) : (
-                                    'Koble til Stripe'
+                                    'Sett opp betalinger'
                                 )}
                             </Button>
                         </div>
@@ -479,7 +473,7 @@ const TeacherProfilePage = () => {
 
             {/* Tab Content: Notifications */}
             {activeTab === 'notifications' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="mb-6 border-b border-zinc-100 pb-2">
                             <h3 className="text-sm font-medium text-text-secondary">Varslingsinnstillinger</h3>
@@ -534,7 +528,7 @@ const TeacherProfilePage = () => {
 
             {/* Tab Content: Security */}
             {activeTab === 'security' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="space-y-6 animate-in fade-in duration-200">
                      <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
                         <div className="mb-6 border-b border-zinc-100 pb-2">
                             <h3 className="text-sm font-medium text-text-secondary">Passord & sikkerhet</h3>
@@ -546,7 +540,7 @@ const TeacherProfilePage = () => {
                           </div>
                           <p className="text-sm font-medium text-text-primary mb-1">Sikkerhetsinnstillinger kommer snart</p>
                           <p className="text-xs text-text-secondary max-w-[280px]">
-                            Passordendring og to-faktor autentisering vil være tilgjengelig i en fremtidig oppdatering.
+                            Passordendring og tofaktorinnlogging vil være tilgjengelig i en fremtidig oppdatering.
                           </p>
                         </div>
                      </div>

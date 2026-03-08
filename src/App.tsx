@@ -28,6 +28,9 @@ const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
 
 const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
 const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
+const StudentForgotPasswordPage = lazy(() => import('./pages/student/StudentForgotPasswordPage'));
+const StudentResetPasswordPage = lazy(() => import('./pages/student/StudentResetPasswordPage'));
+const StudentConfirmEmailPage = lazy(() => import('./pages/student/StudentConfirmEmailPage'));
 const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboardPage'));
 const StudentProfilePage = lazy(() => import('./pages/student/StudentProfilePage'));
 
@@ -70,9 +73,12 @@ const App = () => {
             {/* Student Routes */}
             <Route path="/student/login" element={<StudentLoginPage />} />
             <Route path="/student/register" element={<StudentRegisterPage />} />
+            <Route path="/student/forgot-password" element={<StudentForgotPasswordPage />} />
+            <Route path="/student/reset-password" element={<StudentResetPasswordPage />} />
+            <Route path="/student/confirm-email" element={<StudentConfirmEmailPage />} />
             <Route path="/student/dashboard" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentDashboardPage /></ProtectedRoute>} />
             <Route path="/student/profile" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentProfilePage /></ProtectedRoute>} />
-            
+
             {/* 404 Catch-all */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

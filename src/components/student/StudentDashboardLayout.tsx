@@ -25,10 +25,10 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="theme-public min-h-screen bg-public-sand flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200/60 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
             <Link to="/" className="font-geist text-xl font-medium text-text-primary tracking-tight">
@@ -73,7 +73,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm">
-                  <p className="font-medium text-text-primary">{profile?.name || 'Student'}</p>
+                  <p className="font-medium text-text-primary">{profile?.name || 'Deltaker'}</p>
                   <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
@@ -93,15 +93,15 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-6 sm:py-8">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-6 sm:py-8">
         {children}
       </main>
 
       {/* Simple Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8 mt-auto">
-        <div className="max-w-5xl mx-auto px-4 text-center">
+      <footer className="border-t border-zinc-200/60 bg-white py-8 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-sm text-text-secondary">
-            Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-primary underline hover:text-text-secondary transition-colors">Kontakt support</a>
+            Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-secondary underline hover:text-text-primary transition-colors">Kontakt oss</a>
           </p>
         </div>
       </footer>

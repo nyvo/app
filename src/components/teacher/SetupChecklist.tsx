@@ -12,14 +12,15 @@ interface SetupChecklistProps {
 
 export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepId }: SetupChecklistProps) => {
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
-      <div className="flex h-full flex-col p-6 sm:p-9">
+    <div className="col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-zinc-900 text-white border border-zinc-800 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 z-0" />
+      <div className="relative flex h-full flex-col p-6 sm:p-9 z-10">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="font-geist text-xl sm:text-2xl font-medium tracking-tight text-text-primary mb-1">
+          <h2 className="font-geist text-xl sm:text-2xl font-medium tracking-tight text-white mb-1">
             Kom i gang
           </h2>
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-zinc-400">
             {completedCount} av {totalCount} fullført
           </p>
         </div>
@@ -29,22 +30,22 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
           {steps.map((step) => (
             <div
               key={step.id}
-              className="flex items-center gap-4 rounded-xl border border-zinc-100 bg-surface px-4 py-3"
+              className="flex items-center gap-4 rounded-xl border border-zinc-700 bg-zinc-700/20 px-4 py-3"
             >
               {/* Icon */}
               {step.isComplete ? (
                 <CheckCircle2 className="h-5 w-5 text-success shrink-0 stroke-[1.5]" />
               ) : (
-                <step.icon className="h-5 w-5 text-text-tertiary shrink-0 stroke-[1.5]" />
+                <step.icon className="h-5 w-5 text-zinc-500 shrink-0 stroke-[1.5]" />
               )}
 
               {/* Text */}
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${step.isComplete ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
+                <p className={`text-sm font-medium ${step.isComplete ? 'text-zinc-500 line-through' : 'text-white'}`}>
                   {step.title}
                 </p>
                 {!step.isComplete && (
-                  <p className="text-xs text-text-tertiary mt-0.5 truncate">
+                  <p className="text-xs text-zinc-400 mt-0.5 truncate">
                     {step.description}
                   </p>
                 )}
@@ -54,7 +55,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
               {!step.isComplete && (
                 <>
                   {step.actionHref ? (
-                    <Button asChild variant="outline-soft" size="xs" className="shrink-0">
+                    <Button asChild variant="outline-soft" size="xs" className="shrink-0 bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100">
                       <Link to={step.actionHref}>
                         {step.actionLabel}
                         <ArrowRight className="h-3 w-3" />
@@ -64,7 +65,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
                     <Button
                       variant="outline-soft"
                       size="xs"
-                      className="shrink-0"
+                      className="shrink-0 bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100"
                       onClick={step.actionOnClick}
                       loading={loadingStepId === step.id}
                       loadingText={step.actionLabel}

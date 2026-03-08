@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { CourseType, CourseStatus, CourseLevel, Json } from '@/types/database'
 import type { PracticalInfo } from '@/types/practicalInfo'
 
@@ -164,11 +165,11 @@ export async function fetchPublicCourses(
 
   // Check for batch query errors — if signups query failed, spots_available would be wrong
   if (signupsResult.error) {
-    console.error('Error fetching signup counts:', signupsResult.error)
+    logger.error('Error fetching signup counts:', signupsResult.error)
     return { data: null, error: signupsResult.error as Error }
   }
   if (sessionsResult.error) {
-    console.error('Error fetching sessions:', sessionsResult.error)
+    logger.error('Error fetching sessions:', sessionsResult.error)
     return { data: null, error: sessionsResult.error as Error }
   }
 
@@ -276,7 +277,7 @@ export async function fetchPublicCourseById(
   }
 
   if (!course) {
-    return { data: null, error: new Error('Course not found') }
+    return { data: null, error: new Error('Kurs ikke funnet') }
   }
 
   const typedCourse = course as unknown as CourseQueryResult

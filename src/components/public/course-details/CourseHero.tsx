@@ -12,11 +12,11 @@ export interface CourseHeroProps {
 export const CourseHero: React.FC<CourseHeroProps> = ({ title, description }) => {
   return (
     <div className="space-y-4">
-      <h1 className="font-geist text-3xl md:text-4xl font-medium tracking-tight text-text-primary leading-tight">
+      <h1 className="display-heading text-3xl md:text-4xl font-medium text-text-primary leading-tight">
         {title}
       </h1>
       {description && (
-        <p className="text-lg text-text-secondary font-light leading-relaxed">
+        <p className="text-lg text-text-secondary font-normal leading-relaxed">
           {description}
         </p>
       )}

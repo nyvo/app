@@ -2,7 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@17.3.1'
-import { verifyAuth, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
+import { verifyAuth, handleCors, getCorsHeaders, errorResponse, escapeHtml } from '../_shared/auth.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2024-12-18.acacia',
@@ -78,22 +78,37 @@ Deno.serve(async (req: Request) => {
     // Determine the relevant date for cancellation check.
     // Dates from the DB are date-only strings (YYYY-MM-DD) without timezone.
     // Courses are in Norway (CET = UTC+1, CEST = UTC+2).
-    // We append the Norwegian timezone offset so the comparison is correct.
+    // We use Intl to get the correct UTC offset for a given date in Europe/Oslo,
+    // which handles DST transitions automatically.
+    function norwegianDateToUTC(dateStr: string, timeStr: string): Date {
+      // Build a rough Date to determine the correct UTC offset for that date
+      const rough = new Date(`${dateStr}T${timeStr}:00Z`)
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Oslo',
+        timeZoneName: 'shortOffset',
+      })
+      const parts = formatter.formatToParts(rough)
+      const tzPart = parts.find(p => p.type === 'timeZoneName')
+      // tzPart.value is e.g. "GMT+1" or "GMT+2"
+      const offsetMatch = tzPart?.value?.match(/GMT([+-]\d+)/)
+      const offsetHours = offsetMatch ? parseInt(offsetMatch[1], 10) : 1
+      const sign = offsetHours >= 0 ? '+' : '-'
+      const absOffset = String(Math.abs(offsetHours)).padStart(2, '0')
+      return new Date(`${dateStr}T${timeStr}:00${sign}${absOffset}:00`)
+    }
+
     let eventDate: Date | null = null
 
     if (signup.is_drop_in && signup.class_date) {
-      // For drop-in, use the specific class date
       const timeStr = signup.class_time || '09:00'
-      // Parse as Norwegian time by appending Europe/Oslo offset
-      eventDate = new Date(`${signup.class_date}T${timeStr}:00+01:00`)
+      eventDate = norwegianDateToUTC(signup.class_date, timeStr)
     } else if (course?.start_date) {
-      // For course series, use course start date
       let timeStr = '09:00'
       if (course.time_schedule) {
         const timeMatch = course.time_schedule.match(/(\d{1,2}:\d{2})/)
         if (timeMatch) timeStr = timeMatch[1]
       }
-      eventDate = new Date(`${course.start_date}T${timeStr}:00+01:00`)
+      eventDate = norwegianDateToUTC(course.start_date, timeStr)
     }
 
     const now = new Date()
@@ -129,7 +144,7 @@ Deno.serve(async (req: Request) => {
           success: false,
           refunded: false,
           refund_amount: 0,
-          message: `Refusjon feilet: ${refundError}. Påmeldingen er ikke endret.`,
+          message: `Refusjonen mislyktes. Påmeldingen er ikke endret.`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -172,7 +187,7 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           to: signup.participant_email,
-          subject: canGetRefund ? 'Avmelding bekreftet - Refusjon behandlet' : 'Avmelding bekreftet',
+          subject: canGetRefund ? 'Avbestilling bekreftet – Refusjon behandlet' : 'Avbestilling bekreftet',
           html: `
 <!DOCTYPE html>
 <html>
@@ -199,32 +214,32 @@ Deno.serve(async (req: Request) => {
 
     <p style="text-align: center;">
       <span class="status-badge ${canGetRefund ? 'refunded' : 'no-refund'}">
-        ${canGetRefund ? 'Avmelding med refusjon' : 'Avmelding uten refusjon'}
+        ${canGetRefund ? 'Avbestilling med refusjon' : 'Avbestilling uten refusjon'}
       </span>
     </p>
 
-    <p>Hei ${signup.participant_name || ''},</p>
+    <p>Hei ${escapeHtml(signup.participant_name) || ''},</p>
 
-    <p>Din avmelding fra <strong>${course?.title || 'kurset'}</strong> er bekreftet.</p>
+    <p>Din avbestilling fra <strong>${escapeHtml(course?.title) || 'kurset'}</strong> er bekreftet.</p>
 
     <div class="details-box">
       ${canGetRefund && signup.amount_paid ? `
-        <p><strong>Refusjon:</strong> ${signup.amount_paid} kr vil bli tilbakebetalt til din betalingsmetode innen 5-10 virkedager.</p>
+        <p><strong>Refusjon:</strong> ${signup.amount_paid} kr vil bli refundert til betalingskortet ditt innen 5–10 virkedager.</p>
       ` : `
-        <p><strong>Merk:</strong> Siden avmeldingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon i henhold til våre avbestillingsvilkår.</p>
+        <p><strong>Merk:</strong> Siden avbestillingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon i henhold til våre avbestillingsvilkår.</p>
       `}
     </div>
 
     <div class="footer">
-      <p>Hilsen,<br>${org?.name || 'Ease'}</p>
+      <p>Hilsen,<br>${escapeHtml(org?.name) || 'Ease'}</p>
     </div>
   </div>
 </body>
 </html>
           `,
           text: canGetRefund
-            ? `Hei ${signup.participant_name || ''}, din avmelding fra ${course?.title || 'kurset'} er bekreftet. Refusjon på ${signup.amount_paid || 0} kr vil bli tilbakebetalt innen 5-10 virkedager.`
-            : `Hei ${signup.participant_name || ''}, din avmelding fra ${course?.title || 'kurset'} er bekreftet. Siden avmeldingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon.`
+            ? `Hei ${signup.participant_name || ''}, din avbestilling fra ${course?.title || 'kurset'} er bekreftet. Refusjon på ${signup.amount_paid || 0} kr vil bli refundert innen 5–10 virkedager.`
+            : `Hei ${signup.participant_name || ''}, din avbestilling fra ${course?.title || 'kurset'} er bekreftet. Siden avbestillingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon.`
         })
       })
 
@@ -243,8 +258,8 @@ Deno.serve(async (req: Request) => {
         refunded: refundSucceeded,
         refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
         message: canGetRefund && refundSucceeded
-          ? 'Avmelding bekreftet. Refusjon vil bli behandlet.'
-          : 'Avmelding bekreftet. Ingen refusjon grunnet 48-timers avbestillingsfrist.',
+          ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
+          : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 48 timer før kursstart.',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

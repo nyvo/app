@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, FileText, X } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -189,6 +189,42 @@ const TeacherDashboard = () => {
   const [hasCourses, setHasCourses] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
+
+  // Course draft detection
+  const DRAFT_STORAGE_KEY = 'form-draft:create-course-draft';
+  const [hasCourseDraft, setHasCourseDraft] = useState(() => {
+    try {
+      const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!stored) return false;
+      const parsed = JSON.parse(stored);
+      return !!parsed?.title;
+    } catch { return false; }
+  });
+  const [draftTitle, setDraftTitle] = useState(() => {
+    try {
+      const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!stored) return '';
+      const parsed = JSON.parse(stored);
+      return parsed?.title || '';
+    } catch { return ''; }
+  });
+  const dismissDraft = () => {
+    try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch {}
+    setHasCourseDraft(false);
+    setDraftTitle('');
+  };
+
+
+  // Refresh org data when arriving from Stripe callback
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('stripe') === 'success') {
+      refreshOrganizations();
+      // Clean up the query param
+      searchParams.delete('stripe');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stripe Connect handler
   const [connectingStripe, setConnectingStripe] = useState(false);
@@ -427,6 +463,30 @@ const TeacherDashboard = () => {
                 )}
               </header>
 
+              {/* Course draft banner */}
+              {hasCourseDraft && !isLoading && (
+                <div className="mb-6 rounded-2xl border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
+                    <p className="text-sm text-text-secondary truncate">
+                      Du har et utkast{draftTitle ? `: «${draftTitle}»` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button asChild variant="outline-soft" size="xs">
+                      <Link to="/teacher/new-course">Fortsett</Link>
+                    </Button>
+                    <button
+                      onClick={dismissDraft}
+                      className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-zinc-100 transition-colors duration-200"
+                      aria-label="Forkast utkast"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {isLoading ? (
                 <DashboardSkeleton />
               ) : loadError ? (
@@ -434,7 +494,7 @@ const TeacherDashboard = () => {
                   <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste dashboard</h3>
+                  <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste oversikten</h3>
                   <p className="text-xs text-text-secondary max-w-xs mb-4">{loadError}</p>
                   <Button
                     variant="outline-soft"
@@ -457,7 +517,7 @@ const TeacherDashboard = () => {
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {/* Primary Action Card - Minimal Style */}
-                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
+                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
                     <div className="relative flex h-full flex-col justify-center z-10 p-9">
                       <div className="max-w-md">
                         <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">

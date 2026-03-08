@@ -16,6 +16,8 @@ export interface TicketSelectorProps {
  */
 export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   const displayPrice = price || 0;
+  const isFree = displayPrice === 0;
+  const priceLabel = isFree ? 'Gratis' : `${displayPrice} kr`;
 
   return (
     <div className="space-y-3">
@@ -32,7 +34,7 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
           <div className="flex items-baseline gap-2 mb-1">
             <span className="text-base font-medium text-text-primary">Standard</span>
             <span className="text-sm text-text-secondary">•</span>
-            <span className="text-base font-medium text-text-primary">{displayPrice} kr</span>
+            <span className="text-base font-medium text-text-primary">{priceLabel}</span>
           </div>
           <p className="text-xs text-text-secondary">
             Per time
@@ -40,9 +42,9 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
         </div>
       </div>
 
-      {/* Student pricing coming soon hint */}
+      {/* Elevrabatt coming soon hint */}
       <p className="text-xs text-text-tertiary text-center">
-        Studentrabatt kommer snart
+        Elevrabatt kommer snart
       </p>
     </div>
   );

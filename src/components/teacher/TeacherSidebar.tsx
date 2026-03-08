@@ -146,7 +146,7 @@ export const TeacherSidebar = () => {
         <button
           onClick={toggleSidebar}
           className={cn(
-            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-zinc-50 hover:text-text-secondary smooth-transition cursor-pointer border border-transparent hover:border-zinc-200 p-2",
+            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-zinc-50 hover:text-text-secondary smooth-transition cursor-pointer border border-transparent p-2",
             isCollapsed && "px-0"
           )}
           title={isCollapsed ? 'Utvid meny' : 'Skjul meny'}
@@ -184,8 +184,8 @@ export const TeacherSidebar = () => {
                   {!isCollapsed && (
                     <>
                       <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
-                        <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || currentOrganization?.name || 'Bruker'}</p>
-                        <p className="truncate text-xs text-muted-foreground leading-none">
+                        <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || currentOrganization?.name || 'Konto'}</p>
+                        <p className="truncate text-xs text-text-secondary leading-none">
                           {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                         </p>
                       </div>
@@ -203,14 +203,14 @@ export const TeacherSidebar = () => {
                   <Link
                     to="/teacher/profile"
                     onClick={() => setIsProfileMenuOpen(false)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary transition-colors"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary transition-colors"
                   >
                     <Settings className="h-3.5 w-3.5 text-text-tertiary" />
                     Innstillinger
                   </Link>
-                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-zinc-50 hover:text-text-primary transition-colors cursor-pointer">
+                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary transition-colors cursor-pointer">
                     <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
-                    Hjelp & Support
+                    Hjelp
                   </button>
                   <div className="my-1 border-t border-zinc-100"></div>
                   <button

@@ -24,10 +24,12 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   location,
 }) => {
   const displayPrice = course.price || 0;
+  const isFree = displayPrice === 0;
+  const priceLabel = isFree ? 'Gratis' : `${displayPrice} kr`;
 
   return (
     <div className="space-y-6">
-      <h3 className="font-geist text-lg font-medium text-text-primary">Sammendrag</h3>
+      <h3 className="font-geist text-lg font-medium text-text-primary">Oppsummering</h3>
 
       {/* Course preview */}
       <div className="flex gap-4 border-b border-zinc-200 pb-5">
@@ -45,7 +47,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
             {course.title}
           </h4>
           <p className="mt-1 text-xs text-text-secondary">
-            {dateInfo.shortDate} {time && `Kl ${time}`}
+            {dateInfo.shortDate} {time && `kl. ${time}`}
           </p>
           {location && (
             <p className="text-xs text-text-secondary">{location}</p>
@@ -57,11 +59,11 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       <div className="space-y-3 py-5">
         <div className="flex items-center justify-between text-sm">
           <span className="text-text-secondary">Kursavgift</span>
-          <span className="font-medium text-text-primary">{displayPrice} kr</span>
+          <span className="font-medium text-text-primary">{priceLabel}</span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span className="text-text-secondary">Servicegebyr</span>
-          <span className="font-medium text-text-primary">0 kr</span>
+          <span className="font-medium text-text-primary">Gratis</span>
         </div>
       </div>
 
@@ -70,7 +72,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         <div className="flex items-center justify-between">
           <span className="font-medium text-text-primary">Totalt å betale</span>
           <span className="font-geist text-xl font-medium text-text-primary tracking-tight">
-            {displayPrice} kr
+            {priceLabel}
           </span>
         </div>
       </div>

@@ -35,30 +35,26 @@ export function useFormDraft<T extends object>(
   debounceMs = 1000
 ) {
   const storageKey = `form-draft:${key}`
-  const [draft, setDraft] = useState<T | null>(null)
-  const [hasDraft, setHasDraft] = useState(false)
+
+  // Initialize synchronously from localStorage so auto-save guards
+  // work correctly on the very first render (prevents overwriting the draft).
+  const [draft, setDraft] = useState<T | null>(() => {
+    try {
+      const stored = localStorage.getItem(storageKey)
+      if (stored) return JSON.parse(stored) as T
+    } catch (err) {
+      logger.warn('[FormDraft] Failed to load draft:', err)
+      localStorage.removeItem(storageKey)
+    }
+    return null
+  })
+  const [hasDraft, setHasDraft] = useState(() => draft !== null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestDataRef = useRef<T | null>(null)
   const storageKeyRef = useRef(storageKey)
 
   // Keep storageKeyRef in sync
   storageKeyRef.current = storageKey
-
-  // Load draft from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey)
-      if (stored) {
-        const parsed = JSON.parse(stored) as T
-        setDraft(parsed)
-        setHasDraft(true)
-      }
-    } catch (err) {
-      logger.warn('[FormDraft] Failed to load draft:', err)
-      // Clear corrupted data
-      localStorage.removeItem(storageKey)
-    }
-  }, [storageKey])
 
   // Save draft to localStorage (debounced)
   const saveDraft = useCallback((data: T) => {
@@ -89,8 +85,39 @@ export function useFormDraft<T extends object>(
     }, debounceMs)
   }, [storageKey, debounceMs])
 
+  // Save draft immediately, bypassing debounce.
+  // Use before navigation or redirects where the debounced save would be lost.
+  const saveDraftImmediate = useCallback((data: T) => {
+    // Cancel any pending debounced save
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    latestDataRef.current = null
+
+    try {
+      const hasContent = Object.values(data).some(v =>
+        v !== '' && v !== null && v !== undefined
+      )
+      if (hasContent) {
+        localStorage.setItem(storageKey, JSON.stringify(data))
+        setHasDraft(true)
+      }
+    } catch (err) {
+      logger.warn('[FormDraft] Failed to save draft immediately:', err)
+    }
+  }, [storageKey])
+
   // Clear draft from localStorage
   const clearDraft = useCallback(() => {
+    // Cancel any pending debounced save so it doesn't re-write after clear
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    // Prevent the unmount flush from re-writing the draft
+    latestDataRef.current = null
+
     try {
       localStorage.removeItem(storageKey)
       setDraft(null)
@@ -130,6 +157,8 @@ export function useFormDraft<T extends object>(
     hasDraft,
     /** Save draft data (debounced) */
     saveDraft,
+    /** Save draft data immediately (bypasses debounce — use before redirects) */
+    saveDraftImmediate,
     /** Clear the draft from storage */
     clearDraft,
   }

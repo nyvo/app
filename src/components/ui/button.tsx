@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-white border border-destructive/80 hover:bg-destructive/90",
         outline:
-          "border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50 hover:border-zinc-300",
+          "border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50",
         "outline-soft":
           "border border-zinc-200 bg-white text-text-secondary hover:bg-zinc-50 hover:text-text-primary",
         secondary:
@@ -22,6 +22,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-surface-elevated hover:text-text-primary",
         link: "text-text-primary underline-offset-4 hover:underline",
+        public: "bg-public-sage text-public-sage-foreground border border-public-sage/80 rounded-full hover:bg-public-sage-hover hover:border-public-sage-hover/80 focus-visible:ring-public-sage/30",
+        "public-outline": "border border-public-sage/30 bg-white text-public-sage rounded-full hover:bg-public-sage-light hover:border-public-sage/50 focus-visible:ring-public-sage/30",
       },
       size: {
         default: "h-10 px-5 py-2.5 text-sm rounded-xl",

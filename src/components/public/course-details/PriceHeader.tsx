@@ -40,7 +40,7 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
   return (
     <div className="px-6 py-5 border-b border-zinc-200 bg-surface/50 flex justify-between items-center">
       <div>
-        <span className="block text-xs font-medium text-text-tertiary">
+        <span className="block text-xs font-medium text-text-secondary">
           Pris
         </span>
         <div className="flex items-baseline gap-1 mt-1">

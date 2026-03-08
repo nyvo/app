@@ -371,12 +371,12 @@ const MessagesPage = () => {
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-2xl ios-ease text-left group relative ${
+                  className={`w-full flex items-start gap-3 p-3 rounded-2xl ios-ease text-left group relative border ${
                     activeConversation?.id === conversation.id && !isComposing
-                      ? 'bg-white border border-zinc-200'
+                      ? 'bg-white border-zinc-200'
                       : conversation.is_read
-                      ? 'hover:bg-zinc-50 hover:border hover:border-zinc-200 opacity-70 hover:opacity-100'
-                      : 'hover:bg-zinc-50 hover:border hover:border-zinc-200'
+                      ? 'border-transparent hover:bg-zinc-50 opacity-70 hover:opacity-100'
+                      : 'border-transparent hover:bg-zinc-50'
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -439,7 +439,7 @@ const MessagesPage = () => {
             {/* Composing New Message View */}
             {isComposing ? (
               <div className="flex-1 flex flex-col h-full bg-surface">
-                 <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
+                 <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
@@ -532,7 +532,7 @@ const MessagesPage = () => {
             ) : (
               <>
                 {/* Regular Chat Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
+            <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button
                   className="md:hidden text-text-secondary hover:text-text-primary mr-1"
@@ -557,7 +557,7 @@ const MessagesPage = () => {
                 <div>
                   <h3 className="text-sm font-medium text-text-primary">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
                           <p className="text-xs text-text-secondary">
-                            {activeConversation.participant?.email || 'Student'}
+                            {activeConversation.participant?.email || 'Elev'}
                           </p>
                         </div>
                       </>

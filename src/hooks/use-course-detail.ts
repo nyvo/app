@@ -41,8 +41,8 @@ export function mapCourseToComponentFormat(courseData: Course & { signups_count:
       switch (courseData.level) {
         case 'nybegynner': return 'Nybegynner';
         case 'viderekommen': return 'Viderekommen';
-        case 'alle': return 'Middels';
-        default: return 'Middels';
+        case 'alle': return 'Alle nivåer';
+        default: return 'Alle nivåer';
       }
     })(),
     duration: formatDuration(),

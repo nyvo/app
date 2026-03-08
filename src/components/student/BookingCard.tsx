@@ -52,11 +52,11 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       case 'paid':
         return <StatusIndicator variant="success" mode="inline" size="xs" label="Betalt" />;
       case 'pending':
-        return <StatusIndicator variant="warning" mode="inline" size="xs" label="Venter" />;
+        return <StatusIndicator variant="warning" mode="inline" size="xs" label="Venter betaling" />;
       case 'refunded':
         return <StatusIndicator variant="neutral" mode="inline" size="xs" label="Refundert" />;
       default:
-        return <StatusIndicator variant="error" mode="badge" size="xs" label="Feilet" />;
+        return <StatusIndicator variant="error" mode="badge" size="xs" label="Betaling feilet" />;
     }
   };
 
@@ -71,18 +71,18 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       toast.success('Avbestilt. Du får refusjon.');
       onStatusChange();
     } catch {
-      toast.error('Noe gikk galt.');
+      toast.error('Noe gikk galt. Prøv på nytt.');
     } finally {
       setIsCancelling(false);
     }
   }, [signup.id, onStatusChange]);
 
   const handleContactTeacher = useCallback(() => {
-    toast.info("Meldinger kommer snart.");
+    toast.info("Meldinger kommer snart");
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6">
+    <div className="bg-white rounded-3xl border border-zinc-200/60 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* Left: Date Box */}
       <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-zinc-100 shrink-0">
@@ -173,7 +173,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
                    disabled={isCancelling}
                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-none"
                  >
-                   {isCancelling ? 'Avbestiller...' : 'Avbestill'}
+                   {isCancelling ? 'Avbestiller' : 'Avbestill'}
                  </AlertDialogAction>
                </AlertDialogFooter>
              </AlertDialogContent>
@@ -183,7 +183,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
              <Tooltip>
                <TooltipTrigger asChild>
                  <div className="w-full">
-                   <Button variant="ghost" size="sm" disabled className="w-full justify-center text-text-tertiary opacity-50 cursor-not-allowed">
+                   <Button variant="ghost" size="sm" disabled className="w-full justify-center cursor-not-allowed">
                      Avbestill
                    </Button>
                  </div>

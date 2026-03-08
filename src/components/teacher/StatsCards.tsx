@@ -21,8 +21,8 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-text-primary">Aktive studenter</span>
-              <span className="text-xs text-text-tertiary">
+              <span className="text-sm font-medium text-text-primary">Aktive elever</span>
+              <span className="text-xs text-text-secondary">
                 Data vises etter første økt
               </span>
             </div>
@@ -39,7 +39,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-text-primary">Oppmøte</span>
-              <span className="text-xs text-text-tertiary">
+              <span className="text-xs text-text-secondary">
                 Statistikk aktiveres etter første økt
               </span>
             </div>
@@ -59,7 +59,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
           <span className="text-xs font-medium text-text-tertiary">Denne uken</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-sm text-text-secondary font-normal">Aktive studenter</span>
+          <span className="text-sm text-text-secondary font-normal">Aktive elever</span>
           <div className="flex items-baseline gap-2">
             <span className="font-geist text-3xl font-normal tracking-tight text-text-primary mt-1">
               {stats.activeStudents}
@@ -68,7 +68,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         </div>
       </div>
 
-      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 flex flex-col justify-between group">
+      <div className="h-[168px] rounded-2xl bg-white p-6 border border-zinc-200 flex flex-col justify-between">
         <div>
           <p className="text-sm text-text-secondary font-normal">Oppmøte</p>
           <div className="flex items-end gap-2 mt-1">
@@ -83,10 +83,10 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
             <div
               key={index}
               className={`w-1/6 rounded-t-sm ${
-                index === 4 ? 'bg-primary' : index === 3 ? 'bg-zinc-300 group-hover:bg-zinc-400' : 'bg-surface-elevated group-hover:bg-zinc-300'
+                index === 4 ? 'bg-primary' : index === 3 ? 'bg-zinc-400' : 'bg-zinc-300'
               } transition-colors`}
               style={{ height: `${value}%` }}
-              aria-label={`Day ${index + 1}: ${value}% attendance`}
+              aria-label={`Dag ${index + 1}: ${value} % oppmøte`}
             />
           ))}
         </div>

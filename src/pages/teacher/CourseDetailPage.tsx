@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, CreditCard } from 'lucide-react';
+import { ExternalLink, AlertTriangle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -277,7 +277,7 @@ const CourseDetailPage = () => {
       const { error: updateError } = await updateCourse(id, updateData);
 
       if (updateError) {
-        setSaveError(updateError.message || 'Kunne ikke lagre endringer');
+        setSaveError(updateError.message || 'Kunne ikke lagre endringer. Prøv på nytt.');
         return;
       }
 
@@ -314,7 +314,7 @@ const CourseDetailPage = () => {
 
       toast.success('Endringer lagret');
     } catch {
-      setSaveError('En feil oppstod');
+      setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSaving(false);
     }
@@ -347,7 +347,7 @@ const CourseDetailPage = () => {
       // Navigate to courses list on success
       navigate('/teacher/courses', { state: { message } });
     } catch {
-      setSaveError('En feil oppstod ved avlysning');
+      setSaveError('Kunne ikke avlyse kurset. Prøv igjen.');
       setShowCancelPreview(false);
     } finally {
       setIsDeleting(false);
@@ -526,7 +526,7 @@ const CourseDetailPage = () => {
       setSettingsImageUrl(url);
       toast.success('Bilde lastet opp');
     } catch {
-      setSaveError('En feil oppstod under opplasting');
+      setSaveError('Kunne ikke laste opp bildet. Prøv igjen.');
     } finally {
       setIsUploadingQuickImage(false);
       // Reset input so same file can be selected again
@@ -590,35 +590,42 @@ const CourseDetailPage = () => {
               </div>
             </div>
 
-            {/* Stripe warning banner */}
+            {/* Payment setup required — blocking state */}
             {!currentOrganization?.stripe_onboarding_complete && (
-              <div className="mb-4 rounded-xl border border-zinc-200 bg-surface px-4 py-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
-                  <p className="text-sm text-text-secondary">
-                    Kurset er ikke bookbart ennå — koble til Stripe for å motta betalinger.
-                  </p>
+              <div className="mb-4 rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-white">
+                      Betalinger er ikke satt opp
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-1 leading-snug">
+                      Kurset er opprettet, men kan ikke motta påmeldinger før betalinger er satt opp. Du kobles til Stripe — det tar bare noen minutter.
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  variant="outline-soft"
-                  size="xs"
-                  className="shrink-0"
-                  loading={connectingStripe}
-                  loadingText="Koble til"
-                  onClick={async () => {
-                    if (!currentOrganization?.id) return;
-                    setConnectingStripe(true);
-                    const { data, error } = await createStripeConnectLink(currentOrganization.id);
-                    if (error || !data?.url) {
-                      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-                      setConnectingStripe(false);
-                      return;
-                    }
-                    window.location.href = data.url;
-                  }}
-                >
-                  Koble til
-                </Button>
+                <div className="mt-4 ml-7">
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100 shrink-0"
+                    loading={connectingStripe}
+                    loadingText="Sender deg til Stripe …"
+                    onClick={async () => {
+                      if (!currentOrganization?.id) return;
+                      setConnectingStripe(true);
+                      const { data, error } = await createStripeConnectLink(currentOrganization.id);
+                      if (error || !data?.url) {
+                        toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+                        setConnectingStripe(false);
+                        return;
+                      }
+                      window.location.href = data.url;
+                    }}
+                  >
+                    Sett opp betalinger
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -800,7 +807,7 @@ const CourseDetailPage = () => {
           {/* Modal body */}
           <div className="p-7 space-y-6">
             <AlertDialogHeader>
-              <AlertDialogTitle>Avlys kurs</AlertDialogTitle>
+              <AlertDialogTitle>Avlyse kurset?</AlertDialogTitle>
               <AlertDialogDescription>
                 {refundPreview.count > 0
                   ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet på e-post.`
@@ -812,7 +819,7 @@ const CourseDetailPage = () => {
             {refundPreview.count > 0 && (
               <div className="space-y-4">
                 <div>
-                  <span className="block text-xs font-medium text-text-tertiary mb-2">
+                  <span className="block text-xs font-medium text-text-secondary mb-2">
                     Refunderes
                   </span>
                   <div className="rounded-2xl border border-zinc-200 bg-surface/50 overflow-hidden max-h-[200px] overflow-y-auto">
@@ -825,7 +832,7 @@ const CourseDetailPage = () => {
                         )}
                       >
                         <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
-                        <span className="text-sm text-text-secondary tabular-nums">{p.amount_paid} kr</span>
+                        <span className="text-sm text-text-secondary tabular-nums">{p.amount_paid ? `${p.amount_paid} kr` : 'Gratis'}</span>
                       </div>
                     ))}
                   </div>
@@ -833,7 +840,7 @@ const CourseDetailPage = () => {
 
                 {/* Refund total */}
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-medium text-text-tertiary">Totalt refusjon</span>
+                  <span className="text-xs font-medium text-text-secondary">Totalt refusjon</span>
                   <span className="text-lg font-medium text-text-primary tabular-nums">{refundPreview.totalAmount} kr</span>
                 </div>
               </div>
@@ -841,7 +848,7 @@ const CourseDetailPage = () => {
           </div>
 
           {/* Frosted footer */}
-          <AlertDialogFooter className="border-t border-zinc-200 bg-white/80 backdrop-blur-md p-6 flex-row justify-end gap-3 sm:space-x-0">
+          <AlertDialogFooter className="border-t border-zinc-200 bg-white p-6 flex-row justify-end gap-3 sm:space-x-0">
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
               variant="outline-soft"

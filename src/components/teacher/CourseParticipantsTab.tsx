@@ -94,7 +94,7 @@ export const CourseParticipantsTab = ({
               <div className="p-4 space-y-5">
                 {/* Status: Segmented Control */}
                 <div>
-                  <p id="status-label" className="text-xs font-medium text-text-tertiary mb-2">
+                  <p id="status-label" className="text-xs font-medium text-text-secondary mb-2">
                     Status
                   </p>
                   <div
@@ -125,13 +125,13 @@ export const CourseParticipantsTab = ({
 
                 {/* Payment: Radio Group */}
                 <div>
-                  <p id="payment-label" className="text-xs font-medium text-text-tertiary mb-2">
+                  <p id="payment-label" className="text-xs font-medium text-text-secondary mb-2">
                     Betaling
                   </p>
                   <div role="radiogroup" aria-labelledby="payment-label" className="space-y-1">
                     {([
                       { value: 'paid', label: 'Betalt' },
-                      { value: 'pending', label: 'Venter' },
+                      { value: 'pending', label: 'Venter betaling' },
                     ] as const).map((option) => (
                       <button
                         key={option.value}
@@ -197,10 +197,10 @@ export const CourseParticipantsTab = ({
           {paymentFilter !== 'all' && (
             <button
               onClick={() => onPaymentFilterChange('all')}
-              aria-label={`Fjern filter: Betaling ${paymentFilter === 'paid' ? 'Betalt' : 'Venter'}`}
+              aria-label={`Fjern filter: Betaling ${paymentFilter === 'paid' ? 'Betalt' : 'Venter betaling'}`}
               className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-zinc-400 smooth-transition"
             >
-              Betaling: {paymentFilter === 'paid' ? 'Betalt' : 'Venter'}
+              Betaling: {paymentFilter === 'paid' ? 'Betalt' : 'Venter betaling'}
               <X className="h-3 w-3" />
             </button>
           )}
@@ -219,11 +219,11 @@ export const CourseParticipantsTab = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-zinc-100 bg-surface/50">
-                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-auto">Navn</th>
-                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-32">Status</th>
-                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-40">Betaling</th>
-                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary w-20">Kvittering</th>
-                <th className="py-2.5 px-6 text-xs font-medium text-text-tertiary text-right w-20">Notater</th>
+                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-auto">Navn</th>
+                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-32">Status</th>
+                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-40 hidden md:table-cell">Betaling</th>
+                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-20 hidden md:table-cell">Kvittering</th>
+                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary text-right w-20 hidden sm:table-cell">Notater</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -252,25 +252,25 @@ export const CourseParticipantsTab = ({
                 filteredParticipants.map((participant) => (
                   <tr key={participant.id} className="group hover:bg-zinc-50 smooth-transition">
                     {/* Navn */}
-                    <td className="py-3 px-6">
+                    <td className="py-4 px-3 sm:px-6">
                       <div className="flex items-center gap-3">
                         <UserAvatar name={participant.name} email={participant.email} size="sm" />
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">{participant.name}</p>
-                          <p className="text-xs text-text-secondary">{participant.email}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">{participant.name}</p>
+                          <p className="text-xs text-text-secondary truncate">{participant.email}</p>
                         </div>
                       </div>
                     </td>
                     {/* Status (signup) */}
-                    <td className="py-3 px-6">
+                    <td className="py-3 px-3 sm:px-6">
                       <StatusBadge status={participant.status} />
                     </td>
                     {/* Betaling (payment) - exception-only (paid is silent by default) */}
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
                       <PaymentBadge status={participant.paymentStatus} />
                     </td>
                     {/* Kvittering (receipt) - icon-only when present */}
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
                       {participant.receiptUrl && (
                         <a
                           href={participant.receiptUrl}
@@ -285,7 +285,7 @@ export const CourseParticipantsTab = ({
                       )}
                     </td>
                     {/* Notater - icon-only when present */}
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-4 px-3 sm:px-6 text-right hidden sm:table-cell">
                       <NotePopover note={participant.notes} />
                     </td>
                   </tr>

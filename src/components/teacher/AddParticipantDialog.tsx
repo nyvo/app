@@ -119,7 +119,7 @@ export function AddParticipantDialog({
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      newErrors.email = 'E-postadresse er påkrevd';
+      newErrors.email = 'Skriv inn e-post';
     } else if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Skriv inn en gyldig e-postadresse';
     }
@@ -144,7 +144,7 @@ export function AddParticipantDialog({
 
     // Validate organizationId is present
     if (!organizationId) {
-      setSubmitError('Organisasjons-ID mangler. Vennligst last siden på nytt.');
+      setSubmitError('Organisasjons-ID mangler. Last siden på nytt.');
       return;
     }
 
@@ -185,7 +185,7 @@ export function AddParticipantDialog({
       onSuccess(); // Trigger refresh
       toast.success('Deltaker lagt til');
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'En feil oppstod');
+      setSubmitError(err instanceof Error ? err.message : 'Noe gikk galt. Prøv igjen.');
       setIsSubmitting(false);
     }
   };
@@ -223,7 +223,7 @@ export function AddParticipantDialog({
             )}
 
             {/* Form fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* First Name */}
               <div>
                 <label
@@ -306,7 +306,7 @@ export function AddParticipantDialog({
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-xs font-medium text-text-secondary mb-1.5">
-                E-postadresse <span className="text-destructive">*</span>
+                E-post <span className="text-destructive">*</span>
               </label>
               <Input
                 id="email"
@@ -335,7 +335,7 @@ export function AddParticipantDialog({
                   {errors.email}
                 </p>
               ) : (
-                <p id="email-hint" className="text-xs text-text-tertiary mt-1.5">
+                <p id="email-hint" className="text-xs text-text-secondary mt-1.5">
                   Bekreftelse sendes hit
                 </p>
               )}
@@ -352,11 +352,11 @@ export function AddParticipantDialog({
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="+47 000 00 000"
+                placeholder="+47 912 34 567"
                 aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
-              <p id="phone-hint" className="text-xs text-text-tertiary mt-1.5">
+              <p id="phone-hint" className="text-xs text-text-secondary mt-1.5">
                 For kontakt ved endringer
               </p>
             </div>
@@ -375,7 +375,7 @@ export function AddParticipantDialog({
                 rows={3}
                 disabled={isSubmitting}
               />
-              <p className="text-xs text-text-tertiary mt-1.5">Synlig kun for instruktør</p>
+              <p className="text-xs text-text-secondary mt-1.5">Synlig kun for instruktør</p>
             </div>
 
             {/* Payment Toggle */}
@@ -389,7 +389,7 @@ export function AddParticipantDialog({
                 className="flex gap-1 border-b border-border"
               >
                 {[
-                  { value: 'pending' as const, label: 'Ikke betalt' },
+                  { value: 'pending' as const, label: 'Venter betaling' },
                   { value: 'paid' as const, label: 'Betalt' },
                 ].map((option) => (
                   <button
@@ -409,7 +409,7 @@ export function AddParticipantDialog({
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-text-tertiary mt-1.5">Dette oppretter ikke noen faktisk betaling</p>
+              <p className="text-xs text-text-secondary mt-1.5">Dette oppretter ikke noen faktisk betaling</p>
             </div>
 
             <DialogFooter>
@@ -421,7 +421,7 @@ export function AddParticipantDialog({
               >
                 Avbryt
               </Button>
-              <Button type="submit" loading={isSubmitting} loadingText="Legger til...">
+              <Button type="submit" loading={isSubmitting} loadingText="Legger til">
                 Legg til deltaker
               </Button>
             </DialogFooter>

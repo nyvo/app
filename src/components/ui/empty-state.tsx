@@ -8,6 +8,7 @@ interface EmptyStateProps {
   description?: string
   action?: React.ReactNode
   className?: string
+  variant?: 'default' | 'public'
 }
 
 /**
@@ -18,8 +19,11 @@ export const EmptyState = React.memo(function EmptyState({
   title,
   description,
   action,
-  className
+  className,
+  variant = 'default'
 }: EmptyStateProps) {
+  const isPublic = variant === 'public'
+
   return (
     <div
       className={cn(
@@ -28,13 +32,19 @@ export const EmptyState = React.memo(function EmptyState({
       )}
     >
       {Icon && (
-        <div className="mb-4 rounded-full bg-surface-secondary p-3">
+        <div className={cn(
+          'mb-4 rounded-full p-3',
+          isPublic ? 'bg-public-sand-deep' : 'bg-surface-secondary'
+        )}>
           <Icon className="h-6 w-6 text-text-tertiary" />
         </div>
       )}
-      <h3 className="text-sm font-medium text-text-secondary">{title}</h3>
+      <h3 className={cn(
+        'text-sm font-medium text-text-secondary',
+        isPublic && 'display-heading text-base'
+      )}>{title}</h3>
       {description && (
-        <p className="mt-1 text-sm text-text-tertiary max-w-sm">{description}</p>
+        <p className="mt-1 text-sm text-text-secondary max-w-sm">{description}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>

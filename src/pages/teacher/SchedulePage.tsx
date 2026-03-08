@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, CalendarPlus, Filter, Users, CheckCircle2, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, Users, CheckCircle2, CalendarDays } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -92,7 +92,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-lg bg-white border border-zinc-300 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-2xl bg-white border border-zinc-200 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
@@ -101,8 +101,8 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         </span>
         {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
         {isActive && (
-          <span className="inline-flex items-center rounded-full bg-success px-1.5 py-0.5 text-xxs font-medium text-success-foreground">
-            Start
+          <span className="inline-flex items-center rounded-full bg-status-confirmed-bg px-1.5 py-0.5 text-xxs font-medium text-status-confirmed-text border border-status-confirmed-border">
+            Pågår
           </span>
         )}
         {!isCompleted && !isActive && (
@@ -110,7 +110,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
         )}
       </div>
       <p className="text-xs font-medium text-text-primary mt-1 truncate">{event.title}</p>
-      <p className="text-xs text-text-tertiary mt-0.5">{event.location}</p>
+      <p className="text-xs text-text-secondary mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -120,11 +120,11 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
               size="xxs"
               ringClassName="ring-1 ring-border"
             />
-            <span className="text-xs text-text-tertiary">{event.instructor}</span>
+            <span className="text-xs text-text-secondary">{event.instructor}</span>
           </div>
           <div className="flex items-center gap-1">
             <Users className="h-3 w-3 text-text-tertiary" />
-            <span className="text-xs text-text-tertiary">
+            <span className="text-xs text-text-secondary">
               {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
             </span>
           </div>
@@ -170,17 +170,17 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
               {formatTime(event.startTime)} - {formatTime(event.endTime)}
             </span>
             {isActive && (
-              <span className="inline-flex items-center rounded-full bg-success px-2 py-0.5 text-xs font-medium text-success-foreground">
+              <span className="inline-flex items-center rounded-full bg-status-confirmed-bg px-2 py-0.5 text-xs font-medium text-status-confirmed-text border border-status-confirmed-border">
                 Pågår
               </span>
             )}
             {isCompleted && <CheckCircle2 className="h-4 w-4 text-text-tertiary" />}
           </div>
           <p className="text-sm font-medium text-text-primary truncate">{event.title}</p>
-          <p className="text-xs text-text-tertiary mt-0.5">{event.location}</p>
+          <p className="text-xs text-text-secondary mt-0.5">{event.location}</p>
         </div>
         {!isCompleted && (
-          <div className="flex items-center gap-1 text-xs text-text-tertiary shrink-0">
+          <div className="flex items-center gap-1 text-xs text-text-secondary shrink-0">
             <Users className="h-4 w-4" />
             <span>{event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}</span>
           </div>
@@ -250,8 +250,8 @@ const MobileDayView = ({
         ) : error ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
-                <CalendarDays className="h-7 w-7 text-destructive" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-status-error-bg border border-status-error-border">
+                <CalendarDays className="h-7 w-7 text-status-error-text" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Noe gikk galt</h3>
               <p className="text-xs text-text-secondary mb-4">{error}</p>
@@ -605,20 +605,7 @@ export const SchedulePage = () => {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 flex-nowrap -mx-4 sm:-mx-6 lg:-mx-12 px-4 sm:px-6 lg:px-12">
-              <button className="flex items-center gap-2 h-10 rounded-lg bg-white border border-zinc-200 px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
-                <Filter className="h-3.5 w-3.5" />
-                Instruktør: Alle
-              </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
-                Rom
-              </button>
-              <button className="flex items-center gap-2 h-10 rounded-lg border border-dashed border-ring bg-transparent px-3 py-2 text-xs font-medium text-text-secondary ios-ease opacity-50 pointer-events-none" title="Kommer snart">
-                Kurstype
-              </button>
-              {/* Dynamic style legend - only shows styles from active courses */}
-            </div>
+            {/* Filters - placeholder removed per progressive disclosure principle */}
           </motion.header>
 
           {/* Mobile View */}
@@ -648,8 +635,8 @@ export const SchedulePage = () => {
             {error && !isLoading && (
               <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
                 <div className="text-center max-w-sm mx-auto p-8">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
-                    <CalendarDays className="h-8 w-8 text-destructive" />
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-status-error-bg border border-status-error-border">
+                    <CalendarDays className="h-8 w-8 text-status-error-text" />
                   </div>
                   <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
                     Noe gikk galt
@@ -700,7 +687,7 @@ export const SchedulePage = () => {
                   key={day.name}
                   className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                 >
-                  <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-tertiary group-hover:text-text-secondary'}`}>
+                  <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                     {day.name}
                   </span>
                   <span
@@ -727,14 +714,14 @@ export const SchedulePage = () => {
                   className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
                   style={{ top: `${currentTimePosition}px` }}
                 >
-                  <div className="w-[60px] text-right pr-2 text-xxs font-medium text-destructive">{currentTimeString}</div>
-                  <div className="h-px flex-1 bg-destructive opacity-50"></div>
-                  <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-destructive"></div>
+                  <div className="w-[60px] text-right pr-2 text-xxs font-medium text-primary">{currentTimeString}</div>
+                  <div className="h-px flex-1 bg-primary opacity-50"></div>
+                  <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"></div>
                 </div>
               )}
 
               {/* Time Column */}
-              <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-tertiary">
+              <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-secondary">
                 {timeSlots.map((time) => (
                   <div key={time} className="h-[100px] border-b border-zinc-200/50 px-2 py-1">
                     {time}

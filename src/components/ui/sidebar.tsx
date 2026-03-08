@@ -223,8 +223,8 @@ const Sidebar = React.forwardRef<
             side={side}
           >
             <SheetHeader className="sr-only">
-              <SheetTitle>Sidebar</SheetTitle>
-              <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+              <SheetTitle>Sidemeny</SheetTitle>
+              <SheetDescription>Viser mobilmenyen.</SheetDescription>
             </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
@@ -299,7 +299,7 @@ const SidebarTrigger = React.forwardRef<
       {...props}
     >
       <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
+      <span className="sr-only">Vis/skjul meny</span>
     </Button>
   )
 })
@@ -315,10 +315,10 @@ const SidebarRail = React.forwardRef<
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label="Vis/skjul meny"
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title="Vis/skjul meny"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
         "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",
@@ -538,7 +538,7 @@ const sidebarMenuButtonVariants = cva(
       variant: {
         default: "",
         outline:
-          "bg-background border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent",
+          "bg-background border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       },
       size: {
         default: "text-sm",

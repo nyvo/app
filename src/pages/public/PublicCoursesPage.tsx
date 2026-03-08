@@ -9,10 +9,9 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { CourseCard } from '@/components/public/CourseCard';
+import { PublicCourseTable } from '@/components/public/PublicCourseTable';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
-import { fetchMySignups } from '@/services/studentSignups';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { getDayOfWeekFromSchedule } from '@/components/public/courseCardUtils';
@@ -84,7 +83,6 @@ const PublicCoursesPage = () => {
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [signedUpCourseIds, setSignedUpCourseIds] = useState<Set<string>>(new Set());
 
   // Split and sort courses by type
   const { kursrekker, arrangementer } = useMemo(() => {
@@ -128,19 +126,6 @@ const PublicCoursesPage = () => {
 
       setCourses(activeResult.data || []);
 
-      // Load student's signups if authenticated
-      if (user && profile?.email) {
-        const { data: signups } = await fetchMySignups(user.id, profile.email);
-        if (signups) {
-          const courseIds = new Set(
-            signups
-              .filter((s) => s.status !== 'cancelled')
-              .map((s) => s.course_id)
-          );
-          setSignedUpCourseIds(courseIds);
-        }
-      }
-
       setLoading(false);
     }
 
@@ -150,10 +135,10 @@ const PublicCoursesPage = () => {
   const isEmpty = !loading && courses.length === 0 && organization;
 
   return (
-    <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
+    <div className="theme-public min-h-screen w-full bg-public-sand text-sidebar-foreground overflow-x-hidden font-sans">
       {/* Minimal Navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-zinc-200">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+      <nav className="sticky top-0 z-50 w-full bg-public-sand/80 backdrop-blur-md border-b border-zinc-200/60">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface border border-zinc-100 group-hover:border-zinc-400 transition-colors">
               <Leaf className="h-4 w-4 text-text-primary" />
@@ -190,7 +175,7 @@ const PublicCoursesPage = () => {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-3xl px-6 py-12 sm:py-16">
+      <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-24">
@@ -232,7 +217,7 @@ const PublicCoursesPage = () => {
 
               {/* Text Info */}
               <div className="space-y-2 flex-1">
-                <h1 className="text-2xl font-medium text-text-primary sm:text-3xl tracking-tight">
+                <h1 className="display-heading text-2xl sm:text-3xl font-medium text-text-primary">
                   {organization.name}
                 </h1>
 
@@ -244,7 +229,7 @@ const PublicCoursesPage = () => {
                 )}
 
                 {organization.description && (
-                  <p className="max-w-2xl text-sm text-text-tertiary leading-relaxed pt-1">
+                  <p className="max-w-2xl text-sm text-text-secondary leading-relaxed pt-1">
                     {organization.description}
                   </p>
                 )}
@@ -253,51 +238,44 @@ const PublicCoursesPage = () => {
 
             {/* Unified Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-2xl border-border bg-white">
-                <p className="text-sm font-medium text-text-primary">Ingen aktive kurs</p>
-                <p className="text-xs text-text-tertiary mt-1">
+              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-3xl border-zinc-200/60 bg-white">
+                <p className="display-heading text-base font-medium text-text-primary">Ingen aktive kurs</p>
+                <p className="text-xs text-text-secondary mt-1">
                   Det er ingen planlagte kurs for øyeblikket.
                 </p>
               </div>
             )}
 
-            {/* Kursrekker Section */}
-            {!isEmpty && kursrekker.length > 0 && (
-              <section className="mb-12">
-                <h2 className="text-lg font-medium text-text-primary mb-6">
-                  Kursrekker
-                </h2>
-                <div className="space-y-4">
-                  {kursrekker.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      studioSlug={slug || ''}
-                      isSignedUp={signedUpCourseIds.has(course.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* Course Lists — narrower container within the wider page */}
+            <div className="max-w-4xl mx-auto">
+              {/* Kursrekker Section */}
+              {!isEmpty && kursrekker.length > 0 && (
+                <section className="mb-12">
+                  <h2 className="display-heading text-xl font-medium text-text-primary mb-6">
+                    Kursrekker
+                  </h2>
+                  <PublicCourseTable
+                    courses={kursrekker}
+                    studioSlug={slug || ''}
+                    signedUpCourseIds={new Set<string>()}
+                  />
+                </section>
+              )}
 
-            {/* Arrangementer Section */}
-            {!isEmpty && arrangementer.length > 0 && (
-              <section className="mb-12">
-                <h2 className="text-lg font-medium text-text-primary mb-6">
-                  Arrangementer
-                </h2>
-                <div className="space-y-4">
-                  {arrangementer.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      studioSlug={slug || ''}
-                      isSignedUp={signedUpCourseIds.has(course.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+              {/* Arrangementer Section */}
+              {!isEmpty && arrangementer.length > 0 && (
+                <section className="mb-12">
+                  <h2 className="display-heading text-xl font-medium text-text-primary mb-6">
+                    Arrangementer
+                  </h2>
+                  <PublicCourseTable
+                    courses={arrangementer}
+                    studioSlug={slug || ''}
+                    signedUpCourseIds={new Set<string>()}
+                  />
+                </section>
+              )}
+            </div>
           </>
         )}
       </main>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import { PriceHeader } from './PriceHeader';
@@ -10,7 +10,7 @@ import { StudentDetailsForm, type StudentDetailsFormData } from './StudentDetail
 export interface BookingSidebarProps {
   course: PublicCourseWithDetails;
   isFull: boolean;
-  isAlreadySignedUp: boolean;
+  isAlreadySignedUp?: boolean;
   formData: StudentDetailsFormData;
   errors: Record<string, boolean>;
   touched: Record<string, boolean>;
@@ -29,7 +29,6 @@ export interface BookingSidebarProps {
 export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   course,
   isFull,
-  isAlreadySignedUp,
   formData,
   errors,
   touched,
@@ -40,6 +39,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   onInputChange,
   onBlur,
 }) => {
+  const stripeNotReady = course.organization?.stripe_onboarding_complete === false;
 
   return (
     <div className="sticky top-28">
@@ -52,13 +52,6 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         />
 
         {/* Content */}
-        {course.organization?.stripe_onboarding_complete === false ? (
-          <div className="p-6">
-            <p className="text-sm text-text-secondary text-center py-6">
-              Påmelding er ikke tilgjengelig ennå.
-            </p>
-          </div>
-        ) : (
         <form id="booking-form" onSubmit={onSubmit} className="p-6 space-y-8">
           {/* Redirecting to payment state */}
           {redirectingToPayment ? (
@@ -72,11 +65,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               </p>
             </div>
           ) : (
-            <div className={`space-y-6 ${isFull ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+            <div className={`space-y-6 ${isFull || stripeNotReady ? 'opacity-40 pointer-events-none select-none' : ''}`}>
               {/* Step 1: Ticket Selection */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-tertiary">
+                  <span className="text-xs font-medium text-text-secondary">
                     Steg 1
                   </span>
                   <div className="h-px flex-1 bg-zinc-200"></div>
@@ -87,7 +80,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               {/* Step 2: Your Details */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-tertiary">
+                  <span className="text-xs font-medium text-text-secondary">
                     Steg 2
                   </span>
                   <div className="h-px flex-1 bg-zinc-200"></div>
@@ -103,18 +96,22 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 />
               </div>
 
-              {/* Submit button & disclaimer - hidden when full (header badge is sufficient) */}
+              {/* Submit button & disclaimer */}
               {!isFull && (
                 <div className="space-y-3">
-                  {isAlreadySignedUp ? (
-                    <Button
-                      size="compact"
-                      className="w-full"
-                      disabled
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Du er påmeldt
-                    </Button>
+                  {stripeNotReady ? (
+                    <>
+                      <Button
+                        size="compact"
+                        className="w-full"
+                        disabled
+                      >
+                        Påmelding åpner snart
+                      </Button>
+                      <p className="text-center text-xs text-text-secondary">
+                        Instruktøren klargjør påmelding.
+                      </p>
+                    </>
                   ) : (
                     <Button
                       size="compact"
@@ -129,15 +126,16 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                       </span>
                     </Button>
                   )}
-                  <p className="text-center text-xs text-text-tertiary">
-                    Sikker betaling. Du belastes ikke før bekreftelse.
-                  </p>
+                  {!stripeNotReady && (
+                    <p className="text-center text-xs text-text-secondary">
+                      Sikker betaling. Du belastes ikke før bekreftelse.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
         </form>
-        )}
       </div>
     </div>
   );

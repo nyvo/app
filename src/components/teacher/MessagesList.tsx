@@ -10,10 +10,10 @@ interface MessagesListProps {
 
 export const MessagesList = memo(function MessagesList({ messages }: MessagesListProps) {
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-2xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
+    <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[280px] sm:h-[360px] rounded-2xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
       <div className="flex items-center justify-between p-5 pb-4">
         <h3 className="font-geist text-sm font-medium text-text-primary">Meldinger</h3>
-        <Link to="/teacher/messages" className="text-xs font-medium text-text-tertiary hover:text-text-secondary transition-colors">Se alle</Link>
+        <Link to="/teacher/messages" className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors">Se alle</Link>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-2 flex flex-col">
         {messages.length === 0 ? (

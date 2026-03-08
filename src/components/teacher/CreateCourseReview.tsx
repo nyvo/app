@@ -100,7 +100,7 @@ export function CreateCourseReview({
 }: CreateCourseReviewProps) {
   return (
     <div
-      className="rounded-xl bg-white border border-zinc-200 overflow-hidden"
+      className="rounded-2xl bg-white border border-zinc-200 overflow-hidden"
       role="region"
       aria-label="Sjekk oppsummering"
     >

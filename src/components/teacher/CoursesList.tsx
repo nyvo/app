@@ -143,7 +143,7 @@ function CourseRow({ course }: { course: Course }) {
             <span className="text-xs text-text-secondary group-hover/card:text-text-primary transition-colors">{course.subtitle}</span>
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 text-ring group-hover/card:text-text-tertiary group-hover/card:translate-x-0.5 smooth-transition flex-shrink-0 ml-2" />
+        <ChevronRight className="h-4 w-4 text-ring group-hover/card:text-text-tertiary smooth-transition flex-shrink-0 ml-2" />
       </Link>
     </div>
   );
@@ -165,7 +165,7 @@ function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
       </p>
       <Link
         to="/teacher/courses"
-        className="text-xs text-text-tertiary hover:text-text-secondary mt-3 smooth-transition inline-flex items-center gap-1"
+        className="text-xs text-text-secondary hover:text-text-primary mt-3 smooth-transition inline-flex items-center gap-1"
       >
         Se alle kurs
         <ChevronRight className="h-3 w-3" />

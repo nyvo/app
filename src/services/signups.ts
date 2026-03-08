@@ -3,7 +3,7 @@ import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus,
 
 // Signup with joined course and profile data
 export interface SignupWithDetails extends Signup {
-  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date'> | null
+  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
   // Exception detection fields (already on Signup, explicitly noted here)
   // payment_status is inherited from Signup
@@ -188,7 +188,7 @@ export async function fetchAllSignups(
     .from('signups')
     .select(`
       *,
-      course:courses(id, title, course_type, time_schedule, start_date),
+      course:courses(id, title, course_type, time_schedule, start_date, end_date, status),
       profile:profiles(id, name, email, avatar_url)
     `)
     .eq('organization_id', organizationId)
@@ -257,7 +257,7 @@ export async function teacherCancelSignup(
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke avmelde deltaker') }
+      return { data: null, error: new Error(error.message || 'Kunne ikke avbestille deltaker') }
     }
 
     if (data?.error) {

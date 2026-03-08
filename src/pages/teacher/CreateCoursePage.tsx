@@ -17,7 +17,7 @@ import {
   Leaf,
   Menu,
   Plus,
-  CreditCard,
+  AlertTriangle,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -131,7 +131,7 @@ const CreateCoursePage = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Form draft persistence
-  const { draft, saveDraft, clearDraft, hasDraft } = useFormDraft<CourseDraft>(DRAFT_KEY);
+  const { draft, saveDraft, saveDraftImmediate, clearDraft, hasDraft } = useFormDraft<CourseDraft>(DRAFT_KEY);
 
   // Load draft on mount
   useEffect(() => {
@@ -198,6 +198,23 @@ const CreateCoursePage = () => {
   const handleConnectStripe = async () => {
     if (!currentOrganization?.id) return;
     setConnectingStripe(true);
+    saveDraftImmediate({
+      courseType,
+      title,
+      description,
+      startDate: startDate?.toISOString(),
+      startTime,
+      duration,
+      weeks,
+      location,
+      price,
+      capacity,
+      audienceLevel: audienceLevel || undefined,
+      equipment: equipment || undefined,
+      arrivalMinutes: arrivalMinutes || undefined,
+      customBullets: customBullets.length > 0 ? customBullets : undefined,
+      stepIndex: currentStep,
+    });
     const { data, error } = await createStripeConnectLink(currentOrganization.id);
     if (error || !data?.url) {
       toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
@@ -315,8 +332,8 @@ const CreateCoursePage = () => {
       ? durationMins < 60
         ? `${durationMins} min`
         : durationMins % 60 > 0
-          ? `${Math.floor(durationMins / 60)} t ${durationMins % 60} min`
-          : `${Math.floor(durationMins / 60)} t`
+          ? `${Math.floor(durationMins / 60)}t ${durationMins % 60}min`
+          : `${Math.floor(durationMins / 60)} ${Math.floor(durationMins / 60) === 1 ? 'time' : 'timer'}`
       : null;
     const timeAndDurationLabel = startTime
       ? `${startTime}${durationStr ? ` \u00b7 ${durationStr}` : ''}`
@@ -327,7 +344,7 @@ const CreateCoursePage = () => {
     const priceNum = price !== '' ? parseInt(price, 10) : null;
     const priceLabel =
       priceNum != null && !isNaN(priceNum) && priceNum >= 0
-        ? `${priceNum} kr`
+        ? (priceNum === 0 ? 'Gratis' : `${priceNum} kr`)
         : 'Pris ikke angitt';
 
     const capNum = capacity ? parseInt(capacity, 10) : null;
@@ -505,12 +522,12 @@ const CreateCoursePage = () => {
               </BreadcrumbList>
             </Breadcrumb>
             <h1 className="text-2xl font-medium text-text-primary tracking-tight">
-              {showReviewView ? 'Sjekk detaljer' : 'Opprett nytt kurs'}
+              {showReviewView ? 'Sjekk oppsummering' : 'Opprett nytt kurs'}
             </h1>
             <p className="text-text-secondary text-sm mt-1">
               {showReviewView
                 ? 'Kontroller at informasjonen stemmer før du publiserer.'
-                : 'Sett opp et nytt kurs eller workshop.'}
+                : 'Sett opp et nytt kurs eller arrangement.'}
             </p>
           </div>
         </header>
@@ -530,24 +547,31 @@ const CreateCoursePage = () => {
               className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-10"
             >
               {!isStripeConnected && (
-                <div className="mb-6 rounded-xl border border-zinc-200 bg-surface px-4 py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
-                    <p className="text-sm text-text-secondary">
-                      Koble til Stripe for å publisere kurset og motta betalinger.
-                    </p>
+                <div className="mb-6 rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-white">
+                        Betalinger må settes opp før publisering
+                      </h3>
+                      <p className="text-xs text-zinc-400 mt-1 leading-snug">
+                        Du blir sendt til Stripe for å fullføre oppsett av betalinger. Utkastet ditt lagres automatisk og vil være her når du kommer tilbake.
+                      </p>
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline-soft"
-                    size="xs"
-                    onClick={handleConnectStripe}
-                    className="shrink-0"
-                    loading={connectingStripe}
-                    loadingText="Koble til"
-                  >
-                    Koble til
-                  </Button>
+                  <div className="mt-4 ml-7">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      className="bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100 shrink-0"
+                      onClick={handleConnectStripe}
+                      loading={connectingStripe}
+                      loadingText="Sender deg til Stripe …"
+                    >
+                      Sett opp betalinger
+                    </Button>
+                  </div>
                 </div>
               )}
               {submitAttempted && !isFormValid && (
@@ -612,7 +636,7 @@ const CreateCoursePage = () => {
                     value="single"
                     icon={CalendarDays}
                     title="Enkeltkurs"
-                    description="For drop-in, workshop eller enkelthendelse."
+                    description="For drop-in, arrangement eller enkelthendelse."
                   />
                 </RadioGroup>
               </section>
@@ -660,7 +684,7 @@ const CreateCoursePage = () => {
                     </label>
                     <Textarea
                       id="create-description"
-                      placeholder="Hva vil studentene lære?"
+                      placeholder="Hva vil elevene lære?"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       maxLength={DESCRIPTION_MAX_LENGTH}
@@ -710,7 +734,7 @@ const CreateCoursePage = () => {
                 </div>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="create-start-date" className="block text-xs font-medium text-text-primary mb-1.5">
                         {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-destructive">*</span>
@@ -755,7 +779,7 @@ const CreateCoursePage = () => {
                               }`}
                             >
                               <span className={weeks ? 'text-text-primary' : 'text-text-tertiary'}>{weeks || 'Velg'}</span>
-                              <ChevronDown className={`h-4 w-4 text-text-tertiary opacity-50 transition-transform ${isWeeksOpen ? 'rotate-180' : ''} ${showError('weeks') ? 'text-destructive' : ''}`} />
+                              <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isWeeksOpen ? 'rotate-180' : ''} ${showError('weeks') ? 'text-destructive' : ''}`} />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent align="start" className="w-[140px] p-3 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
@@ -793,7 +817,7 @@ const CreateCoursePage = () => {
                   </div>
 
                   {/* Time + Duration row */}
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="create-start-time" className="block text-xs font-medium text-text-primary mb-1.5">
                         Starttid <span className="text-destructive">*</span>
@@ -840,7 +864,7 @@ const CreateCoursePage = () => {
                         <SelectContent>
                           {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
                             <SelectItem key={mins} value={mins.toString()}>
-                              {mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} t ${mins % 60 > 0 ? `${mins % 60} min` : ''}`}
+                              {mins < 60 ? `${mins} min` : mins % 60 > 0 ? `${Math.floor(mins / 60)}t ${mins % 60}min` : `${Math.floor(mins / 60)} ${Math.floor(mins / 60) === 1 ? 'time' : 'timer'}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -911,7 +935,7 @@ const CreateCoursePage = () => {
                 <div className="mb-6 border-b border-zinc-100 pb-2">
                   <h2 className="text-sm font-medium text-text-secondary">Påmelding</h2>
                 </div>
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Price */}
                   <div>
                     <label htmlFor="create-price" className="block text-xs font-medium text-text-primary mb-1.5">
@@ -937,7 +961,7 @@ const CreateCoursePage = () => {
                         )}
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-text-secondary'}`}>NOK</span>
+                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-text-secondary'}`}>kr</span>
                       </div>
                     </div>
                     {showError('price') && (
@@ -1009,7 +1033,7 @@ const CreateCoursePage = () => {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-text-tertiary mt-2">
+                    <p className="text-xs text-text-secondary mt-2">
                       Velg det laveste nivået som passer.
                     </p>
                   </div>

@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchCourseSessions } from '@/services/courses';
 import { checkCourseAvailability } from '@/services/signups';
-import { checkIfAlreadySignedUp } from '@/services/studentSignups';
 import { createCheckoutSession } from '@/services/checkout';
 import { toast } from 'sonner';
 import type { CourseSession } from '@/types/database';
@@ -77,7 +76,6 @@ const PublicCourseDetailPage = () => {
   const [sessions, setSessions] = useState<CourseSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [isAlreadySignedUp, setIsAlreadySignedUp] = useState(false);
 
   // Booking flow state
   const [submitting, setSubmitting] = useState(false);
@@ -144,16 +142,6 @@ const PublicCourseDetailPage = () => {
       const { data: sessionsData, error: sessionsError } = await fetchCourseSessions(courseId);
       if (!sessionsError && sessionsData) {
         setSessions(sessionsData);
-      }
-
-      // Check if student is already signed up
-      if (user && userType === 'student' && profile?.email) {
-        const { isSignedUp } = await checkIfAlreadySignedUp(
-          courseId,
-          user.id,
-          profile.email
-        );
-        setIsAlreadySignedUp(isSignedUp);
       }
 
       setLoading(false);
@@ -319,7 +307,7 @@ const PublicCourseDetailPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-surface flex items-center justify-center">
+      <div className="theme-public min-h-screen w-full bg-public-sand flex items-center justify-center">
         <Spinner size="xl" />
       </div>
     );
@@ -329,9 +317,9 @@ const PublicCourseDetailPage = () => {
   if (fetchError || !course) {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
-      <div className="min-h-screen w-full bg-surface">
-        <header className="border-b border-zinc-200 bg-surface">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+      <div className="theme-public min-h-screen w-full bg-public-sand">
+        <header className="border-b border-zinc-200/60 bg-public-sand">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to={backUrl} className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface border border-zinc-100">
                 <Leaf className="h-5 w-5" />
@@ -367,7 +355,7 @@ const PublicCourseDetailPage = () => {
   const isAuthStudent = Boolean(user && userType === 'student');
 
   return (
-    <div className="min-h-screen w-full bg-surface overflow-x-hidden pb-32 lg:pb-0">
+    <div className="theme-public min-h-screen w-full bg-public-sand overflow-x-hidden pb-32 lg:pb-0">
       {/* Header */}
       <PublicCourseHeader
         organizationSlug={slug || ''}
@@ -379,7 +367,7 @@ const PublicCourseDetailPage = () => {
 
       {/* Main Content */}
       <main className="pt-24 px-4 sm:px-6">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
             {/* Left Column */}
             <div className="lg:col-span-8 space-y-8">
@@ -393,8 +381,8 @@ const PublicCourseDetailPage = () => {
               {course.instructor && (
                 <InstructorCard
                   instructor={{
-                    name: course.instructor.name || 'Instructor',
-                    role: 'Instructor',
+                    name: course.instructor.name || 'Instruktør',
+                    role: 'Instruktør',
                     avatar_url: course.instructor.avatar_url,
                     profileUrl: undefined, // TODO: Add profile URL when available
                   }}
@@ -429,7 +417,7 @@ const PublicCourseDetailPage = () => {
               <BookingSidebar
                 course={course}
                 isFull={isFull}
-                isAlreadySignedUp={isAlreadySignedUp}
+                isAlreadySignedUp={false}
                 formData={formData}
                 errors={errors}
                 touched={touched}
@@ -449,7 +437,7 @@ const PublicCourseDetailPage = () => {
       <MobileStickyBar
         price={course.price}
         isFull={isFull}
-        isAlreadySignedUp={isAlreadySignedUp}
+        isAlreadySignedUp={false}
         submitting={submitting}
         isEnded={isEnded}
         studioUrl={studioUrl}

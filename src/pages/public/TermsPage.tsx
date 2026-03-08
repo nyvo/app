@@ -44,7 +44,7 @@ const TermsPage = () => {
                 Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er gjennomført.
               </p>
               <p className="text-text-secondary leading-relaxed text-sm">
-                Du vil motta en bekreftelse på e-post når påmeldingen er registrert.
+                Du vil motta en bekreftelse på e-post når påmeldingen er bekreftet.
               </p>
             </section>
 

@@ -121,7 +121,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
                 ? 'border-destructive focus:border-destructive focus:ring-destructive'
                 : ''
             } ${isAuthStudent ? 'bg-surface-elevated opacity-60' : ''}`}
-            placeholder="ola@example.com"
+            placeholder="ola@eksempel.no"
             aria-invalid={touched.email && errors.email}
           />
         </div>
@@ -157,9 +157,13 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           id="termsAccepted"
           name="termsAccepted"
           checked={formData.termsAccepted}
-          onChange={onChange}
+          onCheckedChange={(checked) => {
+            onChange({
+              target: { name: 'termsAccepted', type: 'checkbox', checked: !!checked }
+            } as React.ChangeEvent<HTMLInputElement>);
+          }}
           disabled={submitting}
-          aria-invalid={touched.termsAccepted && errors.termsAccepted}
+          aria-invalid={touched.termsAccepted && errors.termsAccepted ? true : undefined}
         />
         <label htmlFor="termsAccepted" className="text-xs text-text-secondary">
           Jeg godtar{' '}

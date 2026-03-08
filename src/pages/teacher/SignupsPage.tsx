@@ -163,7 +163,7 @@ export const SignupsPage = () => {
 
   // Filters state
   const [modeFilter, setModeFilter] = useState<ModeFilter>('active');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>('upcoming');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
 
@@ -177,7 +177,7 @@ export const SignupsPage = () => {
     const { data, error: fetchError } = await fetchAllSignups(currentOrganization.id);
 
     if (fetchError) {
-      setError('Sjekk internettforbindelsen og prøv på nytt.');
+      setError('Kunne ikke laste påmeldinger. Sjekk internettforbindelsen og prøv på nytt.');
       setLoading(false);
       return;
     }
@@ -193,10 +193,22 @@ export const SignupsPage = () => {
 
   // Transform signups to display format
   const displaySignups: SignupDisplay[] = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
     return signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
-      const courseDate = signup.course?.start_date || null;
-      const courseTime = extractTime(signup.course?.time_schedule || null);
+      // For drop-in signups, use class_date; for course-series, use course start_date
+      const displayDate = signup.class_date || signup.course?.start_date || null;
+      const displayTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
+
+      // A course has ended if its status is completed/cancelled,
+      // or if end_date has passed (for course-series that haven't been marked completed yet)
+      const courseStatus = signup.course?.status;
+      const courseEndDate = signup.course?.end_date;
+      const courseEnded =
+        courseStatus === 'completed' ||
+        courseStatus === 'cancelled' ||
+        (courseEndDate != null && courseEndDate < todayStr);
 
       return {
         id: signup.id,
@@ -204,9 +216,9 @@ export const SignupsPage = () => {
         participantName: signup.participant_name || signup.profile?.name || 'Ukjent',
         participantEmail: signup.participant_email || signup.profile?.email || '',
         className: courseTitle,
-        classDate: formatDate(courseDate),
-        classTime: courseTime,
-        classDateTime: courseDate ? new Date(courseDate) : new Date(),
+        classDate: formatDate(displayDate),
+        classTime: displayTime,
+        classDateTime: displayDate ? new Date(displayDate) : new Date(),
         registeredAt: formatRelativeDate(signup.created_at),
         registeredAtDate: new Date(signup.created_at),
         status: signup.status as SignupStatus,
@@ -214,6 +226,7 @@ export const SignupsPage = () => {
         note: signup.note || undefined,
         stripePaymentIntentId: signup.stripe_payment_intent_id || null,
         organizationId: signup.organization_id,
+        courseEnded,
       };
     });
   }, [signups]);
@@ -230,28 +243,15 @@ export const SignupsPage = () => {
   // Reset secondary filters when switching modes
   const handleModeChange = (newMode: ModeFilter) => {
     setModeFilter(newMode);
-
-    if (newMode === 'active') {
-      setTimeFilter('upcoming');
-    } else if (newMode === 'needs_attention') {
-      setTimeFilter(null);
-    } else if (newMode === 'ended') {
-      setTimeFilter(null);
-    }
-
+    setTimeFilter(null);
     setStatusFilter('all');
     setPaymentFilter('all');
   };
 
   const showTimeFilter = modeFilter === 'active';
 
-  const getDefaultTimeFilter = (): TimeFilter | null => {
-    if (modeFilter === 'active') return 'upcoming';
-    return null;
-  };
-
   const clearFilters = () => {
-    setTimeFilter(getDefaultTimeFilter());
+    setTimeFilter(null);
     setStatusFilter('all');
     setPaymentFilter('all');
     setSearchQuery('');
@@ -273,7 +273,7 @@ export const SignupsPage = () => {
     onCancelEnrollment: async (signupId: string, refund: boolean) => {
       const { error } = await teacherCancelSignup(signupId, { refund });
       if (!error) {
-        toast.success('Deltaker avmeldt');
+        toast.success('Deltaker avbestilt');
         loadSignups();
       } else {
         toast.error(error.message);
@@ -306,7 +306,7 @@ export const SignupsPage = () => {
         >
           <div>
             <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
-            <p className="text-sm text-text-secondary mt-1">Oversikt over studenter og bookinger.</p>
+            <p className="text-sm text-text-secondary mt-1">Oversikt over deltakere og påmeldinger.</p>
           </div>
 
           {/* Filters Bar */}
@@ -318,7 +318,7 @@ export const SignupsPage = () => {
               <FilterTab value="needs_attention" className="flex items-center gap-1.5">
                 <AlertCircle className={cn(
                   'h-3.5 w-3.5',
-                  modeFilter === 'needs_attention' ? 'text-status-error-text' : 'text-zinc-400'
+                  modeFilter === 'needs_attention' ? 'text-status-error-text' : 'text-text-tertiary'
                 )} />
                 Krever handling
                 {stats.totalExceptions > 0 && (
@@ -326,7 +326,7 @@ export const SignupsPage = () => {
                     'px-1.5 py-0.5 rounded-full text-xxs font-medium',
                     modeFilter === 'needs_attention'
                       ? 'bg-status-error-bg text-status-error-text'
-                      : 'bg-zinc-100 text-zinc-500'
+                      : 'bg-surface text-text-secondary'
                   )}>
                     {stats.totalExceptions}
                   </span>

@@ -1,4 +1,4 @@
-import { supabase, typedFrom } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import type { Signup, Course } from '@/types/database'
 
 // Shared Supabase select string for student signup queries
@@ -138,27 +138,22 @@ export async function cancelMySignup(
   } catch (err) {
     return {
       data: null,
-      error: err instanceof Error ? err : new Error('Unknown error')
+      error: err instanceof Error ? err : new Error('Ukjent feil')
     }
   }
 }
 
-// Link bookings without user_id to student account after registration
-export async function linkGuestBookingsToUser(
-  userId: string,
-  email: string
-): Promise<{ count: number; error: Error | null }> {
-  const { data, error } = await typedFrom('signups')
-    .update({ user_id: userId })
-    .eq('participant_email', email)
-    .is('user_id', null)
-    .select('id')
+// Link guest bookings to the authenticated user's account.
+// Uses a server-side RPC that looks up the caller's email via auth.uid(),
+// so the client cannot spoof userId or email.
+export async function linkGuestBookings(): Promise<{ count: number; error: Error | null }> {
+  const { data, error } = await supabase.rpc('link_guest_bookings')
 
   if (error) {
     return { count: 0, error: error as Error }
   }
 
-  return { count: data?.length || 0, error: null }
+  return { count: (data as number) || 0, error: null }
 }
 
 // Check if student is already signed up for a course

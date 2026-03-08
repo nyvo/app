@@ -89,7 +89,7 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
                 className="text-destructive focus:text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Avmeld deltaker
+                Avbestill deltaker
               </DropdownMenuItem>
             </>
           )}
@@ -111,7 +111,7 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
                 className="text-destructive focus:text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Avmeld deltaker
+                Avbestill deltaker
               </DropdownMenuItem>
             </>
           )}
@@ -123,9 +123,9 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
       <AlertDialog open={confirmDialog === 'cancel'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Avmeld deltaker</AlertDialogTitle>
+            <AlertDialogTitle>Avbestille deltaker?</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på at du vil avmelde <strong>{signup.participantName}</strong> fra {signup.className}?
+              Er du sikker på at du vil avbestille <strong>{signup.participantName}</strong> fra {signup.className}?
               {signup.paymentStatus === 'paid' && ' Deltakeren har betalt og vil motta refusjon.'}
               {signup.paymentStatus !== 'paid' && ' Denne handlingen kan ikke angres.'}
             </AlertDialogDescription>
@@ -139,7 +139,7 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
                 runAction(() => handlers.onCancelEnrollment(signup.id, signup.paymentStatus === 'paid'));
               }}
             >
-              Avmeld
+              Avbestill
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

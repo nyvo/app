@@ -61,22 +61,8 @@ Deno.serve(async (req) => {
     }
 
     // Create login link for the Express Dashboard
-    try {
-      const loginLink = await stripe.accounts.createLoginLink(org.stripe_account_id)
-      return successResponse({ url: loginLink.url })
-    } catch (stripeErr: unknown) {
-      // Account deleted/deauthorized — reset onboarding so teacher can reconnect
-      const stripeError = stripeErr as { type?: string; code?: string; message?: string }
-      if (stripeError.type === 'StripeInvalidRequestError') {
-        console.warn('Stripe account invalid, resetting onboarding for org:', organizationId)
-        await supabase
-          .from('organizations')
-          .update({ stripe_onboarding_complete: false, stripe_account_id: null })
-          .eq('id', organizationId)
-        return errorResponse('STRIPE_ACCOUNT_INVALID', 410)
-      }
-      throw stripeErr
-    }
+    const loginLink = await stripe.accounts.createLoginLink(org.stripe_account_id)
+    return successResponse({ url: loginLink.url })
   } catch (err) {
     console.error('create-stripe-login-link error:', err)
     const message = err instanceof Error ? err.message : 'Internal server error'
