@@ -326,7 +326,7 @@ const MessagesPage = () => {
           {/* Conversation List (Left Panel) */}
           <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-zinc-200 bg-surface">
             {/* List Header */}
-            <div className="p-5 pb-2">
+            <div className="p-6 pb-2">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Meldinger</h2>
                 <Button
@@ -371,7 +371,7 @@ const MessagesPage = () => {
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-2xl ios-ease text-left group relative border ${
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl ios-ease text-left group relative border ${
                     activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border-zinc-200'
                       : conversation.is_read
@@ -404,11 +404,7 @@ const MessagesPage = () => {
                       >
                         {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                       </span>
-                      <span
-                        className={`text-xs ${
-                          conversation.is_read ? 'text-text-tertiary' : 'text-text-secondary'
-                        }`}
-                      >
+                      <span className="text-xs text-text-secondary">
                         {formatMessageTimestamp(conversation.updated_at)}
                       </span>
                     </div>
@@ -475,7 +471,7 @@ const MessagesPage = () => {
 
                   <div className="space-y-3">
                     <label className="text-xs font-medium text-text-secondary ml-1">Melding</label>
-                    <div className="rounded-2xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white ios-ease">
+                    <div className="rounded-xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 ios-ease">
                         <Textarea
                           rows={8}
                           value={newMessageBody}
@@ -602,11 +598,11 @@ const MessagesPage = () => {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
                   {!activeConversation ? (
-                    <div className="flex flex-col items-center justify-center h-full text-text-tertiary">
+                    <div className="flex flex-col items-center justify-center h-full text-text-secondary">
                         <p>Velg en samtale</p>
                     </div>
                   ) : currentMessages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-text-tertiary">
+                      <div className="flex flex-col items-center justify-center h-full text-text-secondary">
                         <p>Ingen meldinger i samtalen ennå</p>
                       </div>
                   ) : (
@@ -642,7 +638,7 @@ const MessagesPage = () => {
 
                   <div className={`flex flex-col gap-1 ${message.is_outgoing ? 'items-end' : ''}`}>
                     <div
-                      className={`px-4 py-3 rounded-2xl ${
+                      className={`px-4 py-3 rounded-xl ${
                         message.is_outgoing
                           ? 'bg-primary text-primary-foreground rounded-br-sm'
                           : 'bg-white rounded-bl-sm'
@@ -657,7 +653,7 @@ const MessagesPage = () => {
                       </p>
                     </div>
                     <span
-                      className={`text-xs text-text-tertiary flex items-center gap-1 ${
+                      className={`text-xs text-text-secondary flex items-center gap-1 ${
                         message.is_outgoing ? 'pr-1' : 'pl-1'
                       }`}
                     >
@@ -676,7 +672,7 @@ const MessagesPage = () => {
 
             {/* Input Area */}
             <div className="p-6 pt-2 bg-surface">
-              <div className="flex flex-col gap-2 rounded-2xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white ios-ease relative">
+              <div className="flex flex-col gap-2 rounded-xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 ios-ease relative">
                 <Textarea
                   rows={1}
                   placeholder="Skriv en melding"
@@ -743,7 +739,7 @@ const MessagesPage = () => {
                       </Button>
                 </div>
               </div>
-              <p className="text-xs text-text-tertiary text-center mt-3">
+              <p className="text-xs text-text-secondary text-center mt-3">
                 Trykk <span className="font-medium text-text-secondary">Enter</span> for å sende
               </p>
             </div>

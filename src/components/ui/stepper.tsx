@@ -108,7 +108,7 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
                   <button
                     type="button"
                     onClick={() => onStepSelect(index)}
-                    className="flex flex-col items-center rounded-lg py-1 px-2 -mx-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                    className="flex flex-col items-center rounded-lg py-1 px-2 -mx-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50"
                     aria-current={isActive ? 'step' : undefined}
                     aria-label={`${step.label}, steg ${index + 1} av ${total}`}
                   >

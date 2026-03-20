@@ -54,7 +54,7 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-text-secondary">
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-text-secondary">
           <X className="h-4 w-4" />
           <span className="sr-only">Lukk</span>
         </DialogPrimitive.Close>
@@ -97,7 +97,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "text-lg font-medium leading-none tracking-tight text-text-primary",
+        "text-lg font-medium leading-none text-text-primary",
         className
       )}
       {...props}

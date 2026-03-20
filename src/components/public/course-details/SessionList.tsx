@@ -66,7 +66,7 @@ export const SessionList: React.FC<SessionListProps> = ({
       case 'cancelled':
         return { variant: 'error' as const, label: 'Avlyst' };
       default:
-        return { variant: 'neutral' as const, label: session.status };
+        return { variant: 'neutral' as const, label: session.status || 'upcoming' };
     }
   };
 
@@ -93,10 +93,10 @@ export const SessionList: React.FC<SessionListProps> = ({
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
-        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-2xl border border-zinc-200 bg-white smooth-transition hover:bg-zinc-50/50 group"
+        className="cursor-pointer w-full flex items-center justify-between p-4 rounded-xl border border-zinc-200 bg-white smooth-transition hover:bg-zinc-50/50 group"
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-medium text-text-primary">Økter</h2>
+          <h2 className="text-sm font-medium text-text-primary">Økter</h2>
           <span className="text-xs font-medium text-text-secondary px-2.5 py-1 rounded-full bg-white">
             {sessions.length} {sessions.length === 1 ? 'økt' : 'økter'}
           </span>
@@ -129,7 +129,7 @@ export const SessionList: React.FC<SessionListProps> = ({
             return (
               <div
                 key={session.id}
-                className={`snap-start shrink-0 w-64 md:w-auto rounded-2xl border p-4 ios-ease ${
+                className={`snap-start shrink-0 w-64 md:w-auto rounded-xl border p-4 ios-ease ${
                   isNextSession
                     ? 'ring-2 ring-status-confirmed-border border-transparent bg-white'
                     : 'border-zinc-200 bg-white'
@@ -158,7 +158,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                 </div>
 
                 {session.notes && (
-                  <p className="text-xs text-text-secondary mt-3 line-clamp-2">
+                  <p className="text-sm text-text-secondary mt-3 line-clamp-2">
                     {session.notes}
                   </p>
                 )}

@@ -82,13 +82,13 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   }, []);
 
   return (
-    <div className="bg-white rounded-3xl border border-zinc-200/60 p-4 sm:p-5 flex flex-col md:flex-row gap-4 md:gap-6">
+    <div className="bg-white rounded-xl border border-zinc-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* Left: Date Box */}
       <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-zinc-100 shrink-0">
         {startDate && isValid(startDate) ? (
           <>
-            <span className="text-sm font-medium text-text-tertiary">
+            <span className="text-sm font-medium text-text-secondary">
               {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
             </span>
             <span className="text-3xl font-medium text-text-primary">
@@ -96,7 +96,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
             </span>
           </>
         ) : (
-          <span className="text-xs text-text-tertiary">—</span>
+          <span className="text-xs text-text-secondary">—</span>
         )}
       </div>
 
@@ -104,24 +104,24 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       <div className="flex-1 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-             <div className="md:hidden flex items-center gap-2 text-sm text-text-tertiary mb-1">
+             <div className="md:hidden flex items-center gap-2 text-sm text-text-secondary mb-1">
                 <Calendar className="h-4 w-4" />
                 <span>{dateStr}</span>
              </div>
-             <h3 className="text-lg font-medium text-text-primary leading-tight">
+             <h3 className="text-sm font-medium text-text-primary leading-tight">
                {course.title}
              </h3>
           </div>
-          {getPaymentBadge(signup.payment_status)}
+          {getPaymentBadge(signup.payment_status || 'pending')}
         </div>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
            <div className="flex items-center gap-1.5">
-             <Clock className="h-4 w-4 text-text-tertiary" />
+             <Clock className="h-4 w-4 text-text-secondary" />
              <span>{timeStr || 'Tid mangler'}</span>
            </div>
            <div className="flex items-center gap-1.5">
-             <MapPin className="h-4 w-4 text-text-tertiary" />
+             <MapPin className="h-4 w-4 text-text-secondary" />
              <span>{course.location || 'Sted mangler'}</span>
            </div>
         </div>
@@ -155,7 +155,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
          {canCancel ? (
            <AlertDialog>
              <AlertDialogTrigger asChild>
-               <Button variant="ghost" size="sm" className="w-full justify-center text-text-tertiary hover:text-status-error-text hover:bg-status-error-bg">
+               <Button variant="ghost" size="sm" className="w-full justify-center text-text-secondary hover:text-status-error-text hover:bg-status-error-bg">
                  Avbestill
                </Button>
              </AlertDialogTrigger>

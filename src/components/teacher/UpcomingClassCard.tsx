@@ -10,7 +10,9 @@ interface UpcomingClassCardProps {
 export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
-      <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
+      <div className="col-span-1 md:col-span-2 lg:col-span-2">
+        <h2 className="text-sm font-medium text-text-primary mb-3">Neste kurs</h2>
+      <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-white border border-border">
         <div className="relative flex h-full flex-col justify-center p-6 sm:p-9 z-10">
           {/* Main content */}
           <div className="max-w-md">
@@ -37,13 +39,16 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   return (
+    <div className="col-span-1 md:col-span-2 lg:col-span-2">
+      <h2 className="text-sm font-medium text-text-primary mb-3">Neste kurs</h2>
     <Link
       to={`/teacher/courses/${classData.id}`}
-      className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50 cursor-pointer block"
+      className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50 cursor-pointer block"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 z-0"></div>
 
@@ -97,5 +102,6 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
         </div>
       </div>
     </Link>
+    </div>
   );
 };

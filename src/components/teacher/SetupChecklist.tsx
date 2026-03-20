@@ -12,7 +12,9 @@ interface SetupChecklistProps {
 
 export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepId }: SetupChecklistProps) => {
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-zinc-900 text-white border border-zinc-800 relative">
+    <div className="col-span-1 md:col-span-2 lg:col-span-2">
+      <h2 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h2>
+    <div className="h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-zinc-900 text-white border border-zinc-800 relative">
       <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 z-0" />
       <div className="relative flex h-full flex-col p-6 sm:p-9 z-10">
         {/* Header */}
@@ -80,6 +82,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
           ))}
         </div>
       </div>
+    </div>
     </div>
   )
 }

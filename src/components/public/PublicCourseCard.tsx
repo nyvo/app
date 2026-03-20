@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { formatKroner } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import {
   getAvailabilityText,
@@ -25,7 +26,7 @@ export const PublicCourseCard = ({
 
   return (
     <Link to={`/studio/${studioSlug}/${course.id}`} className="block group">
-      <div className="rounded-3xl bg-white border border-zinc-200/60 overflow-hidden smooth-transition hover:border-zinc-300/60">
+      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden smooth-transition hover:border-zinc-300">
         {/* Image area */}
         {course.image_url ? (
           <div className="aspect-[4/3] w-full overflow-hidden">
@@ -36,8 +37,8 @@ export const PublicCourseCard = ({
             />
           </div>
         ) : (
-          <div className="aspect-[4/3] w-full bg-public-sand-deep flex items-center justify-center">
-            <span className="text-4xl font-serif text-text-tertiary">
+          <div className="aspect-[4/3] w-full bg-zinc-100 flex items-center justify-center">
+            <span className="text-4xl text-text-tertiary">
               {course.title.charAt(0)}
             </span>
           </div>
@@ -45,7 +46,7 @@ export const PublicCourseCard = ({
 
         {/* Content */}
         <div className="p-8 space-y-4">
-          <h3 className="display-heading text-xl font-medium text-text-primary leading-snug">
+          <h3 className="tracking-tight text-xl font-medium text-text-primary leading-snug">
             {course.title}
           </h3>
 
@@ -62,11 +63,11 @@ export const PublicCourseCard = ({
 
           <div className="flex items-center justify-between pt-2">
             <span className="text-lg font-medium text-text-primary">
-              {course.price ? `${course.price} kr` : 'Gratis'}
+              {formatKroner(course.price)}
             </span>
 
             {!isFull ? (
-              <Button variant="public" size="sm">
+              <Button variant="default" size="sm">
                 Meld deg på
               </Button>
             ) : (

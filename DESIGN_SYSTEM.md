@@ -1,6 +1,17 @@
-# Ease Design System (V2.4 - Shadowless Zinc)
+# Ease Design System (V2.5 - Norwegian Polish)
 
 > **Important**: Always use design tokens (semantic class names) instead of hardcoded hex values. This ensures consistency and makes theme updates easier.
+
+---
+
+## V2.5 "Norwegian Polish" Key Changes
+
+1. **Section titles outside cards** — Following Scandinavian SaaS convention (Vipps, Fiken), section headers sit above their card containers, not inside them.
+2. **No nested empty states** — Empty states inside dashboard cards use centered content with padding only, no inner bordered containers (double-boxing).
+3. **Unified border tokens** — All borders use `border-zinc-200` at full opacity. No `border-zinc-200/60` opacity variants.
+4. **Card radius standardized** — `rounded-xl` everywhere. No `rounded-3xl` (removed from public/student pages).
+5. **Consistent page padding** — Teacher pages use `px-8 py-8` for header areas.
+6. **Single font family** — Geist Sans only. No DM Serif Display or serif fonts anywhere.
 
 ---
 
@@ -16,7 +27,7 @@
 **From V2.2 & V2.3:**
 1. **Input borders** - `border-zinc-300` (darker than cards) so inputs look "cut into" the surface
 2. **List dividers** - `border-zinc-100` for subtle row separation without harsh breaks
-3. **Card radius** - `rounded-2xl` (16px) for all cards. Bolder, more structured look
+3. **Card radius** - `rounded-xl` (12px) for all cards. Bolder, more structured look
 4. **Card borders** - `border-zinc-200` for clean, consistent definition
 5. **Focus rings** - Softened offset ring: `focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white` with `focus:border-zinc-400`
 
@@ -93,7 +104,7 @@ Depth (recessive → emphatic):
 | **Color** | `#FFFFFF` (White) |
 | **CSS variable** | `--color-card` (existing) |
 | **Border** | `border-zinc-200` required for definition |
-| **Radius** | `rounded-2xl` (16px) |
+| **Radius** | `rounded-xl` (12px) |
 | **Purpose** | The standard container for content. White cards "pop" against the canvas floor. This is the workhorse surface for all data display, forms, and navigation. |
 
 **When to use:**
@@ -121,7 +132,7 @@ Depth (recessive → emphatic):
 | **Color** | `#09090B` (Zinc-900), optionally with gradient `from-zinc-800 to-zinc-900` |
 | **CSS variable** | Uses `bg-zinc-900` or gradient directly |
 | **Border** | `border-zinc-800` for subtle edge definition |
-| **Radius** | `rounded-2xl` (16px), matching standard cards |
+| **Radius** | `rounded-xl` (12px), matching standard cards |
 | **Purpose** | A dark surface that demands attention within the light UI. Used sparingly to create a clear focal point — the one thing the user should notice first. |
 
 **When to use:**
@@ -171,7 +182,7 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 #### 1. Setup Checklist (Onboarding)
 ```tsx
 // bg-surface-emphasis — first-run guidance demands attention
-<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7">
+<div className="rounded-xl bg-zinc-900 text-white border border-zinc-800 p-8">
   <h2 className="text-xl font-medium text-white">Kom i gang</h2>
   <p className="text-sm text-zinc-400">Fullfør disse stegene for å publisere.</p>
 
@@ -191,7 +202,7 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 #### 2. Upcoming Class Hero Card (Dashboard)
 ```tsx
 // bg-surface-emphasis — the single most important item on the dashboard
-<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7 smooth-transition hover:bg-zinc-800/50 cursor-pointer">
+<div className="rounded-xl bg-zinc-900 text-white border border-zinc-800 p-8 smooth-transition hover:bg-zinc-800/50 cursor-pointer">
   <p className="text-xs text-zinc-400">Neste time</p>
   <h2 className="text-2xl font-medium text-white">Morgenyoga</h2>
   <p className="text-sm text-zinc-400">I dag kl. 08:00 · 12 påmeldte</p>
@@ -202,7 +213,7 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 #### 3. Stats Card (Standard Data)
 ```tsx
 // bg-surface — stats are standard content, not emphasis
-<div className="rounded-2xl bg-white border border-zinc-200 p-6">
+<div className="rounded-xl bg-white border border-zinc-200 p-6">
   <p className="text-xs font-medium text-text-tertiary">Aktive studenter</p>
   <p className="text-2xl font-medium text-text-primary">47</p>
 </div>
@@ -238,7 +249,7 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 #### 1. Dark Table Container
 ```tsx
 // WRONG — tables are standard data display, never emphasis
-<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-6">
+<div className="rounded-xl bg-zinc-900 text-white border border-zinc-800 p-6">
   <table>
     <thead><tr><th className="text-zinc-400">Navn</th></tr></thead>
     <tbody>{/* rows */}</tbody>
@@ -251,8 +262,8 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 ```tsx
 // WRONG — two emphasis cards compete for attention
 <div className="grid grid-cols-2 gap-6">
-  <div className="rounded-2xl bg-zinc-900 text-white p-7">Hero Card A</div>
-  <div className="rounded-2xl bg-zinc-900 text-white p-7">Hero Card B</div>
+  <div className="rounded-xl bg-zinc-900 text-white p-8">Hero Card A</div>
+  <div className="rounded-xl bg-zinc-900 text-white p-8">Hero Card B</div>
 </div>
 ```
 > Why it's wrong: Emphasis is lost when repeated. If everything is important, nothing is. Use emphasis for one card; make the other `bg-surface`.
@@ -260,7 +271,7 @@ When a container uses `bg-surface-emphasis`, every nested element must use the i
 #### 3. Dark Settings Panel
 ```tsx
 // WRONG — settings are routine content, not attention-demanding
-<div className="rounded-2xl bg-zinc-900 text-white border border-zinc-800 p-7">
+<div className="rounded-xl bg-zinc-900 text-white border border-zinc-800 p-8">
   <h2 className="text-white">Kursinnstillinger</h2>
   <Input className="bg-zinc-800 border-zinc-700" />
 </div>
@@ -384,34 +395,64 @@ Single-tone semantic colors for icons, text accents, and button states. These al
 
 ## Typography
 
+### Quick Reference — Copy-Paste Patterns
+
+When building new UI, use these exact classes. Do not deviate.
+
+| Element | Classes | When to use |
+|---------|---------|-------------|
+| **Page title** | `font-geist text-2xl font-medium tracking-tight text-text-primary` | Every page's main `<h1>` |
+| **Section header** | `text-sm font-medium text-text-primary mb-3` | Above a card, never inside |
+| **Card header** | `text-sm font-medium text-text-primary` | First heading inside a card |
+| **Body text** | `text-sm text-text-secondary` | Descriptions, paragraphs, list content |
+| **Micro-label** | `text-xs font-medium text-text-tertiary` | Timestamps, metadata, form labels |
+| **Form label** | `text-xs font-medium text-text-primary mb-1.5` | Above form inputs |
+| **Table header** | `text-xs font-medium text-text-secondary` | Table column headers (sentence case) |
+| **Badge** | `text-xxs font-medium` or `text-xs font-medium` | Status indicators, counts |
+| **Empty/error state (in card)** | `text-sm font-medium text-text-primary` | Title inside card overlay |
+| **Empty/error state (standalone)** | `font-geist text-2xl font-medium tracking-tight text-text-primary` | Full-page error/empty |
+| **Dialog title** | `text-lg font-medium text-text-primary` | Dialog/sheet headers |
+| **Display number** | `text-xl`–`text-3xl font-medium tracking-tight` | Stats, prices, large counters |
+
 ### Typography Scale
-Refined to ensure high data density remains legible.
 
 | Class | Size | Line Height | Usage |
 |-------|------|-------------|-------|
-| `text-xxs` | 11px | 16px | Small badges, toast descriptions |
-| `text-xs` | 12px | 16px | Meta text, secondary info, badges |
-| `text-small` | 13px | 18px | Dense lists, table data, toast titles |
-| `text-sm` | 14px | 20px | **Main UI Workhorse**. Standard body, inputs |
-| `text-base` | 16px | 24px | Lead text, section descriptions |
-| `text-lg` | 18px | 28px | Small section headers |
-| `text-xl` | 20px | 28px | Card titles, section headers |
-| `text-2xl` | 24px | 32px | **Page Titles**. Use with `font-geist` |
-| `text-3xl` | 30px | 36px | Hero numbers |
+| `text-xxs` | 11px | 16px | Tiny badges (status-indicator, avatar initials) |
+| `text-xs` | 12px | 16px | Labels, metadata, hints, form validation |
+| `text-sm` | 14px | 20px | **Main UI Workhorse**. Body text, card headers, section headers, inputs |
+| `text-base` | 16px | 24px | Lead text on marketing pages only |
+| `text-lg` | 18px | 28px | Dialog/sheet titles only |
+| `text-xl` | 20px | 28px | Display numbers, public-facing card titles (PublicCourseCard) |
+| `text-2xl` | 24px | 32px | **Page Titles**. Always with `font-geist tracking-tight` |
+| `text-3xl` | 30px | 36px | Large display numbers, marketing section headers (md: breakpoint) |
+
+> **Landing / Marketing Pages:** Marketing pages (LandingPage) may use sizes up to `text-5xl` for the hero headline and `text-3xl` for section h2s at the `md:` breakpoint, but the heading-to-description ratio should stay ≤ 1.7×. App UI pages always cap at `text-2xl` for page titles.
+
+### Strict Rules (DO NOT break these)
+
+1. **`font-semibold` is banned.** Use `font-medium` (500) for all hierarchy. Use `font-normal` (400) for body.
+2. **`uppercase` is banned on labels.** Only exception: brand logo marks (e.g. studio initials in PublicCourseHeader).
+3. **`tracking-wider` / `tracking-widest` are banned on labels.** Only exception: brand logo marks.
+4. **`tracking-tight` is only for `text-2xl` page titles.** Do not add it to text-sm, text-lg, or any other size.
+5. **`text-base` is not for body text.** It is only for lead/marketing text. Body text is always `text-sm`.
+6. **`text-lg` is not for card headers or section headers.** It is only for dialog/sheet titles.
+7. **`text-xl` is not for section headers in the app UI.** It is for display numbers and public-facing marketing card titles.
+8. **Use semantic color tokens**, never hardcoded zinc values for text. Use `text-text-primary`, `text-text-secondary`, `text-text-tertiary`, `text-muted-foreground`. Exception: dark surfaces (`bg-zinc-900`) use `text-white`, `text-zinc-400`.
+9. **Heading-to-description ratio must stay ≤ 1.7×.** A `text-2xl` (24px) heading pairs with `text-sm` (14px) description = 1.7×. Never pair `text-3xl` with `text-xs`.
 
 ### Font Weights
-**Principle:** Use `font-normal` for body and `font-medium` for hierarchy. Avoid semibold to keep the dashboard feeling light.
 
 | Class | Weight | Usage |
 |-------|--------|-------|
-| `font-normal` | 400 | Body text, Large display numbers, Secondary text |
-| `font-medium` | 500 | Headings, Buttons, Table headers, Labels |
-| `font-semibold` | 600 | **Avoid** - rarely needed in calm UI |
+| `font-normal` | 400 | Body text, large display numbers, secondary text |
+| `font-medium` | 500 | Headings, buttons, table headers, labels |
+| `font-semibold` | 600 | **Banned** — do not use |
 
 ### Font Family
 - **Primary**: Geist Sans (loaded via CDN)
 - **Class**: `font-geist` adds tighter letter-spacing (-0.02em)
-- **Usage**: Apply `font-geist` to page titles and hero sections
+- **Usage**: Apply `font-geist` only to page titles (`text-2xl`) and marketing hero sections
 
 ### Typography Hierarchy
 
@@ -425,11 +466,34 @@ Refined to ensure high data density remains legible.
 </h1>
 ```
 
-#### Section Headers
+#### Section Headers (Norwegian Pattern — Title Outside Card)
+Section titles sit **above** their card container, not inside. This follows the Scandinavian SaaS convention (Vipps, Fiken, Linear). The `CourseOverviewTab` is the reference implementation.
+
 ```tsx
-<h2 className="text-lg font-medium text-text-primary">
-  Section Title
-</h2>
+{/* ✅ Correct: title outside, card below */}
+<div>
+  <h2 className="text-sm font-medium text-text-primary mb-3">Section Title</h2>
+  <div className="rounded-xl bg-white p-6 border border-zinc-200">
+    {/* card content */}
+  </div>
+</div>
+
+{/* ✅ With icon (CourseOverviewTab pattern) */}
+<div>
+  <div className="flex items-center gap-2 mb-3">
+    <Icon className="h-4 w-4 text-text-tertiary" />
+    <h2 className="text-sm font-medium text-text-primary">Section Title</h2>
+  </div>
+  <div className="rounded-xl bg-white p-6 border border-zinc-200">
+    {/* card content */}
+  </div>
+</div>
+
+{/* ❌ Wrong: title inside card */}
+<div className="rounded-xl bg-white p-6 border border-zinc-200">
+  <h2>Section Title</h2>
+  {/* content */}
+</div>
 ```
 
 #### Card Headers
@@ -441,7 +505,7 @@ Refined to ensure high data density remains legible.
 
 #### Body Text
 ```tsx
-<p className="text-sm font-normal text-text-secondary">
+<p className="text-sm text-text-secondary">
   Regular body text content.
 </p>
 ```
@@ -454,13 +518,41 @@ Refined to ensure high data density remains legible.
 ```
 > **Note:** Labels use sentence case and `text-xs` (12px) for a visually quiet style. No uppercase or tracking-wider.
 
+#### Empty / Error States
+```tsx
+{/* Inside a card or overlay — card-level sizing */}
+<h3 className="text-sm font-medium text-text-primary mb-1">Ingen data</h3>
+<p className="text-sm text-text-secondary">Beskrivelse her.</p>
+
+{/* Standalone full-page error — page-level sizing */}
+<h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+  Noe gikk galt
+</h1>
+<p className="text-sm text-text-secondary">Feilmelding her.</p>
+```
+
+#### Dialog / Sheet Titles
+```tsx
+<DialogTitle className="text-lg font-medium text-text-primary">
+  Legg til deltaker
+</DialogTitle>
+```
+
+#### Dark Surfaces (bg-zinc-900)
+```tsx
+<div className="bg-zinc-900 text-white">
+  <h2 className="text-xl font-medium text-white">Heading</h2>
+  <p className="text-sm text-zinc-400">Description on dark bg.</p>
+</div>
+```
+
 ---
 
 ## Components
 
 ### Buttons (V2.6 - Shadowless Zinc)
 
-> **V2.6 Geometry:** Buttons use `rounded-xl` (12px) for softer corners. Inputs keep `rounded-lg` (8px). Cards use `rounded-2xl` (16px).
+> **V2.6 Geometry:** Buttons use `rounded-xl` (12px) for softer corners. Inputs keep `rounded-lg` (8px). Cards use `rounded-xl` (12px). Modals use `rounded-2xl` (16px).
 
 **Philosophy:** Buttons stay shadowless. The primary button uses a vertical gradient (`from-zinc-800 to-zinc-950`) with three layers of edge definition: outer ring (`ring-1 ring-black/5`), border (`border-zinc-700/70`), and an inner white ring via `after:` pseudo-element (`after:ring-1 after:ring-white/10`). This creates depth without box-shadow. Hover shifts the gradient and border one step lighter. Icons inside buttons use `opacity-70` for a muted, refined look.
 
@@ -508,23 +600,23 @@ The `<Button>` component supports these variants and sizes:
 
 ### Cards
 
-> **V2.3 Geometry Rule:** All cards use `rounded-2xl` (16px) for a structured, premium feel.
+> **V2.3 Geometry Rule:** All cards use `rounded-xl` (12px) for a structured, premium feel.
 
 #### Standard Card (Static)
 ```tsx
-className="rounded-2xl bg-white p-7 border border-zinc-200"
+className="rounded-xl bg-white p-8 border border-zinc-200"
 ```
 > **Usage:** Dashboard cards, stats, list containers. White cards "pop" against the Zinc-100 page background. No hover effect — cards are static containers.
 
 #### Clickable Card
 ```tsx
-className="rounded-2xl bg-white p-5 border border-zinc-200 smooth-transition hover:bg-zinc-50/50 cursor-pointer"
+className="rounded-xl bg-white p-6 border border-zinc-200 smooth-transition hover:bg-zinc-50/50 cursor-pointer"
 ```
 > **Usage:** Course cards, schedule items — anything that navigates on click. Background-only hover.
 
 #### Hero Card (Dark)
 ```tsx
-className="relative rounded-2xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50"
+className="relative rounded-xl bg-zinc-900 text-white border border-zinc-800 smooth-transition hover:bg-zinc-800/50"
 ```
 
 ### Tables (Data Density)
@@ -750,33 +842,35 @@ Stats cards, container wrappers (CoursesList, MessagesList, RegistrationsList), 
 
 ---
 
-### Focus States (V2.4 Zinc)
+### Focus States (V2.5 Flush Ring)
 
-> **DEPRECATED:** `ring-4` and `ring-border/30`. These look dated and fuzzy.
+> **DEPRECATED:** `ring-4` and `ring-border/30` (fuzzy). Also deprecated: `ring-offset-2 ring-offset-white` (offset gap creates visual disconnect).
 >
-> **STANDARD:** Use a crisp 2px offset ring with soft zinc color for a calm, sophisticated highlight.
+> **STANDARD:** A flush 2px ring that hugs the element — no offset gap. Matches Stripe's embedded input styling for a cohesive, modern feel.
 
 #### Standard Focus Ring
 ```tsx
 // For inputs, buttons, and interactive elements
-// Ring color: zinc-400/50 (zinc-400 at 50% opacity)
+// Ring: 2px zinc-400 at 50% opacity, flush against the border
 // Border shifts to zinc-400 when focused
-className="focus:outline-none focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+className="focus:outline-none focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50"
 ```
 
 #### Focus-Within (for compound inputs like TimePicker, DurationInput)
 ```tsx
 // When the focus state needs to apply to a container
-className="focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white"
+className="focus-within:border-zinc-400 focus-within:ring-2 focus-within:ring-zinc-400/50"
 ```
 
 #### Error State Focus
 ```tsx
 // For inputs in error state
-className="focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+className="focus-visible:ring-2 focus-visible:ring-destructive"
 ```
 
-**Logic:** This creates a sharp 2px gap of white space between the input and a soft zinc-colored ring. The `zinc-400/50` provides a calm, sophisticated highlight that guides the user without creating too much visual weight - perfect for the "Ease" aesthetic.
+**Logic:** The ring sits flush against the element's border (no `ring-offset`). This creates a tight, precise highlight that feels integrated with the input rather than floating around it. The `zinc-400/50` is calm and sophisticated — visible enough to guide focus without being heavy. This matches the Stripe Payment Element focus style for consistency across native and embedded inputs.
+
+> **Never use:** `ring-offset-2`, `ring-offset-white`, or `ring-offset-background` on focus rings. The flush ring is the standard across all interactive elements.
 
 ### Transition Utilities
 
@@ -885,7 +979,7 @@ className="safe-area-top"
 
 ### Padding
 - **Small cards**: `p-6`
-- **Large cards**: `p-7` to `p-9`
+- **Large cards**: `p-8` or `p-10`
 - **List items**: `p-3`
 - **Buttons**: `px-3 py-2` (compact), `px-5 py-2.5` (standard)
 - **Table cells**: `py-4 px-6`
@@ -920,16 +1014,34 @@ className="text-ring group-hover:text-text-tertiary"
 1. Use solid `border-zinc-200` (no dashed borders)
 2. Flat white background — no gradients or blur decorations
 3. Calm, inviting copy that explains what to do next
+4. **No double-boxing** — when an empty state sits inside an already-bordered container (e.g. a dashboard card), render centered content with padding only. No inner `bg-zinc-50 border border-zinc-200` wrapper.
 
-### Pattern
+### Pattern — Standalone
 ```tsx
-<div className="rounded-2xl border border-zinc-200 bg-white p-6">
+<div className="rounded-xl border border-zinc-200 bg-white p-6">
   <h2 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
     Klar til å planlegge din første time?
   </h2>
   <p className="text-sm text-text-secondary">
     Opprett en yogaøkt og bygg din timeplan.
   </p>
+</div>
+```
+
+### Pattern — Inside a Card (Dashboard Widgets)
+```tsx
+{/* ✅ Correct: no inner border, just centered content */}
+<div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+  <div className="w-10 h-10 bg-surface-elevated rounded-xl flex items-center justify-center mb-3">
+    <Icon className="w-4 h-4 text-text-tertiary" />
+  </div>
+  <p className="text-sm font-medium text-text-primary">Ingen data</p>
+  <p className="text-xs text-text-secondary mt-1">Beskrivelse her.</p>
+</div>
+
+{/* ❌ Wrong: bordered box inside an already-bordered card */}
+<div className="bg-zinc-50 border border-zinc-200 rounded-xl p-8">
+  ...
 </div>
 ```
 
@@ -1117,159 +1229,4 @@ Info: #DBEAFE bg, #BFDBFE border, #1E3A5F text
 
 Shadows (V2.4 - Disabled):
 none
-
-Public Theme (Sand + Sage):
-#F9F8F6 → bg-public-sand (PUBLIC PAGE FLOOR)
-#F3F1ED → bg-public-sand-deep (elevated surfaces)
-#6B7F6E → bg-public-sage (sage accent buttons)
-#5A6E5D → bg-public-sage-hover (sage hover)
-#E8EDE9 → bg-public-sage-light (soft sage bg)
-#FFFFFF → text-public-sage-foreground (button text)
 ```
-
----
-
-## Public Theme (Student / Public Pages)
-
-### Activation
-
-Wrap page content in `.theme-public` class. This overrides semantic tokens so that `bg-surface` resolves to warm sand instead of cool zinc. Teacher dashboard pages are unaffected.
-
-```tsx
-<div className="theme-public min-h-screen bg-public-sand">
-  {/* page content */}
-</div>
-```
-
-### Scope
-
-- **Applies to:** Landing page, PublicCoursesPage, PublicCourseDetailPage, Student Dashboard, Student Profile, Student auth pages (login, register, forgot/reset password, confirm email)
-- **Does NOT apply to:** Teacher dashboard, teacher auth pages, admin pages
-
-### Color Tokens
-
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `public-sand` | `#F9F8F6` | Page floor (warm sand) |
-| `public-sand-deep` | `#F3F1ED` | Elevated surfaces, empty state icon backgrounds |
-| `public-sage` | `#6B7F6E` | Primary accent — buttons, brand moments |
-| `public-sage-hover` | `#5A6E5D` | Button hover state |
-| `public-sage-light` | `#E8EDE9` | Soft sage background |
-| `public-sage-foreground` | `#FFFFFF` | Text on sage buttons |
-| `public-border` | `rgba(228,228,231,0.6)` | Softer card borders |
-| `public-border-hover` | `rgba(161,161,170,0.5)` | Border hover state |
-
-### Token Overrides (via `.theme-public`)
-
-When `.theme-public` is active, these semantic tokens are remapped:
-
-| Semantic Token | Default (Dashboard) | Public Override |
-|---------------|---------------------|-----------------|
-| `--color-background` | `#F4F4F5` (Zinc-100) | `#F9F8F6` (Sand) |
-| `--color-surface` | `#F4F4F5` (Zinc-100) | `#F9F8F6` (Sand) |
-| `--color-surface-elevated` | `#E4E4E7` (Zinc-200) | `#F3F1ED` (Sand Deep) |
-
-### Typography
-
-**Serif font:** DM Serif Display (loaded via Google Fonts CDN).
-
-**Rule:** DM Serif Display is used **only** on `h1` and `h2` display headings. All body text, subtitles, descriptions, labels, and smaller headings (`h3`–`h6`) remain Geist Sans.
-
-| Utility | Effect | Usage |
-|---------|--------|-------|
-| `.display-heading` | DM Serif Display + `letter-spacing: -0.02em` + `text-wrap: balance` | h1 and h2 on public/student pages |
-| `.font-serif` | DM Serif Display only (no tracking/balance) | Decorative use (e.g., fallback initials) |
-
-```tsx
-// h1 — serif
-<h1 className="display-heading text-4xl font-medium text-text-primary">
-  Booking og betaling for yogastudioer.
-</h1>
-
-// h2 — serif
-<h2 className="display-heading text-2xl font-medium text-text-primary">
-  Kursrekker
-</h2>
-
-// h3 — stays sans-serif
-<h3 className="text-lg font-medium text-text-primary">
-  Step Title
-</h3>
-
-// body — stays sans-serif
-<p className="text-sm text-text-secondary">Description text.</p>
-```
-
-### Surfaces
-
-| Element | Dashboard | Public |
-|---------|-----------|--------|
-| Page floor | `bg-surface` (`#F4F4F5`) | `bg-public-sand` (`#F9F8F6`) |
-| Card radius | `rounded-2xl` (16px) | `rounded-3xl` (24px) |
-| Card border | `border-zinc-200` | `border-zinc-200/60` |
-| Page max-width | `max-w-5xl` | `max-w-6xl` |
-
-### Navigation
-
-Public/student pages use a centered navigation bar (not sidebar):
-- `bg-white/80 backdrop-blur-md` for glass effect
-- `border-b border-zinc-200/60` softer border
-- `max-w-6xl mx-auto` width constraint
-
-### Button Variants
-
-**Primary:** `variant="public"` — sage green pill button for public-facing CTAs.
-
-```tsx
-<Button variant="public" size="sm">Meld deg på</Button>
-```
-
-- Background: `bg-public-sage` → hover `bg-public-sage-hover`
-- Text: `text-public-sage-foreground` (white)
-- Shape: `rounded-full` (pill)
-- Border: `border-public-sage/80`
-
-**Secondary:** `variant="public-outline"` — outlined sage pill for secondary actions.
-
-```tsx
-<Button variant="public-outline" size="sm">Se detaljer</Button>
-```
-
-- Background: `bg-white` → hover `bg-public-sage-light`
-- Text: `text-public-sage` (sage green)
-- Shape: `rounded-full` (pill)
-- Border: `border-public-sage/30` → hover `border-public-sage/50`
-
-### PublicCourseCard Component
-
-Vertical card for course browsing with large image area:
-
-```tsx
-import { PublicCourseCard } from '@/components/public/PublicCourseCard';
-
-<PublicCourseCard
-  course={course}
-  studioSlug={slug}
-  isSignedUp={false}
-/>
-```
-
-- `rounded-3xl` with `border-zinc-200/60`
-- `aspect-[4/3]` image area (serif initial fallback when no image)
-- `p-8` content padding
-- Uses `variant="public"` button for CTA
-
-### EmptyState Variant
-
-The `<EmptyState>` component supports `variant="public"`:
-
-```tsx
-<EmptyState
-  variant="public"
-  icon={CalendarX}
-  title="Ingen kommende kurs"
-  description="Ingen kurs å vise."
-/>
-```
-
-When `variant="public"`: serif title via `.display-heading`, icon background uses `bg-public-sand-deep`.

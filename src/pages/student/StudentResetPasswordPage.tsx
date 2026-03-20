@@ -87,7 +87,7 @@ const StudentResetPasswordPage = () => {
   // Loading
   if (isValidSession === null) {
     return (
-      <div className="theme-public min-h-screen w-full bg-public-sand text-text-primary font-geist antialiased flex items-center justify-center">
+      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex items-center justify-center">
         <Spinner size="xl" />
       </div>
     )

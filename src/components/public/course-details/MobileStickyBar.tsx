@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { calculateTotalPrice } from '@/lib/pricing';
+import { formatKroner } from '@/lib/utils';
 
 export interface MobileStickyBarProps {
   price: number | null;
@@ -14,9 +16,7 @@ export interface MobileStickyBarProps {
 }
 
 /**
- * Mobile sticky action bar (fixed bottom)
- * Mirrors BookingSidebar state
- * Hidden on desktop (lg:hidden)
+ * Mobile sticky bar — fixed bottom, matches Linear aesthetic
  */
 export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
   price,
@@ -26,21 +26,17 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
   studioUrl,
   stripeConnected = true,
 }) => {
-  const displayPrice = price || 0;
-  const isFreePrice = displayPrice === 0;
-  const priceLabel = isFreePrice ? 'Gratis' : `${displayPrice} kr`;
+  const total = calculateTotalPrice(price);
+  const priceLabel = formatKroner(total);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white/80 backdrop-blur-xl lg:hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white md:hidden pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-lg items-center justify-between p-4">
         {isEnded ? (
-          /* Course ended */
           <>
             <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">Status</span>
-              <span className="font-geist text-base font-medium text-text-secondary">
-                Fullført
-              </span>
+              <span className="text-xs text-muted-foreground">Status</span>
+              <span className="text-sm font-medium text-muted-foreground">Fullført</span>
             </div>
             <Button asChild size="default" variant="outline">
               <Link to={studioUrl}>Se kommende kurs</Link>
@@ -49,15 +45,10 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
         ) : isFull ? (
           null
         ) : (
-          /* Price + Submit */
           <>
             <div className="flex flex-col">
-              <span className="text-xs text-text-secondary">
-                Totalpris
-              </span>
-              <span className="font-geist text-xl font-medium text-text-primary">
-                {priceLabel}
-              </span>
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span className="text-xl font-medium text-text-primary">{priceLabel}</span>
             </div>
 
             {!stripeConnected ? (
@@ -66,7 +57,7 @@ export const MobileStickyBar: React.FC<MobileStickyBarProps> = ({
               </Button>
             ) : (
               <Button
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg"
                 size="default"
                 type="submit"
                 form="booking-form"

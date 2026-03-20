@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatSessionDate, formatTimeRange } from '@/utils/dateFormatting';
@@ -73,8 +73,7 @@ function getStatusInfo(spotsAvailable: number) {
 }
 
 function formatPrice(price: number | null): string {
-  if (!price) return 'Gratis';
-  return `${price} kr`;
+  return formatKroner(price);
 }
 
 /**
@@ -153,14 +152,14 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               className={cn(
                 "smooth-transition",
                 isExpanded
-                  ? "rounded-2xl border border-zinc-200/60 bg-white/60 my-2"
-                  : "border-b border-zinc-200/60 last:border-b-0"
+                  ? "rounded-xl border border-zinc-200 bg-white/60 my-2"
+                  : "border-b border-zinc-200 last:border-b-0"
               )}
             >
               {/* Row */}
               <div
                 className={cn(
-                  "group flex items-center gap-4 px-6 py-5 smooth-transition cursor-pointer",
+                  "group flex items-center gap-4 px-6 py-6 smooth-transition cursor-pointer",
                   isFull ? "opacity-40" : "hover:bg-zinc-50/30",
                   isExpanded && "bg-zinc-50/30"
                 )}
@@ -205,7 +204,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                         {formatPrice(course.price)}
                       </span>
                       <Button
-                        variant="public-outline"
+                        variant="outline"
                         size="compact"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -249,14 +248,14 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               className={cn(
                 "smooth-transition",
                 isExpanded
-                  ? "rounded-2xl border border-zinc-200/60 bg-white/60 my-2"
-                  : "border-b border-zinc-200/60 last:border-b-0"
+                  ? "rounded-xl border border-zinc-200 bg-white/60 my-2"
+                  : "border-b border-zinc-200 last:border-b-0"
               )}
             >
               {/* Row */}
               <div
                 className={cn(
-                  "group flex items-center gap-3 px-4 py-5 smooth-transition cursor-pointer",
+                  "group flex items-center gap-3 px-4 py-6 smooth-transition cursor-pointer",
                   isFull ? "opacity-40" : "hover:bg-zinc-50/30",
                   isExpanded && "bg-zinc-50/30"
                 )}
@@ -288,7 +287,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                     <span className="text-xs font-medium text-text-primary">Fullt</span>
                   ) : (
                     <Button
-                      variant="public-outline"
+                      variant="outline"
                       size="compact"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -344,7 +343,7 @@ function DesktopPreview({ course }: PreviewProps) {
   if (!hasContent) {
     return (
       <div className="px-6 pb-6 pt-1">
-        <span className="text-sm text-text-tertiary">Ingen tilleggsinformasjon</span>
+        <span className="text-sm text-text-secondary">Ingen tilleggsinformasjon</span>
       </div>
     );
   }

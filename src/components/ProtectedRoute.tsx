@@ -60,10 +60,10 @@ function OrgSetupFallback() {
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="text-lg font-medium tracking-tight text-text-primary">Ease</span>
+            <span className="text-lg font-medium text-text-primary">Ease</span>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+        <div className="bg-white rounded-xl border border-zinc-200 p-6">
           <h1 className="text-lg font-medium text-text-primary mb-1 text-center">
             Fullfør registreringen
           </h1>
@@ -165,10 +165,10 @@ export function ProtectedRoute({ children, requireOrganization = true, requiredU
               <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
                 <Infinity className="w-3.5 h-3.5" />
               </div>
-              <span className="text-lg font-medium tracking-tight text-text-primary">Ease</span>
+              <span className="text-lg font-medium text-text-primary">Ease</span>
             </div>
           </div>
-          <div className="bg-white rounded-2xl border border-zinc-200 p-6 text-center">
+          <div className="bg-white rounded-xl border border-zinc-200 p-6 text-center">
             <h1 className="text-lg font-medium text-text-primary mb-1">
               Ingen tilgang
             </h1>

@@ -19,11 +19,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 /**
  * Typed query builder helper.
  *
- * The auto-generated Database type resolves insert/update to `never` for tables
- * with RLS policies. This helper centralizes the unavoidable cast.
- *
- * TODO: Run `supabase gen types typescript` against the live DB to get correct
- * types, then remove this helper and use `supabase.from()` directly.
+ * Supabase RLS policies cause insert/update types to resolve to `never`.
+ * This helper centralizes the unavoidable cast for write operations.
+ * Read operations (select) can use `supabase.from()` directly.
  */
 type TableName = keyof Database['public']['Tables']
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

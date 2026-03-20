@@ -1,51 +1,46 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
+import { formatKroner } from '@/lib/utils';
 
 export interface TicketSelectorProps {
   price: number | null;
 }
 
 /**
- * Ticket selector for choosing pricing tiers
- * Currently shows only standard ticket - student pricing coming soon
- *
- * TODO: Implement student discount pricing when backend supports it
- * Backend requirements:
- * - Add priceStandard and priceStudent fields to Course model
- * - Update Stripe integration to handle different pricing tiers
+ * Order summary card — shows course fee, service fee, and total
+ * Matches Stripe's embedded order summary styling (bg-zinc-50, no border)
  */
 export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
-  const displayPrice = price || 0;
-  const isFree = displayPrice === 0;
-  const priceLabel = isFree ? 'Gratis' : `${displayPrice} kr`;
+  const basePrice = price || 0;
+  const isFree = basePrice === 0;
+
+  if (isFree) return null;
+
+  const serviceFee = calculateServiceFee(price);
+  const total = calculateTotalPrice(price);
 
   return (
-    <div className="space-y-3">
-      {/* Standard ticket card */}
-      <div className="relative border-2 border-primary bg-surface/30 rounded-2xl p-4 cursor-default">
-        {/* Selected indicator */}
-        <div className="absolute top-3 right-3">
-          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-            <Check className="h-3 w-3 text-white" />
-          </div>
-        </div>
-
-        <div className="pr-8">
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-base font-medium text-text-primary">Standard</span>
-            <span className="text-sm text-text-secondary">•</span>
-            <span className="text-base font-medium text-text-primary">{priceLabel}</span>
-          </div>
-          <p className="text-xs text-text-secondary">
-            Per time
-          </p>
-        </div>
+    <div className="rounded-xl bg-zinc-50 p-4 space-y-3">
+      {/* Course fee */}
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-text-primary">Kursavgift</span>
+        <span className="text-sm text-text-primary">{formatKroner(basePrice)}</span>
       </div>
 
-      {/* Elevrabatt coming soon hint */}
-      <p className="text-xs text-text-tertiary text-center">
-        Elevrabatt kommer snart
-      </p>
+      {/* Service fee */}
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">Servicegebyr</span>
+        <span className="text-sm text-muted-foreground">{formatKroner(serviceFee)}</span>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-zinc-200" />
+
+      {/* Total */}
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-medium text-text-primary">Totalt</span>
+        <span className="text-sm font-medium text-text-primary">{formatKroner(total)}</span>
+      </div>
     </div>
   );
 };

@@ -44,7 +44,7 @@ function AlertDialogContent({
       <AlertDialogPrimitive.Content
         data-slot="alert-dialog-content"
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-200 bg-white p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl",
+          "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] sm:w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-zinc-200 bg-white p-6 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-2xl",
           className
         )}
         {...props}
@@ -112,7 +112,7 @@ function AlertDialogAction({
   return (
     <AlertDialogPrimitive.Action
       data-slot="alert-dialog-action"
-      className={cn(buttonVariants(), className)}
+      className={cn(buttonVariants({ size: "sm" }), className)}
       {...props}
     />
   )
@@ -126,7 +126,7 @@ function AlertDialogCancel({
     <AlertDialogPrimitive.Cancel
       data-slot="alert-dialog-cancel"
       className={cn(
-        buttonVariants({ variant: "outline-soft" }),
+        buttonVariants({ variant: "outline-soft", size: "sm" }),
         "mt-2 sm:mt-0",
         className
       )}

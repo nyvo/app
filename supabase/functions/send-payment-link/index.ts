@@ -1,12 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import type Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { verifyAuth, verifyOrgMembership, handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
+import { calculatePricing } from '../_shared/pricing.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course has no valid price', 400)
     }
 
-    const priceInOre = Math.round(price * 100)
+    const { serviceFeeNok, totalPrice, priceInOre } = calculatePricing(price)
     const org = course.organization
 
     const successUrl = `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${org.slug}`
@@ -153,9 +153,14 @@ Deno.serve(async (req: Request) => {
         customer_email: signup.participant_email,
         customer_phone: signup.participant_phone || '',
         is_drop_in: (signup.is_drop_in || false).toString(),
-        session_id: signup.class_session_id || '',
+        // session_id not needed: existing_signup_id path in webhook already has class_date/class_time
+        session_id: '',
         signup_package_id: signup.signup_package_id || '',
         package_weeks: signup.package_weeks?.toString() || '',
+        // Pricing breakdown for transparency
+        base_price_nok: price.toString(),
+        service_fee_nok: serviceFeeNok.toString(),
+        total_price_nok: totalPrice.toString(),
         // Link to existing signup so webhook can update it instead of creating a new one
         existing_signup_id: signup.id,
       },
@@ -166,7 +171,7 @@ Deno.serve(async (req: Request) => {
 
     // Configure payment intent with manual capture (matching existing pattern)
     if (org.stripe_account_id && org.stripe_onboarding_complete) {
-      const platformFee = Math.round(priceInOre * 0.05)
+      const { platformFee } = calculatePricing(price)
       sessionOptions.payment_intent_data = {
         capture_method: 'manual',
         application_fee_amount: platformFee,
@@ -200,64 +205,16 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           to: signup.participant_email,
-          subject: `Fullfør betaling: ${course.title}`,
-          html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 500; margin-bottom: 20px; }
-    .pending { background: #fef3c7; color: #92400e; }
-    .details-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .button { display: inline-block; background: #10b981; color: white; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: 600; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-
-    <p style="text-align: center;">
-      <span class="status-badge pending">Betaling venter</span>
-    </p>
-
-    <p>Hei ${signup.participant_name || ''},</p>
-
-    <p>Vi ser at betalingen for <strong>${course.title}</strong> ikke er fullført ennå. Bruk lenken nedenfor for å fullføre betalingen.</p>
-
-    <div class="details-box">
-      <p><strong>Kurs:</strong> ${course.title}</p>
-      ${courseDate ? `<p><strong>Dato:</strong> ${courseDate}</p>` : ''}
-      ${course.time_schedule ? `<p><strong>Tid:</strong> ${course.time_schedule}</p>` : ''}
-      <p><strong>Beløp:</strong> ${price} kr</p>
-    </div>
-
-    <p style="text-align: center;">
-      <a href="${checkoutSession.url}" class="button">Betal nå</a>
-    </p>
-
-    <p style="text-align: center; font-size: 12px; color: #9ca3af;">
-      Eller kopier denne lenken: ${checkoutSession.url}
-    </p>
-
-    <p>Ta kontakt med ${org.name} hvis du har spørsmål.</p>
-
-    <div class="footer">
-      <p>Hilsen,<br>${org.name || 'Ease'}</p>
-    </div>
-  </div>
-</body>
-</html>
-          `,
-          text: `Hei ${signup.participant_name || ''}, vi ser at betalingen for ${course.title} ikke er fullført. Bruk denne lenken for å betale: ${checkoutSession.url}. Beløp: ${price} kr.`
+          template: 'payment-link',
+          templateData: {
+            participantName: signup.participant_name || '',
+            courseName: course.title,
+            courseDate: courseDate || '',
+            courseTime: course.time_schedule || '',
+            totalPrice: totalPrice.toString(),
+            paymentUrl: checkoutSession.url || '',
+            organizationName: org.name || '',
+          }
         })
       })
     } catch (emailError) {

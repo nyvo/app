@@ -25,9 +25,9 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
   };
 
   return (
-    <div className="theme-public min-h-screen bg-public-sand flex flex-col">
+    <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200/60 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
@@ -98,7 +98,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       </main>
 
       {/* Simple Footer */}
-      <footer className="border-t border-zinc-200/60 bg-white py-8 mt-auto">
+      <footer className="border-t border-zinc-200 bg-white py-8 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-sm text-text-secondary">
             Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-secondary underline hover:text-text-primary transition-colors">Kontakt oss</a>

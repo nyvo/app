@@ -53,10 +53,10 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
         align="start"
       >
         {/* Header */}
-        <div className="px-5 pt-5 pb-3">
+        <div className="px-6 pt-5 pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-medium text-text-primary tracking-tight">Del dette kurset</h3>
+              <h3 className="text-sm font-medium text-text-primary">Del dette kurset</h3>
               <p className="text-xs text-text-secondary mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>
@@ -76,7 +76,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Twitter */}
             <button
               onClick={() => handleShare('twitter')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white smooth-transition">
                 <Twitter className="h-4 w-4 text-text-secondary group-hover:text-text-primary stroke-[1.5]" />
@@ -89,7 +89,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* LinkedIn */}
             <button
               onClick={() => handleShare('linkedin')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white smooth-transition">
                 <Linkedin className="h-4 w-4 text-text-secondary group-hover:text-blue-600 stroke-[1.5]" />
@@ -102,7 +102,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Facebook */}
             <button
               onClick={() => handleShare('facebook')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white smooth-transition">
                 <Facebook className="h-4 w-4 text-text-secondary group-hover:text-blue-500 stroke-[1.5]" />
@@ -115,7 +115,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             {/* Email */}
             <button
               onClick={() => handleShare('email')}
-              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-zinc-50 smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-surface-elevated border border-border rounded-lg group-hover:bg-white smooth-transition">
                 <Mail className="h-4 w-4 text-text-secondary group-hover:text-text-primary stroke-[1.5]" />
@@ -130,9 +130,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
         <div className="h-px w-full bg-border my-1" />
 
         {/* Copy Link Section */}
-        <div className="px-5 py-4">
+        <div className="px-6 py-4">
           <label className="text-xs font-medium text-text-secondary mb-2 block">Kurslenke</label>
-          <div className="flex items-center gap-2 p-1.5 bg-surface-elevated border border-border rounded-lg focus-within:ring-2 focus-within:ring-zinc-400/50 focus-within:ring-offset-2 focus-within:ring-offset-white smooth-transition">
+          <div className="flex items-center gap-2 p-1.5 bg-surface-elevated border border-border rounded-lg focus-within:ring-2 focus-within:ring-zinc-400/50 smooth-transition">
             <div className="pl-2 text-text-tertiary">
               <LinkIcon className="h-3.5 w-3.5" />
             </div>
@@ -163,7 +163,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
         </div>
 
         {/* Footer - Access Info */}
-        <div className="bg-surface border-t border-border px-5 py-3 flex items-center justify-between">
+        <div className="bg-surface border-t border-border px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs text-text-secondary">Offentlig tilgjengelig</span>
           </div>

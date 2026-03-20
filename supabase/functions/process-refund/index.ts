@@ -1,12 +1,10 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
-import { verifyAuth, handleCors, getCorsHeaders, errorResponse, escapeHtml } from '../_shared/auth.ts'
+import { createStripeClient } from '../_shared/stripe.ts'
+import { verifyAuth, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -158,6 +156,8 @@ Deno.serve(async (req: Request) => {
 
     if (refundResult) {
       updateData.payment_status = 'refunded'
+      updateData.refund_amount = signup.amount_paid || 0
+      updateData.refunded_at = new Date().toISOString()
     }
 
     const { error: updateError } = await supabase
@@ -187,59 +187,14 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           to: signup.participant_email,
-          subject: canGetRefund ? 'Avbestilling bekreftet – Refusjon behandlet' : 'Avbestilling bekreftet',
-          html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 500; margin-bottom: 20px; }
-    .refunded { background: #dcfce7; color: #166534; }
-    .no-refund { background: #fef3c7; color: #92400e; }
-    .details-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-
-    <p style="text-align: center;">
-      <span class="status-badge ${canGetRefund ? 'refunded' : 'no-refund'}">
-        ${canGetRefund ? 'Avbestilling med refusjon' : 'Avbestilling uten refusjon'}
-      </span>
-    </p>
-
-    <p>Hei ${escapeHtml(signup.participant_name) || ''},</p>
-
-    <p>Din avbestilling fra <strong>${escapeHtml(course?.title) || 'kurset'}</strong> er bekreftet.</p>
-
-    <div class="details-box">
-      ${canGetRefund && signup.amount_paid ? `
-        <p><strong>Refusjon:</strong> ${signup.amount_paid} kr vil bli refundert til betalingskortet ditt innen 5–10 virkedager.</p>
-      ` : `
-        <p><strong>Merk:</strong> Siden avbestillingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon i henhold til våre avbestillingsvilkår.</p>
-      `}
-    </div>
-
-    <div class="footer">
-      <p>Hilsen,<br>${escapeHtml(org?.name) || 'Ease'}</p>
-    </div>
-  </div>
-</body>
-</html>
-          `,
-          text: canGetRefund
-            ? `Hei ${signup.participant_name || ''}, din avbestilling fra ${course?.title || 'kurset'} er bekreftet. Refusjon på ${signup.amount_paid || 0} kr vil bli refundert innen 5–10 virkedager.`
-            : `Hei ${signup.participant_name || ''}, din avbestilling fra ${course?.title || 'kurset'} er bekreftet. Siden avbestillingen skjedde mindre enn 48 timer før kursstart, kan vi dessverre ikke tilby refusjon.`
+          template: 'student-cancellation',
+          templateData: {
+            participantName: signup.participant_name || '',
+            courseName: course?.title || '',
+            organizationName: org?.name || '',
+            canGetRefund: canGetRefund.toString(),
+            refundAmount: signup.amount_paid?.toString() || '',
+          }
         })
       })
 

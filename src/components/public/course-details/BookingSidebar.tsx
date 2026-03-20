@@ -1,11 +1,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import { PriceHeader } from './PriceHeader';
 import { TicketSelector } from './TicketSelector';
 import { StudentDetailsForm, type StudentDetailsFormData } from './StudentDetailsForm';
+import { EmbeddedPayment } from './EmbeddedPayment';
 
 export interface BookingSidebarProps {
   course: PublicCourseWithDetails;
@@ -15,16 +15,18 @@ export interface BookingSidebarProps {
   errors: Record<string, boolean>;
   touched: Record<string, boolean>;
   submitting: boolean;
-  redirectingToPayment: boolean;
   isAuthStudent: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onBlur: (field: string) => void;
+  clientSecret: string | null;
+  onPaymentSuccess: (paymentIntentId: string) => void;
+  onPaymentError: (error: string) => void;
+  onPaymentBack: () => void;
 }
 
 /**
- * Booking sidebar - orchestrates two-step booking flow
- * Sticky on desktop, responsive on mobile
+ * Linear-style booking sidebar — bordered card with step header + form/payment
  */
 export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   course,
@@ -33,110 +35,90 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   errors,
   touched,
   submitting,
-  redirectingToPayment,
   isAuthStudent,
   onSubmit,
   onInputChange,
   onBlur,
+  clientSecret,
+  onPaymentSuccess,
+  onPaymentError,
+  onPaymentBack,
 }) => {
   const stripeNotReady = course.organization?.stripe_onboarding_complete === false;
+  const showPayment = !!clientSecret;
 
   return (
-    <div className="sticky top-28">
-      {/* Booking container */}
-      <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-        {/* Price header */}
-        <PriceHeader
-          price={course.price}
-          spotsAvailable={course.spots_available}
-        />
+    <div className="bg-white rounded-xl border border-zinc-200">
+      {/* Step header */}
+      <PriceHeader
+        label={showPayment ? 'Betaling' : 'Påmelding'}
+        step={showPayment ? 'Steg 2 av 2' : (course.price && course.price > 0 ? 'Steg 1 av 2' : undefined)}
+      />
 
-        {/* Content */}
-        <form id="booking-form" onSubmit={onSubmit} className="p-6 space-y-8">
-          {/* Redirecting to payment state */}
-          {redirectingToPayment ? (
-            <div className="py-12 text-center">
-              <Spinner size="xl" className="mx-auto mb-4 text-text-primary" />
-              <p className="text-sm font-medium text-text-primary">
-                Går til betaling ...
-              </p>
-              <p className="text-xs text-text-secondary mt-1">
-                Vent litt
-              </p>
-            </div>
-          ) : (
-            <div className={`space-y-6 ${isFull || stripeNotReady ? 'opacity-40 pointer-events-none select-none' : ''}`}>
-              {/* Step 1: Ticket Selection */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-secondary">
-                    Steg 1
-                  </span>
-                  <div className="h-px flex-1 bg-zinc-200"></div>
-                </div>
-                <TicketSelector price={course.price} />
+      {/* Step content */}
+      {showPayment ? (
+        <div className="p-6">
+          <EmbeddedPayment
+            clientSecret={clientSecret}
+            courseName={course.title}
+            price={course.price || 0}
+            onPaymentSuccess={onPaymentSuccess}
+            onPaymentError={onPaymentError}
+            onBack={onPaymentBack}
+          />
+        </div>
+      ) : (
+        <form
+          id="booking-form"
+          onSubmit={onSubmit}
+          className="p-6 space-y-5"
+        >
+          <div className={`space-y-5 ${isFull || stripeNotReady ? 'opacity-40 pointer-events-none select-none' : ''}`}>
+            {/* Ticket selection (if paid) */}
+            {course.price && course.price > 0 && (
+              <TicketSelector price={course.price} />
+            )}
+
+            {/* Student details */}
+            <StudentDetailsForm
+              formData={formData}
+              errors={errors}
+              touched={touched}
+              submitting={submitting}
+              isAuthStudent={isAuthStudent}
+              onChange={onInputChange}
+              onBlur={onBlur}
+            />
+
+            {/* Submit */}
+            {!isFull && (
+              <div className="pt-2">
+                {stripeNotReady ? (
+                  <Button
+                    size="compact"
+                    className="w-full"
+                    disabled
+                  >
+                    Påmelding åpner snart
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="w-full bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg text-sm font-medium py-3 h-auto"
+                    loading={submitting}
+                    loadingText="Behandler"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      {course.price && course.price > 0 ? 'Gå til betaling' : 'Fullfør påmelding'}
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </Button>
+                )}
               </div>
-
-              {/* Step 2: Your Details */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-secondary">
-                    Steg 2
-                  </span>
-                  <div className="h-px flex-1 bg-zinc-200"></div>
-                </div>
-                <StudentDetailsForm
-                  formData={formData}
-                  errors={errors}
-                  touched={touched}
-                  submitting={submitting}
-                  isAuthStudent={isAuthStudent}
-                  onChange={onInputChange}
-                  onBlur={onBlur}
-                />
-              </div>
-
-              {/* Submit button & disclaimer */}
-              {!isFull && (
-                <div className="space-y-3">
-                  {stripeNotReady ? (
-                    <>
-                      <Button
-                        size="compact"
-                        className="w-full"
-                        disabled
-                      >
-                        Påmelding åpner snart
-                      </Button>
-                      <p className="text-center text-xs text-text-secondary">
-                        Instruktøren klargjør påmelding.
-                      </p>
-                    </>
-                  ) : (
-                    <Button
-                      size="compact"
-                      type="submit"
-                      className="w-full"
-                      loading={submitting}
-                      loadingText="Behandler"
-                    >
-                      <span className="flex items-center justify-center gap-2">
-                        Fullfør påmelding
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    </Button>
-                  )}
-                  {!stripeNotReady && (
-                    <p className="text-center text-xs text-text-secondary">
-                      Sikker betaling. Du belastes ikke før bekreftelse.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </form>
-      </div>
+      )}
     </div>
   );
 };

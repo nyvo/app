@@ -11,7 +11,7 @@ const StudentProfilePage = () => {
     <StudentDashboardLayout>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="display-heading text-2xl font-medium text-text-primary">
+          <h1 className="tracking-tight text-2xl font-medium text-text-primary">
             Min profil
           </h1>
           <p className="text-text-secondary mt-1">
@@ -19,7 +19,7 @@ const StudentProfilePage = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl border border-zinc-200/60 overflow-hidden">
+        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
           <div className="p-6 space-y-6">
             
             {/* Name */}
@@ -31,7 +31,7 @@ const StudentProfilePage = () => {
                 <label className="block text-xs font-medium text-text-secondary mb-1">
                   Navn
                 </label>
-                <p className="text-base text-text-primary font-medium">
+                <p className="text-sm text-text-primary font-medium">
                   {profile?.name || 'Ikke angitt'}
                 </p>
               </div>
@@ -46,7 +46,7 @@ const StudentProfilePage = () => {
                 <label className="block text-xs font-medium text-text-secondary mb-1">
                   E-post
                 </label>
-                <p className="text-base text-text-primary">
+                <p className="text-sm text-text-primary">
                   {user?.email}
                 </p>
               </div>
@@ -61,7 +61,7 @@ const StudentProfilePage = () => {
                 <label className="block text-xs font-medium text-text-secondary mb-1">
                   Telefon
                 </label>
-                <p className="text-base text-text-primary">
+                <p className="text-sm text-text-primary">
                   {profile?.phone || 'Ikke angitt'}
                 </p>
               </div>
@@ -76,7 +76,7 @@ const StudentProfilePage = () => {
                 <label className="block text-xs font-medium text-text-secondary mb-1">
                   Medlem siden
                 </label>
-                <p className="text-base text-text-primary">
+                <p className="text-sm text-text-primary">
                   {profile?.created_at 
                     ? format(new Date(profile.created_at), 'd. MMMM yyyy', { locale: nb })
                     : 'Ukjent'}

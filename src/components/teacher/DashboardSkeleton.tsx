@@ -41,8 +41,8 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </SkeletonCard>
 
       {/* Messages Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-2xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-5 pb-4">
+      <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[360px] rounded-xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-6 pb-4">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-3 w-12" />
         </div>
@@ -63,7 +63,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Courses Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 p-6">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-xl bg-white border border-zinc-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-7 w-36 rounded-lg" />
@@ -90,12 +90,12 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Registrations Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-2xl bg-white border border-zinc-200 overflow-hidden">
-        <div className="flex items-center justify-between p-5 sm:p-6 pb-3">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-xl bg-white border border-zinc-200 overflow-hidden">
+        <div className="flex items-center justify-between p-6 sm:p-6 pb-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-12" />
         </div>
-        <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-2">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-5 space-y-2">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="p-3.5 rounded-lg border border-zinc-100 bg-surface/30">
               <div className="flex items-center justify-between gap-3">

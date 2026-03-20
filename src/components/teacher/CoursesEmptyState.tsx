@@ -7,7 +7,7 @@ export const CoursesEmptyState = () => {
     <div className="h-full flex items-start pt-8">
       <div className="w-full max-w-2xl mx-auto">
         {/* Main card with minimal background */}
-        <div className="relative rounded-2xl border border-zinc-200 bg-white p-10 overflow-hidden">
+        <div className="relative rounded-xl border border-zinc-200 bg-white p-10 overflow-hidden">
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center text-center">
             {/* Icon */}
@@ -16,7 +16,7 @@ export const CoursesEmptyState = () => {
             </div>
 
             {/* Text */}
-            <h2 className="font-geist text-xl font-medium tracking-tight text-text-primary mb-2">
+            <h2 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
               Opprett ditt første kurs
             </h2>
             <p className="text-sm text-text-secondary mb-8 max-w-sm">
@@ -35,7 +35,7 @@ export const CoursesEmptyState = () => {
 
         {/* Hints section */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-zinc-200">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-white border border-zinc-200">
             <div className="shrink-0 rounded-lg bg-surface p-2">
               <Layers className="h-4 w-4 text-text-tertiary" />
             </div>
@@ -46,7 +46,7 @@ export const CoursesEmptyState = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-4 rounded-2xl bg-white border border-zinc-200">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-white border border-zinc-200">
             <div className="shrink-0 rounded-lg bg-surface p-2">
               <Calendar className="h-4 w-4 text-text-tertiary" />
             </div>

@@ -2,12 +2,10 @@
 // Deployed: 2026-01-20 - using Stripe SDK constructEventAsync for verification
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import type Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2024-12-18.acacia',
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const stripe = createStripeClient()
 
 const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
@@ -533,6 +531,9 @@ Deno.serve(async (req: Request) => {
         const isFullRefund = charge.amount_refunded >= charge.amount
         console.log(`Charge refunded: ${charge.id}, full=${isFullRefund}, refunded=${charge.amount_refunded}/${charge.amount}`)
 
+        const refundAmountNok = charge.amount_refunded / 100
+        const refundedAt = new Date().toISOString()
+
         if (isFullRefund) {
           // Full refund — cancel the signup
           const { error: updateError } = await supabase
@@ -540,6 +541,8 @@ Deno.serve(async (req: Request) => {
             .update({
               payment_status: 'refunded',
               status: 'cancelled',
+              refund_amount: refundAmountNok,
+              refunded_at: refundedAt,
             })
             .eq('stripe_payment_intent_id', charge.payment_intent)
 
@@ -547,11 +550,13 @@ Deno.serve(async (req: Request) => {
             console.error('Error updating signup for full refund:', updateError)
           }
         } else {
-          // Partial refund — keep signup confirmed, just note the partial refund
+          // Partial refund — keep signup confirmed, track refund amount
           const { error: updateError } = await supabase
             .from('signups')
             .update({
               payment_status: 'refunded',
+              refund_amount: refundAmountNok,
+              refunded_at: refundedAt,
             })
             .eq('stripe_payment_intent_id', charge.payment_intent)
 
@@ -560,6 +565,294 @@ Deno.serve(async (req: Request) => {
           }
         }
         processingResult = { type: 'refund', charge_id: charge.id, full_refund: isFullRefund }
+        break
+      }
+
+      // ============================================
+      // EMBEDDED PAYMENT FLOW: PaymentIntent authorized (manual capture)
+      // Fires when a manual-capture PaymentIntent is authorized via embedded Payment Element.
+      // This is the equivalent of checkout.session.completed for the embedded flow.
+      // ============================================
+      case 'payment_intent.amount_capturable_updated': {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent
+        const metadata = paymentIntent.metadata || {}
+
+        // Only process embedded flow payments (skip checkout session PIs)
+        if (metadata.payment_flow !== 'embedded') {
+          console.log('Skipping non-embedded payment_intent.amount_capturable_updated:', paymentIntent.id)
+          processingResult = { type: 'amount_capturable_updated', status: 'skipped_non_embedded', payment_intent_id: paymentIntent.id }
+          break
+        }
+
+        const courseId = metadata.course_id
+        const organizationId = metadata.organization_id
+        const customerName = metadata.customer_name
+        const customerEmail = metadata.customer_email
+        const customerPhone = metadata.customer_phone
+        const isDropIn = metadata.is_drop_in === 'true'
+        const sessionId = metadata.session_id
+        const signupPackageId = metadata.signup_package_id || null
+        const packageWeeks = metadata.package_weeks ? parseInt(metadata.package_weeks, 10) : null
+
+        // Validate required metadata
+        const missingFields: string[] = []
+        if (!courseId) missingFields.push('course_id')
+        if (!organizationId) missingFields.push('organization_id')
+        if (!customerEmail) missingFields.push('customer_email')
+        if (!customerName) missingFields.push('customer_name')
+
+        if (missingFields.length > 0) {
+          console.error('CRITICAL: Missing required metadata in PaymentIntent:', {
+            paymentIntentId: paymentIntent.id,
+            missingFields,
+            metadata,
+          })
+          await supabase.from('processed_webhook_events')
+            .delete()
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response(`Missing metadata: ${missingFields.join(', ')}`, { status: 500 })
+        }
+
+        console.log('Processing payment_intent.amount_capturable_updated (embedded):', {
+          paymentIntentId: paymentIntent.id,
+          courseId,
+          organizationId,
+          customerEmail,
+          customerName,
+          isDropIn,
+          amount: paymentIntent.amount,
+        })
+
+        // Check if signup already exists (idempotency)
+        const { data: existingPISignups } = await supabase
+          .from('signups')
+          .select('id')
+          .eq('stripe_payment_intent_id', paymentIntent.id)
+
+        if (existingPISignups && existingPISignups.length > 0) {
+          console.log('Signup already exists for this PaymentIntent:', existingPISignups[0].id)
+          try {
+            if (paymentIntent.status === 'requires_capture') {
+              await stripe.paymentIntents.capture(paymentIntent.id)
+            }
+          } catch (captureError) {
+            console.error('Error capturing payment for existing signup:', captureError)
+          }
+          processingResult = { type: 'embedded_signup', status: 'already_exists', existing_id: existingPISignups[0].id }
+          await supabase.from('processed_webhook_events')
+            .update({ result: processingResult })
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response('OK', { status: 200 })
+        }
+
+        // Get session date/time if it's a drop-in
+        let classDate = null
+        let classTime = null
+
+        if (isDropIn && sessionId) {
+          const { data: courseSession } = await supabase
+            .from('course_sessions')
+            .select('session_date, start_time')
+            .eq('id', sessionId)
+            .single()
+
+          if (courseSession) {
+            classDate = courseSession.session_date
+            classTime = courseSession.start_time
+          }
+        }
+
+        // Use atomic function to check capacity and create signup
+        const { data: signupResult, error: signupError } = await supabase
+          .rpc('create_signup_if_available', {
+            p_course_id: courseId,
+            p_organization_id: organizationId,
+            p_participant_name: customerName,
+            p_participant_email: customerEmail,
+            p_participant_phone: customerPhone || null,
+            p_stripe_checkout_session_id: null, // No checkout session in embedded flow
+            p_stripe_payment_intent_id: paymentIntent.id,
+            p_stripe_receipt_url: null,
+            p_amount_paid: paymentIntent.amount ? paymentIntent.amount / 100 : null,
+            p_is_drop_in: isDropIn,
+            p_class_date: classDate,
+            p_class_time: classTime,
+            p_signup_package_id: signupPackageId,
+            p_package_weeks: packageWeeks
+          })
+
+        if (signupError) {
+          console.error('Error calling create_signup_if_available:', signupError)
+          try {
+            await stripe.paymentIntents.cancel(paymentIntent.id)
+            console.log('Payment cancelled due to database error')
+          } catch (cancelError) {
+            console.error('Error cancelling payment:', cancelError)
+          }
+          return new Response(`Error creating signup: ${signupError.message}`, { status: 500 })
+        }
+
+        if (!signupResult || !signupResult.success) {
+          const errorType = signupResult?.error || 'unknown'
+          const errorMessage = signupResult?.message || 'Kunne ikke opprette påmelding'
+
+          console.log('Signup failed - cancelling payment:', {
+            error: errorType,
+            message: errorMessage,
+            courseId,
+            customerEmail,
+          })
+
+          try {
+            await stripe.paymentIntents.cancel(paymentIntent.id)
+            console.log('Payment authorization cancelled successfully')
+          } catch (cancelError) {
+            console.error('Error cancelling payment authorization:', cancelError)
+          }
+
+          // Send booking failed email
+          try {
+            const { data: course } = await supabase
+              .from('courses')
+              .select('title')
+              .eq('id', courseId)
+              .single()
+
+            await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                to: customerEmail,
+                template: 'booking-failed',
+                templateData: {
+                  courseName: course?.title || 'Kurset',
+                  reason: errorType === 'course_full' ? 'Kurset ble dessverre fullt før vi kunne bekrefte din påmelding.' :
+                          errorType === 'already_signed_up' ? 'Du er allerede påmeldt dette kurset.' :
+                          'Det oppstod en feil ved påmelding.',
+                  wasCharged: 'false'
+                }
+              })
+            })
+          } catch (emailError) {
+            console.error('Error sending booking failed email:', emailError)
+          }
+
+          processingResult = { type: 'embedded_signup', status: 'failed', error: errorType }
+          await supabase.from('processed_webhook_events')
+            .update({ result: processingResult })
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response('OK', { status: 200 })
+        }
+
+        // Signup created successfully - capture the payment
+        console.log('Embedded signup created successfully, capturing payment:', {
+          signupId: signupResult.signup_id,
+          paymentIntentId: paymentIntent.id,
+        })
+
+        processingResult = {
+          type: 'embedded_signup',
+          signup_id: signupResult.signup_id,
+          status: 'confirmed'
+        }
+
+        let receiptUrl: string | null = null
+        try {
+          const capturedPayment = await stripe.paymentIntents.capture(paymentIntent.id)
+          console.log('Payment captured successfully:', capturedPayment.id)
+
+          if (capturedPayment.latest_charge) {
+            const charge = await stripe.charges.retrieve(capturedPayment.latest_charge as string)
+            receiptUrl = charge.receipt_url || null
+          }
+
+          if (receiptUrl) {
+            await supabase
+              .from('signups')
+              .update({ stripe_receipt_url: receiptUrl })
+              .eq('id', signupResult.signup_id)
+          }
+        } catch (captureError) {
+          console.error('CRITICAL: Payment capture failed after signup created:', captureError)
+          await supabase
+            .from('signups')
+            .update({ payment_status: 'failed' })
+            .eq('id', signupResult.signup_id)
+          processingResult = {
+            type: 'embedded_signup',
+            signup_id: signupResult.signup_id,
+            status: 'capture_failed',
+            error: captureError instanceof Error ? captureError.message : 'Unknown'
+          }
+          await supabase.from('processed_webhook_events')
+            .update({ result: processingResult })
+            .eq('event_id', eventId)
+            .catch(() => {})
+          return new Response(JSON.stringify({ status: 'capture_failed' }), { status: 200 })
+        }
+
+        // Send confirmation email
+        try {
+          const { data: course } = await supabase
+            .from('courses')
+            .select('title, location, time_schedule, start_date')
+            .eq('id', courseId)
+            .single()
+
+          const { data: org } = await supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', organizationId)
+            .single()
+
+          const formatDate = (dateStr: string | null): string => {
+            if (!dateStr) return ''
+            const date = new Date(dateStr)
+            return date.toLocaleDateString('nb-NO', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })
+          }
+
+          const extractTime = (schedule: string | null): string => {
+            if (!schedule) return ''
+            const timeMatch = schedule.match(/(\d{1,2}:\d{2})/)
+            return timeMatch ? timeMatch[1] : ''
+          }
+
+          const emailDate = isDropIn && classDate ? classDate : course?.start_date
+          const emailTime = isDropIn && classTime ? classTime : extractTime(course?.time_schedule)
+
+          await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`
+            },
+            body: JSON.stringify({
+              to: customerEmail,
+              template: 'signup-confirmation',
+              templateData: {
+                courseName: course?.title || 'Kurs',
+                courseDate: formatDate(emailDate),
+                courseTime: emailTime,
+                location: course?.location || '',
+                organizationName: org?.name || 'Ease'
+              }
+            })
+          })
+        } catch (emailError) {
+          console.error('Error sending confirmation email:', emailError)
+        }
+
         break
       }
 
@@ -585,6 +878,8 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('Webhook error:', message)
-    return new Response(`Webhook Error: ${message}`, { status: 400 })
+    // Return 500 so Stripe retries on transient errors (network, DB).
+    // Signature failures are caught earlier and return 400.
+    return new Response(`Webhook Error: ${message}`, { status: 500 })
   }
 })

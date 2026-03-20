@@ -17,7 +17,7 @@ const alertVariants = cva(
         neutral: 'bg-surface border-transparent [&_svg]:text-text-tertiary',
       },
       size: {
-        default: 'p-4 rounded-2xl',
+        default: 'p-4 rounded-xl',
         sm: 'p-3 rounded-lg',
       },
     },

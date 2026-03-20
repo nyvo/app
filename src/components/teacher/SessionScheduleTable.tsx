@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { formatSessionDate, formatTimeRange } from '@/utils/dateFormatting';
 import type { SessionScheduleRow } from '@/services/courses';
+import { formatKroner } from '@/lib/utils';
 
 interface SessionScheduleTableProps {
   sessions: SessionScheduleRow[];
@@ -53,8 +54,7 @@ function getEnrollmentLabel(session: SessionScheduleRow): string {
  * Formats price for display
  */
 function formatPrice(price: number | null): string {
-  if (!price) return 'Gratis';
-  return `${price} kr`;
+  return formatKroner(price);
 }
 
 export function SessionScheduleTable({ sessions }: SessionScheduleTableProps) {

@@ -1,69 +1,27 @@
 import React from 'react';
-import { StatusIndicator } from '@/components/ui/status-indicator';
 
 export interface PriceHeaderProps {
-  price: number | null;
-  spotsAvailable: number;
+  label: string;
+  step?: string;
 }
 
 /**
- * Displays course price and availability status
- * Uses StatusIndicator for WCAG-compliant availability badges
+ * Card header — shows current step label (e.g. "Påmelding", "Betaling")
  */
 export const PriceHeader: React.FC<PriceHeaderProps> = ({
-  price,
-  spotsAvailable,
+  label,
+  step,
 }) => {
-  // Determine availability badge variant and label
-  const getAvailabilityBadge = () => {
-    if (spotsAvailable === 0) {
-      return {
-        variant: 'neutral' as const,
-        label: 'Fullt',
-      };
-    } else if (spotsAvailable <= 3) {
-      return {
-        variant: 'warning' as const,
-        label: `${spotsAvailable} ${spotsAvailable === 1 ? 'plass' : 'plasser'} igjen`,
-      };
-    } else {
-      return {
-        variant: 'success' as const,
-        label: 'Ledige plasser',
-      };
-    }
-  };
-
-  const availabilityBadge = getAvailabilityBadge();
-  const displayPrice = price !== null && price > 0 ? price : null;
-
   return (
-    <div className="px-6 py-5 border-b border-zinc-200 bg-surface/50 flex justify-between items-center">
-      <div>
-        <span className="block text-xs font-medium text-text-secondary">
-          Pris
+    <div className="flex justify-between items-center px-6 py-6 border-b border-zinc-200">
+      <span className="text-sm font-medium text-text-primary">
+        {label}
+      </span>
+      {step && (
+        <span className="text-xs text-muted-foreground">
+          {step}
         </span>
-        <div className="flex items-baseline gap-1 mt-1">
-          {displayPrice ? (
-            <>
-              <span className="text-2xl font-medium text-text-primary">
-                {displayPrice} kr
-              </span>
-              <span className="text-sm text-text-tertiary font-normal">/ time</span>
-            </>
-          ) : (
-            <span className="text-2xl font-medium text-status-confirmed-text">Gratis</span>
-          )}
-        </div>
-      </div>
-      <div>
-        <StatusIndicator
-          variant={availabilityBadge.variant}
-          label={availabilityBadge.label}
-          mode="badge"
-          size="sm"
-        />
-      </div>
+      )}
     </div>
   );
 };

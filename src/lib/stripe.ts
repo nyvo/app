@@ -24,14 +24,6 @@ export function getStripe(): Promise<Stripe | null> {
 }
 
 /**
- * Redirect to Stripe Checkout using URL (modern approach).
- * @param checkoutUrl - The Checkout URL from the backend
- */
-export function redirectToCheckout(checkoutUrl: string): void {
-  window.location.href = checkoutUrl
-}
-
-/**
  * Format amount for display (øre to kroner).
  * @param amountInOre - Amount in øre (cents)
  * @returns Formatted string like "250 kr"

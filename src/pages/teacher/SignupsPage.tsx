@@ -10,10 +10,9 @@ import {
   Filter,
   ChevronDown,
   Calendar,
-  AlertCircle
+  Archive,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
@@ -23,6 +22,7 @@ import type { PaymentStatus } from '@/components/ui/payment-badge';
 import { SearchInput } from '@/components/ui/search-input';
 import { SmartSignupsView } from '@/components/teacher/SmartSignupsView';
 import { toast } from 'sonner';
+import { friendlyError } from '@/lib/error-messages';
 import {
   fetchAllSignups,
   teacherCancelSignup,
@@ -30,7 +30,7 @@ import {
   markPaymentResolved,
   type SignupWithDetails,
 } from '@/services/signups';
-import type { ExceptionActionHandlers } from '@/components/teacher/ExceptionActionMenu';
+import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
 import {
   useGroupedSignups,
   type SignupDisplay,
@@ -81,23 +81,26 @@ const TimeDropdown = ({
   onChange: (value: TimeFilter | null) => void;
 }) => {
   const options: Array<{ value: TimeFilter | null; label: string }> = [
+    { value: null, label: 'Alle' },
     { value: 'upcoming', label: 'Kommende' },
     { value: 'today', label: 'I dag' },
     { value: 'this_week', label: 'Denne uken' },
-    { value: null, label: 'Alle' },
   ];
+
+  const currentLabel = options.find(o => o.value === value)?.label || 'Alle';
+  const isActive = value !== null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className={cn(
           'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-          value !== 'upcoming'
+          isActive
             ? 'bg-white text-text-primary border-border'
             : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
         )}>
           <Calendar className="h-3.5 w-3.5" />
-          Tid
+          Tid: {currentLabel}
           <ChevronDown className="ml-1 h-3.5 w-3.5" />
         </button>
       </DropdownMenuTrigger>
@@ -197,8 +200,14 @@ export const SignupsPage = () => {
 
     return signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
-      // For drop-in signups, use class_date; for course-series, use course start_date
-      const displayDate = signup.class_date || signup.course?.start_date || null;
+      // For drop-in signups, use class_date (actual session date).
+      // For course-series without class_date, use end_date so the signup
+      // appears as "upcoming" while the course is still running. Fall back
+      // to start_date only if end_date isn't set.
+      const displayDate = signup.class_date
+        || signup.course?.end_date
+        || signup.course?.start_date
+        || null;
       const displayTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
 
       // A course has ended if its status is completed/cancelled,
@@ -219,14 +228,16 @@ export const SignupsPage = () => {
         classDate: formatDate(displayDate),
         classTime: displayTime,
         classDateTime: displayDate ? new Date(displayDate) : new Date(),
-        registeredAt: formatRelativeDate(signup.created_at),
-        registeredAtDate: new Date(signup.created_at),
+        registeredAt: formatRelativeDate(signup.created_at || ''),
+        registeredAtDate: new Date(signup.created_at || ''),
         status: signup.status as SignupStatus,
         paymentStatus: signup.payment_status as PaymentStatus,
         note: signup.note || undefined,
+        amountPaid: signup.amount_paid ?? null,
         stripePaymentIntentId: signup.stripe_payment_intent_id || null,
         organizationId: signup.organization_id,
         courseEnded,
+        courseCapacity: signup.course?.max_participants ?? null,
       };
     });
   }, [signups]);
@@ -261,13 +272,13 @@ export const SignupsPage = () => {
   // EXCEPTION ACTION HANDLERS
   // ============================================
 
-  const actionHandlers: ExceptionActionHandlers = useMemo(() => ({
+  const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
     onSendPaymentLink: async (signupId: string) => {
       const { error } = await sendPaymentLink(signupId);
       if (!error) {
         toast.success('Betalingslenke sendt');
       } else {
-        toast.error(error.message);
+        toast.error(friendlyError(error, 'Kunne ikke sende betalingslenke'));
       }
     },
     onCancelEnrollment: async (signupId: string, refund: boolean) => {
@@ -276,7 +287,7 @@ export const SignupsPage = () => {
         toast.success('Deltaker avbestilt');
         loadSignups();
       } else {
-        toast.error(error.message);
+        toast.error(friendlyError(error, 'Kunne ikke avbestille deltaker'));
       }
     },
     onMarkResolved: async (signupId: string) => {
@@ -293,86 +304,71 @@ export const SignupsPage = () => {
   return (
     <SidebarProvider>
       <TeacherSidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
         <MobileTeacherHeader title="Påmeldinger" />
 
-        {/* Header Toolbar */}
+        {/* Header */}
         <motion.header
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="flex flex-col gap-6 px-8 py-8 shrink-0"
+          className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div>
+          <div className="mb-8">
             <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
             <p className="text-sm text-text-secondary mt-1">Oversikt over deltakere og påmeldinger.</p>
           </div>
 
-          {/* Filters Bar */}
-          <div className="flex flex-col gap-5">
-            {/* Primary Mode Tabs */}
-            <FilterTabs value={modeFilter} onValueChange={(v) => handleModeChange(v as ModeFilter)}>
-              <FilterTab value="active">Aktive</FilterTab>
-              <FilterTab value="ended">Avsluttet</FilterTab>
-              <FilterTab value="needs_attention" className="flex items-center gap-1.5">
-                <AlertCircle className={cn(
-                  'h-3.5 w-3.5',
-                  modeFilter === 'needs_attention' ? 'text-status-error-text' : 'text-text-tertiary'
-                )} />
-                Krever handling
-                {stats.totalExceptions > 0 && (
-                  <span className={cn(
-                    'px-1.5 py-0.5 rounded-full text-xxs font-medium',
-                    modeFilter === 'needs_attention'
-                      ? 'bg-status-error-bg text-status-error-text'
-                      : 'bg-surface text-text-secondary'
-                  )}>
-                    {stats.totalExceptions}
-                  </span>
-                )}
-              </FilterTab>
-            </FilterTabs>
+          {/* Filters row */}
+          <div className="flex flex-col md:flex-row gap-3 md:items-center pb-4">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Søk etter navn eller e-post"
+              aria-label="Søk etter deltakere"
+              className="flex-1 max-w-xs"
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              {showTimeFilter && (
+                <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
+              )}
+              <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
 
-            {/* Secondary Filters Row */}
-            <div className="flex flex-col md:flex-row gap-3 md:items-center">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Søk etter navn eller e-post"
-                aria-label="Søk etter deltakere"
-                className="flex-1 max-w-xs"
-              />
-              <div className="flex items-center gap-2 flex-wrap">
-                {showTimeFilter && (
-                  <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 ml-2"
+                >
+                  Nullstill
+                </button>
+              )}
+            </div>
+            <div className="md:ml-auto">
+              <button
+                onClick={() => handleModeChange(modeFilter === 'ended' ? 'active' : 'ended')}
+                className={cn(
+                  'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
+                  modeFilter === 'ended'
+                    ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
+                    : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
                 )}
-                {modeFilter !== 'needs_attention' && (
-                  <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
-                )}
-
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 ml-2"
-                  >
-                    Nullstill
-                  </button>
-                )}
-              </div>
+              >
+                <Archive className="h-3.5 w-3.5" />
+                Arkiv
+              </button>
             </div>
           </div>
         </motion.header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden px-8 pb-8">
-          <div className="h-full overflow-auto custom-scrollbar">
+        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+          <div>
             {error ? (
               <ErrorState
                 title="Kunne ikke laste påmeldinger"
                 message={error}
                 onRetry={loadSignups}
-                className="rounded-2xl bg-white border border-zinc-200"
               />
             ) : (
               <SmartSignupsView

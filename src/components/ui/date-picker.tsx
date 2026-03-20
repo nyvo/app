@@ -59,7 +59,7 @@ const DatePicker = ({
             // Hover state matching Input
             'hover:border-ring ios-ease',
             // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
-            'focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
+            'focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50',
             // Placeholder style when no value
             !value && 'text-text-tertiary',
             // Disabled state

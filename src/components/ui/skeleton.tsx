@@ -50,7 +50,7 @@ function SkeletonCard({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'rounded-2xl border animate-pulse bg-white border-zinc-200',
+        'rounded-xl border animate-pulse bg-white border-zinc-200',
         className
       )}
       aria-hidden="true"

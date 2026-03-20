@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatKroner } from '@/lib/utils';
 
 export interface BookingSummaryProps {
   course: {
@@ -23,13 +24,11 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
   time,
   location,
 }) => {
-  const displayPrice = course.price || 0;
-  const isFree = displayPrice === 0;
-  const priceLabel = isFree ? 'Gratis' : `${displayPrice} kr`;
+  const priceLabel = formatKroner(course.price);
 
   return (
     <div className="space-y-6">
-      <h3 className="font-geist text-lg font-medium text-text-primary">Oppsummering</h3>
+      <h3 className="text-sm font-medium text-text-primary">Oppsummering</h3>
 
       {/* Course preview */}
       <div className="flex gap-4 border-b border-zinc-200 pb-5">
@@ -46,17 +45,17 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           <h4 className="font-medium text-text-primary leading-tight">
             {course.title}
           </h4>
-          <p className="mt-1 text-xs text-text-secondary">
+          <p className="mt-1 text-sm text-text-secondary">
             {dateInfo.shortDate} {time && `kl. ${time}`}
           </p>
           {location && (
-            <p className="text-xs text-text-secondary">{location}</p>
+            <p className="text-sm text-text-secondary">{location}</p>
           )}
         </div>
       </div>
 
       {/* Price breakdown */}
-      <div className="space-y-3 py-5">
+      <div className="space-y-3 py-6">
         <div className="flex items-center justify-between text-sm">
           <span className="text-text-secondary">Kursavgift</span>
           <span className="font-medium text-text-primary">{priceLabel}</span>

@@ -1,6 +1,7 @@
-import { Search, Calendar, Users, CheckCircle, Archive } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Calendar, CheckCircle, Archive } from 'lucide-react';
 import { SignupGroup } from './SignupGroup';
-import type { ExceptionActionHandlers } from './ExceptionActionMenu';
+import type { ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
 
 interface SmartSignupsViewProps {
@@ -17,7 +18,7 @@ interface SmartSignupsViewProps {
   hasFilters?: boolean;
   mode?: ModeFilter;
   onClearFilters?: () => void;
-  actionHandlers?: ExceptionActionHandlers;
+  actionHandlers?: ParticipantActionHandlers;
 }
 
 // Get contextual empty state content based on mode and filter state
@@ -65,9 +66,91 @@ function getEmptyStateContent(mode: ModeFilter, hasFilters: boolean) {
   }
 }
 
+// --- Temporal section grouping ---
+
+interface TemporalSection {
+  label: string;
+  groups: SignupGroupType[];
+}
+
+const MONTH_NAMES = [
+  'Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni',
+  'Juli', 'August', 'September', 'Oktober', 'November', 'Desember',
+];
+
+function getMonday(date: Date): Date {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function groupByTemporalSection(groups: SignupGroupType[], mode: ModeFilter): TemporalSection[] {
+  if (groups.length === 0) return [];
+
+  const now = new Date();
+  const thisMonday = getMonday(now);
+  const nextMonday = new Date(thisMonday);
+  nextMonday.setDate(nextMonday.getDate() + 7);
+  const mondayAfterNext = new Date(nextMonday);
+  mondayAfterNext.setDate(mondayAfterNext.getDate() + 7);
+
+  // For ended mode, compute previous week boundary
+  const prevMonday = new Date(thisMonday);
+  prevMonday.setDate(prevMonday.getDate() - 7);
+
+  const sections = new Map<string, SignupGroupType[]>();
+  const sectionOrder: string[] = [];
+
+  for (const group of groups) {
+    const d = group.classDate;
+    let label: string;
+
+    if (mode === 'ended') {
+      // Ended: this week, last week, then month names going backward
+      if (d >= thisMonday) {
+        label = 'Denne uken';
+      } else if (d >= prevMonday && d < thisMonday) {
+        label = 'Forrige uke';
+      } else {
+        label = MONTH_NAMES[d.getMonth()];
+        if (d.getFullYear() !== now.getFullYear()) {
+          label += ` ${d.getFullYear()}`;
+        }
+      }
+    } else {
+      // Active/needs_attention: this week, next week, then month names forward
+      if (d >= thisMonday && d < nextMonday) {
+        label = 'Denne uken';
+      } else if (d >= nextMonday && d < mondayAfterNext) {
+        label = 'Neste uke';
+      } else {
+        label = MONTH_NAMES[d.getMonth()];
+        if (d.getFullYear() !== now.getFullYear()) {
+          label += ` ${d.getFullYear()}`;
+        }
+      }
+    }
+
+    if (!sections.has(label)) {
+      sections.set(label, []);
+      sectionOrder.push(label);
+    }
+    sections.get(label)!.push(group);
+  }
+
+  return sectionOrder.map(label => ({ label, groups: sections.get(label)! }));
+}
+
+// --- Progressive loading ---
+
+const INITIAL_VISIBLE = 5;
+const LOAD_MORE_INCREMENT = 5;
+
 export function SmartSignupsView({
   groups,
-  stats,
+  stats: _stats,
   isLoading = false,
   isEmpty = false,
   hasFilters = false,
@@ -78,20 +161,16 @@ export function SmartSignupsView({
   // Loading state
   if (isLoading) {
     return (
-      <div className="space-y-5" role="status" aria-live="polite">
+      <div className="space-y-3" role="status" aria-live="polite">
         <span className="sr-only">Henter påmeldinger</span>
         {[1, 2, 3].map(i => (
-          <div
-            key={i}
-            className="rounded-2xl bg-white border border-zinc-200 p-6 animate-pulse"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-4 w-48 bg-surface-elevated rounded" />
-              <div className="h-5 w-16 bg-surface-elevated rounded-full" />
+          <div key={i} className="py-3.5 border-b border-zinc-100 animate-pulse">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-4 w-48 bg-zinc-100 rounded" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-3 w-32 bg-surface-elevated rounded" />
-              <div className="h-3 w-24 bg-surface-elevated rounded" />
+              <div className="h-3 w-32 bg-zinc-100 rounded" />
+              <div className="h-3 w-20 bg-zinc-100 rounded" />
             </div>
           </div>
         ))}
@@ -99,16 +178,14 @@ export function SmartSignupsView({
     );
   }
 
-  // Empty state - contextual based on mode and filters
+  // Empty state — minimal, no card wrapper
   if (isEmpty || groups.length === 0) {
     const emptyState = getEmptyStateContent(mode, hasFilters);
     const IconComponent = emptyState.icon;
 
     return (
-      <div className="rounded-2xl bg-white border border-zinc-200 flex flex-col items-center justify-center p-12 text-center">
-        <div className="mb-4 rounded-2xl bg-surface p-4 border border-zinc-100">
-          <IconComponent className="h-8 w-8 text-text-tertiary stroke-[1.5]" />
-        </div>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <IconComponent className="h-8 w-8 text-text-tertiary stroke-[1.5] mb-4" />
         <h3 className="font-geist text-sm font-medium text-text-primary">
           {emptyState.title}
         </h3>
@@ -120,43 +197,66 @@ export function SmartSignupsView({
             onClick={onClearFilters}
             className="mt-4 text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 transition-colors"
           >
-            Nullstill filtre
+            Nullstill filter
           </button>
         )}
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Summary stats bar */}
-      <div className="flex items-center gap-6 px-2 text-xs text-text-secondary">
-        <span className="inline-flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-text-tertiary" />
-          {stats.groups} {stats.groups === 1 ? 'økt' : 'økter'}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5 text-text-tertiary" />
-          {stats.confirmed} påmeldt
-        </span>
-        {stats.cancelled > 0 && (
-          <span className="text-text-secondary">
-            {stats.cancelled} avbestilt
-          </span>
-        )}
-      </div>
+  // Progressive loading state
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
-      {/* Groups list */}
-      <div className="space-y-5">
-        {groups.map(group => (
-          <SignupGroup
-            key={group.key}
-            group={group}
-            defaultExpanded={group.hasExceptions}
-            actionHandlers={actionHandlers}
-          />
+  // Reset when underlying result set changes
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [groups]);
+
+  const visibleGroups = groups.slice(0, visibleCount);
+  const remainingCount = groups.length - visibleCount;
+  const isTruncated = remainingCount > 0;
+
+  // Temporal section grouping
+  const sections = useMemo(
+    () => groupByTemporalSection(visibleGroups, mode),
+    [visibleGroups, mode]
+  );
+
+  return (
+    <div>
+
+      {/* Temporal sections with groups */}
+      <div className="space-y-10">
+        {sections.map(section => (
+          <div key={section.label}>
+            <h3 className="text-sm font-medium text-text-primary pb-3">
+              {section.label}
+            </h3>
+            <div className="border-t border-zinc-200">
+              {section.groups.map(group => (
+                <SignupGroup
+                  key={group.key}
+                  group={group}
+                  defaultExpanded={false}
+                  actionHandlers={actionHandlers}
+                />
+              ))}
+            </div>
+          </div>
         ))}
       </div>
+
+      {/* Load more */}
+      {isTruncated && (
+        <div className="flex justify-center pt-6 pb-2">
+          <button
+            onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+            className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
+          >
+            Last inn flere
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -105,7 +105,7 @@ const StudentDashboardPage = () => {
       
       {/* Welcome / Header */}
       <div className="mb-8">
-        <h1 className="display-heading text-2xl font-medium text-text-primary">
+        <h1 className="tracking-tight text-2xl font-medium text-text-primary">
           Mine kurs
         </h1>
         <p className="text-text-secondary mt-1">
@@ -141,12 +141,12 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-zinc-200/60 overflow-hidden">
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200 overflow-hidden">
               <div className="relative z-10">
-                <div className="rounded-full bg-public-sand-deep p-4 mb-4 mx-auto inline-flex">
+                <div className="rounded-full bg-zinc-100 p-4 mb-4 mx-auto inline-flex">
                   <CalendarX className="h-8 w-8 text-text-tertiary" />
                 </div>
-                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
+                <h3 className="text-sm font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
                 <p className="text-sm text-text-secondary mb-6 max-w-xs">
                   Ingen kurs å vise.
                 </p>
@@ -170,12 +170,12 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-zinc-200/60 overflow-hidden">
+            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200 overflow-hidden">
               <div className="relative z-10">
-                <div className="rounded-full bg-public-sand-deep p-4 mb-4 mx-auto inline-flex">
+                <div className="rounded-full bg-zinc-100 p-4 mb-4 mx-auto inline-flex">
                   <Clock className="h-8 w-8 text-text-tertiary" />
                 </div>
-                <h3 className="text-lg font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
+                <h3 className="text-sm font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
                 <p className="text-sm text-text-secondary max-w-xs">
                   Du har ikke deltatt på noen kurs ennå.
                 </p>

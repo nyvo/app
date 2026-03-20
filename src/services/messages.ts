@@ -51,7 +51,7 @@ async function mapConversationsToDetails(
   return conversations.map(conv => {
     const messages = conv.messages || []
     const sortedMessages = [...messages].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
     )
     const lastMessage = sortedMessages[0] || null
     const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length
@@ -107,21 +107,38 @@ export async function fetchConversations(
   return { data: result, error: null }
 }
 
-// Fetch messages for a specific conversation
+// Fetch messages for a specific conversation (paginated, newest last)
 export async function fetchMessages(
-  conversationId: string
-): Promise<{ data: Message[] | null; error: Error | null }> {
-  const { data, error } = await supabase
+  conversationId: string,
+  options?: { limit?: number; before?: string }
+): Promise<{ data: Message[] | null; error: Error | null; hasMore: boolean }> {
+  const limit = options?.limit ?? 50
+
+  let query = supabase
     .from('messages')
     .select('*')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(limit + 1) // Fetch one extra to detect if there are more
 
-  if (error) {
-    return { data: null, error: error as Error }
+  if (options?.before) {
+    query = query.lt('created_at', options.before)
   }
 
-  return { data: data as unknown as Message[], error: null }
+  const { data, error } = await query
+
+  if (error) {
+    return { data: null, error: error as Error, hasMore: false }
+  }
+
+  const messages = (data as unknown as Message[]) || []
+  const hasMore = messages.length > limit
+  const page = hasMore ? messages.slice(0, limit) : messages
+
+  // Reverse to ascending order for display (oldest first)
+  page.reverse()
+
+  return { data: page, error: null, hasMore }
 }
 
 // Find or create a conversation with a recipient
@@ -312,7 +329,7 @@ export async function fetchRecentConversations(
   // Sort by unread first, then by update time, and limit
   const sorted = mapped
     .sort((a, b) => b.unread_count - a.unread_count ||
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
     .slice(0, limit)
 
   return { data: sorted, error: null }

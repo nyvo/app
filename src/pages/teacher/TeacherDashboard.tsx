@@ -114,8 +114,8 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
     course: signup.course?.title || 'Ukjent kurs',
     courseTime,
     courseType: (signup.course?.course_type || 'vinyasa') as DashboardCourseType,
-    registeredAt: formatRelativeTimePast(signup.created_at),
-    createdAt: signup.created_at,
+    registeredAt: formatRelativeTimePast(signup.created_at || ''),
+    createdAt: signup.created_at || '',
     status: signup.status as SignupStatus,
     hasException,
   };
@@ -176,7 +176,7 @@ function formatSessionDate(sessionDate: string): string {
   });
 }
 
-const STRIPE_CHECK_THROTTLE_MS = 6 * 60 * 60 * 1000; // 6 hours
+const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
@@ -434,7 +434,7 @@ const TeacherDashboard = () => {
       <main className="flex-1 overflow-y-auto bg-surface h-screen">
           <MobileTeacherHeader title="Oversikt" />
 
-          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-10 lg:py-8">
+          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
             <motion.div
               variants={pageVariants}
               initial="initial"
@@ -443,7 +443,7 @@ const TeacherDashboard = () => {
             >
               <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-text-tertiary mb-2">Oversikt</p>
+                  <p className="text-xs font-medium text-text-secondary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
@@ -465,7 +465,7 @@ const TeacherDashboard = () => {
 
               {/* Course draft banner */}
               {hasCourseDraft && !isLoading && (
-                <div className="mb-6 rounded-2xl border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
+                <div className="mb-6 rounded-xl border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <FileText className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
                     <p className="text-sm text-text-secondary truncate">
@@ -495,7 +495,7 @@ const TeacherDashboard = () => {
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
                   <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste oversikten</h3>
-                  <p className="text-xs text-text-secondary max-w-xs mb-4">{loadError}</p>
+                  <p className="text-sm text-text-secondary max-w-xs mb-4">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
@@ -517,7 +517,9 @@ const TeacherDashboard = () => {
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {/* Primary Action Card - Minimal Style */}
-                  <div className="group relative col-span-1 md:col-span-2 lg:col-span-2 h-[280px] sm:h-[360px] overflow-hidden rounded-2xl bg-white border border-border">
+                  <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                  <h3 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h3>
+                  <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-white border border-border">
                     <div className="relative flex h-full flex-col justify-center z-10 p-9">
                       <div className="max-w-md">
                         <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
@@ -541,6 +543,7 @@ const TeacherDashboard = () => {
                         </Button>
                       </div>
                     </div>
+                  </div>
                   </div>
 
                   {/* Messages Card */}

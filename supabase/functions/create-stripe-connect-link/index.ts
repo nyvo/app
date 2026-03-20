@@ -1,16 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { verifyAuthAndOrgMembership, handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 
-const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-if (!stripeKey) {
-  console.error('STRIPE_SECRET_KEY not configured')
-}
-
-const stripe = new Stripe(stripeKey || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''

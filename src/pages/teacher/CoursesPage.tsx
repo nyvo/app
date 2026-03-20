@@ -51,7 +51,7 @@ function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRo
     courseId: course.id,
     courseTitle: course.title,
     courseType: course.course_type as 'course-series' | 'event' | 'online',
-    sessionDate: course.start_date || course.created_at.slice(0, 10),
+    sessionDate: course.start_date || (course.created_at || '').slice(0, 10),
     startTime,
     endTime,
     location: course.location || '',
@@ -176,7 +176,7 @@ const CoursesPage = () => {
   return (
     <SidebarProvider>
       <TeacherSidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
 
         <MobileTeacherHeader title="Mine kurs" />
 
@@ -233,10 +233,10 @@ const CoursesPage = () => {
         </motion.div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden px-8 pb-8">
+        <div className="flex-1 px-8 pb-8">
             {isLoading ? (
               <div
-                className="h-full overflow-y-auto custom-scrollbar pb-8"
+                className="pb-8"
                 role="status"
                 aria-live="polite"
                 aria-label="Laster kurs"

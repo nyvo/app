@@ -100,12 +100,12 @@ export function CreateCourseReview({
 }: CreateCourseReviewProps) {
   return (
     <div
-      className="rounded-2xl bg-white border border-zinc-200 overflow-hidden"
+      className="rounded-xl bg-white border border-zinc-200 overflow-hidden"
       role="region"
       aria-label="Sjekk oppsummering"
     >
       {/* Section 1 — Course identity */}
-      <section className="px-6 py-6 sm:px-8 sm:py-7 border-b border-zinc-100">
+      <section className="px-6 py-6 sm:px-8 sm:py-8 border-b border-zinc-100">
         <SectionHeading>Kursdetaljer</SectionHeading>
         <dl className="space-y-5">
           <SummaryRow label="Tittel">
@@ -138,7 +138,7 @@ export function CreateCourseReview({
       </section>
 
       {/* Section 2 — Logistics & schedule */}
-      <section className="px-6 py-6 sm:px-8 sm:py-7 border-b border-zinc-100">
+      <section className="px-6 py-6 sm:px-8 sm:py-8 border-b border-zinc-100">
         <SectionHeading>Tid, sted og kapasitet</SectionHeading>
         <dl className="space-y-5">
           <SummaryRow label="Startdato">{startDateLabel}</SummaryRow>
@@ -156,7 +156,7 @@ export function CreateCourseReview({
       </section>
 
       {/* Section 3 — Pricing */}
-      <section className="px-6 py-6 sm:px-8 sm:py-7">
+      <section className="px-6 py-6 sm:px-8 sm:py-8">
         <SectionHeading>Pris og praktisk info</SectionHeading>
         <dl className="space-y-5">
           <SummaryRow label="Pris per deltaker">{priceLabel}</SummaryRow>

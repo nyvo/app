@@ -41,7 +41,7 @@ export function AuthLayout({
   return (
     <div className={cn(
       "min-h-screen w-full text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900",
-      isStudent ? "theme-public bg-public-sand" : "bg-surface"
+      isStudent ? "bg-surface" : "bg-surface"
     )}>
       {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">

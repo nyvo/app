@@ -20,35 +20,35 @@ interface StatusIndicatorProps {
 const variantConfig: Record<IndicatorVariant, {
   bg: string;
   text: string;
-  border: string;
+  ring: string;
   defaultIcon?: React.ComponentType<{ className?: string }>;
 }> = {
   success: {
-    bg: 'bg-green-100',
-    text: 'text-green-800',
-    border: 'border-green-200',
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    ring: 'ring-green-600/20',
   },
   warning: {
-    bg: 'bg-amber-100',
-    text: 'text-amber-900',
-    border: 'border-amber-200',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    ring: 'ring-amber-600/20',
     defaultIcon: Clock,
   },
   error: {
-    bg: 'bg-red-100',
+    bg: 'bg-red-50',
     text: 'text-red-700',
-    border: 'border-red-200',
+    ring: 'ring-red-600/20',
     defaultIcon: XCircle,
   },
   neutral: {
     bg: 'bg-zinc-50',
-    text: 'text-zinc-700',
-    border: 'border-zinc-200',
+    text: 'text-zinc-600',
+    ring: 'ring-zinc-500/20',
   },
   critical: {
-    bg: 'bg-red-100',
+    bg: 'bg-red-50',
     text: 'text-red-700',
-    border: 'border-red-200',
+    ring: 'ring-red-600/20',
     defaultIcon: AlertTriangle,
   },
 };
@@ -57,25 +57,25 @@ const modeConfig: Record<IndicatorMode, {
   borderRadius: string;
   padding: string;
   bgOpacity: string;
-  showBorder: boolean;
+  showRing: boolean;
 }> = {
   badge: {
     borderRadius: 'rounded-md',
     padding: 'px-2 py-0.5',
     bgOpacity: '',
-    showBorder: true,
+    showRing: true,
   },
   inline: {
     borderRadius: 'rounded-md',
     padding: 'px-1.5 py-0.5',
     bgOpacity: '/70',
-    showBorder: false,
+    showRing: false,
   },
   'text-icon': {
     borderRadius: '',
     padding: '',
     bgOpacity: '',
-    showBorder: false,
+    showRing: false,
   },
 };
 
@@ -88,7 +88,7 @@ const sizeConfig: Record<IndicatorSize, {
     iconSize: 'h-2.5 w-2.5',
   },
   sm: {
-    fontSize: 'text-xxs',
+    fontSize: 'text-xs',
     iconSize: 'h-3 w-3',
   },
   md: {
@@ -166,8 +166,7 @@ export function StatusIndicator({
   }
 
   // Badge or Inline mode (with background)
-  // Critical variant uses rounded-full for urgency signaling
-  const borderRadiusClass = variant === 'critical' ? 'rounded-full' : modeStyles.borderRadius;
+  const borderRadiusClass = modeStyles.borderRadius;
 
   return (
     <span
@@ -176,7 +175,7 @@ export function StatusIndicator({
       className={cn(
         'inline-flex items-center gap-1 font-medium',
         config.bg + modeStyles.bgOpacity,
-        modeStyles.showBorder && `border ${config.border}`,
+        modeStyles.showRing && `ring-1 ring-inset ${config.ring}`,
         borderRadiusClass,
         modeStyles.padding,
         sizeStyles.fontSize,

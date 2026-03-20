@@ -3,7 +3,7 @@ import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus,
 
 // Signup with joined course and profile data
 export interface SignupWithDetails extends Signup {
-  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status'> | null
+  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
   // Exception detection fields (already on Signup, explicitly noted here)
   // payment_status is inherited from Signup
@@ -112,6 +112,23 @@ export async function createSignup(
   return { data: data as Signup, error: null }
 }
 
+// Send signup confirmation email (used for free courses where no webhook fires)
+export async function sendSignupConfirmationEmail(params: {
+  to: string
+  courseName: string
+  courseDate?: string
+  courseTime?: string
+  location?: string
+  organizationName?: string
+}): Promise<void> {
+  try {
+    await supabase.functions.invoke('send-confirmation-email', { body: params })
+  } catch (err) {
+    // Non-blocking — don't fail the signup if email fails
+    console.error('Failed to send confirmation email:', err)
+  }
+}
+
 // Update a signup
 export async function updateSignup(
   signupId: string,
@@ -188,7 +205,7 @@ export async function fetchAllSignups(
     .from('signups')
     .select(`
       *,
-      course:courses(id, title, course_type, time_schedule, start_date, end_date, status),
+      course:courses(id, title, course_type, time_schedule, start_date, end_date, status, max_participants),
       profile:profiles(id, name, email, avatar_url)
     `)
     .eq('organization_id', organizationId)

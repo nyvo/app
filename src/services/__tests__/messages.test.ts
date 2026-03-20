@@ -10,12 +10,12 @@ describe('messages service', () => {
 
   describe('archiveConversation', () => {
     it('should call update with archived = true', async () => {
-      // Import the mocked supabase
-      const { supabase } = await import('@/lib/supabase')
+      // Import the mocked typedFrom
+      const { typedFrom } = await import('@/lib/supabase')
       const mockUpdate = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ data: null, error: null })
       })
-      vi.mocked(supabase.from).mockReturnValue({
+      vi.mocked(typedFrom).mockReturnValue({
         update: mockUpdate,
       } as never)
 
@@ -24,17 +24,17 @@ describe('messages service', () => {
 
       const result = await archiveConversation('conv-123', true)
 
-      expect(supabase.from).toHaveBeenCalledWith('conversations')
+      expect(typedFrom).toHaveBeenCalledWith('conversations')
       expect(mockUpdate).toHaveBeenCalledWith({ archived: true, is_read: true })
       expect(result.error).toBeNull()
     })
 
     it('should call update with archived = false to unarchive', async () => {
-      const { supabase } = await import('@/lib/supabase')
+      const { typedFrom } = await import('@/lib/supabase')
       const mockUpdate = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ data: null, error: null })
       })
-      vi.mocked(supabase.from).mockReturnValue({
+      vi.mocked(typedFrom).mockReturnValue({
         update: mockUpdate,
       } as never)
 

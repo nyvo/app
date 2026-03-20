@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, User, LogOut, BookOpen, Leaf } from 'lucide-react';
+import { User, LogOut, BookOpen } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +17,8 @@ export interface PublicCourseHeaderProps {
 }
 
 /**
- * Public course detail page header
- * Sticky navbar with back button and profile dropdown
+ * Minimal Linear-style header for public course booking page
+ * Clean brand initials on left, subtle label + profile on right
  */
 export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
   organizationSlug,
@@ -29,41 +29,37 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
 }) => {
   const studioUrl = `/studio/${organizationSlug}`;
 
+  // Generate short initials from org name (e.g., "Kristoffer Studio" → "K/S")
+  const initials = (organizationName || 'Ease')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase())
+    .join('/');
+
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200/60">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
+    <header className="border-b border-zinc-200">
+      <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Brand mark */}
         <Link
           to={studioUrl}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-70 transition-opacity"
         >
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-            <Leaf className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-medium tracking-tight text-text-primary">
-            {organizationName || 'Ease'}
+          <span className="text-sm font-medium tracking-widest uppercase text-text-primary">
+            {initials}
           </span>
         </Link>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4 text-sm">
-          {/* Back button (desktop only) */}
-          <Link
-            to={studioUrl}
-            className="hidden sm:flex items-center gap-1 text-text-secondary hover:text-text-primary transition-colors text-xs font-medium ios-ease"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Tilbake til kurs
-          </Link>
-
-          {/* Divider */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block"></div>
+        {/* Right side */}
+        <div className="flex items-center gap-6">
+          <span className="text-xs text-muted-foreground font-medium hidden sm:block">
+            Booking
+          </span>
 
           {/* Profile dropdown */}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button aria-label="Brukermeny" className="w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center hover:bg-zinc-200 smooth-transition">
+                <button aria-label="Brukermeny" className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 smooth-transition">
                   <User className="h-4 w-4 text-text-primary" />
                 </button>
               </DropdownMenuTrigger>
@@ -99,7 +95,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/login"
-              className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+              className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
             >
               Logg inn
             </Link>

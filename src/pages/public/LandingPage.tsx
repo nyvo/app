@@ -32,7 +32,7 @@ const staggerContainer = {
 
 const LandingPage = () => {
   return (
-    <div className="theme-public overflow-x-hidden bg-public-sand text-text-primary font-geist antialiased">
+    <div className="overflow-x-hidden bg-surface text-text-primary font-geist antialiased">
       {/* Navigation */}
       <nav className="absolute top-0 w-full z-50 bg-transparent border-none">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -62,7 +62,7 @@ const LandingPage = () => {
       <section className="relative min-h-screen flex items-center pt-32 pb-20 md:pt-48 md:pb-32 bg-white">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="display-heading text-4xl md:text-6xl font-medium leading-tight text-text-primary mb-8">
+            <h1 className="tracking-tight text-3xl md:text-5xl font-medium leading-tight text-text-primary mb-8">
               Påmelding og betaling <br className="hidden md:block" />
               for yogastudioer.
             </h1>
@@ -93,7 +93,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16 max-w-2xl mx-auto"
         >
-          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
+          <h2 className="tracking-tight text-2xl md:text-3xl font-medium text-text-primary mb-4">
             Hvordan det fungerer
           </h2>
           <p className="text-text-secondary text-lg">
@@ -112,7 +112,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="md:col-span-2 relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group"
+            className="md:col-span-2 relative overflow-hidden rounded-xl bg-white border border-zinc-200 p-8 ios-ease group"
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
@@ -143,7 +143,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
+            className="relative overflow-hidden rounded-xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 text-sm font-medium text-text-primary">
@@ -177,7 +177,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-2xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
+            className="relative overflow-hidden rounded-xl bg-white border border-zinc-200 p-8 ios-ease group flex flex-col"
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
@@ -201,7 +201,7 @@ const LandingPage = () => {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-text-primary">Påminnelse sendt</p>
-                    <p className="text-xxs text-text-secondary">til 12 deltakere</p>
+                    <p className="text-xs text-text-secondary">til 12 deltakere</p>
                   </div>
                </div>
                <div className="bg-white p-3 rounded-xl border border-zinc-200 flex items-center gap-3">
@@ -210,7 +210,7 @@ const LandingPage = () => {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-text-primary">Oppmøte bekreftet</p>
-                    <p className="text-xxs text-text-secondary">Automatisk</p>
+                    <p className="text-xs text-text-secondary">Automatisk</p>
                   </div>
                </div>
             </div>
@@ -233,7 +233,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="mb-24 text-center max-w-2xl mx-auto"
         >
-          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
+          <h2 className="tracking-tight text-2xl md:text-3xl font-medium text-text-primary mb-4">
             Alt du trenger
           </h2>
           <p className="text-text-secondary text-lg">
@@ -246,14 +246,14 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="md:col-span-2 bg-white rounded-2xl border border-zinc-200 p-8 md:p-12 overflow-hidden relative group"
+            className="md:col-span-2 bg-white rounded-xl border border-zinc-200 p-8 md:p-12 overflow-hidden relative group"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-text-primary text-xs font-medium mb-6">
                   <CreditCard className="w-3.5 h-3.5" /> Betaling
                 </div>
-                <h3 className="text-3xl font-medium text-text-primary tracking-tight mb-4">
+                <h3 className="text-xl font-medium text-text-primary tracking-tight mb-4">
                   Inntekter på autopilot.
                 </h3>
                 <p className="text-text-secondary text-lg leading-relaxed mb-8">
@@ -270,7 +270,7 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="relative">
-                <div className="bg-zinc-50/50 rounded-2xl border border-zinc-200 p-8">
+                <div className="bg-zinc-50/50 rounded-xl border border-zinc-200 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <p className="text-sm font-medium text-text-secondary">
@@ -288,7 +288,7 @@ const LandingPage = () => {
                     <div className="h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
                       <div className="h-full bg-primary w-[70%]"></div>
                     </div>
-                    <div className="flex justify-between text-xs text-text-tertiary">
+                    <div className="flex justify-between text-xs text-text-secondary">
                       <span>1. okt</span>
                       <span>31. okt</span>
                     </div>
@@ -302,7 +302,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="bg-white rounded-2xl border border-zinc-200 p-8 overflow-hidden relative group flex flex-col"
+            className="bg-white rounded-xl border border-zinc-200 p-8 overflow-hidden relative group flex flex-col"
           >
             <div className="mb-8 relative z-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-zinc-200 text-text-primary text-xs font-medium mb-4">
@@ -342,7 +342,7 @@ const LandingPage = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="display-heading text-3xl md:text-4xl font-medium text-text-primary mb-4">
+          <h2 className="tracking-tight text-2xl md:text-3xl font-medium text-text-primary mb-4">
             Enkel prismodell
           </h2>
           <p className="text-text-secondary mb-3">
@@ -360,7 +360,7 @@ const LandingPage = () => {
           <motion.div
             variants={fadeInUp}
             transition={{ duration: 0.6 }}
-            className="bg-white p-8 rounded-2xl border border-zinc-200 flex flex-col"
+            className="bg-white p-8 rounded-xl border border-zinc-200 flex flex-col"
           >
             <div className="mb-6">
               <h3 className="text-xl font-medium text-text-primary tracking-tight">
@@ -377,7 +377,7 @@ const LandingPage = () => {
                 </span>
                 <span className="text-text-secondary font-medium">/ mnd</span>
               </div>
-              <p className="text-xs text-text-tertiary mt-2">
+              <p className="text-xs text-text-secondary mt-2">
                 Ingen kort nødvendig.
               </p>
             </div>
@@ -521,7 +521,7 @@ const LandingPage = () => {
           </div>
 
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="text-xs text-text-tertiary">
+            <p className="text-xs text-text-secondary">
               © {new Date().getFullYear()} Ease AS. Alle rettigheter reservert.
             </p>
             <div className="flex items-center gap-6">

@@ -47,7 +47,7 @@ import { CreateCourseReview } from '@/components/teacher/CreateCourseReview';
 import { Stepper } from '@/components/ui/stepper';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import { tabVariants, tabTransition, pageVariants, pageTransition } from '@/lib/motion';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import type { CourseType as DBCourseType, Json } from '@/types/database';
 import type { AudienceLevel, EquipmentInfo, PracticalInfo } from '@/types/practicalInfo';
 import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, ARRIVAL_DEFAULT_MINUTES, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH, ARRIVAL_MINUTES_MAX, practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
@@ -344,7 +344,7 @@ const CreateCoursePage = () => {
     const priceNum = price !== '' ? parseInt(price, 10) : null;
     const priceLabel =
       priceNum != null && !isNaN(priceNum) && priceNum >= 0
-        ? (priceNum === 0 ? 'Gratis' : `${priceNum} kr`)
+        ? formatKroner(priceNum)
         : 'Pris ikke angitt';
 
     const capNum = capacity ? parseInt(capacity, 10) : null;
@@ -493,7 +493,7 @@ const CreateCoursePage = () => {
     <SidebarProvider>
       <TeacherSidebar />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-white">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-white">
         {/* Mobile Header */}
         <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
           <div className="flex items-center gap-3">
@@ -547,7 +547,7 @@ const CreateCoursePage = () => {
               className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-10"
             >
               {!isStripeConnected && (
-                <div className="mb-6 rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+                <div className="mb-6 rounded-xl bg-zinc-900 border border-zinc-800 p-6">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
                     <div className="flex-1 min-w-0">
@@ -692,7 +692,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-text-tertiary'}`}>
+                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-text-secondary'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -774,7 +774,7 @@ const CreateCoursePage = () => {
                               aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                               aria-invalid={showError('weeks') ? 'true' : undefined}
                               aria-required="true"
-                              className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-text-primary text-sm bg-input-bg text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white hover:border-zinc-400 ios-ease ${
+                              className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-text-primary text-sm bg-input-bg text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 hover:border-zinc-400 ios-ease ${
                                 showError('weeks') ? 'border-destructive' : 'border-zinc-300'
                               }`}
                             >

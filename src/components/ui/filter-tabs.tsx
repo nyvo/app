@@ -69,8 +69,8 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-zinc-100 text-text-primary rounded-lg"
-            : "text-text-secondary hover:text-text-primary hover:bg-zinc-50 rounded-lg"
+            ? "bg-white border border-zinc-200 text-text-primary rounded-lg"
+            : "text-text-secondary hover:text-text-primary hover:bg-zinc-50 rounded-lg border border-transparent"
         case "contained":
           return isActive
             ? "bg-white text-text-primary"
@@ -91,7 +91,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         onClick={() => context.onValueChange(value)}
         className={cn(
           "relative shrink-0 font-medium ios-ease cursor-pointer transition-colors",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
           variant === "default"
             ? "text-xs px-3 py-2 -mb-px"
             : variant === "pill"

@@ -102,7 +102,7 @@ export const CourseSettingsTab = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
-      <div className="lg:col-span-2 bg-white rounded-2xl border border-zinc-200 p-6 h-full flex flex-col">
+      <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-200 p-6 h-full flex flex-col">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Generelt</h3>
         </div>
@@ -129,7 +129,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
-      <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col h-full">
+      <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col h-full">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Kursbilde</h3>
         </div>
@@ -156,7 +156,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 3: Schedule - Span 1 */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
+      <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Tidspunkt</h3>
         </div>
@@ -198,7 +198,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 4: Capacity - Span 1 */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
+      <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Kapasitet</h3>
         </div>
@@ -236,7 +236,7 @@ export const CourseSettingsTab = ({
       </div>
 
       {/* Tile 5: Practical Info - Span 3 */}
-      <div className="lg:col-span-3 bg-white rounded-2xl border border-zinc-200 p-6 flex flex-col">
+      <div className="lg:col-span-3 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Praktisk info</h3>
           <p className="text-xs text-text-secondary mt-1">Hjelp elevene dine med å komme forberedt</p>

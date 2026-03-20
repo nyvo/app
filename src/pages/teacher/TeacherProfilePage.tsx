@@ -1,15 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  User,
-  Bell,
   Shield,
   Mail,
   MapPin,
   Leaf,
   Menu,
   CreditCard,
-  ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -19,18 +16,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
-import { createStripeConnectLink, createStripeDashboardLink } from '@/services/stripe-connect';
+import { createStripeConnectLink, createStripeDashboardLink, checkStripeStatus } from '@/services/stripe-connect';
 import { typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-type Tab = 'profile' | 'notifications' | 'security';
+import { cn } from '@/lib/utils';
 
 const TeacherProfilePage = () => {
   const { profile, currentOrganization, refreshOrganizations } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'system'>('profile');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
@@ -158,6 +154,22 @@ const TeacherProfilePage = () => {
     }
   };
 
+  const handleCancel = () => {
+    setIsEditingProfile(false);
+    if (profile) {
+      const nameParts = profile.name?.split(' ') || [];
+      setFirstName(nameParts[0] || '');
+      setLastName(nameParts.slice(1).join(' ') || '');
+      setEmail(profile.email || '');
+    }
+    if (currentOrganization) {
+      setStudioDescription(currentOrganization.description || '');
+      setCity(currentOrganization.city || '');
+    }
+    setErrors({});
+    setTouched({});
+  };
+
   const handleSave = async () => {
     setTouched({ firstName: true, lastName: true, email: true, studioDescription: true, city: true });
 
@@ -180,7 +192,7 @@ const TeacherProfilePage = () => {
     if (profile?.id) {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const { error: profileError } = await typedFrom('profiles')
-        .update({ name: fullName })
+        .update({ name: fullName } as any)
         .eq('id', profile.id);
 
       if (profileError) {
@@ -207,11 +219,29 @@ const TeacherProfilePage = () => {
 
     toast.success('Endringer lagret');
     setIsSaving(false);
+    setIsEditingProfile(false);
   };
 
   // Stripe handlers
   const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
+  const hasStripeAccount = !!currentOrganization?.stripe_account_id;
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [checkingStripeStatus, setCheckingStripeStatus] = useState(false);
+
+  const handleCheckStripeStatus = useCallback(async () => {
+    if (!currentOrganization?.id) return;
+    setCheckingStripeStatus(true);
+    const { data, error } = await checkStripeStatus(currentOrganization.id);
+    if (error) {
+      toast.error('Kunne ikke sjekke status. Prøv igjen.');
+    } else if (data?.onboardingComplete) {
+      await refreshOrganizations();
+      toast.success('Betalinger er satt opp');
+    } else {
+      toast('Oppsettet er ikke fullført ennå. Fullfør hos Stripe.');
+    }
+    setCheckingStripeStatus(false);
+  }, [currentOrganization?.id, refreshOrganizations]);
 
   const handleStripeAction = useCallback(async () => {
     if (!currentOrganization?.id) return;
@@ -223,8 +253,8 @@ const TeacherProfilePage = () => {
         setStripeLoading(false);
         return;
       }
-      window.open(data.url, '_blank');
-      setStripeLoading(false);
+      window.location.href = data.url;
+      // Don't setStripeLoading(false) — page is navigating away
     } else {
       const { data, error } = await createStripeConnectLink(currentOrganization.id);
       if (error || !data?.url) {
@@ -233,6 +263,7 @@ const TeacherProfilePage = () => {
         return;
       }
       window.location.href = data.url;
+      // Don't setStripeLoading(false) — page is navigating away
     }
   }, [currentOrganization?.id, isStripeConnected, refreshOrganizations]);
 
@@ -245,10 +276,6 @@ const TeacherProfilePage = () => {
 
   const handleToggle = (key: keyof typeof notifications) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const switchTab = (tab: Tab) => {
-    setActiveTab(tab);
   };
 
   return (
@@ -272,290 +299,311 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="mx-auto max-w-4xl p-6 lg:p-12 pb-24 w-full"
+          className="mx-auto max-w-3xl px-6 lg:px-8 py-6 lg:py-8 pb-24 w-full"
         >
 
             {/* Header Section */}
-            <header className="mb-8">
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
-                    Innstillinger
-                </h1>
-                <p className="text-sm text-text-secondary">Administrer din profil, varslinger og konto.</p>
+            <header className="mb-8 flex items-start justify-between gap-4">
+                <div>
+                    <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+                        Innstillinger
+                    </h1>
+                    <p className="text-sm text-text-secondary">Administrer din profil, varslinger og konto.</p>
+                </div>
+                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-lg md:text-xl font-medium ring-2 ring-zinc-200 shrink-0">
+                  {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
+                </div>
             </header>
 
-            {/* Tabs Navigation */}
-            <div className="mb-8 flex w-full md:w-auto overflow-x-auto no-scrollbar">
-                <FilterTabs value={activeTab} onValueChange={(v) => switchTab(v as Tab)}>
-                    <FilterTab value="profile" className="flex items-center gap-2">
-                        <User className="h-3.5 w-3.5" />
-                        Profil
-                    </FilterTab>
-                    <FilterTab value="notifications" className="flex items-center gap-2">
-                        <Bell className="h-3.5 w-3.5" />
-                        Varslinger
-                    </FilterTab>
-                    <FilterTab value="security" className="flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5" />
-                        Sikkerhet
-                    </FilterTab>
-                </FilterTabs>
+            {/* Tabs */}
+            <div className="flex space-x-1 bg-zinc-100/50 p-1 rounded-xl w-fit mb-8 border border-zinc-200/50">
+              {(['profile', 'system'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={cn(
+                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
+                    activeTab === tab ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-700"
+                  )}
+                >
+                  {activeTab === tab && (
+                    <motion.div
+                      layoutId="active-tab"
+                      className="absolute inset-0 bg-white rounded-lg shadow-sm border border-zinc-200/50"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab === 'profile' ? 'Profil' : 'System'}</span>
+                </button>
+              ))}
             </div>
 
             {/* Tab Content: Profile */}
             {activeTab === 'profile' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-
-                    {/* Avatar Section */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-                            <div className="relative group">
-                                <div className="h-24 w-24 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-2xl font-medium ring-2 ring-zinc-200">
-                                  {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
-                                </div>
-                            </div>
-                            <div className="flex-1 text-center md:text-left">
-                                <h3 className="text-sm font-medium text-text-primary">Profilbilde</h3>
-                                <p className="text-sm text-text-secondary mt-1">Profilbildeopplasting kommer snart.</p>
-                            </div>
-                        </div>
+                <div className="space-y-8 animate-in fade-in duration-200">
+                  {/* Personal Info Form */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-medium text-text-primary">Personlig informasjon</h2>
+                      <Button variant="ghost" size="compact" onClick={() => {
+                          if (isEditingProfile) {
+                              handleCancel();
+                          } else {
+                              setIsEditingProfile(true);
+                          }
+                      }}>
+                          {isEditingProfile ? 'Avbryt' : 'Rediger'}
+                      </Button>
                     </div>
-
-                    {/* Personal Info Form */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="mb-6 border-b border-zinc-100 pb-2">
-                            <h3 className="text-sm font-medium text-text-secondary">Personlig informasjon</h3>
-                        </div>
-
+                    <div className="rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
+                      {isEditingProfile ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* First Name */}
-                            <div>
-                                <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                  Fornavn <span className="text-destructive">*</span>
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={firstName}
-                                    onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
-                                    onBlur={() => handleBlur('firstName')}
-                                    aria-invalid={!!errors.firstName}
-                                />
-                                {errors.firstName && touched.firstName && (
-                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.firstName}</p>
-                                )}
-                            </div>
-
-                            {/* Last Name */}
-                            <div>
-                                <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                  Etternavn <span className="text-destructive">*</span>
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={lastName}
-                                    onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
-                                    onBlur={() => handleBlur('lastName')}
-                                    aria-invalid={!!errors.lastName}
-                                />
-                                {errors.lastName && touched.lastName && (
-                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.lastName}</p>
-                                )}
-                            </div>
-
-                            {/* Email */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                  E-postadresse <span className="text-destructive">*</span>
-                                </label>
-                                <div className="relative group">
-                                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
-                                    <Input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                                        onBlur={() => handleBlur('email')}
-                                        aria-invalid={!!errors.email}
-                                        className="pl-10"
-                                    />
-                                </div>
-                                {errors.email && touched.email ? (
-                                  <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
-                                ) : (
-                                  <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
-                                )}
-                            </div>
-
-                            {/* City */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
-                                <div className="relative group">
-                                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
-                                    <Input
-                                        type="text"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        placeholder="F.eks. Oslo"
-                                        className="pl-10"
-                                    />
-                                </div>
-                                <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
-                            </div>
-
-                            {/* Studio Description */}
-                            <div className="md:col-span-2">
-                                <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
-                                <Textarea
-                                    rows={4}
-                                    value={studioDescription}
-                                    onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
-                                    onBlur={() => handleBlur('studioDescription')}
-                                    placeholder="Fortell litt om studioet ditt"
-                                    aria-invalid={!!errors.studioDescription}
-                                />
-                                <div className="flex justify-between text-xs mt-1.5">
-                                    {errors.studioDescription && touched.studioDescription ? (
-                                      <span className="text-destructive font-medium">{errors.studioDescription}</span>
-                                    ) : (
-                                      <span className="text-text-secondary">Vises på din offentlige studioside.</span>
-                                    )}
-                                    <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-tertiary'}>{studioDescription.length}/500</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Stripe Section */}
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="mb-6 border-b border-zinc-100 pb-2">
-                            <h3 className="text-sm font-medium text-text-secondary">Betalinger</h3>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isStripeConnected ? 'bg-status-confirmed-bg' : 'bg-surface-elevated'}`}>
-                                    {isStripeConnected ? (
-                                        <CheckCircle2 className="h-5 w-5 text-success stroke-[1.5]" />
-                                    ) : (
-                                        <CreditCard className="h-5 w-5 text-text-tertiary stroke-[1.5]" />
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-text-primary">
-                                        {isStripeConnected ? 'Betalinger er satt opp' : 'Betalinger er ikke satt opp'}
-                                    </p>
-                                    <p className="text-xs text-text-secondary mt-0.5">
-                                        {isStripeConnected
-                                            ? 'Du kan se utbetalinger og administrere bankkonto via Stripe.'
-                                            : 'Knytt kontoen din til Stripe, så du kan motta betaling fra elever.'}
-                                    </p>
-                                </div>
-                            </div>
-                            <Button
-                                variant="outline-soft"
-                                size="compact"
-                                className="shrink-0"
-                                onClick={handleStripeAction}
-                                loading={stripeLoading}
-                                loadingText={isStripeConnected ? 'Åpner...' : 'Sender deg til Stripe …'}
-                            >
-                                {isStripeConnected ? (
-                                    <>
-                                        Se utbetalinger
-                                        <ExternalLink className="h-3.5 w-3.5" />
-                                    </>
-                                ) : (
-                                    'Sett opp betalinger'
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Tab Content: Notifications */}
-            {activeTab === 'notifications' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                    <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="mb-6 border-b border-zinc-100 pb-2">
-                            <h3 className="text-sm font-medium text-text-secondary">Varslingsinnstillinger</h3>
-                            <p className="text-sm text-text-secondary mt-1">Velg hvordan og når du vil bli kontaktet.</p>
-                            <p className="text-xs text-text-secondary mt-2 italic">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
-                        </div>
-
-                        <div className="divide-y divide-surface-elevated">
-
-                            {/* Item 1 */}
-                            <div className="flex items-center justify-between py-4">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
-                                    <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
-                                </div>
-                                <Switch
-                                    checked={notifications.newSignups}
-                                    onCheckedChange={() => handleToggle('newSignups')}
-                                    aria-label="Nye påmeldinger"
-                                />
-                            </div>
-
-                            {/* Item 2 */}
-                            <div className="flex items-center justify-between py-4">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
-                                    <span className="text-xs text-text-secondary">Send e-post umiddelbart ved avbestilling (under 24t).</span>
-                                </div>
-                                <Switch
-                                    checked={notifications.cancellations}
-                                    onCheckedChange={() => handleToggle('cancellations')}
-                                    aria-label="Avbestillinger"
-                                />
-                            </div>
-
-                            {/* Item 3 */}
-                            <div className="flex items-center justify-between py-4">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-text-primary">Markedsføring</span>
-                                    <span className="text-xs text-text-secondary">Nyheter, tips og oppdateringer fra Ease på e-post.</span>
-                                </div>
-                                <Switch
-                                    checked={notifications.marketing}
-                                    onCheckedChange={() => handleToggle('marketing')}
-                                    aria-label="Markedsføring"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Tab Content: Security */}
-            {activeTab === 'security' && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                     <div className="rounded-2xl bg-white p-6 md:p-8 border border-zinc-200">
-                        <div className="mb-6 border-b border-zinc-100 pb-2">
-                            <h3 className="text-sm font-medium text-text-secondary">Passord & sikkerhet</h3>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center py-8 text-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-elevated mb-4">
-                            <Shield className="h-6 w-6 text-text-tertiary" />
+                          {/* First Name */}
+                          <div>
+                              <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                Fornavn <span className="text-destructive">*</span>
+                              </label>
+                              <Input
+                                  type="text"
+                                  value={firstName}
+                                  onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
+                                  onBlur={() => handleBlur('firstName')}
+                                  aria-invalid={!!errors.firstName}
+                              />
+                              {errors.firstName && touched.firstName && (
+                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.firstName}</p>
+                              )}
                           </div>
-                          <p className="text-sm font-medium text-text-primary mb-1">Sikkerhetsinnstillinger kommer snart</p>
-                          <p className="text-xs text-text-secondary max-w-[280px]">
-                            Passordendring og tofaktorinnlogging vil være tilgjengelig i en fremtidig oppdatering.
-                          </p>
+
+                          {/* Last Name */}
+                          <div>
+                              <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                Etternavn <span className="text-destructive">*</span>
+                              </label>
+                              <Input
+                                  type="text"
+                                  value={lastName}
+                                  onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
+                                  onBlur={() => handleBlur('lastName')}
+                                  aria-invalid={!!errors.lastName}
+                              />
+                              {errors.lastName && touched.lastName && (
+                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.lastName}</p>
+                              )}
+                          </div>
+
+                          {/* Email */}
+                          <div className="md:col-span-2">
+                              <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                E-postadresse <span className="text-destructive">*</span>
+                              </label>
+                              <div className="relative group">
+                                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
+                                  <Input
+                                      type="email"
+                                      value={email}
+                                      onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                                      onBlur={() => handleBlur('email')}
+                                      aria-invalid={!!errors.email}
+                                      className="pl-10"
+                                  />
+                              </div>
+                              {errors.email && touched.email ? (
+                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
+                              ) : (
+                                <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              )}
+                          </div>
+
+                          {/* City */}
+                          <div className="md:col-span-2">
+                              <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
+                              <div className="relative group">
+                                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+                                  <Input
+                                      type="text"
+                                      value={city}
+                                      onChange={(e) => setCity(e.target.value)}
+                                      placeholder="F.eks. Oslo"
+                                      className="pl-10"
+                                  />
+                              </div>
+                              <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
+                          </div>
+
+                          {/* Studio Description */}
+                          <div className="md:col-span-2">
+                              <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
+                              <Textarea
+                                  rows={6}
+                                  value={studioDescription}
+                                  onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
+                                  onBlur={() => handleBlur('studioDescription')}
+                                  placeholder="Fortell litt om studioet ditt"
+                                  aria-invalid={!!errors.studioDescription}
+                              />
+                              <div className="flex justify-between text-xs mt-1.5">
+                                  {errors.studioDescription && touched.studioDescription ? (
+                                    <span className="text-destructive font-medium">{errors.studioDescription}</span>
+                                  ) : (
+                                    <span className="text-text-secondary">Vises på din offentlige studioside.</span>
+                                  )}
+                                  <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-secondary'}>{studioDescription.length}/500</span>
+                              </div>
+                          </div>
                         </div>
-                     </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                            <div>
+                                <span className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</span>
+                                <span className="text-sm text-text-primary">{firstName || '—'}</span>
+                            </div>
+                            <div>
+                                <span className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</span>
+                                <span className="text-sm text-text-primary">{lastName || '—'}</span>
+                            </div>
+                            <div className="md:col-span-2">
+                                <span className="block text-xs font-medium text-text-primary mb-1.5">E-postadresse</span>
+                                <span className="text-sm text-text-primary">{email || '—'}</span>
+                            </div>
+                            <div className="md:col-span-2">
+                                <span className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</span>
+                                <span className="text-sm text-text-primary">{city || '—'}</span>
+                            </div>
+                            <div className="md:col-span-2">
+                                <span className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</span>
+                                <p className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">{studioDescription || '—'}</p>
+                            </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+            )}
+
+            {/* Tab Content: System */}
+            {activeTab === 'system' && (
+                <div className="space-y-8 animate-in fade-in duration-200">
+                  {/* System Action Rows */}
+                  <div>
+                      <h2 className="text-sm font-medium text-text-primary mb-3">Konto & Sikkerhet</h2>
+                      <div className="rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                          {/* Betalinger */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-zinc-50 transition-colors gap-4 sm:gap-0">
+                              <div className="flex items-center gap-3">
+                                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isStripeConnected ? 'bg-status-confirmed-bg' : 'bg-surface-elevated'}`}>
+                                      {isStripeConnected ? (
+                                          <CheckCircle2 className="h-4 w-4 text-success stroke-[1.5]" />
+                                      ) : (
+                                          <CreditCard className="h-4 w-4 text-text-tertiary stroke-[1.5]" />
+                                      )}
+                                  </div>
+                                  <div>
+                                      <span className="text-sm font-medium text-text-primary block">Betalinger</span>
+                                      <span className="text-xs text-text-secondary block">
+                                          {isStripeConnected ? 'Tilkoblet Stripe' : 'Knytt kontoen din til Stripe for å motta betaling.'}
+                                      </span>
+                                  </div>
+                              </div>
+                              <div className="flex items-center gap-2 sm:ml-4">
+                                  {!isStripeConnected && hasStripeAccount && (
+                                      <Button
+                                          variant="ghost"
+                                          size="xs"
+                                          onClick={handleCheckStripeStatus}
+                                          loading={checkingStripeStatus}
+                                          loadingText="Sjekker..."
+                                      >
+                                          Sjekk status
+                                      </Button>
+                                  )}
+                                  <Button
+                                      variant="ghost"
+                                      size="compact"
+                                      onClick={handleStripeAction}
+                                      loading={stripeLoading}
+                                      loadingText={isStripeConnected ? 'Åpner...' : 'Sender deg til Stripe …'}
+                                      className="text-text-secondary hover:text-text-primary"
+                                  >
+                                      {isStripeConnected ? 'Se utbetalinger →' : 'Sett opp →'}
+                                  </Button>
+                              </div>
+                          </div>
+
+                          {/* Sikkerhet */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-zinc-50 transition-colors gap-4 sm:gap-0">
+                              <div className="flex items-center gap-3">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated">
+                                      <Shield className="h-4 w-4 text-text-tertiary stroke-[1.5]" />
+                                  </div>
+                                  <div>
+                                      <span className="text-sm font-medium text-text-primary block">Passord & sikkerhet</span>
+                                      <span className="text-xs text-text-secondary block">Passordendring og tofaktorinnlogging.</span>
+                                  </div>
+                              </div>
+                              <Button variant="ghost" size="compact" disabled className="text-text-secondary hover:text-text-primary sm:ml-4">
+                                  Kommer snart →
+                              </Button>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Varslinger */}
+                  <div>
+                      <h2 className="text-sm font-medium text-text-primary mb-3">Varslinger</h2>
+                      <div className="rounded-xl bg-white border border-zinc-200 p-4">
+                          <p className="text-xs text-text-secondary italic mb-4">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
+                          <div className="divide-y divide-zinc-100">
+                              <div className="flex items-center justify-between py-3 first:pt-0">
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
+                                      <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
+                                  </div>
+                                  <Switch
+                                      checked={notifications.newSignups}
+                                      onCheckedChange={() => handleToggle('newSignups')}
+                                      aria-label="Nye påmeldinger"
+                                  />
+                              </div>
+
+                              <div className="flex items-center justify-between py-3">
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
+                                      <span className="text-xs text-text-secondary">Send e-post umiddelbart ved avbestilling (under 24t).</span>
+                                  </div>
+                                  <Switch
+                                      checked={notifications.cancellations}
+                                      onCheckedChange={() => handleToggle('cancellations')}
+                                      aria-label="Avbestillinger"
+                                  />
+                              </div>
+
+                              <div className="flex items-center justify-between py-3 last:pb-0">
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-medium text-text-primary">Markedsføring</span>
+                                      <span className="text-xs text-text-secondary">Nyheter, tips og oppdateringer fra Ease på e-post.</span>
+                                  </div>
+                                  <Switch
+                                      checked={notifications.marketing}
+                                      onCheckedChange={() => handleToggle('marketing')}
+                                      aria-label="Markedsføring"
+                                  />
+                              </div>
+                          </div>
+                      </div>
+                  </div>
                 </div>
             )}
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
-            {activeTab === 'profile' && (
+            {isDirty && (
               <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
-                  <Button variant="ghost" size="compact" className="hidden md:inline-flex">Avbryt</Button>
+                  <Button variant="ghost" size="compact" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
                   <Button
                     size="compact"
                     className="flex-1 md:flex-none justify-center"
                     onClick={handleSave}
-                    disabled={isSaving || !isDirty}
+                    disabled={isSaving}
                   >
                       {isSaving ? 'Lagrer' : 'Lagre endringer'}
                   </Button>

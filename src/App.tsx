@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageLoader } from './components/ui/page-loader';
 
 // Lazy load all route components for code splitting
@@ -44,6 +45,7 @@ const App = () => {
           position="top-right"
           theme="light"
         />
+        <ErrorBoundary>
         <Suspense fallback={<PageLoader variant="fullscreen" />}>
           <Routes>
             {/* Public Routes */}
@@ -83,6 +85,7 @@ const App = () => {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   );

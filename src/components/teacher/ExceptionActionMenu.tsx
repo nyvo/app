@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MoreHorizontal, Link, CheckCircle, XCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { formatKroner } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -123,20 +124,36 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
       <AlertDialog open={confirmDialog === 'cancel'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Avbestille deltaker?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Er du sikker på at du vil avbestille <strong>{signup.participantName}</strong> fra {signup.className}?
-              {signup.paymentStatus === 'paid' && ' Deltakeren har betalt og vil motta refusjon.'}
-              {signup.paymentStatus !== 'paid' && ' Denne handlingen kan ikke angres.'}
+            <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-zinc-200 bg-surface/50 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-text-primary">{signup.participantName}</p>
+                      <p className="text-xs text-text-secondary">{signup.participantEmail}</p>
+                    </div>
+                    {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
+                      <span className="text-sm font-medium text-text-primary tabular-nums">{formatKroner(signup.amountPaid)}</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-sm text-text-secondary">
+                  {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
+                    ? 'Deltakeren har betalt og får refusjon via Stripe.'
+                    : 'Dette kan ikke angres.'}
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-status-error-bg border-status-error-border text-status-error-text hover:bg-status-error-bg/80"
               onClick={() => {
+                const hasRefund = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
                 setConfirmDialog(null);
-                runAction(() => handlers.onCancelEnrollment(signup.id, signup.paymentStatus === 'paid'));
+                runAction(() => handlers.onCancelEnrollment(signup.id, hasRefund));
               }}
             >
               Avbestill
@@ -149,10 +166,9 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
       <AlertDialog open={confirmDialog === 'resolve'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Merk som betalt</AlertDialogTitle>
+            <AlertDialogTitle>Merk som betalt?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bekreft at betalingen for <strong>{signup.participantName}</strong> er mottatt
-              utenom Stripe (kontant, Vipps, etc.). Påmeldingen vil bli markert som betalt.
+              Betalingen for {signup.participantName} registreres som mottatt utenom Stripe (kontant, Vipps, e.l.).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

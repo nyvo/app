@@ -12,7 +12,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "h-11 w-full rounded-lg border border-zinc-300 bg-input-bg px-4 text-sm text-text-primary",
         "placeholder:text-text-tertiary",
         // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
-        "focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "hover:border-ring ios-ease",
         // Autofill styles - override browser's blue/yellow background
         "autofill:bg-white",

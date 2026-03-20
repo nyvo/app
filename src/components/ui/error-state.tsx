@@ -15,7 +15,7 @@ interface ErrorStateProps {
 const variantClasses = {
   default: 'flex flex-col items-center justify-center h-64 text-center',
   inline: 'flex flex-col items-center justify-center py-8 px-4 text-center',
-  card: 'flex flex-col items-center justify-center h-64 text-center rounded-2xl bg-white border border-zinc-200',
+  card: 'flex flex-col items-center justify-center h-64 text-center rounded-xl bg-white border border-zinc-200',
 }
 
 /**
@@ -40,7 +40,7 @@ export const ErrorState = React.memo(function ErrorState({
         <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" aria-hidden="true" />
       </div>
       <h3 className="font-geist text-sm font-medium text-text-primary mb-1">{title}</h3>
-      <p className="text-xs text-text-secondary max-w-xs mb-4">{message}</p>
+      <p className="text-sm text-text-secondary max-w-xs mb-4">{message}</p>
       {onRetry && (
         <Button
           variant="outline-soft"

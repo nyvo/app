@@ -10,8 +10,11 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
+import { teacherCancelSignup, sendPaymentLink, markPaymentResolved } from '@/services/signups';
+import { friendlyError } from '@/lib/error-messages';
+import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { formatDateNorwegian } from '@/utils/dateUtils';
 import type { PaymentStatus } from '@/components/ui/payment-badge';
@@ -28,7 +31,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { createStripeConnectLink } from '@/services/stripe-connect';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
@@ -44,15 +46,11 @@ const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
-  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<SignupStatus | 'all'>('all');
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
   const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
-  const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
-  // Show fewer sessions on mobile to reduce scroll fatigue
-  const [visibleWeeks, setVisibleWeeks] = useState(isMobile ? 1 : 3);
   const [settingsTime, setSettingsTime] = useState('09:00');
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
@@ -207,8 +205,6 @@ const CourseDetailPage = () => {
         return newEdits;
       });
 
-      // Close accordion
-      setExpandedItem(undefined);
     } catch {
       // Silent fail for session save
     } finally {
@@ -365,6 +361,36 @@ const CourseDetailPage = () => {
     };
   }, [participants]);
 
+  // Action handlers for participant actions (cancel, payment link, mark resolved)
+  const participantActionHandlers: ParticipantActionHandlers = useMemo(() => ({
+    onSendPaymentLink: async (signupId: string) => {
+      const { error } = await sendPaymentLink(signupId);
+      if (!error) {
+        toast.success('Betalingslenke sendt');
+      } else {
+        toast.error(friendlyError(error, 'Kunne ikke sende betalingslenke'));
+      }
+    },
+    onCancelEnrollment: async (signupId: string, refund: boolean) => {
+      const { error } = await teacherCancelSignup(signupId, { refund });
+      if (!error) {
+        toast.success('Deltaker avbestilt');
+        refetchParticipants();
+      } else {
+        toast.error(friendlyError(error, 'Kunne ikke avbestille deltaker'));
+      }
+    },
+    onMarkResolved: async (signupId: string) => {
+      const { error } = await markPaymentResolved(signupId);
+      if (!error) {
+        toast.success('Markert som betalt');
+        refetchParticipants();
+      } else {
+        toast.error('Kunne ikke oppdatere status');
+      }
+    },
+  }), [refetchParticipants]);
+
   // Map participants from database to display format
   const displayParticipants = useMemo(() => participants.map(signup => ({
     id: signup.id,
@@ -372,6 +398,7 @@ const CourseDetailPage = () => {
     email: signup.participant_email || signup.profile?.email || '',
     status: signup.status as SignupStatus,
     paymentStatus: signup.payment_status as PaymentStatus,
+    amountPaid: signup.amount_paid ?? null,
     notes: signup.note || undefined,
     receiptUrl: signup.stripe_receipt_url || undefined,
   })), [participants]);
@@ -440,7 +467,7 @@ const CourseDetailPage = () => {
         id: session.id,
         weekNum: String(session.session_number).padStart(2, '0'),
         title: courseData.title,
-        status: session.status,
+        status: session.status || 'upcoming',
         isNext: index === firstUpcomingIndex, // First upcoming session is "next"
         date: formatDateNorwegian(new Date(session.session_date)),
         time: formatTime(session.start_time),
@@ -453,38 +480,6 @@ const CourseDetailPage = () => {
   // Check if we have real sessions from DB
   const hasRealSessions = sessions.length > 0;
 
-  const handleShowMore = () => {
-    const increment = isMobile ? 2 : 3;
-    const defaultVisible = isMobile ? 1 : 3;
-    if (visibleWeeks >= generatedCourseWeeks.length) {
-      setVisibleWeeks(defaultVisible);
-    } else {
-      setVisibleWeeks(prev => Math.min(prev + increment, generatedCourseWeeks.length));
-    }
-  };
-
-  const handleEditTime = () => {
-    if (isMultiDayCourse && generatedCourseWeeks.length > 0) {
-      // Find the next upcoming week (marked with isNext)
-      const nextWeek = generatedCourseWeeks.find(w => w.isNext);
-      if (nextWeek) {
-        // Make sure it's visible
-        const weekIndex = generatedCourseWeeks.findIndex(w => w.id === nextWeek.id);
-        if (weekIndex >= visibleWeeks) {
-          setVisibleWeeks(weekIndex + 1);
-        }
-        // Open the accordion
-        setExpandedItem(nextWeek.id);
-        // Scroll to kursplan section smoothly
-        setTimeout(() => {
-          kursplanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
-    } else {
-      // Single course - go to settings tab
-      setActiveTab('settings');
-    }
-  };
 
   // Handle quick image upload from overview placeholder
   const handleQuickImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -548,7 +543,7 @@ const CourseDetailPage = () => {
   return (
     <SidebarProvider>
       <TeacherSidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
 
         {/* Header Section */}
         <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
@@ -592,14 +587,14 @@ const CourseDetailPage = () => {
 
             {/* Payment setup required — blocking state */}
             {!currentOrganization?.stripe_onboarding_complete && (
-              <div className="mb-4 rounded-2xl bg-zinc-900 border border-zinc-800 p-5">
+              <div className="mb-4 rounded-xl bg-zinc-900 border border-zinc-800 p-6">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-medium text-white">
                       Betalinger er ikke satt opp
                     </h3>
-                    <p className="text-xs text-zinc-400 mt-1 leading-snug">
+                    <p className="text-sm text-zinc-400 mt-1 leading-snug">
                       Kurset er opprettet, men kan ikke motta påmeldinger før betalinger er satt opp. Du kobles til Stripe — det tar bare noen minutter.
                     </p>
                   </div>
@@ -644,7 +639,7 @@ const CourseDetailPage = () => {
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10" role="tabpanel">
+        <div className="flex-1 p-6 lg:p-10" role="tabpanel">
           <div className="max-w-6xl mx-auto w-full">
             <AnimatePresence mode="wait">
 
@@ -666,10 +661,7 @@ const CourseDetailPage = () => {
                   sessionLabel={sessionLabel}
                   sessionLabelPlural={sessionLabelPlural}
                   generatedCourseWeeks={generatedCourseWeeks}
-                  visibleWeeks={visibleWeeks}
-                  expandedItem={expandedItem}
                   hasRealSessions={hasRealSessions}
-                  isMobile={isMobile}
                   sessionEditHandlers={{
                     sessionEdits,
                     savingSessionId,
@@ -685,16 +677,12 @@ const CourseDetailPage = () => {
                         delete newEdits[weekId];
                         return newEdits;
                       });
-                      setExpandedItem(undefined);
                     },
                     onSaveSession: handleSaveSession,
                   }}
                   isUploadingQuickImage={isUploadingQuickImage}
                   quickImageInputRef={quickImageInputRef}
-                  onShowMore={handleShowMore}
-                  onExpandedItemChange={setExpandedItem}
                   onQuickImageUpload={handleQuickImageUpload}
-                  onEditTime={handleEditTime}
                   onCancelCourse={() => setShowCancelPreview(true)}
                   onNavigateToSettings={() => setActiveTab('settings')}
                   kursplanRef={kursplanRef}
@@ -724,7 +712,8 @@ const CourseDetailPage = () => {
                   activeFiltersCount={activeFiltersCount}
                   onClearFilters={clearFilters}
                   onOpenAddDialog={() => setAddParticipantDialogOpen(true)}
-
+                  courseName={course.title}
+                  actionHandlers={participantActionHandlers}
                 />
 
                 {/* Add Participant Dialog */}
@@ -803,9 +792,9 @@ const CourseDetailPage = () => {
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>
-        <AlertDialogContent className="gap-0 p-0 overflow-hidden ring-1 ring-black/5 ios-ease">
+        <AlertDialogContent className="gap-0 p-0 overflow-hidden ios-ease">
           {/* Modal body */}
-          <div className="p-7 space-y-6">
+          <div className="p-8 space-y-6">
             <AlertDialogHeader>
               <AlertDialogTitle>Avlyse kurset?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -819,10 +808,10 @@ const CourseDetailPage = () => {
             {refundPreview.count > 0 && (
               <div className="space-y-4">
                 <div>
-                  <span className="block text-xs font-medium text-text-secondary mb-2">
+                  <span className="block text-xs font-medium text-text-primary mb-2">
                     Refunderes
                   </span>
-                  <div className="rounded-2xl border border-zinc-200 bg-surface/50 overflow-hidden max-h-[200px] overflow-y-auto">
+                  <div className="rounded-xl border border-zinc-200 bg-surface/50 overflow-hidden max-h-[200px] overflow-y-auto">
                     {refundPreview.participants.map((p, i) => (
                       <div
                         key={p.id}
@@ -832,7 +821,7 @@ const CourseDetailPage = () => {
                         )}
                       >
                         <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
-                        <span className="text-sm text-text-secondary tabular-nums">{p.amount_paid ? `${p.amount_paid} kr` : 'Gratis'}</span>
+                        <span className="text-sm text-text-secondary tabular-nums">{formatKroner(p.amount_paid)}</span>
                       </div>
                     ))}
                   </div>
@@ -841,7 +830,7 @@ const CourseDetailPage = () => {
                 {/* Refund total */}
                 <div className="flex items-center justify-between px-1">
                   <span className="text-xs font-medium text-text-secondary">Totalt refusjon</span>
-                  <span className="text-lg font-medium text-text-primary tabular-nums">{refundPreview.totalAmount} kr</span>
+                  <span className="text-sm font-medium text-text-primary tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
                 </div>
               </div>
             )}
@@ -852,6 +841,7 @@ const CourseDetailPage = () => {
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
               variant="outline-soft"
+              size="sm"
               className="bg-status-error-bg border-status-error-border text-status-error-text hover:bg-status-error-bg/80"
               onClick={(e) => {
                 e.preventDefault();

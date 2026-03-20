@@ -179,7 +179,7 @@ const SignupPage = () => {
           Opprett konto
         </Button>
 
-        <p className="text-center text-xs text-text-tertiary pt-2">
+        <p className="text-center text-xs text-text-secondary pt-2">
           Ved å opprette konto godtar du{' '}
           <Link to="/terms" className="underline hover:text-text-primary">
             vilkår

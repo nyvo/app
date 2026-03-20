@@ -1,12 +1,10 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { verifyAuth, verifyOrgMembership, handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -106,11 +104,14 @@ Deno.serve(async (req: Request) => {
 
     if (refundResult) {
       updateData.payment_status = 'refunded'
+      updateData.refund_amount = signup.amount_paid || 0
+      updateData.refunded_at = new Date().toISOString()
     }
 
     if (body.reason) {
-      updateData.note = signup.note
-        ? `${signup.note}\n---\nAvmeldt av instruktør: ${body.reason}`
+      const existingNote = typeof signup.note === 'string' ? signup.note : ''
+      updateData.note = existingNote
+        ? `${existingNote}\n---\nAvmeldt av instruktør: ${body.reason}`
         : `Avmeldt av instruktør: ${body.reason}`
     }
 
@@ -146,63 +147,16 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           to: signup.participant_email,
-          subject: `Avmelding: ${course.title}`,
-          html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 500; margin-bottom: 20px; }
-    .cancelled { background: #fee2e2; color: #991b1b; }
-    .details-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .info-box { background: #f0fdf4; border-radius: 12px; padding: 16px; margin: 20px 0; border-left: 4px solid #10b981; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-
-    <p style="text-align: center;">
-      <span class="status-badge cancelled">Påmelding avmeldt</span>
-    </p>
-
-    <p>Hei ${signup.participant_name || ''},</p>
-
-    <p>Din påmelding til <strong>${course.title}</strong> har blitt avmeldt av ${org?.name || 'studiet'}.</p>
-
-    <div class="details-box">
-      <p><strong>Kurs:</strong> ${course.title}</p>
-      ${courseDate ? `<p><strong>Dato:</strong> ${courseDate}</p>` : ''}
-      ${course.time_schedule ? `<p><strong>Tid:</strong> ${course.time_schedule}</p>` : ''}
-    </div>
-
-    ${refunded && signup.amount_paid ? `
-    <div class="info-box">
-      <p><strong>Refusjon:</strong> ${signup.amount_paid} kr vil bli tilbakebetalt til din betalingsmetode innen 5\u201310 virkedager.</p>
-    </div>
-    ` : ''}
-
-    <p>Ta kontakt med ${org?.name || 'oss'} hvis du har spørsmål.</p>
-
-    <div class="footer">
-      <p>Hilsen,<br>${org?.name || 'Ease'}</p>
-    </div>
-  </div>
-</body>
-</html>
-          `,
-          text: refunded
-            ? `Hei ${signup.participant_name || ''}, din påmelding til ${course.title} har blitt avmeldt av ${org?.name || 'studiet'}. Refusjon på ${signup.amount_paid || 0} kr vil bli tilbakebetalt innen 5-10 virkedager.`
-            : `Hei ${signup.participant_name || ''}, din påmelding til ${course.title} har blitt avmeldt av ${org?.name || 'studiet'}. Ta kontakt med oss hvis du har spørsmål.`
+          template: 'teacher-cancellation',
+          templateData: {
+            participantName: signup.participant_name || '',
+            courseName: course.title,
+            courseDate: courseDate || '',
+            courseTime: course.time_schedule || '',
+            organizationName: org?.name || '',
+            refunded: refunded.toString(),
+            refundAmount: signup.amount_paid?.toString() || '',
+          }
         })
       })
     } catch (emailError) {

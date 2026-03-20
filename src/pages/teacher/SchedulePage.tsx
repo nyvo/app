@@ -92,7 +92,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-2xl bg-white border border-zinc-200 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-xl bg-white border border-zinc-200 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
@@ -109,7 +109,7 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
           <Users className="h-3 w-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
-      <p className="text-xs font-medium text-text-primary mt-1 truncate">{event.title}</p>
+      <p className="text-sm font-medium text-text-primary mt-1 truncate">{event.title}</p>
       <p className="text-xs text-text-secondary mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
@@ -161,7 +161,7 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`block rounded-2xl bg-white border border-zinc-200 p-4 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`block rounded-xl bg-white border border-zinc-200 p-4 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -250,7 +250,7 @@ const MobileDayView = ({
         ) : error ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-status-error-bg border border-status-error-border">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-status-error-bg border border-status-error-border">
                 <CalendarDays className="h-7 w-7 text-status-error-text" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Noe gikk galt</h3>
@@ -552,7 +552,7 @@ export const SchedulePage = () => {
             initial="initial"
             animate="animate"
             transition={pageTransition}
-            className="flex flex-col gap-4 border-b border-zinc-200 bg-surface px-6 py-5 shrink-0 z-20"
+            className="flex flex-col gap-4 border-b border-zinc-200 bg-surface px-8 py-8 shrink-0 z-20"
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
@@ -635,10 +635,10 @@ export const SchedulePage = () => {
             {error && !isLoading && (
               <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
                 <div className="text-center max-w-sm mx-auto p-8">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-status-error-bg border border-status-error-border">
+                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-status-error-bg border border-status-error-border">
                     <CalendarDays className="h-8 w-8 text-status-error-text" />
                   </div>
-                  <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
+                  <h3 className="font-geist text-sm font-medium text-text-primary mb-2">
                     Noe gikk galt
                   </h3>
                   <p className="text-sm text-text-secondary mb-6">
@@ -654,11 +654,11 @@ export const SchedulePage = () => {
             {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
               <div className="absolute inset-0 z-30 flex items-center justify-center bg-surface/30">
-                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-2xl border border-zinc-200">
+                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-xl border border-zinc-200">
                   <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-white border border-border">
                     <CalendarDays className="h-8 w-8 text-text-tertiary" />
                   </div>
-                  <h3 className="font-geist text-lg font-medium text-text-primary mb-2">
+                  <h3 className="font-geist text-sm font-medium text-text-primary mb-2">
                     Ingen timer denne uken
                   </h3>
                   <p className="text-sm text-text-secondary mb-6">

@@ -49,7 +49,7 @@ export function mapCourseToComponentFormat(courseData: Course & { signups_count:
     durationMinutes: courseData.duration || 60,
     courseType: courseTypeMap[courseData.course_type] || 'enkeltkurs',
     totalWeeks: courseData.total_weeks || 0,
-    currentWeek: courseData.current_week || 0,
+    currentWeek: 0,
     timeSchedule: courseData.time_schedule || '',
     imageUrl: courseData.image_url || null,
     startDate: courseData.start_date || null,

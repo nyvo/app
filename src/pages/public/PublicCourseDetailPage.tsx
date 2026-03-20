@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ChevronLeft,
-  Leaf,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchCourseSessions } from '@/services/courses';
-import { checkCourseAvailability } from '@/services/signups';
-import { createCheckoutSession } from '@/services/checkout';
+import { checkCourseAvailability, createSignup, sendSignupConfirmationEmail } from '@/services/signups';
+import { createPaymentIntent } from '@/services/checkout';
 import { toast } from 'sonner';
-import type { CourseSession } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { friendlyError } from '@/lib/error-messages';
 import { practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
 
 // Import new components
@@ -21,9 +19,7 @@ import { CourseHero } from '@/components/public/course-details/CourseHero';
 import { InstructorCard } from '@/components/public/course-details/InstructorCard';
 import { CourseMetaGrid } from '@/components/public/course-details/CourseMetaGrid';
 import { CourseDescription } from '@/components/public/course-details/CourseDescription';
-import { SessionList } from '@/components/public/course-details/SessionList';
 import { BookingSidebar } from '@/components/public/course-details/BookingSidebar';
-import { MobileStickyBar } from '@/components/public/course-details/MobileStickyBar';
 
 // Helper to format date for display
 function formatCourseDate(dateString: string | null): { month: string; day: string; dayName: string; fullDate: string; shortDate: string } {
@@ -73,14 +69,14 @@ const PublicCourseDetailPage = () => {
 
   // Data fetching state
   const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [sessions, setSessions] = useState<CourseSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Booking flow state
   const [submitting, setSubmitting] = useState(false);
-  const [redirectingToPayment, setRedirectingToPayment] = useState(false);
 
+  // Embedded payment state
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -137,29 +133,12 @@ const PublicCourseDetailPage = () => {
       }
 
       setCourse(data);
-
-      // Fetch sessions for the course
-      const { data: sessionsData, error: sessionsError } = await fetchCourseSessions(courseId);
-      if (!sessionsError && sessionsData) {
-        setSessions(sessionsData);
-      }
-
       setLoading(false);
     }
 
     loadCourseAndSessions();
   }, [courseId, user, userType, profile?.email]);
 
-  // Handle cancelled payment return
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('cancelled') === 'true') {
-      toast.info('Betalingen ble avbrutt', {
-        description: 'Du kan prøve igjen når du er klar.',
-      });
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -278,36 +257,82 @@ const PublicCourseDetailPage = () => {
       return;
     }
 
-    // Create Stripe checkout session (URLs are constructed server-side)
-    const { data: checkoutData, error: checkoutError } = await createCheckoutSession({
+    const isFree = !course.price || course.price <= 0;
+
+    if (isFree) {
+      // Free course: create signup directly without payment
+      const { error: signupError } = await createSignup({
+        course_id: courseId,
+        organization_id: course.organization_id,
+        participant_name: `${formData.firstName} ${formData.lastName}`.trim(),
+        participant_email: formData.email,
+        status: 'confirmed',
+        payment_status: 'paid',
+        user_id: user?.id || null,
+        note: formData.message || null,
+      });
+
+      if (signupError) {
+        toast.error(friendlyError(signupError, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
+        setSubmitting(false);
+        return;
+      }
+
+      // Send confirmation email (non-blocking)
+      sendSignupConfirmationEmail({
+        to: formData.email,
+        courseName: course.title,
+        courseDate: course.start_date ? new Date(course.start_date).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '',
+        courseTime: course.time_schedule?.match(/(\d{1,2}:\d{2})/)?.[1] || '',
+        location: course.location || '',
+        organizationName: course.organization?.name || 'Ease',
+      });
+
+      toast.success('Du er nå påmeldt!');
+      setSubmitting(false);
+      window.location.href = `/checkout/success?free=true&org=${slug}`;
+      return;
+    }
+
+    // Paid course: create PaymentIntent for embedded payment
+    const { data: paymentData, error: paymentError } = await createPaymentIntent({
       courseId,
       organizationSlug: slug,
       customerEmail: formData.email,
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
     });
 
-    if (checkoutError || !checkoutData) {
-      toast.error(checkoutError?.message || 'Kunne ikke starte betaling. Prøv igjen.');
+    if (paymentError || !paymentData) {
+      toast.error(friendlyError(paymentError, 'Kunne ikke starte betaling. Prøv igjen.'));
       setSubmitting(false);
       return;
     }
 
-    // Redirect to Stripe Checkout
-    if (checkoutData.url) {
-      setSubmitting(false);
-      setRedirectingToPayment(true);
-      window.location.href = checkoutData.url;
-    } else {
-      toast.error('Kunne ikke gå til betaling. Prøv igjen.');
-      setSubmitting(false);
-    }
+    // Show inline payment form
+    setClientSecret(paymentData.clientSecret);
+    setSubmitting(false);
+  };
+
+  const handlePaymentSuccess = (paymentIntentId: string) => {
+    setClientSecret(null);
+    // Navigate to success page with payment_intent_id
+    window.location.href = `/checkout/success?payment_intent_id=${paymentIntentId}&org=${slug}`;
+  };
+
+  const handlePaymentBack = () => {
+    setClientSecret(null);
+  };
+
+  const handlePaymentError = (error: string) => {
+    // Error is shown inside the dialog, only toast if dialog closes
+    console.error('Payment error:', error);
   };
 
 
   // Loading state
   if (loading) {
     return (
-      <div className="theme-public min-h-screen w-full bg-public-sand flex items-center justify-center">
+      <div className="min-h-screen w-full bg-white flex items-center justify-center">
         <Spinner size="xl" />
       </div>
     );
@@ -317,20 +342,17 @@ const PublicCourseDetailPage = () => {
   if (fetchError || !course) {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
-      <div className="theme-public min-h-screen w-full bg-public-sand">
-        <header className="border-b border-zinc-200/60 bg-public-sand">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to={backUrl} className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface border border-zinc-100">
-                <Leaf className="h-5 w-5" />
-              </div>
-              <span className="font-geist text-lg font-medium text-text-primary tracking-tight">Ease</span>
+      <div className="min-h-screen w-full bg-white">
+        <header className="border-b border-zinc-200 bg-white">
+          <div className="mx-auto flex max-w-4xl items-center justify-between px-6 h-16">
+            <Link to={backUrl} className="flex items-center gap-2">
+              <span className="text-sm font-medium tracking-widest uppercase text-text-primary">Ease</span>
             </Link>
           </div>
         </header>
-        <main className="pt-24 px-4 sm:px-6">
+        <main className="pt-24 px-6">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-2xl border border-destructive/30 bg-white p-12 text-center">
+            <div className="rounded-xl border border-destructive/30 bg-white p-12 text-center">
               <p className="text-sm text-destructive mb-4">{fetchError || 'Kurset ble ikke funnet'}</p>
               <Button asChild variant="outline" size="compact">
                 <Link to={backUrl}>
@@ -349,13 +371,10 @@ const PublicCourseDetailPage = () => {
   const dateInfo = formatCourseDate(course.start_date);
   const time = extractTime(course.time_schedule);
   const isFull = course.spots_available === 0;
-  const studioUrl = slug ? `/studio/${slug}` : '/';
-  const courseEndDate = course.end_date ? new Date(course.end_date) : (course.start_date ? new Date(course.start_date) : null);
-  const isEnded = courseEndDate ? courseEndDate < new Date(new Date().setHours(0, 0, 0, 0)) : false;
   const isAuthStudent = Boolean(user && userType === 'student');
 
   return (
-    <div className="theme-public min-h-screen w-full bg-public-sand overflow-x-hidden pb-32 lg:pb-0">
+    <div className="min-h-screen w-full bg-white">
       {/* Header */}
       <PublicCourseHeader
         organizationSlug={slug || ''}
@@ -366,83 +385,68 @@ const PublicCourseDetailPage = () => {
       />
 
       {/* Main Content */}
-      <main className="pt-24 px-4 sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-            {/* Left Column */}
-            <div className="lg:col-span-8 space-y-8">
-              {/* Hero */}
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+          {/* Left Column — Course Info (5/12), hidden on mobile during payment */}
+          <div className={`md:col-span-5 space-y-12 ${clientSecret ? 'hidden md:block' : ''}`}>
+            {/* Hero + Description grouped tightly */}
+            <div className="space-y-4">
               <CourseHero
                 title={course.title}
                 description={course.description}
+                spotsAvailable={course.spots_available}
               />
 
-              {/* Instructor */}
-              {course.instructor && (
-                <InstructorCard
-                  instructor={{
-                    name: course.instructor.name || 'Instruktør',
-                    role: 'Instruktør',
-                    avatar_url: course.instructor.avatar_url,
-                    profileUrl: undefined, // TODO: Add profile URL when available
-                  }}
-                />
-              )}
-
-              {/* Meta Grid */}
-              <CourseMetaGrid
-                time={time}
-                location={course.location}
-                duration={course.duration}
-                dateInfo={dateInfo}
-              />
-
-              {/* Description */}
               <CourseDescription
                 description={course.description}
                 highlights={practicalInfoToHighlights(course.practical_info)}
               />
-
-              {/* Sessions (if course series) */}
-              {course.course_type === 'course-series' && sessions.length > 0 && (
-                <SessionList
-                  sessions={sessions}
-                  highlightNextSession={true}
-                />
-              )}
             </div>
 
-            {/* Right Column (Sidebar) */}
-            <div className="lg:col-span-4">
-              <BookingSidebar
-                course={course}
-                isFull={isFull}
-                isAlreadySignedUp={false}
-                formData={formData}
-                errors={errors}
-                touched={touched}
-                submitting={submitting}
-                redirectingToPayment={redirectingToPayment}
-                isAuthStudent={isAuthStudent}
-                onSubmit={handleSubmit}
-                onInputChange={handleInputChange}
-                onBlur={handleBlur}
+            {/* Meta: Date/Time + Location */}
+            <CourseMetaGrid
+              time={time}
+              location={course.location}
+              duration={course.duration}
+              dateInfo={dateInfo}
+            />
+
+            {/* Instructor */}
+            {course.instructor && (
+              <InstructorCard
+                instructor={{
+                  name: course.instructor.name || 'Instruktør',
+                  role: 'Instruktør',
+                  avatar_url: course.instructor.avatar_url,
+                  profileUrl: undefined,
+                }}
               />
-            </div>
+            )}
+          </div>
+
+          {/* Right Column — Booking Form (7/12) */}
+          <div className="md:col-span-7">
+            <BookingSidebar
+              course={course}
+              isFull={isFull}
+              isAlreadySignedUp={false}
+              formData={formData}
+              errors={errors}
+              touched={touched}
+              submitting={submitting}
+              isAuthStudent={isAuthStudent}
+              onSubmit={handleSubmit}
+              onInputChange={handleInputChange}
+              onBlur={handleBlur}
+              clientSecret={clientSecret}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              onPaymentBack={handlePaymentBack}
+            />
           </div>
         </div>
       </main>
 
-      {/* Mobile Sticky Bar */}
-      <MobileStickyBar
-        price={course.price}
-        isFull={isFull}
-        isAlreadySignedUp={false}
-        submitting={submitting}
-        isEnded={isEnded}
-        studioUrl={studioUrl}
-        stripeConnected={course.organization?.stripe_onboarding_complete !== false}
-      />
     </div>
   );
 };

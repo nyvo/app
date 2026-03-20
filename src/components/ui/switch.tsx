@@ -14,7 +14,7 @@ function Switch({
       data-slot="switch"
       className={cn(
         "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent smooth-transition",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[state=checked]:bg-primary data-[state=unchecked]:bg-surface-elevated",
         className

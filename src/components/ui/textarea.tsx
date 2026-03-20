@@ -12,7 +12,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
         "placeholder:text-text-tertiary",
         // Focus styles - identical to Input
         "focus:outline-none focus:bg-white focus:border-zinc-400",
-        "focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "hover:border-ring ios-ease",
         // Disabled state
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",

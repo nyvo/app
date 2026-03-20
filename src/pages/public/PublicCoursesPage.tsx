@@ -135,9 +135,9 @@ const PublicCoursesPage = () => {
   const isEmpty = !loading && courses.length === 0 && organization;
 
   return (
-    <div className="theme-public min-h-screen w-full bg-public-sand text-sidebar-foreground overflow-x-hidden font-sans">
+    <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
       {/* Minimal Navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-public-sand/80 backdrop-blur-md border-b border-zinc-200/60">
+      <nav className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-zinc-200">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface border border-zinc-100 group-hover:border-zinc-400 transition-colors">
@@ -187,7 +187,7 @@ const PublicCoursesPage = () => {
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <h3 className="text-lg font-medium text-text-primary mb-2">{error}</h3>
-            <Button asChild variant="link" className="text-text-tertiary">
+            <Button asChild variant="link" className="text-text-secondary">
               <Link to="/">Gå til forsiden</Link>
             </Button>
           </div>
@@ -199,7 +199,7 @@ const PublicCoursesPage = () => {
             {/* Hero Section - Studio Info */}
             <header className="mb-12 flex items-start gap-6">
               {/* Logo */}
-              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-2xl shrink-0">
+              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-xl shrink-0">
                 {organization.logo_url ? (
                   <img
                     src={organization.logo_url}
@@ -207,7 +207,7 @@ const PublicCoursesPage = () => {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-2xl bg-zinc-800 border border-zinc-700">
+                  <div className="flex h-full w-full items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700">
                     <span className="text-2xl font-medium text-white">
                       {organization.name.charAt(0).toUpperCase()}
                     </span>
@@ -217,7 +217,7 @@ const PublicCoursesPage = () => {
 
               {/* Text Info */}
               <div className="space-y-2 flex-1">
-                <h1 className="display-heading text-2xl sm:text-3xl font-medium text-text-primary">
+                <h1 className="tracking-tight text-2xl font-medium text-text-primary">
                   {organization.name}
                 </h1>
 
@@ -238,9 +238,9 @@ const PublicCoursesPage = () => {
 
             {/* Unified Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-3xl border-zinc-200/60 bg-white">
-                <p className="display-heading text-base font-medium text-text-primary">Ingen aktive kurs</p>
-                <p className="text-xs text-text-secondary mt-1">
+              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-zinc-200 bg-white">
+                <p className="tracking-tight text-sm font-medium text-text-primary">Ingen aktive kurs</p>
+                <p className="text-sm text-text-secondary mt-1">
                   Det er ingen planlagte kurs for øyeblikket.
                 </p>
               </div>
@@ -251,7 +251,7 @@ const PublicCoursesPage = () => {
               {/* Kursrekker Section */}
               {!isEmpty && kursrekker.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="display-heading text-xl font-medium text-text-primary mb-6">
+                  <h2 className="text-sm font-medium text-text-primary mb-6">
                     Kursrekker
                   </h2>
                   <PublicCourseTable
@@ -265,7 +265,7 @@ const PublicCoursesPage = () => {
               {/* Arrangementer Section */}
               {!isEmpty && arrangementer.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="display-heading text-xl font-medium text-text-primary mb-6">
+                  <h2 className="text-sm font-medium text-text-primary mb-6">
                     Arrangementer
                   </h2>
                   <PublicCourseTable

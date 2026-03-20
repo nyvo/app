@@ -1,16 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { verifyAuthAndOrgMembership, handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 
-const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-if (!stripeKey) {
-  console.error('STRIPE_SECRET_KEY not configured')
-}
-
-const stripe = new Stripe(stripeKey || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -82,6 +75,7 @@ Deno.serve(async (req) => {
       charges_enabled: !!account.charges_enabled,
       payouts_enabled: !!account.payouts_enabled,
       details_submitted: !!account.details_submitted,
+      currently_due: account.requirements?.currently_due || [],
     }
 
     // In test mode, charges_enabled may not be immediately true after onboarding.

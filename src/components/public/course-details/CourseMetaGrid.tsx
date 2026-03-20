@@ -5,6 +5,7 @@ import { formatDuration } from '@/components/public/courseCardUtils';
 export interface CourseMetaGridProps {
   time: string;
   location: string | null;
+  address?: string | null;
   duration: number | null;
   dateInfo?: {
     dayName: string;
@@ -13,44 +14,56 @@ export interface CourseMetaGridProps {
 }
 
 /**
- * Grid layout displaying course meta information (time, location, duration)
- * Each card has an icon, label, and value
+ * Linear-style meta info — icon-led rows instead of cards
+ * Vertical stack with lucide icons and clean typography
  */
 export const CourseMetaGrid: React.FC<CourseMetaGridProps> = ({
   time,
   location,
+  address,
   duration,
   dateInfo,
 }) => {
-  // Extract date part from fullDate (e.g., "Mandag, 7. Jan" -> "7. Jan")
   const dateOnly = dateInfo?.fullDate.split(', ')[1] || '';
 
+  // If no explicit address prop, try splitting location on comma
+  // e.g. "Studio 1, Parkveien 5, Oslo" → venue: "Studio 1", addr: "Parkveien 5, Oslo"
+  let venueName = location || 'Ikke angitt';
+  let venueAddress = address || null;
+
+  if (!venueAddress && location && location.includes(',')) {
+    const parts = location.split(',');
+    venueName = parts[0].trim();
+    venueAddress = parts.slice(1).join(',').trim();
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Date and time card */}
-      <div className="p-5 rounded-2xl border border-zinc-200 bg-surface/30">
-        <div className="flex items-center gap-2 mb-2">
-          <Clock className="h-4 w-4 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">Dato og tid</span>
-        </div>
-        <div className="text-xl font-medium text-text-primary">
-          {time} {duration && <span className="text-base">({formatDuration(duration)})</span>}
-        </div>
-        {dateInfo && (
-          <div className="text-xs text-text-secondary mt-3">
-            {dateInfo.dayName}, {dateOnly}
+    <div className="space-y-6">
+      {/* Date & time */}
+      <div className="flex items-start gap-4">
+        <Clock className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+        <div>
+          <div className="text-sm font-medium tracking-tight text-text-primary">
+            {dateInfo?.dayName}, {dateOnly}
           </div>
-        )}
+          <div className="text-sm text-muted-foreground mt-1">
+            {time}{duration ? ` — ${formatDuration(duration)}` : ''}
+          </div>
+        </div>
       </div>
 
-      {/* Location card */}
-      <div className="p-5 rounded-2xl border border-zinc-200 bg-surface/30">
-        <div className="flex items-center gap-2 mb-2">
-          <MapPin className="h-4 w-4 text-text-tertiary" />
-          <span className="text-xs font-medium text-text-secondary">Sted</span>
-        </div>
-        <div className="text-lg font-medium text-text-primary">
-          {location || 'Ikke angitt'}
+      {/* Location */}
+      <div className="flex items-start gap-4">
+        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+        <div>
+          <div className="text-sm font-medium tracking-tight text-text-primary">
+            {venueName}
+          </div>
+          {venueAddress && (
+            <div className="text-sm text-muted-foreground mt-1">
+              {venueAddress}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
+import { friendlyError } from '@/lib/error-messages';
 
 import type { SignupInsert } from '@/types/database';
 
@@ -174,7 +175,7 @@ export function AddParticipantDialog({
       const { error } = await createSignup(signupData);
 
       if (error) {
-        setSubmitError(error.message || 'Kunne ikke legge til deltaker');
+        setSubmitError(friendlyError(error, 'Kunne ikke legge til deltaker'));
         setIsSubmitting(false);
         return;
       }
@@ -228,7 +229,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="firstName"
-                  className="block text-xs font-medium text-text-secondary mb-1.5"
+                  className="block text-xs font-medium text-text-primary mb-1.5"
                 >
                   Fornavn <span className="text-destructive">*</span>
                 </label>
@@ -267,7 +268,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="lastName"
-                  className="block text-xs font-medium text-text-secondary mb-1.5"
+                  className="block text-xs font-medium text-text-primary mb-1.5"
                 >
                   Etternavn <span className="text-destructive">*</span>
                 </label>
@@ -305,7 +306,7 @@ export function AddParticipantDialog({
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-text-secondary mb-1.5">
+              <label htmlFor="email" className="block text-xs font-medium text-text-primary mb-1.5">
                 E-post <span className="text-destructive">*</span>
               </label>
               <Input
@@ -343,8 +344,8 @@ export function AddParticipantDialog({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-xs font-medium text-text-secondary mb-1.5">
-                Telefonnummer <span className="text-text-tertiary font-normal">(valgfritt)</span>
+              <label htmlFor="phone" className="block text-xs font-medium text-text-primary mb-1.5">
+                Telefonnummer <span className="text-text-secondary font-normal">(valgfritt)</span>
               </label>
               <Input
                 id="phone"
@@ -363,8 +364,8 @@ export function AddParticipantDialog({
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="block text-xs font-medium text-text-secondary mb-1.5">
-                Kommentar <span className="text-text-tertiary font-normal">(valgfritt)</span>
+              <label htmlFor="note" className="block text-xs font-medium text-text-primary mb-1.5">
+                Kommentar <span className="text-text-secondary font-normal">(valgfritt)</span>
               </label>
               <Textarea
                 id="note"
@@ -380,7 +381,7 @@ export function AddParticipantDialog({
 
             {/* Payment Toggle */}
             <div>
-              <p id="payment-label" className="text-xs font-medium text-text-secondary mb-2">
+              <p id="payment-label" className="text-xs font-medium text-text-primary mb-2">
                 Betalingsstatus
               </p>
               <div
@@ -416,12 +417,13 @@ export function AddParticipantDialog({
               <Button
                 type="button"
                 variant="outline-soft"
+                size="sm"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Avbryt
               </Button>
-              <Button type="submit" loading={isSubmitting} loadingText="Legger til">
+              <Button type="submit" size="sm" loading={isSubmitting} loadingText="Legger til">
                 Legg til deltaker
               </Button>
             </DialogFooter>

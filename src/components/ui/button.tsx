@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 cursor-pointer",
   {
     variants: {
       variant: {
@@ -22,11 +22,9 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-surface-elevated hover:text-text-primary",
         link: "text-text-primary underline-offset-4 hover:underline",
-        public: "bg-public-sage text-public-sage-foreground border border-public-sage/80 rounded-full hover:bg-public-sage-hover hover:border-public-sage-hover/80 focus-visible:ring-public-sage/30",
-        "public-outline": "border border-public-sage/30 bg-white text-public-sage rounded-full hover:bg-public-sage-light hover:border-public-sage/50 focus-visible:ring-public-sage/30",
       },
       size: {
-        default: "h-10 px-5 py-2.5 text-sm rounded-xl",
+        default: "h-10 px-6 py-2.5 text-sm rounded-xl",
         xs: "h-8 px-3 py-1.5 text-xs rounded-lg [&_svg:not([class*='size-'])]:size-3.5",
         sm: "h-9 px-4 py-2 text-xs rounded-xl",
         compact: "h-10 px-3 py-2 text-xs rounded-xl [&_svg:not([class*='size-'])]:size-3.5",

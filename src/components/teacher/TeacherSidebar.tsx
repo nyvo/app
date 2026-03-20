@@ -81,7 +81,7 @@ export const TeacherSidebar = () => {
     <Sidebar collapsible="icon">
       <SidebarHeader className={`pt-8 pb-8 ${isCollapsed ? 'px-4' : 'px-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-2'}`}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white outline-none">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none">
             <Leaf className="h-4 w-4" />
           </div>
           {!isCollapsed && (
@@ -194,11 +194,11 @@ export const TeacherSidebar = () => {
                   )}
                 </SidebarMenuButton>
               </PopoverTrigger>
-              <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-2xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
+              <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
                 <div className="flex flex-col gap-0.5">
                   <div className="px-2 py-1.5 mb-1 border-b border-zinc-100">
                     <p className="text-sm font-medium text-text-primary truncate">{profile?.name || currentOrganization?.name}</p>
-                    <p className="text-xxs font-medium text-text-tertiary truncate">{profile?.email}</p>
+                    <p className="text-xxs font-medium text-text-secondary truncate">{profile?.email}</p>
                   </div>
                   <Link
                     to="/teacher/profile"

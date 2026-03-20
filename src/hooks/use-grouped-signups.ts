@@ -16,6 +16,7 @@ export interface SignupDisplay {
   status: SignupStatus;
   paymentStatus: PaymentStatus;
   note?: string;
+  amountPaid?: number | null;
   // Additional fields for teacher actions
   stripePaymentIntentId?: string | null;
   organizationId?: string;
@@ -23,6 +24,8 @@ export interface SignupDisplay {
   exceptionType?: ExceptionType | null;
   // Course lifecycle: whether the course has ended (end_date passed or status completed/cancelled)
   courseEnded?: boolean;
+  // Course capacity (max_participants), null/0 = unlimited
+  courseCapacity?: number | null;
 }
 
 export type ExceptionType = 'payment_failed' | 'pending_payment';
@@ -47,6 +50,7 @@ export interface SignupGroup {
     cancelled: number;
     exceptions: number;
   };
+  capacity: number | null;
   hasExceptions: boolean;
 }
 
@@ -146,6 +150,7 @@ function groupSignups(signups: SignupDisplay[]): SignupGroup[] {
         cancelled: cancelled.length,
         exceptions: exceptions.length,
       },
+      capacity: firstSignup.courseCapacity || null,
       hasExceptions: exceptions.length > 0,
     });
   }
@@ -255,8 +260,15 @@ export function useGroupedSignups(
     // Apply mode filter first (defines the baseline dataset)
     result = filterByMode(result, modeFilter);
 
+    // Derive effective time filter: Active mode with no explicit filter
+    // implicitly shows upcoming sessions. This is a smart default —
+    // effectiveTimeFilter is internal only, never leaks into UI state.
+    const effectiveTimeFilter = (modeFilter === 'active' && timeFilter === null)
+      ? 'upcoming' as TimeFilter
+      : timeFilter;
+
     // Apply time filter (secondary refinement)
-    result = filterByTime(result, timeFilter);
+    result = filterByTime(result, effectiveTimeFilter);
 
     // Apply status filter
     result = filterByStatus(result, statusFilter);

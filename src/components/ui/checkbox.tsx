@@ -16,7 +16,7 @@ function Checkbox({
       className={cn(
         "grid place-content-center peer h-4 w-4 shrink-0 rounded border border-zinc-300 bg-white",
         "data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         "aria-invalid:border-destructive",
         className

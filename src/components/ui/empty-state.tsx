@@ -34,15 +34,12 @@ export const EmptyState = React.memo(function EmptyState({
       {Icon && (
         <div className={cn(
           'mb-4 rounded-full p-3',
-          isPublic ? 'bg-public-sand-deep' : 'bg-surface-secondary'
+          isPublic ? 'bg-zinc-100' : 'bg-surface-secondary'
         )}>
           <Icon className="h-6 w-6 text-text-tertiary" />
         </div>
       )}
-      <h3 className={cn(
-        'text-sm font-medium text-text-secondary',
-        isPublic && 'display-heading text-base'
-      )}>{title}</h3>
+      <h3 className="text-sm font-medium text-text-secondary">{title}</h3>
       {description && (
         <p className="mt-1 text-sm text-text-secondary max-w-sm">{description}</p>
       )}

@@ -344,7 +344,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       postal_code: null,
       stripe_account_id: null,
       stripe_onboarding_complete: false,
-      fiken_company_slug: null,
       settings: {},
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

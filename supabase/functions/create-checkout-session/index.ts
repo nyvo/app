@@ -1,17 +1,12 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import type Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
+import { calculatePricing } from '../_shared/pricing.ts'
 
-const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-if (!stripeKey) {
-  console.error('STRIPE_SECRET_KEY not configured')
-}
-
-const stripe = new Stripe(stripeKey || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -61,6 +56,15 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(customerEmail)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Fetch course with organization
     const { data: course, error: courseError } = await supabase
       .from('courses')
@@ -90,6 +94,22 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: 'Course not found for this organization' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Reject bookings for courses that aren't bookable
+    if (course.status === 'draft' || course.status === 'cancelled') {
+      return new Response(
+        JSON.stringify({ error: 'Course is not available for booking' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Verify Stripe is set up for the organization
+    if (!course.organization.stripe_account_id || !course.organization.stripe_onboarding_complete) {
+      return new Response(
+        JSON.stringify({ error: 'Payment is not set up for this organization' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -143,7 +163,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Prepare Stripe checkout session options
-    const priceInOre = Math.round(price * 100) // Convert NOK to øre
+    const { serviceFeeNok, totalPrice, priceInOre } = calculatePricing(price)
 
     const sessionOptions: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
@@ -184,6 +204,10 @@ Deno.serve(async (req: Request) => {
         // Package metadata for package-aware capacity
         signup_package_id: signupPackageId || '',
         package_weeks: packageWeeks?.toString() || '',
+        // Pricing breakdown for transparency
+        base_price_nok: price.toString(),
+        service_fee_nok: serviceFeeNok.toString(),
+        total_price_nok: totalPrice.toString(),
       },
       // Construct redirect URLs server-side to prevent phishing via client-controlled URLs
       success_url: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&org=${course.organization.slug}`,
@@ -198,7 +222,7 @@ Deno.serve(async (req: Request) => {
 
     if (org.stripe_account_id && org.stripe_onboarding_complete) {
       // Organization has Stripe Connect - use connected account with platform fee
-      const platformFee = Math.round(priceInOre * 0.05) // 5% platform fee
+      const { platformFee } = calculatePricing(price)
 
       sessionOptions.payment_intent_data = {
         capture_method: 'manual', // Authorize only, capture after capacity check

@@ -8,7 +8,7 @@ import { extendTailwindMerge } from "tailwind-merge"
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
-      'font-size': ['text-xxs', 'text-small'],
+      'font-size': ['text-xxs'],
     },
   },
 })
@@ -41,4 +41,13 @@ export function toggleEmptyState(): void {
     localStorage.setItem(EMPTY_STATE_KEY, 'true');
   }
   window.location.reload();
+}
+
+/**
+ * Format a kroner amount for display with Norwegian thousands separator.
+ * Returns "Gratis" for 0/null, otherwise "1 200 kr".
+ */
+export function formatKroner(amount: number | null | undefined): string {
+  if (!amount) return 'Gratis';
+  return `${amount.toLocaleString('nb-NO')} kr`;
 }

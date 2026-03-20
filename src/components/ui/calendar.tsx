@@ -75,6 +75,7 @@ function CalendarDayButton({
 
   const isToday = modifiers.today
   const isSelected = modifiers.selected && !modifiers.range_start && !modifiers.range_end && !modifiers.range_middle
+  const hasSession = !!(modifiers as Record<string, boolean>).session
 
   return (
     <button
@@ -82,13 +83,15 @@ function CalendarDayButton({
       type="button"
       className={cn(
         // Base styles
-        "inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-normal transition-colors cursor-pointer",
+        "relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm font-normal transition-colors cursor-pointer",
         // Default state
         "text-text-secondary hover:bg-surface-elevated hover:text-text-primary",
+        // Session date — bolder text when not selected
+        hasSession && !isSelected && "text-text-primary font-medium",
         // Today indicator - subtle gray background
         isToday && !isSelected && "bg-surface-elevated text-text-primary font-medium",
-        // Selected state - primary fill
-        isSelected && "bg-primary text-primary-foreground font-medium hover:bg-primary-soft hover:text-primary-foreground",
+        // Selected state - solid black background with clean border
+        isSelected && "bg-primary text-primary-foreground font-medium hover:bg-primary-soft hover:text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-white",
         // Range states
         modifiers.range_start && "bg-primary text-primary-foreground rounded-l-lg rounded-r-none",
         modifiers.range_end && "bg-primary text-primary-foreground rounded-r-lg rounded-l-none",
@@ -100,7 +103,13 @@ function CalendarDayButton({
         className
       )}
       {...props}
-    />
+    >
+      {props.children}
+      {/* Session dot indicator */}
+      {hasSession && !isSelected && !modifiers.outside && (
+        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary" />
+      )}
+    </button>
   )
 }
 

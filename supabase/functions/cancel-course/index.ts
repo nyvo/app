@@ -1,12 +1,10 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import Stripe from 'npm:stripe@17.3.1'
+import { createStripeClient } from '../_shared/stripe.ts'
 import { verifyAuth, verifyOrgMembership, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2024-12-18.acacia',
-})
+const stripe = createStripeClient()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -19,10 +17,18 @@ interface CancelCourseRequest {
   notify_participants?: boolean
 }
 
+interface FailedRefundDetail {
+  signup_id: string
+  participant_name: string
+  participant_email: string
+  error: string
+}
+
 interface CancellationResult {
   success: boolean
   refunds_processed: number
   refunds_failed: number
+  failed_refund_details: FailedRefundDetail[]
   notifications_sent: number
   total_refunded: number
   message: string
@@ -96,6 +102,7 @@ Deno.serve(async (req: Request) => {
       success: true,
       refunds_processed: 0,
       refunds_failed: 0,
+      failed_refund_details: [],
       notifications_sent: 0,
       total_refunded: 0,
       message: ''
@@ -118,7 +125,10 @@ Deno.serve(async (req: Request) => {
     // Process refunds in parallel (not sequentially)
     const refundPromises = (signups || []).map(async (signup) => {
       let refunded = false
-      if (signup.stripe_payment_intent_id && signup.payment_status === 'paid') {
+      let refundErrorMsg = ''
+      const shouldRefund = signup.stripe_payment_intent_id && signup.payment_status === 'paid'
+
+      if (shouldRefund) {
         try {
           const refund = await stripe.refunds.create({
             payment_intent: signup.stripe_payment_intent_id,
@@ -128,20 +138,34 @@ Deno.serve(async (req: Request) => {
           refunded = true
         } catch (refundError) {
           console.error(`Refund failed for signup ${signup.id}:`, refundError)
+          refundErrorMsg = refundError instanceof Error ? refundError.message : 'Stripe refund failed'
         }
       }
 
       // Update signup status
+      const signupUpdate: Record<string, unknown> = {
+        status: 'course_cancelled',
+        payment_status: refunded ? 'refunded' : signup.payment_status,
+        updated_at: new Date().toISOString(),
+      }
+      if (refunded) {
+        signupUpdate.refund_amount = signup.amount_paid || 0
+        signupUpdate.refunded_at = new Date().toISOString()
+      }
       await supabase
         .from('signups')
-        .update({
-          status: 'course_cancelled',
-          payment_status: refunded ? 'refunded' : signup.payment_status,
-          updated_at: new Date().toISOString()
-        })
+        .update(signupUpdate)
         .eq('id', signup.id)
 
-      return { refunded, amount: refunded ? (signup.amount_paid || 0) : 0 }
+      return {
+        refunded,
+        amount: refunded ? (signup.amount_paid || 0) : 0,
+        shouldRefund: !!shouldRefund,
+        refundErrorMsg,
+        signup_id: signup.id,
+        participant_name: signup.participant_name || '',
+        participant_email: signup.participant_email || '',
+      }
     })
 
     const refundResults = await Promise.allSettled(refundPromises)
@@ -150,9 +174,23 @@ Deno.serve(async (req: Request) => {
         if (r.value.refunded) {
           results.refunds_processed++
           results.total_refunded += r.value.amount
+        } else if (r.value.shouldRefund && !r.value.refunded) {
+          results.refunds_failed++
+          results.failed_refund_details.push({
+            signup_id: r.value.signup_id,
+            participant_name: r.value.participant_name,
+            participant_email: r.value.participant_email,
+            error: r.value.refundErrorMsg,
+          })
         }
       } else {
         results.refunds_failed++
+        results.failed_refund_details.push({
+          signup_id: 'unknown',
+          participant_name: 'unknown',
+          participant_email: 'unknown',
+          error: r.reason instanceof Error ? r.reason.message : 'Promise rejected',
+        })
       }
     }
 
@@ -170,56 +208,15 @@ Deno.serve(async (req: Request) => {
               },
               body: JSON.stringify({
                 to: signup.participant_email,
-                subject: `Kurs avlyst: ${course.title}`,
-                html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .alert-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .alert-title { color: #991b1b; font-weight: 600; margin-bottom: 8px; }
-    .refund-box { background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .refund-title { color: #166534; font-weight: 600; margin-bottom: 8px; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-
-    <p>Hei ${signup.participant_name || ''},</p>
-
-    <div class="alert-box">
-      <p class="alert-title">Kurset er avlyst</p>
-      <p>Vi må dessverre informere om at <strong>${course.title}</strong> er avlyst.</p>
-      ${body.reason ? `<p><em>Årsak: ${body.reason}</em></p>` : ''}
-    </div>
-
-    ${signup.payment_status === 'paid' && signup.amount_paid ? `
-    <div class="refund-box">
-      <p class="refund-title">Refusjon</p>
-      <p>${signup.amount_paid} kr vil bli tilbakebetalt til din betalingsmetode innen 5-10 virkedager.</p>
-    </div>
-    ` : ''}
-
-    <p>Vi beklager eventuelle ulemper dette måtte medføre.</p>
-
-    <div class="footer">
-      <p>Hilsen,<br>${org?.name || 'Ease'}</p>
-    </div>
-  </div>
-</body>
-</html>
-                `,
-                text: `Hei ${signup.participant_name || ''}, vi må dessverre informere om at ${course.title} er avlyst.${signup.payment_status === 'paid' && signup.amount_paid ? ` ${signup.amount_paid} kr vil bli tilbakebetalt innen 5-10 virkedager.` : ''} Vi beklager eventuelle ulemper.`
+                template: 'course-cancelled',
+                templateData: {
+                  participantName: signup.participant_name || '',
+                  courseName: course.title,
+                  reason: body.reason || '',
+                  organizationName: org?.name || '',
+                  showRefund: (signup.payment_status === 'paid' && !!signup.amount_paid).toString(),
+                  refundAmount: signup.amount_paid?.toString() || '',
+                }
               })
             })
             return emailResponse.ok
@@ -235,7 +232,12 @@ Deno.serve(async (req: Request) => {
       ).length
     }
 
-    results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
+    if (results.refunds_failed > 0) {
+      results.success = false
+      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.refunds_failed} feilet og krever manuell oppfølging. ${results.notifications_sent} varsler sendt.`
+    } else {
+      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
+    }
 
     return new Response(
       JSON.stringify(results),

@@ -29,7 +29,7 @@ function RadioGroupItem({
       className={cn(
         "h-4 w-4 shrink-0 rounded-full border-2 border-zinc-300 bg-white",
         "data-[state=checked]:border-primary",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
@@ -57,10 +57,10 @@ function RadioGroupCardItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-card-item"
       className={cn(
-        "relative flex flex-col gap-3 p-5 rounded-2xl text-left cursor-pointer group smooth-transition bg-white bg-clip-padding",
+        "relative flex flex-col gap-3 p-6 rounded-xl text-left cursor-pointer group smooth-transition bg-white bg-clip-padding",
         "border border-zinc-200 hover:bg-zinc-50/50",
         "data-[state=checked]:border-zinc-900 data-[state=checked]:ring-1 data-[state=checked]:ring-zinc-900 data-[state=checked]:bg-zinc-50/80",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
@@ -79,7 +79,7 @@ function RadioGroupCardItem({
         </div>
       </div>
       <div>
-        <h3 className="text-base font-medium text-text-secondary group-data-[state=checked]:text-text-primary smooth-transition">
+        <h3 className="text-sm font-medium text-text-secondary group-data-[state=checked]:text-text-primary smooth-transition">
           {title}
         </h3>
         {description && (
