@@ -61,7 +61,7 @@ Dark surfaces are **semantic emphasis** — they signal importance within the li
 │  └─────────────────────────────────────────────┘     │
 │                                                      │
 │  ┌─────────────────────────────────────────────┐     │
-│  │  bg-surface-emphasis  (Zinc-900 #09090B)     │     │
+│  │  bg-surface-emphasis  (Zinc-800 #27272A)     │     │
 │  │  High-emphasis. Demands attention.            │     │
 │  │  Inverted text. Used sparingly.               │     │
 │  └─────────────────────────────────────────────┘     │

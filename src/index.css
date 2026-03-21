@@ -97,6 +97,8 @@
      Cards use bg-white to "pop" against the floor */
   --color-surface: #F4F4F5;
   --color-surface-elevated: #E4E4E7;
+  --color-surface-emphasis: #27272A;
+  --color-surface-emphasis-foreground: #FAFAFA;
   --color-input-bg: rgba(255, 255, 255, 0.5);
 
   /* Brand Dark Variations */

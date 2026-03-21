@@ -92,25 +92,25 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-xl bg-white border border-zinc-200 p-2 smooth-transition hover:bg-zinc-50 cursor-pointer group overflow-hidden block ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-xl p-2 smooth-transition cursor-pointer group overflow-hidden block ${isCompleted ? 'bg-surface-emphasis/40 text-surface-emphasis-foreground/70' : 'bg-surface-emphasis text-surface-emphasis-foreground hover:bg-surface-emphasis/90'} ${isActive ? 'ring-2 ring-surface-emphasis ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
-        <span className="text-xs font-medium text-text-secondary">
+        <span className="text-xs font-medium text-surface-emphasis-foreground/70">
           {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
-        {isCompleted && <CheckCircle2 className="h-3 w-3 text-text-tertiary" />}
+        {isCompleted && <CheckCircle2 className="h-3 w-3 text-surface-emphasis-foreground/50" />}
         {isActive && (
-          <span className="inline-flex items-center rounded-full bg-status-confirmed-bg px-1.5 py-0.5 text-xxs font-medium text-status-confirmed-text border border-status-confirmed-border">
+          <span className="inline-flex items-center rounded-full bg-white/20 px-1.5 py-0.5 text-xxs font-medium text-surface-emphasis-foreground">
             Pågår
           </span>
         )}
         {!isCompleted && !isActive && (
-          <Users className="h-3 w-3 text-text-tertiary opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Users className="h-3 w-3 text-surface-emphasis-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
-      <p className="text-sm font-medium text-text-primary mt-1 truncate">{event.title}</p>
-      <p className="text-xs text-text-secondary mt-0.5">{event.location}</p>
+      <p className="text-sm font-medium text-surface-emphasis-foreground mt-1 truncate">{event.title}</p>
+      <p className="text-xs text-surface-emphasis-foreground/70 mt-0.5">{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -118,13 +118,13 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
               name={event.instructor}
               src={event.instructorAvatar}
               size="xxs"
-              ringClassName="ring-1 ring-border"
+              ringClassName="ring-1 ring-white/30"
             />
-            <span className="text-xs text-text-secondary">{event.instructor}</span>
+            <span className="text-xs text-surface-emphasis-foreground/70">{event.instructor}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="h-3 w-3 text-text-tertiary" />
-            <span className="text-xs text-text-secondary">
+            <Users className="h-3 w-3 text-surface-emphasis-foreground/50" />
+            <span className="text-xs text-surface-emphasis-foreground/70">
               {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
             </span>
           </div>
@@ -449,15 +449,16 @@ export const SchedulePage = () => {
       const endTime = session.end_time || (session.start_time ? calculateEndTime(session.start_time, duration) : null);
       if (!endTime) continue;
 
-      // Determine session status
+      // Determine session status by comparing Oslo wall-clock values
       const now = getOsloTime();
-      const sessionDateTime = new Date(`${sessionDate}T${session.start_time}`);
-      const sessionEndDateTime = new Date(`${sessionDate}T${endTime}`);
+      const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const sessionStartStr = `${sessionDate}T${formatTime(session.start_time)}`;
+      const sessionEndStr = `${sessionDate}T${formatTime(endTime)}`;
 
       let status: 'completed' | 'upcoming' | 'active' | undefined;
-      if (now > sessionEndDateTime) {
+      if (nowStr > sessionEndStr) {
         status = 'completed';
-      } else if (now >= sessionDateTime && now <= sessionEndDateTime) {
+      } else if (nowStr >= sessionStartStr && nowStr <= sessionEndStr) {
         status = 'active';
       } else {
         status = 'upcoming';

@@ -82,7 +82,6 @@ const TimeDropdown = ({
 }) => {
   const options: Array<{ value: TimeFilter | null; label: string }> = [
     { value: null, label: 'Alle' },
-    { value: 'upcoming', label: 'Kommende' },
     { value: 'today', label: 'I dag' },
     { value: 'this_week', label: 'Denne uken' },
   ];
@@ -168,7 +167,6 @@ export const SignupsPage = () => {
   const [modeFilter, setModeFilter] = useState<ModeFilter>('active');
   const [timeFilter, setTimeFilter] = useState<TimeFilter | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -247,7 +245,7 @@ export const SignupsPage = () => {
     modeFilter,
     timeFilter,
     statusFilter,
-    paymentFilter,
+    paymentFilter: 'all' as PaymentFilter,
     searchQuery,
   });
 
@@ -256,15 +254,14 @@ export const SignupsPage = () => {
     setModeFilter(newMode);
     setTimeFilter(null);
     setStatusFilter('all');
-    setPaymentFilter('all');
   };
 
   const showTimeFilter = modeFilter === 'active';
+  const showStatusFilter = modeFilter === 'ended';
 
   const clearFilters = () => {
     setTimeFilter(null);
     setStatusFilter('all');
-    setPaymentFilter('all');
     setSearchQuery('');
   };
 
@@ -333,7 +330,9 @@ export const SignupsPage = () => {
               {showTimeFilter && (
                 <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
               )}
-              <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
+              {showStatusFilter && (
+                <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
+              )}
 
               {hasActiveFilters && (
                 <button

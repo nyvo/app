@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
+  Archive,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -13,10 +14,10 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { SessionScheduleTable, SessionScheduleTableSkeleton } from '@/components/teacher/SessionScheduleTable';
+import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { cn } from '@/lib/utils';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -60,6 +61,7 @@ function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRo
     maxParticipants: course.max_participants,
     courseStatus: course.status,
     courseStartDate: course.start_date,
+    totalWeeks: course.total_weeks,
   };
 }
 
@@ -167,10 +169,6 @@ const CoursesPage = () => {
     );
   }, [archiveRows, searchQuery]);
 
-  // Course count summary
-  const activeCount = courses.filter(c => c.status === 'active').length;
-  const upcomingCount = courses.filter(c => c.status === 'upcoming').length;
-
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
@@ -180,60 +178,61 @@ const CoursesPage = () => {
 
         <MobileTeacherHeader title="Mine kurs" />
 
-        {/* Header Area & Controls */}
-        <motion.div
+        {/* Header */}
+        <motion.header
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="flex flex-col gap-6 px-8 py-8 bg-surface shrink-0"
+          className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine kurs</h1>
-                    {!showCoursesEmptyState && (
-                      <p className="text-sm text-text-secondary mt-1">
-                        {(() => {
-                            const parts = [];
-                            if (activeCount > 0) parts.push(`${activeCount} aktive`);
-                            if (upcomingCount > 0) parts.push(`${upcomingCount} kommende`);
-                            return parts.length > 0 ? parts.join(', ') : 'Ingen aktive kurs';
-                          })()}
-                      </p>
-                    )}
-                </div>
-                {!showCoursesEmptyState && (
-                  <div className="flex items-center gap-3">
-                    <Button asChild size="compact" className="gap-2">
-                      <Link to="/teacher/new-course">
-                        <CalendarPlus className="h-3.5 w-3.5" />
-                        <span>Opprett nytt</span>
-                      </Link>
-                    </Button>
-                  </div>
-                )}
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine kurs</h1>
+              {!showCoursesEmptyState && (
+                <p className="text-sm text-text-secondary mt-1">Oversikt over kursene dine.</p>
+              )}
             </div>
-
-            {/* Search & Filter */}
             {!showCoursesEmptyState && (
-              <div className="flex items-center gap-4">
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Søk etter kurs"
-                  aria-label="Søk etter kurs"
-                  className="max-w-md"
-                />
-                <FilterTabs value={viewFilter} onValueChange={(v) => setViewFilter(v as 'active' | 'archive')}>
-                  <FilterTab value="active">Aktive</FilterTab>
-                  <FilterTab value="archive">Arkiv</FilterTab>
-                </FilterTabs>
-              </div>
+              <Button asChild size="compact" className="gap-2">
+                <Link to="/teacher/new-course">
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  <span>Opprett nytt</span>
+                </Link>
+              </Button>
             )}
-        </motion.div>
+          </div>
+
+          {/* Filters row */}
+          {!showCoursesEmptyState && (
+            <div className="flex flex-col md:flex-row gap-3 md:items-center pb-4">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Søk etter kurs"
+                aria-label="Søk etter kurs"
+                className="flex-1 max-w-xs"
+              />
+              <div className="md:ml-auto">
+                <button
+                  onClick={() => setViewFilter(viewFilter === 'archive' ? 'active' : 'archive')}
+                  className={cn(
+                    'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
+                    viewFilter === 'archive'
+                      ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
+                      : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
+                  )}
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  Arkiv
+                </button>
+              </div>
+            </div>
+          )}
+        </motion.header>
 
         {/* Content */}
-        <div className="flex-1 px-8 pb-8">
+        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
             {isLoading ? (
               <div
                 className="pb-8"
@@ -242,7 +241,7 @@ const CoursesPage = () => {
                 aria-label="Laster kurs"
               >
                 <span className="sr-only">Henter kurs</span>
-                <SessionScheduleTableSkeleton />
+                <CourseListSkeleton />
               </div>
             ) : error ? (
               <ErrorState
@@ -273,7 +272,7 @@ const CoursesPage = () => {
                     }
                   />
                 ) : (
-                  <SessionScheduleTable sessions={filteredActiveRows} />
+                  <CourseListView courses={filteredActiveRows} />
                 )}
               </div>
             ) : (
@@ -287,7 +286,7 @@ const CoursesPage = () => {
                       : 'Fullførte kurs vil vises her.'}
                   />
                 ) : (
-                  <SessionScheduleTable sessions={filteredArchiveRows} />
+                  <CourseListView courses={filteredArchiveRows} />
                 )}
               </div>
             )}

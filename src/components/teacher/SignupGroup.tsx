@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ChevronRight, AlertTriangle, Calendar, Users } from 'lucide-react';
+import { ChevronRight, AlertTriangle, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DateBadge } from '@/components/ui/date-badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { PaymentBadge } from '@/components/ui/payment-badge';
@@ -9,12 +10,6 @@ import { NotePopover } from '@/components/ui/note-popover';
 import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupGroup as SignupGroupType, SignupDisplay } from '@/hooks/use-grouped-signups';
 
-// Format date for display
-function formatGroupDate(date: Date): string {
-  const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
-  const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
-  return `${days[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
-}
 
 interface SignupGroupProps {
   group: SignupGroupType;
@@ -33,10 +28,12 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
       {/* Group Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full py-3.5 flex items-center justify-between cursor-pointer smooth-transition text-left"
+        className="w-full py-3 flex items-center gap-3 cursor-pointer smooth-transition text-left"
         aria-expanded={isExpanded}
         aria-controls={`group-content-${group.key}`}
       >
+        <DateBadge date={group.classDate} />
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
             <h3 className="text-sm font-medium text-text-primary truncate">
@@ -55,32 +52,20 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
               />
             )}
           </div>
-          {/* Desktop: horizontal meta */}
-          <div className="hidden md:flex items-center gap-4 mt-1">
-            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <Calendar className="h-3.5 w-3.5" />
-              {formatGroupDate(group.classDate)}{group.classTime && `, ${group.classTime}`}
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <Users className="h-3.5 w-3.5" />
-              {group.capacity ? `${group.counts.confirmed}/${group.capacity}` : `${group.counts.confirmed}`} påmeldt
-            </span>
-          </div>
-          {/* Mobile: stacked meta */}
-          <div className="flex md:hidden flex-col gap-0.5 mt-1">
-            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-              {formatGroupDate(group.classDate)}{group.classTime && `, ${group.classTime}`}
-            </span>
-            <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <Users className="h-3.5 w-3.5 flex-shrink-0" />
+          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+            {group.classTime && (
+              <span className="text-xs text-text-secondary">{group.classTime}</span>
+            )}
+            <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
+              <Users className="h-3 w-3" />
               {group.capacity ? `${group.counts.confirmed}/${group.capacity}` : `${group.counts.confirmed}`} påmeldt
             </span>
           </div>
         </div>
+
         <ChevronRight
           className={cn(
-            'h-5 w-5 text-text-tertiary transition-transform flex-shrink-0 ml-2 md:ml-4',
+            'h-5 w-5 text-text-tertiary transition-transform flex-shrink-0',
             isExpanded && 'rotate-90'
           )}
         />

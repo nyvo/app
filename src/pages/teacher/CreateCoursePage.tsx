@@ -1214,7 +1214,7 @@ const CreateCoursePage = () => {
                     </Button>
                   )}
                   {currentStep === 2 && (
-                    <div className="flex flex-col items-end gap-1.5">
+                    <div className="relative flex flex-col items-end">
                       <Button
                         type="button"
                         size="compact"
@@ -1225,7 +1225,7 @@ const CreateCoursePage = () => {
                         <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
                       {!isFormValid && (
-                        <p className="text-xs text-text-secondary">
+                        <p className="absolute top-full mt-1.5 text-xs text-text-secondary whitespace-nowrap">
                           Fyll ut alle påkrevde felt for å fortsette
                         </p>
                       )}
