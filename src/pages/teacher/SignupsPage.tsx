@@ -1,16 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Filter,
-  ChevronDown,
-  ChevronRight,
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { SignupFilterDropdown, type CombinedFilter } from '@/components/teacher/SignupFilterDropdown';
 import { ErrorState } from '@/components/ui/error-state';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -71,59 +62,6 @@ function formatRelativeDate(dateString: string): string {
 }
 
 // Combined signup filter — merges status + payment into one meaningful dropdown
-type CombinedFilter = 'all' | 'pending_payment' | 'payment_failed' | 'cancelled' | 'refunded';
-
-const COMBINED_FILTER_OPTIONS: Array<{ value: CombinedFilter; label: string }> = [
-  { value: 'all', label: 'Alle' },
-  { value: 'pending_payment', label: 'Venter betaling' },
-  { value: 'payment_failed', label: 'Betaling feilet' },
-  { value: 'cancelled', label: 'Avbestilt' },
-  { value: 'refunded', label: 'Refundert' },
-];
-
-const SignupFilterDropdown = ({
-  value,
-  onChange,
-  counts,
-}: {
-  value: CombinedFilter;
-  onChange: (value: CombinedFilter) => void;
-  counts: Record<CombinedFilter, number>;
-}) => {
-  const currentLabel = COMBINED_FILTER_OPTIONS.find(o => o.value === value)?.label || 'Alle';
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className={cn(
-          'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-          value !== 'all'
-            ? 'bg-white text-text-primary border-border'
-            : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-        )}>
-          <Filter className="h-3.5 w-3.5" />
-          Filter: {currentLabel}
-          <ChevronDown className="ml-1 h-3.5 w-3.5" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {COMBINED_FILTER_OPTIONS.map(option => {
-          const isEmpty = option.value !== 'all' && counts[option.value] === 0;
-          return (
-            <DropdownMenuItem
-              key={option.value}
-              disabled={isEmpty}
-              onSelect={() => onChange(option.value)}
-            >
-              {option.label}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);

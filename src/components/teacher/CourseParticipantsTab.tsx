@@ -1,17 +1,17 @@
+import { useState, useMemo } from 'react';
 import {
   Plus,
   FileText,
-  X,
 } from 'lucide-react';
 import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
 import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
 import { NotePopover } from '@/components/ui/note-popover';
 import { ParticipantActionMenu, type ParticipantActionHandlers, type ActionableParticipant } from './ParticipantActionMenu';
+import { SignupFilterDropdown, type CombinedFilter } from './SignupFilterDropdown';
 import type { ExceptionType } from '@/hooks/use-grouped-signups';
 
 export interface DisplayParticipant {
@@ -28,14 +28,8 @@ export interface DisplayParticipant {
 interface CourseParticipantsTabProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  statusFilter: SignupStatus | 'all';
-  onStatusFilterChange: (filter: SignupStatus | 'all') => void;
-  paymentFilter: PaymentStatus | 'all';
-  onPaymentFilterChange: (filter: PaymentStatus | 'all') => void;
-  filteredParticipants: DisplayParticipant[];
+  participants: DisplayParticipant[];
   participantsLoading: boolean;
-  activeFiltersCount: number;
-  onClearFilters: () => void;
   onOpenAddDialog: () => void;
   courseName: string;
   actionHandlers: ParticipantActionHandlers;
@@ -64,80 +58,94 @@ function toActionable(p: DisplayParticipant, courseName: string): ActionablePart
 export const CourseParticipantsTab = ({
   searchQuery,
   onSearchQueryChange,
-  statusFilter,
-  onStatusFilterChange,
-  paymentFilter,
-  onPaymentFilterChange,
-  filteredParticipants,
+  participants,
   participantsLoading,
-  activeFiltersCount,
-  onClearFilters,
   onOpenAddDialog,
   courseName,
   actionHandlers,
 }: CourseParticipantsTabProps) => {
+  const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all');
+
+  // Count participants per filter option
+  const filterCounts = useMemo((): Record<CombinedFilter, number> => {
+    const counts: Record<CombinedFilter, number> = {
+      all: participants.length,
+      pending_payment: 0,
+      payment_failed: 0,
+      cancelled: 0,
+      refunded: 0,
+    };
+    for (const p of participants) {
+      if (p.paymentStatus === 'pending' && p.status === 'confirmed') counts.pending_payment++;
+      if (p.paymentStatus === 'failed') counts.payment_failed++;
+      if (p.status === 'cancelled' || p.status === 'course_cancelled') counts.cancelled++;
+      if (p.paymentStatus === 'refunded') counts.refunded++;
+    }
+    return counts;
+  }, [participants]);
+
+  // Apply combined filter + search
+  const filteredParticipants = useMemo(() => {
+    let result = participants;
+
+    // Combined filter
+    switch (combinedFilter) {
+      case 'pending_payment':
+        result = result.filter(p => p.paymentStatus === 'pending' && p.status === 'confirmed');
+        break;
+      case 'payment_failed':
+        result = result.filter(p => p.paymentStatus === 'failed');
+        break;
+      case 'cancelled':
+        result = result.filter(p => p.status === 'cancelled' || p.status === 'course_cancelled');
+        break;
+      case 'refunded':
+        result = result.filter(p => p.paymentStatus === 'refunded');
+        break;
+    }
+
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.email.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [participants, combinedFilter, searchQuery]);
+
+  const hasActiveFilters = combinedFilter !== 'all' || searchQuery.trim() !== '';
+
+  const clearFilters = () => {
+    setCombinedFilter('all');
+    onSearchQueryChange('');
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
-          <div className="relative w-full sm:w-80">
-            <SearchInput
-              value={searchQuery}
-              onChange={onSearchQueryChange}
-              placeholder="Søk etter deltaker"
-              aria-label="Søk etter deltaker"
-            />
-          </div>
-          <FilterTabs variant="pill" value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as SignupStatus | 'all')}>
-            <FilterTab value="all">Alle</FilterTab>
-            <FilterTab value="confirmed">Påmeldt</FilterTab>
-            <FilterTab value="cancelled">Avbestilt</FilterTab>
-          </FilterTabs>
+      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row gap-3 md:items-center flex-1">
+          <SearchInput
+            value={searchQuery}
+            onChange={onSearchQueryChange}
+            placeholder="Søk etter deltaker"
+            aria-label="Søk etter deltaker"
+            className="flex-1 max-w-xs"
+          />
+          <SignupFilterDropdown
+            value={combinedFilter}
+            onChange={setCombinedFilter}
+            counts={filterCounts}
+          />
         </div>
         <Button size="compact" onClick={onOpenAddDialog}>
           <Plus className="h-4 w-4" />
           Legg til deltaker
         </Button>
       </div>
-
-      {/* Active Filter Chips */}
-      {activeFiltersCount > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          {statusFilter !== 'all' && (
-            <button
-              onClick={() => onStatusFilterChange('all')}
-              aria-label={`Fjern filter: Status ${
-                statusFilter === 'confirmed' ? 'Påmeldt' :
-                'Avbestilt'
-              }`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-zinc-400 smooth-transition"
-            >
-              Status: {
-                statusFilter === 'confirmed' ? 'Påmeldt' :
-                'Avbestilt'
-              }
-              <X className="h-3 w-3" />
-            </button>
-          )}
-          {paymentFilter !== 'all' && (
-            <button
-              onClick={() => onPaymentFilterChange('all')}
-              aria-label={`Fjern filter: Betaling ${paymentFilter === 'paid' ? 'Betalt' : 'Venter betaling'}`}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium text-text-primary border border-border hover:border-zinc-400 smooth-transition"
-            >
-              Betaling: {paymentFilter === 'paid' ? 'Betalt' : 'Venter betaling'}
-              <X className="h-3 w-3" />
-            </button>
-          )}
-          <button
-            onClick={onClearFilters}
-            className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
-          >
-            Nullstill alle
-          </button>
-        </div>
-      )}
 
       {/* Table Container */}
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
@@ -165,9 +173,9 @@ export const CourseParticipantsTab = ({
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
                     <p className="text-sm text-text-secondary">Ingen deltakere funnet</p>
-                    {activeFiltersCount > 0 && (
+                    {hasActiveFilters && (
                       <button
-                        onClick={onClearFilters}
+                        onClick={clearFilters}
                         className="mt-2 text-xs text-primary hover:underline"
                       >
                         Nullstill filter
@@ -192,11 +200,11 @@ export const CourseParticipantsTab = ({
                     <td className="py-3 px-3 sm:px-6">
                       <StatusBadge status={participant.status} />
                     </td>
-                    {/* Betaling (payment) - exception-only (paid is silent by default) */}
+                    {/* Betaling (payment) */}
                     <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
                       <PaymentBadge status={participant.paymentStatus} />
                     </td>
-                    {/* Kvittering (receipt) - icon-only when present */}
+                    {/* Kvittering (receipt) */}
                     <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
                       {participant.receiptUrl && (
                         <a
@@ -211,7 +219,7 @@ export const CourseParticipantsTab = ({
                         </a>
                       )}
                     </td>
-                    {/* Notater - icon-only when present */}
+                    {/* Notater */}
                     <td className="py-4 px-3 sm:px-6 text-right hidden sm:table-cell">
                       <NotePopover note={participant.notes} />
                     </td>
@@ -229,7 +237,6 @@ export const CourseParticipantsTab = ({
           </table>
         </div>
       </div>
-
     </div>
   );
 };

@@ -49,8 +49,6 @@ const CourseDetailPage = () => {
   const { currentOrganization } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<SignupStatus | 'all'>('all');
-  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all');
   const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
   const [settingsTime, setSettingsTime] = useState('09:00');
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
@@ -419,15 +417,6 @@ const CourseDetailPage = () => {
     receiptUrl: signup.stripe_receipt_url || undefined,
   })), [participants]);
 
-  // Filter participants based on search and filters
-  const filteredParticipants = useMemo(() => displayParticipants.filter((p) => {
-    const matchesSearch = searchQuery === '' ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
-    const matchesPayment = paymentFilter === 'all' || p.paymentStatus === paymentFilter;
-    return matchesSearch && matchesStatus && matchesPayment;
-  }), [displayParticipants, searchQuery, statusFilter, paymentFilter]);
 
   // Loading state
   if (isLoading) {
@@ -583,13 +572,6 @@ const CourseDetailPage = () => {
   };
 
   const spotsLeft = course.capacity - course.enrolled;
-
-  const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (paymentFilter !== 'all' ? 1 : 0);
-
-  const clearFilters = () => {
-    setStatusFilter('all');
-    setPaymentFilter('all');
-  };
 
   return (
     <SidebarProvider>
@@ -755,14 +737,8 @@ const CourseDetailPage = () => {
                 <CourseParticipantsTab
                   searchQuery={searchQuery}
                   onSearchQueryChange={setSearchQuery}
-                  statusFilter={statusFilter}
-                  onStatusFilterChange={setStatusFilter}
-                  paymentFilter={paymentFilter}
-                  onPaymentFilterChange={setPaymentFilter}
-                  filteredParticipants={filteredParticipants}
+                  participants={displayParticipants}
                   participantsLoading={participantsLoading}
-                  activeFiltersCount={activeFiltersCount}
-                  onClearFilters={clearFilters}
                   onOpenAddDialog={() => setAddParticipantDialogOpen(true)}
                   courseName={course.title}
                   actionHandlers={participantActionHandlers}
