@@ -9,8 +9,7 @@ import {
 import {
   Filter,
   ChevronDown,
-  Calendar,
-  Archive,
+  ChevronRight,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -34,13 +33,12 @@ import type { ParticipantActionHandlers } from '@/components/teacher/Participant
 import {
   useGroupedSignups,
   type SignupDisplay,
-  type TimeFilter,
-  type ModeFilter,
   type StatusFilter,
   type PaymentFilter,
 } from '@/hooks/use-grouped-signups';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { typedFrom } from '@/lib/supabase';
 
 // Format date for display
 function formatDate(dateString: string | null): string {
@@ -72,63 +70,27 @@ function formatRelativeDate(dateString: string): string {
   return `${date.getDate()}. ${months[date.getMonth()]}`;
 }
 
-// Time dropdown filter (secondary - demoted from segmented control)
-const TimeDropdown = ({
+// Combined signup filter — merges status + payment into one meaningful dropdown
+type CombinedFilter = 'all' | 'pending_payment' | 'payment_failed' | 'cancelled' | 'refunded';
+
+const COMBINED_FILTER_OPTIONS: Array<{ value: CombinedFilter; label: string }> = [
+  { value: 'all', label: 'Alle' },
+  { value: 'pending_payment', label: 'Venter betaling' },
+  { value: 'payment_failed', label: 'Betaling feilet' },
+  { value: 'cancelled', label: 'Avbestilt' },
+  { value: 'refunded', label: 'Refundert' },
+];
+
+const SignupFilterDropdown = ({
   value,
   onChange,
+  counts,
 }: {
-  value: TimeFilter | null;
-  onChange: (value: TimeFilter | null) => void;
+  value: CombinedFilter;
+  onChange: (value: CombinedFilter) => void;
+  counts: Record<CombinedFilter, number>;
 }) => {
-  const options: Array<{ value: TimeFilter | null; label: string }> = [
-    { value: null, label: 'Alle' },
-    { value: 'today', label: 'I dag' },
-    { value: 'this_week', label: 'Denne uken' },
-  ];
-
-  const currentLabel = options.find(o => o.value === value)?.label || 'Alle';
-  const isActive = value !== null;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className={cn(
-          'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-          isActive
-            ? 'bg-white text-text-primary border-border'
-            : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-        )}>
-          <Calendar className="h-3.5 w-3.5" />
-          Tid: {currentLabel}
-          <ChevronDown className="ml-1 h-3.5 w-3.5" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {options.map(option => (
-          <DropdownMenuItem key={option.value ?? 'all'} onClick={() => onChange(option.value)}>
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
-// Status dropdown filter
-const StatusDropdown = ({
-  value,
-  onChange,
-}: {
-  value: StatusFilter;
-  onChange: (value: StatusFilter) => void;
-}) => {
-  const options: Array<{ value: StatusFilter; label: string }> = [
-    { value: 'all', label: 'Alle' },
-    { value: 'confirmed', label: 'Påmeldt' },
-    { value: 'cancelled', label: 'Avbestilt' },
-  ];
-
-  const currentLabel = options.find(o => o.value === value)?.label || 'Alle';
+  const currentLabel = COMBINED_FILTER_OPTIONS.find(o => o.value === value)?.label || 'Alle';
 
   return (
     <DropdownMenu>
@@ -140,16 +102,23 @@ const StatusDropdown = ({
             : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
         )}>
           <Filter className="h-3.5 w-3.5" />
-          Status: {currentLabel}
+          Filter: {currentLabel}
           <ChevronDown className="ml-1 h-3.5 w-3.5" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
-        {options.map(option => (
-          <DropdownMenuItem key={option.value} onClick={() => onChange(option.value)}>
-            {option.label}
-          </DropdownMenuItem>
-        ))}
+        {COMBINED_FILTER_OPTIONS.map(option => {
+          const isEmpty = option.value !== 'all' && counts[option.value] === 0;
+          return (
+            <DropdownMenuItem
+              key={option.value}
+              disabled={isEmpty}
+              onSelect={() => onChange(option.value)}
+            >
+              {option.label}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -158,15 +127,15 @@ const StatusDropdown = ({
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
+  const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filters state
-  const [modeFilter, setModeFilter] = useState<ModeFilter>('active');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter | null>(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all');
+  const [showPast, setShowPast] = useState(false);
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -183,7 +152,28 @@ export const SignupsPage = () => {
       return;
     }
 
-    setSignups(data || []);
+    const signupsData = data || [];
+    setSignups(signupsData);
+
+    // Fetch next upcoming session date per course (for DateBadge)
+    const courseIds = [...new Set(signupsData.map(s => s.course_id).filter(Boolean))];
+    if (courseIds.length > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: sessionsData } = await typedFrom('course_sessions')
+        .select('course_id, session_date')
+        .in('course_id', courseIds)
+        .gte('session_date', today)
+        .order('session_date', { ascending: true });
+
+      const nextDates: Record<string, string> = {};
+      (sessionsData as { course_id: string; session_date: string }[] | null)?.forEach(s => {
+        if (!nextDates[s.course_id]) {
+          nextDates[s.course_id] = s.session_date;
+        }
+      });
+      setNextSessionDates(nextDates);
+    }
+
     setLoading(false);
   }, [currentOrganization?.id]);
 
@@ -198,24 +188,22 @@ export const SignupsPage = () => {
 
     return signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
-      // For drop-in signups, use class_date (actual session date).
-      // For course-series without class_date, use end_date so the signup
-      // appears as "upcoming" while the course is still running. Fall back
-      // to start_date only if end_date isn't set.
+      // Date priority for DateBadge:
+      // 1. class_date (drop-in signups with a specific session)
+      // 2. Next upcoming session (fetched from course_sessions)
+      // 3. start_date as fallback
+      const courseId = signup.course?.id || signup.course_id;
       const displayDate = signup.class_date
-        || signup.course?.end_date
+        || nextSessionDates[courseId]
         || signup.course?.start_date
         || null;
       const displayTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
 
-      // A course has ended if its status is completed/cancelled,
-      // or if end_date has passed (for course-series that haven't been marked completed yet)
-      const courseStatus = signup.course?.status;
+      // A course has ended if its dates are in the past (same logic as courses page)
       const courseEndDate = signup.course?.end_date;
-      const courseEnded =
-        courseStatus === 'completed' ||
-        courseStatus === 'cancelled' ||
-        (courseEndDate != null && courseEndDate < todayStr);
+      const courseStartDate = signup.course?.start_date;
+      const cutoffDate = courseEndDate || courseStartDate;
+      const courseEnded = cutoffDate != null && cutoffDate < todayStr;
 
       return {
         id: signup.id,
@@ -238,30 +226,89 @@ export const SignupsPage = () => {
         courseCapacity: signup.course?.max_participants ?? null,
       };
     });
-  }, [signups]);
+  }, [signups, nextSessionDates]);
 
-  // Use grouped signups hook
-  const { groups, stats, hasActiveFilters } = useGroupedSignups(displaySignups, {
-    modeFilter,
-    timeFilter,
-    statusFilter,
-    paymentFilter: 'all' as PaymentFilter,
+  // Count signups per filter option (active signups only)
+  const filterCounts = useMemo((): Record<CombinedFilter, number> => {
+    const active = displaySignups.filter(s => !s.courseEnded && s.status !== 'cancelled' && s.status !== 'course_cancelled');
+
+    const counts: Record<CombinedFilter, number> = {
+      all: active.length,
+      pending_payment: 0,
+      payment_failed: 0,
+      cancelled: 0,
+      refunded: 0,
+    };
+    for (const s of active) {
+      if (s.paymentStatus === 'pending' && s.status === 'confirmed') counts.pending_payment++;
+      if (s.paymentStatus === 'failed') counts.payment_failed++;
+      if (s.status === 'cancelled' || s.status === 'course_cancelled') counts.cancelled++;
+      if (s.paymentStatus === 'refunded') counts.refunded++;
+    }
+    return counts;
+  }, [displaySignups]);
+
+  // Map combined filter to hook params
+  const hookFilters = useMemo(() => {
+    let statusFilter: StatusFilter = 'all';
+    let paymentFilter: PaymentFilter = 'all';
+
+    switch (combinedFilter) {
+      case 'cancelled':
+        statusFilter = 'cancelled';
+        break;
+      case 'refunded':
+        paymentFilter = 'refunded';
+        break;
+    }
+
+    return { statusFilter, paymentFilter };
+  }, [combinedFilter]);
+
+  // Pre-filter for combined filter options that the hook can't handle directly
+  const filteredDisplaySignups = useMemo(() => {
+    if (combinedFilter === 'pending_payment') {
+      return displaySignups.filter(s => s.paymentStatus === 'pending' && s.status === 'confirmed');
+    }
+    if (combinedFilter === 'payment_failed') {
+      return displaySignups.filter(s => s.paymentStatus === 'failed');
+    }
+    return displaySignups;
+  }, [displaySignups, combinedFilter]);
+
+  // Active signups (main view)
+  const { groups, stats, hasActiveFilters } = useGroupedSignups(filteredDisplaySignups, {
+    modeFilter: 'active',
+    timeFilter: null,
+    statusFilter: hookFilters.statusFilter,
+    paymentFilter: hookFilters.paymentFilter,
     searchQuery,
   });
 
-  // Reset secondary filters when switching modes
-  const handleModeChange = (newMode: ModeFilter) => {
-    setModeFilter(newMode);
-    setTimeFilter(null);
-    setStatusFilter('all');
-  };
+  // Past signups — only date-based (courseEnded), no cancelled-signup mixing
+  const pastDisplaySignups = useMemo(
+    () => displaySignups.filter(s => s.courseEnded),
+    [displaySignups]
+  );
+  const { groups: pastGroups } = useGroupedSignups(pastDisplaySignups, {
+    modeFilter: 'ended',
+    timeFilter: null,
+    statusFilter: 'all',
+    paymentFilter: 'all',
+    searchQuery,
+  });
 
-  const showTimeFilter = modeFilter === 'active';
-  const showStatusFilter = modeFilter === 'ended';
+  // Auto-expand past section when search finds results there
+  useEffect(() => {
+    if (searchQuery.trim() && pastGroups.length > 0) {
+      setShowPast(true);
+    } else if (!searchQuery.trim()) {
+      setShowPast(false);
+    }
+  }, [searchQuery, pastGroups.length]);
 
   const clearFilters = () => {
-    setTimeFilter(null);
-    setStatusFilter('all');
+    setCombinedFilter('all');
     setSearchQuery('');
   };
 
@@ -327,61 +374,65 @@ export const SignupsPage = () => {
               className="flex-1 max-w-xs"
             />
             <div className="flex items-center gap-2 flex-wrap">
-              {showTimeFilter && (
-                <TimeDropdown value={timeFilter} onChange={setTimeFilter} />
-              )}
-              {showStatusFilter && (
-                <StatusDropdown value={statusFilter} onChange={setStatusFilter} />
-              )}
-
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 ml-2"
-                >
-                  Nullstill
-                </button>
-              )}
-            </div>
-            <div className="md:ml-auto">
-              <button
-                onClick={() => handleModeChange(modeFilter === 'ended' ? 'active' : 'ended')}
-                className={cn(
-                  'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-                  modeFilter === 'ended'
-                    ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
-                    : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-                )}
-              >
-                <Archive className="h-3.5 w-3.5" />
-                Arkiv
-              </button>
+              <SignupFilterDropdown value={combinedFilter} onChange={setCombinedFilter} counts={filterCounts} />
             </div>
           </div>
         </motion.header>
 
         {/* Content Area */}
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
-          <div>
-            {error ? (
-              <ErrorState
-                title="Kunne ikke laste påmeldinger"
-                message={error}
-                onRetry={loadSignups}
-              />
-            ) : (
+          {error ? (
+            <ErrorState
+              title="Kunne ikke laste påmeldinger"
+              message={error}
+              onRetry={loadSignups}
+            />
+          ) : (
+            <div>
               <SmartSignupsView
                 groups={groups}
                 stats={stats}
                 isLoading={loading}
                 isEmpty={displaySignups.length === 0}
-                hasFilters={hasActiveFilters}
-                mode={modeFilter}
+                hasFilters={hasActiveFilters || combinedFilter !== 'all'}
+                mode="active"
                 onClearFilters={clearFilters}
                 actionHandlers={actionHandlers}
               />
-            )}
-          </div>
+
+              {/* Past / ended section */}
+              {!loading && pastGroups.length > 0 && (
+                <div className="mt-8">
+                  <button
+                    onClick={() => setShowPast(prev => !prev)}
+                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 w-full text-left cursor-pointer"
+                  >
+                    <ChevronRight className={cn(
+                      'h-3.5 w-3.5 text-text-tertiary smooth-transition',
+                      showPast && 'rotate-90'
+                    )} />
+                    <span className="text-sm font-medium text-text-tertiary">
+                      {pastGroups.length} avsluttede kurs
+                    </span>
+                  </button>
+
+                  {showPast && (
+                    <div className="mt-6 opacity-60">
+                      <SmartSignupsView
+                        groups={pastGroups}
+                        stats={stats}
+                        isLoading={false}
+                        isEmpty={false}
+                        hasFilters={false}
+                        mode="ended"
+                        actionHandlers={actionHandlers}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
 

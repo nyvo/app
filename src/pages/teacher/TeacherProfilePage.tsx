@@ -1,33 +1,39 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Shield,
   Mail,
   MapPin,
-  Leaf,
-  Menu,
-  CreditCard,
-  CheckCircle2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
 import { createStripeConnectLink, createStripeDashboardLink, checkStripeStatus } from '@/services/stripe-connect';
-import { typedFrom } from '@/lib/supabase';
+import { supabase, typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import type { NotificationSettings, OrganizationSettings } from '@/types/database';
 
 const TeacherProfilePage = () => {
-  const { profile, currentOrganization, refreshOrganizations } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'system'>('profile');
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-
+  const { profile, currentOrganization, refreshOrganizations, updatePassword } = useAuth();
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -155,7 +161,6 @@ const TeacherProfilePage = () => {
   };
 
   const handleCancel = () => {
-    setIsEditingProfile(false);
     if (profile) {
       const nameParts = profile.name?.split(' ') || [];
       setFirstName(nameParts[0] || '');
@@ -219,7 +224,6 @@ const TeacherProfilePage = () => {
 
     toast.success('Endringer lagret');
     setIsSaving(false);
-    setIsEditingProfile(false);
   };
 
   // Stripe handlers
@@ -267,15 +271,124 @@ const TeacherProfilePage = () => {
     }
   }, [currentOrganization?.id, isStripeConnected, refreshOrganizations]);
 
-  // State for notification toggles
-  const [notifications, setNotifications] = useState({
+  // Password change state
+  const [passwordExpanded, setPasswordExpanded] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  // Logout all devices
+  const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
+
+  // Delete account
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Notification preferences
+  const defaultNotifications: NotificationSettings = {
     newSignups: true,
     cancellations: true,
+    messages: true,
     marketing: false,
-  });
+  };
+  const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
 
-  const handleToggle = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+  // Load notification prefs from org settings
+  useEffect(() => {
+    if (currentOrganization?.settings) {
+      const settings = currentOrganization.settings as unknown as OrganizationSettings;
+      if (settings.notifications) {
+        setNotifications({ ...defaultNotifications, ...settings.notifications });
+      }
+    }
+  }, [currentOrganization?.id]);
+
+  // Password change handler
+  const handleChangePassword = async () => {
+    const errs: Record<string, string> = {};
+    if (!currentPassword) errs.currentPassword = 'Skriv inn nåværende passord';
+    if (!newPassword) errs.newPassword = 'Skriv inn nytt passord';
+    else if (newPassword.length < 8) errs.newPassword = 'Må være minst 8 tegn';
+    if (!confirmPassword) errs.confirmPassword = 'Bekreft nytt passord';
+    else if (newPassword !== confirmPassword) errs.confirmPassword = 'Passordene er ikke like';
+
+    if (Object.keys(errs).length > 0) {
+      setPasswordErrors(errs);
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordErrors({});
+
+    // Verify current password
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: profile?.email || '',
+      password: currentPassword,
+    });
+    if (verifyError) {
+      setPasswordErrors({ currentPassword: 'Feil passord' });
+      setIsChangingPassword(false);
+      return;
+    }
+
+    // Update password
+    const { error: updateError } = await updatePassword(newPassword);
+    if (updateError) {
+      toast.error('Kunne ikke oppdatere passordet. Prøv igjen.');
+      setIsChangingPassword(false);
+      return;
+    }
+
+    toast.success('Passord oppdatert');
+    setPasswordExpanded(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setIsChangingPassword(false);
+  };
+
+  // Logout all devices handler
+  const handleLogoutAllDevices = async () => {
+    setIsLoggingOutAll(true);
+    await supabase.auth.signOut({ scope: 'global' });
+  };
+
+  // Delete account handler (deferred — signs out + instructs to contact support)
+  const handleDeleteAccount = async () => {
+    await supabase.auth.signOut();
+    toast('Kontoen din vil bli slettet. Kontakt oss på hei@ease.no om du ombestemmer deg.');
+  };
+
+  // Notification toggle with auto-save
+  const handleNotificationToggle = async (key: keyof NotificationSettings) => {
+    if (!currentOrganization) return;
+
+    const previous = { ...notifications };
+    const updated = { ...notifications, [key]: !notifications[key] };
+    setNotifications(updated);
+
+    const currentSettings = (currentOrganization.settings as unknown as OrganizationSettings) || {};
+    const newSettings: OrganizationSettings = {
+      ...currentSettings,
+      notifications: updated,
+    };
+
+    const { error } = await updateOrganization(currentOrganization.id, {
+      settings: newSettings as any,
+    });
+
+    if (error) {
+      setNotifications(previous);
+      toast.error('Kunne ikke lagre innstilling');
+      return;
+    }
+
+    await refreshOrganizations();
   };
 
   return (
@@ -283,229 +396,132 @@ const TeacherProfilePage = () => {
       <TeacherSidebar />
 
       <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
-        {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border sticky top-0 bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-          <div className="flex items-center gap-3">
-             <Leaf className="h-5 w-5 text-primary" />
-             <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-          </div>
-          <SidebarTrigger>
-            <Menu className="h-6 w-6 text-text-secondary" />
-          </SidebarTrigger>
-        </div>
+        <MobileTeacherHeader title="Innstillinger" />
 
         <motion.div
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="mx-auto max-w-3xl px-6 lg:px-8 py-6 lg:py-8 pb-24 w-full"
+          className="max-w-6xl mx-auto w-full p-6 lg:p-10 pb-24"
         >
 
             {/* Header Section */}
-            <header className="mb-8 flex items-start justify-between gap-4">
-                <div>
-                    <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
-                        Innstillinger
-                    </h1>
-                    <p className="text-sm text-text-secondary">Administrer din profil, varslinger og konto.</p>
-                </div>
-                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-surface-elevated flex items-center justify-center text-text-secondary text-lg md:text-xl font-medium ring-2 ring-zinc-200 shrink-0">
-                  {firstName && lastName ? `${firstName[0]}${lastName[0]}`.toUpperCase() : profile?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'}
-                </div>
+            <header className="mb-8">
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+                    Innstillinger
+                </h1>
+                <p className="text-sm text-text-secondary">Din profil, varslinger og kontoinnstillinger.</p>
             </header>
 
-            {/* Tabs */}
-            <div className="flex space-x-1 bg-zinc-100/50 p-1 rounded-xl w-fit mb-8 border border-zinc-200/50">
-              {(['profile', 'system'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
-                    activeTab === tab ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-700"
-                  )}
-                >
-                  {activeTab === tab && (
-                    <motion.div
-                      layoutId="active-tab"
-                      className="absolute inset-0 bg-white rounded-lg shadow-sm border border-zinc-200/50"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <span className="relative z-10">{tab === 'profile' ? 'Profil' : 'System'}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Tab Content: Profile */}
-            {activeTab === 'profile' && (
-                <div className="space-y-8 animate-in fade-in duration-200">
-                  {/* Personal Info Form */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm font-medium text-text-primary">Personlig informasjon</h2>
-                      <Button variant="ghost" size="compact" onClick={() => {
-                          if (isEditingProfile) {
-                              handleCancel();
-                          } else {
-                              setIsEditingProfile(true);
-                          }
-                      }}>
-                          {isEditingProfile ? 'Avbryt' : 'Rediger'}
-                      </Button>
-                    </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+                  {/* Personlig informasjon */}
+                  <div className="lg:col-span-7">
+                    <h2 className="text-sm font-medium text-text-primary mb-3">Personlig informasjon</h2>
                     <div className="rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
-                      {isEditingProfile ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {/* First Name */}
-                          <div>
-                              <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                Fornavn <span className="text-destructive">*</span>
-                              </label>
-                              <Input
-                                  type="text"
-                                  value={firstName}
-                                  onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
-                                  onBlur={() => handleBlur('firstName')}
-                                  aria-invalid={!!errors.firstName}
-                              />
-                              {errors.firstName && touched.firstName && (
-                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.firstName}</p>
-                              )}
-                          </div>
-
-                          {/* Last Name */}
-                          <div>
-                              <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                Etternavn <span className="text-destructive">*</span>
-                              </label>
-                              <Input
-                                  type="text"
-                                  value={lastName}
-                                  onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
-                                  onBlur={() => handleBlur('lastName')}
-                                  aria-invalid={!!errors.lastName}
-                              />
-                              {errors.lastName && touched.lastName && (
-                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.lastName}</p>
-                              )}
-                          </div>
-
-                          {/* Email */}
-                          <div className="md:col-span-2">
-                              <label className="block text-xs font-medium text-text-primary mb-1.5">
-                                E-postadresse <span className="text-destructive">*</span>
-                              </label>
-                              <div className="relative group">
-                                  <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
-                                  <Input
-                                      type="email"
-                                      value={email}
-                                      onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                                      onBlur={() => handleBlur('email')}
-                                      aria-invalid={!!errors.email}
-                                      className="pl-10"
-                                  />
-                              </div>
-                              {errors.email && touched.email ? (
-                                <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
-                              ) : (
-                                <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
-                              )}
-                          </div>
-
-                          {/* City */}
-                          <div className="md:col-span-2">
-                              <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
-                              <div className="relative group">
-                                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
-                                  <Input
-                                      type="text"
-                                      value={city}
-                                      onChange={(e) => setCity(e.target.value)}
-                                      placeholder="F.eks. Oslo"
-                                      className="pl-10"
-                                  />
-                              </div>
-                              <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
-                          </div>
-
-                          {/* Studio Description */}
-                          <div className="md:col-span-2">
-                              <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
-                              <Textarea
-                                  rows={6}
-                                  value={studioDescription}
-                                  onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
-                                  onBlur={() => handleBlur('studioDescription')}
-                                  placeholder="Fortell litt om studioet ditt"
-                                  aria-invalid={!!errors.studioDescription}
-                              />
-                              <div className="flex justify-between text-xs mt-1.5">
-                                  {errors.studioDescription && touched.studioDescription ? (
-                                    <span className="text-destructive font-medium">{errors.studioDescription}</span>
-                                  ) : (
-                                    <span className="text-text-secondary">Vises på din offentlige studioside.</span>
-                                  )}
-                                  <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-secondary'}>{studioDescription.length}/500</span>
-                              </div>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</label>
+                            <Input
+                                type="text"
+                                value={firstName}
+                                onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
+                                onBlur={() => handleBlur('firstName')}
+                                aria-invalid={!!errors.firstName}
+                            />
+                            {errors.firstName && touched.firstName && (
+                              <p className="text-xs text-destructive font-medium mt-1.5">{errors.firstName}</p>
+                            )}
                         </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
-                            <div>
-                                <span className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</span>
-                                <span className="text-sm text-text-primary">{firstName || '—'}</span>
+
+                        <div>
+                            <label className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</label>
+                            <Input
+                                type="text"
+                                value={lastName}
+                                onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
+                                onBlur={() => handleBlur('lastName')}
+                                aria-invalid={!!errors.lastName}
+                            />
+                            {errors.lastName && touched.lastName && (
+                              <p className="text-xs text-destructive font-medium mt-1.5">{errors.lastName}</p>
+                            )}
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-medium text-text-primary mb-1.5">E-post</label>
+                            <div className="relative group">
+                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
+                                <Input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                                    onBlur={() => handleBlur('email')}
+                                    aria-invalid={!!errors.email}
+                                    className="pl-10"
+                                />
                             </div>
-                            <div>
-                                <span className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</span>
-                                <span className="text-sm text-text-primary">{lastName || '—'}</span>
+                            {errors.email && touched.email ? (
+                              <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
+                            ) : (
+                              <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                            )}
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
+                            <div className="relative group">
+                                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+                                <Input
+                                    type="text"
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    placeholder="F.eks. Oslo"
+                                    className="pl-10"
+                                />
                             </div>
-                            <div className="md:col-span-2">
-                                <span className="block text-xs font-medium text-text-primary mb-1.5">E-postadresse</span>
-                                <span className="text-sm text-text-primary">{email || '—'}</span>
-                            </div>
-                            <div className="md:col-span-2">
-                                <span className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</span>
-                                <span className="text-sm text-text-primary">{city || '—'}</span>
-                            </div>
-                            <div className="md:col-span-2">
-                                <span className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</span>
-                                <p className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">{studioDescription || '—'}</p>
+                            <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
+                            <Textarea
+                                rows={4}
+                                value={studioDescription}
+                                onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
+                                onBlur={() => handleBlur('studioDescription')}
+                                placeholder="Fortell litt om studioet ditt"
+                                aria-invalid={!!errors.studioDescription}
+                            />
+                            <div className="flex justify-between text-xs mt-1.5">
+                                {errors.studioDescription && touched.studioDescription ? (
+                                  <span className="text-destructive font-medium">{errors.studioDescription}</span>
+                                ) : (
+                                  <span className="text-text-secondary">Vises på din offentlige studioside.</span>
+                                )}
+                                <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-secondary'}>{studioDescription.length}/500</span>
                             </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
-                </div>
-            )}
 
-            {/* Tab Content: System */}
-            {activeTab === 'system' && (
-                <div className="space-y-8 animate-in fade-in duration-200">
-                  {/* System Action Rows */}
+                  {/* Right column */}
+                  <div className="lg:col-span-5 space-y-8">
+
+                  {/* Konto & Sikkerhet */}
                   <div>
                       <h2 className="text-sm font-medium text-text-primary mb-3">Konto & Sikkerhet</h2>
                       <div className="rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
                           {/* Betalinger */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-zinc-50 transition-colors gap-4 sm:gap-0">
-                              <div className="flex items-center gap-3">
-                                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isStripeConnected ? 'bg-status-confirmed-bg' : 'bg-surface-elevated'}`}>
-                                      {isStripeConnected ? (
-                                          <CheckCircle2 className="h-4 w-4 text-success stroke-[1.5]" />
-                                      ) : (
-                                          <CreditCard className="h-4 w-4 text-text-tertiary stroke-[1.5]" />
-                                      )}
-                                  </div>
-                                  <div>
-                                      <span className="text-sm font-medium text-text-primary block">Betalinger</span>
-                                      <span className="text-xs text-text-secondary block">
-                                          {isStripeConnected ? 'Tilkoblet Stripe' : 'Knytt kontoen din til Stripe for å motta betaling.'}
-                                      </span>
-                                  </div>
+                          <div className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
+                              <div>
+                                  <span className="text-sm font-medium text-text-primary block">Betalinger</span>
+                                  <span className="text-xs text-text-secondary block">
+                                      {isStripeConnected ? 'Tilkoblet Stripe' : 'Sett opp Stripe for å motta betaling.'}
+                                  </span>
                               </div>
-                              <div className="flex items-center gap-2 sm:ml-4">
+                              <div className="flex items-center gap-2 ml-4 shrink-0">
                                   {!isStripeConnected && hasStripeAccount && (
                                       <Button
                                           variant="ghost"
@@ -530,70 +546,275 @@ const TeacherProfilePage = () => {
                               </div>
                           </div>
 
-                          {/* Sikkerhet */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-zinc-50 transition-colors gap-4 sm:gap-0">
-                              <div className="flex items-center gap-3">
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-elevated">
-                                      <Shield className="h-4 w-4 text-text-tertiary stroke-[1.5]" />
-                                  </div>
+                          {/* Endre passord */}
+                          <div className="p-4">
+                              <div className="flex items-center justify-between">
                                   <div>
-                                      <span className="text-sm font-medium text-text-primary block">Passord & sikkerhet</span>
-                                      <span className="text-xs text-text-secondary block">Passordendring og tofaktorinnlogging.</span>
+                                      <span className="text-sm font-medium text-text-primary block">Endre passord</span>
+                                      <span className="text-xs text-text-secondary block">Oppdater passordet ditt.</span>
                                   </div>
+                                  <Button
+                                      variant="ghost"
+                                      size="compact"
+                                      onClick={() => {
+                                          setPasswordExpanded(!passwordExpanded);
+                                          setPasswordErrors({});
+                                          setCurrentPassword('');
+                                          setNewPassword('');
+                                          setConfirmPassword('');
+                                          setShowCurrentPassword(false);
+                                          setShowNewPassword(false);
+                                      }}
+                                      className="text-text-secondary hover:text-text-primary ml-4 shrink-0"
+                                  >
+                                      {passwordExpanded ? 'Avbryt' : 'Endre →'}
+                                  </Button>
                               </div>
-                              <Button variant="ghost" size="compact" disabled className="text-text-secondary hover:text-text-primary sm:ml-4">
-                                  Kommer snart →
-                              </Button>
+
+                              {/* Expanded password form */}
+                              {passwordExpanded && (
+                                  <div className="mt-4 pt-4 border-t border-zinc-100 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                      <div>
+                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Nåværende passord</label>
+                                          <div className="relative">
+                                              <Input
+                                                  type={showCurrentPassword ? 'text' : 'password'}
+                                                  value={currentPassword}
+                                                  onChange={(e) => { setCurrentPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.currentPassword; return n; }); }}
+                                                  aria-invalid={!!passwordErrors.currentPassword}
+                                                  autoComplete="current-password"
+                                              />
+                                              <button
+                                                  type="button"
+                                                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                                                  tabIndex={-1}
+                                              >
+                                                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                              </button>
+                                          </div>
+                                          {passwordErrors.currentPassword && (
+                                              <p className="text-xs text-destructive font-medium mt-1.5">{passwordErrors.currentPassword}</p>
+                                          )}
+                                      </div>
+
+                                      <div>
+                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Nytt passord</label>
+                                          <div className="relative">
+                                              <Input
+                                                  type={showNewPassword ? 'text' : 'password'}
+                                                  value={newPassword}
+                                                  onChange={(e) => { setNewPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.newPassword; return n; }); }}
+                                                  aria-invalid={!!passwordErrors.newPassword}
+                                                  autoComplete="new-password"
+                                              />
+                                              <button
+                                                  type="button"
+                                                  onClick={() => setShowNewPassword(!showNewPassword)}
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                                                  tabIndex={-1}
+                                              >
+                                                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                              </button>
+                                          </div>
+                                          {passwordErrors.newPassword ? (
+                                              <p className="text-xs text-destructive font-medium mt-1.5">{passwordErrors.newPassword}</p>
+                                          ) : (
+                                              <p className="text-xs text-text-secondary mt-1.5">Minimum 8 tegn.</p>
+                                          )}
+                                      </div>
+
+                                      <div>
+                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Bekreft nytt passord</label>
+                                          <Input
+                                              type={showNewPassword ? 'text' : 'password'}
+                                              value={confirmPassword}
+                                              onChange={(e) => { setConfirmPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.confirmPassword; return n; }); }}
+                                              aria-invalid={!!passwordErrors.confirmPassword}
+                                              autoComplete="new-password"
+                                          />
+                                          {passwordErrors.confirmPassword && (
+                                              <p className="text-xs text-destructive font-medium mt-1.5">{passwordErrors.confirmPassword}</p>
+                                          )}
+                                      </div>
+
+                                      <div className="flex justify-end gap-3 pt-2">
+                                          <Button
+                                              variant="ghost"
+                                              size="compact"
+                                              onClick={() => {
+                                                  setPasswordExpanded(false);
+                                                  setPasswordErrors({});
+                                                  setCurrentPassword('');
+                                                  setNewPassword('');
+                                                  setConfirmPassword('');
+                                              }}
+                                          >
+                                              Avbryt
+                                          </Button>
+                                          <Button
+                                              size="compact"
+                                              onClick={handleChangePassword}
+                                              disabled={isChangingPassword}
+                                          >
+                                              {isChangingPassword ? 'Oppdaterer' : 'Oppdater passord'}
+                                          </Button>
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
+
+                          {/* Logg ut alle enheter */}
+                          <div className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
+                              <div>
+                                  <span className="text-sm font-medium text-text-primary block">Logg ut alle enheter</span>
+                                  <span className="text-xs text-text-secondary block">Logger deg ut overalt.</span>
+                              </div>
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button
+                                          variant="ghost"
+                                          size="compact"
+                                          className="text-text-secondary hover:text-text-primary ml-4 shrink-0"
+                                      >
+                                          Logg ut alle →
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>Logg ut alle enheter?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                          <AlertDialogAction
+                                              onClick={handleLogoutAllDevices}
+                                              disabled={isLoggingOutAll}
+                                          >
+                                              {isLoggingOutAll ? 'Logger ut …' : 'Logg ut alle'}
+                                          </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
                           </div>
                       </div>
                   </div>
 
                   {/* Varslinger */}
                   <div>
-                      <h2 className="text-sm font-medium text-text-primary mb-3">Varslinger</h2>
-                      <div className="rounded-xl bg-white border border-zinc-200 p-4">
-                          <p className="text-xs text-text-secondary italic mb-4">Varslingsinnstillinger lagres ikke ennå. Denne funksjonen kommer snart.</p>
-                          <div className="divide-y divide-zinc-100">
-                              <div className="flex items-center justify-between py-3 first:pt-0">
-                                  <div className="flex flex-col">
-                                      <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
-                                      <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
-                                  </div>
-                                  <Switch
-                                      checked={notifications.newSignups}
-                                      onCheckedChange={() => handleToggle('newSignups')}
-                                      aria-label="Nye påmeldinger"
-                                  />
+                      <h2 className="text-sm font-medium text-text-primary mb-3">E-postvarslinger</h2>
+                      <div className="rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                          <div className="flex items-center justify-between p-4">
+                              <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
+                                  <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
                               </div>
+                              <Switch
+                                  size="sm"
+                                  checked={notifications.newSignups}
+                                  onCheckedChange={() => handleNotificationToggle('newSignups')}
+                                  aria-label="Nye påmeldinger"
+                              />
+                          </div>
 
-                              <div className="flex items-center justify-between py-3">
-                                  <div className="flex flex-col">
-                                      <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
-                                      <span className="text-xs text-text-secondary">Send e-post umiddelbart ved avbestilling (under 24t).</span>
-                                  </div>
-                                  <Switch
-                                      checked={notifications.cancellations}
-                                      onCheckedChange={() => handleToggle('cancellations')}
-                                      aria-label="Avbestillinger"
-                                  />
+                          <div className="flex items-center justify-between p-4">
+                              <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
+                                  <span className="text-xs text-text-secondary">Få e-post når noen avbestiller.</span>
                               </div>
+                              <Switch
+                                  size="sm"
+                                  checked={notifications.cancellations}
+                                  onCheckedChange={() => handleNotificationToggle('cancellations')}
+                                  aria-label="Avbestillinger"
+                              />
+                          </div>
 
-                              <div className="flex items-center justify-between py-3 last:pb-0">
-                                  <div className="flex flex-col">
-                                      <span className="text-sm font-medium text-text-primary">Markedsføring</span>
-                                      <span className="text-xs text-text-secondary">Nyheter, tips og oppdateringer fra Ease på e-post.</span>
-                                  </div>
-                                  <Switch
-                                      checked={notifications.marketing}
-                                      onCheckedChange={() => handleToggle('marketing')}
-                                      aria-label="Markedsføring"
-                                  />
+                          <div className="flex items-center justify-between p-4">
+                              <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-text-primary">Nye meldinger</span>
+                                  <span className="text-xs text-text-secondary">Få e-post når du mottar en ny melding.</span>
                               </div>
+                              <Switch
+                                  size="sm"
+                                  checked={notifications.messages}
+                                  onCheckedChange={() => handleNotificationToggle('messages')}
+                                  aria-label="Nye meldinger"
+                              />
+                          </div>
+
+                          <div className="flex items-center justify-between p-4">
+                              <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-text-primary">Nyheter fra Ease</span>
+                                  <span className="text-xs text-text-secondary">Tips, oppdateringer og nyheter på e-post.</span>
+                              </div>
+                              <Switch
+                                  size="sm"
+                                  checked={notifications.marketing}
+                                  onCheckedChange={() => handleNotificationToggle('marketing')}
+                                  aria-label="Nyheter fra Ease"
+                              />
                           </div>
                       </div>
                   </div>
-                </div>
-            )}
+
+                  {/* Slett konto */}
+                  <div>
+                      <h2 className="text-sm font-medium text-text-primary mb-3">Slett konto</h2>
+                      <div className="rounded-xl bg-white border border-zinc-200 p-4">
+                          <div className="flex items-center justify-between">
+                              <div>
+                                  <span className="text-sm font-medium text-text-primary block">Slett kontoen din</span>
+                                  <span className="text-xs text-text-secondary block">All data slettes permanent.</span>
+                              </div>
+                              <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
+                                  <AlertDialogTrigger asChild>
+                                      <Button
+                                          variant="ghost"
+                                          size="compact"
+                                          className="text-destructive hover:text-destructive ml-4 shrink-0"
+                                      >
+                                          Slett konto →
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>Slette kontoen din?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <div className="py-2">
+                                          <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                              Skriv SLETT for å bekrefte
+                                          </label>
+                                          <Input
+                                              value={deleteConfirmText}
+                                              onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                              placeholder="SLETT"
+                                              autoComplete="off"
+                                          />
+                                      </div>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                                          <AlertDialogAction
+                                              onClick={handleDeleteAccount}
+                                              disabled={deleteConfirmText !== 'SLETT'}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          >
+                                              Slett
+                                          </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                          </div>
+                      </div>
+                  </div>
+
+                  </div>{/* end right column */}
+            </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (

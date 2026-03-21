@@ -70,7 +70,15 @@
       "Bash(npx playwright install chromium)",
       "Bash(npx playwright test --list)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "WebFetch(domain:linear.app)",
+      "WebFetch(domain:www.notion.com)",
+      "WebFetch(domain:clerk.com)",
+      "WebFetch(domain:docs.stripe.com)",
+      "WebFetch(domain:support.stripe.com)",
+      "WebFetch(domain:hjelp.fiken.no)",
+      "WebFetch(domain:stripe.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

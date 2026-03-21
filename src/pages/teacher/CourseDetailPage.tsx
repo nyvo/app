@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -36,6 +36,7 @@ import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 import { AddParticipantDialog } from '@/components/teacher/AddParticipantDialog';
+import { MessageParticipantsDialog } from '@/components/teacher/MessageParticipantsDialog';
 import type { AudienceLevel, EquipmentInfo, PracticalInfo } from '@/types/practicalInfo';
 import type { Json } from '@/types/database';
 import { ARRIVAL_MINUTES_MAX, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
@@ -137,6 +138,9 @@ const CourseDetailPage = () => {
 
   // Add participant dialog state
   const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
+
+  // Message participants dialog state
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
 
   // Initialize settings form state when course data loads
   useEffect(() => {
@@ -391,6 +395,18 @@ const CourseDetailPage = () => {
     },
   }), [refetchParticipants]);
 
+  // Confirmed participants for messaging (name + email)
+  const confirmedParticipants = useMemo(() =>
+    participants
+      .filter(p => p.status === 'confirmed')
+      .map(p => ({
+        name: p.participant_name || p.profile?.name || 'Ukjent',
+        email: p.participant_email || p.profile?.email || '',
+      }))
+      .filter(p => p.email),
+    [participants]
+  );
+
   // Map participants from database to display format
   const displayParticipants = useMemo(() => participants.map(signup => ({
     id: signup.id,
@@ -418,8 +434,43 @@ const CourseDetailPage = () => {
     return (
       <SidebarProvider>
         <TeacherSidebar />
-        <main className="flex-1 flex items-center justify-center h-screen bg-surface">
-          <Spinner size="xl" />
+        <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+          <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
+            <div className="max-w-6xl mx-auto w-full">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div>
+                  <Breadcrumb className="mb-1">
+                    <BreadcrumbList>
+                      <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                          <Link to="/teacher/courses">Kurs</Link>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <Skeleton className="h-4 w-24" />
+                      </BreadcrumbItem>
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                  <Skeleton className="h-7 w-56" />
+                </div>
+              </div>
+              <FilterTabs value="overview" onValueChange={() => {}}>
+                <FilterTab value="overview">Oversikt</FilterTab>
+                <FilterTab value="participants">Deltakere</FilterTab>
+                <FilterTab value="settings">Innstillinger</FilterTab>
+              </FilterTabs>
+            </div>
+          </header>
+          <div className="flex-1 p-6 lg:p-10">
+            <div className="max-w-6xl mx-auto w-full animate-pulse space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Skeleton className="h-48 rounded-xl md:col-span-2" />
+                <Skeleton className="h-48 rounded-xl" />
+              </div>
+              <Skeleton className="h-64 rounded-xl" />
+            </div>
+          </div>
         </main>
       </SidebarProvider>
     );
@@ -684,6 +735,7 @@ const CourseDetailPage = () => {
                   quickImageInputRef={quickImageInputRef}
                   onQuickImageUpload={handleQuickImageUpload}
                   onCancelCourse={() => setShowCancelPreview(true)}
+                  onMessageParticipants={() => setMessageDialogOpen(true)}
                   onNavigateToSettings={() => setActiveTab('settings')}
                   kursplanRef={kursplanRef}
                 />
@@ -789,6 +841,15 @@ const CourseDetailPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Message Participants Dialog */}
+      <MessageParticipantsDialog
+        open={messageDialogOpen}
+        onOpenChange={setMessageDialogOpen}
+        courseName={course.title}
+        participants={confirmedParticipants}
+        organizationName={currentOrganization?.name}
+      />
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>

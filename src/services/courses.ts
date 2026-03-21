@@ -766,6 +766,7 @@ export interface SessionScheduleRow {
   maxParticipants: number | null
   courseStatus: string
   courseStartDate: string | null
+  courseEndDate?: string | null
   totalWeeks?: number | null
 }
 

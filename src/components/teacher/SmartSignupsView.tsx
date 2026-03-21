@@ -147,6 +147,7 @@ function groupByTemporalSection(groups: SignupGroupType[], mode: ModeFilter): Te
 
 const INITIAL_VISIBLE = 5;
 const LOAD_MORE_INCREMENT = 5;
+const SHOW_ALL_THRESHOLD = 2;
 
 export function SmartSignupsView({
   groups,
@@ -166,11 +167,11 @@ export function SmartSignupsView({
         {[1, 2, 3].map(i => (
           <div key={i} className="py-3.5 border-b border-zinc-100 animate-pulse">
             <div className="flex items-center gap-3 mb-2">
-              <div className="h-4 w-48 bg-zinc-100 rounded" />
+              <div className="h-4 w-48 bg-surface-elevated rounded" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-3 w-32 bg-zinc-100 rounded" />
-              <div className="h-3 w-20 bg-zinc-100 rounded" />
+              <div className="h-3 w-32 bg-surface-elevated rounded" />
+              <div className="h-3 w-20 bg-surface-elevated rounded" />
             </div>
           </div>
         ))}
@@ -212,8 +213,9 @@ export function SmartSignupsView({
     setVisibleCount(INITIAL_VISIBLE);
   }, [groups]);
 
-  const visibleGroups = groups.slice(0, visibleCount);
-  const remainingCount = groups.length - visibleCount;
+  const effectiveVisible = (groups.length - visibleCount) <= SHOW_ALL_THRESHOLD ? groups.length : visibleCount;
+  const visibleGroups = groups.slice(0, effectiveVisible);
+  const remainingCount = groups.length - effectiveVisible;
   const isTruncated = remainingCount > 0;
 
   // Temporal section grouping
@@ -246,15 +248,25 @@ export function SmartSignupsView({
         ))}
       </div>
 
-      {/* Load more */}
-      {isTruncated && (
-        <div className="flex justify-center pt-6 pb-2">
-          <button
-            onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-            className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
-          >
-            Last inn flere
-          </button>
+      {/* Load more / show less */}
+      {(isTruncated || visibleCount > INITIAL_VISIBLE) && (
+        <div className="flex justify-center gap-3 pt-6 pb-2">
+          {isTruncated && (
+            <button
+              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
+            >
+              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
+            </button>
+          )}
+          {visibleCount > INITIAL_VISIBLE && (
+            <button
+              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
+            >
+              Vis færre
+            </button>
+          )}
         </div>
       )}
     </div>

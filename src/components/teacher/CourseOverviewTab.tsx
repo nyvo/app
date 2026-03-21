@@ -123,6 +123,7 @@ interface CourseOverviewTabProps {
   // Callbacks
   onQuickImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onCancelCourse: () => void;
+  onMessageParticipants: () => void;
   onNavigateToSettings: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
@@ -141,6 +142,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   quickImageInputRef,
   onQuickImageUpload,
   onCancelCourse,
+  onMessageParticipants,
   onNavigateToSettings,
   kursplanRef,
 }) => {
@@ -154,32 +156,30 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             Påmelding
           </h2>
           <div className="rounded-xl bg-white p-6 border border-zinc-200">
-            <div className="flex justify-end items-start mb-4">
+            <div className="flex items-end justify-between mb-3">
+              <div className="flex items-end gap-3">
+                <span className="text-2xl font-medium tracking-tight text-text-primary">
+                  {course.enrolled ?? 0}
+                </span>
+                <span className="text-sm text-text-secondary mb-0.5">
+                  av {course.capacity} påmeldte
+                </span>
+              </div>
               {/* Enrollment status badge */}
               {course.capacity > 0 && (
-                <div className="flex items-center">
-                  {course.enrolled >= course.capacity ? (
-                    <StatusIndicator
-                      variant="success"
-                      mode="badge"
-                      size="sm"
-                      label="Fullt"
-                    />
-                  ) : (
-                    <span className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-xxs font-medium text-text-secondary">
-                      {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-                    </span>
-                  )}
-                </div>
+                course.enrolled >= course.capacity ? (
+                  <StatusIndicator
+                    variant="success"
+                    mode="badge"
+                    size="sm"
+                    label="Fullt"
+                  />
+                ) : (
+                  <span className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-xxs font-medium text-text-secondary mb-0.5">
+                    {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
+                  </span>
+                )
               )}
-            </div>
-            <div className="flex items-end gap-3 mb-2">
-              <span className="text-2xl font-medium tracking-tight text-text-primary">
-                {course.enrolled ?? 0}
-              </span>
-              <span className="text-sm text-text-secondary mb-0.5">
-                av {course.capacity} påmeldte
-              </span>
             </div>
             {/* Progress Bar */}
             <div className="w-full bg-surface-elevated rounded-full h-2 overflow-hidden">
@@ -198,27 +198,25 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <h2 className="text-sm font-medium text-text-primary mb-3">
             Tid og sted
           </h2>
-          <div className="rounded-xl bg-white p-6 border border-zinc-200 flex flex-col justify-center space-y-3">
+          <div className="rounded-xl bg-white p-6 border border-zinc-200 flex flex-col justify-center space-y-4">
             <div className="flex items-center gap-2.5">
               <Calendar className="h-4 w-4 text-text-tertiary shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-text-primary leading-none">
-                  {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
-                </p>
-                {course.date && formatDateRange(course.startDate, course.endDate) && (
-                  <p className="text-sm text-text-secondary mt-0.5">{course.date}</p>
-                )}
-              </div>
-            </div>
-            <div className="h-px bg-zinc-100 w-full" />
-            <div className="flex items-center gap-2.5">
-              <MapPin className="h-4 w-4 text-text-tertiary shrink-0" />
-              <p className="text-sm font-medium text-text-primary leading-none">{course.location}</p>
+              <p className="text-sm text-text-primary leading-none">
+                {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
+              </p>
             </div>
             <div className="h-px bg-zinc-100 w-full" />
             <div className="flex items-center gap-2.5">
               <Clock className="h-4 w-4 text-text-tertiary shrink-0" />
-              <p className="text-sm font-medium text-text-primary leading-none">{course.duration}</p>
+              <p className="text-sm text-text-primary leading-none">
+                {course.date || `${course.durationMinutes} min`}
+                {course.date && ` (${course.durationMinutes} min)`}
+              </p>
+            </div>
+            <div className="h-px bg-zinc-100 w-full" />
+            <div className="flex items-center gap-2.5">
+              <MapPin className="h-4 w-4 text-text-tertiary shrink-0" />
+              <p className="text-sm text-text-primary leading-none">{course.location}</p>
             </div>
           </div>
         </div>
@@ -338,18 +336,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   size="compact"
                   className="w-full justify-center"
                   disabled={course.enrolled === 0}
+                  onClick={onMessageParticipants}
                 >
                   <Mail className="h-4 w-4" />
                   Melding til deltakere
-                </Button>
-                <Button
-                  variant="outline"
-                  size="compact"
-                  className="w-full justify-center"
-                  onClick={() => kursplanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                >
-                  <Calendar className="h-4 w-4" />
-                  Endre tidspunkt
                 </Button>
                 <Button
                   variant="outline"

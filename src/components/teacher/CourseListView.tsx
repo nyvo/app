@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Users, MapPin } from 'lucide-react';
 import { StatusIndicator } from '@/components/ui/status-indicator';
@@ -63,17 +63,22 @@ function getEnrollmentLabel(session: SessionScheduleRow): string {
   return `${signupsCount}/${maxParticipants} påmeldte`;
 }
 
+const INITIAL_VISIBLE = 5;
+const LOAD_MORE_INCREMENT = 5;
+const SHOW_ALL_THRESHOLD = 2; // if only this many remain after expanding, just show all
+
 interface CourseListViewProps {
   courses: SessionScheduleRow[];
+  flat?: boolean;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  active: 'Aktive',
-  upcoming: 'Kommende',
-  draft: 'Utkast',
+const TYPE_LABELS: Record<string, string> = {
+  'course-series': 'Kursrekker',
+  'event': 'Arrangementer',
+  'online': 'Nettkurs',
 };
 
-const STATUS_ORDER = ['active', 'upcoming', 'draft'];
+const TYPE_ORDER = ['course-series', 'event', 'online'];
 
 function CourseRow({ course }: { course: SessionScheduleRow }) {
   const navigate = useNavigate();
@@ -98,7 +103,15 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
             <h3 className="text-sm font-medium text-text-primary truncate">
               {course.courseTitle}
             </h3>
-            {urgency.isUrgent && urgency.reason && (
+            {course.courseStatus === 'cancelled' ? (
+              <StatusIndicator
+                variant="neutral"
+                mode="badge"
+                size="xs"
+                label="Avlyst"
+                className="flex-shrink-0"
+              />
+            ) : urgency.isUrgent && urgency.reason ? (
               <StatusIndicator
                 variant="warning"
                 mode="badge"
@@ -106,7 +119,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
                 label={urgency.reason}
                 className="flex-shrink-0"
               />
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
@@ -116,7 +129,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
               </span>
             )}
             {weekLabel && (
-              <span className="text-xs text-text-tertiary">
+              <span className="text-xs text-text-secondary">
                 {weekLabel}
               </span>
             )}
@@ -145,37 +158,73 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
   );
 }
 
-export function CourseListView({ courses }: CourseListViewProps) {
+function CourseGroup({ label, courses, showHeader }: { label: string; courses: SessionScheduleRow[]; showHeader: boolean }) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [courses]);
+
+  const sorted = useMemo(
+    () => [...courses].sort((a, b) => a.sessionDate.localeCompare(b.sessionDate)),
+    [courses]
+  );
+  // If showing more would leave only a few stragglers, just show all
+  const effectiveVisible = (sorted.length - visibleCount) <= SHOW_ALL_THRESHOLD ? sorted.length : visibleCount;
+  const visible = sorted.slice(0, effectiveVisible);
+  const remainingCount = sorted.length - effectiveVisible;
+
+  return (
+    <section>
+      {showHeader && (
+        <h2 className="text-sm font-medium text-text-primary pb-3 border-t border-zinc-200 pt-4">
+          {label}
+        </h2>
+      )}
+      {visible.map(c => <CourseRow key={c.sessionId} course={c} />)}
+      {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
+        <div className="flex justify-center gap-3 pt-4 pb-2">
+          {remainingCount > 0 && (
+            <button
+              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
+            >
+              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
+            </button>
+          )}
+          {visibleCount > INITIAL_VISIBLE && (
+            <button
+              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
+              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
+            >
+              Vis færre
+            </button>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function CourseListView({ courses, flat = false }: CourseListViewProps) {
   const groups = useMemo(() => {
     const grouped: Record<string, SessionScheduleRow[]> = {};
     for (const course of courses) {
-      const status = course.courseStatus || 'draft';
-      if (!grouped[status]) grouped[status] = [];
-      grouped[status].push(course);
+      const type = course.courseType || 'event';
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type].push(course);
     }
-    return STATUS_ORDER
-      .filter(s => grouped[s]?.length)
-      .map(s => ({ label: STATUS_LABELS[s] || s, courses: grouped[s] }));
+    return TYPE_ORDER
+      .filter(t => grouped[t]?.length)
+      .map(t => ({ label: TYPE_LABELS[t] || t, courses: grouped[t] }));
   }, [courses]);
 
-  // If all courses share the same status, skip the section header
-  if (groups.length <= 1) {
-    return (
-      <div>
-        {courses.map(c => <CourseRow key={c.sessionId} course={c} />)}
-      </div>
-    );
-  }
+  const showHeaders = !flat && groups.length > 1;
 
   return (
-    <div className="space-y-10">
+    <div className={showHeaders ? 'space-y-10' : undefined}>
       {groups.map(group => (
-        <section key={group.label}>
-          <h2 className="text-sm font-medium text-text-primary pb-3 border-t border-zinc-200 pt-4">
-            {group.label}
-          </h2>
-          {group.courses.map(c => <CourseRow key={c.sessionId} course={c} />)}
-        </section>
+        <CourseGroup key={group.label} label={group.label} courses={group.courses} showHeader={showHeaders} />
       ))}
     </div>
   );
@@ -186,7 +235,10 @@ export function CourseListSkeleton() {
     <div className="animate-pulse">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="px-2 py-3 flex items-center gap-3 border-b border-zinc-100 last:border-b-0">
-          <div className="w-11 h-11 rounded-lg bg-surface-elevated shrink-0" />
+          <div className="w-11 h-11 rounded-lg border border-border bg-surface-elevated shrink-0 flex flex-col items-center justify-center gap-0.5">
+            <div className="h-2 w-5 bg-zinc-200 rounded-sm" />
+            <div className="h-3 w-4 bg-zinc-200 rounded-sm" />
+          </div>
           <div className="flex-1 space-y-1.5">
             <div className="h-4 w-40 bg-surface-elevated rounded" />
             <div className="h-3 w-52 bg-surface-elevated rounded" />

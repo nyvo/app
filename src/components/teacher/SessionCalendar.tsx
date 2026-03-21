@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { nb } from 'date-fns/locale';
-import { Pencil } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -93,8 +92,6 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     nextSession?.originalDate ? parseLocalDate(nextSession.originalDate) : undefined
   );
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-
   // Look up selected session (use local date key to avoid UTC shift)
   const selectedSession = useMemo(() => {
     if (!selectedDate) return null;
@@ -104,10 +101,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
-    setEditingSessionId(null);
   };
-
-  const isEditing = editingSessionId !== null;
 
   return (
     <div>
@@ -121,7 +115,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
       <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
       {/* Calendar + Detail side-by-side on desktop, stacked on mobile */}
       <div className="p-6">
-        <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
           {/* Left: Calendar + Legend */}
           <div className="shrink-0">
             <Calendar
@@ -163,32 +157,9 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
           {/* Right: Session Detail Panel — top-aligned, content-hugging */}
           <div className="flex-1 min-w-0 mt-6 lg:mt-0">
-            {selectedSession && !isEditing && (
-              <div className="rounded-xl border border-zinc-200 p-4 flex items-center gap-4 flex-wrap">
-                {/* Date + time */}
-                <div className="flex items-baseline gap-2 flex-1 min-w-0">
-                  <h4 className={`text-sm font-medium whitespace-nowrap ${selectedSession.status === 'completed' ? 'text-text-secondary line-through' : 'text-text-primary'}`}>
-                    {selectedSession.date}
-                  </h4>
-                  <span className="text-sm text-text-secondary whitespace-nowrap">{selectedSession.time}</span>
-                </div>
-
-                {/* Edit icon button — outline box */}
-                {hasRealSessions && (
-                  <button
-                    type="button"
-                    onClick={() => setEditingSessionId(selectedSession.id)}
-                    className="shrink-0 h-9 w-9 rounded-lg border border-zinc-200 inline-flex items-center justify-center text-text-tertiary hover:bg-zinc-50 hover:text-text-primary smooth-transition cursor-pointer"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {selectedSession && isEditing && (
+            {selectedSession && (
               <div className="rounded-xl border border-zinc-200 p-6 space-y-4">
-                {/* Edit header */}
+                {/* Header */}
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0 ${
@@ -241,10 +212,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     variant="ghost"
                     size="compact"
                     className="flex-1"
-                    onClick={() => {
-                      onSessionEditCancel(selectedSession.id);
-                      setEditingSessionId(null);
-                    }}
+                    onClick={() => onSessionEditCancel(selectedSession.id)}
                     disabled={savingSessionId === selectedSession.id}
                   >
                     Avbryt
@@ -252,10 +220,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                   <Button
                     size="compact"
                     className="flex-1"
-                    onClick={() => {
-                      onSaveSession(selectedSession.id);
-                      setEditingSessionId(null);
-                    }}
+                    onClick={() => onSaveSession(selectedSession.id)}
                     disabled={savingSessionId === selectedSession.id || !hasRealSessions || !sessionEdits[selectedSession.id]}
                   >
                     {savingSessionId === selectedSession.id ? (
@@ -271,9 +236,9 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
               </div>
             )}
 
-            {/* Empty state — centered placeholder, doesn't stretch */}
+            {/* Empty state — stretches to match calendar height */}
             {!selectedSession && (
-              <div className="rounded-xl border border-dashed border-zinc-200 p-6 min-h-[120px] flex items-center justify-center">
+              <div className="rounded-xl border border-dashed border-zinc-200 p-6 h-full flex items-center justify-center">
                 <p className="text-xs text-text-secondary">
                   {selectedDate ? 'Ingen økt på denne datoen' : 'Velg en dato for å se detaljer'}
                 </p>

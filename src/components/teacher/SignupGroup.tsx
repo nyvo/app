@@ -41,11 +41,11 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
             </h3>
             {group.hasExceptions && (
               <StatusIndicator
-                variant="critical"
+                variant="warning"
                 mode="badge"
                 size="sm"
+                label=""
                 count={group.counts.exceptions}
-                label="krever oppmerksomhet"
                 icon={AlertTriangle}
                 ariaLabel={`${group.counts.exceptions} påmeldinger krever oppmerksomhet`}
                 className="flex-shrink-0"

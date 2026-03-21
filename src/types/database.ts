@@ -596,3 +596,15 @@ export type CourseSessionUpdate = Database['public']['Tables']['course_sessions'
 export type CourseSignupPackage = Database['public']['Tables']['course_signup_packages']['Row']
 export type CourseSignupPackageInsert = Database['public']['Tables']['course_signup_packages']['Insert']
 export type CourseSignupPackageUpdate = Database['public']['Tables']['course_signup_packages']['Update']
+
+// Notification preferences stored in organizations.settings JSONB
+export interface NotificationSettings {
+  newSignups: boolean
+  cancellations: boolean
+  messages: boolean
+  marketing: boolean
+}
+
+export interface OrganizationSettings {
+  notifications?: NotificationSettings
+}

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
-  Archive,
+  ChevronRight,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -29,7 +29,7 @@ import { typedFrom } from '@/lib/supabase';
 /**
  * Maps a Course to a SessionScheduleRow shape for display in the table.
  */
-function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRow {
+function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: string): SessionScheduleRow {
   // Extract start time from time_schedule (e.g. "Mandager 18:00-19:15" → "18:00")
   const timeMatch = course.time_schedule?.match(/(\d{2}:\d{2})/);
   const startTime = timeMatch ? timeMatch[1] : '';
@@ -52,7 +52,7 @@ function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRo
     courseId: course.id,
     courseTitle: course.title,
     courseType: course.course_type as 'course-series' | 'event' | 'online',
-    sessionDate: course.start_date || (course.created_at || '').slice(0, 10),
+    sessionDate: nextSessionDate || course.start_date || (course.created_at || '').slice(0, 10),
     startTime,
     endTime,
     location: course.location || '',
@@ -61,6 +61,7 @@ function mapCourseToRow(course: Course, signupsCount: number): SessionScheduleRo
     maxParticipants: course.max_participants,
     courseStatus: course.status,
     courseStartDate: course.start_date,
+    courseEndDate: course.end_date,
     totalWeeks: course.total_weeks,
   };
 }
@@ -71,9 +72,10 @@ const CoursesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
+  const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewFilter, setViewFilter] = useState<'active' | 'archive'>('active');
+  const [showPast, setShowPast] = useState(false);
 
   // Fetch courses from Supabase
   const loadData = useCallback(async () => {
@@ -114,6 +116,22 @@ const CoursesPage = () => {
           counts[s.course_id] = (counts[s.course_id] || 0) + 1;
         });
         setSignupsCounts(counts);
+
+        // Fetch next upcoming session date per course (for DateBadge)
+        const today = new Date().toISOString().split('T')[0];
+        const { data: sessionsData } = await typedFrom('course_sessions')
+          .select('course_id, session_date')
+          .in('course_id', courseIds)
+          .gte('session_date', today)
+          .order('session_date', { ascending: true });
+
+        const nextDates: Record<string, string> = {};
+        (sessionsData as { course_id: string; session_date: string }[] | null)?.forEach(s => {
+          if (!nextDates[s.course_id]) {
+            nextDates[s.course_id] = s.session_date;
+          }
+        });
+        setNextSessionDates(nextDates);
       }
     } catch {
       setError('Kunne ikke laste inn kurs. Prøv på nytt.');
@@ -127,47 +145,51 @@ const CoursesPage = () => {
     loadData();
   }, [loadData]);
 
-  // Active courses (not completed)
-  const activeCourses = useMemo(
-    () => courses.filter(c => c.status !== 'completed'),
-    [courses]
-  );
+  // Classify courses by dates, not status
+  const { currentRows, pastRows } = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const current: SessionScheduleRow[] = [];
+    const past: SessionScheduleRow[] = [];
 
-  // Completed courses for archive
-  const completedCourses = useMemo(
-    () => courses.filter(c => c.status === 'completed'),
-    [courses]
-  );
+    for (const c of courses) {
+      const row = mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id]);
 
-  // Map to table rows
-  const activeRows = useMemo(
-    () => activeCourses.map(c => mapCourseToRow(c, signupsCounts[c.id] || 0)),
-    [activeCourses, signupsCounts]
-  );
+      if (c.status === 'cancelled') {
+        past.push(row);
+      } else {
+        const cutoff = c.end_date || c.start_date;
+        if (cutoff && cutoff < today) {
+          past.push(row);
+        } else {
+          current.push(row);
+        }
+      }
+    }
 
-  const archiveRows = useMemo(
-    () => completedCourses.map(c => mapCourseToRow(c, signupsCounts[c.id] || 0)),
-    [completedCourses, signupsCounts]
-  );
+    return { currentRows: current, pastRows: past };
+  }, [courses, signupsCounts, nextSessionDates]);
 
-  // Filter by search
-  const filteredActiveRows = useMemo(() => {
-    if (!searchQuery.trim()) return activeRows;
-    const query = searchQuery.toLowerCase().trim();
-    return activeRows.filter(r =>
-      r.courseTitle.toLowerCase().includes(query) ||
-      r.location.toLowerCase().includes(query)
+  // Search filtering
+  const filterBySearch = useCallback((rows: SessionScheduleRow[]) => {
+    if (!searchQuery.trim()) return rows;
+    const q = searchQuery.toLowerCase().trim();
+    return rows.filter(r =>
+      r.courseTitle.toLowerCase().includes(q) ||
+      r.location.toLowerCase().includes(q)
     );
-  }, [activeRows, searchQuery]);
+  }, [searchQuery]);
 
-  const filteredArchiveRows = useMemo(() => {
-    if (!searchQuery.trim()) return archiveRows;
-    const query = searchQuery.toLowerCase().trim();
-    return archiveRows.filter(r =>
-      r.courseTitle.toLowerCase().includes(query) ||
-      r.location.toLowerCase().includes(query)
-    );
-  }, [archiveRows, searchQuery]);
+  const filteredCurrentRows = useMemo(() => filterBySearch(currentRows), [currentRows, filterBySearch]);
+  const filteredPastRows = useMemo(() => filterBySearch(pastRows), [pastRows, filterBySearch]);
+
+  // Auto-expand past section when search finds results there
+  useEffect(() => {
+    if (searchQuery.trim() && filteredPastRows.length > 0) {
+      setShowPast(true);
+    } else if (!searchQuery.trim()) {
+      setShowPast(false);
+    }
+  }, [searchQuery, filteredPastRows.length]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -197,99 +219,93 @@ const CoursesPage = () => {
               <Button asChild size="compact" className="gap-2">
                 <Link to="/teacher/new-course">
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  <span>Opprett nytt</span>
+                  <span>Opprett kurs</span>
                 </Link>
               </Button>
             )}
           </div>
 
-          {/* Filters row */}
+          {/* Search */}
           {!showCoursesEmptyState && (
-            <div className="flex flex-col md:flex-row gap-3 md:items-center pb-4">
+            <div className="pb-4">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Søk etter kurs"
                 aria-label="Søk etter kurs"
-                className="flex-1 max-w-xs"
+                className="max-w-xs"
               />
-              <div className="md:ml-auto">
-                <button
-                  onClick={() => setViewFilter(viewFilter === 'archive' ? 'active' : 'archive')}
-                  className={cn(
-                    'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-                    viewFilter === 'archive'
-                      ? 'bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800'
-                      : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-                  )}
-                >
-                  <Archive className="h-3.5 w-3.5" />
-                  Arkiv
-                </button>
-              </div>
             </div>
           )}
         </motion.header>
 
         {/* Content */}
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
-            {isLoading ? (
-              <div
-                className="pb-8"
-                role="status"
-                aria-live="polite"
-                aria-label="Laster kurs"
-              >
-                <span className="sr-only">Henter kurs</span>
-                <CourseListSkeleton />
-              </div>
-            ) : error ? (
-              <ErrorState
-                title="Kunne ikke laste kurs"
-                message={error}
-                onRetry={loadData}
-                variant="card"
-              />
-            ) : showCoursesEmptyState ? (
-              <CoursesEmptyState />
-            ) : viewFilter === 'active' ? (
-              <div className="h-full overflow-y-auto custom-scrollbar pb-8">
-                {searchQuery && filteredActiveRows.length === 0 ? (
+          {isLoading ? (
+            <div role="status" aria-live="polite" aria-label="Laster kurs">
+              <span className="sr-only">Henter kurs</span>
+              <CourseListSkeleton />
+            </div>
+          ) : error ? (
+            <ErrorState
+              title="Kunne ikke laste kurs"
+              message={error}
+              onRetry={loadData}
+              variant="card"
+            />
+          ) : showCoursesEmptyState ? (
+            <CoursesEmptyState />
+          ) : (
+            <div>
+              {/* Current courses */}
+              {filteredCurrentRows.length === 0 && searchQuery ? (
+                filteredPastRows.length === 0 && (
                   <EmptyState
                     icon={Calendar}
                     title="Ingen kurs funnet"
                     description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
                   />
-                ) : filteredActiveRows.length === 0 ? (
-                  <EmptyState
-                    icon={Calendar}
-                    title="Ingen aktive kurs"
-                    description="Opprett et kurs for å komme i gang."
-                    action={
-                      <Button asChild size="sm">
-                        <Link to="/teacher/new-course">Opprett kurs</Link>
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <CourseListView courses={filteredActiveRows} />
-                )}
-              </div>
-            ) : (
-              <div className="h-full overflow-y-auto custom-scrollbar pb-8">
-                {filteredArchiveRows.length === 0 ? (
-                  <EmptyState
-                    icon={Calendar}
-                    title={searchQuery ? 'Ingen fullførte kurs funnet' : 'Ingen fullførte kurs'}
-                    description={searchQuery
-                      ? 'Prøv et annet søkeord eller fjern søket.'
-                      : 'Fullførte kurs vil vises her.'}
-                  />
-                ) : (
-                  <CourseListView courses={filteredArchiveRows} />
-                )}
-              </div>
-            )}
+                )
+              ) : filteredCurrentRows.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title="Ingen aktive kurs"
+                  description="Opprett et kurs for å komme i gang."
+                  action={
+                    <Button asChild size="sm">
+                      <Link to="/teacher/new-course">Opprett kurs</Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <CourseListView courses={filteredCurrentRows} />
+              )}
+
+              {/* Past / cancelled section */}
+              {pastRows.length > 0 && (
+                <div className="mt-8">
+                  <button
+                    onClick={() => setShowPast(prev => !prev)}
+                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 w-full text-left cursor-pointer"
+                  >
+                    <ChevronRight className={cn(
+                      'h-3.5 w-3.5 text-text-tertiary smooth-transition',
+                      showPast && 'rotate-90'
+                    )} />
+                    <span className="text-sm font-medium text-text-tertiary">
+                      {pastRows.length} avsluttede kurs
+                    </span>
+                  </button>
+
+                  {showPast && (
+                    <div className="mt-6 opacity-60">
+                      <CourseListView courses={filteredPastRows} flat />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <EmptyStateToggle />
       </main>

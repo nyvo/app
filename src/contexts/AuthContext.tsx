@@ -34,6 +34,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
 
   // Organization methods
   ensureOrganization: (name: string, slug: string) => Promise<{ organization: Organization | null; error: Error | null }>
@@ -282,6 +283,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
+  // Update password for authenticated user
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    return { error: error as Error | null }
+  }, [])
+
   // Sign out
   const signOut = useCallback(async () => {
     // Clear state first
@@ -407,6 +414,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     ensureOrganization,
     switchOrganization,
     refreshOrganizations
@@ -424,6 +432,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     ensureOrganization,
     switchOrganization,
     refreshOrganizations

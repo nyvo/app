@@ -11,8 +11,6 @@ import {
   CheckCheck,
   Plus,
   X,
-  Archive,
-  ArchiveRestore,
   Trash2,
 } from 'lucide-react';
 import { SectionLoader } from '@/components/ui/section-loader';
@@ -26,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { SearchInput } from '@/components/ui/search-input';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   fetchConversations,
@@ -33,7 +32,6 @@ import {
   markConversationRead,
   findOrCreateConversation,
   deleteConversation,
-  archiveConversation,
   type ConversationWithDetails,
 } from '@/services/messages';
 import { sendNewMessageNotification } from '@/services/emails';
@@ -42,10 +40,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { FilterTabs, FilterTab } from "@/components/ui/filter-tabs"
 import { UserAvatar } from '@/components/ui/user-avatar'
 
 import { formatMessageTimestamp } from '@/utils/dateFormatting'
@@ -64,7 +60,6 @@ const MessagesPage = () => {
 
   // UI state
   const [activeConversation, setActiveConversation] = useState<ConversationWithDetails | null>(null);
-  const [filterTab, setFilterTab] = useState<'all' | 'unread' | 'archive'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');
 
@@ -127,18 +122,8 @@ const MessagesPage = () => {
       );
     }
 
-    // Filter by tab
-    if (filterTab === 'unread') {
-      result = result.filter(c => c.unread_count > 0 && !c.archived);
-    } else if (filterTab === 'archive') {
-      result = result.filter(c => c.archived);
-    } else {
-      // "all" tab: show non-archived conversations
-      result = result.filter(c => !c.archived);
-    }
-
     return result;
-  }, [conversations, searchQuery, filterTab]);
+  }, [conversations, searchQuery]);
 
   // Auto-select first conversation
   useEffect(() => {
@@ -289,24 +274,6 @@ const MessagesPage = () => {
     toast.success('Samtale slettet');
   };
 
-  // Archive/unarchive conversation
-  const handleArchiveConversation = async () => {
-    if (!activeConversation) return;
-
-    const newArchivedState = !activeConversation.archived;
-    const { error } = await archiveConversation(activeConversation.id, newArchivedState);
-    if (error) {
-      toast.error(newArchivedState ? 'Kunne ikke arkivere samtale' : 'Kunne ikke gjenopprette samtale');
-      return;
-    }
-
-    // Update local state
-    setConversations(prev => prev.map(c =>
-      c.id === activeConversation.id ? { ...c, archived: newArchivedState } : c
-    ));
-    setActiveConversation(prev => prev ? { ...prev, archived: newArchivedState } : null);
-    toast.success(newArchivedState ? 'Samtale arkivert' : 'Samtale gjenopprettet');
-  };
 
   return (
     <SidebarProvider>
@@ -324,7 +291,10 @@ const MessagesPage = () => {
           className="flex h-full w-full overflow-hidden"
         >
           {/* Conversation List (Left Panel) */}
-          <div className="hidden md:flex w-80 lg:w-96 flex-col border-r border-zinc-200 bg-surface">
+          <div className={cn(
+            'w-full md:w-80 lg:w-96 flex-col border-r border-zinc-200 bg-surface',
+            activeConversation || isComposing ? 'hidden md:flex' : 'flex'
+          )}>
             {/* List Header */}
             <div className="p-6 pb-2">
               <div className="flex items-center justify-between mb-4">
@@ -348,22 +318,16 @@ const MessagesPage = () => {
                 className="mb-4"
               />
 
-              {/* Filter Tabs */}
-              <FilterTabs value={filterTab} onValueChange={(v) => setFilterTab(v as 'all' | 'unread' | 'archive')} className="mb-2">
-                <FilterTab value="all">Alle</FilterTab>
-                <FilterTab value="unread">Uleste</FilterTab>
-                <FilterTab value="archive">Arkiv</FilterTab>
-              </FilterTabs>
             </div>
 
             {/* Conversations Scroll Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-3 space-y-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-3 space-y-2">
               {loading ? (
                 <SectionLoader size="md" />
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
                   <p className="text-sm font-medium text-text-primary">Ingen meldinger</p>
-                  <p className="text-xs text-text-secondary mt-1">Ingen treff med dette filteret.</p>
+                  <p className="text-xs text-text-secondary mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
                 </div>
               ) : (
                 filteredConversations.map((conversation) => {
@@ -430,7 +394,10 @@ const MessagesPage = () => {
           </div>
 
           {/* Chat View (Main Area) */}
-          <div className="flex-1 flex flex-col h-full bg-surface relative">
+          <div className={cn(
+            'flex-1 flex-col h-full bg-surface relative',
+            activeConversation || isComposing ? 'flex' : 'hidden md:flex'
+          )}>
 
             {/* Composing New Message View */}
             {isComposing ? (
@@ -462,7 +429,7 @@ const MessagesPage = () => {
                           type="text"
                           value={newRecipient}
                           onChange={(e) => setNewRecipient(e.target.value)}
-                          placeholder="Søk på navn eller e-post"
+                          placeholder="f.eks. navn@eksempel.no"
                           autoFocus
                           className="pl-10"
                         />
@@ -569,20 +536,6 @@ const MessagesPage = () => {
                 </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={handleArchiveConversation}>
-                          {activeConversation?.archived ? (
-                            <>
-                              <ArchiveRestore />
-                              Gjenopprett samtale
-                            </>
-                          ) : (
-                            <>
-                              <Archive />
-                              Arkiver samtale
-                            </>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive focus:bg-destructive/5 [&_svg]:text-destructive"
                           onClick={handleDeleteConversation}
@@ -598,8 +551,8 @@ const MessagesPage = () => {
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
                   {!activeConversation ? (
-                    <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-                        <p>Velg en samtale</p>
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                        <p className="text-sm text-text-secondary">Velg en samtale fra listen til venstre</p>
                     </div>
                   ) : currentMessages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-text-secondary">
@@ -646,7 +599,7 @@ const MessagesPage = () => {
                     >
                       <p
                         className={`text-sm leading-relaxed ${
-                          message.is_outgoing ? 'font-light' : 'text-text-primary'
+                          message.is_outgoing ? '' : 'text-text-primary'
                         }`}
                       >
                         {message.content}
