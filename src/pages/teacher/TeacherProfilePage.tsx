@@ -403,7 +403,7 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="max-w-6xl mx-auto w-full p-6 lg:p-10 pb-24"
+          className="max-w-5xl mx-auto w-full p-6 lg:p-10 pb-24"
         >
 
             {/* Header Section */}
@@ -414,11 +414,14 @@ const TeacherProfilePage = () => {
                 <p className="text-sm text-text-secondary">Din profil, varslinger og kontoinnstillinger.</p>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+            <div className="divide-y divide-border">
                   {/* Personlig informasjon */}
-                  <div className="lg:col-span-7">
-                    <h2 className="text-sm font-medium text-text-primary mb-3">Personlig informasjon</h2>
-                    <div className="rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
+                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pb-10">
+                    <div>
+                      <h2 className="text-sm font-medium text-text-primary">Personlig informasjon</h2>
+                      <p className="text-sm text-text-secondary mt-1">Navn, e-post og informasjon om studioet ditt.</p>
+                    </div>
+                    <div className="md:col-span-2 rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</label>
@@ -504,15 +507,15 @@ const TeacherProfilePage = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Right column */}
-                  <div className="lg:col-span-5 space-y-8">
+                  </section>
 
                   {/* Konto & Sikkerhet */}
-                  <div>
-                      <h2 className="text-sm font-medium text-text-primary mb-3">Konto & Sikkerhet</h2>
-                      <div className="rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                    <div>
+                      <h2 className="text-sm font-medium text-text-primary">Konto & Sikkerhet</h2>
+                      <p className="text-sm text-text-secondary mt-1">Betalinger, passord og sikkerhet.</p>
+                    </div>
+                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
                           {/* Betalinger */}
                           <div className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
                               <div>
@@ -700,12 +703,15 @@ const TeacherProfilePage = () => {
                               </AlertDialog>
                           </div>
                       </div>
-                  </div>
+                  </section>
 
-                  {/* Varslinger */}
-                  <div>
-                      <h2 className="text-sm font-medium text-text-primary mb-3">E-postvarslinger</h2>
-                      <div className="rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                  {/* E-postvarslinger */}
+                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                    <div>
+                      <h2 className="text-sm font-medium text-text-primary">E-postvarslinger</h2>
+                      <p className="text-sm text-text-secondary mt-1">Velg hvilke e-poster du vil motta.</p>
+                    </div>
+                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
                           <div className="flex items-center justify-between p-4">
                               <div className="flex flex-col">
                                   <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
@@ -758,12 +764,15 @@ const TeacherProfilePage = () => {
                               />
                           </div>
                       </div>
-                  </div>
+                  </section>
 
                   {/* Slett konto */}
-                  <div>
-                      <h2 className="text-sm font-medium text-text-primary mb-3">Slett konto</h2>
-                      <div className="rounded-xl bg-white border border-zinc-200 p-4">
+                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                    <div>
+                      <h2 className="text-sm font-medium text-text-primary">Slett konto</h2>
+                      <p className="text-sm text-text-secondary mt-1">Permanent sletting av kontoen din.</p>
+                    </div>
+                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 p-4">
                           <div className="flex items-center justify-between">
                               <div>
                                   <span className="text-sm font-medium text-text-primary block">Slett kontoen din</span>
@@ -811,9 +820,7 @@ const TeacherProfilePage = () => {
                               </AlertDialog>
                           </div>
                       </div>
-                  </div>
-
-                  </div>{/* end right column */}
+                  </section>
             </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
