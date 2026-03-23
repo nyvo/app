@@ -156,7 +156,7 @@ export function formatTimeRange(startTime: string, endTime: string): string {
  */
 export function formatCourseStartTime(
   startDate: string | null | undefined,
-  status: 'active' | 'upcoming' | 'completed' | 'draft' | 'cancelled',
+  status: 'active' | 'upcoming' | 'completed' | 'cancelled',
   courseType?: 'kursrekke' | 'enkeltkurs',
   currentWeek?: number,
   totalWeeks?: number
@@ -234,6 +234,6 @@ export function formatCourseStartTime(
     return `Starter ${formatDateShort(startDate)}`; // "Starter 12. mars"
   }
 
-  // Fallback for draft/cancelled or missing data
+  // Fallback for cancelled or missing data
   return '';
 }

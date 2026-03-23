@@ -73,7 +73,7 @@ export interface PublicCoursesFilters {
   includePast?: boolean // If true, returns only past courses (archive)
 }
 
-// Fetch all published courses (status != 'draft') for public viewing
+// Fetch all published courses for public viewing
 export async function fetchPublicCourses(
   filters?: PublicCoursesFilters
 ): Promise<{
@@ -103,7 +103,6 @@ export async function fetchPublicCourses(
       organization:organizations(name, slug, stripe_onboarding_complete),
       instructor:instructor_id(id, name, avatar_url)
     `, { count: filters?.limit ? 'exact' : undefined })
-    .neq('status', 'draft')
     .neq('status', 'cancelled')
     .order('start_date', { ascending: true })
 
@@ -268,7 +267,6 @@ export async function fetchPublicCourseById(
       instructor:instructor_id(id, name, avatar_url)
     `)
     .eq('id', courseId)
-    .neq('status', 'draft')
     .neq('status', 'cancelled')
     .single()
 

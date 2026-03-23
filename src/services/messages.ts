@@ -107,6 +107,84 @@ export async function fetchConversations(
   return { data: result, error: null }
 }
 
+// Fetch all conversations for a student (by user_id)
+export async function fetchStudentConversations(
+  userId: string
+): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
+  const { data: conversations, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      messages(*)
+    `)
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+
+  if (!conversations || conversations.length === 0) {
+    return { data: [], error: null }
+  }
+
+  // For student conversations, the "participant" is the organization (teacher)
+  // We need to look up the organization name instead of user profiles
+  const orgIds = [...new Set(conversations.map(c => (c as any).organization_id as string))]
+  let orgsMap: Record<string, { name: string; logo_url: string | null }> = {}
+  if (orgIds.length > 0) {
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('id, name, logo_url')
+      .in('id', orgIds)
+
+    if (orgs) {
+      const typedOrgs = orgs as unknown as Array<{ id: string; name: string; logo_url: string | null }>
+      orgsMap = typedOrgs.reduce((acc, o) => {
+        acc[o.id] = { name: o.name, logo_url: o.logo_url }
+        return acc
+      }, {} as Record<string, { name: string; logo_url: string | null }>)
+    }
+  }
+
+  const result: ConversationWithDetails[] = conversations.map((conv: any) => {
+    const messages = conv.messages || []
+    const sortedMessages = [...messages].sort(
+      (a: any, b: any) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+    )
+    const lastMessage = sortedMessages[0] || null
+    // For students, unread messages are the outgoing ones (from teacher's perspective)
+    const unreadCount = messages.filter((m: any) => !m.is_read && m.is_outgoing).length
+
+    const org = orgsMap[conv.organization_id]
+    const participant = org
+      ? { name: org.name, email: '', avatar_url: org.logo_url }
+      : { name: 'Ukjent studio', email: '', avatar_url: null }
+
+    return {
+      ...conv,
+      messages: sortedMessages,
+      participant,
+      last_message: lastMessage,
+      unread_count: unreadCount
+    }
+  })
+
+  return { data: result, error: null }
+}
+
+// Mark all outgoing messages in a conversation as read (student side)
+export async function markStudentConversationRead(
+  conversationId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await typedFrom('messages')
+    .update({ is_read: true })
+    .eq('conversation_id', conversationId)
+    .eq('is_outgoing', true) // From teacher = incoming for student
+
+  return { error: error as Error | null }
+}
+
 // Fetch messages for a specific conversation (paginated, newest last)
 export async function fetchMessages(
   conversationId: string,

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { PublicCourseTable } from '@/components/public/PublicCourseTable';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
@@ -83,15 +84,28 @@ const PublicCoursesPage = () => {
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter courses by search query
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) return courses;
+    const q = searchQuery.toLowerCase().trim();
+    return courses.filter(c =>
+      c.title.toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q) ||
+      (c.instructor?.name || '').toLowerCase().includes(q) ||
+      (c.location || '').toLowerCase().includes(q)
+    );
+  }, [courses, searchQuery]);
 
   // Split and sort courses by type
   const { kursrekker, arrangementer } = useMemo(() => {
-    const split = splitCoursesByType(courses);
+    const split = splitCoursesByType(filteredCourses);
     return {
       kursrekker: sortKursrekker(split.kursrekker),
       arrangementer: sortArrangementer(split.arrangementer),
     };
-  }, [courses]);
+  }, [filteredCourses]);
 
   useEffect(() => {
     async function loadData() {
@@ -132,7 +146,8 @@ const PublicCoursesPage = () => {
     loadData();
   }, [slug, user, profile?.email]);
 
-  const isEmpty = !loading && courses.length === 0 && organization;
+  const isEmpty = !loading && filteredCourses.length === 0 && organization;
+  const hasCoursesButNoResults = !loading && courses.length > 0 && filteredCourses.length === 0;
 
   return (
     <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
@@ -236,12 +251,28 @@ const PublicCoursesPage = () => {
               </div>
             </header>
 
-            {/* Unified Empty State */}
+            {/* Search */}
+            {courses.length > 2 && (
+              <div className="max-w-md mb-10">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Søk etter kurs, instruktør eller sted"
+                  aria-label="Søk etter kurs"
+                />
+              </div>
+            )}
+
+            {/* Empty State */}
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-zinc-200 bg-white">
-                <p className="tracking-tight text-sm font-medium text-text-primary">Ingen aktive kurs</p>
+                <p className="tracking-tight text-sm font-medium text-text-primary">
+                  {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
+                </p>
                 <p className="text-sm text-text-secondary mt-1">
-                  Det er ingen planlagte kurs for øyeblikket.
+                  {hasCoursesButNoResults
+                    ? 'Prøv et annet søkeord.'
+                    : 'Det er ingen planlagte kurs for øyeblikket.'}
                 </p>
               </div>
             )}

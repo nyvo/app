@@ -480,19 +480,9 @@ const LandingPage = () => {
               </h4>
               <ul className="space-y-4 text-sm text-text-secondary">
                 <li>
-                  <Link to="/about" className="hover:text-text-primary transition-colors">
-                    Om oss
-                  </Link>
-                </li>
-                <li>
                   <a href="mailto:hei@ease.no" className="hover:text-text-primary transition-colors">
                     Kontakt
                   </a>
-                </li>
-                <li>
-                  <Link to="/careers" className="hover:text-text-primary transition-colors">
-                    Jobb hos oss
-                  </Link>
                 </li>
               </ul>
             </div>
@@ -504,16 +494,6 @@ const LandingPage = () => {
                 <li>
                   <Link to="/terms" className="hover:text-text-primary transition-colors">
                     Vilkår
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/privacy" className="hover:text-text-primary transition-colors">
-                    Personvern
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/cookies" className="hover:text-text-primary transition-colors">
-                    Cookies
                   </Link>
                 </li>
               </ul>

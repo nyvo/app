@@ -124,7 +124,7 @@ export interface DetailedCourse {
   title: string;
   type: 'course-series' | 'event';
   courseType: CourseType;
-  status: 'active' | 'upcoming' | 'completed' | 'draft' | 'cancelled';
+  status: 'active' | 'upcoming' | 'completed' | 'cancelled';
   location: string;
   timeSchedule: string;
   duration: string;

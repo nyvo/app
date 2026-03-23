@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Leaf,
   Home,
@@ -17,6 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { getUnreadCount } from '@/services/messages';
 import {
   Sidebar,
   SidebarContent,
@@ -54,8 +55,22 @@ export const TeacherSidebar = () => {
   const navigate = useNavigate();
   const { signOut, profile, userRole, currentOrganization } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
+
+  // Fetch unread message count
+  useEffect(() => {
+    if (!currentOrganization?.id) return;
+    const load = async () => {
+      const { data } = await getUnreadCount(currentOrganization.id);
+      setUnreadMessages(data);
+    };
+    load();
+    // Poll every 30 seconds
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [currentOrganization?.id]);
 
   const handleLogout = async () => {
     await signOut();
@@ -110,12 +125,28 @@ export const TeacherSidebar = () => {
                           : 'text-text-secondary border border-transparent'
                       )}
                     >
-                      <Link to={item.href} className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-                        <item.icon className={cn(
-                          "h-4 w-4 shrink-0",
-                          active ? 'text-primary' : 'text-text-tertiary'
-                        )} />
-                        {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                      <Link to={item.href} className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} relative`}>
+                        <div className="relative">
+                          <item.icon className={cn(
+                            "h-4 w-4 shrink-0",
+                            active ? 'text-primary' : 'text-text-tertiary'
+                          )} />
+                          {isCollapsed && item.href === '/teacher/messages' && unreadMessages > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground">
+                              {unreadMessages > 9 ? '9+' : unreadMessages}
+                            </span>
+                          )}
+                        </div>
+                        {!isCollapsed && (
+                          <>
+                            <span className="text-sm font-medium">{item.label}</span>
+                            {item.href === '/teacher/messages' && unreadMessages > 0 && (
+                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground">
+                                {unreadMessages > 9 ? '9+' : unreadMessages}
+                              </span>
+                            )}
+                          </>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   );

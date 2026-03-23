@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { LogOut, User, Search } from 'lucide-react';
+import { LogOut, User, Search, MessageCircle } from 'lucide-react';
 
 interface StudentDashboardLayoutProps {
   children: React.ReactNode;
@@ -37,11 +37,18 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             
             {/* Navigation Tabs (Desktop) */}
             <nav className="hidden md:flex items-center gap-1">
-              <Link 
-                to="/student/dashboard" 
+              <Link
+                to="/student/dashboard"
                 className="px-3 py-2 text-sm font-medium text-text-primary bg-surface-elevated rounded-lg transition-colors"
               >
                 Mine kurs
+              </Link>
+              <Link
+                to="/student/messages"
+                className="px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-elevated rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Meldinger
               </Link>
             </nav>
           </div>

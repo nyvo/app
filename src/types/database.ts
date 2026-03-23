@@ -15,7 +15,7 @@ export type Json =
 
 // Enum types matching the database
 export type CourseType = 'course-series' | 'event' | 'online'
-export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'cancelled'
+export type CourseStatus = 'upcoming' | 'active' | 'completed' | 'cancelled'
 export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type OrgMemberRole = 'owner' | 'admin' | 'teacher'

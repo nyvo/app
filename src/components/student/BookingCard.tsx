@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { MapPin, Calendar, Clock, MessageCircle } from 'lucide-react';
@@ -77,9 +78,10 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
     }
   }, [signup.id, onStatusChange]);
 
+  const navigate = useNavigate();
   const handleContactTeacher = useCallback(() => {
-    toast.info("Meldinger kommer snart");
-  }, []);
+    navigate('/student/messages');
+  }, [navigate]);
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
