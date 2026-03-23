@@ -48,7 +48,7 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
                   {message.timestamp}
                 </span>
               </div>
-              <p className="text-xs text-text-secondary truncate group-hover:text-text-primary transition-colors">
+              <p className="text-sm text-text-secondary truncate group-hover:text-text-primary transition-colors">
                 {message.content}
               </p>
             </div>

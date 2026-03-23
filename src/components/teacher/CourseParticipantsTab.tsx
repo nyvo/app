@@ -153,12 +153,12 @@ export const CourseParticipantsTab = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-zinc-100 bg-surface/50">
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-auto">Navn</th>
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-32">Status</th>
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-40 hidden md:table-cell">Betaling</th>
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-20 hidden md:table-cell">Kvittering</th>
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary text-right w-20 hidden sm:table-cell">Notater</th>
-                <th className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-12"><span className="sr-only">Handlinger</span></th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-auto">Navn</th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-32">Status</th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-40 hidden md:table-cell">Betaling</th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-20 hidden md:table-cell">Kvittering</th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary text-right w-20 hidden sm:table-cell">Notater</th>
+                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-text-secondary w-12"><span className="sr-only">Handlinger</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -167,7 +167,7 @@ export const CourseParticipantsTab = ({
                   <SkeletonTableRow columns={6} hasAvatar={true} />
                   <SkeletonTableRow columns={6} hasAvatar={true} />
                   <SkeletonTableRow columns={6} hasAvatar={true} />
-                  <span className="sr-only">Laster deltakere</span>
+                  <tr className="sr-only"><td colSpan={6}>Laster deltakere</td></tr>
                 </>
               ) : filteredParticipants.length === 0 ? (
                 <tr>

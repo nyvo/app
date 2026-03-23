@@ -9,6 +9,7 @@ import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+
 import { Button } from '@/components/ui/button';
 import { cn, formatKroner } from '@/lib/utils';
 import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
@@ -424,6 +425,7 @@ const CourseDetailPage = () => {
       <SidebarProvider>
         <TeacherSidebar />
         <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+
           <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
             <div className="max-w-6xl mx-auto w-full">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -453,9 +455,9 @@ const CourseDetailPage = () => {
           </header>
           <div className="flex-1 p-6 lg:p-10">
             <div className="max-w-6xl mx-auto w-full animate-pulse space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Skeleton className="h-48 rounded-xl md:col-span-2" />
-                <Skeleton className="h-48 rounded-xl" />
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <Skeleton className="h-48 rounded-xl lg:col-span-8" />
+                <Skeleton className="h-48 rounded-xl lg:col-span-4" />
               </div>
               <Skeleton className="h-64 rounded-xl" />
             </div>
@@ -470,10 +472,13 @@ const CourseDetailPage = () => {
     return (
       <SidebarProvider>
         <TeacherSidebar />
-        <main className="flex-1 flex items-center justify-center h-screen bg-surface">
-          <div className="text-center">
+        <main className="flex-1 flex flex-col min-h-screen bg-surface">
+
+          <div className="flex-1 flex items-center justify-center text-center">
+            <div>
             <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight mb-2">Kurs ikke funnet</h1>
             <p className="text-text-secondary">{error || `Kurset med ID "${id}" finnes ikke.`}</p>
+            </div>
           </div>
         </main>
       </SidebarProvider>
@@ -597,11 +602,11 @@ const CourseDetailPage = () => {
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary truncate">
                   {course.title}
                 </h1>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 <ShareCoursePopover
                   courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
                   courseTitle={courseData?.title}

@@ -63,7 +63,7 @@ export function SessionScheduleTable({ sessions }: SessionScheduleTableProps) {
   return (
     <div className="overflow-hidden">
       {/* Desktop table */}
-      <div className="hidden md:block">
+      <div className="hidden md:block overflow-x-auto">
         {/* Header */}
         <div className="grid grid-cols-[minmax(120px,1fr)_minmax(100px,1fr)_minmax(160px,2fr)_minmax(140px,1.5fr)_minmax(80px,0.8fr)_48px] items-center border-b border-zinc-200 px-6 py-4">
           <span className="text-xs font-medium text-text-secondary">Dato</span>
@@ -81,9 +81,11 @@ export function SessionScheduleTable({ sessions }: SessionScheduleTableProps) {
           return (
             <div
               key={session.sessionId}
-              className={`group grid grid-cols-[minmax(120px,1fr)_minmax(100px,1fr)_minmax(160px,2fr)_minmax(140px,1.5fr)_minmax(80px,0.8fr)_48px] items-center border-b border-zinc-200 last:border-b-0 px-6 py-6 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${urgency.isUrgent ? 'border-l-2 border-l-amber-400' : ''}`}
+              className={`group grid grid-cols-[minmax(120px,1fr)_minmax(100px,1fr)_minmax(160px,2fr)_minmax(140px,1.5fr)_minmax(80px,0.8fr)_48px] items-center border-b border-zinc-200 last:border-b-0 px-6 py-6 smooth-transition hover:bg-zinc-50/50 cursor-pointer focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none ${urgency.isUrgent ? 'border-l-2 border-l-amber-400' : ''}`}
               onClick={() => navigate(`/teacher/courses/${session.courseId}`)}
-              role="row"
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${session.courseId}`); } }}
+              role="link"
+              tabIndex={0}
               aria-label={`${session.courseTitle}, ${formatSessionDate(session.sessionDate)}`}
             >
               {/* Date */}
@@ -138,8 +140,12 @@ export function SessionScheduleTable({ sessions }: SessionScheduleTableProps) {
           return (
             <div
               key={session.sessionId}
-              className={`group flex items-center gap-3 border-b border-zinc-200 last:border-b-0 px-4 py-6 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${urgency.isUrgent ? 'border-l-2 border-l-amber-400' : ''}`}
+              className={`group flex items-center gap-3 border-b border-zinc-200 last:border-b-0 px-4 py-6 smooth-transition hover:bg-zinc-50/50 cursor-pointer focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none ${urgency.isUrgent ? 'border-l-2 border-l-amber-400' : ''}`}
               onClick={() => navigate(`/teacher/courses/${session.courseId}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${session.courseId}`); } }}
+              role="link"
+              tabIndex={0}
+              aria-label={`${session.courseTitle}, ${formatSessionDate(session.sessionDate)}`}
             >
               <div className="flex-1 min-w-0 space-y-1">
                 <div className="flex items-center gap-2">

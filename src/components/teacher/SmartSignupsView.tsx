@@ -190,7 +190,7 @@ export function SmartSignupsView({
         <h3 className="font-geist text-sm font-medium text-text-primary">
           {emptyState.title}
         </h3>
-        <p className="mt-1 text-xs text-text-secondary max-w-sm">
+        <p className="mt-1 text-sm text-text-secondary max-w-sm">
           {emptyState.description}
         </p>
         {emptyState.showClearAction && onClearFilters && (

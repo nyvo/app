@@ -279,7 +279,7 @@ const MessagesPage = () => {
     <SidebarProvider>
       <TeacherSidebar />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-surface">
+      <main className="flex-1 flex flex-col h-dvh overflow-hidden bg-surface">
         <MobileTeacherHeader title="Meldinger" />
 
         {/* Messages Layout: Split View */}
@@ -288,7 +288,7 @@ const MessagesPage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="flex h-full w-full overflow-hidden"
+          className="flex h-full w-full overflow-hidden min-h-0"
         >
           {/* Conversation List (Left Panel) */}
           <div className={cn(
@@ -298,7 +298,7 @@ const MessagesPage = () => {
             {/* List Header */}
             <div className="p-6 pb-2">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Meldinger</h2>
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Meldinger</h1>
                 <Button
                   onClick={handleStartNewMessage}
                   size="compact"
@@ -327,7 +327,7 @@ const MessagesPage = () => {
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
                   <p className="text-sm font-medium text-text-primary">Ingen meldinger</p>
-                  <p className="text-xs text-text-secondary mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
+                  <p className="text-sm text-text-secondary mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
                 </div>
               ) : (
                 filteredConversations.map((conversation) => {
@@ -360,7 +360,7 @@ const MessagesPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
                       <span
-                        className={`text-sm font-medium ${
+                        className={`text-sm font-medium truncate ${
                           activeConversation?.id === conversation.id && !isComposing
                             ? 'text-text-primary'
                             : conversation.is_read ? 'text-text-secondary' : 'text-text-primary'
@@ -373,7 +373,7 @@ const MessagesPage = () => {
                       </span>
                     </div>
                     <p
-                      className={`text-xs truncate ${
+                      className={`text-sm truncate ${
                         conversation.unread_count > 0
                           ? 'text-text-primary font-medium'
                           : activeConversation?.id === conversation.id
@@ -385,7 +385,7 @@ const MessagesPage = () => {
                     </p>
                   </div>
                   {conversation.unread_count > 0 && (
-                    <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
+                    <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" role="img" aria-label="Ulest" />
                   )}
                 </button>
               );
@@ -406,7 +406,8 @@ const MessagesPage = () => {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
-                        className="md:hidden text-text-secondary hover:text-text-primary mr-1 cursor-pointer"
+                        className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer"
+                        aria-label="Tilbake"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
@@ -415,6 +416,7 @@ const MessagesPage = () => {
                     <button
                       onClick={handleCancelComposition}
                       className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer"
+                      aria-label="Lukk ny melding"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -422,10 +424,11 @@ const MessagesPage = () => {
 
                 <div className="p-6 space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-text-secondary ml-1">Til</label>
+                    <label htmlFor="compose-recipient" className="text-xs font-medium text-text-primary ml-1">Til</label>
                     <div className="relative group">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
                         <Input
+                          id="compose-recipient"
                           type="text"
                           value={newRecipient}
                           onChange={(e) => setNewRecipient(e.target.value)}
@@ -437,9 +440,10 @@ const MessagesPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-xs font-medium text-text-secondary ml-1">Melding</label>
+                    <label htmlFor="compose-message-body" className="text-xs font-medium text-text-primary ml-1">Melding</label>
                     <div className="rounded-xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 ios-ease">
                         <Textarea
+                          id="compose-message-body"
                           rows={8}
                           value={newMessageBody}
                           onChange={(e) => setNewMessageBody(e.target.value)}
@@ -448,12 +452,12 @@ const MessagesPage = () => {
                         />
                         <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-elevated">
                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary">
+                              <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Legg til vedlegg">
                                 <Paperclip />
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary">
+                                  <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Velg emoji">
                                     <Smile />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -463,7 +467,7 @@ const MessagesPage = () => {
                                       <button
                                         key={emoji}
                                         onClick={() => setNewMessageBody(prev => prev + emoji)}
-                                        className="text-xl p-1 hover:bg-surface-elevated rounded transition-colors"
+                                        className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
                                       >
                                         {emoji}
                                       </button>
@@ -498,7 +502,7 @@ const MessagesPage = () => {
             <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button
-                  className="md:hidden text-text-secondary hover:text-text-primary mr-1"
+                  className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake til samtaler"
                 >
@@ -517,9 +521,9 @@ const MessagesPage = () => {
                     ringClassName="ring-2 ring-white"
                   />
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-text-primary">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
-                          <p className="text-xs text-text-secondary">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium text-text-primary truncate">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
+                          <p className="text-xs text-text-secondary truncate">
                             {activeConversation.participant?.email || 'Elev'}
                           </p>
                         </div>
@@ -648,13 +652,13 @@ const MessagesPage = () => {
                           variant="ghost"
                           size="icon-sm"
                           className="text-text-tertiary hover:text-text-secondary"
-                          title="Legg til fil"
+                          aria-label="Legg til vedlegg"
                         >
                           <Paperclip />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary">
+                            <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Velg emoji">
                               <Smile />
                             </Button>
                           </DropdownMenuTrigger>
@@ -664,7 +668,7 @@ const MessagesPage = () => {
                                 <button
                                   key={emoji}
                                   onClick={() => setMessageText(prev => prev + emoji)}
-                                  className="text-xl p-1 hover:bg-surface-elevated rounded transition-colors"
+                                  className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
                                 >
                                   {emoji}
                                 </button>

@@ -61,7 +61,7 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         <div className="flex flex-col">
           <span className="text-sm text-text-secondary font-normal">Aktive elever</span>
           <div className="flex items-baseline gap-2">
-            <span className="font-geist text-3xl font-normal tracking-tight text-text-primary mt-1">
+            <span className="font-geist text-3xl font-normal text-text-primary mt-1">
               {stats.activeStudents}
             </span>
           </div>
@@ -72,17 +72,17 @@ export const StatsCards = memo(function StatsCards({ stats }: StatsCardsProps) {
         <div>
           <p className="text-sm text-text-secondary font-normal">Oppmøte</p>
           <div className="flex items-end gap-2 mt-1">
-            <h3 className="font-geist text-3xl font-normal tracking-tight text-text-primary">
+            <h3 className="font-geist text-3xl font-normal text-text-primary">
               {stats.attendanceRate}%
             </h3>
             <span className="text-xs text-text-secondary mb-1.5">snitt</span>
           </div>
         </div>
-        <div className="flex h-12 items-end gap-2 mt-2">
+        <div className="flex h-12 items-end gap-2 mt-2 overflow-hidden">
           {stats.attendanceData.map((value, index) => (
             <div
               key={index}
-              className={`w-1/6 rounded-t-sm ${
+              className={`flex-1 min-w-0 rounded-t-sm ${
                 index === 4 ? 'bg-primary' : index === 3 ? 'bg-zinc-400' : 'bg-zinc-300'
               } transition-colors`}
               style={{ height: `${value}%` }}

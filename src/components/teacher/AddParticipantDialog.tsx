@@ -145,7 +145,7 @@ export function AddParticipantDialog({
 
     // Validate organizationId is present
     if (!organizationId) {
-      setSubmitError('Organisasjons-ID mangler. Last siden på nytt.');
+      setSubmitError('Noe gikk galt. Last siden på nytt.');
       return;
     }
 

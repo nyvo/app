@@ -403,7 +403,7 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="max-w-5xl mx-auto w-full p-6 lg:p-10 pb-24"
+          className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 pb-24"
         >
 
             {/* Header Section */}
@@ -424,8 +424,9 @@ const TeacherProfilePage = () => {
                     <div className="md:col-span-2 rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</label>
+                            <label htmlFor="profile-firstname" className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</label>
                             <Input
+                                id="profile-firstname"
                                 type="text"
                                 value={firstName}
                                 onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
@@ -438,8 +439,9 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</label>
+                            <label htmlFor="profile-lastname" className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</label>
                             <Input
+                                id="profile-lastname"
                                 type="text"
                                 value={lastName}
                                 onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
@@ -452,10 +454,11 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-xs font-medium text-text-primary mb-1.5">E-post</label>
+                            <label htmlFor="profile-email" className="block text-xs font-medium text-text-primary mb-1.5">E-post</label>
                             <div className="relative group">
                                 <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
                                 <Input
+                                    id="profile-email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
@@ -472,10 +475,11 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
+                            <label htmlFor="profile-city" className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
                             <div className="relative group">
                                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
                                 <Input
+                                    id="profile-city"
                                     type="text"
                                     value={city}
                                     onChange={(e) => setCity(e.target.value)}
@@ -487,8 +491,9 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
+                            <label htmlFor="profile-description" className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
                             <Textarea
+                                id="profile-description"
                                 rows={4}
                                 value={studioDescription}
                                 onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
@@ -524,7 +529,7 @@ const TeacherProfilePage = () => {
                                       {isStripeConnected ? 'Tilkoblet Stripe' : 'Sett opp Stripe for å motta betaling.'}
                                   </span>
                               </div>
-                              <div className="flex items-center gap-2 ml-4 shrink-0">
+                              <div className="flex items-center gap-2 ml-4 shrink-0 flex-wrap justify-end">
                                   {!isStripeConnected && hasStripeAccount && (
                                       <Button
                                           variant="ghost"
@@ -591,7 +596,7 @@ const TeacherProfilePage = () => {
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-                                                  tabIndex={-1}
+                                                  aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                               </button>
@@ -615,7 +620,7 @@ const TeacherProfilePage = () => {
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
                                                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
-                                                  tabIndex={-1}
+                                                  aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                               </button>

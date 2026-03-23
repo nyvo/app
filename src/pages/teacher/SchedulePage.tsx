@@ -254,7 +254,7 @@ const MobileDayView = ({
                 <CalendarDays className="h-7 w-7 text-status-error-text" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Noe gikk galt</h3>
-              <p className="text-xs text-text-secondary mb-4">{error}</p>
+              <p className="text-sm text-text-secondary mb-4">{error}</p>
               <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
@@ -265,7 +265,7 @@ const MobileDayView = ({
                 <CalendarDays className="h-7 w-7 text-text-tertiary" />
               </div>
               <h3 className="text-sm font-medium text-text-primary mb-1">Ingen timer denne uken</h3>
-              <p className="text-xs text-text-secondary mb-4">
+              <p className="text-sm text-text-secondary mb-4">
                 {courses.length === 0
                   ? 'Opprett et kurs for å komme i gang.'
                   : 'Ingen planlagte timer denne uken.'}
@@ -287,7 +287,7 @@ const MobileDayView = ({
               <h3 className="text-sm font-medium text-text-primary mb-1">
                 Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
               </h3>
-              <p className="text-xs text-text-secondary">
+              <p className="text-sm text-text-secondary">
                 Velg en annen dag for å se timer.
               </p>
             </div>
@@ -408,7 +408,7 @@ export const SchedulePage = () => {
         setSignupsCounts(counts);
       }
     } catch {
-      setError('Kunne ikke laste timeplanen. Prøv på nytt senere.');
+      setError('Kunne ikke laste timeplanen. Prøv på nytt.');
     } finally {
       setIsLoading(false);
     }
@@ -553,7 +553,7 @@ export const SchedulePage = () => {
             initial="initial"
             animate="animate"
             transition={pageTransition}
-            className="flex flex-col gap-4 border-b border-zinc-200 bg-surface px-8 py-8 shrink-0 z-20"
+            className="flex flex-col gap-4 border-b border-zinc-200 bg-surface px-4 sm:px-6 lg:px-8 py-6 lg:py-8 shrink-0 z-20"
           >
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
@@ -598,7 +598,7 @@ export const SchedulePage = () => {
                   size="compact"
                   className="gap-2"
                 >
-                  <Link to="/teacher/new-course">
+                  <Link to="/teacher/new-course" aria-label="Nytt kurs">
                     <CalendarPlus className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Nytt kurs</span>
                   </Link>

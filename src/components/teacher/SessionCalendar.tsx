@@ -114,7 +114,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
       <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
       {/* Calendar + Detail side-by-side on desktop, stacked on mobile */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex flex-col lg:flex-row lg:items-stretch lg:gap-6">
           {/* Left: Calendar + Legend */}
           <div className="shrink-0">
@@ -177,7 +177,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {/* Fields */}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                    <label className="block text-xs font-medium text-text-primary mb-1.5">
                       Dato
                     </label>
                     <DatePicker
@@ -192,7 +192,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                    <label className="block text-xs font-medium text-text-primary mb-1.5">
                       Tidspunkt
                     </label>
                     <TimePicker

@@ -14,14 +14,13 @@ import {
   AlertCircle,
   MapPin,
   X,
-  Leaf,
-  Menu,
   Plus,
   AlertTriangle,
 } from 'lucide-react';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { createStripeConnectLink } from '@/services/stripe-connect';
 import { createCourse, updateCourse } from '@/services/courses';
@@ -483,7 +482,7 @@ const CreateCoursePage = () => {
       clearDraft();
       navigate(`/teacher/courses/${createdCourse.id}`);
     } catch {
-      setSubmitError('Noe gikk galt');
+      setSubmitError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSubmitting(false);
     }
@@ -494,16 +493,7 @@ const CreateCoursePage = () => {
       <TeacherSidebar />
 
       <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-white">
-        {/* Mobile Header */}
-        <div className="flex md:hidden items-center justify-between p-6 border-b border-border bg-surface/80 backdrop-blur-xl z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            <Leaf className="h-5 w-5 text-primary" />
-            <span className="font-geist text-base font-medium text-text-primary">Ease</span>
-          </div>
-          <SidebarTrigger>
-            <Menu className="h-6 w-6 text-text-secondary" />
-          </SidebarTrigger>
-        </div>
+        <MobileTeacherHeader title="Opprett kurs" />
 
         {/* Header with Breadcrumbs */}
         <header className="bg-white border-b border-zinc-100 shrink-0">
@@ -521,7 +511,7 @@ const CreateCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="text-2xl font-medium text-text-primary tracking-tight">
+            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
               {showReviewView ? 'Sjekk oppsummering' : 'Opprett nytt kurs'}
             </h1>
             <p className="text-text-secondary text-sm mt-1">
@@ -1065,7 +1055,7 @@ const CreateCoursePage = () => {
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
                       onValueChange={(val) => setArrivalMinutes(val === ARRIVAL_NONE_VALUE ? '' : val)}
                     >
-                      <SelectTrigger className="w-52 h-11 bg-input-bg border-zinc-300">
+                      <SelectTrigger className="w-full sm:w-52 h-11 bg-input-bg border-zinc-300">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1102,7 +1092,8 @@ const CreateCoursePage = () => {
                           <button
                             type="button"
                             onClick={() => setCustomBullets(customBullets.filter((_, j) => j !== i))}
-                            className="text-text-tertiary hover:text-destructive p-1 smooth-transition"
+                            className="text-text-tertiary hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                            aria-label={`Fjern punkt ${i + 1}`}
                           >
                             <X className="h-4 w-4" />
                           </button>

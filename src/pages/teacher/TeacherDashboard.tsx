@@ -407,7 +407,7 @@ const TeacherDashboard = () => {
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {
-          setLoadError('Noe gikk galt ved lasting av data');
+          setLoadError('Noe gikk galt. Prøv igjen.');
         }
       } finally {
         if (isActive) {
@@ -443,7 +443,7 @@ const TeacherDashboard = () => {
             >
               <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-text-secondary mb-2">Oversikt</p>
+                  <p className="text-xs font-medium text-text-tertiary mb-2">Oversikt</p>
                   <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
@@ -488,7 +488,10 @@ const TeacherDashboard = () => {
               )}
 
               {isLoading ? (
-                <DashboardSkeleton />
+                <div role="status" aria-live="polite">
+                  <span className="sr-only">Laster oversikt</span>
+                  <DashboardSkeleton />
+                </div>
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
@@ -525,7 +528,7 @@ const TeacherDashboard = () => {
                         <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
                           <Plus className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
                         </div>
-                        <h2 className="font-geist text-2xl md:text-3xl font-medium tracking-tight mb-2 text-text-primary leading-tight">
+                        <h2 className="font-geist text-2xl font-medium tracking-tight mb-2 text-text-primary leading-tight">
                           La oss sette opp ditt første kurs
                         </h2>
                         <p className="text-sm text-text-secondary mb-8">

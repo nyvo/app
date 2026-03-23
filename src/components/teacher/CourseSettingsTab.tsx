@@ -109,8 +109,9 @@ export const CourseSettingsTab = ({
 
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
+            <label htmlFor="settings-title" className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
             <Input
+              id="settings-title"
               type="text"
               value={settingsTitle}
               onChange={(e) => onTitleChange(e.target.value)}
@@ -118,8 +119,9 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
+            <label htmlFor="settings-description" className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
             <Textarea
+              id="settings-description"
               rows={6}
               value={settingsDescription}
               onChange={(e) => onDescriptionChange(e.target.value)}
@@ -209,6 +211,7 @@ export const CourseSettingsTab = ({
               size="icon"
               onClick={() => onMaxParticipantsChange(Math.max(currentEnrolled || 1, maxParticipants - 1))}
               disabled={maxParticipants <= (currentEnrolled || 1)}
+              aria-label="Reduser antall plasser"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -220,6 +223,7 @@ export const CourseSettingsTab = ({
               variant="outline-soft"
               size="icon"
               onClick={() => onMaxParticipantsChange(maxParticipants + 1)}
+              aria-label="Øk antall plasser"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -290,7 +294,7 @@ export const CourseSettingsTab = ({
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
             >
-              <SelectTrigger className="w-48 h-11 bg-input-bg border-zinc-300">
+              <SelectTrigger className="w-full sm:w-48 h-11 bg-input-bg border-zinc-300">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -324,7 +328,8 @@ export const CourseSettingsTab = ({
                   <button
                     type="button"
                     onClick={() => onCustomBulletsChange(settingsCustomBullets.filter((_, j) => j !== i))}
-                    className="text-text-tertiary hover:text-destructive p-1 smooth-transition"
+                    className="text-text-tertiary hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                    aria-label={`Fjern punkt ${i + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

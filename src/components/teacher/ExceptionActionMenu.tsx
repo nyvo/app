@@ -54,7 +54,7 @@ export function ExceptionActionMenu({ signup, handlers }: ExceptionActionMenuPro
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-zinc-50 smooth-transition text-text-tertiary hover:text-text-secondary flex-shrink-0"
+            className="h-8 w-8 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-zinc-50 smooth-transition text-text-tertiary hover:text-text-secondary flex-shrink-0"
             aria-label="Handlinger"
             disabled={loading}
           >

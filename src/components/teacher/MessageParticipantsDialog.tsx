@@ -129,7 +129,7 @@ export function MessageParticipantsDialog({
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Skriv melding..."
           rows={5}
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
           disabled={isSending}
         />
         </div>

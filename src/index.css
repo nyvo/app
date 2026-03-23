@@ -91,15 +91,21 @@
   --color-text-secondary: #52525B;
   --color-text-tertiary: #A1A1AA;
 
-  /* Surface/Background Variations
-     surface = page "floor" (Zinc-100)
-     surface-elevated = secondary elements (Zinc-200)
-     Cards use bg-white to "pop" against the floor */
+  /* Surface Hierarchy (V2.7)
+     canvas   = page "floor" (Zinc-100) — everything sits on this
+     surface  = page "floor" (Zinc-100) — legacy alias for canvas
+     card     = content containers (White) — defined above as --color-card
+     field    = input backgrounds (Zinc-200/white blend)
+     overlay  = modal/dialog backdrops
+     emphasis = high-attention dark surface (Zinc-800) */
+  --color-canvas: #F4F4F5;
   --color-surface: #F4F4F5;
   --color-surface-elevated: #E4E4E7;
   --color-surface-emphasis: #27272A;
   --color-surface-emphasis-foreground: #FAFAFA;
+  --color-field: rgba(255, 255, 255, 0.5);
   --color-input-bg: rgba(255, 255, 255, 0.5);
+  --color-overlay: rgba(0, 0, 0, 0.3);
 
   /* Brand Dark Variations */
   --color-primary-darker: #09090B;

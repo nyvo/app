@@ -155,8 +155,7 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
     <p>${reason}</p>
 
     <div class="info-box">
-      <p><strong>Du har ikke blitt belastet.</strong></p>
-      <p>Ingen penger er trukket fra kontoen din.</p>
+      <p><strong>Du er ikke belastet.</strong></p>
     </div>
 
     <p>Hvis du fortsatt ønsker å delta, kan du prøve igjen.</p>
@@ -224,7 +223,7 @@ function getSignupConfirmationTemplate(data: Record<string, string>): { subject:
 
     <p>Hei,</p>
 
-    <p>Din påmelding til <strong>${courseName}</strong> er bekreftet!</p>
+    <p>Din påmelding til <strong>${courseName}</strong> er bekreftet.</p>
 
     <div class="details-box">
       <div class="detail-row"><span class="detail-label">Kurs:</span> <span>${courseName}</span></div>
@@ -240,7 +239,7 @@ function getSignupConfirmationTemplate(data: Record<string, string>): { subject:
     ` : ''}
 
     <div class="footer">
-      <p>Vi gleder oss til å se deg!</p>
+      <p>Vi gleder oss til å se deg.</p>
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
     </div>
   </div>
@@ -250,14 +249,14 @@ function getSignupConfirmationTemplate(data: Record<string, string>): { subject:
     text: `
 Hei,
 
-Din påmelding til ${courseName} er bekreftet!
+Din påmelding til ${courseName} er bekreftet.
 
 Kurs: ${courseName}
 ${courseDate ? `Dato: ${courseDate}` : ''}
 ${courseTime ? `Tid: ${courseTime}` : ''}
 ${location ? `Sted: ${location}` : ''}
 
-Vi gleder oss til å se deg!
+Vi gleder oss til å se deg.
 
 Hilsen,
 ${organizationName || 'Ease'}
@@ -302,7 +301,7 @@ function getCourseReminderTemplate(data: Record<string, string>): { subject: str
 
     <p>Hei,</p>
 
-    <p>Dette er en vennlig påminnelse om at <strong>${courseName}</strong> starter snart.</p>
+    <p><strong>${courseName}</strong> starter snart.</p>
 
     <div class="details-box">
       <div class="detail-row"><span class="detail-label">Kurs:</span> <span>${courseName}</span></div>
@@ -311,7 +310,7 @@ function getCourseReminderTemplate(data: Record<string, string>): { subject: str
       ${location ? `<div class="detail-row"><span class="detail-label">Sted:</span> <span>${location}</span></div>` : ''}
     </div>
 
-    <p>Vi gleder oss til å se deg!</p>
+    <p>Vi gleder oss til å se deg.</p>
 
     <div class="footer">
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
@@ -330,7 +329,7 @@ ${courseDate ? `Dato: ${courseDate}` : ''}
 ${courseTime ? `Tid: ${courseTime}` : ''}
 ${location ? `Sted: ${location}` : ''}
 
-Vi gleder oss til å se deg!
+Vi gleder oss til å se deg.
 
 Hilsen,
 ${organizationName || 'Ease'}
@@ -343,7 +342,7 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
   const courseName = escapeHtml(data.courseName)
   const reason = escapeHtml(data.reason)
   const organizationName = escapeHtml(data.organizationName)
-  const refundAmount = data.refundAmount // numeric, no escaping needed
+  const refundAmount = Number(data.refundAmount) || 0
   const showRefund = data.showRefund === 'true'
 
   return {
@@ -387,7 +386,7 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
     </div>
     ` : ''}
 
-    <p>Vi beklager eventuelle ulemper dette måtte medføre.</p>
+    <p>Vi beklager ulempene.</p>
 
     <div class="footer">
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
@@ -404,7 +403,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
   const participantName = escapeHtml(data.participantName)
   const courseName = escapeHtml(data.courseName)
   const organizationName = escapeHtml(data.organizationName)
-  const refundAmount = data.refundAmount
+  const refundAmount = Number(data.refundAmount) || 0
   const canGetRefund = data.canGetRefund === 'true'
 
   return {
@@ -447,7 +446,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
       ${canGetRefund && refundAmount ? `
         <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} vil bli refundert til betalingskortet ditt innen 5\u201310 virkedager.</p>
       ` : `
-        <p><strong>Merk:</strong> Siden avbestillingen skjedde mindre enn 48 timer f\u00f8r kursstart, kan vi dessverre ikke tilby refusjon i henhold til v\u00e5re avbestillingsvilk\u00e5r.</p>
+        <p><strong>Merk:</strong> Avbestillingen var mindre enn 48 timer f\u00f8r kursstart, og kvalifiserer ikke for refusjon.</p>
       `}
     </div>
 
@@ -470,11 +469,11 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
   const courseDate = escapeHtml(data.courseDate)
   const courseTime = escapeHtml(data.courseTime)
   const organizationName = escapeHtml(data.organizationName)
-  const refundAmount = data.refundAmount
+  const refundAmount = Number(data.refundAmount) || 0
   const refunded = data.refunded === 'true'
 
   return {
-    subject: `Avmelding: ${courseName}`,
+    subject: `Avbestilt: ${courseName}`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -500,12 +499,12 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
     </div>
 
     <p style="text-align: center;">
-      <span class="status-badge cancelled">Påmelding avmeldt</span>
+      <span class="status-badge cancelled">Påmelding avbestilt</span>
     </p>
 
     <p>Hei ${participantName || ''},</p>
 
-    <p>Din påmelding til <strong>${courseName}</strong> har blitt avmeldt av ${organizationName || 'studiet'}.</p>
+    <p>Din påmelding til <strong>${courseName}</strong> har blitt avbestilt av ${organizationName || 'studiet'}.</p>
 
     <div class="details-box">
       <p><strong>Kurs:</strong> ${courseName}</p>
@@ -529,8 +528,8 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 </html>
     `,
     text: refunded
-      ? `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avmeldt av ${organizationName || 'studiet'}. Refusjon på ${formatKr(refundAmount || 0)} vil bli tilbakebetalt innen 5-10 virkedager.`
-      : `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avmeldt av ${organizationName || 'studiet'}. Ta kontakt med oss hvis du har spørsmål.`
+      ? `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studiet'}. Refusjon på ${formatKr(refundAmount || 0)} vil bli tilbakebetalt innen 5-10 virkedager.`
+      : `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studiet'}. Ta kontakt med oss hvis du har spørsmål.`
   }
 }
 
@@ -539,7 +538,7 @@ function getPaymentLinkTemplate(data: Record<string, string>): { subject: string
   const courseName = escapeHtml(data.courseName)
   const courseDate = escapeHtml(data.courseDate)
   const courseTime = escapeHtml(data.courseTime)
-  const totalPrice = data.totalPrice
+  const totalPrice = Number(data.totalPrice) || 0
   const paymentUrl = safeUrl(data.paymentUrl || '')
   const organizationName = escapeHtml(data.organizationName)
 

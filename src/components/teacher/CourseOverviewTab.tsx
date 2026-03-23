@@ -156,7 +156,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             Påmelding
           </h2>
           <div className="rounded-xl bg-white p-6 border border-zinc-200">
-            <div className="flex items-end justify-between mb-3">
+            <div className="flex items-end justify-between gap-2 mb-3 flex-wrap">
               <div className="flex items-end gap-3">
                 <span className="text-2xl font-medium tracking-tight text-text-primary">
                   {course.enrolled ?? 0}
@@ -182,7 +182,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               )}
             </div>
             {/* Progress Bar */}
-            <div className="w-full bg-surface-elevated rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-surface-elevated rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={course.enrolled} aria-valuemin={0} aria-valuemax={course.capacity} aria-label={`${course.enrolled} av ${course.capacity} påmeldte`}>
               {course.enrolled > 0 && course.capacity > 0 && (
                 <div
                   className="bg-primary h-2 rounded-full ios-ease"
@@ -249,8 +249,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     className="hidden"
                   />
                   <div
-                    className="h-40 bg-surface/30 rounded-xl border border-zinc-200 flex items-center justify-center group cursor-pointer smooth-transition hover:bg-zinc-50/50"
+                    className="h-40 bg-surface/30 rounded-xl border border-zinc-200 flex items-center justify-center group cursor-pointer smooth-transition hover:bg-zinc-50/50 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none"
                     onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isUploadingQuickImage && quickImageInputRef.current?.click(); } }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Last opp forsidebilde"
                   >
                     {isUploadingQuickImage ? (
                       <div className="flex items-center gap-2 text-text-secondary">
