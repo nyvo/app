@@ -23,7 +23,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
   return (
     <div className={cn(
       "px-2 rounded-lg smooth-transition",
-      isExpanded ? "bg-zinc-50/50" : "hover:bg-zinc-50/50 border-b border-zinc-100"
+      isExpanded ? "bg-white border border-zinc-200" : "hover:bg-zinc-50/50 border-b border-zinc-100"
     )}>
       {/* Group Header */}
       <button

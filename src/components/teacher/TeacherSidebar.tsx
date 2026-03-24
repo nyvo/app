@@ -9,8 +9,6 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  ChevronsLeft,
-  ChevronsRight,
   ChevronsUpDown
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -56,7 +54,7 @@ export const TeacherSidebar = () => {
   const { signOut, profile, userRole, currentOrganization } = useAuth();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const { state, toggleSidebar } = useSidebar();
+  const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
   // Fetch unread message count
@@ -119,17 +117,20 @@ export const TeacherSidebar = () => {
                       asChild
                       isActive={active}
                       className={cn(
-                        "!transition-none",
+                        "group relative cursor-pointer transition-colors",
                         active
                           ? 'bg-white border border-zinc-200 text-text-primary'
-                          : 'text-text-secondary border border-transparent'
+                          : 'text-text-secondary border border-transparent hover:bg-zinc-100'
                       )}
                     >
-                      <Link to={item.href} className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} relative`}>
+                      <Link to={item.href} className={cn("flex items-center relative", isCollapsed ? 'justify-center' : 'gap-3', active && !isCollapsed && 'pl-6')}>
+                        {active && !isCollapsed && (
+                          <span className="absolute left-[7px] top-1/2 -translate-y-1/2 w-[1.5px] h-2.5 bg-zinc-900 rounded-full" />
+                        )}
                         <div className="relative">
                           <item.icon className={cn(
-                            "h-4 w-4 shrink-0",
-                            active ? 'text-primary' : 'text-text-tertiary'
+                            "h-4 w-4 shrink-0 transition-colors",
+                            active ? 'text-primary' : 'text-text-tertiary group-hover:text-text-primary'
                           )} />
                           {isCollapsed && item.href === '/teacher/messages' && unreadMessages > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground">
@@ -139,7 +140,7 @@ export const TeacherSidebar = () => {
                         </div>
                         {!isCollapsed && (
                           <>
-                            <span className="text-sm font-medium">{item.label}</span>
+                            <span className="text-sm font-medium leading-none">{item.label}</span>
                             {item.href === '/teacher/messages' && unreadMessages > 0 && (
                               <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground">
                                 {unreadMessages > 9 ? '9+' : unreadMessages}
@@ -172,26 +173,6 @@ export const TeacherSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Collapse Toggle Button */}
-      <div className={`py-2 px-6 mb-2`}>
-        <button
-          onClick={toggleSidebar}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 rounded-lg text-text-tertiary hover:bg-zinc-50 hover:text-text-secondary smooth-transition cursor-pointer border border-transparent p-2",
-            isCollapsed && "px-0"
-          )}
-          title={isCollapsed ? 'Utvid meny' : 'Skjul meny'}
-        >
-          {isCollapsed ? (
-            <ChevronsRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronsLeft className="h-4 w-4" />
-              <span className="text-xs font-medium">Skjul meny</span>
-            </>
-          )}
-        </button>
-      </div>
 
       <SidebarFooter className={`pb-6 pt-4 border-t border-zinc-200 ${isCollapsed ? 'px-3' : 'px-6'}`}>
         <SidebarMenu>
@@ -201,9 +182,9 @@ export const TeacherSidebar = () => {
                 <SidebarMenuButton
                   size="lg"
                   className={cn(
-                    "w-full transition-all duration-200",
+                    "w-full cursor-pointer transition-colors",
                     "bg-white border border-zinc-200",
-                    !isProfileMenuOpen && "hover:border-zinc-400"
+                    !isProfileMenuOpen && "hover:bg-zinc-50 hover:border-zinc-300"
                   )}
                 >
                   <UserAvatar

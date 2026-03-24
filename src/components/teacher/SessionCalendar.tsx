@@ -99,6 +99,15 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     return sessionDateMap.get(key) || null;
   }, [selectedDate, sessionDateMap]);
 
+  // Check if a session date is in the past (date-only comparison, local timezone)
+  const isSessionPast = (dateStr: string) => {
+    const sessionDate = parseLocalDate(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    sessionDate.setHours(0, 0, 0, 0);
+    return sessionDate < today;
+  };
+
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
   };
@@ -128,13 +137,13 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 session: sessionDates,
               }}
               classNames={{
-                root: "w-full max-w-[320px]",
+                root: "w-full max-w-[350px]",
                 months: "relative flex flex-col gap-4",
-                month: "flex flex-col gap-4",
+                month: "flex flex-col gap-5",
                 weekdays: "flex justify-between",
-                weekday: "text-text-tertiary w-10 text-center text-xs font-normal",
-                week: "flex justify-between w-full mt-2",
-                day: "h-10 w-10 p-0 text-center",
+                weekday: "text-text-tertiary w-11 text-center text-xs font-normal",
+                week: "flex justify-between w-full mt-1",
+                day: "h-11 w-11 p-0 text-center",
               }}
             />
 
@@ -157,7 +166,9 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
           {/* Right: Session Detail Panel — top-aligned, content-hugging */}
           <div className="flex-1 min-w-0 mt-6 lg:mt-0">
-            {selectedSession && (
+            {selectedSession && (() => {
+              const isPast = isSessionPast(selectedSession.originalDate);
+              return (
               <div className="rounded-xl border border-zinc-200 p-6 space-y-4">
                 {/* Header */}
                 <div className="flex items-center gap-3">
@@ -171,70 +182,91 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     <span className="text-[9px] font-medium opacity-80">{sessionLabel}</span>
                     <span className="text-sm leading-none font-medium">{selectedSession.weekNum}</span>
                   </div>
-                  <h4 className="text-sm font-medium text-text-primary">Rediger økt</h4>
+                  <h4 className="text-sm font-medium text-text-primary">
+                    {isPast ? 'Tidligere økt' : 'Rediger økt'}
+                  </h4>
                 </div>
 
-                {/* Fields */}
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1.5">
-                      Dato
-                    </label>
-                    <DatePicker
-                      value={sessionEdits[selectedSession.id]?.date || (selectedSession.originalDate ? new Date(selectedSession.originalDate) : undefined)}
-                      onChange={(date) => {
-                        if (date) {
-                          onSessionEditChange(selectedSession.id, 'date', date);
-                        }
-                      }}
-                      placeholder={selectedSession.date}
-                    />
+                {isPast ? (
+                  /* Read-only view for past sessions */
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-text-primary mb-1.5">Dato</label>
+                      <p className="text-sm text-text-secondary">{selectedSession.date}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-text-primary mb-1.5">Tidspunkt</label>
+                      <p className="text-sm text-text-secondary">{selectedSession.time}</p>
+                    </div>
+                    <Alert variant="neutral" size="sm" icon={Info}>
+                      <p className="text-xs text-text-secondary">Tidligere økter kan ikke endres.</p>
+                    </Alert>
                   </div>
+                ) : (
+                  /* Editable view for future sessions */
+                  <>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-text-primary mb-1.5">
+                          Dato
+                        </label>
+                        <DatePicker
+                          value={sessionEdits[selectedSession.id]?.date || (selectedSession.originalDate ? new Date(selectedSession.originalDate) : undefined)}
+                          onChange={(date) => {
+                            if (date) {
+                              onSessionEditChange(selectedSession.id, 'date', date);
+                            }
+                          }}
+                          placeholder={selectedSession.date}
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1.5">
-                      Tidspunkt
-                    </label>
-                    <TimePicker
-                      value={sessionEdits[selectedSession.id]?.time || selectedSession.time.split(' - ')[0]}
-                      onChange={(time) => onSessionEditChange(selectedSession.id, 'time', time)}
-                    />
-                  </div>
-                </div>
+                      <div>
+                        <label className="block text-xs font-medium text-text-primary mb-1.5">
+                          Tidspunkt
+                        </label>
+                        <TimePicker
+                          value={sessionEdits[selectedSession.id]?.time || selectedSession.time.split(' - ')[0]}
+                          onChange={(time) => onSessionEditChange(selectedSession.id, 'time', time)}
+                        />
+                      </div>
+                    </div>
 
-                <Alert variant="neutral" size="sm" icon={Info}>
-                  <p className="text-xs text-text-secondary">Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
-                </Alert>
+                    <Alert variant="neutral" size="sm" icon={Info}>
+                      <p className="text-xs text-text-secondary">Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
+                    </Alert>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    variant="ghost"
-                    size="compact"
-                    className="flex-1"
-                    onClick={() => onSessionEditCancel(selectedSession.id)}
-                    disabled={savingSessionId === selectedSession.id}
-                  >
-                    Avbryt
-                  </Button>
-                  <Button
-                    size="compact"
-                    className="flex-1"
-                    onClick={() => onSaveSession(selectedSession.id)}
-                    disabled={savingSessionId === selectedSession.id || !hasRealSessions || !sessionEdits[selectedSession.id]}
-                  >
-                    {savingSessionId === selectedSession.id ? (
-                      <>
-                        <Spinner size="xs" />
-                        Lagrer
-                      </>
-                    ) : (
-                      'Lagre endringer'
-                    )}
-                  </Button>
-                </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        className="flex-1"
+                        onClick={() => onSessionEditCancel(selectedSession.id)}
+                        disabled={savingSessionId === selectedSession.id}
+                      >
+                        Avbryt
+                      </Button>
+                      <Button
+                        size="compact"
+                        className="flex-1"
+                        onClick={() => onSaveSession(selectedSession.id)}
+                        disabled={savingSessionId === selectedSession.id || !hasRealSessions || !sessionEdits[selectedSession.id]}
+                      >
+                        {savingSessionId === selectedSession.id ? (
+                          <>
+                            <Spinner size="xs" />
+                            Lagrer
+                          </>
+                        ) : (
+                          'Lagre endringer'
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
+              );
+            })()}
 
             {/* Empty state — stretches to match calendar height */}
             {!selectedSession && (

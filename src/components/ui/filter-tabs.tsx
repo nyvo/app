@@ -38,7 +38,7 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "gap-1 bg-surface-elevated p-1 rounded-lg"
+            variant === "contained" ? "gap-0.5 bg-zinc-200/60 p-1 rounded-md"
               : variant === "pill" ? "gap-1.5"
               : "gap-1 border-b border-border",
             className
@@ -73,7 +73,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
             : "text-text-secondary hover:text-text-primary hover:bg-zinc-50 rounded-lg border border-transparent"
         case "contained":
           return isActive
-            ? "bg-white text-text-primary"
+            ? "text-text-primary"
             : "bg-transparent text-text-secondary hover:text-text-primary"
         default:
           return isActive
@@ -96,12 +96,19 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
             ? "text-xs px-3 py-2 -mb-px"
             : variant === "pill"
               ? "text-xs px-3 py-1.5 rounded-lg"
-              : "text-xs px-3 py-2 rounded-lg h-10",
+              : "text-xs px-2 py-1 rounded-[5px] text-center whitespace-nowrap",
           getStyles(),
           className
         )}
       >
-        {children}
+        {variant === "contained" && isActive && (
+          <motion.div
+            layoutId={context.layoutId}
+            className="absolute inset-0 bg-white rounded-[5px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
+        )}
+        <span className="relative z-10">{children}</span>
         {variant === "default" && isActive && (
           <motion.div
             layoutId={context.layoutId}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, CalendarPlus, Users, CheckCircle2, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarPlus, Users, CalendarDays } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -92,14 +92,14 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`absolute left-1 right-1 rounded-xl p-2 smooth-transition cursor-pointer group overflow-hidden block ${isCompleted ? 'bg-surface-emphasis/40 text-surface-emphasis-foreground/70' : 'bg-surface-emphasis text-surface-emphasis-foreground hover:bg-surface-emphasis/90'} ${isActive ? 'ring-2 ring-surface-emphasis ring-offset-1' : ''}`}
+      className={`absolute left-1 right-1 rounded-xl p-2 smooth-transition cursor-pointer group overflow-hidden block ${isCompleted ? 'bg-zinc-200 border border-zinc-200' : 'bg-surface-emphasis text-surface-emphasis-foreground hover:bg-surface-emphasis/90'} ${isActive ? 'ring-2 ring-surface-emphasis ring-offset-1' : ''}`}
       style={positionStyle}
     >
       <div className="flex justify-between items-start">
-        <span className="text-xs font-medium text-surface-emphasis-foreground/70">
+        <span className={`text-xs font-medium ${isCompleted ? 'text-text-tertiary' : 'text-surface-emphasis-foreground/70'}`}>
           {formatTime(event.startTime)} - {formatTime(event.endTime)}
         </span>
-        {isCompleted && <CheckCircle2 className="h-3 w-3 text-surface-emphasis-foreground/50" />}
+        {isCompleted && <span className="text-xs font-medium text-text-secondary">Fullført</span>}
         {isActive && (
           <span className="inline-flex items-center rounded-full bg-white/20 px-1.5 py-0.5 text-xxs font-medium text-surface-emphasis-foreground">
             Pågår
@@ -109,8 +109,8 @@ const EventCard = ({ event }: { event: ScheduleEvent }) => {
           <Users className="h-3 w-3 text-surface-emphasis-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
-      <p className="text-sm font-medium text-surface-emphasis-foreground mt-1 truncate">{event.title}</p>
-      <p className="text-xs text-surface-emphasis-foreground/70 mt-0.5">{event.location}</p>
+      <p className={`text-sm font-medium mt-1 truncate ${isCompleted ? 'text-text-secondary' : 'text-surface-emphasis-foreground'}`}>{event.title}</p>
+      <p className={`text-xs mt-0.5 ${isCompleted ? 'text-text-tertiary' : 'text-surface-emphasis-foreground/70'}`}>{event.location}</p>
       {!isCompleted && (
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -161,12 +161,12 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
   return (
     <Link
       to={`/teacher/courses/${event.courseId}`}
-      className={`block rounded-xl bg-white border border-zinc-200 p-4 smooth-transition hover:bg-zinc-50/50 cursor-pointer ${isCompleted ? 'opacity-60' : ''} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+      className={`block rounded-xl p-4 smooth-transition cursor-pointer ${isCompleted ? 'bg-zinc-200 border border-zinc-200' : 'bg-white border border-zinc-200 hover:bg-zinc-50/50'} ${isActive ? 'ring-2 ring-primary ring-offset-1' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-text-secondary">
+            <span className={`text-xs font-medium ${isCompleted ? 'text-text-tertiary' : 'text-text-secondary'}`}>
               {formatTime(event.startTime)} - {formatTime(event.endTime)}
             </span>
             {isActive && (
@@ -174,12 +174,13 @@ const MobileEventCard = ({ event }: { event: ScheduleEvent }) => {
                 Pågår
               </span>
             )}
-            {isCompleted && <CheckCircle2 className="h-4 w-4 text-text-tertiary" />}
           </div>
-          <p className="text-sm font-medium text-text-primary truncate">{event.title}</p>
-          <p className="text-xs text-text-secondary mt-0.5">{event.location}</p>
+          <p className={`text-sm font-medium truncate ${isCompleted ? 'text-text-secondary' : 'text-text-primary'}`}>{event.title}</p>
+          <p className={`text-xs mt-0.5 ${isCompleted ? 'text-text-tertiary' : 'text-text-secondary'}`}>{event.location}</p>
         </div>
-        {!isCompleted && (
+        {isCompleted ? (
+          <span className="text-xs font-medium text-text-secondary shrink-0">Fullført</span>
+        ) : (
           <div className="flex items-center gap-1 text-xs text-text-secondary shrink-0">
             <Users className="h-4 w-4" />
             <span>{event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}</span>

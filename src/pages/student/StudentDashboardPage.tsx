@@ -160,7 +160,7 @@ const StudentDashboardPage = () => {
 
         <TabsContent value="past" className="space-y-4 focus-visible:outline-none">
           {past.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 opacity-75">
+            <div className="grid grid-cols-1 gap-4">
               {past.map((signup) => (
                 <BookingCard
                   key={signup.id}

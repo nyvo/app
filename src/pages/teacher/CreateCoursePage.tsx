@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   ChevronDown,
   AlertCircle,
-  MapPin,
   X,
   Plus,
   AlertTriangle,
@@ -880,25 +879,22 @@ const CreateCoursePage = () => {
                     <label htmlFor="create-location" className="block text-xs font-medium text-text-primary mb-1.5">
                       Sted <span className="text-destructive">*</span>
                     </label>
-                    <div className="relative">
-                      <Input
-                        ref={locationRef}
-                        id="create-location"
-                        type="text"
-                        placeholder="F.eks. Studioet, Grünerløkka"
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        onBlur={() => handleBlur('location')}
-                        aria-describedby={showError('location') ? 'create-location-error' : undefined}
-                        aria-invalid={showError('location') ? 'true' : undefined}
-                        aria-required="true"
-                        className={cn(
-                          "w-full h-11 pl-9",
-                          showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
-                        )}
-                      />
-                      <MapPin className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${showError('location') ? 'text-destructive' : 'text-text-tertiary'}`} aria-hidden="true" />
-                    </div>
+                    <Input
+                      ref={locationRef}
+                      id="create-location"
+                      type="text"
+                      placeholder="F.eks. Studioet, Grünerløkka"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      onBlur={() => handleBlur('location')}
+                      aria-describedby={showError('location') ? 'create-location-error' : undefined}
+                      aria-invalid={showError('location') ? 'true' : undefined}
+                      aria-required="true"
+                      className={cn(
+                        "w-full h-11",
+                        showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                      )}
+                    />
                     {showError('location') && (
                       <p id="create-location-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />

@@ -85,6 +85,15 @@ const DatePicker = ({
           }}
           locale={nb}
           disabled={fromDate ? { before: fromDate } : undefined}
+          classNames={{
+            root: "w-full max-w-[350px]",
+            months: "relative flex flex-col gap-4",
+            month: "flex flex-col gap-5",
+            weekdays: "flex justify-between",
+            weekday: "text-text-tertiary w-11 text-center text-xs font-normal",
+            week: "flex justify-between w-full mt-1",
+            day: "h-11 w-11 p-0 text-center",
+          }}
         />
       </PopoverContent>
     </Popover>

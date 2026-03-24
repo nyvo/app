@@ -1,15 +1,12 @@
-import { useState, memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from 'lucide-react';
 import type { Course } from '@/types/dashboard';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 
 interface CoursesListProps {
   courses: Course[];
 }
 
-const FULL_DAY_NAMES = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
-const SHORT_MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
 
 /**
  * Parse a date string (ISO YYYY-MM-DD or full ISO) into local year/month/day.
@@ -25,12 +22,6 @@ function parseLocalDate(dateString: string): { year: number; month: number; day:
   return { year, month, day };
 }
 
-/** Build a Date object in local timezone from a date string */
-function toLocalDate(dateString: string): Date | null {
-  const parsed = parseLocalDate(dateString);
-  if (!parsed) return null;
-  return new Date(parsed.year, parsed.month - 1, parsed.day);
-}
 
 /** Check if a date string represents today */
 function isToday(dateString: string | undefined): boolean {
@@ -57,47 +48,6 @@ function sortChronologically(courses: Course[]): Course[] {
   return [...courses].sort((a, b) => getSortKey(a) - getSortKey(b));
 }
 
-interface DayGroup {
-  key: string;       // YYYY-MM-DD
-  sortValue: number; // timestamp for ordering
-  label: string;     // "I dag" or "Mandag 17. feb"
-  courses: Course[];
-}
-
-/** Group courses by calendar date, sorted chronologically */
-function groupByDay(courses: Course[]): DayGroup[] {
-  const sorted = sortChronologically(courses);
-  const groups = new Map<string, DayGroup>();
-
-  for (const course of sorted) {
-    if (!course.date) continue;
-    const key = course.date.slice(0, 10); // YYYY-MM-DD
-    if (groups.has(key)) {
-      groups.get(key)!.courses.push(course);
-      continue;
-    }
-
-    const localDate = toLocalDate(course.date);
-    if (!localDate) continue;
-
-    const dayName = FULL_DAY_NAMES[localDate.getDay()];
-    const dayNum = localDate.getDate();
-    const monthName = SHORT_MONTH_NAMES[localDate.getMonth()];
-    const label = isToday(course.date)
-      ? 'I dag'
-      : `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${dayNum}. ${monthName}`;
-
-    groups.set(key, {
-      key,
-      sortValue: localDate.getTime(),
-      label,
-      courses: [course],
-    });
-  }
-
-  // Explicit sort by date (don't rely on Map insertion order)
-  return Array.from(groups.values()).sort((a, b) => a.sortValue - b.sortValue);
-}
 
 /** Shared course row used by both views */
 function CourseRow({ course }: { course: Course }) {
@@ -147,62 +97,25 @@ function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
 }
 
 export const CoursesList = memo(function CoursesList({ courses }: CoursesListProps) {
-  const [timeFilter, setTimeFilter] = useState<'today' | 'week'>('today');
-
-  // Today: filter + sort chronologically
   const todayCourses = useMemo(
     () => sortChronologically(courses.filter(c => isToday(c.date))),
     [courses]
   );
 
-  // Week: group by day, sorted
-  const dayGroups = useMemo(() => groupByDay(courses), [courses]);
-
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-text-primary">Dine kurs</h2>
-        <FilterTabs variant="pill" value={timeFilter} onValueChange={(v) => setTimeFilter(v as 'today' | 'week')}>
-          <FilterTab value="today">I dag</FilterTab>
-          <FilterTab value="week">Hele uken</FilterTab>
-        </FilterTabs>
-      </div>
+      <h2 className="text-sm font-medium text-text-primary mb-3">Dagens kurs</h2>
 
       <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
       <div className="px-2 py-3">
-        {/* ── Today view: single-column chronological list ── */}
-        {timeFilter === 'today' && (
-          todayCourses.length === 0 ? (
-            <EmptyState timeFilter="today" />
-          ) : (
-            <div className="space-y-1">
-              {todayCourses.map((course) => (
-                <CourseRow key={course.id} course={course} />
-              ))}
-            </div>
-          )
-        )}
-
-        {/* ── Week view: single-column day-grouped list ── */}
-        {timeFilter === 'week' && (
-          dayGroups.length === 0 ? (
-            <EmptyState timeFilter="week" />
-          ) : (
-            <div className="divide-y divide-zinc-100">
-              {dayGroups.map((group) => (
-                <div key={group.key} className="pt-3 first:pt-0">
-                  <h4 className="text-xxs font-medium text-text-secondary mb-1 px-3">
-                    {group.label}
-                  </h4>
-                  <div className="space-y-1">
-                    {group.courses.map((course) => (
-                      <CourseRow key={course.id} course={course} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+        {todayCourses.length === 0 ? (
+          <EmptyState timeFilter="today" />
+        ) : (
+          <div className="divide-y divide-zinc-100">
+            {todayCourses.map((course) => (
+              <CourseRow key={course.id} course={course} />
+            ))}
+          </div>
         )}
       </div>
       </div>

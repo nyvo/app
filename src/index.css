@@ -75,8 +75,8 @@
   --color-growth-bg: var(--color-green-50);
   --color-growth-text: var(--color-green-700);
 
-  /* Sidebar Colors - White surface for clean navigation */
-  --color-sidebar: #FFFFFF;
+  /* Sidebar Colors - Zinc-50 surface for subtle hierarchy vs white cards */
+  --color-sidebar: #FAFAFA;
   --color-sidebar-foreground: #3F3F46;
   --color-sidebar-primary: #09090B;
   --color-sidebar-primary-foreground: #FAFAFA;

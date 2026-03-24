@@ -68,7 +68,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         </div>
       ) : (
         /* Activity Feed - Simple list rows */
-        <div className="px-2 py-3 space-y-1">
+        <div className="px-2 py-3 divide-y divide-zinc-100">
           {displayedRegistrations.map((registration) => {
             const dayName = extractDayName(registration.courseTime);
             const startTime = extractTimeFromSchedule(registration.courseTime)?.time ?? '';
