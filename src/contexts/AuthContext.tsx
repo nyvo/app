@@ -32,6 +32,7 @@ interface AuthContextType {
   // Auth methods
   signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
@@ -244,7 +245,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshOrganizations = useCallback(async () => {
     if (!userRef.current) return
 
-    const { organizations: orgs, memberships } = await fetchOrganizationsData(userRef.current.id)
+    // Refresh profile alongside orgs (e.g. after onboarding writes to profiles)
+    const [profileData, { organizations: orgs, memberships }] = await Promise.all([
+      fetchProfileData(userRef.current.id),
+      fetchOrganizationsData(userRef.current.id),
+    ])
+
+    if (profileData) {
+      setProfile(profileData)
+    }
+
     setOrganizations(orgs)
 
     if (currentOrgRef.current) {
@@ -271,6 +281,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sign in
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error: error as Error | null }
+  }, [])
+
+  // Sign in with Google OAuth
+  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectTo || `${window.location.origin}/teacher`,
+      },
+    })
     return { error: error as Error | null }
   }, [])
 
@@ -351,6 +372,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       postal_code: null,
       stripe_account_id: null,
       stripe_onboarding_complete: false,
+      studio_shared_at: null,
       settings: {},
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -412,6 +434,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     updatePassword,
@@ -430,6 +453,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     updatePassword,

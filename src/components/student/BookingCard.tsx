@@ -119,11 +119,11 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
            <div className="flex items-center gap-1.5">
-             <Clock className="h-4 w-4 text-text-secondary" />
+             <Clock className="h-4 w-4 text-text-tertiary" />
              <span>{timeStr || 'Tid mangler'}</span>
            </div>
            <div className="flex items-center gap-1.5">
-             <MapPin className="h-4 w-4 text-text-secondary" />
+             <MapPin className="h-4 w-4 text-text-tertiary" />
              <span>{course.location || 'Sted mangler'}</span>
            </div>
         </div>
@@ -143,7 +143,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 md:border-l border-zinc-100 w-full md:w-auto md:min-w-[140px]">
+      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 border-zinc-100 w-full md:w-auto md:min-w-[140px]">
          <Button 
            variant="outline-soft" 
            size="sm" 

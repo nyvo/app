@@ -6,9 +6,7 @@ import { tabVariants, tabTransition } from '@/lib/motion';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatKroner } from '@/lib/utils';
@@ -422,9 +420,7 @@ const CourseDetailPage = () => {
   // Loading state
   if (isLoading) {
     return (
-      <SidebarProvider>
-        <TeacherSidebar />
-        <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
 
           <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
             <div className="max-w-6xl mx-auto w-full">
@@ -463,16 +459,13 @@ const CourseDetailPage = () => {
             </div>
           </div>
         </main>
-      </SidebarProvider>
     );
   }
 
   // Error or not found state
   if (error || !courseData) {
     return (
-      <SidebarProvider>
-        <TeacherSidebar />
-        <main className="flex-1 flex flex-col min-h-screen bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen bg-surface">
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
@@ -481,7 +474,6 @@ const CourseDetailPage = () => {
             </div>
           </div>
         </main>
-      </SidebarProvider>
     );
   }
 
@@ -579,9 +571,8 @@ const CourseDetailPage = () => {
   const spotsLeft = course.capacity - course.enrolled;
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+    <>
+    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
 
         {/* Header Section */}
         <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
@@ -900,7 +891,7 @@ const CourseDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SidebarProvider>
+    </>
   );
 };
 

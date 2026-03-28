@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { StudentDashboardLayout } from '@/components/student/StudentDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +47,7 @@ const StudentProfilePage = () => {
   };
 
   return (
-    <StudentDashboardLayout>
+    <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="tracking-tight text-2xl font-medium text-text-primary">
@@ -146,7 +145,7 @@ const StudentProfilePage = () => {
           )}
         </div>
       </div>
-    </StudentDashboardLayout>
+    </>
   );
 };
 

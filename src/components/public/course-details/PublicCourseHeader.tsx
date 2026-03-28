@@ -94,7 +94,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
             </DropdownMenu>
           ) : (
             <Link
-              to="/login"
+              to="/student/login"
               className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
             >
               Logg inn

@@ -9,9 +9,7 @@ import {
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
@@ -194,8 +192,6 @@ const CoursesPage = () => {
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
       <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
 
         <MobileTeacherHeader title="Mine kurs" />
@@ -309,7 +305,6 @@ const CoursesPage = () => {
         </div>
         <EmptyStateToggle />
       </main>
-    </SidebarProvider>
   );
 };
 

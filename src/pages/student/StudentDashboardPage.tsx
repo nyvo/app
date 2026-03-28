@@ -1,10 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchUpcomingSignups, fetchPastSignups, type StudentSignupWithCourse } from '@/services/studentSignups';
-import { StudentDashboardLayout } from '@/components/student/StudentDashboardLayout';
 import { BookingCard } from '@/components/student/BookingCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarX, Clock } from 'lucide-react';
+import { CalendarX, Clock, Search } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
@@ -76,36 +75,35 @@ const StudentDashboardPage = () => {
 
   if (isLoading) {
     return (
-      <StudentDashboardLayout>
+      <>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <Spinner size="xl" className="mb-4" />
           <p className="text-text-secondary">Henter kurs ...</p>
         </div>
-      </StudentDashboardLayout>
+      </>
     );
   }
 
   if (error) {
     return (
-      <StudentDashboardLayout>
+      <>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <div className="rounded-full bg-status-error-bg p-4 mb-4">
-            <CalendarX className="h-8 w-8 text-status-error-text" />
+          <div className="rounded-full bg-status-error-bg p-3 mb-4">
+            <CalendarX className="h-5 w-5 text-status-error-text" />
           </div>
-          <h2 className="text-xl font-medium text-text-primary mb-2">Noe gikk galt</h2>
+          <h2 className="text-sm font-medium text-text-primary mb-2">Noe gikk galt</h2>
           <p className="text-text-secondary mb-6 max-w-md">{error}</p>
           <Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>
         </div>
-      </StudentDashboardLayout>
+      </>
     );
   }
 
   return (
-    <StudentDashboardLayout>
-      
+    <>
       {/* Welcome / Header */}
       <div className="mb-8">
-        <h1 className="tracking-tight text-2xl font-medium text-text-primary">
+        <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
           Mine kurs
         </h1>
         <p className="text-text-secondary mt-1">
@@ -140,22 +138,37 @@ const StudentDashboardPage = () => {
                 />
               ))}
             </div>
-          ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="relative z-10">
-                <div className="rounded-full bg-zinc-100 p-4 mb-4 mx-auto inline-flex">
-                  <CalendarX className="h-8 w-8 text-text-tertiary" />
+          ) : (() => {
+            // Detect first visit: user created less than 5 minutes ago
+            const isNewUser = user?.created_at
+              ? (Date.now() - new Date(user.created_at).getTime()) < 5 * 60 * 1000
+              : false;
+
+            return (
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
+                <div>
+                  <div className="rounded-full bg-zinc-100 p-3 mb-4 mx-auto inline-flex">
+                    {isNewUser ? (
+                      <Search className="h-5 w-5 text-text-tertiary" />
+                    ) : (
+                      <CalendarX className="h-5 w-5 text-text-tertiary" />
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium text-text-primary mb-1">
+                    {isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
+                  </h3>
+                  <p className="text-sm text-text-secondary mb-6 max-w-xs">
+                    {isNewUser
+                      ? 'Utforsk kurs i nærheten og meld deg på.'
+                      : 'Du har ingen kommende kurs.'}
+                  </p>
+                  <Button onClick={() => window.open('/', '_self')} variant="default">
+                    {isNewUser ? 'Utforsk kurs' : 'Finn kurs'}
+                  </Button>
                 </div>
-                <h3 className="text-sm font-medium text-text-primary mb-1">Ingen kommende kurs</h3>
-                <p className="text-sm text-text-secondary mb-6 max-w-xs">
-                  Ingen kurs å vise.
-                </p>
-                <Button onClick={() => window.open('/', '_self')} variant="default">
-                  Finn kurs
-                </Button>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="past" className="space-y-4 focus-visible:outline-none">
@@ -170,10 +183,10 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="relative flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="relative z-10">
-                <div className="rounded-full bg-zinc-100 p-4 mb-4 mx-auto inline-flex">
-                  <Clock className="h-8 w-8 text-text-tertiary" />
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
+              <div>
+                <div className="rounded-full bg-zinc-100 p-3 mb-4 mx-auto inline-flex">
+                  <Clock className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <h3 className="text-sm font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
                 <p className="text-sm text-text-secondary max-w-xs">
@@ -185,7 +198,7 @@ const StudentDashboardPage = () => {
         </TabsContent>
       </Tabs>
 
-    </StudentDashboardLayout>
+    </>
   );
 };
 

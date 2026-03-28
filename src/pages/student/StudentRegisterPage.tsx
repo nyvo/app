@@ -9,6 +9,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS, AUTH_HINTS } from '@/lib/auth-messages'
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 
 const ROUTES = AUTH_ROUTES.student
 
@@ -103,7 +104,7 @@ const StudentRegisterPage = () => {
     <AuthLayout
       context="student"
       title="Opprett konto"
-      subtitle="Se kursene dine og meld deg på enkelt."
+      subtitle="Opprett en konto for å melde deg på kurs og holde oversikt over påmeldingene dine."
       backTo="/"
       footer={
         <p className="text-xs text-text-secondary">
@@ -114,6 +115,16 @@ const StudentRegisterPage = () => {
         </p>
       }
     >
+      <div className="w-full space-y-5">
+        <GoogleAuthButton redirectTo={`${window.location.origin}/student/dashboard`} />
+
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-zinc-200" />
+          <span className="text-xs text-text-tertiary">eller</span>
+          <div className="flex-1 h-px bg-zinc-200" />
+        </div>
+      </div>
+
       <form className="w-full space-y-5" onSubmit={handleSubmit}>
         <AuthFormField
           id="fullName"

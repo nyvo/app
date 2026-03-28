@@ -220,3 +220,41 @@ Before adding anything, ask:
 - Does it respect the user's attention?
 
 If the answer is no — remove it.
+
+---
+
+## 14. Reference Patterns (from Norwegian SaaS audit)
+
+Patterns observed across Vipps, Fiken, Linear, and Cluely that inform Ease's design decisions.
+
+### Section Titles Outside Containers
+
+All reference apps place section/group titles above their content areas, not inside card containers. Ease follows this in `CourseOverviewTab.tsx` — replicate everywhere.
+
+### Open Layouts Over Card-Heavy Layouts
+
+Fewer bordered containers. Sections separated by whitespace and subtle dividers (`border-b border-zinc-100`), not by wrapping everything in a bordered card. Cards are for distinct, self-contained content — not generic wrappers.
+
+### Subtle Dividers
+
+Replace bordered mini-cards in lists with simple `border-b border-zinc-100` row dividers. Cleaner, less visual noise.
+
+### What Works Well (Do Not Change)
+
+- Zinc color palette — correct for Norwegian SaaS
+- Geist Sans — clean, modern, appropriate
+- Shadowless hierarchy — borders over shadows
+- Dark primary button gradient — distinctive
+- Surface emphasis (dark cards) for onboarding — used sparingly
+- Status color system — semantic colors
+- `smooth-transition` / `ios-ease` — appropriate motion
+- FilterTabs component — good pattern for view switching
+
+### Reference Apps
+
+| App | What to study |
+|-----|--------------|
+| Vipps | Modular cards, warmth, accessibility-first |
+| Fiken | Task-oriented dashboard, minimal card styling, section titles above content |
+| Linear | Open layouts, warm grays, tight letter-spacing, 8px spacing grid |
+| Cluely | Subtle dividers, tight letter-spacing, escalating border-radius |

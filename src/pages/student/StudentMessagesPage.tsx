@@ -5,7 +5,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { StudentDashboardLayout } from '@/components/student/StudentDashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -112,7 +111,7 @@ const StudentMessagesPage = () => {
   };
 
   return (
-    <StudentDashboardLayout>
+    <>
       <div className="mb-6">
         <h1 className="tracking-tight text-2xl font-medium text-text-primary">Meldinger</h1>
         <p className="text-text-secondary mt-1">Kommuniser med instruktørene dine</p>
@@ -301,7 +300,7 @@ const StudentMessagesPage = () => {
           )}
         </div>
       </div>
-    </StudentDashboardLayout>
+    </>
   );
 };
 

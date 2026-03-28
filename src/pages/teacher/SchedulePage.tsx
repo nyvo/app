@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, CalendarPlus, Users, CalendarDays } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -543,8 +541,6 @@ export const SchedulePage = () => {
   const goToCurrentWeek = () => setWeekOffset(0);
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
       <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
           <MobileTeacherHeader title="Timeplan" />
 
@@ -744,9 +740,8 @@ export const SchedulePage = () => {
             </div>
           </div>
           )}
-        </main>
       <EmptyStateToggle />
-    </SidebarProvider>
+    </main>
   );
 };
 

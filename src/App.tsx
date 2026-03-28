@@ -6,6 +6,10 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageLoader } from './components/ui/page-loader';
 
+// Persistent layouts (no lazy — always mounted)
+import TeacherLayout from './layouts/TeacherLayout';
+import StudentLayout from './layouts/StudentLayout';
+
 // Lazy load all route components for code splitting
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
@@ -62,26 +66,32 @@ const App = () => {
             <Route path="/studio/:slug" element={<PublicCoursesPage />} />
             <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
 
-            {/* Teacher Routes (Protected) */}
-            <Route path="/teacher" element={<ProtectedRoute requiredUserType="teacher"><TeacherDashboard /></ProtectedRoute>} />
-            <Route path="/teacher/courses" element={<ProtectedRoute requiredUserType="teacher"><CoursesPage /></ProtectedRoute>} />
-            <Route path="/teacher/courses/:id" element={<ProtectedRoute requiredUserType="teacher"><CourseDetailPage /></ProtectedRoute>} />
-            <Route path="/teacher/schedule" element={<ProtectedRoute requiredUserType="teacher"><SchedulePage /></ProtectedRoute>} />
-            <Route path="/teacher/signups" element={<ProtectedRoute requiredUserType="teacher"><SignupsPage /></ProtectedRoute>} />
-            <Route path="/teacher/messages" element={<ProtectedRoute requiredUserType="teacher"><MessagesPage /></ProtectedRoute>} />
-            <Route path="/teacher/new-course" element={<ProtectedRoute requiredUserType="teacher"><CreateCoursePage /></ProtectedRoute>} />
-            <Route path="/teacher/profile" element={<ProtectedRoute requiredUserType="teacher"><TeacherProfilePage /></ProtectedRoute>} />
+            {/* Teacher Routes (Protected, persistent sidebar layout) */}
+            <Route path="/teacher" element={<TeacherLayout />}>
+              <Route index element={<TeacherDashboard />} />
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="courses/:id" element={<CourseDetailPage />} />
+              <Route path="schedule" element={<SchedulePage />} />
+              <Route path="signups" element={<SignupsPage />} />
+              <Route path="messages" element={<MessagesPage />} />
+              <Route path="new-course" element={<CreateCoursePage />} />
+              <Route path="profile" element={<TeacherProfilePage />} />
+            </Route>
             <Route path="/teacher/stripe-callback" element={<ProtectedRoute requiredUserType="teacher"><StripeCallbackPage /></ProtectedRoute>} />
 
-            {/* Student Routes */}
+            {/* Student Auth Routes (public) */}
             <Route path="/student/login" element={<StudentLoginPage />} />
             <Route path="/student/register" element={<StudentRegisterPage />} />
             <Route path="/student/forgot-password" element={<StudentForgotPasswordPage />} />
             <Route path="/student/reset-password" element={<StudentResetPasswordPage />} />
             <Route path="/student/confirm-email" element={<StudentConfirmEmailPage />} />
-            <Route path="/student/dashboard" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentDashboardPage /></ProtectedRoute>} />
-            <Route path="/student/profile" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentProfilePage /></ProtectedRoute>} />
-            <Route path="/student/messages" element={<ProtectedRoute requireOrganization={false} requiredUserType="student"><StudentMessagesPage /></ProtectedRoute>} />
+
+            {/* Student Routes (Protected, persistent header layout) */}
+            <Route path="/student" element={<StudentLayout />}>
+              <Route path="dashboard" element={<StudentDashboardPage />} />
+              <Route path="profile" element={<StudentProfilePage />} />
+              <Route path="messages" element={<StudentMessagesPage />} />
+            </Route>
 
             {/* 404 Catch-all */}
             <Route path="*" element={<NotFoundPage />} />

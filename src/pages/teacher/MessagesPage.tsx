@@ -15,9 +15,7 @@ import {
 } from 'lucide-react';
 import { SectionLoader } from '@/components/ui/section-loader';
 import { Spinner } from '@/components/ui/spinner';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -276,9 +274,6 @@ const MessagesPage = () => {
 
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
-
       <main className="flex-1 flex flex-col h-dvh overflow-hidden bg-surface">
         <MobileTeacherHeader title="Meldinger" />
 
@@ -705,7 +700,6 @@ const MessagesPage = () => {
           </div>
         </motion.div>
       </main>
-    </SidebarProvider>
   );
 };
 

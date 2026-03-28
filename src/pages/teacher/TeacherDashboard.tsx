@@ -3,14 +3,13 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, FileText, X } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, FileText, X, Check } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
 import { SetupChecklist } from '@/components/teacher/SetupChecklist';
+import { WelcomeFlow, useWelcomeFlow } from '@/components/teacher/WelcomeFlow';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
@@ -21,6 +20,7 @@ import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
+import { updateOrganization } from '@/services/organizations';
 import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
@@ -241,12 +241,48 @@ const TeacherDashboard = () => {
     window.location.href = data.url;
   }, [currentOrganization?.id]);
 
+  // Share studio handler
+  const handleShareStudio = useCallback(async () => {
+    if (!currentOrganization?.id || !currentOrganization?.slug) return;
+    const url = `${window.location.origin}/studio/${currentOrganization.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      // Mark as shared in database if not already
+      if (!currentOrganization.studio_shared_at) {
+        await updateOrganization(currentOrganization.id, {
+          studio_shared_at: new Date().toISOString(),
+        });
+        await refreshOrganizations();
+      }
+      toast.success('Lenke kopiert');
+    } catch {
+      toast.error('Kunne ikke kopiere lenken');
+    }
+  }, [currentOrganization?.id, currentOrganization?.slug, currentOrganization?.studio_shared_at, refreshOrganizations]);
+
   // Setup progress
   const { steps, completedCount, totalCount, isSetupComplete } = useSetupProgress({
     currentOrganization,
+    profile,
     hasCourses,
     onConnectStripe: handleConnectStripe,
+    onShareStudio: handleShareStudio,
   });
+
+  // Welcome flow (first-time signup)
+  const { isOpen: showWelcome, dismiss: dismissWelcome } = useWelcomeFlow();
+
+  // "All done" celebration state — show briefly when setup just completed
+  const [showSetupComplete, setShowSetupComplete] = useState(false);
+  const prevSetupCompleteRef = useRef(isSetupComplete);
+  useEffect(() => {
+    if (isSetupComplete && !prevSetupCompleteRef.current) {
+      setShowSetupComplete(true);
+      const timer = setTimeout(() => setShowSetupComplete(false), 4000);
+      return () => clearTimeout(timer);
+    }
+    prevSetupCompleteRef.current = isSetupComplete;
+  }, [isSetupComplete]);
 
   // Stripe auto-check (self-heal for missed callbacks)
   useEffect(() => {
@@ -428,10 +464,8 @@ const TeacherDashboard = () => {
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
-
       <main className="flex-1 overflow-y-auto bg-surface h-screen">
+          <WelcomeFlow isOpen={showWelcome} onDismiss={dismissWelcome} />
           <MobileTeacherHeader title="Oversikt" />
 
           <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
@@ -508,10 +542,22 @@ const TeacherDashboard = () => {
                     Prøv på nytt
                   </Button>
                 </div>
-              ) : !isSetupComplete ? (
+              ) : (!isSetupComplete || showSetupComplete) ? (
                 // Setup incomplete — show checklist in hero position
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} loadingStepId={connectingStripe ? 'stripe' : undefined} />
+                  {showSetupComplete ? (
+                    <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                      <h2 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h2>
+                      <div className="rounded-xl bg-white border border-zinc-200 p-6 flex items-center gap-3">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
+                          <Check className="h-3.5 w-3.5" />
+                        </div>
+                        <p className="text-sm font-medium text-text-primary">Alt klart — studioet ditt er satt opp</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} loadingStepId={connectingStripe ? 'stripe' : undefined} />
+                  )}
                   <MessagesList messages={messages} />
                   <CoursesList courses={dashboardCourses} />
                   <RegistrationsList registrations={registrations} />
@@ -519,7 +565,7 @@ const TeacherDashboard = () => {
               ) : (showEmptyState || !hasCourses) ? (
                 // Empty state - no courses yet (or dev toggle active)
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  {/* Primary Action Card - Minimal Style */}
+                  {/* Primary Action Card */}
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
                   <h3 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h3>
                   <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-white border border-border">
@@ -571,7 +617,6 @@ const TeacherDashboard = () => {
           </div>
           <EmptyStateToggle />
         </main>
-    </SidebarProvider>
   );
 };
 

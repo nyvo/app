@@ -78,7 +78,22 @@
       "WebFetch(domain:support.stripe.com)",
       "WebFetch(domain:hjelp.fiken.no)",
       "WebFetch(domain:stripe.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test e2e/visual-audit.ts)",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test visual-audit)",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test --config=playwright.config.ts -g \"visual-audit\" e2e/visual-audit.ts)",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test --grep \"visual-audit\")",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test --config playwright.config.ts --test-match \"visual-audit.ts\")",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test --config /tmp/visual-audit-config.ts)",
+      "Bash(AUDIT_EMAIL=nyvo77@gmail.com AUDIT_PASSWORD=lol12345 npx playwright test --config playwright-audit.config.ts)",
+      "Bash(npx vitest:*)",
+      "Bash(find /Users/nyvo/ease/app/src -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(npx playwright:*)",
+      "Bash(npx tsx:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)",
+      "Read(//Users/nyvo/.claude/**)"
     ],
     "deny": [],
     "ask": []

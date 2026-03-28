@@ -39,6 +39,7 @@ export interface Database {
           postal_code: string | null
           stripe_account_id: string | null
           stripe_onboarding_complete: boolean | null
+          studio_shared_at: string | null
           settings: Json | null
           created_at: string | null
           updated_at: string | null
@@ -56,6 +57,7 @@ export interface Database {
           postal_code?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
+          studio_shared_at?: string | null
           settings?: Json | null
           created_at?: string | null
           updated_at?: string | null
@@ -73,6 +75,7 @@ export interface Database {
           postal_code?: string | null
           stripe_account_id?: string | null
           stripe_onboarding_complete?: boolean | null
+          studio_shared_at?: string | null
           settings?: Json | null
           created_at?: string | null
           updated_at?: string | null
@@ -86,6 +89,7 @@ export interface Database {
           avatar_url: string | null
           phone: string | null
           is_platform_admin: boolean | null
+          onboarding_completed_at: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -96,6 +100,7 @@ export interface Database {
           avatar_url?: string | null
           phone?: string | null
           is_platform_admin?: boolean | null
+          onboarding_completed_at?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -106,6 +111,7 @@ export interface Database {
           avatar_url?: string | null
           phone?: string | null
           is_platform_admin?: boolean | null
+          onboarding_completed_at?: string | null
           created_at?: string | null
           updated_at?: string | null
         }

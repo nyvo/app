@@ -59,16 +59,10 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
-## Design System (MUST READ)
+## Design System
 
-Before writing ANY UI code, read `DESIGN_SYSTEM.md` and `src/index.css` for full context on tokens, variables, and utility classes. Use the shadcn MCP tools to search for and reference existing shadcn components — prefer composing from shadcn primitives over building custom UI. Key rules enforced across the entire app:
-
-- **Typography**: Read the "Quick Reference" table and "Strict Rules" section. The most common mistakes:
-  - Using `text-lg` or `text-xl` for section/card headers (must be `text-sm font-medium`)
-  - Using `text-xs` for body text (must be `text-sm`)
-  - Using `font-semibold` (banned — use `font-medium`)
-  - Using `text-base` for body text (only for lead/marketing text)
-  - Adding `tracking-tight` to anything other than `text-2xl` page titles
-  - Using hardcoded `text-zinc-*` colors instead of `text-text-primary/secondary/tertiary`
-- **Section headers** sit ABOVE cards, not inside them (Norwegian SaaS pattern)
-- **Reference implementation**: `CourseOverviewTab.tsx` is the gold standard for card/section patterns
+Before writing ANY UI code, read `DESIGN_SYSTEM.md` for tokens, typography, and component patterns.
+- Reference implementation: `CourseOverviewTab.tsx` — the gold standard for section/card layout
+- Norwegian copy rules: `COPY_STYLE_GUIDE.md`
+- Design philosophy: `DESIGN_LANGUAGE.md`
+- Use shadcn primitives over custom UI

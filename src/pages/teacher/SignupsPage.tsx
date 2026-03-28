@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { SignupFilterDropdown, type CombinedFilter } from '@/components/teacher/SignupFilterDropdown';
 import { ErrorState } from '@/components/ui/error-state';
-import { SidebarProvider } from '@/components/ui/sidebar';
+
 import { pageVariants, pageTransition } from '@/lib/motion';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
+
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import type { SignupStatus } from '@/components/ui/status-badge';
 import type { PaymentStatus } from '@/components/ui/payment-badge';
@@ -284,8 +284,6 @@ export const SignupsPage = () => {
   }), [loadSignups]);
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
       <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
         <MobileTeacherHeader title="Påmeldinger" />
 
@@ -373,8 +371,6 @@ export const SignupsPage = () => {
           )}
         </div>
       </main>
-
-    </SidebarProvider>
   );
 };
 

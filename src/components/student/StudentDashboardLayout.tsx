@@ -27,7 +27,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-zinc-200 sticky top-0 z-50">
+      <header className="bg-white border-b border-zinc-200 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
@@ -104,11 +104,11 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
         {children}
       </main>
 
-      {/* Simple Footer */}
-      <footer className="border-t border-zinc-200 bg-white py-8 mt-auto">
+      {/* Footer */}
+      <footer className="border-t border-zinc-100 py-6 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-sm text-text-secondary">
-            Trenger du hjelp? <a href="mailto:support@ease.no" className="text-text-secondary underline hover:text-text-primary transition-colors">Kontakt oss</a>
+          <p className="text-xs text-text-tertiary">
+            Trenger du hjelp? <a href="mailto:support@ease.no" className="underline hover:text-text-secondary smooth-transition">Kontakt oss</a>
           </p>
         </div>
       </footer>

@@ -16,9 +16,7 @@ import {
   Plus,
   AlertTriangle,
 } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { createStripeConnectLink } from '@/services/stripe-connect';
@@ -488,10 +486,7 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
-
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-white">
+    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-white">
         <MobileTeacherHeader title="Opprett kurs" />
 
         {/* Header with Breadcrumbs */}
@@ -1224,8 +1219,7 @@ const CreateCoursePage = () => {
           </div>
         </footer>
 
-      </main>
-    </SidebarProvider>
+    </main>
   );
 };
 

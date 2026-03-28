@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +22,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
@@ -392,10 +390,7 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <SidebarProvider>
-      <TeacherSidebar />
-
-      <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
+    <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
         <MobileTeacherHeader title="Innstillinger" />
 
         <motion.div
@@ -844,8 +839,7 @@ const TeacherProfilePage = () => {
             )}
 
         </motion.div>
-      </main>
-    </SidebarProvider>
+    </main>
   );
 };
 
