@@ -35,25 +35,6 @@ export interface StudentSignupWithCourse extends Signup {
   }) | null
 }
 
-// Fetch all signups for a student (by user_id or participant_email)
-export async function fetchMySignups(
-  userId: string,
-  email: string
-): Promise<{ data: StudentSignupWithCourse[] | null; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('signups')
-    .select(SIGNUP_WITH_COURSE_SELECT)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
-    .neq('status', 'cancelled')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  return { data: data as unknown as StudentSignupWithCourse[], error: null }
-}
-
 // Fetch upcoming signups for a student
 export async function fetchUpcomingSignups(
   userId: string,
@@ -156,27 +137,3 @@ export async function linkGuestBookings(): Promise<{ count: number; error: Error
   return { count: (data as number) || 0, error: null }
 }
 
-// Check if student is already signed up for a course
-export async function checkIfAlreadySignedUp(
-  courseId: string,
-  userId: string,
-  email: string
-): Promise<{ isSignedUp: boolean; signupStatus: string | null; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('signups')
-    .select('status')
-    .eq('course_id', courseId)
-    .or(`user_id.eq.${userId},participant_email.eq.${email}`)
-    .neq('status', 'cancelled')
-    .maybeSingle()
-
-  if (error) {
-    return { isSignedUp: false, signupStatus: null, error: error as Error }
-  }
-
-  return {
-    isSignedUp: !!data,
-    signupStatus: (data as unknown as { status: string })?.status || null,
-    error: null
-  }
-}

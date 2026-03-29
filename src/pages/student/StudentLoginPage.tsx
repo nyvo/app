@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
@@ -16,12 +16,15 @@ const ROUTES = AUTH_ROUTES.student
 
 const StudentLoginPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signIn, user, userType } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const prefillEmail = (location.state as { email?: string } | null)?.email ?? ''
+
   const { formData, errors, touched, setErrors, setFormData, handleChange, handleBlur, validateForm } =
     useFormValidation({
-      initialValues: { email: '', password: '' },
+      initialValues: { email: prefillEmail, password: '' },
       rules: {
         email: {
           validate: (value) => {
@@ -103,7 +106,6 @@ const StudentLoginPage = () => {
       context="student"
       title="Velkommen tilbake"
       subtitle="Logg inn for å se kursene dine."
-      backTo="/"
       footer={
         <p className="text-xs text-text-secondary">
           Har du ikke konto?{' '}

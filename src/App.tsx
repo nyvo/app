@@ -77,7 +77,7 @@ const App = () => {
               <Route path="new-course" element={<CreateCoursePage />} />
               <Route path="profile" element={<TeacherProfilePage />} />
             </Route>
-            <Route path="/teacher/stripe-callback" element={<ProtectedRoute requiredUserType="teacher"><StripeCallbackPage /></ProtectedRoute>} />
+            <Route path="/teacher/stripe-callback" element={<ProtectedRoute><StripeCallbackPage /></ProtectedRoute>} />
 
             {/* Student Auth Routes (public) */}
             <Route path="/student/login" element={<StudentLoginPage />} />

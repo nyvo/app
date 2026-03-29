@@ -24,24 +24,6 @@ export function formatDuration(minutes: number | null): string {
   return `${hours}t ${remaining}min`;
 }
 
-// Format schedule string for inline display (e.g. "Mandager, 18:00")
-export function formatScheduleLabel(schedule: string | null): string {
-  if (!schedule) return 'Tid kommer';
-  return schedule;
-}
-
-// Extract day number from date string (e.g. "15")
-export function getDateDay(dateStr: string): string {
-  return new Date(dateStr).getDate().toString();
-}
-
-// Extract short month from date string (e.g. "feb")
-export function getDateMonthShort(dateStr: string): string {
-  return new Date(dateStr)
-    .toLocaleDateString('nb-NO', { month: 'short' })
-    .replace('.', '');
-}
-
 // Get the display date for an event (prefers next_session, falls back to start_date)
 export function getEventDisplayDate(
   nextSession: { session_date: string } | null,

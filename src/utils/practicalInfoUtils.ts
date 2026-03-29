@@ -1,14 +1,14 @@
 import type { PracticalInfo, AudienceLevel, EquipmentInfo } from '@/types/practicalInfo'
 
 /** Norwegian labels for audience_level enum (used on public display) */
-export const AUDIENCE_LEVEL_LABELS: Record<AudienceLevel, string> = {
+const AUDIENCE_LEVEL_LABELS: Record<AudienceLevel, string> = {
   BEGINNER: 'Passer for nybegynnere',
   ALL_LEVELS: 'Passer for alle nivåer',
   INTERMEDIATE: 'Viderekommende',
 }
 
 /** Norwegian labels for equipment enum (used on public display) */
-export const EQUIPMENT_LABELS: Record<EquipmentInfo, string> = {
+const EQUIPMENT_LABELS: Record<EquipmentInfo, string> = {
   EQUIPMENT_INCLUDED: 'Alt nødvendig utstyr er inkludert',
   BRING_OWN_MAT: 'Ta med egen matte',
   LIMITED_EQUIPMENT: 'Begrenset utstyr \u2013 ta gjerne med eget',
@@ -82,5 +82,4 @@ export function practicalInfoToHighlights(info: PracticalInfo | null | undefined
 /** Validation constants */
 export const CUSTOM_BULLET_MAX_LENGTH = 60
 export const CUSTOM_BULLETS_MAX_COUNT = 3
-export const ARRIVAL_MINUTES_MIN = 0
 export const ARRIVAL_MINUTES_MAX = 60

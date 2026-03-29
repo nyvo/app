@@ -23,21 +23,3 @@ export function getStripe(): Promise<Stripe | null> {
   return stripePromise
 }
 
-/**
- * Format amount for display (øre to kroner).
- * @param amountInOre - Amount in øre (cents)
- * @returns Formatted string like "250 kr"
- */
-export function formatPrice(amountInOre: number): string {
-  const kroner = amountInOre / 100
-  return `${kroner.toLocaleString('nb-NO')} kr`
-}
-
-/**
- * Convert kroner to øre for Stripe.
- * @param kroner - Amount in kroner
- * @returns Amount in øre (cents)
- */
-export function kronerToOre(kroner: number): number {
-  return Math.round(kroner * 100)
-}

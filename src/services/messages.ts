@@ -185,40 +185,6 @@ export async function markStudentConversationRead(
   return { error: error as Error | null }
 }
 
-// Fetch messages for a specific conversation (paginated, newest last)
-export async function fetchMessages(
-  conversationId: string,
-  options?: { limit?: number; before?: string }
-): Promise<{ data: Message[] | null; error: Error | null; hasMore: boolean }> {
-  const limit = options?.limit ?? 50
-
-  let query = supabase
-    .from('messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: false })
-    .limit(limit + 1) // Fetch one extra to detect if there are more
-
-  if (options?.before) {
-    query = query.lt('created_at', options.before)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    return { data: null, error: error as Error, hasMore: false }
-  }
-
-  const messages = (data as unknown as Message[]) || []
-  const hasMore = messages.length > limit
-  const page = hasMore ? messages.slice(0, limit) : messages
-
-  // Reverse to ascending order for display (oldest first)
-  page.reverse()
-
-  return { data: page, error: null, hasMore }
-}
-
 // Find or create a conversation with a recipient
 export async function findOrCreateConversation(
   organizationId: string,

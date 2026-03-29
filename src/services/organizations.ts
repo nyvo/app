@@ -18,23 +18,6 @@ export async function fetchOrganizationBySlug(
   return { data, error: null }
 }
 
-// Fetch organization by ID
-export async function fetchOrganizationById(
-  id: string
-): Promise<{ data: Organization | null; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('organizations')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  return { data, error: null }
-}
-
 // Update organization
 export async function updateOrganization(
   id: string,

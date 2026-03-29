@@ -154,7 +154,6 @@ const StudentResetPasswordPage = () => {
       context="student"
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
-      backTo={ROUTES.login}
       footer={
         <p className="text-xs text-text-secondary">
           Trenger du hjelp?

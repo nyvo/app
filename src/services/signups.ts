@@ -1,5 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
-import type { Signup, SignupInsert, SignupUpdate, Profile, Course, SignupStatus, PaymentStatus } from '@/types/database'
+import type { Signup, SignupInsert, Profile, Course, PaymentStatus } from '@/types/database'
 
 // Signup with joined course and profile data
 export interface SignupWithDetails extends Signup {
@@ -37,61 +37,6 @@ export async function fetchRecentSignups(
   return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
-// Fetch signups for a specific course
-export async function fetchSignupsByCourse(
-  courseId: string
-): Promise<{ data: SignupWithDetails[] | null; error: Error | null }> {
-  const { data, error } = await supabase
-    .from('signups')
-    .select(`
-      *,
-      course:courses(id, title, course_type, time_schedule, start_date),
-      profile:profiles(id, name, email, avatar_url)
-    `)
-    .eq('course_id', courseId)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  return { data: data as unknown as SignupWithDetails[], error: null }
-}
-
-// Get signup counts by status for a course using SQL counts (no row download)
-export async function fetchSignupStats(courseId: string): Promise<{
-  data: { confirmed: number; cancelled: number } | null
-  error: Error | null
-}> {
-  const [confirmedResult, cancelledResult] = await Promise.all([
-    supabase
-      .from('signups')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId)
-      .eq('status', 'confirmed'),
-    supabase
-      .from('signups')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId)
-      .in('status', ['cancelled', 'course_cancelled']),
-  ])
-
-  if (confirmedResult.error) {
-    return { data: null, error: confirmedResult.error as Error }
-  }
-  if (cancelledResult.error) {
-    return { data: null, error: cancelledResult.error as Error }
-  }
-
-  return {
-    data: {
-      confirmed: confirmedResult.count || 0,
-      cancelled: cancelledResult.count || 0,
-    },
-    error: null,
-  }
-}
-
 // ============================================
 // CRUD OPERATIONS FOR BOOKING FLOW
 // ============================================
@@ -127,53 +72,6 @@ export async function sendSignupConfirmationEmail(params: {
     // Non-blocking — don't fail the signup if email fails
     console.error('Failed to send confirmation email:', err)
   }
-}
-
-// Update a signup
-export async function updateSignup(
-  signupId: string,
-  signupData: SignupUpdate
-): Promise<{ data: Signup | null; error: Error | null }> {
-  const { data, error } = await typedFrom('signups')
-    .update(signupData)
-    .eq('id', signupId)
-    .select()
-    .single()
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  return { data: data as Signup, error: null }
-}
-
-// Valid signup status transitions
-const validTransitions: Record<SignupStatus, SignupStatus[]> = {
-  confirmed: ['cancelled', 'course_cancelled'],
-  cancelled: [],
-  course_cancelled: [],
-}
-
-// Update signup status with transition validation
-export async function updateSignupStatus(
-  signupId: string,
-  newStatus: SignupStatus,
-  currentStatus?: SignupStatus
-): Promise<{ error: Error | null }> {
-  // Validate transition if current status is known
-  if (currentStatus && !validTransitions[currentStatus]?.includes(newStatus)) {
-    return { error: new Error(`Ugyldig statusendring: ${currentStatus} → ${newStatus}`) }
-  }
-
-  const { error } = await typedFrom('signups')
-    .update({ status: newStatus })
-    .eq('id', signupId)
-
-  if (error) {
-    return { error: error as Error }
-  }
-
-  return { error: null }
 }
 
 // Fetch signups for a course with profile data (for participants tab)

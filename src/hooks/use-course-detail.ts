@@ -7,7 +7,7 @@ import type { Course, CourseSession } from '@/types/database';
 import type { PracticalInfo } from '@/types/practicalInfo';
 
 // Helper to map database course to component format
-export function mapCourseToComponentFormat(courseData: Course & { signups_count: number }) {
+function mapCourseToComponentFormat(courseData: Course & { signups_count: number }) {
   const priceNumber = courseData.price || 0;
   const estimatedRevenue = priceNumber * courseData.signups_count;
   const descriptionParts = courseData.description?.split('\n\n') || [''];

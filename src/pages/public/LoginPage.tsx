@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
@@ -14,11 +14,14 @@ const ROUTES = AUTH_ROUTES.teacher
 
 const LoginPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signIn, user, isLoading: authLoading } = useAuth()
+
+  const prefillEmail = (location.state as { email?: string } | null)?.email ?? ''
 
   const { formData, errors, touched, setFormData, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
-      initialValues: { email: '', password: '' },
+      initialValues: { email: prefillEmail, password: '' },
       rules: {
         email: {
           validate: (value) => {
@@ -84,7 +87,6 @@ const LoginPage = () => {
       context="teacher"
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
-      backTo="/"
       footer={
         <p className="text-xs text-text-secondary">
           Har du ikke konto?{' '}

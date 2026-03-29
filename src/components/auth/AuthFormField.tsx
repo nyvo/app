@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Check } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 interface AuthFormFieldProps {
@@ -7,11 +7,15 @@ interface AuthFormFieldProps {
   label: string
   type?: 'text' | 'email' | 'password'
   value: string
-  error?: string
+  error?: React.ReactNode
   touched?: boolean
   placeholder?: string
   /** Helper text shown below input when there is no error */
   hint?: string
+  /** Text shown when hintMet is true (defaults to hint value) */
+  hintMetText?: string
+  /** Whether the hint requirement has been satisfied */
+  hintMet?: boolean
   onChange: (value: string) => void
   onBlur: () => void
   /** Slot rendered inline with the label (e.g., forgot-password link) */
@@ -34,6 +38,8 @@ export function AuthFormField({
   touched,
   placeholder,
   hint,
+  hintMetText,
+  hintMet,
   onChange,
   onBlur,
   labelExtra,
@@ -86,7 +92,10 @@ export function AuthFormField({
       {hasError ? (
         <p className="text-xs text-destructive">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-text-secondary">{hint}</p>
+        <p className={`text-xs flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+          {hintMet && <Check className="w-3 h-3" />}
+          {hintMet ? (hintMetText ?? hint) : hint}
+        </p>
       ) : null}
     </div>
   )

@@ -32,11 +32,3 @@ export function extractTimeFromSchedule(
   };
 }
 
-/**
- * Determine time period for color coding (morning, afternoon, evening)
- */
-export function getTimePeriod(hour: number): 'morning' | 'afternoon' | 'evening' {
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
-}

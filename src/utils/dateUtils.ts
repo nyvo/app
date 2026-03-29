@@ -36,7 +36,7 @@ export function getMondayOfWeek(date: Date): Date {
 /**
  * Day name abbreviations in Norwegian
  */
-export const DAY_NAMES_NO = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
+const DAY_NAMES_NO = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
 
 export interface WeekDay {
   name: string;

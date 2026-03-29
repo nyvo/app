@@ -59,7 +59,16 @@ const SignupPage = () => {
 
       if (signUpError) {
         if (signUpError.message.includes('already registered')) {
-          setErrors({ email: AUTH_ERRORS.emailAlreadyRegistered })
+          setErrors({
+            email: (
+              <>
+                {AUTH_ERRORS.emailAlreadyRegistered}.{' '}
+                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-text-primary">
+                  Logg inn her
+                </Link>
+              </>
+            ),
+          })
         } else {
           setErrors({ general: signUpError.message })
         }
@@ -81,7 +90,6 @@ const SignupPage = () => {
       context="teacher"
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
-      backTo="/"
       footer={
         <p className="text-xs text-text-secondary">
           Har du allerede en konto?{' '}
@@ -122,7 +130,8 @@ const SignupPage = () => {
           error={errors.password}
           touched={touched.password}
           placeholder={AUTH_PLACEHOLDERS.password}
-          hint={formData.password.length < 8 ? AUTH_HINTS.passwordMinLength : undefined}
+          hint={AUTH_HINTS.passwordMinLength}
+          hintMet={formData.password.length >= 8}
           onChange={(v) => handleChange('password', v)}
           onBlur={() => handleBlur('password')}
         />

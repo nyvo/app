@@ -84,7 +84,16 @@ const StudentRegisterPage = () => {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          setErrors({ email: AUTH_ERRORS.emailAlreadyRegistered })
+          setErrors({
+            email: (
+              <>
+                {AUTH_ERRORS.emailAlreadyRegistered}.{' '}
+                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-text-primary">
+                  Logg inn her
+                </Link>
+              </>
+            ),
+          })
         } else {
           setErrors({ general: AUTH_ERRORS.accountNotCreated })
         }
@@ -105,7 +114,6 @@ const StudentRegisterPage = () => {
       context="student"
       title="Opprett konto"
       subtitle="Opprett en konto for å melde deg på kurs og holde oversikt over påmeldingene dine."
-      backTo="/"
       footer={
         <p className="text-xs text-text-secondary">
           Har du allerede en konto?{' '}
@@ -158,7 +166,8 @@ const StudentRegisterPage = () => {
           error={errors.password}
           touched={touched.password}
           placeholder={AUTH_PLACEHOLDERS.password}
-          hint={formData.password.length < 8 ? AUTH_HINTS.passwordMinLength : undefined}
+          hint={AUTH_HINTS.passwordMinLength}
+          hintMet={formData.password.length >= 8}
           onChange={(v) => handleChange('password', v)}
           onBlur={() => handleBlur('password')}
         />

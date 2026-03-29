@@ -86,15 +86,6 @@ const LandingPage = () => {
               <Link to="/signup">Start gratis</Link>
             </Button>
 
-            {/* Trust line */}
-            <div className="flex items-center justify-center gap-3 mt-6">
-              <div className="flex items-center gap-2 opacity-60">
-                <img src="/badges/vipps.svg" alt="Vipps" className="h-4" />
-                <img src="/badges/visa.svg" alt="Visa" className="h-4" />
-                <img src="/badges/mastercard.svg" alt="Mastercard" className="h-4" />
-              </div>
-              <span className="text-xs text-text-tertiary">Sikker betaling</span>
-            </div>
           </div>
 
           {/* Product screenshot */}

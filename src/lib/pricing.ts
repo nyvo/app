@@ -8,7 +8,7 @@
  * (supabase/functions/create-payment-intent/index.ts).
  */
 
-export const SERVICE_FEE_RATE = 0.05 // 5%
+const SERVICE_FEE_RATE = 0.05 // 5%
 
 /**
  * Calculate the service fee for a given course price.

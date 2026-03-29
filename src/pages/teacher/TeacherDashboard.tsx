@@ -9,7 +9,6 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
 import { SetupChecklist } from '@/components/teacher/SetupChecklist';
-import { WelcomeFlow, useWelcomeFlow } from '@/components/teacher/WelcomeFlow';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
@@ -186,6 +185,7 @@ const TeacherDashboard = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [messages, setMessages] = useState<DashboardMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
   const [hasCourses, setHasCourses] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
@@ -268,9 +268,6 @@ const TeacherDashboard = () => {
     onConnectStripe: handleConnectStripe,
     onShareStudio: handleShareStudio,
   });
-
-  // Welcome flow (first-time signup)
-  const { isOpen: showWelcome, dismiss: dismissWelcome } = useWelcomeFlow();
 
   // "All done" celebration state — show briefly when setup just completed
   const [showSetupComplete, setShowSetupComplete] = useState(false);
@@ -465,7 +462,6 @@ const TeacherDashboard = () => {
 
   return (
       <main className="flex-1 overflow-y-auto bg-surface h-screen">
-          <WelcomeFlow isOpen={showWelcome} onDismiss={dismissWelcome} />
           <MobileTeacherHeader title="Oversikt" />
 
           <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">

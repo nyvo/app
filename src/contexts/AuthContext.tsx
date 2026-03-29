@@ -34,6 +34,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
   resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
 
@@ -295,6 +296,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error as Error | null }
   }, [])
 
+  // Magic link — sends a one-click login link via email (no password needed)
+  const sendMagicLink = useCallback(async (email: string, redirectTo?: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo || `${window.location.origin}/teacher`,
+      },
+    })
+    return { error: error as Error | null }
+  }, [])
+
   // Reset password — redirectTo defaults to teacher reset route.
   // Student pages pass their own redirectTo for context isolation.
   const resetPassword = useCallback(async (email: string, redirectTo?: string) => {
@@ -436,6 +448,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signInWithGoogle,
     signOut,
+    sendMagicLink,
     resetPassword,
     updatePassword,
     ensureOrganization,
@@ -455,6 +468,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signInWithGoogle,
     signOut,
+    sendMagicLink,
     resetPassword,
     updatePassword,
     ensureOrganization,

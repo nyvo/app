@@ -318,23 +318,3 @@ export function useGroupedSignups(
   return { groups, filteredSignups, stats, hasActiveFilters };
 }
 
-// Exception display config
-export const EXCEPTION_CONFIG: Record<ExceptionType, {
-  label: string;
-  bgColor: string;
-  textColor: string;
-  borderColor: string;
-}> = {
-  payment_failed: {
-    label: 'Betaling feilet',
-    bgColor: 'bg-status-error-bg/30',
-    textColor: 'text-status-error-text',
-    borderColor: 'border-status-error-border',
-  },
-  pending_payment: {
-    label: 'Venter betaling',
-    bgColor: 'bg-zinc-100/50',
-    textColor: 'text-text-secondary',
-    borderColor: 'border-zinc-300',
-  },
-};

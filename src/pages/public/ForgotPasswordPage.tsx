@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,8 +14,7 @@ import { toast } from 'sonner'
 const ROUTES = AUTH_ROUTES.teacher
 
 const ForgotPasswordPage = () => {
-  const navigate = useNavigate()
-  const { resetPassword } = useAuth()
+  const { sendMagicLink } = useAuth()
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm, resetForm } =
     useFormValidation({
@@ -42,7 +41,7 @@ const ForgotPasswordPage = () => {
     setErrors({})
 
     try {
-      const { error } = await resetPassword(formData.email)
+      const { error } = await sendMagicLink(formData.email, `${window.location.origin}/teacher`)
 
       if (error) {
         if (error.message.includes('rate') || (error as { status?: number }).status === 429) {
@@ -55,7 +54,7 @@ const ForgotPasswordPage = () => {
       }
 
       toast.success('E-post sendt', {
-        description: 'Sjekk innboksen din for en lenke til tilbakestilling.',
+        description: 'Sjekk innboksen din for innloggingslenken.',
       })
       setEmailSent(true)
       setIsSubmitting(false)
@@ -71,7 +70,6 @@ const ForgotPasswordPage = () => {
       <AuthLayout
         context="teacher"
         title=""
-        backTo={undefined}
         customContent
         footer={
           <p className="text-xs text-text-secondary">
@@ -90,7 +88,7 @@ const ForgotPasswordPage = () => {
             Sjekk e-posten din
           </h1>
           <p className="text-text-secondary text-sm">
-            Vi har sendt en lenke til{' '}
+            Vi har sendt en innloggingslenke til{' '}
             <span className="font-medium text-text-primary">{formData.email}</span>
           </p>
         </div>
@@ -103,21 +101,15 @@ const ForgotPasswordPage = () => {
           </Alert>
 
           <Button
-            onClick={() => navigate(ROUTES.login)}
-            className="w-full h-11"
-          >
-            Gå til innlogging
-          </Button>
-
-          <button
             onClick={() => {
               setEmailSent(false)
               resetForm()
             }}
-            className="w-full text-sm text-text-secondary hover:text-text-primary transition-colors"
+            variant="outline"
+            className="w-full h-11"
           >
             Send på nytt
-          </button>
+          </Button>
         </div>
       </AuthLayout>
     )
@@ -128,8 +120,7 @@ const ForgotPasswordPage = () => {
     <AuthLayout
       context="teacher"
       title="Glemt passord?"
-      subtitle="Skriv inn e-posten din, så sender vi en lenke."
-      backTo={ROUTES.login}
+      subtitle="Skriv inn e-posten din, så sender vi en innloggingslenke."
       footer={
         <p className="text-xs text-text-secondary">
           Husker du passordet ditt?{' '}

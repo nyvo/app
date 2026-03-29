@@ -32,7 +32,7 @@ export const AUTH_ERRORS = {
 // --- Placeholders ---
 export const AUTH_PLACEHOLDERS = {
   email: 'navn@eksempel.no',
-  password: '••••••••',
+  password: 'Skriv inn passord',
   passwordMin: 'Minst 8 tegn',
   confirmPassword: 'Gjenta passordet',
   studioName: 'F.eks. Yoga med Ola',

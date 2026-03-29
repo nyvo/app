@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Infinity, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Infinity } from 'lucide-react'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import type { AuthContext } from '@/lib/auth-routes'
@@ -11,8 +10,6 @@ interface AuthLayoutProps {
   context: AuthContext
   title: string
   subtitle?: string
-  /** Back button destination. Must match context system. */
-  backTo?: string
   /** Footer content slot */
   footer?: React.ReactNode
   /** Replace the default heading + motion wrapper with a custom content block */
@@ -31,7 +28,6 @@ export function AuthLayout({
   context,
   title,
   subtitle,
-  backTo,
   footer,
   customContent,
   children,
@@ -44,24 +40,8 @@ export function AuthLayout({
       isStudent ? "bg-surface" : "bg-surface"
     )}>
       {/* Header */}
-      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
-        <div className="w-24">
-          {backTo ? (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              className="text-text-secondary hover:text-text-primary"
-              asChild
-            >
-              <Link to={backTo}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Tilbake
-              </Link>
-            </Button>
-          ) : null}
-        </div>
-
-        <Link to="/" className="flex items-center gap-2 select-none">
+      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
+        <Link to="/" className="flex items-center gap-2 select-none mx-auto">
           <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
             <Infinity className="w-3.5 h-3.5" />
           </div>
@@ -69,8 +49,6 @@ export function AuthLayout({
             Ease
           </span>
         </Link>
-
-        <div className="w-24" />
       </header>
 
       {/* Main Content */}

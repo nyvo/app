@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { type ReactNode, useState, useCallback } from 'react'
 
 export interface FieldRule<T> {
   validate: (value: string, formData: T) => string | undefined
@@ -15,7 +15,7 @@ export function useFormValidation<T extends Record<string, unknown>>(
   const { initialValues, rules } = config
 
   const [formData, setFormData] = useState<T>(initialValues)
-  const [errors, setErrors] = useState<Partial<Record<keyof T | 'general', string>>>({})
+  const [errors, setErrors] = useState<Partial<Record<keyof T | 'general', ReactNode>>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const validateField = useCallback(
@@ -64,7 +64,7 @@ export function useFormValidation<T extends Record<string, unknown>>(
   )
 
   const validateForm = useCallback(() => {
-    const newErrors: Partial<Record<keyof T | 'general', string>> = {}
+    const newErrors: Partial<Record<keyof T | 'general', ReactNode>> = {}
     const allTouched: Record<string, boolean> = {}
 
     for (const field of Object.keys(rules) as Array<keyof T>) {

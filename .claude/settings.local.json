@@ -93,7 +93,21 @@
       "Bash(npx tsx:*)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)",
-      "Read(//Users/nyvo/.claude/**)"
+      "Read(//Users/nyvo/.claude/**)",
+      "Bash(git clone:*)",
+      "Read(//private/tmp/ecc/agents/**)",
+      "Read(//private/tmp/ecc/rules/common/**)",
+      "Read(//private/tmp/ecc/rules/typescript/**)",
+      "Read(//private/tmp/ecc/commands/**)",
+      "Read(//private/tmp/ecc/skills/**)",
+      "Bash(npx knip:*)",
+      "Bash(npx depcheck:*)",
+      "Bash(python3 -m json.tool)",
+      "WebFetch(domain:data.brreg.no)",
+      "Bash(vercel --version)",
+      "Bash(npx vercel:*)",
+      "Bash(vercel --yes)",
+      "Bash(vercel --prod --yes)"
     ],
     "deny": [],
     "ask": []

@@ -39,20 +39,6 @@ interface SessionWithFullCourseJoin {
   course: Course
 }
 
-// Check if organization has ever created a course (for onboarding detection)
-export async function hasEverCreatedCourse(organizationId: string): Promise<{ data: boolean; error: Error | null }> {
-  const { count, error } = await supabase
-    .from('courses')
-    .select('*', { count: 'exact', head: true })
-    .eq('organization_id', organizationId)
-
-  if (error) {
-    return { data: false, error: error as Error }
-  }
-
-  return { data: (count || 0) > 0, error: null }
-}
-
 // Pagination options for course queries
 export interface PaginationOptions {
   limit?: number
@@ -149,7 +135,7 @@ export interface ScheduleConflict {
 }
 
 // Check for schedule conflicts before creating a course
-export async function checkScheduleConflicts(
+async function checkScheduleConflicts(
   organizationId: string,
   plannedSessions: { date: string; startTime: string; duration: number }[]
 ): Promise<{ conflicts: ScheduleConflict[]; error: Error | null }> {
@@ -233,82 +219,6 @@ export async function checkScheduleConflicts(
   }
 
   return { conflicts, error: null }
-}
-
-// Booked time slot info for time picker
-export interface BookedTimeSlot {
-  startTime: string  // HH:MM format
-  endTime: string    // HH:MM format
-  courseTitle: string
-  courseId: string
-}
-
-// Fetch booked time slots for a specific date (for time picker availability)
-export async function fetchBookedTimesForDate(
-  organizationId: string,
-  date: string, // YYYY-MM-DD format
-  excludeCourseId?: string // Optional: exclude this course from results (for editing existing courses)
-): Promise<{ data: BookedTimeSlot[] | null; error: Error | null }> {
-  // Query sessions for this date with course data, filtered by organization in the DB
-  const { data: sessions, error } = await typedFrom('course_sessions')
-    .select(`
-      id,
-      session_date,
-      start_time,
-      status,
-      course:courses!inner(
-        id,
-        title,
-        organization_id,
-        duration,
-        status
-      )
-    `)
-    .eq('session_date', date)
-    .eq('course.organization_id', organizationId)
-    .neq('course.status', 'cancelled')
-    .neq('status', 'cancelled')
-
-  if (error) {
-    return { data: null, error: error as Error }
-  }
-
-  if (!sessions || sessions.length === 0) {
-    return { data: [], error: null }
-  }
-
-  // Filter and map sessions to booked time slots
-  const bookedSlots: BookedTimeSlot[] = []
-  const typedSessions = sessions as unknown as SessionWithCourseJoin[]
-
-  for (const session of typedSessions) {
-    const course = session.course
-
-    // Skip if no course data
-    if (!course) continue
-    // Skip if this is the course we're excluding (editing)
-    if (excludeCourseId && course.id === excludeCourseId) continue
-
-    const startMinutes = timeToMinutes(session.start_time || '')
-    const duration = course.duration > 0 ? course.duration : 60
-    const endMinutes = startMinutes + duration
-
-    // Format times to HH:MM
-    const formatTime = (mins: number) => {
-      const h = Math.floor(mins / 60)
-      const m = mins % 60
-      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-    }
-
-    bookedSlots.push({
-      startTime: (session.start_time || '').slice(0, 5), // Strip seconds if present
-      endTime: formatTime(endMinutes),
-      courseTitle: course.title,
-      courseId: course.id
-    })
-  }
-
-  return { data: bookedSlots, error: null }
 }
 
 // Helper to convert time string to minutes since midnight
@@ -522,20 +432,6 @@ export async function updateCourse(courseId: string, courseData: CourseUpdate): 
   }
 
   return { data: data as Course, error: null }
-}
-
-// Delete a course and its dependent records using a transaction via RPC
-export async function deleteCourse(courseId: string): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.rpc as any)('delete_course_cascade', {
-    p_course_id: courseId
-  })
-
-  if (error) {
-    return { error: error as Error }
-  }
-
-  return { error: null }
 }
 
 // Cancel course result
@@ -770,147 +666,4 @@ export interface SessionScheduleRow {
   totalWeeks?: number | null
 }
 
-// Fetch upcoming sessions for the teacher schedule table view
-export async function fetchScheduleSessions(organizationId: string): Promise<{
-  data: SessionScheduleRow[] | null
-  error: Error | null
-}> {
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-
-  const { data: sessionsData, error: sessionsError } = await supabase
-    .from('course_sessions')
-    .select(`
-      *,
-      course:courses!inner(
-        *
-      )
-    `)
-    .eq('course.organization_id', organizationId)
-    .neq('course.status', 'cancelled')
-    .neq('course.status', 'completed')
-    .gte('session_date', todayStr)
-    .eq('status', 'upcoming')
-    .order('session_date', { ascending: true })
-    .order('start_time', { ascending: true })
-
-  if (sessionsError) {
-    return { data: null, error: sessionsError as Error }
-  }
-
-  if (!sessionsData || sessionsData.length === 0) {
-    return { data: [], error: null }
-  }
-
-  const typedResults = sessionsData as unknown as SessionWithFullCourseJoin[]
-
-  // Collect unique course IDs for signup counts
-  const courseIds = [...new Set(typedResults.map(s => s.course.id))]
-
-  // Fetch signup counts per course
-  const { data: signupsData } = await typedFrom('signups')
-    .select('course_id')
-    .in('course_id', courseIds)
-    .eq('status', 'confirmed')
-
-  const signupsCounts: Record<string, number> = {}
-  ;(signupsData as { course_id: string }[] | null)?.forEach(s => {
-    signupsCounts[s.course_id] = (signupsCounts[s.course_id] || 0) + 1
-  })
-
-  // Map to SessionScheduleRow
-  const rows: SessionScheduleRow[] = typedResults.map(session => {
-    const course = session.course as Course
-    const startTime = (session.start_time || '').slice(0, 5)
-    let endTime = session.end_time?.slice(0, 5) || ''
-
-    // Calculate end_time from duration if missing
-    if (!endTime && course.duration) {
-      const startMinutes = timeToMinutes(startTime)
-      const endMinutes = startMinutes + course.duration
-      const h = Math.floor(endMinutes / 60)
-      const m = endMinutes % 60
-      endTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-    }
-
-    return {
-      sessionId: session.id,
-      courseId: course.id,
-      courseTitle: course.title,
-      courseType: course.course_type as 'course-series' | 'event' | 'online',
-      sessionDate: session.session_date,
-      startTime,
-      endTime,
-      location: course.location || '',
-      price: course.price,
-      signupsCount: signupsCounts[course.id] || 0,
-      maxParticipants: course.max_participants,
-      courseStatus: course.status,
-      courseStartDate: course.start_date,
-    }
-  })
-
-  return { data: rows, error: null }
-}
-
-// Generate sessions for an existing course (useful for updating week count)
-export async function generateCourseSessions(
-  courseId: string,
-  startDate: string,
-  weekCount: number,
-  startTime: string
-): Promise<{ error: Error | null }> {
-  // Fetch existing sessions first so we can restore on failure
-  const { data: existingSessions } = await typedFrom('course_sessions')
-    .select('*')
-    .eq('course_id', courseId)
-
-  // Delete existing sessions
-  const { error: deleteError } = await typedFrom('course_sessions')
-    .delete()
-    .eq('course_id', courseId)
-
-  if (deleteError) {
-    return { error: deleteError as Error }
-  }
-
-  // Generate new sessions
-  const sessions: CourseSessionInsert[] = []
-  const baseDate = new Date(startDate + 'T12:00:00') // noon avoids timezone drift
-
-  for (let i = 0; i < weekCount; i++) {
-    const sessionDate = new Date(baseDate)
-    sessionDate.setDate(baseDate.getDate() + (i * 7))
-    sessions.push({
-      course_id: courseId,
-      session_number: i + 1,
-      session_date: formatLocalDate(sessionDate),
-      start_time: startTime,
-      status: 'upcoming',
-    })
-  }
-
-  const { error } = await typedFrom('course_sessions').insert(sessions)
-
-  if (error) {
-    // Rollback: re-insert the original sessions so the course isn't left empty
-    if (existingSessions && existingSessions.length > 0) {
-      const rollbackSessions = (existingSessions as CourseSession[]).map(s => ({
-        course_id: s.course_id,
-        session_number: s.session_number,
-        session_date: s.session_date,
-        start_time: s.start_time,
-        end_time: s.end_time,
-        status: s.status,
-        notes: s.notes,
-      }))
-      await typedFrom('course_sessions').insert(rollbackSessions).catch((rollbackErr: unknown) => {
-        logger.error('CRITICAL: Rollback of course sessions failed:', rollbackErr)
-      })
-    }
-    return { error: error as Error }
-  }
-
-  return { error: null }
-}
 

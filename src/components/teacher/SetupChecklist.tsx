@@ -20,7 +20,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
         <div className="mb-6">
           <div className="flex items-baseline justify-between mb-3">
             <p className="text-sm font-medium text-text-primary">
-              Sett opp studioet ditt
+              Sett opp kontoen din
             </p>
             <p className="text-xs text-text-tertiary">
               {completedCount} av {totalCount}
