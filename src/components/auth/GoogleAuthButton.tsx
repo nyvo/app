@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface GoogleAuthButtonProps {
   redirectTo?: string
@@ -11,11 +12,39 @@ export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: 
   const { signInWithGoogle } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
+  // Reset loading when user navigates back (browser restores cached page state)
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setIsLoading(false)
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
+  // Detect OAuth error in URL hash when redirected back from provider
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('error_description=')) {
+      const params = new URLSearchParams(hash.replace('#', ''))
+      const errorDesc = params.get('error_description')
+      if (errorDesc) {
+        toast.error('Innlogging feilet', {
+          description: errorDesc.replace(/\+/g, ' '),
+        })
+        // Clean up the hash
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+    }
+  }, [])
+
   const handleClick = async () => {
     setIsLoading(true)
     const { error } = await signInWithGoogle(redirectTo)
     if (error) {
       setIsLoading(false)
+      toast.error('Kunne ikke starte Google-innlogging')
     }
     // On success, browser redirects to Google — no need to reset loading
   }
