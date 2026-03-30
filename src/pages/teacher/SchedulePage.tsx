@@ -7,6 +7,7 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { EmptyState } from '@/components/ui/empty-state';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import {
@@ -540,6 +541,9 @@ export const SchedulePage = () => {
   const goToNextWeek = () => setWeekOffset(prev => Math.min(prev + 1, 52));
   const goToCurrentWeek = () => setWeekOffset(0);
 
+  // True empty: no courses at all (or forced empty state)
+  const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
+
   return (
       <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
           <MobileTeacherHeader title="Timeplan" />
@@ -555,59 +559,82 @@ export const SchedulePage = () => {
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
               <div className="flex items-center gap-3">
                 <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Timeplan</h1>
-                <div className="h-4 w-px bg-border"></div>
-                <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToPreviousWeek}
-                  className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
-                  aria-label="Forrige uke"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-text-primary min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={goToNextWeek}
-                  className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
-                  aria-label="Neste uke"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                </div>
-{weekOffset !== 0 && (
-                <Button
-                  onClick={goToCurrentWeek}
-                  variant="outline"
-                  size="sm"
-                  className="hidden md:flex ml-2 h-7 text-text-secondary"
-                >
-                  Gå til i dag
-                </Button>
+                {!isFullyEmpty && (
+                  <>
+                    <div className="h-4 w-px bg-border"></div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={goToPreviousWeek}
+                      className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                      aria-label="Forrige uke"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-text-primary min-w-[80px] text-center">Uke {displayedWeekNumber}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={goToNextWeek}
+                      className="rounded-lg hover:bg-surface-elevated hover:text-text-primary transition-colors"
+                      aria-label="Neste uke"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    </div>
+                    {weekOffset !== 0 && (
+                    <Button
+                      onClick={goToCurrentWeek}
+                      variant="outline"
+                      size="sm"
+                      className="hidden md:flex ml-2 h-7 text-text-secondary"
+                    >
+                      Gå til i dag
+                    </Button>
+                    )}
+                  </>
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button
-                  asChild
-                  size="compact"
-                  className="gap-2"
-                >
-                  <Link to="/teacher/new-course" aria-label="Nytt kurs">
-                    <CalendarPlus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Nytt kurs</span>
-                  </Link>
-                </Button>
-              </div>
+              {!isFullyEmpty && (
+                <div className="flex items-center gap-3">
+                  <Button
+                    asChild
+                    size="compact"
+                    className="gap-2"
+                  >
+                    <Link to="/teacher/new-course" aria-label="Nytt kurs">
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Nytt kurs</span>
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Filters - placeholder removed per progressive disclosure principle */}
           </motion.header>
 
-          {/* Mobile View */}
-          {isMobile ? (
+          {/* Full empty state — no courses at all */}
+          {isFullyEmpty ? (
+            <div className="flex-1 flex items-center justify-center">
+              <EmptyState
+                icon={CalendarDays}
+                title="Ingen kurs ennå"
+                description="Opprett et kurs for å komme i gang."
+                action={
+                  <Button asChild size="compact" className="gap-2">
+                    <Link to="/teacher/new-course">
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                      Opprett nytt kurs
+                    </Link>
+                  </Button>
+                }
+              />
+            </div>
+          ) : isMobile ? (
+          /* Mobile View */
             <MobileDayView
               weekDays={weekDays}
               selectedDayIndex={selectedDayIndex}
@@ -616,7 +643,7 @@ export const SchedulePage = () => {
               isLoading={isLoading}
               error={error}
               onRetry={loadScheduleData}
-              showEmptyState={showEmptyState}
+              showEmptyState={false}
               hasEventsThisWeek={hasEventsThisWeek}
               courses={courses}
             />
@@ -647,8 +674,8 @@ export const SchedulePage = () => {
               </div>
             )}
 
-            {/* Empty State — clean, no grid */}
-            {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
+            {/* Empty week state — has courses but no events this week */}
+            {!isLoading && !error && !hasEventsThisWeek && (
               <div className="flex-1 flex flex-col items-center pt-[20vh]">
                 <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
                   <CalendarDays className="w-4 h-4 text-text-secondary" />
@@ -657,16 +684,8 @@ export const SchedulePage = () => {
                   Ingen timer denne uken
                 </h3>
                 <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
-                  {courses.length === 0
-                    ? 'Opprett et kurs for å komme i gang.'
-                    : 'Ingen planlagte timer denne uken.'}
+                  Ingen planlagte timer denne uken. Naviger til en annen uke for å se timeplanen.
                 </p>
-                <Button asChild size="compact" className="gap-2 mt-6">
-                  <Link to="/teacher/new-course">
-                    <CalendarPlus className="h-3.5 w-3.5" />
-                    Opprett nytt kurs
-                  </Link>
-                </Button>
               </div>
             )}
 

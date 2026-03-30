@@ -107,7 +107,10 @@
       "Bash(vercel --version)",
       "Bash(npx vercel:*)",
       "Bash(vercel --yes)",
-      "Bash(vercel --prod --yes)"
+      "Bash(vercel --prod --yes)",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(git -c core.editor=true rebase --continue)"
     ],
     "deny": [],
     "ask": []
