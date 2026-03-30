@@ -154,7 +154,7 @@ export function ImageUpload({
               </Button>
               <Button
                 type="button"
-                variant="destructive"
+                variant="destructive-outline"
                 size="sm"
                 onClick={handleRemove}
                 disabled={disabled}

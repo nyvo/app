@@ -873,9 +873,8 @@ const CourseDetailPage = () => {
           <AlertDialogFooter className="border-t border-zinc-200 bg-white p-6 flex-row justify-end gap-3 sm:space-x-0">
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
-              variant="outline-soft"
+              variant="destructive-outline"
               size="sm"
-              className="bg-status-error-bg border-status-error-border text-status-error-text hover:bg-status-error-bg/80"
               onClick={(e) => {
                 e.preventDefault();
                 handleDeleteCourse();

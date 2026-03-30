@@ -13,6 +13,8 @@ const buttonVariants = cva(
         default: "relative bg-gradient-to-b from-zinc-800 to-zinc-950 text-white border border-zinc-700/70 ring-1 ring-black/5 hover:from-zinc-700 hover:to-zinc-900 hover:border-zinc-600/80 after:absolute after:inset-0 after:rounded-[inherit] after:ring-1 after:ring-white/10 after:pointer-events-none [&_svg]:opacity-70",
         destructive:
           "bg-destructive text-white border border-destructive/80 hover:bg-destructive/90",
+        "destructive-outline":
+          "border border-destructive/30 bg-white text-destructive hover:bg-destructive/5 hover:border-destructive/50",
         outline:
           "border border-zinc-200 bg-white text-text-primary hover:bg-zinc-50",
         "outline-soft":
