@@ -7,7 +7,6 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { EmptyState } from '@/components/ui/empty-state';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import {
@@ -618,20 +617,22 @@ export const SchedulePage = () => {
 
           {/* Full empty state — no courses at all */}
           {isFullyEmpty ? (
-            <div className="flex-1 flex items-center justify-center">
-              <EmptyState
-                icon={CalendarDays}
-                title="Ingen kurs ennå"
-                description="Opprett et kurs for å komme i gang."
-                action={
-                  <Button asChild size="compact" className="gap-2">
-                    <Link to="/teacher/new-course">
-                      <CalendarPlus className="h-3.5 w-3.5" />
-                      Opprett nytt kurs
-                    </Link>
-                  </Button>
-                }
-              />
+            <div className="flex flex-col items-center pt-[20vh]">
+              <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
+                <CalendarDays className="w-4 h-4 text-text-secondary" />
+              </div>
+              <h2 className="font-geist text-sm font-medium text-text-primary">
+                Ingen kurs ennå
+              </h2>
+              <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
+                Opprett et kurs for å komme i gang.
+              </p>
+              <Button asChild size="default" className="gap-2 mt-6">
+                <Link to="/teacher/new-course">
+                  <CalendarPlus className="h-4 w-4" />
+                  Opprett nytt kurs
+                </Link>
+              </Button>
             </div>
           ) : isMobile ? (
           /* Mobile View */
