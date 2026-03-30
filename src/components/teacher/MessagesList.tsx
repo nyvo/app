@@ -10,17 +10,17 @@ interface MessagesListProps {
 
 export const MessagesList = memo(function MessagesList({ messages }: MessagesListProps) {
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-2">
+    <div className="col-span-1 md:col-span-3 lg:col-span-2 flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-text-primary">Meldinger</h3>
         <Link to="/teacher/messages" className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors">Se alle</Link>
       </div>
-      <div className="h-[280px] sm:h-[360px] rounded-xl bg-white border border-zinc-200 overflow-hidden flex flex-col">
+      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden flex flex-col flex-1 min-h-[280px]">
       <div className="flex-1 overflow-y-auto px-2 py-3 divide-y divide-zinc-100 flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-10 h-10 bg-surface-elevated rounded-xl flex items-center justify-center mb-3">
-              <MessageSquare className="w-4 h-4 text-text-tertiary" />
+            <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
+              <MessageSquare className="w-4 h-4 text-text-secondary" />
             </div>
             <p className="text-sm font-medium text-text-primary">Alt oppdatert</p>
             <p className="text-xs text-text-secondary mt-1">Ingen nye henvendelser fra elever.</p>

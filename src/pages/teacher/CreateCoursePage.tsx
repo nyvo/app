@@ -567,7 +567,7 @@ const CreateCoursePage = () => {
                 courseTypeLabel={reviewLabels.courseTypeLabel}
                 title={title.trim() || 'Ikke angitt'}
                 description={description}
-                hasCoverImage={!!imageFile}
+                imageFile={imageFile}
                 startDateLabel={reviewLabels.startDateLabel}
                 timeAndDurationLabel={reviewLabels.timeAndDurationLabel}
                 weeksLabel={reviewLabels.weeksLabel}
@@ -575,6 +575,10 @@ const CreateCoursePage = () => {
                 capacityLabel={reviewLabels.capacityLabel}
                 priceLabel={reviewLabels.priceLabel}
                 practicalInfoLabel={reviewLabels.practicalInfoLabel}
+                onEditStep={(step) => {
+                  setCurrentStep(step);
+                  setShowReviewView(false);
+                }}
               />
             </motion.div>
           ) : (

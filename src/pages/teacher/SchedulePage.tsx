@@ -621,123 +621,124 @@ export const SchedulePage = () => {
               courses={courses}
             />
           ) : (
-          /* Desktop Schedule Grid Container */
-          <div className={`flex-1 bg-white relative flex flex-col ${!isLoading && !error && (showEmptyState || !hasEventsThisWeek) ? 'overflow-hidden' : 'overflow-auto'}`}>
+          /* Desktop View */
+          <div className="flex-1 bg-white relative flex flex-col overflow-auto">
 
-            {/* Loading State Overlay */}
+            {/* Loading State */}
             {isLoading && (
               <PageLoader variant="overlay" message="Laster timeplan" />
             )}
 
-            {/* Error State Overlay */}
+            {/* Error State */}
             {error && !isLoading && (
-              <div className="sticky top-0 left-0 right-0 bottom-0 z-30 flex items-center justify-center bg-white min-h-full">
-                <div className="text-center max-w-sm mx-auto p-8">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-status-error-bg border border-status-error-border">
-                    <CalendarDays className="h-8 w-8 text-status-error-text" />
-                  </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary mb-2">
-                    Noe gikk galt
-                  </h3>
-                  <p className="text-sm text-text-secondary mb-6">
-                    {error}
-                  </p>
-                  <Button onClick={loadScheduleData} size="compact" className="gap-2">
-                    Prøv på nytt
-                  </Button>
+              <div className="flex-1 flex flex-col items-center pt-[20vh]">
+                <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
+                  <CalendarDays className="w-4 h-4 text-text-secondary" />
                 </div>
+                <h3 className="font-geist text-sm font-medium text-text-primary">
+                  Noe gikk galt
+                </h3>
+                <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
+                  {error}
+                </p>
+                <Button onClick={loadScheduleData} size="compact" className="gap-2 mt-6">
+                  Prøv på nytt
+                </Button>
               </div>
             )}
 
-            {/* Empty State Overlay - darkens table underneath, container overflow hidden prevents scroll */}
+            {/* Empty State — clean, no grid */}
             {!isLoading && !error && (showEmptyState || !hasEventsThisWeek) && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center bg-surface/30">
-                <div className="text-center max-w-sm mx-auto p-8 bg-white rounded-xl border border-zinc-200">
-                  <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-white border border-border">
-                    <CalendarDays className="h-8 w-8 text-text-tertiary" />
-                  </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary mb-2">
-                    Ingen timer denne uken
-                  </h3>
-                  <p className="text-sm text-text-secondary mb-6">
-                    {courses.length === 0
-                      ? 'Du har ingen kurs ennå. Opprett et nytt kurs for å komme i gang.'
-                      : 'Det er ingen planlagte timer denne uken. Naviger til en annen uke eller opprett et nytt kurs.'}
-                  </p>
-                  <Button asChild size="compact" className="gap-2">
-                    <Link to="/teacher/new-course">
-                      <CalendarPlus className="h-3.5 w-3.5" />
-                      Opprett nytt kurs
-                    </Link>
-                  </Button>
+              <div className="flex-1 flex flex-col items-center pt-[20vh]">
+                <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
+                  <CalendarDays className="w-4 h-4 text-text-secondary" />
                 </div>
+                <h3 className="font-geist text-sm font-medium text-text-primary">
+                  Ingen timer denne uken
+                </h3>
+                <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
+                  {courses.length === 0
+                    ? 'Opprett et kurs for å komme i gang.'
+                    : 'Ingen planlagte timer denne uken.'}
+                </p>
+                <Button asChild size="compact" className="gap-2 mt-6">
+                  <Link to="/teacher/new-course">
+                    <CalendarPlus className="h-3.5 w-3.5" />
+                    Opprett nytt kurs
+                  </Link>
+                </Button>
               </div>
             )}
 
-            {/* Sticky Header (Days) */}
-            <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-zinc-200 bg-white min-w-[1040px]">
-              {/* Corner */}
-              <div className="border-r border-border p-3 bg-surface"></div>
+            {/* Calendar Grid — only when there are events */}
+            {!isLoading && !error && !showEmptyState && hasEventsThisWeek && (
+              <>
+                {/* Sticky Header (Days) */}
+                <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-zinc-200 bg-white min-w-[1040px]">
+                  {/* Corner */}
+                  <div className="border-r border-border p-3 bg-surface"></div>
 
-              {/* Days Headers */}
-              {weekDays.map((day) => (
-                <div
-                  key={day.name}
-                  className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
-                >
-                  <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
-                    {day.name}
-                  </span>
-                  <span
-                    className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
-                      day.isToday
-                        ? 'bg-primary text-primary-foreground'
-                        : day.isWeekend
-                        ? 'text-text-tertiary group-hover:bg-zinc-50'
-                        : 'text-text-secondary group-hover:bg-zinc-50'
-                    }`}
-                  >
-                    {day.date}
-                  </span>
+                  {/* Days Headers */}
+                  {weekDays.map((day) => (
+                    <div
+                      key={day.name}
+                      className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
+                    >
+                      <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
+                        {day.name}
+                      </span>
+                      <span
+                        className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                          day.isToday
+                            ? 'bg-primary text-primary-foreground'
+                            : day.isWeekend
+                            ? 'text-text-tertiary group-hover:bg-zinc-50'
+                            : 'text-text-secondary group-hover:bg-zinc-50'
+                        }`}
+                      >
+                        {day.date}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Grid Content */}
-            <div className="relative grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] min-w-[1040px] flex-1">
+                {/* Grid Content */}
+                <div className="relative grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] min-w-[1040px] flex-1">
 
-              {/* Current Time Indicator */}
-              {showTimeIndicator && (
-                <div
-                  className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
-                  style={{ top: `${currentTimePosition}px` }}
-                >
-                  <div className="w-[60px] text-right pr-2 text-xxs font-medium text-primary">{currentTimeString}</div>
-                  <div className="h-px flex-1 bg-primary opacity-50"></div>
-                  <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"></div>
-                </div>
-              )}
+                  {/* Current Time Indicator */}
+                  {showTimeIndicator && (
+                    <div
+                      className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
+                      style={{ top: `${currentTimePosition}px` }}
+                    >
+                      <div className="w-[60px] text-right pr-2 text-xxs font-medium text-primary">{currentTimeString}</div>
+                      <div className="h-px flex-1 bg-primary opacity-50"></div>
+                      <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"></div>
+                    </div>
+                  )}
 
-              {/* Time Column */}
-              <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-secondary">
-                {timeSlots.map((time) => (
-                  <div key={time} className="h-[100px] border-b border-zinc-200/50 px-2 py-1">
-                    {time}
+                  {/* Time Column */}
+                  <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-secondary">
+                    {timeSlots.map((time) => (
+                      <div key={time} className="h-[100px] border-b border-zinc-200/50 px-2 py-1">
+                        {time}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Day Columns */}
-              {weekDays.map((day, index) => (
-                <DayColumn
-                  key={day.name}
-                  dayIndex={index}
-                  isToday={day.isToday}
-                  isWeekend={day.isWeekend}
-                  events={currentEvents[index] || []}
-                />
-              ))}
-            </div>
+                  {/* Day Columns */}
+                  {weekDays.map((day, index) => (
+                    <DayColumn
+                      key={day.name}
+                      dayIndex={index}
+                      isToday={day.isToday}
+                      isWeekend={day.isWeekend}
+                      events={currentEvents[index] || []}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           )}
       <EmptyStateToggle />

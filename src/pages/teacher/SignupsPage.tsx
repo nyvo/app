@@ -316,7 +316,7 @@ export const SignupsPage = () => {
         </motion.header>
 
         {/* Content Area */}
-        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+        <div className="flex-1 flex flex-col px-6 lg:px-8 pb-6 lg:pb-8">
           {error ? (
             <ErrorState
               title="Kunne ikke laste påmeldinger"
@@ -324,7 +324,7 @@ export const SignupsPage = () => {
               onRetry={loadSignups}
             />
           ) : (
-            <div>
+            <div className="flex-1 flex flex-col">
               <SmartSignupsView
                 groups={groups}
                 stats={stats}

@@ -67,9 +67,16 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   const { profile, currentOrganization, ensureOrganization, signOut } = useAuth()
   const [step, setStep] = useState(0)
 
-  // Personal info
-  const [firstName, setFirstName] = useState(() => profile?.name?.split(' ')[0] || '')
-  const [lastName, setLastName] = useState(() => profile?.name?.split(' ').slice(1).join(' ') || '')
+  // Personal info — don't prefill if the name is just the email prefix (e.g. "kristian" from "kristian@example.com")
+  const prefillName = (() => {
+    const name = profile?.name?.trim()
+    if (!name) return ''
+    const emailPrefix = profile?.email?.split('@')[0]
+    if (emailPrefix && name.toLowerCase() === emailPrefix.toLowerCase()) return ''
+    return name
+  })()
+  const [firstName, setFirstName] = useState(() => prefillName.split(' ')[0] || '')
+  const [lastName, setLastName] = useState(() => prefillName.split(' ').slice(1).join(' ') || '')
 
   // Business info
   const [orgNumber, setOrgNumber] = useState('')

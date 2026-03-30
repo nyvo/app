@@ -60,8 +60,8 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
       {displayedRegistrations.length === 0 ? (
         /* Empty State */
         <div className="p-8 flex flex-col items-center justify-center text-center">
-          <div className="w-10 h-10 bg-surface-elevated rounded-xl flex items-center justify-center mb-3">
-            <UserPlus className="w-4 h-4 text-text-tertiary" />
+          <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
+            <UserPlus className="w-4 h-4 text-text-secondary" />
           </div>
           <p className="text-sm font-medium text-text-primary">Ingen nye påmeldinger</p>
           <p className="text-xs text-text-secondary mt-1">Nye påmeldinger vises her.</p>

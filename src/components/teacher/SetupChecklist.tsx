@@ -13,9 +13,9 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2">
+    <div className="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col">
       <h2 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h2>
-      <div className="rounded-xl bg-white border border-zinc-200 p-6">
+      <div className="rounded-xl bg-white border border-zinc-200 p-6 flex-1">
         {/* Progress header */}
         <div className="mb-6">
           <div className="flex items-baseline justify-between mb-3">

@@ -74,8 +74,8 @@ function CourseRow({ course }: { course: Course }) {
 function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
   return (
     <div className="p-8 flex flex-col items-center justify-center text-center">
-      <div className="w-10 h-10 bg-surface-elevated rounded-xl flex items-center justify-center mb-3">
-        <CalendarPlus className="w-4 h-4 text-text-tertiary" />
+      <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
+        <CalendarPlus className="w-4 h-4 text-text-secondary" />
       </div>
       <p className="text-sm font-medium text-text-primary">
         {timeFilter === 'today' ? 'Ingen kurs i dag' : 'Ingen kurs denne uken'}

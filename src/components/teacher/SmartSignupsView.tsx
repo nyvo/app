@@ -185,8 +185,10 @@ export function SmartSignupsView({
     const IconComponent = emptyState.icon;
 
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <IconComponent className="h-8 w-8 text-text-tertiary stroke-[1.5] mb-4" />
+      <div className="flex flex-col items-center pt-[20vh] text-center">
+        <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
+          <IconComponent className="w-4 h-4 text-text-secondary" />
+        </div>
         <h3 className="font-geist text-sm font-medium text-text-primary">
           {emptyState.title}
         </h3>

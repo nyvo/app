@@ -1,6 +1,5 @@
-import { ImageOff } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useMemo } from 'react';
+import { Calendar, Clock, MapPin, Users, Banknote, Info, ImageOff, Image } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -11,7 +10,7 @@ export interface CreateCourseReviewProps {
   title: string;
   description?: string | null;
 
-  hasCoverImage: boolean;
+  imageFile?: File | null;
 
   startDateLabel: string;
   timeAndDurationLabel: string;
@@ -21,75 +20,75 @@ export interface CreateCourseReviewProps {
   capacityLabel: string;
   priceLabel: string;
   practicalInfoLabel?: string | null;
+
+  /** Called with step index to navigate back for editing */
+  onEditStep?: (step: number) => void;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Sub-components                                                     */
 /* ------------------------------------------------------------------ */
 
-/** Label + value row in the 160 px | 1fr grid. */
-function SummaryRow({
+/** Icon + label on left, value on right — same weight both sides. */
+function Row({
+  icon: Icon,
   label,
   children,
-  align = 'baseline',
+  muted = false,
 }: {
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   children: React.ReactNode;
-  align?: 'baseline' | 'start';
+  muted?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        'grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-1 sm:gap-4',
-        align === 'start' ? 'items-start' : 'items-baseline',
-      )}
-    >
-      <dt className="text-sm text-text-secondary font-normal">{label}</dt>
-      <dd className="text-sm font-medium text-text-primary">{children}</dd>
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div className="flex items-center gap-2.5">
+        <Icon className="h-4 w-4 text-text-tertiary shrink-0" />
+        <span className="text-sm text-text-primary">{label}</span>
+      </div>
+      <div className={`text-sm text-right ${muted ? 'text-text-tertiary' : 'text-text-primary'}`}>
+        {children}
+      </div>
     </div>
   );
 }
 
-/** Section heading inside the ledger. */
-function SectionHeading({ children }: { children: React.ReactNode }) {
+/** Section divider — stronger visual break with edit action. */
+function SectionDivider({
+  label,
+  onEdit,
+  first = false,
+}: {
+  label: string;
+  onEdit?: () => void;
+  first?: boolean;
+}) {
   return (
-    <h2 className="text-sm font-medium text-text-primary tracking-tight mb-5">
-      {children}
-    </h2>
+    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-zinc-200' : 'border-y border-zinc-200'} bg-zinc-50`}>
+      <span className="text-xs font-medium text-text-primary tracking-wide uppercase">{label}</span>
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
+        >
+          Endre
+        </button>
+      )}
+    </div>
   );
-}
-
-/** Warning alert for missing cover image. */
-function MissingImageWarning() {
-  return (
-    <Alert variant="warning" size="sm" icon={ImageOff}>
-      <AlertTitle variant="warning">Kursbilde mangler</AlertTitle>
-      <AlertDescription variant="warning">
-        Kurs uten bilde er mindre synlig i søk.
-      </AlertDescription>
-    </Alert>
-  );
-}
-
-/** Placeholder for missing optional values. */
-function NotSet() {
-  return <span className="text-text-secondary font-normal">Ikke angitt</span>;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
-/**
- * Single-card "ledger" summary for the review-before-publish step.
- * Three sections separated by subtle dividers inside one card.
- * Accepts pre-formatted display strings — caller handles formatting.
- */
 export function CreateCourseReview({
   courseTypeLabel,
   title,
   description,
-  hasCoverImage,
+  imageFile,
   startDateLabel,
   timeAndDurationLabel,
   weeksLabel,
@@ -97,75 +96,67 @@ export function CreateCourseReview({
   capacityLabel,
   priceLabel,
   practicalInfoLabel,
+  onEditStep,
 }: CreateCourseReviewProps) {
+  const imagePreviewUrl = useMemo(
+    () => imageFile ? URL.createObjectURL(imageFile) : null,
+    [imageFile],
+  );
+
   return (
-    <div
-      className="rounded-xl bg-white border border-zinc-200 overflow-hidden"
-      role="region"
-      aria-label="Sjekk oppsummering"
-    >
-      {/* Section 1 — Course identity */}
-      <section className="px-6 py-6 sm:px-8 sm:py-8 border-b border-zinc-100">
-        <SectionHeading>Kursdetaljer</SectionHeading>
-        <dl className="space-y-5">
-          <SummaryRow label="Tittel">
-            <span className="inline-flex items-center gap-3">
-              {title}
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-zinc-50 text-text-primary border border-zinc-200">
-                {courseTypeLabel}
-              </span>
-            </span>
-          </SummaryRow>
+    <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
+      {/* Image banner */}
+      {imagePreviewUrl && (
+        <div className="h-40 overflow-hidden">
+          <img src={imagePreviewUrl} alt={title} className="w-full h-full object-cover" />
+        </div>
+      )}
 
-          <SummaryRow label="Kursbilde" align="start">
-            {hasCoverImage ? (
-              <span className="font-medium text-text-primary">Lastet opp</span>
-            ) : (
-              <MissingImageWarning />
-            )}
-          </SummaryRow>
+      <div className="px-6">
+        {/* Section 1 — Course details */}
+        <SectionDivider first label="Detaljer" onEdit={onEditStep ? () => onEditStep(0) : undefined} />
 
-          <SummaryRow label="Beskrivelse" align="start">
-            {description?.trim() ? (
-              <span className="font-normal line-clamp-3">
-                {description.trim()}
-              </span>
-            ) : (
-              <NotSet />
-            )}
-          </SummaryRow>
-        </dl>
-      </section>
-
-      {/* Section 2 — Logistics & schedule */}
-      <section className="px-6 py-6 sm:px-8 sm:py-8 border-b border-zinc-100">
-        <SectionHeading>Tid, sted og kapasitet</SectionHeading>
-        <dl className="space-y-5">
-          <SummaryRow label="Startdato">{startDateLabel}</SummaryRow>
-
-          <SummaryRow label="Tid og varighet">{timeAndDurationLabel}</SummaryRow>
-
-          {weeksLabel != null && (
-            <SummaryRow label="Varighet">{weeksLabel}</SummaryRow>
+        <div className="divide-y divide-zinc-100">
+          <Row icon={Info} label="Tittel">{title}</Row>
+          <Row icon={Info} label="Type">{courseTypeLabel}</Row>
+          {description?.trim() && (
+            <Row icon={Info} label="Beskrivelse">
+              <span className="line-clamp-2 max-w-[240px]">{description.trim()}</span>
+            </Row>
           )}
+          <Row icon={Image} label="Kursbilde" muted={!imagePreviewUrl}>
+            {imagePreviewUrl ? 'Lastet opp' : (
+              <span className="flex items-center gap-1.5">
+                <ImageOff className="h-3.5 w-3.5" />
+                Mangler
+              </span>
+            )}
+          </Row>
+        </div>
 
-          <SummaryRow label="Sted">{locationLabel}</SummaryRow>
+        {/* Section 2 — Schedule & logistics */}
+        <SectionDivider label="Tid og sted" onEdit={onEditStep ? () => onEditStep(1) : undefined} />
 
-          <SummaryRow label="Deltakere">{capacityLabel}</SummaryRow>
-        </dl>
-      </section>
+        <div className="divide-y divide-zinc-100">
+          <Row icon={Calendar} label="Startdato">{startDateLabel}</Row>
+          <Row icon={Clock} label="Tid og varighet">{timeAndDurationLabel}</Row>
+          {weeksLabel != null && (
+            <Row icon={Calendar} label="Kursperiode">{weeksLabel}</Row>
+          )}
+          <Row icon={MapPin} label="Sted">{locationLabel}</Row>
+          <Row icon={Users} label="Deltakere">{capacityLabel}</Row>
+        </div>
 
-      {/* Section 3 — Pricing */}
-      <section className="px-6 py-6 sm:px-8 sm:py-8">
-        <SectionHeading>Pris og praktisk info</SectionHeading>
-        <dl className="space-y-5">
-          <SummaryRow label="Pris per deltaker">{priceLabel}</SummaryRow>
+        {/* Section 3 — Pricing */}
+        <SectionDivider label="Pris" onEdit={onEditStep ? () => onEditStep(2) : undefined} />
 
-          <SummaryRow label="Praktisk info">
-            {practicalInfoLabel ?? <NotSet />}
-          </SummaryRow>
-        </dl>
-      </section>
+        <div className="divide-y divide-zinc-100">
+          <Row icon={Banknote} label="Pris per deltaker">{priceLabel}</Row>
+          {practicalInfoLabel && (
+            <Row icon={Info} label="Praktisk info">{practicalInfoLabel}</Row>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
