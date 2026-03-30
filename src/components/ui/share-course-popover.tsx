@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, X, Link as LinkIcon, Twitter, Linkedin, Facebook, Mail, ChevronRight, Check } from 'lucide-react';
+import { Share2, X, Link as LinkIcon, Twitter, Linkedin, Facebook, Mail, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -168,10 +168,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', chi
             <span className="text-xs text-text-secondary">Offentlig tilgjengelig</span>
           </div>
 
-          <button className="cursor-pointer text-xs font-medium text-text-secondary hover:text-text-primary flex items-center gap-1 transition-colors">
+          <Button variant="ghost" size="xs">
             Innstillinger
-            <ChevronRight className="h-3 w-3" />
-          </button>
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

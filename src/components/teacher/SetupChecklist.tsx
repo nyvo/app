@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Check, ArrowRight, Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { SetupStep } from '@/hooks/use-setup-progress'
 
 interface SetupChecklistProps {
@@ -81,21 +82,15 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 text-text-tertiary animate-spin shrink-0" />
                     ) : step.actionHref ? (
-                      <Link
-                        to={step.actionHref}
-                        className="flex items-center gap-1 text-xs font-medium text-text-primary hover:text-text-secondary smooth-transition shrink-0"
-                      >
-                        {step.actionLabel}
-                        <ArrowRight className="h-3 w-3" />
-                      </Link>
+                      <Button variant="outline" size="xs" asChild>
+                        <Link to={step.actionHref}>
+                          {step.actionLabel}
+                        </Link>
+                      </Button>
                     ) : (
-                      <button
-                        onClick={step.actionOnClick}
-                        className="flex items-center gap-1 text-xs font-medium text-text-primary hover:text-text-secondary smooth-transition shrink-0"
-                      >
+                      <Button size="xs" onClick={step.actionOnClick}>
                         {step.actionLabel}
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
+                      </Button>
                     )}
                   </>
                 )}

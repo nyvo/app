@@ -537,14 +537,13 @@ const TeacherProfilePage = () => {
                                       </Button>
                                   )}
                                   <Button
-                                      variant="ghost"
-                                      size="compact"
+                                      variant="outline"
+                                      size="xs"
                                       onClick={handleStripeAction}
                                       loading={stripeLoading}
                                       loadingText={isStripeConnected ? 'Åpner...' : 'Sender deg til Stripe …'}
-                                      className="text-text-secondary hover:text-text-primary"
                                   >
-                                      {isStripeConnected ? 'Se utbetalinger →' : 'Sett opp →'}
+                                      {isStripeConnected ? 'Se utbetalinger' : 'Sett opp'}
                                   </Button>
                               </div>
                           </div>
@@ -557,8 +556,8 @@ const TeacherProfilePage = () => {
                                       <span className="text-xs text-text-secondary block">Oppdater passordet ditt.</span>
                                   </div>
                                   <Button
-                                      variant="ghost"
-                                      size="compact"
+                                      variant={passwordExpanded ? 'ghost' : 'outline'}
+                                      size="xs"
                                       onClick={() => {
                                           setPasswordExpanded(!passwordExpanded);
                                           setPasswordErrors({});
@@ -568,9 +567,9 @@ const TeacherProfilePage = () => {
                                           setShowCurrentPassword(false);
                                           setShowNewPassword(false);
                                       }}
-                                      className="text-text-secondary hover:text-text-primary ml-4 shrink-0"
+                                      className="ml-4 shrink-0"
                                   >
-                                      {passwordExpanded ? 'Avbryt' : 'Endre →'}
+                                      {passwordExpanded ? 'Avbryt' : 'Endre'}
                                   </Button>
                               </div>
 
@@ -676,11 +675,11 @@ const TeacherProfilePage = () => {
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                       <Button
-                                          variant="ghost"
-                                          size="compact"
-                                          className="text-text-secondary hover:text-text-primary ml-4 shrink-0"
+                                          variant="outline"
+                                          size="xs"
+                                          className="ml-4 shrink-0"
                                       >
-                                          Logg ut alle →
+                                          Logg ut alle
                                       </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -781,11 +780,11 @@ const TeacherProfilePage = () => {
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>
                                       <Button
-                                          variant="ghost"
-                                          size="compact"
-                                          className="text-destructive hover:text-destructive ml-4 shrink-0"
+                                          variant="destructive"
+                                          size="xs"
+                                          className="ml-4 shrink-0"
                                       >
-                                          Slett konto →
+                                          Slett konto
                                       </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
