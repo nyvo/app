@@ -339,7 +339,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           Tilbake
                         </Button>
                         <Button onClick={() => setStep(2)}>
-                          Neste
+                          Fortsett
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -382,7 +382,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           Tilbake
                         </Button>
                         <Button onClick={() => setStep(3)}>
-                          Neste
+                          Fortsett
                           <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -533,13 +533,13 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       transition={{ duration: 0.2 }}
                     >
                       <h2 className="text-lg font-medium text-text-primary mb-2">
-                        {displayName ? `Flott, ${displayName}` : 'Flott'}
+                        {displayName ? `Alt er klart, ${displayName}` : 'Alt er klart'}
                       </h2>
                       <p className="text-sm text-text-secondary leading-relaxed mb-8">
-                        Studioet ditt er klart. Du finner flere innstillinger under profil-siden.
+                        Studioet ditt er klart. Du finner flere innstillinger under profilsiden.
                       </p>
                       <Button onClick={onComplete} className="w-full">
-                        Gå til oversikten
+                        Til oversikten
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Button>
                     </motion.div>

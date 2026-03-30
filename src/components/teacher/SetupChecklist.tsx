@@ -23,7 +23,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
               Sett opp kontoen din
             </p>
             <p className="text-xs text-text-tertiary">
-              {completedCount} av {totalCount}
+              {completedCount} av {totalCount} fullført
             </p>
           </div>
           {/* Progress bar */}
