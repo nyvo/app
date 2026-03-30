@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { User, CreditCard, BookOpen, Share2 } from 'lucide-react'
+import { User, CreditCard, BookOpen } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Organization } from '@/types/database'
 import type { Profile } from '@/types/database'
 
 export interface SetupStep {
-  id: 'profile' | 'stripe' | 'course' | 'share'
+  id: 'profile' | 'stripe' | 'course'
   title: string
   description: string
   isComplete: boolean
@@ -20,7 +20,6 @@ interface UseSetupProgressParams {
   profile: Profile | null
   hasCourses: boolean
   onConnectStripe: () => void
-  onShareStudio?: () => void
 }
 
 interface UseSetupProgressResult {
@@ -36,7 +35,6 @@ export function useSetupProgress({
   profile,
   hasCourses,
   onConnectStripe,
-  onShareStudio,
 }: UseSetupProgressParams): UseSetupProgressResult {
   return useMemo(() => {
     const org = currentOrganization
@@ -71,15 +69,6 @@ export function useSetupProgress({
         actionHref: '/teacher/new-course',
         icon: BookOpen,
       },
-      {
-        id: 'share',
-        title: 'Del kurssiden din',
-        description: 'Kopier lenken og del den med elevene dine.',
-        isComplete: !!org?.studio_shared_at,
-        actionLabel: 'Del',
-        actionOnClick: onShareStudio,
-        icon: Share2,
-      },
     ]
 
     const completedCount = steps.filter((s) => s.isComplete).length
@@ -93,5 +82,5 @@ export function useSetupProgress({
       isSetupComplete: completedCount === totalCount,
       nextStep,
     }
-  }, [currentOrganization, profile, hasCourses, onConnectStripe, onShareStudio])
+  }, [currentOrganization, profile, hasCourses, onConnectStripe])
 }

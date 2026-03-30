@@ -19,7 +19,6 @@ import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
-import { updateOrganization } from '@/services/organizations';
 import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
@@ -241,32 +240,12 @@ const TeacherDashboard = () => {
     window.location.href = data.url;
   }, [currentOrganization?.id]);
 
-  // Share studio handler
-  const handleShareStudio = useCallback(async () => {
-    if (!currentOrganization?.id || !currentOrganization?.slug) return;
-    const url = `${window.location.origin}/studio/${currentOrganization.slug}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      // Mark as shared in database if not already
-      if (!currentOrganization.studio_shared_at) {
-        await updateOrganization(currentOrganization.id, {
-          studio_shared_at: new Date().toISOString(),
-        });
-        await refreshOrganizations();
-      }
-      toast.success('Lenke kopiert');
-    } catch {
-      toast.error('Kunne ikke kopiere lenken');
-    }
-  }, [currentOrganization?.id, currentOrganization?.slug, currentOrganization?.studio_shared_at, refreshOrganizations]);
-
   // Setup progress
   const { steps, completedCount, totalCount, isSetupComplete } = useSetupProgress({
     currentOrganization,
     profile,
     hasCourses,
     onConnectStripe: handleConnectStripe,
-    onShareStudio: handleShareStudio,
   });
 
   // "All done" celebration state — show briefly when setup just completed
