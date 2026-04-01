@@ -341,19 +341,21 @@ export const SignupsPage = () => {
                 <div className="mt-8">
                   <button
                     onClick={() => setShowPast(prev => !prev)}
-                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 w-full text-left cursor-pointer"
+                    aria-expanded={showPast}
+                    aria-controls="past-signups-section"
+                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
                   >
                     <ChevronRight className={cn(
                       'h-3.5 w-3.5 text-text-tertiary smooth-transition',
                       showPast && 'rotate-90'
-                    )} />
+                    )} aria-hidden="true" />
                     <span className="text-sm font-medium text-text-tertiary">
                       {pastGroups.length} avsluttede kurs
                     </span>
                   </button>
 
                   {showPast && (
-                    <div className="mt-6 opacity-60">
+                    <div id="past-signups-section" className="mt-6 opacity-60">
                       <SmartSignupsView
                         groups={pastGroups}
                         stats={stats}

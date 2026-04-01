@@ -126,7 +126,7 @@ const StudentRegisterPage = () => {
       <div className="w-full space-y-5">
         <GoogleAuthButton redirectTo={`${window.location.origin}/student/dashboard`} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" aria-hidden="true">
           <div className="flex-1 h-px bg-zinc-200" />
           <span className="text-xs text-text-tertiary">eller</span>
           <div className="flex-1 h-px bg-zinc-200" />

@@ -102,39 +102,36 @@ export const CourseSettingsTab = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
-      <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-200 p-6 h-full flex flex-col">
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-text-primary">Generelt</h3>
-        </div>
+      <div className="lg:col-span-2 flex flex-col">
+        <h3 className="text-sm font-medium text-text-primary mb-3">Generelt</h3>
+        <div className="bg-white rounded-xl border border-zinc-200 p-6 h-full flex flex-col flex-1">
+          <div className="space-y-4 flex-1">
+            <div>
+              <label htmlFor="settings-title" className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
+              <Input
+                id="settings-title"
+                type="text"
+                value={settingsTitle}
+                onChange={(e) => onTitleChange(e.target.value)}
+              />
+            </div>
 
-        <div className="space-y-4 flex-1">
-          <div>
-            <label htmlFor="settings-title" className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
-            <Input
-              id="settings-title"
-              type="text"
-              value={settingsTitle}
-              onChange={(e) => onTitleChange(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="settings-description" className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
-            <Textarea
-              id="settings-description"
-              rows={6}
-              value={settingsDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-            />
+            <div>
+              <label htmlFor="settings-description" className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
+              <Textarea
+                id="settings-description"
+                rows={6}
+                value={settingsDescription}
+                onChange={(e) => onDescriptionChange(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
       <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col h-full">
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-text-primary">Kursbilde</h3>
-        </div>
+        <h3 className="text-sm font-medium text-text-primary mb-6">Kursbilde</h3>
         <div className="flex-1 min-h-[200px] flex flex-col">
           <div className="flex-1 relative rounded-lg overflow-hidden bg-input-bg">
             <ImageUpload
@@ -159,9 +156,7 @@ export const CourseSettingsTab = ({
 
       {/* Tile 3: Schedule - Span 1 */}
       <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-text-primary">Tidspunkt</h3>
-        </div>
+        <h3 className="text-sm font-medium text-text-primary mb-6">Tidspunkt</h3>
         <div className="space-y-4 flex-1">
           <div>
             <label className="block text-xs font-medium text-text-primary mb-1.5">Dato</label>
@@ -179,12 +174,12 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Varighet</label>
+            <label id="settings-duration-label" className="block text-xs font-medium text-text-primary mb-1.5">Varighet</label>
             <Select
               value={settingsDuration?.toString() || ""}
               onValueChange={(val) => onDurationChange(parseInt(val))}
             >
-              <SelectTrigger className="w-full h-11 bg-input-bg border-zinc-300">
+              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 bg-input-bg border-zinc-300">
                 <SelectValue placeholder="Velg" />
               </SelectTrigger>
               <SelectContent>
@@ -205,9 +200,7 @@ export const CourseSettingsTab = ({
 
       {/* Tile 4: Capacity - Span 1 */}
       <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
-        <div className="mb-6">
-          <h3 className="text-sm font-medium text-text-primary">Kapasitet</h3>
-        </div>
+        <h3 className="text-sm font-medium text-text-primary mb-6">Kapasitet</h3>
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
             <Button
@@ -247,7 +240,7 @@ export const CourseSettingsTab = ({
       <div className="lg:col-span-3 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
         <div className="mb-6">
           <h3 className="text-sm font-medium text-text-primary">Praktisk info</h3>
-          <p className="text-xs text-text-secondary mt-1">Hjelp elevene dine med å komme forberedt</p>
+          <p className="text-xs text-text-tertiary mt-1">Hjelp elevene dine med å komme forberedt</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           {/* Audience Level - Segmented pills (single-select) */}

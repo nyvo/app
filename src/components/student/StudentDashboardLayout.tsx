@@ -36,7 +36,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             </Link>
             
             {/* Navigation Tabs (Desktop) */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1" aria-label="Studentnavigasjon">
               <Link
                 to="/student/dashboard"
                 className="px-3 py-2 text-sm font-medium text-text-primary bg-surface-elevated rounded-lg transition-colors"
@@ -68,7 +68,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 outline-none group">
+                <button className="flex items-center gap-2 outline-none group" aria-label="Kontomeny">
                   <UserAvatar
                     name={profile?.name}
                     email={user?.email}

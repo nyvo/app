@@ -90,7 +90,7 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p className="text-xs text-destructive">{error}</p>
+        <p role="alert" className="text-xs text-destructive">{error}</p>
       ) : hint ? (
         <p className={`text-xs flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-text-tertiary' : 'text-text-secondary'}`}>
           {hintMet && <Check className="w-3 h-3" />}

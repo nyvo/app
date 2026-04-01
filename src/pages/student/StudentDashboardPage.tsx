@@ -76,9 +76,9 @@ const StudentDashboardPage = () => {
   if (isLoading) {
     return (
       <>
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <Spinner size="xl" className="mb-4" />
-          <p className="text-text-secondary">Henter kurs ...</p>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]" role="status" aria-live="polite">
+          <Spinner size="xl" className="mb-4" aria-hidden="true" />
+          <p className="text-text-secondary">Henter kurs</p>
         </div>
       </>
     );
@@ -147,7 +147,7 @@ const StudentDashboardPage = () => {
             return (
               <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
                 <div>
-                  <div className="rounded-full bg-zinc-100 p-3 mb-4 mx-auto inline-flex">
+                  <div className="rounded-full bg-surface-elevated p-3 mb-4 mx-auto inline-flex">
                     {isNewUser ? (
                       <Search className="h-5 w-5 text-text-tertiary" />
                     ) : (
@@ -159,11 +159,11 @@ const StudentDashboardPage = () => {
                   </h3>
                   <p className="text-sm text-text-secondary mb-6 max-w-xs">
                     {isNewUser
-                      ? 'Utforsk kurs i nærheten og meld deg på.'
+                      ? 'Se kurs i nærheten og meld deg på.'
                       : 'Du har ingen kommende kurs.'}
                   </p>
                   <Button onClick={() => window.open('/', '_self')} variant="default">
-                    {isNewUser ? 'Utforsk kurs' : 'Finn kurs'}
+                    {isNewUser ? 'Se kurs' : 'Finn kurs'}
                   </Button>
                 </div>
               </div>
@@ -185,7 +185,7 @@ const StudentDashboardPage = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
               <div>
-                <div className="rounded-full bg-zinc-100 p-3 mb-4 mx-auto inline-flex">
+                <div className="rounded-full bg-surface-elevated p-3 mb-4 mx-auto inline-flex">
                   <Clock className="h-5 w-5 text-text-tertiary" />
                 </div>
                 <h3 className="text-sm font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>

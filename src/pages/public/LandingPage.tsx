@@ -38,16 +38,16 @@ const LandingPage = () => {
   return (
     <div className="overflow-x-hidden bg-surface text-text-primary font-geist antialiased">
       {/* Navigation */}
-      <nav className="absolute top-0 w-full z-50 bg-transparent border-none">
+      <nav className="absolute top-0 w-full z-50 bg-transparent border-none" aria-label="Hovednavigasjon">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
+          <Link to="/" className="flex items-center gap-2" aria-label="Ease – til forsiden">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white" aria-hidden="true">
               <Infinity className="w-3.5 h-3.5" />
             </div>
             <span className="text-lg font-medium tracking-tighter text-text-primary">
               Ease
             </span>
-          </div>
+          </Link>
           <div className="flex items-center gap-6">
             <a href="#pricing" className="hidden md:block text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
               Pris
@@ -629,7 +629,7 @@ const LandingPage = () => {
                   </a>
                 </li>
                 <li>
-                  <span className="text-text-tertiary cursor-default">
+                  <span className="text-text-tertiary cursor-default" aria-disabled="true">
                     Oppdateringer
                   </span>
                 </li>

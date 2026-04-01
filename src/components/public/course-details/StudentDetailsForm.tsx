@@ -42,7 +42,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="firstName"
-            className="text-xs font-medium text-muted-foreground block"
+            className="text-xs font-medium text-text-primary mb-1.5 block"
           >
             Fornavn
           </label>
@@ -61,16 +61,17 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             }`}
             placeholder="Ola"
             aria-invalid={touched.firstName && errors.firstName}
+            aria-describedby={touched.firstName && errors.firstName ? 'firstName-error' : undefined}
           />
           {touched.firstName && errors.firstName && (
-            <p className="text-xs text-destructive">Skriv inn fornavnet ditt</p>
+            <p id="firstName-error" role="alert" className="text-xs text-destructive">Skriv inn fornavnet ditt</p>
           )}
         </div>
 
         <div className="space-y-2">
           <label
             htmlFor="lastName"
-            className="text-xs font-medium text-muted-foreground block"
+            className="text-xs font-medium text-text-primary mb-1.5 block"
           >
             Etternavn
           </label>
@@ -89,9 +90,10 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             }`}
             placeholder="Nordmann"
             aria-invalid={touched.lastName && errors.lastName}
+            aria-describedby={touched.lastName && errors.lastName ? 'lastName-error' : undefined}
           />
           {touched.lastName && errors.lastName && (
-            <p className="text-xs text-destructive">Skriv inn etternavnet ditt</p>
+            <p id="lastName-error" role="alert" className="text-xs text-destructive">Skriv inn etternavnet ditt</p>
           )}
         </div>
       </div>
@@ -100,7 +102,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="text-xs font-medium text-muted-foreground block"
+          className="text-xs font-medium text-text-primary mb-1.5 block"
         >
           E-post
         </label>
@@ -119,9 +121,10 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           }
           placeholder="ola@eksempel.no"
           aria-invalid={touched.email && errors.email}
+          aria-describedby={touched.email && errors.email ? 'email-booking-error' : undefined}
         />
         {touched.email && errors.email && (
-          <p className="text-xs text-destructive">Ugyldig e-post</p>
+          <p id="email-booking-error" role="alert" className="text-xs text-destructive">Ugyldig e-post</p>
         )}
       </div>
 
@@ -129,9 +132,9 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="message"
-          className="text-xs font-medium text-muted-foreground block"
+          className="text-xs font-medium text-text-primary mb-1.5 block"
         >
-          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
+          Beskjed til instruktør <span className="text-text-tertiary">(valgfritt)</span>
         </label>
         <Textarea
           id="message"
@@ -157,20 +160,23 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           }}
           disabled={submitting}
           aria-invalid={touched.termsAccepted && errors.termsAccepted ? true : undefined}
+          aria-describedby={touched.termsAccepted && errors.termsAccepted ? 'terms-error' : undefined}
+          aria-required="true"
         />
-        <label htmlFor="termsAccepted" className="text-xs text-muted-foreground select-none">
+        <label htmlFor="termsAccepted" className="text-xs text-text-secondary select-none">
           Jeg godtar{' '}
           <Link
             to="/terms"
             className="text-text-primary underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-500"
             target="_blank"
+            rel="noopener noreferrer"
           >
             vilkårene for påmelding
           </Link>
         </label>
       </div>
       {touched.termsAccepted && errors.termsAccepted && (
-        <p className="text-xs text-destructive -mt-2">
+        <p id="terms-error" role="alert" className="text-xs text-destructive -mt-2">
           Du må godta vilkårene for å gå videre
         </p>
       )}

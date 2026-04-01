@@ -133,6 +133,7 @@ export function ImageUpload({
         accept={ACCEPTED_IMAGE_TYPES.join(',')}
         onChange={handleInputChange}
         disabled={disabled}
+        aria-label="Last opp kursbilde"
         className="hidden"
       />
 
@@ -158,8 +159,9 @@ export function ImageUpload({
                 size="sm"
                 onClick={handleRemove}
                 disabled={disabled}
+                aria-label="Fjern bilde"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -167,14 +169,19 @@ export function ImageUpload({
       ) : (
         // Upload dropzone state
         <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-label="Legg til bilde – klikk eller dra og slipp"
+          aria-disabled={disabled}
           onClick={() => !disabled && inputRef.current?.click()}
+          onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); inputRef.current?.click(); } }}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
             relative h-full rounded-xl border
             flex flex-col items-center justify-center gap-3 cursor-pointer
-            smooth-transition
+            smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50
             ${
               dragActive
                 ? 'border-ring bg-surface'

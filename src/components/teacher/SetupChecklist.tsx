@@ -29,7 +29,14 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
             </p>
           </div>
           {/* Progress bar */}
-          <div className="h-1 rounded-full bg-zinc-100 overflow-hidden">
+          <div
+            className="h-1 rounded-full bg-zinc-100 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={completedCount}
+            aria-valuemin={0}
+            aria-valuemax={totalCount}
+            aria-label={`Oppsett: ${completedCount} av ${totalCount} steg fullført`}
+          >
             <div
               className="h-full rounded-full bg-zinc-900 smooth-transition"
               style={{ width: `${progress}%` }}

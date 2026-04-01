@@ -507,7 +507,7 @@ const TeacherProfilePage = () => {
                     </div>
                     <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
                           {/* Betalinger */}
-                          <div className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center justify-between p-4 hover:bg-surface-elevated transition-colors">
                               <div>
                                   <span className="text-sm font-medium text-text-primary block">Betalinger</span>
                                   <span className="text-xs text-text-secondary block">
@@ -521,7 +521,7 @@ const TeacherProfilePage = () => {
                                           size="xs"
                                           onClick={handleCheckStripeStatus}
                                           loading={checkingStripeStatus}
-                                          loadingText="Sjekker..."
+                                          loadingText="Sjekker"
                                       >
                                           Sjekk status
                                       </Button>
@@ -531,7 +531,7 @@ const TeacherProfilePage = () => {
                                       size="xs"
                                       onClick={handleStripeAction}
                                       loading={stripeLoading}
-                                      loadingText={isStripeConnected ? 'Åpner...' : 'Sender deg til Stripe …'}
+                                      loadingText={isStripeConnected ? 'Åpner' : 'Sender deg til Stripe …'}
                                   >
                                       {isStripeConnected ? 'Se utbetalinger' : 'Sett opp'}
                                   </Button>
@@ -567,9 +567,10 @@ const TeacherProfilePage = () => {
                               {passwordExpanded && (
                                   <div className="mt-4 pt-4 border-t border-zinc-100 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                       <div>
-                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Nåværende passord</label>
+                                          <label htmlFor="current-password" className="block text-xs font-medium text-text-primary mb-1.5">Nåværende passord</label>
                                           <div className="relative">
                                               <Input
+                                                  id="current-password"
                                                   type={showCurrentPassword ? 'text' : 'password'}
                                                   value={currentPassword}
                                                   onChange={(e) => { setCurrentPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.currentPassword; return n; }); }}
@@ -591,9 +592,10 @@ const TeacherProfilePage = () => {
                                       </div>
 
                                       <div>
-                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Nytt passord</label>
+                                          <label htmlFor="new-password" className="block text-xs font-medium text-text-primary mb-1.5">Nytt passord</label>
                                           <div className="relative">
                                               <Input
+                                                  id="new-password"
                                                   type={showNewPassword ? 'text' : 'password'}
                                                   value={newPassword}
                                                   onChange={(e) => { setNewPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.newPassword; return n; }); }}
@@ -617,8 +619,9 @@ const TeacherProfilePage = () => {
                                       </div>
 
                                       <div>
-                                          <label className="block text-xs font-medium text-text-primary mb-1.5">Bekreft nytt passord</label>
+                                          <label htmlFor="confirm-password" className="block text-xs font-medium text-text-primary mb-1.5">Bekreft nytt passord</label>
                                           <Input
+                                              id="confirm-password"
                                               type={showNewPassword ? 'text' : 'password'}
                                               value={confirmPassword}
                                               onChange={(e) => { setConfirmPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.confirmPassword; return n; }); }}
@@ -657,7 +660,7 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Logg ut alle enheter */}
-                          <div className="flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center justify-between p-4 hover:bg-surface-elevated transition-colors">
                               <div>
                                   <span className="text-sm font-medium text-text-primary block">Logg ut alle enheter</span>
                                   <span className="text-xs text-text-secondary block">Logger deg ut overalt.</span>

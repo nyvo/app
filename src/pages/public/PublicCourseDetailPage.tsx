@@ -332,8 +332,9 @@ const PublicCourseDetailPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-white flex items-center justify-center">
-        <Spinner size="xl" />
+      <div className="min-h-screen w-full bg-white flex items-center justify-center" role="status" aria-live="polite">
+        <Spinner size="xl" aria-hidden="true" />
+        <span className="sr-only">Laster kurs</span>
       </div>
     );
   }
@@ -385,8 +386,8 @@ const PublicCourseDetailPage = () => {
       />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+      <main className="max-w-4xl mx-auto px-6 py-8 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
           {/* Left Column — Course Info (5/12), hidden on mobile during payment */}
           <div className={`md:col-span-5 space-y-12 ${clientSecret ? 'hidden md:block' : ''}`}>
             {/* Hero + Description grouped tightly */}

@@ -92,7 +92,7 @@ export const TeacherSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" aria-label="Instruktørnavigasjon">
       <SidebarHeader className={`pt-8 pb-8 ${isCollapsed ? 'px-4' : 'px-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-2'}`}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0 focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none">
@@ -134,8 +134,8 @@ export const TeacherSidebar = () => {
                             active ? 'text-primary' : 'text-text-tertiary group-hover:text-text-primary'
                           )} />
                           {isCollapsed && item.href === '/teacher/messages' && unreadMessages > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground">
-                              {unreadMessages > 9 ? '9+' : unreadMessages}
+                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-medium text-primary-foreground" aria-label={`${unreadMessages > 9 ? 'Mer enn 9' : unreadMessages} uleste meldinger`}>
+                              <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
                             </span>
                           )}
                         </div>
@@ -143,8 +143,8 @@ export const TeacherSidebar = () => {
                           <>
                             <span className="text-sm font-medium leading-none">{item.label}</span>
                             {item.href === '/teacher/messages' && unreadMessages > 0 && (
-                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground">
-                                {unreadMessages > 9 ? '9+' : unreadMessages}
+                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground" aria-label={`${unreadMessages > 9 ? 'Mer enn 9' : unreadMessages} uleste meldinger`}>
+                                <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
                               </span>
                             )}
                           </>

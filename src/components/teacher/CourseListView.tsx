@@ -91,9 +91,9 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
       className="group px-2 rounded-lg smooth-transition hover:bg-zinc-50/50 border-b border-zinc-100 last:border-b-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none"
       onClick={() => navigate(`/teacher/courses/${course.courseId}`)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${course.courseId}`); } }}
-      role="link"
+      role="button"
       tabIndex={0}
-      aria-label={course.courseTitle}
+      aria-label={`Åpne kurs: ${course.courseTitle}`}
     >
       <div className="py-3 flex items-center gap-3">
         {/* Date badge */}

@@ -334,8 +334,8 @@ const MessagesPage = () => {
                     activeConversation?.id === conversation.id && !isComposing
                       ? 'bg-white border-zinc-200'
                       : conversation.is_read
-                      ? 'border-transparent hover:bg-zinc-50 opacity-70 hover:opacity-100'
-                      : 'border-transparent hover:bg-zinc-50'
+                      ? 'border-transparent hover:bg-surface-elevated opacity-70 hover:opacity-100'
+                      : 'border-transparent hover:bg-surface-elevated'
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -457,14 +457,15 @@ const MessagesPage = () => {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="w-64 p-2">
-                                  <div className="grid grid-cols-6 gap-1">
+                                  <div className="grid grid-cols-6 gap-1" role="group" aria-label="Velg emoji">
                                     {['😊', '🙏', '👋', '🧘', '✨', '💚', '🌸', '💪', '🙌', '🌞', '🍵', '🤸'].map(emoji => (
                                       <button
                                         key={emoji}
                                         onClick={() => setNewMessageBody(prev => prev + emoji)}
+                                        aria-label={emoji}
                                         className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
                                       >
-                                        {emoji}
+                                        <span aria-hidden="true">{emoji}</span>
                                       </button>
                                     ))}
                                   </div>
@@ -476,13 +477,14 @@ const MessagesPage = () => {
                               className="gap-2"
                               onClick={handleSendNewMessage}
                               disabled={!newRecipient.trim() || !newMessageBody.trim() || sendingMessage}
+                              aria-label={sendingMessage ? 'Sender melding' : 'Send melding'}
                             >
                               {sendingMessage ? (
-                                <Spinner size="sm" />
+                                <><Spinner size="sm" aria-hidden="true" /><span className="sr-only">Sender</span></>
                               ) : (
                                 <>
                                   <span>Send</span>
-                                  <Send className="h-3.5 w-3.5" />
+                                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
                                 </>
                               )}
                             </Button>
@@ -658,14 +660,15 @@ const MessagesPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" className="w-64 p-2">
-                            <div className="grid grid-cols-6 gap-1">
+                            <div className="grid grid-cols-6 gap-1" role="group" aria-label="Velg emoji">
                               {['😊', '🙏', '👋', '🧘', '✨', '💚', '🌸', '💪', '🙌', '🌞', '🍵', '🤸'].map(emoji => (
                                 <button
                                   key={emoji}
                                   onClick={() => setMessageText(prev => prev + emoji)}
+                                  aria-label={emoji}
                                   className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
                                 >
-                                  {emoji}
+                                  <span aria-hidden="true">{emoji}</span>
                                 </button>
                               ))}
                             </div>
@@ -679,13 +682,14 @@ const MessagesPage = () => {
                         size="compact"
                         className="gap-2"
                         onClick={handleSendMessage}
+                        aria-label={sendingMessage ? 'Sender melding' : 'Send melding'}
                       >
                         {sendingMessage ? (
-                          <Spinner size="sm" />
+                          <><Spinner size="sm" aria-hidden="true" /><span className="sr-only">Sender</span></>
                         ) : (
                           <>
                             <span>Send</span>
-                            <Send className="h-3.5 w-3.5" />
+                            <Send className="h-3.5 w-3.5" aria-hidden="true" />
                           </>
                         )}
                       </Button>

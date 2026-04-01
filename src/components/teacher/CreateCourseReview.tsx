@@ -65,12 +65,13 @@ function SectionDivider({
   first?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-zinc-200' : 'border-y border-zinc-200'} bg-zinc-50`}>
-      <span className="text-xs font-medium text-text-primary tracking-wide uppercase">{label}</span>
+    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-zinc-200' : 'border-y border-zinc-200'} bg-surface-elevated`}>
+      <span className="text-xs font-medium text-text-tertiary">{label}</span>
       {onEdit && (
         <button
           type="button"
           onClick={onEdit}
+          aria-label={`Endre ${label.toLowerCase()}`}
           className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
         >
           Endre
