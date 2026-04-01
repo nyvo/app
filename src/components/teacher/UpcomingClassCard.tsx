@@ -20,11 +20,11 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
               <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
                 <Calendar className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
               </div>
-              <h2 className="font-geist text-xl sm:text-2xl font-medium sm:tracking-tight text-text-primary mb-2">
-                Klar til å planlegge ditt første kurs?
+              <h2 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+                Ingen kommende kurs
               </h2>
               <p className="text-sm text-text-secondary">
-                Opprett ditt første kurs for å komme i gang.
+                Opprett et kurs for å se det her.
               </p>
             </div>
 

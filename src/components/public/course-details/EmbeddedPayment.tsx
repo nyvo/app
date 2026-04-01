@@ -74,7 +74,7 @@ function PaymentForm({
       if (result.paymentIntent.status === 'requires_capture' || result.paymentIntent.status === 'succeeded') {
         onPaymentSuccess(result.paymentIntent.id);
       } else {
-        setError('Uventet betalingsstatus. Kontakt oss.');
+        setError('Noe gikk galt med betalingen. Prøv igjen eller kontakt oss.');
         setProcessing(false);
       }
     }
@@ -94,15 +94,15 @@ function PaymentForm({
       </button>
 
       {/* Order summary */}
-      <div className="rounded-xl bg-zinc-50 p-4 space-y-3">
+      <div className="rounded-xl bg-surface-elevated p-4 space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-sm text-text-primary">{courseName}</span>
           <span className="text-sm text-text-primary">{formatKroner(price)}</span>
         </div>
         {calculateServiceFee(price) > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Servicegebyr</span>
-            <span className="text-sm text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
+            <span className="text-sm text-text-secondary">Servicegebyr</span>
+            <span className="text-sm text-text-secondary">{formatKroner(calculateServiceFee(price))}</span>
           </div>
         )}
         <div className="border-t border-zinc-200" />

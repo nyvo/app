@@ -57,8 +57,8 @@ function CourseRow({ course }: { course: Course }) {
       className="flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-zinc-50 smooth-transition relative focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none"
     >
       <div className="flex flex-col min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-text-primary">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium text-text-primary truncate">
             {course.title}
           </span>
           {course.time && (
@@ -82,8 +82,8 @@ function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
       </p>
       <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto">
         {timeFilter === 'today'
-          ? 'Ingen kurs er planlagt for i dag.'
-          : 'Ingen kurs er planlagt denne uken.'}
+          ? 'Ingen kurs i dag.'
+          : 'Ingen kurs denne uken.'}
       </p>
       <Link
         to="/teacher/courses"

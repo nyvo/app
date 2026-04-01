@@ -32,7 +32,7 @@ const TermsPage = () => {
       <main className="flex-1 px-4 sm:px-6 py-12">
         <div className="max-w-2xl mx-auto">
           {/* Title */}
-          <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-12 text-center">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-12 text-center">
             Vilkår for påmelding
           </h1>
 
@@ -41,7 +41,7 @@ const TermsPage = () => {
             <section>
               <h2 className="text-sm font-medium text-text-primary mb-4">1. Påmelding og betaling</h2>
               <p className="text-text-secondary leading-relaxed mb-4 text-sm">
-                Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er gjennomført.
+                Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er fullført.
               </p>
               <p className="text-text-secondary leading-relaxed text-sm">
                 Du vil motta en bekreftelse på e-post når påmeldingen er bekreftet.
