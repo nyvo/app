@@ -58,16 +58,11 @@ export async function createSignup(
 }
 
 // Send signup confirmation email (used for free courses where no webhook fires)
-export async function sendSignupConfirmationEmail(params: {
-  to: string
-  courseName: string
-  courseDate?: string
-  courseTime?: string
-  location?: string
-  organizationName?: string
-}): Promise<void> {
+export async function sendSignupConfirmationEmail(courseId: string, signupId: string): Promise<void> {
   try {
-    await supabase.functions.invoke('send-confirmation-email', { body: params })
+    await supabase.functions.invoke('send-confirmation-email', {
+      body: { courseId, signupId },
+    })
   } catch (err) {
     // Non-blocking — don't fail the signup if email fails
     console.error('Failed to send confirmation email:', err)

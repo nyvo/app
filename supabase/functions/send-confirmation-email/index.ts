@@ -1,39 +1,69 @@
 // Lightweight edge function to send signup confirmation emails.
 // Used by the free-course signup flow (no webhook involved).
-// Callable with anon key — validates input, then calls send-email internally.
+// Requires courseId + signupId — looks up data server-side to prevent abuse.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-const corsHeaders = getCorsHeaders()
-
-interface ConfirmationRequest {
-  to: string
-  courseName: string
-  courseDate?: string
-  courseTime?: string
-  location?: string
-  organizationName?: string
-}
 
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
 
   try {
-    const body: ConfirmationRequest = await req.json()
+    const { courseId, signupId } = await req.json()
 
-    if (!body.to || !body.courseName) {
-      return errorResponse('Missing required fields: to, courseName', 400)
+    if (!courseId || !signupId) {
+      return errorResponse('Missing required fields: courseId, signupId', 400)
     }
 
-    // Basic email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(body.to)) {
-      return errorResponse('Invalid email format', 400)
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Look up the signup and course server-side
+    const { data: signup, error: signupError } = await serviceClient
+      .from('signups')
+      .select('id, participant_email, course_id')
+      .eq('id', signupId)
+      .eq('course_id', courseId)
+      .single()
+
+    if (signupError || !signup) {
+      return errorResponse('Signup not found', 404)
     }
+
+    const { data: course, error: courseError } = await serviceClient
+      .from('courses')
+      .select('id, title, start_date, time_schedule, location, organization_id')
+      .eq('id', courseId)
+      .single()
+
+    if (courseError || !course) {
+      return errorResponse('Course not found', 404)
+    }
+
+    // Look up organization name
+    let organizationName = 'Ease'
+    if (course.organization_id) {
+      const { data: org } = await serviceClient
+        .from('organizations')
+        .select('name')
+        .eq('id', course.organization_id)
+        .single()
+      if (org?.name) organizationName = org.name
+    }
+
+    // Format date
+    let courseDate = ''
+    if (course.start_date) {
+      courseDate = new Date(course.start_date).toLocaleDateString('nb-NO', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+      })
+    }
+
+    // Extract time from schedule
+    const courseTime = course.time_schedule?.match(/(\d{1,2}:\d{2})/)?.[1] || ''
 
     // Call send-email with service role key
     const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
@@ -43,14 +73,14 @@ Deno.serve(async (req: Request) => {
         'Authorization': `Bearer ${supabaseServiceKey}`,
       },
       body: JSON.stringify({
-        to: body.to,
+        to: signup.participant_email,
         template: 'signup-confirmation',
         templateData: {
-          courseName: body.courseName,
-          courseDate: body.courseDate || '',
-          courseTime: body.courseTime || '',
-          location: body.location || '',
-          organizationName: body.organizationName || 'Ease',
+          courseName: course.title,
+          courseDate,
+          courseTime,
+          location: course.location || '',
+          organizationName,
         },
       }),
     })

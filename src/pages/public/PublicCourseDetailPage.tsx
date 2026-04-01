@@ -261,7 +261,7 @@ const PublicCourseDetailPage = () => {
 
     if (isFree) {
       // Free course: create signup directly without payment
-      const { error: signupError } = await createSignup({
+      const { data: signupData, error: signupError } = await createSignup({
         course_id: courseId,
         organization_id: course.organization_id,
         participant_name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -278,15 +278,10 @@ const PublicCourseDetailPage = () => {
         return;
       }
 
-      // Send confirmation email (non-blocking)
-      sendSignupConfirmationEmail({
-        to: formData.email,
-        courseName: course.title,
-        courseDate: course.start_date ? new Date(course.start_date).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '',
-        courseTime: course.time_schedule?.match(/(\d{1,2}:\d{2})/)?.[1] || '',
-        location: course.location || '',
-        organizationName: course.organization?.name || 'Ease',
-      });
+      // Send confirmation email (non-blocking) — server looks up data by IDs
+      if (signupData?.id) {
+        sendSignupConfirmationEmail(courseId, signupData.id);
+      }
 
       toast.success('Påmelding fullført');
       setSubmitting(false);
