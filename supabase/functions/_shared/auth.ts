@@ -109,7 +109,7 @@ export async function verifyAuthAndOrgMembership(
  * Get CORS headers with configurable origin
  */
 export function getCorsHeaders(): Record<string, string> {
-  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://ease.no'
+  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.framio.no'
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
