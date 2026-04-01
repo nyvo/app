@@ -81,3 +81,20 @@ export function formatDateNorwegian(date: Date, formatString: string = 'PPP'): s
   return format(date, formatString, { locale: nb });
 }
 
+const MONTH_ABBR = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+
+/**
+ * Format a week range for display, e.g. "31. mar – 6. apr"
+ */
+export function formatWeekRange(monday: Date, sunday: Date): string {
+  const mDay = monday.getDate();
+  const mMonth = MONTH_ABBR[monday.getMonth()];
+  const sDay = sunday.getDate();
+  const sMonth = MONTH_ABBR[sunday.getMonth()];
+
+  if (monday.getMonth() === sunday.getMonth()) {
+    return `${mDay}. – ${sDay}. ${sMonth}`;
+  }
+  return `${mDay}. ${mMonth} – ${sDay}. ${sMonth}`;
+}
+
