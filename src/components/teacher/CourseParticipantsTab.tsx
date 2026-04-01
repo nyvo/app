@@ -188,7 +188,7 @@ export const CourseParticipantsTab = ({
                   <tr key={participant.id} className="group hover:bg-zinc-50 smooth-transition">
                     {/* Navn */}
                     <td className="py-4 px-3 sm:px-6">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <UserAvatar name={participant.name} email={participant.email} size="sm" />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-text-primary truncate">{participant.name}</p>
