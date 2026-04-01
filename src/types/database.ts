@@ -90,6 +90,7 @@ export interface Database {
           phone: string | null
           is_platform_admin: boolean | null
           onboarding_completed_at: string | null
+          setup_complete_seen_at: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -101,6 +102,7 @@ export interface Database {
           phone?: string | null
           is_platform_admin?: boolean | null
           onboarding_completed_at?: string | null
+          setup_complete_seen_at?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -112,6 +114,7 @@ export interface Database {
           phone?: string | null
           is_platform_admin?: boolean | null
           onboarding_completed_at?: string | null
+          setup_complete_seen_at?: string | null
           created_at?: string | null
           updated_at?: string | null
         }

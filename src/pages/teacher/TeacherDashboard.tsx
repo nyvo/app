@@ -24,6 +24,7 @@ import {
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { typedFrom } from '@/lib/supabase';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
 import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
@@ -238,17 +239,18 @@ const TeacherDashboard = () => {
     onConnectStripe: openStripeExplainer,
   });
 
-  // One-time "setup done" banner — shown once, then auto-marked as seen
-  const SETUP_SEEN_KEY = 'ease:setup-complete-seen';
-  const [showSetupBanner, setShowSetupBanner] = useState(() => {
-    return isSetupComplete && !localStorage.getItem(SETUP_SEEN_KEY);
-  });
+  // One-time "setup done" banner — shown once, then marked as seen in DB
+  const [showSetupBanner, setShowSetupBanner] = useState(false);
   useEffect(() => {
-    if (isSetupComplete && !localStorage.getItem(SETUP_SEEN_KEY)) {
+    if (isSetupComplete && profile?.id && !profile.setup_complete_seen_at) {
       setShowSetupBanner(true);
-      localStorage.setItem(SETUP_SEEN_KEY, '1');
+      // Mark as seen in DB so it won't show on other devices
+      typedFrom('profiles')
+        .update({ setup_complete_seen_at: new Date().toISOString() } as any)
+        .eq('id', profile.id)
+        .then();
     }
-  }, [isSetupComplete]);
+  }, [isSetupComplete, profile?.id, profile?.setup_complete_seen_at]);
 
   // Stripe auto-check (self-heal for missed callbacks)
   useEffect(() => {
