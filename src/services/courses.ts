@@ -243,6 +243,63 @@ function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+// Existing session info for conflict warnings
+export interface ExistingSession {
+  courseTitle: string
+  startTime: string
+  endTime: string
+  startMinutes: number
+  endMinutes: number
+  date: string
+}
+
+// Fetch existing sessions for given dates within an organization.
+export async function fetchExistingSessions(
+  organizationId: string,
+  dates: string[]
+): Promise<{ data: ExistingSession[]; error: Error | null }> {
+  if (dates.length === 0) return { data: [], error: null }
+
+  const { data: sessions, error } = await typedFrom('course_sessions')
+    .select(`
+      session_date,
+      start_time,
+      course:courses!inner(
+        id,
+        title,
+        organization_id,
+        duration,
+        status
+      )
+    `)
+    .in('session_date', dates)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .neq('status', 'cancelled')
+
+  if (error) return { data: [], error: error as Error }
+  if (!sessions || sessions.length === 0) return { data: [], error: null }
+
+  const typed = sessions as unknown as SessionWithCourseJoin[]
+  const result: ExistingSession[] = typed.map(s => {
+    const start = timeToMinutes(s.start_time)
+    const dur = s.course.duration > 0 ? s.course.duration : 60
+    const endMin = start + dur
+    const endH = Math.floor(endMin / 60).toString().padStart(2, '0')
+    const endM = (endMin % 60).toString().padStart(2, '0')
+    return {
+      courseTitle: s.course.title,
+      startTime: s.start_time.slice(0, 5),
+      endTime: `${endH}:${endM}`,
+      startMinutes: start,
+      endMinutes: endMin,
+      date: s.session_date,
+    }
+  })
+
+  return { data: result, error: null }
+}
+
 // Parse a start time from a time_schedule string (e.g., "Mandager, 18:00" -> "18:00").
 // Logs a warning and falls back to '09:00' when the regex does not match.
 function parseStartTime(timeSchedule: string | null | undefined): string {
@@ -432,6 +489,16 @@ export async function updateCourse(courseId: string, courseData: CourseUpdate): 
   }
 
   return { data: data as Course, error: null }
+}
+
+// Publish a draft course (sets status to 'upcoming')
+export async function publishCourse(courseId: string): Promise<{ data: Course | null; error: Error | null }> {
+  return updateCourse(courseId, { status: 'upcoming' })
+}
+
+// Unpublish a course (sets status back to 'draft')
+export async function unpublishCourse(courseId: string): Promise<{ data: Course | null; error: Error | null }> {
+  return updateCourse(courseId, { status: 'draft' })
 }
 
 // Cancel course result

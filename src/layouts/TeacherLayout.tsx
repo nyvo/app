@@ -11,17 +11,14 @@ export default function TeacherLayout() {
 
   return (
     <ProtectedRoute>
-      <SidebarProvider>
-        {/* Sidebar: visible but muted during onboarding */}
-        <div className={showWelcome ? 'opacity-40 pointer-events-none select-none' : ''}>
+      {showWelcome ? (
+        <WelcomeFlow onComplete={refreshOrganizations} />
+      ) : (
+        <SidebarProvider>
           <TeacherSidebar />
-        </div>
-        {showWelcome ? (
-          <WelcomeFlow onComplete={refreshOrganizations} />
-        ) : (
           <Outlet />
-        )}
-      </SidebarProvider>
+        </SidebarProvider>
+      )}
     </ProtectedRoute>
   );
 }

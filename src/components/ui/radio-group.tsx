@@ -57,36 +57,32 @@ function RadioGroupCardItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-card-item"
       className={cn(
-        "relative flex flex-col gap-3 p-6 rounded-xl text-left cursor-pointer group smooth-transition bg-white bg-clip-padding",
+        "relative flex items-start gap-3.5 p-4 rounded-xl text-left cursor-pointer group smooth-transition bg-white bg-clip-padding",
         "border border-zinc-200 hover:bg-zinc-50/50",
-        "data-[state=checked]:border-zinc-900 data-[state=checked]:ring-1 data-[state=checked]:ring-zinc-900 data-[state=checked]:bg-zinc-50/80",
+        "data-[state=checked]:border-zinc-900 data-[state=checked]:ring-1 data-[state=checked]:ring-zinc-900",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         "disabled:pointer-events-none disabled:opacity-50",
         className
       )}
       {...props}
     >
-      <div className="flex justify-between items-start">
-        {Icon && (
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-zinc-100 text-text-secondary border border-zinc-200 group-data-[state=checked]:bg-zinc-200 group-data-[state=checked]:text-text-primary group-data-[state=checked]:border-zinc-300 smooth-transition">
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </div>
-        )}
-        <div className="h-5 w-5 rounded-full flex items-center justify-center smooth-transition bg-transparent border-2 border-zinc-300 text-transparent group-data-[state=checked]:bg-zinc-900 group-data-[state=checked]:border-zinc-900 group-data-[state=checked]:text-white">
-          <RadioGroupPrimitive.Indicator>
-            <Check className="h-3 w-3 text-white" aria-hidden="true" />
-          </RadioGroupPrimitive.Indicator>
-        </div>
-      </div>
-      <div>
-        <h3 className="text-sm font-medium text-text-secondary group-data-[state=checked]:text-text-primary smooth-transition">
+      {Icon && (
+        <Icon className="h-4 w-4 mt-0.5 shrink-0 text-text-tertiary group-data-[state=checked]:text-text-primary smooth-transition" aria-hidden="true" />
+      )}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium text-text-primary smooth-transition">
           {title}
         </h3>
         {description && (
-          <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+          <p className="text-xs text-text-secondary mt-0.5 leading-relaxed">
             {description}
           </p>
         )}
+      </div>
+      <div className="h-4 w-4 mt-0.5 shrink-0 rounded-full flex items-center justify-center smooth-transition border-2 border-zinc-300 text-transparent group-data-[state=checked]:bg-zinc-900 group-data-[state=checked]:border-zinc-900 group-data-[state=checked]:text-white">
+        <RadioGroupPrimitive.Indicator>
+          <Check className="h-2.5 w-2.5 text-white" aria-hidden="true" />
+        </RadioGroupPrimitive.Indicator>
       </div>
     </RadioGroupPrimitive.Item>
   )

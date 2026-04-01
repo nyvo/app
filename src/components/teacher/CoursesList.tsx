@@ -82,8 +82,8 @@ function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
       </p>
       <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto">
         {timeFilter === 'today'
-          ? 'Du har ingen kurs planlagt for i dag.'
-          : 'Du har ingen kurs planlagt denne uken.'}
+          ? 'Ingen kurs er planlagt for i dag.'
+          : 'Ingen kurs er planlagt denne uken.'}
       </p>
       <Link
         to="/teacher/courses"

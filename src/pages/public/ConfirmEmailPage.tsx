@@ -72,7 +72,7 @@ const ConfirmEmailPage = () => {
             variant="outline-soft"
             className="w-full h-11"
           >
-            Send bekreftelse på nytt
+            Send på nytt
           </Button>
         )}
 

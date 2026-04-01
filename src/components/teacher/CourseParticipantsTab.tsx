@@ -172,7 +172,7 @@ export const CourseParticipantsTab = ({
               ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
-                    <p className="text-sm text-text-secondary">Ingen deltakere funnet</p>
+                    <p className="text-sm text-text-secondary">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                     {hasActiveFilters && (
                       <button
                         onClick={clearFilters}

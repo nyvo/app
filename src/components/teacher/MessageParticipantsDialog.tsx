@@ -127,7 +127,7 @@ export function MessageParticipantsDialog({
           id="participant-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Skriv melding..."
+          placeholder="Skriv meldingen din"
           rows={5}
           className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
           disabled={isSending}
@@ -148,7 +148,7 @@ export function MessageParticipantsDialog({
             onClick={handleSend}
             disabled={!message.trim() || isSending}
             loading={isSending}
-            loadingText="Sender..."
+            loadingText="Sender"
           >
             <Send className="h-3.5 w-3.5" />
             Send melding

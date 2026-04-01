@@ -24,7 +24,7 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
                 Klar til å planlegge ditt første kurs?
               </h2>
               <p className="text-sm text-text-secondary">
-                Opprett en yogaøkt og bygg din kursplan.
+                Opprett ditt første kurs for å komme i gang.
               </p>
             </div>
 

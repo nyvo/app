@@ -14,13 +14,12 @@ import {
   AlertCircle,
   X,
   Plus,
-  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { createStripeConnectLink } from '@/services/stripe-connect';
-import { createCourse, updateCourse } from '@/services/courses';
+import { createCourse, updateCourse, fetchExistingSessions } from '@/services/courses';
+import type { ExistingSession } from '@/services/courses';
 import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -36,17 +35,16 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { CreateCourseReview } from '@/components/teacher/CreateCourseReview';
 import { Stepper } from '@/components/ui/stepper';
-import { useFormDraft } from '@/hooks/use-form-draft';
-import { tabVariants, tabTransition, pageVariants, pageTransition } from '@/lib/motion';
-import { cn, formatKroner } from '@/lib/utils';
+
+import { tabVariants, tabTransition } from '@/lib/motion';
+import { cn } from '@/lib/utils';
 import type { CourseType as DBCourseType, Json } from '@/types/database';
 import type { AudienceLevel, EquipmentInfo, PracticalInfo } from '@/types/practicalInfo';
-import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, ARRIVAL_DEFAULT_MINUTES, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH, ARRIVAL_MINUTES_MAX, practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
+import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, ARRIVAL_DEFAULT_MINUTES, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH, ARRIVAL_MINUTES_MAX } from '@/utils/practicalInfoUtils';
 
 type CourseType = 'series' | 'single';
 
@@ -61,25 +59,7 @@ interface FormErrors {
   capacity?: string;
 }
 
-interface CourseDraft {
-  courseType: CourseType;
-  title: string;
-  description: string;
-  startDate?: string;
-  startTime: string;
-  duration: number | null;
-  weeks: string;
-  location: string;
-  price: string;
-  capacity: string;
-  audienceLevel?: string;
-  equipment?: string;
-  arrivalMinutes?: string;
-  customBullets?: string[];
-  stepIndex?: number;
-}
 
-const DRAFT_KEY = 'create-course-draft';
 const DESCRIPTION_MAX_LENGTH = 600;
 const DESCRIPTION_WARN_LENGTH = 500;
 
@@ -119,106 +99,11 @@ const CreateCoursePage = () => {
   // Validation state
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  const [draftLoaded, setDraftLoaded] = useState(false);
-  const [showReviewView, setShowReviewView] = useState(false);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Form draft persistence
-  const { draft, saveDraft, saveDraftImmediate, clearDraft, hasDraft } = useFormDraft<CourseDraft>(DRAFT_KEY);
-
-  // Load draft on mount
-  useEffect(() => {
-    if (draft && !draftLoaded) {
-      setCourseType(draft.courseType || 'series');
-      setTitle(draft.title || '');
-      setDescription(draft.description || '');
-      if (draft.startDate) {
-        const parsed = new Date(draft.startDate);
-        if (!isNaN(parsed.getTime())) setStartDate(parsed);
-      }
-      setStartTime(draft.startTime || '');
-      setDuration(draft.duration ?? 60);
-      setWeeks(draft.weeks || '');
-      setLocation(draft.location || '');
-      setPrice(draft.price || '');
-      setCapacity(draft.capacity || '');
-      setAudienceLevel((draft.audienceLevel as AudienceLevel) || 'ALL_LEVELS');
-      setEquipment((draft.equipment as EquipmentInfo) || '');
-      setArrivalMinutes(draft.arrivalMinutes ?? ARRIVAL_DEFAULT_MINUTES);
-      setCustomBullets(draft.customBullets || []);
-      const clampedStep = Math.min(2, Math.max(0, draft.stepIndex ?? 0));
-      setCurrentStep(clampedStep);
-      setDraftLoaded(true);
-
-      if (draft.title) {
-        toast.info('Utkast gjenopprettet', {
-          description: 'Utkastet ditt er lastet inn.',
-        });
-      }
-    }
-  }, [draft, draftLoaded]);
-
-  // Auto-save draft
-  const saveDraftCallback = useCallback(() => {
-    saveDraft({
-      courseType,
-      title,
-      description,
-      startDate: startDate?.toISOString(),
-      startTime,
-      duration,
-      weeks,
-      location,
-      price,
-      capacity,
-      audienceLevel: audienceLevel || undefined,
-      equipment: equipment || undefined,
-      arrivalMinutes: arrivalMinutes || undefined,
-      customBullets: customBullets.length > 0 ? customBullets : undefined,
-      stepIndex: currentStep,
-    });
-  }, [courseType, title, description, startDate, startTime, duration, weeks, location, price, capacity, audienceLevel, equipment, arrivalMinutes, customBullets, currentStep, saveDraft]);
-
-  useEffect(() => {
-    if (draftLoaded || (!draft && !hasDraft)) {
-      saveDraftCallback();
-    }
-  }, [saveDraftCallback, draftLoaded, draft, hasDraft]);
-
-  const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
-
-  const [connectingStripe, setConnectingStripe] = useState(false);
-  const handleConnectStripe = async () => {
-    if (!currentOrganization?.id) return;
-    setConnectingStripe(true);
-    saveDraftImmediate({
-      courseType,
-      title,
-      description,
-      startDate: startDate?.toISOString(),
-      startTime,
-      duration,
-      weeks,
-      location,
-      price,
-      capacity,
-      audienceLevel: audienceLevel || undefined,
-      equipment: equipment || undefined,
-      arrivalMinutes: arrivalMinutes || undefined,
-      customBullets: customBullets.length > 0 ? customBullets : undefined,
-      stepIndex: currentStep,
-    });
-    const { data, error } = await createStripeConnectLink(currentOrganization.id);
-    if (error || !data?.url) {
-      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-      setConnectingStripe(false);
-      return;
-    }
-    window.location.href = data.url;
-  };
 
   // Refs for scroll-to-error and content area (scroll to top on step change)
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -272,6 +157,14 @@ const CreateCoursePage = () => {
 
   const isFormValid = Object.keys(errors).length === 0;
 
+  // Clear conflict error when timeslot fields change
+  useEffect(() => {
+    if (submitError === 'conflict') {
+      setSubmitError(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, startTime, duration, weeks]);
+
   // Unsaved changes warning
   const hasUnsavedChanges = useMemo(() => {
     return !!(title.trim() || startDate || startTime || location.trim() || price || capacity || description.trim() || imageFile);
@@ -295,6 +188,45 @@ const CreateCoursePage = () => {
     return addDays(startDate, (weeksNum - 1) * 7);
   }, [startDate, weeks, courseType]);
 
+  // Fetch existing sessions for the selected date(s) to show overlap warnings
+  const [existingSessions, setExistingSessions] = useState<ExistingSession[]>([]);
+
+  useEffect(() => {
+    if (!startDate || !currentOrganization?.id) {
+      setExistingSessions([]);
+      return;
+    }
+
+    const dates: string[] = [];
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    if (courseType === 'series') {
+      const weeksNum = parseInt(weeks) || 1;
+      for (let i = 0; i < weeksNum; i++) {
+        dates.push(fmt(addDays(startDate, i * 7)));
+      }
+    } else {
+      dates.push(fmt(startDate));
+    }
+
+    fetchExistingSessions(currentOrganization.id, dates).then(({ data }) => {
+      setExistingSessions(data);
+    });
+  }, [startDate, weeks, courseType, currentOrganization?.id]);
+
+  // Check if the selected time + duration overlaps with any existing session
+  const timeConflicts = useMemo(() => {
+    if (!startTime || existingSessions.length === 0) return [];
+
+    const dur = duration || 60;
+    const candidateStart = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
+    const candidateEnd = candidateStart + dur;
+
+    return existingSessions.filter(
+      s => candidateStart < s.endMinutes && s.startMinutes < candidateEnd
+    );
+  }, [startTime, duration, existingSessions]);
+
   // Build practical info for submission and preview
   const currentPracticalInfo = useMemo<PracticalInfo | null>(() => {
     const info: PracticalInfo = {};
@@ -308,61 +240,6 @@ const CreateCoursePage = () => {
     if (filtered.length > 0) info.custom_bullets = filtered;
     return Object.keys(info).length > 0 ? info : null;
   }, [audienceLevel, equipment, arrivalMinutes, customBullets]);
-
-  // Pre-formatted labels for the review step
-  const reviewLabels = useMemo(() => {
-    const typeLabel = courseType === 'series' ? 'Kursrekke' : 'Enkeltkurs';
-
-    const startDateLabel = startDate
-      ? (() => {
-          const pattern = startDate.getFullYear() === new Date().getFullYear()
-            ? 'EEEE d. MMMM'
-            : 'EEEE d. MMMM yyyy';
-          const formatted = format(startDate, pattern, { locale: nb });
-          return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-        })()
-      : 'Ikke angitt';
-
-    const durationMins = duration != null && duration > 0 ? duration : null;
-    const durationStr = durationMins
-      ? durationMins < 60
-        ? `${durationMins} min`
-        : durationMins % 60 > 0
-          ? `${Math.floor(durationMins / 60)}t ${durationMins % 60}min`
-          : `${Math.floor(durationMins / 60)} ${Math.floor(durationMins / 60) === 1 ? 'time' : 'timer'}`
-      : null;
-    const timeAndDurationLabel = startTime
-      ? `${startTime}${durationStr ? ` \u00b7 ${durationStr}` : ''}`
-      : 'Ikke angitt';
-
-    const weeksLabel = courseType === 'series' && weeks ? `${weeks} uker` : null;
-
-    const priceNum = price !== '' ? parseInt(price, 10) : null;
-    const priceLabel =
-      priceNum != null && !isNaN(priceNum) && priceNum >= 0
-        ? formatKroner(priceNum)
-        : 'Pris ikke angitt';
-
-    const capNum = capacity ? parseInt(capacity, 10) : null;
-    const capacityLabel =
-      capNum != null && !isNaN(capNum) && capNum >= 1
-        ? `${capNum} plasser`
-        : 'Ingen grense';
-
-    const highlights = practicalInfoToHighlights(currentPracticalInfo);
-    const practicalInfoLabel = highlights.length > 0 ? highlights.join(' \u00b7 ') : null;
-
-    return {
-      courseTypeLabel: typeLabel,
-      startDateLabel,
-      timeAndDurationLabel,
-      weeksLabel,
-      locationLabel: location.trim() || 'Ikke angitt',
-      priceLabel,
-      capacityLabel,
-      practicalInfoLabel,
-    };
-  }, [courseType, startDate, startTime, duration, weeks, location, price, capacity, currentPracticalInfo]);
 
   const showError = (field: keyof FormErrors) => {
     return (touched[field] || submitAttempted) && errors[field];
@@ -443,7 +320,7 @@ const CreateCoursePage = () => {
         location: location.trim(),
         price: parseInt(price) || 0,
         max_participants: parseInt(capacity),
-        status: 'upcoming' as const,
+        status: 'draft' as const,
         practical_info: currentPracticalInfo ? (currentPracticalInfo as unknown as Json) : null,
       };
 
@@ -453,7 +330,7 @@ const CreateCoursePage = () => {
 
       if (error || !createdCourse) {
         if (conflicts && conflicts.length > 0) {
-          setSubmitError('Tidspunktet er opptatt. Velg et annet.');
+          setSubmitError('conflict');
         } else {
           setSubmitError(error?.message || 'Kunne ikke opprette kurset');
         }
@@ -471,12 +348,11 @@ const CreateCoursePage = () => {
       }
 
       if (imageUploadFailed) {
-        toast.warning('Kurset er opprettet. Bildet ble ikke lastet opp.');
+        toast.warning('Kurset er opprettet. Last opp kursbilde fra kurssiden.');
       } else {
         toast.success('Kurs opprettet');
       }
 
-      clearDraft();
       navigate(`/teacher/courses/${createdCourse.id}`);
     } catch {
       setSubmitError('Noe gikk galt. Prøv igjen.');
@@ -486,11 +362,11 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-white">
+    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
         <MobileTeacherHeader title="Opprett kurs" />
 
         {/* Header with Breadcrumbs */}
-        <header className="bg-white border-b border-zinc-100 shrink-0">
+        <header className="bg-white border-b border-border shrink-0">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
             <Breadcrumb className="mb-2">
               <BreadcrumbList>
@@ -506,83 +382,19 @@ const CreateCoursePage = () => {
               </BreadcrumbList>
             </Breadcrumb>
             <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
-              {showReviewView ? 'Sjekk oppsummering' : 'Opprett nytt kurs'}
+              Opprett nytt kurs
             </h1>
             <p className="text-text-secondary text-sm mt-1">
-              {showReviewView
-                ? 'Kontroller at informasjonen stemmer før du publiserer.'
-                : 'Sett opp et nytt kurs eller arrangement.'}
+              Sett opp et nytt kurs eller arrangement.
             </p>
           </div>
         </header>
 
-        {/* Stepper + Form or Review */}
+        {/* Stepper + Form */}
         <div
           ref={contentScrollRef}
           className="flex-1 overflow-y-auto custom-scrollbar"
         >
-          {showReviewView ? (
-            <motion.div
-              key="review"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              transition={pageTransition}
-              className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-10"
-            >
-              {!isStripeConnected && (
-                <div className="mb-6 rounded-xl bg-zinc-900 border border-zinc-800 p-6">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-white">
-                        Betalinger må settes opp før publisering
-                      </h3>
-                      <p className="text-xs text-zinc-400 mt-1 leading-snug">
-                        Du blir sendt til Stripe for å fullføre oppsett av betalinger. Utkastet ditt lagres automatisk og vil være her når du kommer tilbake.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 ml-7">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="xs"
-                      className="bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100 shrink-0"
-                      onClick={handleConnectStripe}
-                      loading={connectingStripe}
-                      loadingText="Sender deg til Stripe …"
-                    >
-                      Sett opp betalinger
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {submitAttempted && !isFormValid && (
-                <div className="mb-6 rounded-xl border border-destructive/30 bg-status-error-bg px-4 py-3 text-sm text-status-error-text" role="alert">
-                  Fyll ut de påkrevde feltene. Gå tilbake til redigering for å rette opp.
-                </div>
-              )}
-              <CreateCourseReview
-                courseTypeLabel={reviewLabels.courseTypeLabel}
-                title={title.trim() || 'Ikke angitt'}
-                description={description}
-                imageFile={imageFile}
-                startDateLabel={reviewLabels.startDateLabel}
-                timeAndDurationLabel={reviewLabels.timeAndDurationLabel}
-                weeksLabel={reviewLabels.weeksLabel}
-                locationLabel={reviewLabels.locationLabel}
-                capacityLabel={reviewLabels.capacityLabel}
-                priceLabel={reviewLabels.priceLabel}
-                practicalInfoLabel={reviewLabels.practicalInfoLabel}
-                onEditStep={(step) => {
-                  setCurrentStep(step);
-                  setShowReviewView(false);
-                }}
-              />
-            </motion.div>
-          ) : (
-            <>
               <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
                 <Stepper
                   steps={CREATE_COURSE_STEPS}
@@ -612,7 +424,7 @@ const CreateCoursePage = () => {
                   value={courseType}
                   onValueChange={(v) => setCourseType(v as CourseType)}
                   aria-labelledby="course-type-label"
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 >
                   <RadioGroupCardItem
                     value="series"
@@ -623,8 +435,8 @@ const CreateCoursePage = () => {
                   <RadioGroupCardItem
                     value="single"
                     icon={CalendarDays}
-                    title="Enkeltkurs"
-                    description="For drop-in, arrangement eller enkelthendelse."
+                    title="Arrangement"
+                    description="For enkeltkurs, workshops eller arrangementer."
                   />
                 </RadioGroup>
               </section>
@@ -632,13 +444,13 @@ const CreateCoursePage = () => {
               {/* ── Section 2: Basic Details ── */}
               <section>
                 <div className="mb-6 border-b border-zinc-100 pb-2">
-                  <h2 className="text-sm font-medium text-text-secondary">Detaljer</h2>
+                  <h2 className="text-sm font-medium text-text-primary">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
                   {/* Title */}
                   <div>
                     <label htmlFor="create-title" className="block text-xs font-medium text-text-primary mb-1.5">
-                      Tittel <span className="text-destructive">*</span>
+                      Tittel
                     </label>
                     <Input
                       ref={titleRef}
@@ -672,7 +484,7 @@ const CreateCoursePage = () => {
                     </label>
                     <Textarea
                       id="create-description"
-                      placeholder="Hva vil elevene lære?"
+                      placeholder="Beskriv kurset kort for deltakerne"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       maxLength={DESCRIPTION_MAX_LENGTH}
@@ -717,15 +529,12 @@ const CreateCoursePage = () => {
               >
               {/* ── Step 2: Tid og sted ── */}
               <section>
-                <div className="mb-6 border-b border-zinc-100 pb-2">
-                  <h2 className="text-sm font-medium text-text-secondary">Tid og sted</h2>
-                </div>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className={cn("grid grid-cols-1 gap-5", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
                       <label htmlFor="create-start-date" className="block text-xs font-medium text-text-primary mb-1.5">
-                        {courseType === 'single' ? 'Dato' : 'Startdato'} <span className="text-destructive">*</span>
+                        {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
                         id="create-start-date"
@@ -750,7 +559,7 @@ const CreateCoursePage = () => {
                     {courseType === 'series' && (
                       <div>
                         <label className="flex items-center gap-1 text-xs font-medium text-text-primary mb-1.5">
-                          Uker <span className="text-destructive">*</span>
+                          Uker
                           <InfoTooltip content="Hvor mange uker kurset varer" />
                         </label>
                         <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
@@ -804,11 +613,23 @@ const CreateCoursePage = () => {
                     )}
                   </div>
 
+                  {/* Schedule summary */}
+                  {courseType === 'series' && endDate && startDate && parseInt(weeks) >= 2 && (
+                    <Alert variant="info" size="sm" icon={CalendarDays}>
+                      <AlertTitle variant="info">
+                        Hver {format(startDate, 'EEEE', { locale: nb })} i {weeks} uker
+                      </AlertTitle>
+                      <AlertDescription variant="info">
+                        {format(startDate, 'd. MMM', { locale: nb })} – {format(endDate, 'd. MMM yyyy', { locale: nb })}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {/* Time + Duration row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label htmlFor="create-start-time" className="block text-xs font-medium text-text-primary mb-1.5">
-                        Starttid <span className="text-destructive">*</span>
+                        Starttid
                       </label>
                       <TimePicker
                         id="create-start-time"
@@ -829,7 +650,7 @@ const CreateCoursePage = () => {
                     </div>
                     <div>
                       <label htmlFor="create-duration" className="block text-xs font-medium text-text-primary mb-1.5">
-                        Varighet <span className="text-destructive">*</span>
+                        Varighet
                       </label>
                       <Select
                         value={duration?.toString() || ""}
@@ -866,17 +687,22 @@ const CreateCoursePage = () => {
                     </div>
                   </div>
 
-                  {/* End date feedback */}
-                  {courseType === 'series' && endDate && parseInt(weeks) >= 2 && (
-                    <p className="text-sm text-text-secondary -mt-2">
-                      Slutter {format(endDate, 'd. MMMM', { locale: nb })}
-                    </p>
+                  {/* Time conflict warning */}
+                  {timeConflicts.length > 0 && (
+                    <Alert variant="warning" size="sm">
+
+                      <AlertDescription variant="warning">
+                        {timeConflicts.length === 1
+                          ? `«${timeConflicts[0].courseTitle}» overlapper (kl. ${timeConflicts[0].startTime}–${timeConflicts[0].endTime})`
+                          : `${timeConflicts.length} kurs overlapper med dette tidspunktet`}
+                      </AlertDescription>
+                    </Alert>
                   )}
 
                   {/* Location */}
                   <div>
                     <label htmlFor="create-location" className="block text-xs font-medium text-text-primary mb-1.5">
-                      Sted <span className="text-destructive">*</span>
+                      Sted
                     </label>
                     <Input
                       ref={locationRef}
@@ -918,13 +744,13 @@ const CreateCoursePage = () => {
               {/* ── Step 3: Påmelding ── */}
               <section>
                 <div className="mb-6 border-b border-zinc-100 pb-2">
-                  <h2 className="text-sm font-medium text-text-secondary">Påmelding</h2>
+                  <h2 className="text-sm font-medium text-text-primary">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Price */}
                   <div>
                     <label htmlFor="create-price" className="block text-xs font-medium text-text-primary mb-1.5">
-                      Pris <span className="text-destructive">*</span>
+                      Pris
                       <span className="ml-2 text-xs font-normal text-text-secondary">per person</span>
                     </label>
                     <div className="relative">
@@ -960,13 +786,13 @@ const CreateCoursePage = () => {
                   {/* Capacity */}
                   <div>
                     <label htmlFor="create-capacity" className="block text-xs font-medium text-text-primary mb-1.5">
-                      Maks deltakere <span className="text-destructive">*</span>
+                      Maks antall deltakere
                     </label>
                     <Input
                       ref={capacityRef}
                       id="create-capacity"
                       type="number"
-                      placeholder=""
+                      placeholder="F.eks. 20"
                       min="1"
                       value={capacity}
                       onChange={(e) => setCapacity(e.target.value)}
@@ -993,13 +819,14 @@ const CreateCoursePage = () => {
               <section>
                 <div className="mb-6">
                   <h2 className="text-sm font-medium text-text-primary">Praktisk info</h2>
-                  <p className="text-sm text-text-secondary mt-1">Hjelp elevene dine med å komme forberedt ved å vise dette på kurssiden.</p>
+                  <p className="text-sm text-text-secondary mt-1">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
                     <label className="block text-xs font-medium text-text-primary mb-2.5">
                       Nivå
+                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
@@ -1019,7 +846,7 @@ const CreateCoursePage = () => {
                       ))}
                     </div>
                     <p className="text-xs text-text-secondary mt-2">
-                      Velg det laveste nivået som passer.
+                      Velg hvem kurset passer for.
                     </p>
                   </div>
 
@@ -1027,6 +854,7 @@ const CreateCoursePage = () => {
                   <div>
                     <label className="block text-xs font-medium text-text-primary mb-2.5">
                       Utstyr
+                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
                     </label>
                     <RadioGroup
                       value={equipment}
@@ -1045,6 +873,7 @@ const CreateCoursePage = () => {
                   <div>
                     <label className="block text-xs font-medium text-text-primary mb-1.5">
                       Oppmøte før start
+                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
                     </label>
                     <Select
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
@@ -1111,14 +940,12 @@ const CreateCoursePage = () => {
               </motion.div>
             )}
               </div>
-            </>
-          )}
         </div>
 
         {/* Footer */}
         <footer className="bg-white/80 backdrop-blur-lg border-t border-border py-4 px-4 sm:px-6 shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="max-w-2xl mx-auto flex flex-col gap-3">
-            {!showReviewView && submitAttempted && !validateStep(currentStep) && (
+            {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <p className="text-sm text-destructive text-center">
                   Fyll ut de markerte feltene.
@@ -1128,11 +955,28 @@ const CreateCoursePage = () => {
             {submitError && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm text-destructive whitespace-pre-line">{submitError}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm text-destructive">
+                      {submitError === 'conflict' ? 'Tidspunktet er opptatt. Velg et annet.' : submitError}
+                    </p>
+                    {submitError === 'conflict' && currentStep !== 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentStep(1);
+                          contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                          setTimeout(() => startTimeRef.current?.focus(), 400);
+                        }}
+                        className="text-xs font-medium text-destructive underline underline-offset-2 hover:text-destructive/80 transition-colors whitespace-nowrap"
+                      >
+                        Endre tidspunkt
+                      </button>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setSubmitError(null)}
-                    className="text-destructive/60 hover:text-destructive transition-colors p-1 -m-1 rounded"
+                    className="text-destructive/60 hover:text-destructive transition-colors p-1 -m-1 rounded shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="h-4 w-4" />
@@ -1150,32 +994,6 @@ const CreateCoursePage = () => {
               >
                 Avbryt
               </Button>
-              {showReviewView ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="outline-soft"
-                    size="compact"
-                    onClick={() => setShowReviewView(false)}
-                    disabled={isSubmitting}
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                    Tilbake til redigering
-                  </Button>
-                  <Button
-                    type="button"
-                    size="compact"
-                    onClick={handlePublish}
-                    disabled={isSubmitting}
-                    loading={isSubmitting}
-                    loadingText="Oppretter"
-                  >
-                    <span>{isStripeConnected ? 'Publiser kurs' : 'Lagre kurs'}</span>
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </Button>
-                </>
-              ) : (
-                <>
                   {currentStep > 0 && (
                     <Button
                       type="button"
@@ -1200,25 +1018,18 @@ const CreateCoursePage = () => {
                     </Button>
                   )}
                   {currentStep === 2 && (
-                    <div className="relative flex flex-col items-end">
-                      <Button
-                        type="button"
-                        size="compact"
-                        onClick={() => setShowReviewView(true)}
-                        disabled={isSubmitting || !isFormValid}
-                      >
-                        <span>{isStripeConnected ? 'Sjekk og publiser' : 'Sjekk og lagre'}</span>
-                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                      </Button>
-                      {!isFormValid && (
-                        <p className="absolute top-full mt-1.5 text-xs text-text-secondary whitespace-nowrap">
-                          Fyll ut alle påkrevde felt for å fortsette
-                        </p>
-                      )}
-                    </div>
+                    <Button
+                      type="button"
+                      size="compact"
+                      onClick={handlePublish}
+                      disabled={isSubmitting}
+                      loading={isSubmitting}
+                      loadingText="Oppretter …"
+                    >
+                      Opprett kurs
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
                   )}
-                </>
-              )}
             </div>
           </div>
         </footer>

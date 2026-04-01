@@ -105,7 +105,15 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
             <h3 className="text-sm font-medium text-text-primary truncate">
               {course.courseTitle}
             </h3>
-            {course.courseStatus === 'cancelled' ? (
+            {course.courseStatus === 'draft' ? (
+              <StatusIndicator
+                variant="neutral"
+                mode="badge"
+                size="xs"
+                label="Utkast"
+                className="flex-shrink-0"
+              />
+            ) : course.courseStatus === 'cancelled' ? (
               <StatusIndicator
                 variant="neutral"
                 mode="badge"
@@ -127,6 +135,11 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             {(course.startTime || course.endTime) && (
               <span className="text-xs text-text-secondary">
+                {(() => {
+                  const d = new Date(course.sessionDate + 'T12:00:00');
+                  const day = d.toLocaleDateString('nb-NO', { weekday: 'short' });
+                  return `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
+                })()}{' '}
                 {formatTimeRange(course.startTime, course.endTime)}
               </span>
             )}

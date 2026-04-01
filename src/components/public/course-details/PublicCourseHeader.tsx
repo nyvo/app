@@ -52,7 +52,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
         {/* Right side */}
         <div className="flex items-center gap-6">
           <span className="text-xs text-muted-foreground font-medium hidden sm:block">
-            Booking
+            Påmelding
           </span>
 
           {/* Profile dropdown */}

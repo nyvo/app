@@ -259,7 +259,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     {isUploadingQuickImage ? (
                       <div className="flex items-center gap-2 text-text-secondary">
                         <Spinner size="sm" />
-                        <span className="text-xs font-medium">Laster opp...</span>
+                        <span className="text-xs font-medium">Laster opp</span>
                       </div>
                     ) : (
                       <div className="text-center">

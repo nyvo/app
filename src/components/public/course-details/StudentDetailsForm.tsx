@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Mail } from 'lucide-react';
+
 import { Link } from 'react-router-dom';
 
 export interface StudentDetailsFormData {
@@ -104,25 +104,22 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         >
           E-post
         </label>
-        <div className="relative group">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-text-primary transition-colors pointer-events-none" />
-          <Input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            onBlur={() => onBlur('email')}
-            disabled={submitting}
-            className={`pl-9 ${
-              touched.email && errors.email
-                ? 'border-destructive focus:border-destructive focus:ring-destructive'
-                : ''
-            }`}
-            placeholder="ola@eksempel.no"
-            aria-invalid={touched.email && errors.email}
-          />
-        </div>
+        <Input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={onChange}
+          onBlur={() => onBlur('email')}
+          disabled={submitting}
+          className={
+            touched.email && errors.email
+              ? 'border-destructive focus:border-destructive focus:ring-destructive'
+              : ''
+          }
+          placeholder="ola@eksempel.no"
+          aria-invalid={touched.email && errors.email}
+        />
         {touched.email && errors.email && (
           <p className="text-xs text-destructive">Ugyldig e-post</p>
         )}
@@ -134,7 +131,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           htmlFor="message"
           className="text-xs font-medium text-muted-foreground block"
         >
-          Beskjed <span className="text-muted-foreground">(valgfritt)</span>
+          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
         </label>
         <Textarea
           id="message"
@@ -143,7 +140,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           onChange={onChange}
           disabled={submitting}
           rows={2}
-          placeholder="Noe vi bør vite om?"
+          placeholder="Noe instruktøren bør vite?"
         />
       </div>
 
@@ -162,13 +159,13 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           aria-invalid={touched.termsAccepted && errors.termsAccepted ? true : undefined}
         />
         <label htmlFor="termsAccepted" className="text-xs text-muted-foreground select-none">
-          Bekreft{' '}
+          Jeg godtar{' '}
           <Link
             to="/terms"
             className="text-text-primary underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-500"
             target="_blank"
           >
-            vilkår
+            vilkårene for påmelding
           </Link>
         </label>
       </div>

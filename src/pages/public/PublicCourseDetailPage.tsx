@@ -288,7 +288,7 @@ const PublicCourseDetailPage = () => {
         organizationName: course.organization?.name || 'Ease',
       });
 
-      toast.success('Du er nå påmeldt!');
+      toast.success('Påmelding fullført');
       setSubmitting(false);
       window.location.href = `/checkout/success?free=true&org=${slug}`;
       return;

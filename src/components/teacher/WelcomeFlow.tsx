@@ -1,10 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
 import { pageVariants, pageTransition } from '@/lib/motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { updateOrganization } from '@/services/organizations'
@@ -67,7 +66,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   const { profile, currentOrganization, ensureOrganization, signOut } = useAuth()
   const [step, setStep] = useState(0)
 
-  // Personal info — don't prefill if the name is just the email prefix (e.g. "kristian" from "kristian@example.com")
+  // Personal info — don't prefill if the name is just the email prefix
   const prefillName = (() => {
     const name = profile?.name?.trim()
     if (!name) return ''
@@ -78,14 +77,21 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   const [firstName, setFirstName] = useState(() => prefillName.split(' ')[0] || '')
   const [lastName, setLastName] = useState(() => prefillName.split(' ').slice(1).join(' ') || '')
 
+  // Location
+  const [city, setCity] = useState(() => currentOrganization?.city || '')
+
   // Business info
   const [orgNumber, setOrgNumber] = useState('')
   const [studioName, setStudioName] = useState(() => currentOrganization?.name || '')
-  const [city, setCity] = useState(() => currentOrganization?.city || '')
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [lookupResult, setLookupResult] = useState<BrregResult | null>(null)
   const [lookupDone, setLookupDone] = useState(false)
   const [studioError, setStudioError] = useState('')
+
+  // Step 0 validation
+  const [firstNameError, setFirstNameError] = useState('')
+  const [lastNameError, setLastNameError] = useState('')
+  const [cityError, setCityError] = useState('')
 
   const [isSaving, setIsSaving] = useState(false)
   const needsOrg = !currentOrganization
@@ -93,7 +99,6 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   // Debounced org number lookup
   const lookupTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
   const handleOrgNumberChange = useCallback((value: string) => {
-    // Allow digits and spaces for readability (e.g. "123 456 789")
     const filtered = value.replace(/[^\d\s]/g, '')
     setOrgNumber(filtered)
     setLookupDone(false)
@@ -139,7 +144,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         const { organization: newOrg, error: orgError } = await ensureOrganization(name, slug)
         if (orgError || !newOrg) {
           logger.error('Welcome flow: org creation failed', orgError)
-          toast.error('Kunne ikke opprette studioet. Prøv igjen.')
+          toast.error('Kunne ikke opprette virksomheten. Prøv igjen.')
           setIsSaving(false)
           return
         }
@@ -167,10 +172,10 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         }
       }
 
-      setStep(4)
+      setStep(2)
     } catch (err) {
       logger.error('Welcome flow save error:', err)
-      toast.error('Kunne ikke lagre. Prøv igjen.')
+      toast.error('Kunne ikke lagre dataene. Prøv igjen.')
     } finally {
       setIsSaving(false)
     }
@@ -178,20 +183,29 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
   const displayName = firstName.trim() || currentOrganization?.name || ''
 
+  const validateStep0 = useCallback(() => {
+    let valid = true
+    if (!firstName.trim()) { setFirstNameError('Skriv inn fornavn'); valid = false }
+    else setFirstNameError('')
+    if (!lastName.trim()) { setLastNameError('Skriv inn etternavn'); valid = false }
+    else setLastNameError('')
+    if (!city.trim()) { setCityError('Skriv inn by eller sted'); valid = false }
+    else setCityError('')
+    return valid
+  }, [firstName, lastName, city])
+
   // Keyboard navigation
   const advance = useCallback(() => {
-    if (step === 0) setStep(1)
-    else if (step === 1) setStep(2)
-    else if (step === 2) setStep(3)
-    else if (step === 3) {
+    if (step === 0) { if (validateStep0()) setStep(1) }
+    else if (step === 1) {
       if (!studioName.trim()) { setStudioError('Skriv inn et navn'); return }
       handleSave()
     }
-    else if (step === 4) onComplete()
-  }, [step, studioName, handleSave, onComplete])
+    else if (step === 2) onComplete()
+  }, [step, validateStep0, studioName, handleSave, onComplete])
 
   const goBack = useCallback(() => {
-    if (step > 0 && step < 4) setStep((s) => s - 1)
+    if (step === 1) setStep(0)
   }, [step])
 
   useEffect(() => {
@@ -202,350 +216,323 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         return
       }
       if (e.key === 'ArrowLeft') { e.preventDefault(); goBack() }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); if (step < 3) advance() }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); if (step === 0) advance() }
       else if (e.key === 'Enter') { e.preventDefault(); advance() }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [step, advance, goBack])
 
-  // Steps: 0=Welcome, 1=Name, 2=City, 3=Studio
+  // Steps: 0=About you (name+city), 1=Studio, 2=Done
   const segments = [
-    { label: 'Velkommen', steps: [0] },
-    { label: 'Om deg', steps: [1, 2] },
-    { label: 'Studioet ditt', steps: [3] },
+    { label: 'Om deg', steps: [0] },
+    { label: 'Virksomheten din', steps: [1] },
   ]
 
   return (
-    <main className="flex-1 overflow-y-auto bg-surface h-screen">
-      <MobileTeacherHeader title="Kom i gang" />
+    <main className="flex-1 overflow-y-auto bg-surface min-h-screen flex flex-col">
+      {/* Minimal top bar */}
+      <div className="flex justify-end px-6 lg:px-8 pt-6 lg:pt-8">
+        <button
+          onClick={() => signOut()}
+          className="text-xs text-text-tertiary hover:text-text-primary smooth-transition"
+        >
+          Logg ut
+        </button>
+      </div>
 
-      <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
+      {/* Centered card */}
+      <div className="flex-1 flex items-start lg:items-center justify-center px-4 sm:px-6 pb-12">
         <motion.div
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
+          className="w-full max-w-lg"
         >
-          <header className="mb-8 flex items-end justify-between">
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-text-tertiary mb-2">Kom i gang</p>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
-                Sett opp kontoen din
-              </h1>
-            </div>
-            <button
-              onClick={() => signOut()}
-              className="text-xs text-text-tertiary hover:text-text-primary smooth-transition"
-            >
-              Logg ut
-            </button>
-          </header>
-
-          <div className="max-w-2xl">
-              <div className="rounded-xl bg-white border border-zinc-200 p-6 sm:p-8">
-                {/* Step indicator */}
-                {step < 4 && (
-                  <div className="flex gap-2 mb-8">
-                    {segments.map((seg) => {
-                      const isActive = seg.steps.includes(step)
-                      const isDone = step > Math.max(...seg.steps)
-                      return (
-                        <div key={seg.label} className="flex-1">
-                          <div className={`h-[3px] rounded-full mb-2 smooth-transition ${
-                            isActive || isDone ? 'bg-zinc-900' : 'bg-zinc-200'
-                          }`} />
-                          <p className={`text-xs smooth-transition ${
-                            isActive ? 'font-medium text-text-primary' : 'text-text-tertiary'
-                          }`}>
-                            {seg.label}
-                          </p>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-
-                <AnimatePresence mode="wait">
-                  {/* Step 0: Welcome */}
-                  {step === 0 && (
-                    <motion.div
-                      key="welcome"
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-lg font-medium text-text-primary mb-2">
-                        Velkommen til Ease
-                      </h2>
-                      <p className="text-sm text-text-secondary leading-relaxed mb-8">
-                        La oss sette opp kontoen din. Det tar under ett minutt.
+          <div className="rounded-xl bg-white border border-zinc-200 p-6 sm:p-8">
+            {/* Step indicator */}
+            {step < 2 && (
+              <div className="flex gap-2 mb-8">
+                {segments.map((seg) => {
+                  const isActive = seg.steps.includes(step)
+                  const isDone = step > Math.max(...seg.steps)
+                  return (
+                    <div key={seg.label} className="flex-1">
+                      <div className={`h-[3px] rounded-full mb-2 smooth-transition ${
+                        isActive || isDone ? 'bg-zinc-900' : 'bg-zinc-200'
+                      }`} />
+                      <p className={`text-xs smooth-transition ${
+                        isActive ? 'font-medium text-text-primary' : 'text-text-tertiary'
+                      }`}>
+                        {seg.label}
                       </p>
-                      <Button onClick={() => setStep(1)} className="w-full">
-                        Kom i gang
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </motion.div>
-                  )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
-                  {/* Step 1: Name */}
-                  {step === 1 && (
-                    <motion.div
-                      key="name"
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-lg font-medium text-text-primary mb-1">
-                        Hva heter du?
-                      </h2>
-                      <p className="text-sm text-text-secondary mb-6">
-                        Navnet vises på kurssiden din.
-                      </p>
+            <AnimatePresence mode="wait">
+              {/* Step 0: Name + City */}
+              {step === 0 && (
+                <motion.div
+                  key="about"
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2 }}
+                >
+                  <h2 className="text-lg font-medium text-text-primary mb-1">
+                    Først litt om deg
+                  </h2>
+                  <p className="text-sm text-text-secondary mb-6">
+                    Navnet og byen din vises på kurssiden din, så elevene vet hvem du er.
+                  </p>
 
-                      <div className="grid grid-cols-2 gap-3 mb-8">
-                        <div>
-                          <label htmlFor="welcome-first-name" className="text-xs font-medium text-text-primary mb-1.5 block">
-                            Fornavn
-                          </label>
-                          <Input
-                            id="welcome-first-name"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Ola"
-                            autoFocus
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="welcome-last-name" className="text-xs font-medium text-text-primary mb-1.5 block">
-                            Etternavn
-                          </label>
-                          <Input
-                            id="welcome-last-name"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Nordmann"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button variant="outline" onClick={() => setStep(0)}>
-                          <ArrowLeft className="h-3.5 w-3.5" />
-                          Tilbake
-                        </Button>
-                        <Button onClick={() => setStep(2)}>
-                          Fortsett
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Step 2: City */}
-                  {step === 2 && (
-                    <motion.div
-                      key="city"
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-lg font-medium text-text-primary mb-1">
-                        Hvilken by holder du til i?
-                      </h2>
-                      <p className="text-sm text-text-secondary mb-6">
-                        Hjelper elever å finne kurs i nærheten.
-                      </p>
-
-                      <div className="mb-8">
-                        <label htmlFor="welcome-city" className="text-xs font-medium text-text-primary mb-1.5 block">
-                          By
+                  <div className="flex flex-col gap-4 mb-8">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="welcome-first-name" className="text-xs font-medium text-text-primary mb-1.5 block">
+                          Fornavn
                         </label>
                         <Input
-                          id="welcome-city"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          placeholder="Oslo"
+                          id="welcome-first-name"
+                          value={firstName}
+                          onChange={(e) => { setFirstName(e.target.value); if (firstNameError) setFirstNameError('') }}
+                          placeholder="Ola"
                           autoFocus
+                          required
+                          aria-invalid={!!firstNameError || undefined}
+                          aria-describedby={firstNameError ? 'welcome-first-name-error' : undefined}
                         />
+                        {firstNameError && (
+                          <p id="welcome-first-name-error" className="text-xs text-destructive mt-1.5" role="alert">{firstNameError}</p>
+                        )}
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button variant="outline" onClick={() => setStep(1)}>
-                          <ArrowLeft className="h-3.5 w-3.5" />
-                          Tilbake
-                        </Button>
-                        <Button onClick={() => setStep(3)}>
-                          Fortsett
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
+                      <div>
+                        <label htmlFor="welcome-last-name" className="text-xs font-medium text-text-primary mb-1.5 block">
+                          Etternavn
+                        </label>
+                        <Input
+                          id="welcome-last-name"
+                          value={lastName}
+                          onChange={(e) => { setLastName(e.target.value); if (lastNameError) setLastNameError('') }}
+                          placeholder="Nordmann"
+                          required
+                          aria-invalid={!!lastNameError || undefined}
+                          aria-describedby={lastNameError ? 'welcome-last-name-error' : undefined}
+                        />
+                        {lastNameError && (
+                          <p id="welcome-last-name-error" className="text-xs text-destructive mt-1.5" role="alert">{lastNameError}</p>
+                        )}
                       </div>
-                    </motion.div>
-                  )}
+                    </div>
 
-                  {/* Step 3: Business info */}
-                  {step === 3 && (
-                    <motion.div
-                      key="studio"
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-lg font-medium text-text-primary mb-1">
-                        Om studioet ditt
-                      </h2>
-                      <p className="text-sm text-text-secondary mb-6">
-                        Har du et organisasjonsnummer? Da fyller vi ut automatisk.
-                      </p>
+                    <div>
+                      <label htmlFor="welcome-city" className="text-xs font-medium text-text-primary mb-1.5 block">
+                        By / Sted
+                      </label>
+                      <Input
+                        id="welcome-city"
+                        value={city}
+                        onChange={(e) => { setCity(e.target.value); if (cityError) setCityError('') }}
+                        placeholder="F.eks. Oslo"
+                        required
+                        aria-invalid={!!cityError || undefined}
+                        aria-describedby={cityError ? 'welcome-city-error' : 'welcome-city-hint'}
+                      />
+                      {cityError ? (
+                        <p id="welcome-city-error" className="text-xs text-destructive mt-1.5" role="alert">{cityError}</p>
+                      ) : (
+                        <p id="welcome-city-hint" className="text-xs text-text-tertiary mt-1.5">
+                          Hjelper elever å finne kurs i nærheten.
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-                      <div className="flex flex-col gap-4 mb-8">
-                        {/* Org number lookup */}
-                        <div>
-                          <label htmlFor="welcome-org-nr" className="text-xs font-medium text-text-primary mb-1.5 block">
-                            Organisasjonsnummer
-                            <span className="text-text-tertiary font-normal ml-1">(valgfritt)</span>
-                          </label>
-                          <div className="relative">
-                            <Input
-                              id="welcome-org-nr"
-                              value={orgNumber}
-                              onChange={(e) => handleOrgNumberChange(e.target.value)}
-                              placeholder="123 456 789"
-                              inputMode="numeric"
-                              autoFocus
-                              className="pr-10"
-                            />
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {isLookingUp ? (
-                                <Loader2 className="h-4 w-4 text-text-tertiary animate-spin" />
-                              ) : (
-                                <Search className="h-4 w-4 text-text-tertiary" />
+                  <Button onClick={() => { if (validateStep0()) setStep(1) }} className="w-full">
+                    Fortsett
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Step 1: Studio */}
+              {step === 1 && (
+                <motion.div
+                  key="studio"
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2 }}
+                >
+                  <h2 className="text-lg font-medium text-text-primary mb-1">
+                    Om virksomheten din
+                  </h2>
+                  <p className="text-sm text-text-secondary mb-6">
+                    Dette brukes på din offentlige kursside. Har du et organisasjonsnummer? Da fyller vi ut automatisk.
+                  </p>
+
+                  <div className="flex flex-col gap-4 mb-8">
+                    {/* Org number lookup */}
+                    <div>
+                      <label htmlFor="welcome-org-nr" className="text-xs font-medium text-text-primary mb-1.5 block">
+                        Organisasjonsnummer
+                        <span className="text-text-tertiary font-normal ml-1">(valgfritt)</span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          id="welcome-org-nr"
+                          value={orgNumber}
+                          onChange={(e) => handleOrgNumberChange(e.target.value)}
+                          placeholder="123 456 789"
+                          inputMode="numeric"
+                          autoFocus
+                          className="pr-10"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {isLookingUp ? (
+                            <Loader2 className="h-4 w-4 text-text-tertiary animate-spin" />
+                          ) : (
+                            <Search className="h-4 w-4 text-text-tertiary" />
+                          )}
+                        </div>
+                      </div>
+                      {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
+                        <p className="text-xs text-text-tertiary mt-1.5">
+                          Fant ingen treff. Fyll inn manuelt under.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Lookup result card */}
+                    {lookupDone && lookupResult && (
+                      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 rounded-lg bg-white border border-zinc-200 p-2">
+                            <Building className="h-4 w-4 text-text-tertiary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-text-primary truncate">
+                                {lookupResult.name}
+                              </p>
+                              <Check className="h-3.5 w-3.5 text-status-confirmed-text shrink-0" />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                              {lookupResult.orgForm && (
+                                <span className="text-xs text-text-secondary">{lookupResult.orgForm}</span>
+                              )}
+                              {lookupResult.city && (
+                                <span className="flex items-center gap-1 text-xs text-text-secondary">
+                                  <MapPin className="h-3 w-3" />
+                                  {lookupResult.city}
+                                </span>
                               )}
                             </div>
-                          </div>
-                          {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
-                            <p className="text-xs text-text-tertiary mt-1.5">
-                              Fant ingen treff. Fyll inn manuelt under.
+                            <p className="text-xs text-text-secondary mt-1 tabular-nums">
+                              Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
                             </p>
-                          )}
-                        </div>
-
-                        {/* Lookup result card */}
-                        {lookupDone && lookupResult && (
-                          <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="mt-0.5 rounded-lg bg-white border border-zinc-200 p-2">
-                                <Building className="h-4 w-4 text-text-tertiary" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-medium text-text-primary truncate">
-                                    {lookupResult.name}
-                                  </p>
-                                  <Check className="h-3.5 w-3.5 text-status-confirmed-text shrink-0" />
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                                  {lookupResult.orgForm && (
-                                    <span className="text-xs text-text-secondary">{lookupResult.orgForm}</span>
-                                  )}
-                                  {lookupResult.city && (
-                                    <span className="flex items-center gap-1 text-xs text-text-secondary">
-                                      <MapPin className="h-3 w-3" />
-                                      {lookupResult.city}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-text-secondary mt-1 tabular-nums">
-                                  Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
-                                </p>
-                              </div>
-                            </div>
                           </div>
-                        )}
-
-                        {/* Divider */}
-                        <div className="h-px bg-zinc-100" />
-
-                        {/* Studio name */}
-                        <div>
-                          <label htmlFor="welcome-studio" className="text-xs font-medium text-text-primary mb-1.5 block">
-                            Studionavn
-                          </label>
-                          <Input
-                            id="welcome-studio"
-                            value={studioName}
-                            onChange={(e) => {
-                              setStudioName(e.target.value)
-                              if (studioError) setStudioError('')
-                            }}
-                            placeholder="Yoga med Ola"
-                            aria-invalid={!!studioError || undefined}
-                          />
-                          {studioError ? (
-                            <p className="text-xs text-destructive mt-1.5">{studioError}</p>
-                          ) : (
-                            <p className="text-xs text-text-tertiary mt-1.5">
-                              Vises på din offentlige kursside. Du kan endre dette senere.
-                            </p>
-                          )}
                         </div>
                       </div>
+                    )}
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button variant="outline" onClick={() => setStep(2)}>
-                          <ArrowLeft className="h-3.5 w-3.5" />
-                          Tilbake
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            if (!studioName.trim()) {
-                              setStudioError('Skriv inn et navn')
-                              return
-                            }
-                            handleSave()
-                          }}
-                          loading={isSaving}
-                          loadingText="Lagrer"
-                        >
-                          Fullfør
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
+                    {/* Divider */}
+                    <div className="h-px bg-zinc-100" />
 
-                  {/* Step 4: Confirmation */}
-                  {step === 4 && (
-                    <motion.div
-                      key="done"
-                      variants={slideVariants}
-                      initial="enter"
-                      animate="center"
-                      exit="exit"
-                      transition={{ duration: 0.2 }}
+                    {/* Studio name */}
+                    <div>
+                      <label htmlFor="welcome-studio" className="text-xs font-medium text-text-primary mb-1.5 block">
+                        Navn på virksomheten
+                      </label>
+                      <Input
+                        id="welcome-studio"
+                        value={studioName}
+                        onChange={(e) => {
+                          setStudioName(e.target.value)
+                          if (studioError) setStudioError('')
+                        }}
+                        placeholder="Yoga med Ola"
+                        aria-invalid={!!studioError || undefined}
+                        aria-describedby={studioError ? 'welcome-studio-error' : undefined}
+                      />
+                      {studioError ? (
+                        <p id="welcome-studio-error" className="text-xs text-destructive mt-1.5" role="alert">{studioError}</p>
+                      ) : (
+                        <p className="text-xs text-text-tertiary mt-1.5">
+                          Vises på din offentlige kursside. Du kan endre dette senere.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outline" onClick={() => setStep(0)}>
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Tilbake
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (!studioName.trim()) {
+                          setStudioError('Skriv inn et navn')
+                          return
+                        }
+                        handleSave()
+                      }}
+                      loading={isSaving}
+                      loadingText="Lagrer"
                     >
-                      <h2 className="text-lg font-medium text-text-primary mb-2">
-                        {displayName ? `Alt er klart, ${displayName}` : 'Alt er klart'}
-                      </h2>
-                      <p className="text-sm text-text-secondary leading-relaxed mb-8">
-                        Studioet ditt er klart. Du finner flere innstillinger under profilsiden.
-                      </p>
-                      <Button onClick={onComplete} className="w-full">
-                        Til oversikten
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                      Fullfør
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Step 2: Bridge — preview remaining journey */}
+              {step === 2 && (
+                <motion.div
+                  key="done"
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.2 }}
+                >
+                  <h2 className="text-lg font-medium text-text-primary mb-2">
+                    {displayName ? `Bra, ${displayName} — grunnlaget er på plass` : 'Grunnlaget er på plass'}
+                  </h2>
+                  <p className="text-sm text-text-secondary leading-relaxed mb-6">
+                    To steg igjen før du kan ta imot påmeldinger og betaling.
+                  </p>
+
+                  <div className="flex flex-col gap-3 mb-8">
+                    {[
+                      { icon: CreditCard, label: 'Aktiver betalinger', time: 'ca. 2 min' },
+                      { icon: BookOpen, label: 'Opprett ditt første kurs', time: 'ca. 3 min' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-center gap-3">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-zinc-200">
+                          <item.icon className="h-3 w-3 text-text-tertiary" />
+                        </div>
+                        <span className="text-sm text-text-primary">{item.label}</span>
+                        <span className="text-xs text-text-tertiary ml-auto">{item.time}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button onClick={onComplete} className="w-full">
+                    Fortsett til oversikten
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>

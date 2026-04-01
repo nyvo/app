@@ -70,7 +70,7 @@ const SignupPage = () => {
             ),
           })
         } else {
-          setErrors({ general: signUpError.message })
+          setErrors({ general: 'Kunne ikke opprette konto. Prøv igjen.' })
         }
         setIsSubmitting(false)
         return

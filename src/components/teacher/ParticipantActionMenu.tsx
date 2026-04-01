@@ -191,7 +191,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           <AlertDialogHeader>
             <AlertDialogTitle>Merk som betalt?</AlertDialogTitle>
             <AlertDialogDescription>
-              Betalingen for {signup.participantName} registreres som mottatt utenom Stripe (kontant, Vipps, e.l.).
+              Betalingen for {signup.participantName} merkes som mottatt utenom Stripe (kontant, Vipps, e.l.).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

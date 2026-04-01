@@ -7,10 +7,11 @@ interface SetupChecklistProps {
   steps: SetupStep[]
   completedCount: number
   totalCount: number
+  motivationalSubtitle: string
   loadingStepId?: string
 }
 
-export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepId }: SetupChecklistProps) => {
+export const SetupChecklist = ({ steps, completedCount, totalCount, motivationalSubtitle, loadingStepId }: SetupChecklistProps) => {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
@@ -19,12 +20,12 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
       <div className="rounded-xl bg-white border border-zinc-200 p-6 flex-1">
         {/* Progress header */}
         <div className="mb-6">
-          <div className="flex items-baseline justify-between mb-3">
+          <div className="flex items-baseline justify-between mb-1.5">
             <p className="text-sm font-medium text-text-primary">
-              Sett opp kontoen din
+              {motivationalSubtitle}
             </p>
             <p className="text-xs text-text-tertiary">
-              {completedCount} av {totalCount} fullført
+              {completedCount} av {totalCount}
             </p>
           </div>
           {/* Progress bar */}
@@ -45,27 +46,29 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
             return (
               <div
                 key={step.id}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 transition-colors duration-150 ${
+                className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-150 ${
                   isNext ? 'bg-zinc-50' : ''
                 }`}
               >
-                {/* Check circle */}
-                <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                {/* Step number */}
+                <span className={`text-xs font-medium shrink-0 tabular-nums mt-0.5 ${
                   step.isComplete
-                    ? 'bg-zinc-900 text-white'
+                    ? 'text-text-tertiary'
                     : isNext
-                      ? 'border-2 border-zinc-900'
-                      : 'border-2 border-zinc-200'
+                      ? 'text-text-primary'
+                      : 'text-text-tertiary'
                 }`}>
-                  {step.isComplete && <Check className="h-3.5 w-3.5" />}
-                </div>
+                  {index + 1}
+                </span>
 
                 {/* Text */}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm ${
                     step.isComplete
-                      ? 'text-text-tertiary line-through'
-                      : 'font-medium text-text-primary'
+                      ? 'text-text-tertiary'
+                      : isNext
+                        ? 'font-medium text-text-primary'
+                        : 'text-text-secondary'
                   }`}>
                     {step.title}
                   </p>
@@ -76,6 +79,13 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
                   )}
                 </div>
 
+                {/* Completed check (right side) */}
+                {step.isComplete && (
+                  <div className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center bg-status-confirmed-bg border border-status-confirmed-border">
+                    <Check className="h-3 w-3 text-status-confirmed-text" />
+                  </div>
+                )}
+
                 {/* Action */}
                 {!step.isComplete && isNext && (
                   <>
@@ -85,11 +95,17 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, loadingStepI
                       <Button variant="outline" size="xs" asChild>
                         <Link to={step.actionHref}>
                           {step.actionLabel}
+                          {step.timeEstimate && (
+                            <span className="text-text-tertiary font-normal ml-1">· {step.timeEstimate}</span>
+                          )}
                         </Link>
                       </Button>
                     ) : (
                       <Button size="xs" onClick={step.actionOnClick}>
                         {step.actionLabel}
+                        {step.timeEstimate && (
+                          <span className="text-white/60 font-normal ml-1">· {step.timeEstimate}</span>
+                        )}
                       </Button>
                     )}
                   </>

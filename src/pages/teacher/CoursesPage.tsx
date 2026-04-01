@@ -289,7 +289,7 @@ const CoursesPage = () => {
                       showPast && 'rotate-90'
                     )} />
                     <span className="text-sm font-medium text-text-tertiary">
-                      {pastRows.length} avsluttede kurs
+                      {pastRows.length} tidligere kurs
                     </span>
                   </button>
 

@@ -146,7 +146,7 @@ const LandingPage = () => {
                   1
                 </div>
                 <h3 className="text-xl font-medium text-text-primary">
-                  Sett opp timeplanen
+                  Sett opp kursene dine
                 </h3>
               </div>
               <p className="text-text-secondary text-base leading-relaxed mb-6">

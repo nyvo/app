@@ -365,7 +365,7 @@ export function AddParticipantDialog({
             {/* Note */}
             <div>
               <label htmlFor="note" className="block text-xs font-medium text-text-primary mb-1.5">
-                Kommentar <span className="text-text-secondary font-normal">(valgfritt)</span>
+                Notat <span className="text-text-secondary font-normal">(valgfritt)</span>
               </label>
               <Textarea
                 id="note"
@@ -410,7 +410,7 @@ export function AddParticipantDialog({
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-text-secondary mt-1.5">Dette oppretter ikke noen faktisk betaling</p>
+              <p className="text-xs text-text-secondary mt-1.5">Betalingen registreres ikke i Stripe</p>
             </div>
 
             <DialogFooter>

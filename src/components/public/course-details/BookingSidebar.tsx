@@ -109,7 +109,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                     loadingText="Behandler"
                   >
                     <span className="flex items-center justify-center gap-2">
-                      {course.price && course.price > 0 ? 'Gå til betaling' : 'Fullfør påmelding'}
+                      {course.price && course.price > 0 ? 'Fortsett til betaling' : 'Fullfør påmelding'}
                       <ArrowRight className="h-4 w-4" />
                     </span>
                   </Button>

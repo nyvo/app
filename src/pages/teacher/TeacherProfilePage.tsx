@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Mail,
-  MapPin,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -450,18 +448,14 @@ const TeacherProfilePage = () => {
 
                         <div className="md:col-span-2">
                             <label htmlFor="profile-email" className="block text-xs font-medium text-text-primary mb-1.5">E-post</label>
-                            <div className="relative group">
-                                <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 ${errors.email ? 'text-destructive' : 'text-text-tertiary'} group-focus-within:text-text-primary transition-colors pointer-events-none`} />
-                                <Input
-                                    id="profile-email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                                    onBlur={() => handleBlur('email')}
-                                    aria-invalid={!!errors.email}
-                                    className="pl-10"
-                                />
-                            </div>
+                            <Input
+                                id="profile-email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                                onBlur={() => handleBlur('email')}
+                                aria-invalid={!!errors.email}
+                            />
                             {errors.email && touched.email ? (
                               <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                             ) : (
@@ -471,17 +465,13 @@ const TeacherProfilePage = () => {
 
                         <div className="md:col-span-2">
                             <label htmlFor="profile-city" className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
-                            <div className="relative group">
-                                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
-                                <Input
-                                    id="profile-city"
-                                    type="text"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                    placeholder="F.eks. Oslo"
-                                    className="pl-10"
-                                />
-                            </div>
+                            <Input
+                                id="profile-city"
+                                type="text"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                placeholder="F.eks. Oslo"
+                            />
                             <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
                         </div>
 

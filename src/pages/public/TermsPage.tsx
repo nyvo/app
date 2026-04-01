@@ -91,7 +91,7 @@ const TermsPage = () => {
           {/* Footer */}
           <div className="mt-16 pt-8 border-t border-border text-center">
             <p className="text-xs text-text-secondary">
-              Sist oppdatert: Januar 2026
+              Sist oppdatert: januar 2026
             </p>
           </div>
         </div>

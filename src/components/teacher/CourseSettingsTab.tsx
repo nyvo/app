@@ -190,7 +190,11 @@ export const CourseSettingsTab = ({
               <SelectContent>
                 {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
                   <SelectItem key={mins} value={mins.toString()}>
-                    {mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)} t ${mins % 60 > 0 ? `${mins % 60} min` : ''}`}
+                    {mins < 60
+                      ? `${mins} min`
+                      : mins % 60 === 0
+                        ? (mins === 60 ? '1 time' : `${mins / 60} timer`)
+                        : `${Math.floor(mins / 60)}t ${mins % 60}min`}
                   </SelectItem>
                 ))}
               </SelectContent>

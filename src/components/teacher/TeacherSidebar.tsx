@@ -29,10 +29,12 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Tooltip,
   TooltipContent,
@@ -52,7 +54,6 @@ export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, userRole, currentOrganization } = useAuth();
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
@@ -174,67 +175,66 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
 
-      <SidebarFooter className={`pb-6 pt-4 border-t border-zinc-200 ${isCollapsed ? 'px-3' : 'px-6'}`}>
+      <SidebarFooter className={`pb-6 pt-4 ${isCollapsed ? 'px-3' : 'px-6'}`}>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Popover open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
-              <PopoverTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
                   className={cn(
                     "w-full cursor-pointer transition-colors",
-                    "bg-white border border-zinc-200",
-                    !isProfileMenuOpen && "hover:bg-zinc-50 hover:border-zinc-300"
+                    "hover:bg-zinc-100 border border-transparent"
                   )}
                 >
                   <UserAvatar
                     name={profile?.name}
                     src={profile?.avatar_url}
                     size="sm"
-                    ringClassName="border border-zinc-200"
                   />
                   {!isCollapsed && (
                     <>
                       <div className="flex flex-1 flex-col items-start overflow-hidden ml-0.5">
                         <p className="truncate text-sm font-medium text-text-primary leading-none mb-1.5">{profile?.name || currentOrganization?.name || 'Konto'}</p>
                         <p className="truncate text-xs text-text-secondary leading-none">
-                          {userRole === 'owner' ? 'Admin' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
+                          {userRole === 'owner' ? 'Administrator' : userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                         </p>
                       </div>
                       <ChevronsUpDown className="h-4 w-4 text-text-tertiary shrink-0" />
                     </>
                   )}
                 </SidebarMenuButton>
-              </PopoverTrigger>
-              <PopoverContent side={isCollapsed ? "right" : "top"} align="start" className={`${isCollapsed ? 'w-48' : 'w-[var(--radix-popover-trigger-width)]'} p-1.5 rounded-xl border-zinc-200 ring-1 ring-zinc-200/50 ${isCollapsed ? 'ml-2' : 'mb-2'}`}>
-                <div className="flex flex-col gap-0.5">
-                  <div className="px-2 py-1.5 mb-1 border-b border-zinc-100">
-                    <p className="text-sm font-medium text-text-primary truncate">{profile?.name || currentOrganization?.name}</p>
-                    <p className="text-xxs font-medium text-text-secondary truncate">{profile?.email}</p>
-                  </div>
-                  <Link
-                    to="/teacher/profile"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary transition-colors"
-                  >
-                    <Settings className="h-3.5 w-3.5 text-text-tertiary" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side={isCollapsed ? "right" : "top"}
+                align="start"
+                className={isCollapsed ? 'w-48 ml-2' : 'w-[var(--radix-dropdown-menu-trigger-width)] mb-2'}
+              >
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium text-text-primary truncate">{profile?.name || currentOrganization?.name}</p>
+                  <p className="text-xxs font-medium text-text-secondary truncate">{profile?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/teacher/profile">
+                    <Settings />
                     Innstillinger
                   </Link>
-                  <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-zinc-50 hover:text-text-primary transition-colors cursor-pointer">
-                    <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
-                    Hjelp
-                  </button>
-                  <div className="my-1 border-t border-zinc-100"></div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/5 transition-colors cursor-pointer"
-                  >
-                    <LogOut className="h-3.5 w-3.5 text-destructive" />
-                    Logg ut
-                  </button>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <HelpCircle />
+                  Hjelp
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive hover:text-destructive focus:text-destructive [&_svg]:text-destructive"
+                >
+                  <LogOut />
+                  Logg ut
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

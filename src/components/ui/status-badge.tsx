@@ -3,7 +3,7 @@ import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './st
 import type { SignupStatus } from '@/types/dashboard';
 
 export type { SignupStatus };
-export type CourseStatus = 'active' | 'upcoming' | 'completed';
+export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
 export type BadgeStatus = SignupStatus | CourseStatus;
 
 interface StatusConfig {
@@ -30,13 +30,18 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     showIcon: false,
   },
   // Course statuses
+  draft: {
+    variant: 'neutral',
+    label: 'Utkast',
+    showIcon: false,
+  },
   active: {
     variant: 'success',
     label: 'Pågår',
     showIcon: false,
   },
   upcoming: {
-    variant: 'warning',
+    variant: 'success',
     label: 'Kommende',
     showIcon: false,
   },

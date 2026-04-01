@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, FileText, X, Check } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, X, Check, Shield } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -14,6 +14,13 @@ import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -189,29 +196,6 @@ const TeacherDashboard = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  // Course draft detection
-  const DRAFT_STORAGE_KEY = 'form-draft:create-course-draft';
-  const [hasCourseDraft, setHasCourseDraft] = useState(() => {
-    try {
-      const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!stored) return false;
-      const parsed = JSON.parse(stored);
-      return !!parsed?.title;
-    } catch { return false; }
-  });
-  const [draftTitle, setDraftTitle] = useState(() => {
-    try {
-      const stored = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!stored) return '';
-      const parsed = JSON.parse(stored);
-      return parsed?.title || '';
-    } catch { return ''; }
-  });
-  const dismissDraft = () => {
-    try { localStorage.removeItem(DRAFT_STORAGE_KEY); } catch {}
-    setHasCourseDraft(false);
-    setDraftTitle('');
-  };
 
 
   // Refresh org data when arriving from Stripe callback
@@ -225,8 +209,14 @@ const TeacherDashboard = () => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stripe Connect handler
+  // Stripe Connect handler — show explainer dialog first, then redirect
   const [connectingStripe, setConnectingStripe] = useState(false);
+  const [showStripeExplainer, setShowStripeExplainer] = useState(false);
+
+  const openStripeExplainer = useCallback(() => {
+    setShowStripeExplainer(true);
+  }, []);
+
   const handleConnectStripe = useCallback(async () => {
     if (!currentOrganization?.id) return;
     setConnectingStripe(true);
@@ -241,23 +231,23 @@ const TeacherDashboard = () => {
   }, [currentOrganization?.id]);
 
   // Setup progress
-  const { steps, completedCount, totalCount, isSetupComplete } = useSetupProgress({
+  const { steps, completedCount, totalCount, isSetupComplete, motivationalSubtitle } = useSetupProgress({
     currentOrganization,
     profile,
     hasCourses,
-    onConnectStripe: handleConnectStripe,
+    onConnectStripe: openStripeExplainer,
   });
 
-  // "All done" celebration state — show briefly when setup just completed
-  const [showSetupComplete, setShowSetupComplete] = useState(false);
-  const prevSetupCompleteRef = useRef(isSetupComplete);
+  // One-time "setup done" banner — shown once, then auto-marked as seen
+  const SETUP_SEEN_KEY = 'ease:setup-complete-seen';
+  const [showSetupBanner, setShowSetupBanner] = useState(() => {
+    return isSetupComplete && !localStorage.getItem(SETUP_SEEN_KEY);
+  });
   useEffect(() => {
-    if (isSetupComplete && !prevSetupCompleteRef.current) {
-      setShowSetupComplete(true);
-      const timer = setTimeout(() => setShowSetupComplete(false), 4000);
-      return () => clearTimeout(timer);
+    if (isSetupComplete && !localStorage.getItem(SETUP_SEEN_KEY)) {
+      setShowSetupBanner(true);
+      localStorage.setItem(SETUP_SEEN_KEY, '1');
     }
-    prevSetupCompleteRef.current = isSetupComplete;
   }, [isSetupComplete]);
 
   // Stripe auto-check (self-heal for missed callbacks)
@@ -472,27 +462,24 @@ const TeacherDashboard = () => {
                 )}
               </header>
 
-              {/* Course draft banner */}
-              {hasCourseDraft && !isLoading && (
+
+              {showSetupBanner && !isLoading && (
                 <div className="mb-6 rounded-xl border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <FileText className="h-4 w-4 text-text-tertiary shrink-0 stroke-[1.5]" />
-                    <p className="text-sm text-text-secondary truncate">
-                      Du har et utkast{draftTitle ? `: «${draftTitle}»` : ''}
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
+                      <Check className="h-3 w-3" />
+                    </div>
+                    <p className="text-sm text-text-primary font-medium">
+                      Alt er klart — du kan nå ta imot påmeldinger og betalinger
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button asChild variant="outline-soft" size="xs">
-                      <Link to="/teacher/new-course">Fortsett</Link>
-                    </Button>
-                    <button
-                      onClick={dismissDraft}
-                      className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-zinc-100 transition-colors duration-200"
-                      aria-label="Forkast utkast"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowSetupBanner(false)}
+                    className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-zinc-100 transition-colors duration-200 shrink-0"
+                    aria-label="Lukk"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               )}
 
@@ -517,22 +504,10 @@ const TeacherDashboard = () => {
                     Prøv på nytt
                   </Button>
                 </div>
-              ) : (!isSetupComplete || showSetupComplete) ? (
+              ) : !isSetupComplete ? (
                 // Setup incomplete — show checklist in hero position
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  {showSetupComplete ? (
-                    <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                      <h2 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h2>
-                      <div className="rounded-xl bg-white border border-zinc-200 p-6 flex items-center gap-3">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
-                          <Check className="h-3.5 w-3.5" />
-                        </div>
-                        <p className="text-sm font-medium text-text-primary">Alt klart — studioet ditt er satt opp</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} loadingStepId={connectingStripe ? 'stripe' : undefined} />
-                  )}
+                  <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} motivationalSubtitle={motivationalSubtitle} loadingStepId={connectingStripe ? 'stripe' : undefined} />
                   <MessagesList messages={messages} />
                   <CoursesList courses={dashboardCourses} />
                   <RegistrationsList registrations={registrations} />
@@ -550,7 +525,7 @@ const TeacherDashboard = () => {
                           <Plus className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
                         </div>
                         <h2 className="font-geist text-2xl font-medium tracking-tight mb-2 text-text-primary leading-tight">
-                          La oss sette opp ditt første kurs
+                          Opprett ditt første kurs
                         </h2>
                         <p className="text-sm text-text-secondary mb-8">
                           Opprett et kurs for å motta påmeldinger og administrere timeplanen din.
@@ -591,6 +566,61 @@ const TeacherDashboard = () => {
             </motion.div>
           </div>
           <EmptyStateToggle />
+
+          {/* Stripe pre-redirect explainer */}
+          <Dialog open={showStripeExplainer} onOpenChange={(open) => { if (!connectingStripe) setShowStripeExplainer(open) }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Slik fungerer betalinger</DialogTitle>
+                <DialogDescription>
+                  Vi bruker Stripe for å håndtere betalinger — samme løsning som brukes av over 1 million virksomheter i Europa.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col gap-3 py-2">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 rounded-lg bg-zinc-50 border border-zinc-200 p-2">
+                    <Shield className="h-4 w-4 text-text-tertiary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">Trygt og sikkert</p>
+                    <p className="text-xs text-text-secondary mt-0.5">
+                      Pengene fra bookinger overføres direkte til din konto. Ease tar ingen del av betalingen.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-px bg-zinc-100" />
+
+                <div>
+                  <p className="text-xs font-medium text-text-primary mb-2">Du trenger</p>
+                  <ul className="flex flex-col gap-1.5 text-xs text-text-secondary">
+                    <li className="flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-zinc-400 shrink-0" />
+                      Bankkonto for utbetalinger
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-1 w-1 rounded-full bg-zinc-400 shrink-0" />
+                      Organisasjonsnummer (valgfritt)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <Button onClick={handleConnectStripe} loading={connectingStripe} loadingText="Kobler til">
+                  Gå videre til oppsett
+                </Button>
+                <button
+                  onClick={() => setShowStripeExplainer(false)}
+                  disabled={connectingStripe}
+                  className="text-xs text-text-tertiary hover:text-text-primary smooth-transition py-1 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Jeg gjør dette senere
+                </button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
   );
 };

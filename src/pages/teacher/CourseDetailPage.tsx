@@ -3,14 +3,16 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, AlertTriangle } from 'lucide-react';
+import { ExternalLink, MoreHorizontal, EyeOff } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatKroner } from '@/lib/utils';
-import { updateCourse, cancelCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
+import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
 import { teacherCancelSignup, sendPaymentLink, markPaymentResolved } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
@@ -19,6 +21,13 @@ import { formatDateNorwegian } from '@/utils/dateUtils';
 import type { PaymentStatus } from '@/components/ui/payment-badge';
 import type { SignupStatus } from '@/components/ui/status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
+import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -54,6 +63,10 @@ const CourseDetailPage = () => {
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const kursplanRef = useRef<HTMLDivElement>(null);
   const [connectingStripe, setConnectingStripe] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
 
   // Data fetching, sessions, participants, and realtime subscription
   const {
@@ -182,7 +195,8 @@ const CourseDetailPage = () => {
       const updateData: { session_date?: string; start_time?: string } = {};
 
       if (edits.date) {
-        updateData.session_date = edits.date.toISOString().split('T')[0];
+        const d = edits.date;
+        updateData.session_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       }
       if (edits.time) {
         updateData.start_time = edits.time;
@@ -311,10 +325,49 @@ const CourseDetailPage = () => {
 
       toast.success('Endringer lagret');
     } catch {
-      setSaveError('Noe gikk galt. Prøv igjen.');
+      setSaveError('Noe gikk galt. Prøv på nytt.');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Handle publish draft course
+  const handlePublish = async () => {
+    if (!id) return;
+    if (!currentOrganization?.stripe_onboarding_complete) {
+      setShowPublishDialog(true);
+      return;
+    }
+    setIsPublishing(true);
+    const { error: pubError } = await publishCourse(id);
+    if (pubError) {
+      toast.error(friendlyError(pubError, 'Kunne ikke publisere kurset'));
+      setIsPublishing(false);
+      return;
+    }
+    if (courseData) {
+      setCourseData({ ...courseData, status: 'upcoming' });
+    }
+    toast.success('Kurset er publisert');
+    setIsPublishing(false);
+  };
+
+  // Handle unpublish course (sets back to draft)
+  const handleUnpublish = async () => {
+    if (!id) return;
+    setIsUnpublishing(true);
+    const { error: unpubError } = await unpublishCourse(id);
+    if (unpubError) {
+      toast.error(friendlyError(unpubError, 'Kunne ikke avpublisere kurset'));
+      setIsUnpublishing(false);
+      return;
+    }
+    if (courseData) {
+      setCourseData({ ...courseData, status: 'draft' });
+    }
+    toast.success('Kurset er lagret som utkast');
+    setIsUnpublishing(false);
+    setShowUnpublishConfirm(false);
   };
 
   // Handle cancel course (with refunds and notifications)
@@ -470,7 +523,7 @@ const CourseDetailPage = () => {
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
             <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight mb-2">Kurs ikke funnet</h1>
-            <p className="text-text-secondary">{error || `Kurset med ID "${id}" finnes ikke.`}</p>
+            <p className="text-text-secondary">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
         </main>
@@ -593,64 +646,119 @@ const CourseDetailPage = () => {
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary truncate">
-                  {course.title}
-                </h1>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary truncate">
+                    {course.title}
+                  </h1>
+                  {courseData?.status === 'draft' && (
+                    <StatusBadge status="draft" size="sm" />
+                  )}
+                  {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      Aktiv
+                    </span>
+                  )}
+                  {courseData?.status === 'completed' && (
+                    <StatusBadge status="completed" size="sm" />
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                <ShareCoursePopover
-                  courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
-                  courseTitle={courseData?.title}
-                />
-                <Button
-                  variant="outline-soft"
-                  size="compact"
-                  onClick={() => currentOrganization?.slug && window.open(`/studio/${currentOrganization.slug}/${id}`, '_blank')}
-                  disabled={!currentOrganization?.slug}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Vis side
-                </Button>
+                {courseData?.status === 'draft' ? (
+                  <Button
+                    size="compact"
+                    onClick={handlePublish}
+                    loading={isPublishing}
+                    loadingText="Publiserer …"
+                  >
+                    Publiser kurs
+                  </Button>
+                ) : (
+                  <>
+                    <ShareCoursePopover
+                      courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
+                      courseTitle={courseData?.title}
+                    />
+                    <Button
+                      variant="outline-soft"
+                      size="compact"
+                      onClick={() => currentOrganization?.slug && window.open(`/studio/${currentOrganization.slug}/${id}`, '_blank')}
+                      disabled={!currentOrganization?.slug}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Vis side
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline-soft" size="compact" className="px-2">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setShowUnpublishConfirm(true)}>
+                          <EyeOff className="h-3.5 w-3.5 mr-2" />
+                          Gjør til utkast
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Payment setup required — blocking state */}
-            {!currentOrganization?.stripe_onboarding_complete && (
-              <div className="mb-4 rounded-xl bg-zinc-900 border border-zinc-800 p-6">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5 stroke-[1.5]" />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-white">
-                      Betalinger er ikke satt opp
-                    </h3>
-                    <p className="text-sm text-zinc-400 mt-1 leading-snug">
-                      Kurset er opprettet, men kan ikke motta påmeldinger før betalinger er satt opp. Du kobles til Stripe — det tar bare noen minutter.
-                    </p>
+            {/* Draft course banner */}
+            {courseData?.status === 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="warning" className="mb-4">
+                <div>
+                  <AlertTitle variant="warning">Kurset er ikke publisert</AlertTitle>
+                  <AlertDescription variant="warning">
+                    Sett opp betalinger for å publisere kurset og begynne å ta imot påmeldinger.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+            {courseData?.status === 'draft' && currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="info" className="mb-4">
+                <div>
+                  <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
+                  <AlertDescription variant="info">
+                    Publiser kurset for å gjøre det synlig og ta imot påmeldinger.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+            {/* Stripe not set up on a published course (edge case) */}
+            {courseData?.status !== 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="warning" className="mb-4">
+                <div>
+                  <AlertTitle variant="warning">Betalinger er ikke satt opp</AlertTitle>
+                  <AlertDescription variant="warning">
+                    Kurset kan ikke motta påmeldinger før betalinger er satt opp.
+                  </AlertDescription>
+                  <div className="mt-3">
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      loading={connectingStripe}
+                      loadingText="Sender deg til Stripe …"
+                      onClick={async () => {
+                        if (!currentOrganization?.id) return;
+                        setConnectingStripe(true);
+                        const { data, error } = await createStripeConnectLink(currentOrganization.id);
+                        if (error || !data?.url) {
+                          toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+                          setConnectingStripe(false);
+                          return;
+                        }
+                        window.location.href = data.url;
+                      }}
+                    >
+                      Sett opp betalinger
+                    </Button>
                   </div>
                 </div>
-                <div className="mt-4 ml-7">
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    className="bg-white text-zinc-900 border-zinc-300 hover:bg-zinc-100 shrink-0"
-                    loading={connectingStripe}
-                    loadingText="Sender deg til Stripe …"
-                    onClick={async () => {
-                      if (!currentOrganization?.id) return;
-                      setConnectingStripe(true);
-                      const { data, error } = await createStripeConnectLink(currentOrganization.id);
-                      if (error || !data?.url) {
-                        toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-                        setConnectingStripe(false);
-                        return;
-                      }
-                      window.location.href = data.url;
-                    }}
-                  >
-                    Sett opp betalinger
-                  </Button>
-                </div>
-              </div>
+              </Alert>
             )}
 
             {/* Tabs */}
@@ -822,6 +930,40 @@ const CourseDetailPage = () => {
         participants={confirmedParticipants}
         organizationName={currentOrganization?.name}
       />
+
+      {/* Publish Course Dialog (Stripe not connected) */}
+      {currentOrganization?.id && (
+        <PublishCourseDialog
+          open={showPublishDialog}
+          onOpenChange={setShowPublishDialog}
+          organizationId={currentOrganization.id}
+          courseTitle={courseData?.title}
+        />
+      )}
+
+      {/* Unpublish Confirmation Dialog */}
+      <AlertDialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gjøre kurset til utkast?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Kurset blir skjult fra den offentlige siden. Eksisterende påmeldinger påvirkes ikke.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <Button
+              size="compact"
+              variant="destructive-outline"
+              onClick={handleUnpublish}
+              loading={isUnpublishing}
+              loadingText="Lagrer …"
+            >
+              Gjør til utkast
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>

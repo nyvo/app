@@ -233,7 +233,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     </div>
 
                     <Alert variant="neutral" size="sm" icon={Info}>
-                      <p className="text-xs text-text-secondary">Endringer i tid eller sted vil automatisk bli sendt på e-post til alle påmeldte deltakere.</p>
+                      <p className="text-xs text-text-secondary">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                     </Alert>
 
                     <div className="flex gap-2 pt-1">

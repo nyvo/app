@@ -10,7 +10,7 @@ interface ShareCoursePopoverProps {
   children?: React.ReactNode;
 }
 
-export function ShareCoursePopover({ courseUrl, courseTitle = 'this course', children }: ShareCoursePopoverProps) {
+export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', children }: ShareCoursePopoverProps) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 

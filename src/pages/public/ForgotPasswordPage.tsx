@@ -54,7 +54,7 @@ const ForgotPasswordPage = () => {
       }
 
       toast.success('E-post sendt', {
-        description: 'Sjekk innboksen din for innloggingslenken.',
+        description: 'Sjekk innboksen din for lenken.',
       })
       setEmailSent(true)
       setIsSubmitting(false)
@@ -88,7 +88,7 @@ const ForgotPasswordPage = () => {
             Sjekk e-posten din
           </h1>
           <p className="text-text-secondary text-sm">
-            Vi har sendt en innloggingslenke til{' '}
+            Vi har sendt en lenke til{' '}
             <span className="font-medium text-text-primary">{formData.email}</span>
           </p>
         </div>
@@ -120,7 +120,7 @@ const ForgotPasswordPage = () => {
     <AuthLayout
       context="teacher"
       title="Glemt passord?"
-      subtitle="Skriv inn e-posten din, så sender vi en innloggingslenke."
+      subtitle="Skriv inn e-posten din, så sender vi en lenke."
       footer={
         <p className="text-xs text-text-secondary">
           Husker du passordet ditt?{' '}

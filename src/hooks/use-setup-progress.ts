@@ -13,6 +13,7 @@ export interface SetupStep {
   actionHref?: string
   actionOnClick?: () => void
   icon: LucideIcon
+  timeEstimate?: string
 }
 
 interface UseSetupProgressParams {
@@ -28,6 +29,14 @@ interface UseSetupProgressResult {
   totalCount: number
   isSetupComplete: boolean
   nextStep: SetupStep | null
+  motivationalSubtitle: string
+}
+
+function getMotivationalSubtitle(completedCount: number, totalCount: number): string {
+  const remaining = totalCount - completedCount
+  if (remaining === 0) return 'Du er klar til å ta imot bookinger og betaling'
+  if (remaining === 1) return 'Nesten der — ett steg igjen'
+  return `${remaining} steg igjen før du kan ta imot bookinger`
 }
 
 export function useSetupProgress({
@@ -44,8 +53,8 @@ export function useSetupProgress({
     const steps: SetupStep[] = [
       {
         id: 'profile',
-        title: 'Fullfør profilen din',
-        description: 'Legg til navn og by så elevene finner deg.',
+        title: 'Profilen din er klar',
+        description: 'Navn og by er registrert.',
         isComplete: hasName && hasCity,
         actionLabel: 'Fullfør profil',
         actionHref: '/teacher/profile',
@@ -53,27 +62,29 @@ export function useSetupProgress({
       },
       {
         id: 'stripe',
-        title: 'Sett opp betalinger',
-        description: 'Knytt kontoen din til Stripe, så du kan motta betaling fra elever.',
+        title: 'Aktiver betalinger',
+        description: 'Koble til en betalingsløsning så du kan motta betaling fra elever. Trygt og sikkert.',
         isComplete: !!org?.stripe_onboarding_complete,
-        actionLabel: 'Sett opp',
+        actionLabel: 'Aktiver',
         actionOnClick: onConnectStripe,
         icon: CreditCard,
       },
       {
         id: 'course',
         title: 'Opprett ditt første kurs',
-        description: 'Publiser et kurs så elever kan melde seg på.',
+        description: 'Legg ut et kurs, så kan elevene melde seg på.',
         isComplete: hasCourses,
-        actionLabel: 'Opprett',
+        actionLabel: 'Opprett kurs',
         actionHref: '/teacher/new-course',
         icon: BookOpen,
+        timeEstimate: 'ca. 3 min',
       },
     ]
 
     const completedCount = steps.filter((s) => s.isComplete).length
     const totalCount = steps.length
     const nextStep = steps.find((s) => !s.isComplete) || null
+    const motivationalSubtitle = getMotivationalSubtitle(completedCount, totalCount)
 
     return {
       steps,
@@ -81,6 +92,7 @@ export function useSetupProgress({
       totalCount,
       isSetupComplete: completedCount === totalCount,
       nextStep,
+      motivationalSubtitle,
     }
   }, [currentOrganization, profile, hasCourses, onConnectStripe])
 }

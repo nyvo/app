@@ -78,9 +78,10 @@ Deno.serve(async (req) => {
       currently_due: account.requirements?.currently_due || [],
     }
 
-    // In test mode, charges_enabled may not be immediately true after onboarding.
-    // details_submitted is the reliable signal that the user completed the flow.
-    const isComplete = account.details_submitted && (account.charges_enabled || account.payouts_enabled)
+    // details_submitted is the reliable signal that the user completed the Stripe
+    // onboarding flow. charges_enabled / payouts_enabled may lag behind due to
+    // Stripe's async verification (especially in test mode).
+    const isComplete = !!account.details_submitted
 
     if (isComplete) {
       // Update org in database
