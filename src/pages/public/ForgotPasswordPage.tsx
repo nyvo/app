@@ -84,7 +84,7 @@ const ForgotPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
             Sjekk e-posten din
           </h1>
           <p className="text-text-secondary text-sm">

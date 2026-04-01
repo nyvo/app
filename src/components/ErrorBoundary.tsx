@@ -39,22 +39,22 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
+        <div className="flex min-h-screen items-center justify-center bg-surface px-4">
           <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-8 text-center">
-            <h1 className="mb-2 text-lg font-medium text-zinc-900">
+            <h1 className="mb-2 text-lg font-medium text-text-primary">
               Noe gikk galt
             </h1>
-            <p className="mb-6 text-sm text-zinc-500">
+            <p className="mb-6 text-sm text-text-secondary">
               En uventet feil oppstod. Prøv å laste siden på nytt.
             </p>
             <button
               onClick={this.handleReload}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground smooth-transition hover:bg-primary/90"
             >
               Last siden på nytt
             </button>
             {import.meta.env.DEV && this.state.error && (
-              <pre className="mt-6 max-h-40 overflow-auto rounded-lg bg-zinc-100 p-3 text-left text-xs text-red-600">
+              <pre className="mt-6 max-h-40 overflow-auto rounded-lg bg-surface p-3 text-left text-xs text-status-error-text">
                 {this.state.error.message}
               </pre>
             )}

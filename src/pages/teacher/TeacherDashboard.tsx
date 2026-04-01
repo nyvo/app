@@ -477,7 +477,7 @@ const TeacherDashboard = () => {
                   </div>
                   <button
                     onClick={() => setShowSetupBanner(false)}
-                    className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-zinc-100 transition-colors duration-200 shrink-0"
+                    className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated transition-colors duration-200 shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -581,7 +581,7 @@ const TeacherDashboard = () => {
 
               <div className="flex flex-col gap-3 py-2">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg bg-zinc-50 border border-zinc-200 p-2">
+                  <div className="mt-0.5 rounded-lg bg-surface-elevated border border-zinc-200 p-2">
                     <Shield className="h-4 w-4 text-text-tertiary" />
                   </div>
                   <div>

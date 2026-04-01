@@ -72,7 +72,7 @@ export function AuthLayout({
             className="w-full flex flex-col items-center"
           >
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="text-2xl font-medium tracking-tight text-text-primary">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
                 {title}
               </h1>
               {subtitle && (

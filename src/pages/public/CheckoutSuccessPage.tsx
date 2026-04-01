@@ -191,7 +191,7 @@ const CheckoutSuccessPage = () => {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="tracking-tight text-2xl font-medium text-text-primary mb-3">
+              <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary mb-3">
                 Noe gikk galt
               </h1>
               <p className="text-text-secondary mb-8">{error}</p>
@@ -222,7 +222,7 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen w-full bg-surface font-geist flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <h1 className="tracking-tight text-2xl font-medium text-text-primary mb-3">
+          <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary mb-3">
             Betalingen er bekreftet
           </h1>
           <p className="text-text-secondary mb-8">
@@ -261,7 +261,7 @@ const CheckoutSuccessPage = () => {
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
 
-              <h1 className="tracking-tight text-2xl md:text-3xl font-medium text-text-primary mb-4">
+              <h1 className="font-geist tracking-tight text-2xl md:text-3xl font-medium text-text-primary mb-4">
                 {isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført'}
               </h1>
 

@@ -38,7 +38,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
           style={{ maxHeight: expanded || !needsTruncation ? '2000px' : `${COLLAPSED_HEIGHT}px` }}
         >
           {description && (
-            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+            <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
               {description}
             </div>
           )}
@@ -47,7 +47,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
             <ul className="space-y-2">
               {highlights.map((highlight, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <Check className="h-4 w-4 text-text-tertiary mt-0.5 shrink-0" />
                   <span className="text-sm text-text-secondary">{highlight}</span>
                 </li>
               ))}
@@ -62,7 +62,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="text-xs font-medium text-text-primary hover:text-muted-foreground transition-colors mt-1.5"
+          className="text-xs font-medium text-text-primary hover:text-text-secondary transition-colors mt-1.5"
         >
           {expanded ? 'Vis mindre' : 'Les mer'}
         </button>

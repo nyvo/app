@@ -113,7 +113,7 @@ const StudentMessagesPage = () => {
   return (
     <>
       <div className="mb-6">
-        <h1 className="tracking-tight text-2xl font-medium text-text-primary">Meldinger</h1>
+        <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">Meldinger</h1>
         <p className="text-text-secondary mt-1">Kommuniser med instruktørene dine</p>
       </div>
 
@@ -143,7 +143,7 @@ const StudentMessagesPage = () => {
                       'w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors',
                       activeConversation?.id === conversation.id
                         ? 'bg-surface-elevated'
-                        : 'hover:bg-zinc-50'
+                        : 'hover:bg-surface-elevated'
                     )}
                   >
                     <UserAvatar

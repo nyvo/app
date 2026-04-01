@@ -18,7 +18,7 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
         {label}
       </span>
       {step && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-text-secondary">
           {step}
         </span>
       )}

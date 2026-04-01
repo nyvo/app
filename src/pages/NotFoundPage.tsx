@@ -34,7 +34,7 @@ const NotFoundPage = () => {
           </div>
 
           {/* Message */}
-          <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-3">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-3">
             Siden ble ikke funnet
           </h1>
           <p className="text-text-secondary text-sm mb-8">

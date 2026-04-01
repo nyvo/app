@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { createStripeConnectLink } from '@/services/stripe-connect';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
@@ -474,6 +475,7 @@ const CourseDetailPage = () => {
   if (isLoading) {
     return (
       <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+          <MobileTeacherHeader title="Kurs" />
 
           <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
             <div className="max-w-6xl mx-auto w-full">
@@ -519,6 +521,7 @@ const CourseDetailPage = () => {
   if (error || !courseData) {
     return (
       <main className="flex-1 flex flex-col min-h-screen bg-surface">
+          <MobileTeacherHeader title="Kurs" />
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
@@ -626,6 +629,7 @@ const CourseDetailPage = () => {
   return (
     <>
     <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+        <MobileTeacherHeader title="Kurs" />
 
         {/* Header Section */}
         <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
@@ -766,7 +770,7 @@ const CourseDetailPage = () => {
               <FilterTab value="overview">Oversikt</FilterTab>
               <FilterTab value="participants" className="flex items-center gap-1.5">
                 Deltakere
-                <span className="px-2.5 py-0.5 rounded-lg bg-zinc-100 text-xs font-medium text-text-primary">
+                <span className="px-2.5 py-0.5 rounded-lg bg-surface-elevated text-xs font-medium text-text-primary">
                   {course.enrolled}
                 </span>
               </FilterTab>

@@ -50,7 +50,7 @@ const StudentProfilePage = () => {
     <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="tracking-tight text-2xl font-medium text-text-primary">
+          <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">
             Min profil
           </h1>
           <p className="text-text-secondary mt-1">
@@ -67,7 +67,7 @@ const StudentProfilePage = () => {
                 <User className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-name" className="block text-xs font-medium text-text-secondary mb-1">
+                <label htmlFor="student-name" className="block text-xs font-medium text-text-primary mb-1.5">
                   Navn
                 </label>
                 <Input
@@ -100,7 +100,7 @@ const StudentProfilePage = () => {
                 <Phone className="h-4 w-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-phone" className="block text-xs font-medium text-text-secondary mb-1">
+                <label htmlFor="student-phone" className="block text-xs font-medium text-text-primary mb-1.5">
                   Telefon
                 </label>
                 <Input

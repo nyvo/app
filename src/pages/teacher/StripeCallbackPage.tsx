@@ -103,10 +103,10 @@ const StripeCallbackPage = () => {
         <div className="w-full flex flex-col items-center text-center">
           {state === 'loading' && (
             <>
-              <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-6">
+              <div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center mb-6">
                 <Spinner size="md" />
               </div>
-              <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
                 Bekrefter betalingsoppsettet
               </h1>
               <p className="text-text-secondary text-sm">
@@ -120,7 +120,7 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-warning-bg flex items-center justify-center mb-6">
                 <AlertCircle className="w-5 h-5 text-status-warning-text" />
               </div>
-              <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
                 Betalingsoppsettet er ikke fullført
               </h1>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
@@ -147,7 +147,7 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-error-bg flex items-center justify-center mb-6">
                 <AlertCircle className="w-5 h-5 text-status-error-text" />
               </div>
-              <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
                 Noe gikk galt
               </h1>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
@@ -174,7 +174,7 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
                 <CheckCircle2 className="w-5 h-5 text-status-confirmed-text" />
               </div>
-              <h1 className="text-2xl font-medium tracking-tight text-text-primary mb-2">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
                 Betalinger er klare
               </h1>
               <p className="text-text-secondary text-sm">

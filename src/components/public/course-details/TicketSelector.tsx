@@ -20,7 +20,7 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="rounded-xl bg-zinc-50 p-4 space-y-3">
+    <div className="rounded-xl bg-surface-elevated p-4 space-y-3">
       {/* Course fee */}
       <div className="flex justify-between items-center">
         <span className="text-sm text-text-primary">Kursavgift</span>
@@ -29,8 +29,8 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
 
       {/* Service fee */}
       <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">Servicegebyr</span>
-        <span className="text-sm text-muted-foreground">{formatKroner(serviceFee)}</span>
+        <span className="text-sm text-text-secondary">Servicegebyr</span>
+        <span className="text-sm text-text-secondary">{formatKroner(serviceFee)}</span>
       </div>
 
       {/* Divider */}

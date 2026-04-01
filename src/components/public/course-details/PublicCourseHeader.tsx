@@ -51,7 +51,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
 
         {/* Right side */}
         <div className="flex items-center gap-6">
-          <span className="text-xs text-muted-foreground font-medium hidden sm:block">
+          <span className="text-xs text-text-secondary font-medium hidden sm:block">
             Påmelding
           </span>
 
@@ -95,7 +95,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/student/login"
-              className="text-xs font-medium text-muted-foreground hover:text-text-primary transition-colors"
+              className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
             >
               Logg inn
             </Link>

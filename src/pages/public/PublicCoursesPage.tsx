@@ -231,8 +231,8 @@ const PublicCoursesPage = () => {
               </div>
 
               {/* Text Info */}
-              <div className="space-y-2 flex-1">
-                <h1 className="tracking-tight text-2xl font-medium text-text-primary">
+              <div className="space-y-2 flex-1 min-w-0">
+                <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">
                   {organization.name}
                 </h1>
 
@@ -266,7 +266,7 @@ const PublicCoursesPage = () => {
             {/* Empty State */}
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-zinc-200 bg-white">
-                <p className="tracking-tight text-sm font-medium text-text-primary">
+                <p className="text-sm font-medium text-text-primary">
                   {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
                 </p>
                 <p className="text-sm text-text-secondary mt-1">

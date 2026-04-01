@@ -289,8 +289,8 @@ export const SchedulePage = () => {
                         day.isToday
                           ? 'bg-primary text-primary-foreground'
                           : day.isWeekend
-                          ? 'text-text-tertiary group-hover:bg-zinc-50'
-                          : 'text-text-secondary group-hover:bg-zinc-50'
+                          ? 'text-text-tertiary group-hover:bg-surface-elevated'
+                          : 'text-text-secondary group-hover:bg-surface-elevated'
                       }`}
                     >
                       {day.date}

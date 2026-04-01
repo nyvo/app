@@ -104,7 +104,7 @@ const ResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
             Ugyldig lenke
           </h1>
           <p className="text-text-secondary text-sm">
@@ -133,7 +133,7 @@ const ResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
             Passordet er oppdatert
           </h1>
           <p className="text-text-secondary text-sm">

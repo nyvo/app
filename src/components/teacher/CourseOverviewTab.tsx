@@ -329,7 +329,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               <div className="mb-5">
                 <span className="text-xs text-text-secondary block mb-1">Pris per deltaker</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-medium text-text-primary tracking-tight">
+                  <span className="text-xl font-medium text-text-primary">
                     {formatKroner(course.price)}
                   </span>
                 </div>
