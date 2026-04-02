@@ -114,7 +114,7 @@ const StudentMessagesPage = () => {
   return (
     <>
       <div className="mb-6">
-        <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">Meldinger</h1>
+        <h1 className="type-heading-1 text-foreground">Meldinger</h1>
         <p className="text-muted-foreground mt-1">Kommuniser med instruktørene dine</p>
       </div>
 
@@ -129,8 +129,8 @@ const StudentMessagesPage = () => {
               <SectionLoader size="md" />
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
-                <p className="text-sm font-medium text-foreground">Ingen meldinger</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="type-title text-foreground">Ingen meldinger</p>
+                <p className="type-body mt-1 text-muted-foreground">
                   Du kan sende melding til instruktører fra kursoversikten.
                 </p>
               </div>
@@ -143,8 +143,8 @@ const StudentMessagesPage = () => {
                     className={cn(
                       'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-colors',
                       activeConversation?.id === conversation.id
-                        ? 'bg-muted'
-                        : 'hover:bg-muted'
+                        ? 'bg-surface-muted'
+                        : 'hover:bg-surface-muted'
                     )}
                   >
                     <UserAvatar
@@ -154,15 +154,15 @@ const StudentMessagesPage = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-sm font-medium text-foreground truncate">
+                        <span className="type-label truncate text-foreground">
                           {conversation.participant?.name || 'Ukjent'}
                         </span>
-                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                        <span className="type-meta ml-2 shrink-0 text-muted-foreground">
                           {formatMessageTimestamp(conversation.updated_at)}
                         </span>
                       </div>
                       <p className={cn(
-                        'text-sm truncate',
+                        'type-body truncate',
                         conversation.unread_count > 0
                           ? 'text-foreground font-medium'
                           : 'text-muted-foreground'
@@ -202,7 +202,7 @@ const StudentMessagesPage = () => {
                   size="lg"
                 />
                 <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-foreground truncate">
+                  <h3 className="type-label truncate text-foreground">
                     {activeConversation.participant?.name || 'Ukjent'}
                   </h3>
                 </div>
@@ -212,7 +212,7 @@ const StudentMessagesPage = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
                 {currentMessages.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p className="text-sm">Ingen meldinger ennå</p>
+                    <p className="type-body">Ingen meldinger ennå</p>
                   </div>
                 ) : (
                   currentMessages.map((message) => {
@@ -239,16 +239,16 @@ const StudentMessagesPage = () => {
                             'px-4 py-3 rounded-lg',
                             isFromStudent
                               ? 'bg-primary text-primary-foreground rounded-br-sm'
-                              : 'bg-muted rounded-bl-sm'
+                              : 'bg-surface-muted rounded-bl-sm'
                           )}>
                             <p className={cn(
-                              'text-sm leading-relaxed',
+                              'type-body leading-relaxed',
                               isFromStudent ? '' : 'text-foreground'
                             )}>
                               {message.content}
                             </p>
                           </div>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 px-1">
+                          <span className="type-meta flex items-center gap-1 px-1 text-muted-foreground">
                             {formatMessageTimestamp(message.created_at)}
                             {isFromStudent && message.is_read && (
                               <CheckCheck className="h-3 w-3 text-status-confirmed-text" />
@@ -296,7 +296,7 @@ const StudentMessagesPage = () => {
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="text-sm">Velg en samtale</p>
+              <p className="type-body">Velg en samtale</p>
             </div>
           )}
         </div>

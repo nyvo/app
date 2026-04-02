@@ -116,7 +116,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     <div>
       {/* Header */}
       <div className="mb-3">
-        <h2 className="text-sm font-medium text-foreground">
+        <h2 className="type-title text-foreground">
           Kursplan ({sessions.length} {sessionLabelPlural})
         </h2>
       </div>
@@ -141,7 +141,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 months: "relative flex flex-col gap-4",
                 month: "flex flex-col gap-5",
                 weekdays: "flex justify-between",
-                weekday: "text-muted-foreground w-11 text-center text-xs font-normal",
+                weekday: "type-meta text-muted-foreground w-11 text-center",
                 week: "flex justify-between w-full mt-1",
                 day: "h-11 w-11 p-0 text-center",
               }}
@@ -151,15 +151,15 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span className="text-xs text-muted-foreground">{sessionLabel}</span>
+                <span className="type-meta text-muted-foreground">{sessionLabel}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-[3px] bg-primary" />
-                <span className="text-xs text-muted-foreground">Valgt</span>
+                <span className="type-meta text-muted-foreground">Valgt</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-[3px] bg-muted border border-border" />
-                <span className="text-xs text-muted-foreground">I dag</span>
+                <span className="h-2.5 w-2.5 rounded-[3px] border border-border bg-surface-muted" />
+                <span className="type-meta text-muted-foreground">I dag</span>
               </div>
             </div>
           </div>
@@ -179,10 +179,10 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                         : 'border border-border text-muted-foreground'
                     }`}
                   >
-                    <span className="text-[9px] font-medium opacity-80">{sessionLabel}</span>
-                    <span className="text-sm leading-none font-medium">{selectedSession.weekNum}</span>
+                    <span className="type-eyebrow opacity-80">{sessionLabel}</span>
+                    <span className="type-label leading-none">{selectedSession.weekNum}</span>
                   </div>
-                  <h4 className="text-sm font-medium text-foreground">
+                  <h4 className="type-title text-foreground">
                     {isPast ? 'Tidligere økt' : 'Rediger økt'}
                   </h4>
                 </div>
@@ -191,15 +191,15 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                   /* Read-only view for past sessions */
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-foreground mb-1.5">Dato</label>
-                      <p className="text-sm text-muted-foreground">{selectedSession.date}</p>
+                      <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
+                      <p className="type-body text-muted-foreground">{selectedSession.date}</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-foreground mb-1.5">Tidspunkt</label>
-                      <p className="text-sm text-muted-foreground">{selectedSession.time}</p>
+                      <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
+                      <p className="type-body text-muted-foreground">{selectedSession.time}</p>
                     </div>
                     <Alert variant="neutral" size="sm" icon={Info}>
-                      <p className="text-xs text-muted-foreground">Tidligere økter kan ikke endres.</p>
+                      <p className="type-meta text-muted-foreground">Tidligere økter kan ikke endres.</p>
                     </Alert>
                   </div>
                 ) : (
@@ -207,7 +207,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                   <>
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-foreground mb-1.5">
+                        <label className="type-label-sm mb-1.5 block text-foreground">
                           Dato
                         </label>
                         <DatePicker
@@ -222,7 +222,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-foreground mb-1.5">
+                        <label className="type-label-sm mb-1.5 block text-foreground">
                           Tidspunkt
                         </label>
                         <TimePicker
@@ -233,7 +233,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     </div>
 
                     <Alert variant="neutral" size="sm" icon={Info}>
-                      <p className="text-xs text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                      <p className="type-meta text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                     </Alert>
 
                     <div className="flex gap-2 pt-1">
@@ -271,7 +271,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
             {/* Empty state — stretches to match calendar height */}
             {!selectedSession && (
               <div className="rounded-lg border border-dashed border-border p-6 h-full flex items-center justify-center">
-                <p className="text-xs text-muted-foreground">
+                <p className="type-meta text-muted-foreground">
                   {selectedDate ? 'Ingen økt på denne datoen' : 'Velg en dato for å se detaljer'}
                 </p>
               </div>

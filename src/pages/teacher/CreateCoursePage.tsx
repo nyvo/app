@@ -381,10 +381,10 @@ const CreateCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">
+            <h1 className="type-heading-1 text-foreground">
               Opprett nytt kurs
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="type-body mt-1 text-muted-foreground">
               Sett opp et nytt kurs eller arrangement.
             </p>
           </div>
@@ -417,8 +417,8 @@ const CreateCoursePage = () => {
               {/* ── Step 1: Kurstype + Detaljer ── */}
               <section>
                 <div className="mb-6">
-                  <h2 id="course-type-label" className="text-sm font-medium text-foreground">Kurstype</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Hva slags kurs vil du opprette?</p>
+                  <h2 id="course-type-label" className="type-title text-foreground">Kurstype</h2>
+                  <p className="type-body mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
                   value={courseType}
@@ -444,12 +444,12 @@ const CreateCoursePage = () => {
               {/* ── Section 2: Basic Details ── */}
               <section>
                 <div className="mb-6 border-b border-border pb-2">
-                  <h2 className="text-sm font-medium text-foreground">Detaljer</h2>
+                  <h2 className="type-title text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
                   {/* Title */}
                   <div>
-                    <label htmlFor="create-title" className="block text-xs font-medium text-foreground mb-1.5">
+                    <label htmlFor="create-title" className="type-label-sm mb-1.5 block text-foreground">
                       Tittel
                     </label>
                     <Input
@@ -469,7 +469,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('title') && (
-                      <p id="create-title-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <p id="create-title-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.title}
                       </p>
@@ -478,9 +478,9 @@ const CreateCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="create-description" className="block text-xs font-medium text-foreground mb-1.5">
+                    <label htmlFor="create-description" className="type-label-sm mb-1.5 block text-foreground">
                       Beskrivelse
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <Textarea
                       id="create-description"
@@ -492,7 +492,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
+                      <p className={`type-meta ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -500,9 +500,9 @@ const CreateCoursePage = () => {
 
                   {/* Cover Image */}
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                    <label className="type-label-sm mb-1.5 block text-foreground">
                       Kursbilde
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <div className="h-40">
                       <ImageUpload
@@ -533,7 +533,7 @@ const CreateCoursePage = () => {
                   {/* Date + Weeks row */}
                   <div className={cn("grid grid-cols-1 gap-5", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
-                      <label htmlFor="create-start-date" className="block text-xs font-medium text-foreground mb-1.5">
+                      <label htmlFor="create-start-date" className="type-label-sm mb-1.5 block text-foreground">
                         {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
@@ -549,7 +549,7 @@ const CreateCoursePage = () => {
                         fromDate={new Date()}
                       />
                       {showError('startDate') && (
-                        <p id="startDate-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <p id="startDate-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                           <AlertCircle className="h-3 w-3" aria-hidden="true" />
                           {errors.startDate}
                         </p>
@@ -558,7 +558,7 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label className="flex items-center gap-1 text-xs font-medium text-foreground mb-1.5">
+                        <label className="type-label-sm mb-1.5 flex items-center gap-1 text-foreground">
                           Uker
                           <InfoTooltip content="Hvor mange uker kurset varer" />
                         </label>
@@ -571,7 +571,7 @@ const CreateCoursePage = () => {
                               aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                               aria-invalid={showError('weeks') ? 'true' : undefined}
                               aria-required="true"
-                              className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-foreground text-sm bg-transparent text-left focus:outline-none focus:bg-background focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
+                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-transparent px-4 text-left text-foreground focus:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
                                 showError('weeks') ? 'border-destructive' : 'border-input'
                               }`}
                             >
@@ -590,7 +590,7 @@ const CreateCoursePage = () => {
                                     setIsWeeksOpen(false);
                                     setTouched(prev => ({ ...prev, weeks: true }));
                                   }}
-                                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-normal transition-colors ${
+                                  className={`type-body flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
                                     weeks === week.toString()
                                       ? 'bg-primary text-primary-foreground'
                                       : 'text-sidebar-foreground hover:bg-secondary hover:text-foreground'
@@ -604,7 +604,7 @@ const CreateCoursePage = () => {
                           </PopoverContent>
                         </Popover>
                         {showError('weeks') && (
-                          <p id="weeks-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                          <p id="weeks-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                             <AlertCircle className="h-3 w-3" aria-hidden="true" />
                             {errors.weeks}
                           </p>
@@ -628,7 +628,7 @@ const CreateCoursePage = () => {
                   {/* Time + Duration row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="create-start-time" className="block text-xs font-medium text-foreground mb-1.5">
+                      <label htmlFor="create-start-time" className="type-label-sm mb-1.5 block text-foreground">
                         Starttid
                       </label>
                       <TimePicker
@@ -642,14 +642,14 @@ const CreateCoursePage = () => {
                         error={!!showError('startTime')}
                       />
                       {showError('startTime') && (
-                        <p id="startTime-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <p id="startTime-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                           <AlertCircle className="h-3 w-3" aria-hidden="true" />
                           {errors.startTime}
                         </p>
                       )}
                     </div>
                     <div>
-                      <label htmlFor="create-duration" className="block text-xs font-medium text-foreground mb-1.5">
+                      <label htmlFor="create-duration" className="type-label-sm mb-1.5 block text-foreground">
                         Varighet
                       </label>
                       <Select
@@ -679,7 +679,7 @@ const CreateCoursePage = () => {
                         </SelectContent>
                       </Select>
                       {showError('duration') && (
-                        <p id="duration-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                        <p id="duration-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                           <AlertCircle className="h-3 w-3" aria-hidden="true" />
                           {errors.duration}
                         </p>
@@ -701,7 +701,7 @@ const CreateCoursePage = () => {
 
                   {/* Location */}
                   <div>
-                    <label htmlFor="create-location" className="block text-xs font-medium text-foreground mb-1.5">
+                    <label htmlFor="create-location" className="type-label-sm mb-1.5 block text-foreground">
                       Sted
                     </label>
                     <Input
@@ -721,7 +721,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('location') && (
-                      <p id="create-location-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <p id="create-location-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.location}
                       </p>
@@ -744,14 +744,14 @@ const CreateCoursePage = () => {
               {/* ── Step 3: Påmelding ── */}
               <section>
                 <div className="mb-6 border-b border-border pb-2">
-                  <h2 className="text-sm font-medium text-foreground">Påmelding</h2>
+                  <h2 className="type-title text-foreground">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Price */}
                   <div>
-                    <label htmlFor="create-price" className="block text-xs font-medium text-foreground mb-1.5">
+                    <label htmlFor="create-price" className="type-label-sm mb-1.5 block text-foreground">
                       Pris
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">per person</span>
+                      <span className="type-meta ml-2 text-muted-foreground">per person</span>
                     </label>
                     <div className="relative">
                       <Input
@@ -772,11 +772,11 @@ const CreateCoursePage = () => {
                         )}
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
+                        <span className={`type-meta ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
                       </div>
                     </div>
                     {showError('price') && (
-                      <p id="create-price-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <p id="create-price-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.price}
                       </p>
@@ -785,7 +785,7 @@ const CreateCoursePage = () => {
 
                   {/* Capacity */}
                   <div>
-                    <label htmlFor="create-capacity" className="block text-xs font-medium text-foreground mb-1.5">
+                    <label htmlFor="create-capacity" className="type-label-sm mb-1.5 block text-foreground">
                       Maks antall deltakere
                     </label>
                     <Input
@@ -806,7 +806,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('capacity') && (
-                      <p id="create-capacity-error" className="mt-1.5 text-xs text-destructive flex items-center gap-1" role="alert">
+                      <p id="create-capacity-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.capacity}
                       </p>
@@ -818,15 +818,15 @@ const CreateCoursePage = () => {
               {/* ── Section 5: Praktisk info (optional) ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-sm font-medium text-foreground">Praktisk info</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
+                  <h2 className="type-title text-foreground">Praktisk info</h2>
+                  <p className="type-body mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-2.5">
+                    <label className="type-label-sm mb-2.5 block text-foreground">
                       Nivå
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
@@ -835,7 +835,7 @@ const CreateCoursePage = () => {
                           type="button"
                           onClick={() => setAudienceLevel(opt.value)}
                           className={cn(
-                            'px-3.5 py-1.5 rounded-full text-sm border smooth-transition',
+                            'type-label rounded-md border px-3.5 py-1.5 smooth-transition',
                             audienceLevel === opt.value
                               ? 'bg-primary text-primary-foreground border-primary'
                               : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
@@ -845,16 +845,16 @@ const CreateCoursePage = () => {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="type-meta mt-2 text-muted-foreground">
                       Velg hvem kurset passer for.
                     </p>
                   </div>
 
                   {/* Equipment - Radio buttons (single factual statement) */}
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-2.5">
+                    <label className="type-label-sm mb-2.5 block text-foreground">
                       Utstyr
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <RadioGroup
                       value={equipment}
@@ -863,7 +863,7 @@ const CreateCoursePage = () => {
                       {EQUIPMENT_OPTIONS.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-1">
                           <RadioGroupItem value={opt.value} />
-                          <span className="text-sm text-foreground">{opt.label}</span>
+                          <span className="type-body text-foreground">{opt.label}</span>
                         </label>
                       ))}
                     </RadioGroup>
@@ -871,9 +871,9 @@ const CreateCoursePage = () => {
 
                   {/* Arrival time - Dropdown select */}
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                    <label className="type-label-sm mb-1.5 block text-foreground">
                       Oppmøte før start
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <Select
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
@@ -894,9 +894,9 @@ const CreateCoursePage = () => {
 
                   {/* Custom bullets */}
                   <div>
-                    <label className="block text-xs font-medium text-foreground mb-1.5">
+                    <label className="type-label-sm mb-1.5 block text-foreground">
                       Egne punkter
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
+                      <span className="type-meta ml-2 text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
                     </label>
                     <div className="space-y-2">
                       {customBullets.map((bullet, i) => (
@@ -911,7 +911,7 @@ const CreateCoursePage = () => {
                               updated[i] = e.target.value;
                               setCustomBullets(updated);
                             }}
-                            className="flex-1 h-10"
+                            className="h-11 flex-1"
                           />
                           <button
                             type="button"
@@ -927,7 +927,7 @@ const CreateCoursePage = () => {
                         <button
                           type="button"
                           onClick={() => setCustomBullets([...customBullets, ''])}
-                          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
+                          className="type-body text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til punkt
@@ -947,7 +947,7 @@ const CreateCoursePage = () => {
           <div className="max-w-2xl mx-auto flex flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
-                <p className="text-sm text-destructive text-center">
+                <p className="type-body text-center text-destructive">
                   Fyll ut de markerte feltene.
                 </p>
               </Alert>
@@ -956,7 +956,7 @@ const CreateCoursePage = () => {
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm text-destructive">
+                    <p className="type-body text-destructive">
                       {submitError === 'conflict' ? 'Tidspunktet er opptatt. Velg et annet.' : submitError}
                     </p>
                     {submitError === 'conflict' && currentStep !== 1 && (
@@ -967,7 +967,7 @@ const CreateCoursePage = () => {
                           contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => startTimeRef.current?.focus(), 400);
                         }}
-                        className="text-xs font-medium text-destructive underline underline-offset-2 hover:text-destructive/80 transition-colors whitespace-nowrap"
+                        className="type-meta whitespace-nowrap text-destructive underline underline-offset-2 transition-colors hover:text-destructive/80"
                       >
                         Endre tidspunkt
                       </button>

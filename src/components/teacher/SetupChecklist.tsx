@@ -16,22 +16,22 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col">
-      <h2 className="text-sm font-medium text-foreground mb-3">Kom i gang</h2>
+    <div className="flex flex-col">
+      <h2 className="type-title mb-3 text-foreground">Kom i gang</h2>
       <Card className="p-6 flex-1">
         {/* Progress header */}
         <div className="mb-6">
           <div className="flex items-baseline justify-between mb-1.5">
-            <p className="text-sm font-medium text-foreground">
+            <p className="type-label text-foreground">
               {motivationalSubtitle}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="type-meta text-muted-foreground">
               {completedCount} av {totalCount}
             </p>
           </div>
           {/* Progress bar */}
           <div
-            className="h-1 rounded-full bg-muted overflow-hidden"
+            className="h-1 overflow-hidden rounded-full bg-surface-muted"
             role="progressbar"
             aria-valuenow={completedCount}
             aria-valuemin={0}
@@ -55,11 +55,11 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
               <div
                 key={step.id}
                 className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-150 ${
-                  isNext ? 'bg-muted' : ''
+                  isNext ? 'bg-surface-muted' : ''
                 }`}
               >
                 {/* Step number */}
-                <span className={`text-xs font-medium shrink-0 tabular-nums mt-0.5 ${
+                <span className={`type-meta mt-0.5 shrink-0 tabular-nums ${
                   step.isComplete
                     ? 'text-muted-foreground'
                     : isNext
@@ -71,17 +71,17 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
                 {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${
+                  <p className={`${
                     step.isComplete
-                      ? 'text-muted-foreground'
+                      ? 'type-body text-muted-foreground'
                       : isNext
-                        ? 'font-medium text-foreground'
-                        : 'text-muted-foreground'
+                        ? 'type-label text-foreground'
+                        : 'type-body text-muted-foreground'
                   }`}>
                     {step.title}
                   </p>
                   {isNext && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="type-meta mt-0.5 text-muted-foreground">
                       {step.description}
                     </p>
                   )}

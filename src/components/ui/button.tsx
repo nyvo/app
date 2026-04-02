@@ -6,31 +6,30 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[14px] font-medium ring-offset-background transition-[background-color,border-color,color,opacity,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "bg-primary text-primary-foreground hover:bg-primary/92 active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/92 active:scale-[0.98]",
         "destructive-outline":
-          "border border-destructive/30 bg-background text-destructive hover:bg-destructive/5 hover:border-destructive/50",
+          "border border-destructive/30 bg-background text-destructive hover:border-destructive/50 hover:bg-destructive/5 active:scale-[0.98]",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background hover:border-ring hover:bg-surface-muted hover:text-foreground active:scale-[0.98]",
         "outline-soft":
-          "border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border border-input bg-background text-muted-foreground hover:border-ring hover:bg-surface-muted hover:text-foreground active:scale-[0.98]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90 active:scale-[0.98]",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        xs: "h-8 px-3 py-1.5 text-xs rounded-md [&_svg]:size-3.5",
-        sm: "h-9 rounded-md px-3",
-        compact: "h-10 px-3 py-2 text-xs rounded-md [&_svg]:size-3.5",
+        default: "h-11 px-4",
+        xs: "h-9 px-3 text-[12px] rounded-md [&_svg]:size-3.5",
+        sm: "h-9 rounded-md px-3 text-[14px]",
+        compact: "h-9 px-3 text-[14px] rounded-md [&_svg]:size-3.5",
         lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        icon: "h-11 w-11",
         "icon-sm": "h-9 w-9",
       },
     },

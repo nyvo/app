@@ -85,14 +85,14 @@ const StripeCallbackPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground font-geist antialiased flex flex-col selection:bg-muted selection:text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground">
       {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none">
           <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-medium tracking-tight text-foreground">
+          <span className="type-title text-foreground">
             Ease
           </span>
         </Link>
@@ -103,13 +103,13 @@ const StripeCallbackPage = () => {
         <div className="w-full flex flex-col items-center text-center">
           {state === 'loading' && (
             <>
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-6">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted">
                 <Spinner size="md" />
               </div>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+              <h1 className="type-heading-1 mb-2 text-foreground">
                 Bekrefter betalingsoppsettet
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="type-body text-muted-foreground">
                 Vent mens vi bekrefter oppsettet ditt.
               </p>
             </>
@@ -120,10 +120,10 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-warning-bg flex items-center justify-center mb-6">
                 <AlertCircle className="w-5 h-5 text-status-warning-text" />
               </div>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+              <h1 className="type-heading-1 mb-2 text-foreground">
                 Betalingsoppsettet er ikke fullført
               </h1>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+              <p className="type-body mb-8 text-muted-foreground leading-relaxed">
                 Det ser ut som oppsettet hos Stripe ikke ble fullført. Du kan prøve igjen eller gå tilbake til oversikten.
               </p>
               <div className="w-full space-y-3">
@@ -147,10 +147,10 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-error-bg flex items-center justify-center mb-6">
                 <AlertCircle className="w-5 h-5 text-status-error-text" />
               </div>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+              <h1 className="type-heading-1 mb-2 text-foreground">
                 Noe gikk galt
               </h1>
-              <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+              <p className="type-body mb-8 text-muted-foreground leading-relaxed">
                 {errorMessage || 'Kunne ikke bekrefte betalingsoppsettet. Prøv igjen.'}
               </p>
               <div className="w-full space-y-3">
@@ -174,10 +174,10 @@ const StripeCallbackPage = () => {
               <div className="w-12 h-12 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
                 <CheckCircle2 className="w-5 h-5 text-status-confirmed-text" />
               </div>
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+              <h1 className="type-heading-1 mb-2 text-foreground">
                 Betalinger er klare
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="type-body text-muted-foreground">
                 Sender deg til oversikten
               </p>
             </>

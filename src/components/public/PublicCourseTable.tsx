@@ -107,7 +107,7 @@ function DifficultyDots({ level }: { level: CourseLevel | null }) {
           />
         ))}
       </div>
-      <span className="text-xs text-muted-foreground">{info.label}</span>
+      <span className="type-meta text-muted-foreground">{info.label}</span>
     </div>
   );
 }
@@ -160,8 +160,8 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               <div
                 className={cn(
                   "group flex items-center gap-4 px-6 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-muted/30",
-                  isExpanded && "bg-muted/30"
+                  isFull ? "opacity-40" : "hover:bg-surface-muted/30",
+                  isExpanded && "bg-surface-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
                 role="row"
@@ -178,15 +178,15 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
 
                 {/* Left group: Class name + meta line */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
+                  <p className="type-label truncate text-foreground">
                     {course.title}
                   </p>
                   <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="type-meta text-muted-foreground">
                       {getDisplayDate(course)} · {getTimeRange(course)}
                     </span>
                     {!isFull && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
@@ -197,10 +197,10 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 {/* Right group: Price/Full + CTA */}
                 <div className="flex items-center gap-4 shrink-0" data-action>
                   {isFull ? (
-                    <span className="text-xs font-medium text-foreground">Fullt</span>
+                    <span className="type-meta text-foreground">Fullt</span>
                   ) : (
                     <>
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="type-label text-foreground">
                         {formatPrice(course.price)}
                       </span>
                       <Button
@@ -221,7 +221,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               {/* Expandable preview panel */}
               <div
                 className={cn(
-                  "grid transition-all duration-200 ease-out",
+                  "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
                   isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                 )}
                 aria-hidden={!isExpanded}
@@ -256,27 +256,27 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               <div
                 className={cn(
                   "group flex items-center gap-3 px-4 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-muted/30",
-                  isExpanded && "bg-muted/30"
+                  isFull ? "opacity-40" : "hover:bg-surface-muted/30",
+                  isExpanded && "bg-surface-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
               >
                 <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-foreground truncate">
+                  <p className="type-label truncate text-foreground">
                     {course.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="type-meta text-muted-foreground">
                     {getDisplayDate(course)} · {getTimeRange(course)}
                   </p>
                   <div className="flex items-center gap-3">
                     {!isFull && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
                     )}
                     {!isFull && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="type-meta text-muted-foreground">
                         {formatPrice(course.price)}
                       </span>
                     )}
@@ -284,7 +284,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 </div>
                 <div className="shrink-0 flex items-center gap-2" data-action>
                   {isFull ? (
-                    <span className="text-xs font-medium text-foreground">Fullt</span>
+                    <span className="type-meta text-foreground">Fullt</span>
                   ) : (
                     <Button
                       variant="outline"
@@ -309,7 +309,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               {/* Mobile expandable preview */}
               <div
                 className={cn(
-                  "grid transition-all duration-200 ease-out",
+                  "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
                   isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                 )}
                 aria-hidden={!isExpanded}
@@ -343,7 +343,7 @@ function DesktopPreview({ course }: PreviewProps) {
   if (!hasContent) {
     return (
       <div className="px-6 pb-6 pt-1">
-        <span className="text-sm text-muted-foreground">Ingen tilleggsinformasjon</span>
+        <span className="type-body text-muted-foreground">Ingen tilleggsinformasjon</span>
       </div>
     );
   }
@@ -352,7 +352,7 @@ function DesktopPreview({ course }: PreviewProps) {
     <div className="px-6 pb-6 pt-1 space-y-3">
       {/* Description */}
       {hasDescription && (
-        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+        <p className="type-body text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -367,7 +367,7 @@ function DesktopPreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="text-xs text-muted-foreground">
+            <span className="type-meta text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
@@ -375,7 +375,7 @@ function DesktopPreview({ course }: PreviewProps) {
         {hasLocation && (
           <div className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
+            <span className="type-meta text-muted-foreground">
               {course.location}
             </span>
           </div>
@@ -394,7 +394,7 @@ function MobilePreview({ course }: PreviewProps) {
   return (
     <div className="px-4 pb-4 space-y-3">
       {hasDescription && (
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+        <p className="type-meta text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -408,7 +408,7 @@ function MobilePreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="text-xs text-muted-foreground">
+            <span className="type-meta text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
@@ -416,7 +416,7 @@ function MobilePreview({ course }: PreviewProps) {
         {hasLocation && (
           <div className="flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
+            <span className="type-meta text-muted-foreground">
               {course.location}
             </span>
           </div>

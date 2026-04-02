@@ -154,17 +154,17 @@ const CheckoutSuccessPage = () => {
     };
 
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center font-geist">
+      <div className="min-h-screen w-full bg-background flex items-center justify-center">
         <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg">
             <Spinner size="xl" className="text-status-info-text" />
           </div>
-          <p className="text-sm font-medium text-foreground mb-2">{getLoadingMessage()}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="type-label mb-2 text-foreground">{getLoadingMessage()}</p>
+          <p className="type-body text-muted-foreground">
             Bekrefter med banken. Ikke lukk denne siden.
           </p>
           {attemptCount > 8 && (
-            <p className="text-xs text-muted-foreground mt-4">
+            <p className="type-meta mt-4 text-muted-foreground">
               Du får beskjed når betalingen er klar.
             </p>
           )}
@@ -175,14 +175,14 @@ const CheckoutSuccessPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-background font-geist">
+      <div className="min-h-screen w-full bg-background">
         <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link to="/" className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
-              <span className="text-lg font-medium text-foreground tracking-tight">Ease</span>
+              <span className="type-title text-foreground">Ease</span>
             </Link>
           </div>
         </header>
@@ -192,7 +192,7 @@ const CheckoutSuccessPage = () => {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground mb-3">
+              <h1 className="type-heading-1 mb-3 text-foreground">
                 Noe gikk galt
               </h1>
               <p className="text-muted-foreground mb-8">{error}</p>
@@ -221,9 +221,9 @@ const CheckoutSuccessPage = () => {
     const failedStudioUrl = orgSlugFromUrl ? `/studio/${orgSlugFromUrl}` : '/';
 
     return (
-      <div className="min-h-screen w-full bg-background font-geist flex items-center justify-center px-4">
+      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground mb-3">
+          <h1 className="type-heading-1 mb-3 text-foreground">
             Betalingen er bekreftet
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -240,14 +240,14 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background font-geist">
+    <div className="min-h-screen w-full bg-background">
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to={studioUrl} className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
               <Leaf className="h-5 w-5" />
             </div>
-            <span className="text-lg font-medium text-foreground tracking-tight">Ease</span>
+            <span className="type-title text-foreground">Ease</span>
           </Link>
         </div>
       </header>
@@ -262,7 +262,7 @@ const CheckoutSuccessPage = () => {
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
 
-              <h1 className="font-geist tracking-tight text-2xl md:text-3xl font-medium text-foreground mb-4">
+              <h1 className="type-heading-1 mb-4 text-foreground">
                 {isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført'}
               </h1>
 
@@ -277,7 +277,7 @@ const CheckoutSuccessPage = () => {
               {/* Email confirmation notice */}
               <Alert variant="info" icon={Mail} className="mb-8 text-left">
                 <div>
-                  <AlertTitle variant="info" className="text-sm">Bekreftelse sendt</AlertTitle>
+                  <AlertTitle variant="info" className="type-title">Bekreftelse sendt</AlertTitle>
                   <AlertDescription variant="info">
                     {signup ? (
                       <>Kvittering sendt til <span className="font-medium">{signup.participant_email}</span>.</>
@@ -306,7 +306,7 @@ const CheckoutSuccessPage = () => {
                     <Button asChild variant="default" size="default" className="w-full sm:w-auto">
                       <Link to={studioUrl}>Se flere kurs</Link>
                     </Button>
-                    <div className="flex items-center justify-center sm:justify-start pt-2 sm:pt-0 sm:pl-4 text-xs text-muted-foreground">
+                    <div className="type-meta flex items-center justify-center pt-2 text-muted-foreground sm:justify-start sm:pl-4 sm:pt-0">
                       <span>
                         <Link to="/student/login" className="underline underline-offset-2 hover:text-foreground">Logg inn</Link>
                         {' '}for å se kursene dine
@@ -322,17 +322,17 @@ const CheckoutSuccessPage = () => {
               <Card className="p-6 md:p-8">
                 <div className="space-y-5">
                   <div className="pb-5 border-b border-border">
-                    <span className="block text-xs text-muted-foreground mb-1">Kurs</span>
-                    <span className="block font-medium text-sm text-foreground">{signup.course.title}</span>
+                    <span className="type-meta mb-1 block text-muted-foreground">Kurs</span>
+                    <span className="type-label block text-foreground">{signup.course.title}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {signup.course.start_date && (
                       <div>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
                           <Calendar className="h-3.5 w-3.5" /> Dato
                         </span>
-                        <span className="font-medium text-foreground text-sm">
+                        <span className="type-label text-foreground">
                           {formatDate(signup.course.start_date)}
                         </span>
                       </div>
@@ -340,10 +340,10 @@ const CheckoutSuccessPage = () => {
                     
                     {signup.course.time_schedule && (
                       <div>
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                        <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" /> Tid
                         </span>
-                        <span className="font-medium text-foreground text-sm">
+                        <span className="type-label text-foreground">
                           kl. {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
                         </span>
                       </div>
@@ -352,15 +352,15 @@ const CheckoutSuccessPage = () => {
 
                   {signup.course.location && (
                     <div>
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" /> Sted
                       </span>
-                      <span className="font-medium text-foreground text-sm">{signup.course.location}</span>
+                      <span className="type-label text-foreground">{signup.course.location}</span>
                     </div>
                   )}
 
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
                     <span className="font-medium text-xl text-foreground">{formatKroner(signup.amount_paid)}</span>

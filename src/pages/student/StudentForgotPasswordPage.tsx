@@ -72,7 +72,7 @@ const StudentForgotPasswordPage = () => {
         title=""
         customContent
         footer={
-          <p className="text-xs text-muted-foreground">
+          <p className="type-meta text-muted-foreground">
             <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
               Til innlogging
             </Link>
@@ -84,18 +84,18 @@ const StudentForgotPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+          <h1 className="type-heading-1 text-foreground">
             Sjekk e-posten din
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="type-body text-muted-foreground">
             Vi har sendt en innloggingslenke til{' '}
-            <span className="font-medium text-foreground">{formData.email}</span>
+            <span className="type-label text-foreground">{formData.email}</span>
           </p>
         </div>
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="type-meta text-muted-foreground leading-relaxed">
               {AUTH_HINTS.checkSpam}
             </p>
           </Alert>
@@ -122,7 +122,7 @@ const StudentForgotPasswordPage = () => {
       title="Glemt passord?"
       subtitle="Skriv inn e-posten din, så sender vi en innloggingslenke."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="type-meta text-muted-foreground">
           Husker du passordet ditt?{' '}
           <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
             Logg inn
@@ -145,7 +145,7 @@ const StudentForgotPasswordPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs text-destructive">{errors.general}</p>
+            <p className="type-meta text-destructive">{errors.general}</p>
           </Alert>
         )}
 

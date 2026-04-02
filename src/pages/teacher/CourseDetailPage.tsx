@@ -528,7 +528,7 @@ const CourseDetailPage = () => {
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
-            <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight mb-2">Kurs ikke funnet</h1>
+            <h1 className="type-heading-1 mb-2 text-foreground">Kurs ikke funnet</h1>
             <p className="text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
@@ -707,15 +707,15 @@ const CourseDetailPage = () => {
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <h1 className="font-geist text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
+                <h1 className="type-heading-1 text-foreground">
                   {course.title}
                 </h1>
-                <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="type-body-sm mt-3 flex items-center gap-3 text-muted-foreground">
                   {courseData?.status === 'draft' && (
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-status-confirmed-bg px-2 py-0.5 text-xs font-medium text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
+                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-status-confirmed-bg px-2 py-0.5 text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
                       <span className="relative flex size-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75" />
                         <span className="relative inline-flex rounded-full size-1.5 bg-status-confirmed-text" />
@@ -727,7 +727,7 @@ const CourseDetailPage = () => {
                     <StatusBadge status="completed" size="sm" />
                   )}
                   {course.createdAt && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                    <span className="type-meta flex items-center gap-1 text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
                       Opprettet {formatDateNorwegian(new Date(course.createdAt), 'd. MMM')}
                     </span>
@@ -784,7 +784,7 @@ const CourseDetailPage = () => {
                 <FilterTab value="participants">
                   <span className="inline-flex items-center gap-2.5">
                     Deltakere
-                    <span className="px-2 py-0.5 rounded-lg bg-muted text-xs font-medium text-muted-foreground">
+                    <span className="type-meta rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
                       {course.enrolled}
                     </span>
                   </span>
@@ -1005,7 +1005,7 @@ const CourseDetailPage = () => {
             {refundPreview.count > 0 && (
               <div className="space-y-4">
                 <div>
-                  <span className="block text-xs font-medium text-foreground mb-2">
+                  <span className="type-label-sm mb-2 block text-foreground">
                     Refunderes
                   </span>
                   <div className="rounded-lg border border-border bg-background/50 overflow-hidden max-h-[200px] overflow-y-auto">
@@ -1017,8 +1017,8 @@ const CourseDetailPage = () => {
                           i < refundPreview.participants.length - 1 && 'border-b border-border'
                         )}
                       >
-                        <span className="text-sm text-foreground">{p.participant_name || p.participant_email}</span>
-                        <span className="text-sm text-muted-foreground tabular-nums">{formatKroner(p.amount_paid)}</span>
+                        <span className="type-body text-foreground">{p.participant_name || p.participant_email}</span>
+                        <span className="type-body text-muted-foreground tabular-nums">{formatKroner(p.amount_paid)}</span>
                       </div>
                     ))}
                   </div>
@@ -1026,8 +1026,8 @@ const CourseDetailPage = () => {
 
                 {/* Refund total */}
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-medium text-muted-foreground">Totalt refusjon</span>
-                  <span className="text-sm font-medium text-foreground tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
+                  <span className="type-meta text-muted-foreground">Totalt refusjon</span>
+                  <span className="type-label text-foreground tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
                 </div>
               </div>
             )}

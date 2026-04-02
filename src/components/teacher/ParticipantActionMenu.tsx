@@ -88,7 +88,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           {/* Exception resolution actions — only for problem signups */}
           {exceptionType === 'payment_failed' && (
             <>
-              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              <DropdownMenuLabel className="type-meta text-muted-foreground">
                 Betaling feilet
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -111,7 +111,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
 
           {exceptionType === 'pending_payment' && (
             <>
-              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              <DropdownMenuLabel className="type-meta text-muted-foreground">
                 Venter på betaling
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -156,15 +156,15 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="rounded-lg border border-border bg-background/50 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">{signup.participantName}</p>
-                      <p className="text-xs text-muted-foreground">{signup.participantEmail}</p>
+                      <p className="type-label text-foreground">{signup.participantName}</p>
+                      <p className="type-meta text-muted-foreground">{signup.participantEmail}</p>
                     </div>
                     {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                      <span className="text-sm font-medium text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
+                      <span className="type-label text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="type-body text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
                     ? 'Deltakeren har betalt og får refusjon via Stripe.'
                     : 'Dette kan ikke angres.'}

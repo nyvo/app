@@ -6,7 +6,7 @@ export interface CourseDescriptionProps {
   highlights?: string[];
 }
 
-const COLLAPSED_HEIGHT = 60; // ~3 lines of text-sm
+const COLLAPSED_HEIGHT = 60; // ~3 lines of compact body text
 
 /**
  * Course description (expandable if long) + practical info highlights
@@ -38,7 +38,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
           style={{ maxHeight: expanded || !needsTruncation ? '2000px' : `${COLLAPSED_HEIGHT}px` }}
         >
           {description && (
-            <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+            <div className="type-body text-muted-foreground leading-relaxed whitespace-pre-line">
               {description}
             </div>
           )}
@@ -48,7 +48,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
               {highlights.map((highlight, index) => (
                 <li key={index} className="flex items-start gap-3">
                   <Check className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span className="text-sm text-muted-foreground">{highlight}</span>
+                  <span className="type-body text-muted-foreground">{highlight}</span>
                 </li>
               ))}
             </ul>
@@ -62,7 +62,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="text-xs font-medium text-foreground hover:text-muted-foreground transition-colors mt-1.5"
+          className="type-meta mt-1.5 text-foreground transition-colors hover:text-muted-foreground"
         >
           {expanded ? 'Vis mindre' : 'Les mer'}
         </button>

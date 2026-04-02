@@ -39,8 +39,8 @@ export const ErrorState = React.memo(function ErrorState({
       <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
         <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" aria-hidden="true" />
       </div>
-      <h3 className="font-geist text-sm font-medium text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-xs mb-4">{message}</p>
+      <h3 className="type-title mb-1 text-foreground">{title}</h3>
+      <p className="type-body max-w-xs mb-4 text-muted-foreground">{message}</p>
       {onRetry && (
         <Button
           variant="outline-soft"

@@ -18,9 +18,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { SearchInput } from '@/components/ui/search-input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -274,8 +276,24 @@ const MessagesPage = () => {
 
 
   return (
-      <main className="flex-1 flex flex-col h-dvh overflow-hidden bg-background">
+      <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
         <MobileTeacherHeader title="Meldinger" />
+
+        <motion.header
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+        >
+          <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
+            <div className="mb-8">
+              <h1 className="type-heading-1 text-foreground">Meldinger</h1>
+              <p className="type-body mt-1 text-muted-foreground">
+                Hold oversikt over samtaler med elever og svar raskt ved behov.
+              </p>
+            </div>
+          </div>
+        </motion.header>
 
         {/* Messages Layout: Split View */}
         <motion.div
@@ -283,17 +301,18 @@ const MessagesPage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="flex h-full w-full overflow-hidden min-h-0"
+          className="flex min-h-0 flex-1 px-6 pb-6 lg:px-8 lg:pb-8"
         >
+          <Card className="flex min-h-0 w-full overflow-hidden rounded-xl">
           {/* Conversation List (Left Panel) */}
           <div className={cn(
             'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-background',
             activeConversation || isComposing ? 'hidden md:flex' : 'flex'
           )}>
             {/* List Header */}
-            <div className="p-6 pb-2">
+            <div className="border-b border-border px-5 py-5">
               <div className="flex items-center justify-between mb-4">
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">Meldinger</h1>
+                <h2 className="type-title text-foreground">Samtaler</h2>
                 <Button
                   onClick={handleStartNewMessage}
                   size="compact"
@@ -316,26 +335,29 @@ const MessagesPage = () => {
             </div>
 
             {/* Conversations Scroll Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-6 pb-3 space-y-2">
+            <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto px-4 py-4">
               {loading ? (
                 <SectionLoader size="md" />
               ) : filteredConversations.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
-                  <p className="text-sm font-medium text-foreground">Ingen meldinger</p>
-                  <p className="text-sm text-muted-foreground mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title={searchQuery ? 'Ingen treff' : 'Ingen meldinger'}
+                  description={searchQuery ? 'Prøv et annet søkeord.' : 'Nye meldinger vises her.'}
+                  variant="compact"
+                  className="mt-8"
+                />
               ) : (
                 filteredConversations.map((conversation) => {
                   return (
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-lg ios-ease text-left group relative border ${
+                  className={`group relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left ios-ease ${
                     activeConversation?.id === conversation.id && !isComposing
-                      ? 'bg-background border-border'
+                      ? 'border-border bg-surface-muted'
                       : conversation.is_read
-                      ? 'border-transparent hover:bg-muted opacity-70 hover:opacity-100'
-                      : 'border-transparent hover:bg-muted'
+                      ? 'border-transparent hover:bg-surface-muted opacity-70 hover:opacity-100'
+                      : 'border-transparent hover:bg-surface-muted'
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -355,7 +377,7 @@ const MessagesPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
                       <span
-                        className={`text-sm font-medium truncate ${
+                        className={`type-label truncate ${
                           activeConversation?.id === conversation.id && !isComposing
                             ? 'text-foreground'
                             : conversation.is_read ? 'text-muted-foreground' : 'text-foreground'
@@ -363,16 +385,16 @@ const MessagesPage = () => {
                       >
                         {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="type-meta text-muted-foreground">
                         {formatMessageTimestamp(conversation.updated_at)}
                       </span>
                     </div>
                     <p
-                      className={`text-sm truncate ${
+                      className={`type-body truncate ${
                         conversation.unread_count > 0
-                          ? 'text-foreground font-medium'
+                          ? 'type-label text-foreground'
                           : activeConversation?.id === conversation.id
-                          ? 'text-muted-foreground font-medium'
+                          ? 'type-label text-muted-foreground'
                           : 'text-muted-foreground'
                       }`}
                     >
@@ -390,13 +412,13 @@ const MessagesPage = () => {
 
           {/* Chat View (Main Area) */}
           <div className={cn(
-            'flex-1 flex-col h-full bg-background relative',
+            'relative flex-1 flex-col bg-background',
             activeConversation || isComposing ? 'flex' : 'hidden md:flex'
           )}>
 
             {/* Composing New Message View */}
             {isComposing ? (
-              <div className="flex-1 flex flex-col h-full bg-background">
+              <div className="flex h-full flex-1 flex-col bg-background">
                  <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
                     <div className="flex items-center gap-3">
                       <button
@@ -406,11 +428,11 @@ const MessagesPage = () => {
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
-                      <h3 className="text-sm font-medium text-foreground">Ny melding</h3>
+                    <h3 className="type-title text-foreground">Ny melding</h3>
                     </div>
                     <button
                       onClick={handleCancelComposition}
-                      className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors cursor-pointer"
+                      className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
                       aria-label="Lukk ny melding"
                     >
                       <X className="h-4 w-4" />
@@ -418,8 +440,8 @@ const MessagesPage = () => {
                 </header>
 
                 <div className="p-6 space-y-6">
-                  <div className="space-y-2">
-                    <label htmlFor="compose-recipient" className="text-xs font-medium text-foreground ml-1">Til</label>
+                    <div className="space-y-2">
+                    <label htmlFor="compose-recipient" className="type-label-sm ml-1 text-foreground">Til</label>
                     <div className="relative group">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
                         <Input
@@ -435,7 +457,7 @@ const MessagesPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <label htmlFor="compose-message-body" className="text-xs font-medium text-foreground ml-1">Melding</label>
+                    <label htmlFor="compose-message-body" className="type-label-sm ml-1 text-foreground">Melding</label>
                     <div className="rounded-lg bg-background p-3 border border-border focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                         <Textarea
                           id="compose-message-body"
@@ -463,7 +485,7 @@ const MessagesPage = () => {
                                         key={emoji}
                                         onClick={() => setNewMessageBody(prev => prev + emoji)}
                                         aria-label={emoji}
-                                        className="text-xl p-2 hover:bg-muted rounded transition-colors"
+                                        className="rounded p-2 text-xl transition-colors hover:bg-surface-muted"
                                       >
                                         <span aria-hidden="true">{emoji}</span>
                                       </button>
@@ -519,8 +541,8 @@ const MessagesPage = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-foreground truncate">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
-                          <p className="text-xs text-muted-foreground truncate">
+                  <h3 className="type-label truncate text-foreground">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
+                          <p className="type-meta truncate text-muted-foreground">
                             {activeConversation.participant?.email || 'Elev'}
                           </p>
                         </div>
@@ -550,20 +572,26 @@ const MessagesPage = () => {
             </header>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
+            <div className="custom-scrollbar flex flex-1 flex-col space-y-6 overflow-y-auto p-6">
                   {!activeConversation ? (
-                    <div className="flex flex-col items-center justify-center h-full text-center">
-                        <p className="text-sm text-muted-foreground">Velg en samtale fra listen til venstre</p>
-                    </div>
+                    <EmptyState
+                      icon={Search}
+                      title="Velg en samtale"
+                      description="Velg en samtale fra listen til venstre for å lese og svare."
+                      className="flex-1"
+                    />
                   ) : currentMessages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                        <p>Ingen meldinger i samtalen ennå</p>
-                      </div>
+                    <EmptyState
+                      icon={Send}
+                      title="Ingen meldinger ennå"
+                      description="Send den første meldingen for å starte samtalen."
+                      className="flex-1"
+                    />
                   ) : (
                     <>
               {/* Time Separator */}
               <div className="flex justify-center">
-                <span className="text-xxs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
+                <span className="type-eyebrow rounded-full bg-primary/10 px-3 py-1 text-primary">
                   I dag
                 </span>
               </div>
@@ -577,7 +605,7 @@ const MessagesPage = () => {
                   }`}
                 >
                           {message.is_outgoing ? (
-                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xxs font-medium mb-1 shrink-0">
+                            <div className="type-meta mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
                                 Du
                             </div>
                           ) : (
@@ -592,14 +620,14 @@ const MessagesPage = () => {
 
                   <div className={`flex flex-col gap-1 ${message.is_outgoing ? 'items-end' : ''}`}>
                     <div
-                      className={`px-4 py-3 rounded-lg ${
+                      className={`rounded-lg px-4 py-3 ${
                         message.is_outgoing
                           ? 'bg-primary text-primary-foreground rounded-br-sm'
-                          : 'bg-background rounded-bl-sm'
+                          : 'bg-surface-muted rounded-bl-sm'
                       }`}
                     >
                       <p
-                        className={`text-sm leading-relaxed ${
+                        className={`type-body leading-relaxed ${
                           message.is_outgoing ? '' : 'text-foreground'
                         }`}
                       >
@@ -607,7 +635,7 @@ const MessagesPage = () => {
                       </p>
                     </div>
                     <span
-                      className={`text-xs text-muted-foreground flex items-center gap-1 ${
+                      className={`type-meta flex items-center gap-1 text-muted-foreground ${
                         message.is_outgoing ? 'pr-1' : 'pl-1'
                       }`}
                     >
@@ -666,7 +694,7 @@ const MessagesPage = () => {
                                   key={emoji}
                                   onClick={() => setMessageText(prev => prev + emoji)}
                                   aria-label={emoji}
-                                  className="text-xl p-2 hover:bg-muted rounded transition-colors"
+                                  className="rounded p-2 text-xl transition-colors hover:bg-surface-muted"
                                 >
                                   <span aria-hidden="true">{emoji}</span>
                                 </button>
@@ -695,13 +723,14 @@ const MessagesPage = () => {
                       </Button>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                Trykk <span className="font-medium text-muted-foreground">Enter</span> for å sende
+              <p className="type-meta mt-3 text-center text-muted-foreground">
+                Trykk <span className="type-label-sm text-muted-foreground">Enter</span> for å sende
               </p>
             </div>
               </>
             )}
           </div>
+          </Card>
         </motion.div>
       </main>
   );

@@ -127,8 +127,8 @@ export const CourseParticipantsTab = ({
   return (
     <div className="flex flex-col gap-4">
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between mb-4">
-        <div className="flex flex-col md:flex-row gap-3 md:items-center flex-1">
+      <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
           <SearchInput
             value={searchQuery}
             onChange={onSearchQueryChange}
@@ -154,12 +154,12 @@ export const CourseParticipantsTab = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-background/50">
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground w-auto">Navn</th>
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground w-32">Status</th>
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground w-40 hidden md:table-cell">Betaling</th>
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground w-20 hidden md:table-cell">Kvittering</th>
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground text-right w-20 hidden sm:table-cell">Notater</th>
-                <th scope="col" className="py-3 px-3 sm:px-6 text-xs font-medium text-muted-foreground w-12"><span className="sr-only">Handlinger</span></th>
+                <th scope="col" className="type-meta w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
+                <th scope="col" className="type-meta w-32 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
+                <th scope="col" className="type-meta hidden w-40 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Betaling</th>
+                <th scope="col" className="type-meta hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
+                <th scope="col" className="type-meta hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
+                <th scope="col" className="type-meta w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -173,11 +173,11 @@ export const CourseParticipantsTab = ({
               ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
-                    <p className="text-sm text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
+                    <p className="type-body text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                     {hasActiveFilters && (
                       <button
                         onClick={clearFilters}
-                        className="mt-2 text-xs text-primary hover:underline"
+                        className="type-meta mt-2 text-primary hover:underline"
                       >
                         Nullstill filter
                       </button>
@@ -186,33 +186,33 @@ export const CourseParticipantsTab = ({
                 </tr>
               ) : (
                 filteredParticipants.map((participant) => (
-                  <tr key={participant.id} className="group hover:bg-muted smooth-transition">
+                  <tr key={participant.id} className="group smooth-transition hover:bg-surface-muted">
                     {/* Navn */}
-                    <td className="py-4 px-3 sm:px-6">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <td className="px-4 py-4 sm:px-6">
+                      <div className="flex min-w-0 items-center gap-3">
                         <UserAvatar name={participant.name} email={participant.email} size="sm" />
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{participant.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">{participant.email}</p>
+                          <p className="type-label truncate text-foreground">{participant.name}</p>
+                          <p className="type-meta truncate text-muted-foreground">{participant.email}</p>
                         </div>
                       </div>
                     </td>
                     {/* Status (signup) */}
-                    <td className="py-3 px-3 sm:px-6">
+                    <td className="px-4 py-3 sm:px-6">
                       <StatusBadge status={participant.status} />
                     </td>
                     {/* Betaling (payment) */}
-                    <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
+                    <td className="hidden px-4 py-4 sm:px-6 md:table-cell">
                       <PaymentBadge status={participant.paymentStatus} />
                     </td>
                     {/* Kvittering (receipt) */}
-                    <td className="py-4 px-3 sm:px-6 hidden md:table-cell">
+                    <td className="hidden px-4 py-4 sm:px-6 md:table-cell">
                       {participant.receiptUrl && (
                         <a
                           href={participant.receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted smooth-transition"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-surface-muted hover:text-foreground"
                           aria-label="Åpne kvittering"
                           title="Åpne kvittering"
                         >
@@ -221,11 +221,11 @@ export const CourseParticipantsTab = ({
                       )}
                     </td>
                     {/* Notater */}
-                    <td className="py-4 px-3 sm:px-6 text-right hidden sm:table-cell">
+                    <td className="hidden px-4 py-4 text-right sm:table-cell sm:px-6">
                       <NotePopover note={participant.notes} />
                     </td>
                     {/* Handlinger */}
-                    <td className="py-4 px-3 sm:px-6">
+                    <td className="px-4 py-4 sm:px-6">
                       <ParticipantActionMenu
                         signup={toActionable(participant, courseName)}
                         handlers={actionHandlers}

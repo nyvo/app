@@ -43,19 +43,19 @@ const ConfirmEmailPage = () => {
 
   return (
     <AuthLayout context="teacher" title="" customContent>
-      <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-6">
+      <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
         <Mail className="size-5 text-muted-foreground" />
       </div>
 
-      <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+      <h1 className="type-heading-1 mb-2 text-foreground">
         Sjekk e-posten din
       </h1>
 
-      <p className="text-muted-foreground text-sm leading-relaxed mb-8 text-center">
+      <p className="type-body mb-8 text-center text-muted-foreground leading-relaxed">
         {email ? (
           <>
             Vi har sendt en bekreftelseslenke til{' '}
-            <span className="font-medium text-foreground">{email}</span>.
+            <span className="type-label text-foreground">{email}</span>.
             Du må bekrefte e-posten før du kan logge inn.
           </>
         ) : (
@@ -81,7 +81,7 @@ const ConfirmEmailPage = () => {
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground mt-6 text-center">
+      <p className="type-meta mt-6 text-center text-muted-foreground">
         {AUTH_HINTS.checkSpamAlt}
       </p>
     </AuthLayout>

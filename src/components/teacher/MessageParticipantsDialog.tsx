@@ -58,12 +58,12 @@ export function MessageParticipantsDialog({
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+    body { font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #44403C; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .message-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
+    .logo { font-size: 24px; font-weight: 600; color: #354F41; }
+    .message-box { background: #F5F5F4; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .footer { margin-top: 40px; text-align: center; color: #78716C; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -123,7 +123,7 @@ export function MessageParticipantsDialog({
         </DialogHeader>
 
         <div>
-        <label htmlFor="participant-message" className="block text-xs font-medium text-foreground mb-1.5">Melding</label>
+        <label htmlFor="participant-message" className="type-label-sm mb-1.5 block text-foreground">Melding</label>
         <Textarea
           id="participant-message"
           value={message}

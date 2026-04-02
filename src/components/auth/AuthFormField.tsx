@@ -26,7 +26,7 @@ interface AuthFormFieldProps {
  * Standardised auth form field. Handles label, input, error display,
  * aria-invalid propagation, and show/hide toggle for password fields.
  *
- * Follows DESIGN_SYSTEM.md: label text-xs font-medium text-muted-foreground,
+ * Follows DESIGN_SYSTEM.md: semantic label/meta styles,
  * Input with border-input, aria-invalid for error styling.
  */
 export function AuthFormField({
@@ -54,7 +54,7 @@ export function AuthFormField({
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="block text-xs font-medium text-muted-foreground"
+          className="type-label-sm block text-muted-foreground"
         >
           {label}
         </label>
@@ -90,9 +90,9 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p role="alert" className="text-xs text-destructive">{error}</p>
+        <p role="alert" className="type-meta text-destructive">{error}</p>
       ) : hint ? (
-        <p className={`text-xs flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+        <p className={`type-meta flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
           {hintMet && <Check className="w-3 h-3" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

@@ -51,7 +51,7 @@ const StudentProfilePage = () => {
     <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">
+          <h1 className="type-heading-1 text-foreground">
             Min profil
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -64,11 +64,11 @@ const StudentProfilePage = () => {
 
             {/* Name */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <User className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-name" className="block text-xs font-medium text-foreground mb-1.5">
+                <label htmlFor="student-name" className="type-label-sm mb-1.5 block text-foreground">
                   Navn
                 </label>
                 <Input
@@ -82,14 +82,14 @@ const StudentProfilePage = () => {
 
             {/* Email (read-only) */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Mail className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="type-meta mb-1 block text-muted-foreground">
                   E-post
                 </label>
-                <p className="text-sm text-foreground py-2">
+                <p className="type-body py-2 text-foreground">
                   {user?.email}
                 </p>
               </div>
@@ -97,11 +97,11 @@ const StudentProfilePage = () => {
 
             {/* Phone */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Phone className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-phone" className="block text-xs font-medium text-foreground mb-1.5">
+                <label htmlFor="student-phone" className="type-label-sm mb-1.5 block text-foreground">
                   Telefon
                 </label>
                 <Input
@@ -116,14 +116,14 @@ const StudentProfilePage = () => {
 
             {/* Member since (read-only) */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Calendar className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                <label className="type-meta mb-1 block text-muted-foreground">
                   Medlem siden
                 </label>
-                <p className="text-sm text-foreground py-2">
+                <p className="type-body py-2 text-foreground">
                   {profile?.created_at
                     ? format(new Date(profile.created_at), 'd. MMMM yyyy', { locale: nb })
                     : 'Ukjent'}

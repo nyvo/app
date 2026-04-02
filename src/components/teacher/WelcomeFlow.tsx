@@ -231,7 +231,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
       <div className="flex justify-end px-6 lg:px-8 pt-6 lg:pt-8">
         <button
           onClick={() => signOut()}
-          className="text-xs text-muted-foreground hover:text-foreground smooth-transition"
+          className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
         >
           Logg ut
         </button>
@@ -258,7 +258,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       <div className={`h-[3px] rounded-full mb-2 smooth-transition ${
                         isActive || isDone ? 'bg-primary' : 'bg-border'
                       }`} />
-                      <p className={`text-xs smooth-transition ${
+                      <p className={`type-meta smooth-transition ${
                         isActive ? 'font-medium text-foreground' : 'text-muted-foreground'
                       }`}>
                         {seg.label}
@@ -281,17 +281,17 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-foreground mb-1">
+                  <h2 className="type-title mb-1 text-foreground">
                     Først litt om deg
                   </h2>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="type-body mb-6 text-muted-foreground">
                     Navnet og byen din vises på kurssiden din, så elevene vet hvem du er.
                   </p>
 
                   <div className="flex flex-col gap-4 mb-8">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="welcome-first-name" className="text-xs font-medium text-foreground mb-1.5 block">
+                        <label htmlFor="welcome-first-name" className="type-label-sm mb-1.5 block text-foreground">
                           Fornavn
                         </label>
                         <Input
@@ -305,11 +305,11 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           aria-describedby={firstNameError ? 'welcome-first-name-error' : undefined}
                         />
                         {firstNameError && (
-                          <p id="welcome-first-name-error" className="text-xs text-destructive mt-1.5" role="alert">{firstNameError}</p>
+                          <p id="welcome-first-name-error" className="type-meta mt-1.5 text-destructive" role="alert">{firstNameError}</p>
                         )}
                       </div>
                       <div>
-                        <label htmlFor="welcome-last-name" className="text-xs font-medium text-foreground mb-1.5 block">
+                        <label htmlFor="welcome-last-name" className="type-label-sm mb-1.5 block text-foreground">
                           Etternavn
                         </label>
                         <Input
@@ -322,13 +322,13 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           aria-describedby={lastNameError ? 'welcome-last-name-error' : undefined}
                         />
                         {lastNameError && (
-                          <p id="welcome-last-name-error" className="text-xs text-destructive mt-1.5" role="alert">{lastNameError}</p>
+                          <p id="welcome-last-name-error" className="type-meta mt-1.5 text-destructive" role="alert">{lastNameError}</p>
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="welcome-city" className="text-xs font-medium text-foreground mb-1.5 block">
+                      <label htmlFor="welcome-city" className="type-label-sm mb-1.5 block text-foreground">
                         By / Sted
                       </label>
                       <Input
@@ -341,9 +341,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         aria-describedby={cityError ? 'welcome-city-error' : 'welcome-city-hint'}
                       />
                       {cityError ? (
-                        <p id="welcome-city-error" className="text-xs text-destructive mt-1.5" role="alert">{cityError}</p>
+                        <p id="welcome-city-error" className="type-meta mt-1.5 text-destructive" role="alert">{cityError}</p>
                       ) : (
-                        <p id="welcome-city-hint" className="text-xs text-muted-foreground mt-1.5">
+                        <p id="welcome-city-hint" className="type-meta mt-1.5 text-muted-foreground">
                           Hjelper elever å finne kurs i nærheten.
                         </p>
                       )}
@@ -368,19 +368,19 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-foreground mb-1">
+                  <h2 className="type-title mb-1 text-foreground">
                     Om virksomheten din
                   </h2>
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <p className="type-body mb-6 text-muted-foreground">
                     Dette brukes på din offentlige kursside. Har du et organisasjonsnummer? Da fyller vi ut automatisk.
                   </p>
 
                   <div className="flex flex-col gap-4 mb-8">
                     {/* Org number lookup */}
                     <div>
-                      <label htmlFor="welcome-org-nr" className="text-xs font-medium text-foreground mb-1.5 block">
+                      <label htmlFor="welcome-org-nr" className="type-label-sm mb-1.5 block text-foreground">
                         Organisasjonsnummer
-                        <span className="text-muted-foreground font-normal ml-1">(valgfritt)</span>
+                        <span className="type-body-sm ml-1 text-muted-foreground">(valgfritt)</span>
                       </label>
                       <div className="relative">
                         <Input
@@ -401,7 +401,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         </div>
                       </div>
                       {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
-                        <p className="text-xs text-muted-foreground mt-1.5">
+                        <p className="type-meta mt-1.5 text-muted-foreground">
                           Fant ingen treff. Fyll inn manuelt under.
                         </p>
                       )}
@@ -409,30 +409,30 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Lookup result card */}
                     {lookupDone && lookupResult && (
-                      <div className="rounded-lg border border-border bg-muted/50 p-4">
+                      <div className="rounded-lg border border-border bg-surface-muted/50 p-4">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
                             <Building className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground truncate">
+                              <p className="type-label truncate text-foreground">
                                 {lookupResult.name}
                               </p>
                               <Check className="h-3.5 w-3.5 text-status-confirmed-text shrink-0" />
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                               {lookupResult.orgForm && (
-                                <span className="text-xs text-muted-foreground">{lookupResult.orgForm}</span>
+                                <span className="type-meta text-muted-foreground">{lookupResult.orgForm}</span>
                               )}
                               {lookupResult.city && (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <span className="type-meta flex items-center gap-1 text-muted-foreground">
                                   <MapPin className="h-3 w-3" />
                                   {lookupResult.city}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                            <p className="type-meta mt-1 text-muted-foreground tabular-nums">
                               Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
                             </p>
                           </div>
@@ -445,7 +445,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Studio name */}
                     <div>
-                      <label htmlFor="welcome-studio" className="text-xs font-medium text-foreground mb-1.5 block">
+                      <label htmlFor="welcome-studio" className="type-label-sm mb-1.5 block text-foreground">
                         Navn på virksomheten
                       </label>
                       <Input
@@ -460,9 +460,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         aria-describedby={studioError ? 'welcome-studio-error' : undefined}
                       />
                       {studioError ? (
-                        <p id="welcome-studio-error" className="text-xs text-destructive mt-1.5" role="alert">{studioError}</p>
+                        <p id="welcome-studio-error" className="type-meta mt-1.5 text-destructive" role="alert">{studioError}</p>
                       ) : (
-                        <p className="text-xs text-muted-foreground mt-1.5">
+                        <p className="type-meta mt-1.5 text-muted-foreground">
                           Vises på din offentlige kursside. Du kan endre dette senere.
                         </p>
                       )}
@@ -503,10 +503,10 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-foreground mb-2">
+                  <h2 className="type-title mb-2 text-foreground">
                     {displayName ? `Bra, ${displayName} — grunnlaget er på plass` : 'Grunnlaget er på plass'}
                   </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                  <p className="type-body mb-6 text-muted-foreground leading-relaxed">
                     To steg igjen før du kan ta imot påmeldinger og betaling.
                   </p>
 
@@ -519,8 +519,8 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         <div className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-border">
                           <item.icon className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <span className="text-sm text-foreground">{item.label}</span>
-                        <span className="text-xs text-muted-foreground ml-auto">{item.time}</span>
+                        <span className="type-body text-foreground">{item.label}</span>
+                        <span className="type-meta ml-auto text-muted-foreground">{item.time}</span>
                       </div>
                     ))}
                   </div>

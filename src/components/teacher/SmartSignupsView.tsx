@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search, Calendar, CheckCircle, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SignupGroup } from './SignupGroup';
 import type { ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
@@ -184,30 +185,24 @@ export function SmartSignupsView({
   // Empty state — minimal, no card wrapper
   if (isEmpty || groups.length === 0) {
     const emptyState = getEmptyStateContent(mode, hasFilters);
-    const IconComponent = emptyState.icon;
 
     return (
-      <div className="flex flex-col items-center pt-[20vh] text-center">
-        <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-4">
-          <IconComponent className="size-4 text-muted-foreground" />
-        </div>
-        <h3 className="font-geist text-sm font-medium text-foreground">
-          {emptyState.title}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-          {emptyState.description}
-        </p>
-        {emptyState.showClearAction && onClearFilters && (
+      <EmptyState
+        icon={emptyState.icon}
+        title={emptyState.title}
+        description={emptyState.description}
+        action={emptyState.showClearAction && onClearFilters ? (
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="mt-4 text-xs underline underline-offset-2"
+            className="type-meta underline underline-offset-2"
           >
             Nullstill filter
           </Button>
-        )}
-      </div>
+        ) : undefined}
+        className={isEmpty ? 'pt-[20vh]' : undefined}
+      />
     );
   }
 
@@ -237,7 +232,7 @@ export function SmartSignupsView({
       <div className="space-y-10">
         {sections.map(section => (
           <div key={section.label}>
-            <h3 className="text-sm font-medium text-foreground pb-3">
+            <h3 className="type-title pb-3 text-foreground">
               {section.label}
             </h3>
             <div className="border-t border-border">

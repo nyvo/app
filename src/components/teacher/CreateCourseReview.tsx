@@ -45,9 +45,9 @@ function Row({
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2.5">
         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm text-foreground">{label}</span>
+        <span className="type-body text-foreground">{label}</span>
       </div>
-      <div className={`text-sm text-right ${muted ? 'text-muted-foreground' : 'text-foreground'}`}>
+      <div className={`type-body text-right ${muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {children}
       </div>
     </div>
@@ -65,14 +65,14 @@ function SectionDivider({
   first?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'} bg-muted`}>
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    <div className={`flex items-center justify-between -mx-6 bg-surface-muted px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'}`}>
+      <span className="type-meta text-muted-foreground">{label}</span>
       {onEdit && (
         <button
           type="button"
           onClick={onEdit}
           aria-label={`Endre ${label.toLowerCase()}`}
-          className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
+          className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
         >
           Endre
         </button>

@@ -89,7 +89,7 @@ const LoginPage = () => {
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="type-meta text-muted-foreground">
           Har du ikke konto?{' '}
           <Link to={ROUTES.signup} className="text-foreground font-medium hover:underline">
             Opprett konto
@@ -102,7 +102,7 @@ const LoginPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">eller</span>
+          <span className="type-meta text-muted-foreground">eller</span>
           <Separator className="flex-1" />
         </div>
       </div>
@@ -133,7 +133,7 @@ const LoginPage = () => {
           labelExtra={
             <Link
               to={ROUTES.forgotPassword}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="type-meta text-muted-foreground transition-colors hover:text-foreground"
             >
               Glemt passord?
             </Link>
@@ -142,11 +142,11 @@ const LoginPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs text-destructive">{errors.general}</p>
+            <p className="type-meta text-destructive">{errors.general}</p>
             {errors.general === AUTH_ERRORS.invalidCredentials && (
               <Link
                 to={ROUTES.forgotPassword}
-                className="text-xs text-destructive underline hover:text-destructive/80 mt-1.5 inline-block"
+                className="type-meta mt-1.5 inline-block text-destructive underline hover:text-destructive/80"
               >
                 Tilbakestill passord
               </Link>

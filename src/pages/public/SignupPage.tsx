@@ -92,7 +92,7 @@ const SignupPage = () => {
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="type-meta text-muted-foreground">
           Har du allerede en konto?{' '}
           <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
             Logg inn
@@ -105,7 +105,7 @@ const SignupPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />
-          <span className="text-xs text-muted-foreground">eller</span>
+          <span className="type-meta text-muted-foreground">eller</span>
           <Separator className="flex-1" />
         </div>
       </div>
@@ -139,7 +139,7 @@ const SignupPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs text-destructive">{errors.general}</p>
+            <p className="type-meta text-destructive">{errors.general}</p>
           </Alert>
         )}
 
@@ -152,7 +152,7 @@ const SignupPage = () => {
           Opprett konto
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground pt-2">
+        <p className="type-meta pt-2 text-center text-muted-foreground">
           Ved å opprette konto godtar du{' '}
           <Link to="/terms" className="underline hover:text-foreground">
             vilkår

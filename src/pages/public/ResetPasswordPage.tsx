@@ -89,7 +89,7 @@ const ResetPasswordPage = () => {
   // Loading state
   if (isValidSession === null) {
     return (
-      <div className="min-h-screen w-full bg-background text-foreground font-geist antialiased flex items-center justify-center">
+      <div className="min-h-screen w-full bg-background text-foreground antialiased flex items-center justify-center">
         <Spinner size="xl" />
       </div>
     )
@@ -104,10 +104,10 @@ const ResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+          <h1 className="type-heading-1 text-foreground">
             Ugyldig lenke
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="type-body text-muted-foreground">
             Lenken er utløpt eller fungerer ikke.
           </p>
         </div>
@@ -133,10 +133,10 @@ const ResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+          <h1 className="type-heading-1 text-foreground">
             Passordet er oppdatert
           </h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="type-body text-muted-foreground">
             Du kan nå logge inn med det nye passordet.
           </p>
         </div>
@@ -157,7 +157,7 @@ const ResetPasswordPage = () => {
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="type-meta text-muted-foreground">
           Trenger du hjelp?
         </p>
       }
@@ -187,16 +187,16 @@ const ResetPasswordPage = () => {
           onBlur={() => handleBlur('confirmPassword')}
         />
 
-        <div className="p-3 rounded-lg bg-muted">
-          <p className="text-xs text-muted-foreground font-medium mb-1">Krav</p>
-          <ul className="text-xs text-muted-foreground space-y-0.5 ml-3">
+        <div className="rounded-lg bg-surface-muted p-3">
+          <p className="type-meta mb-1 text-muted-foreground">Krav</p>
+          <ul className="type-meta ml-3 space-y-0.5 text-muted-foreground">
             <li className="list-disc">Minst 8 tegn</li>
           </ul>
         </div>
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs text-destructive">{errors.general}</p>
+            <p className="type-meta text-destructive">{errors.general}</p>
           </Alert>
         )}
 

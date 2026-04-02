@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, X, Check, Shield } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, X, Check, Shield, Calendar, UserPlus, MessageSquare } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -14,6 +14,7 @@ import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
@@ -184,6 +185,16 @@ function formatSessionDate(sessionDate: string): string {
 }
 
 const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
+
+function isTodayDate(dateString?: string): boolean {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+}
 
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
@@ -431,6 +442,9 @@ const TeacherDashboard = () => {
 
   // Personal name (first word) if set, otherwise fall back to org name
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
+  const todayCourseCount = dashboardCourses.filter((course) => isTodayDate(course.date)).length;
+  const recentSignupsCount = registrations.length;
+  const recentMessageCount = messages.length;
 
   return (
       <main className="flex-1 overflow-y-auto bg-background h-screen">
@@ -443,10 +457,10 @@ const TeacherDashboard = () => {
               animate="animate"
               transition={pageTransition}
             >
-              <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <header className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Oversikt</p>
-                  <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+                  <p className="type-eyebrow mb-2 text-muted-foreground">Oversikt</p>
+                  <h1 className="type-heading-1 text-foreground">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
                 </div>
@@ -467,12 +481,12 @@ const TeacherDashboard = () => {
 
 
               {showSetupBanner && !isLoading && (
-                <div className="mb-6 rounded-lg border border-border bg-background px-4 py-3 flex items-center justify-between gap-3">
+                <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="h-3 w-3" />
                     </div>
-                    <p className="text-sm text-foreground font-medium">
+                    <p className="type-label text-foreground">
                       Alt er klart — du kan nå ta imot påmeldinger og betalinger
                     </p>
                   </div>
@@ -498,8 +512,8 @@ const TeacherDashboard = () => {
                   <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
-                  <h3 className="font-geist text-sm font-medium text-foreground mb-1">Kunne ikke laste oversikten</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mb-4">{loadError}</p>
+                  <h3 className="type-title mb-1 text-foreground">Kunne ikke laste oversikten</h3>
+                  <p className="type-body max-w-xs mb-4 text-muted-foreground">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
@@ -510,63 +524,107 @@ const TeacherDashboard = () => {
                   </Button>
                 </div>
               ) : !isSetupComplete ? (
-                // Setup incomplete — show checklist in hero position
-                <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  <SetupChecklist steps={steps} completedCount={completedCount} totalCount={totalCount} motivationalSubtitle={motivationalSubtitle} loadingStepId={connectingStripe ? 'stripe' : undefined} />
-                  <MessagesList messages={messages} />
-                  <CoursesList courses={dashboardCourses} />
-                  <RegistrationsList registrations={registrations} />
-                </div>
+                <>
+                  <div className="mb-8">
+                    <SetupChecklist
+                      steps={steps}
+                      completedCount={completedCount}
+                      totalCount={totalCount}
+                      motivationalSubtitle={motivationalSubtitle}
+                      loadingStepId={connectingStripe ? 'stripe' : undefined}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <CoursesList courses={dashboardCourses} />
+                    <RegistrationsList registrations={registrations} />
+                    <MessagesList messages={messages} />
+                  </div>
+                </>
               ) : (showEmptyState || !hasCourses) ? (
-                // Empty state - no courses yet (or dev toggle active)
-                <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  {/* Primary Action Card */}
-                  <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                  <h3 className="text-sm font-medium text-foreground mb-3">Kom i gang</h3>
-                  <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-lg bg-background border border-border">
-                    <div className="relative flex h-full flex-col justify-center z-10 p-9">
-                      <div className="max-w-md">
-                        <div className="mb-6 rounded-lg bg-background border border-border p-3 w-fit">
-                          <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
+                <>
+                  <div className="mb-8">
+                    <h3 className="type-title mb-3 text-foreground">Kom i gang</h3>
+                    <div className="group relative overflow-hidden rounded-lg border border-border bg-background">
+                      <div className="relative z-10 flex flex-col justify-center p-6 sm:p-8">
+                        <div className="max-w-xl">
+                          <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
+                            <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
+                          </div>
+                          <h2 className="type-heading-2 leading-tight text-foreground">
+                            Opprett ditt første kurs
+                          </h2>
+                          <p className="type-body mb-8 max-w-lg text-muted-foreground">
+                            Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din i ditt eget tempo.
+                          </p>
+                          <Button
+                            asChild
+                            size="default"
+                            className="gap-2"
+                          >
+                            <Link to="/teacher/new-course">
+                              <CalendarPlus className="h-4 w-4" />
+                              Opprett kurs
+                            </Link>
+                          </Button>
                         </div>
-                        <h2 className="font-geist text-2xl font-medium tracking-tight mb-2 text-foreground leading-tight">
-                          Opprett ditt første kurs
-                        </h2>
-                        <p className="text-sm text-muted-foreground mb-8">
-                          Opprett et kurs for å motta påmeldinger og administrere timeplanen din.
-                        </p>
-                        <Button
-                          asChild
-                          size="default"
-                          className="gap-2"
-                        >
-                          <Link to="/teacher/new-course">
-                            <CalendarPlus className="h-4 w-4" />
-                            Opprett kurs
-                          </Link>
-                        </Button>
                       </div>
                     </div>
                   </div>
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <CoursesList courses={[]} />
+                    <RegistrationsList registrations={[]} />
+                    <MessagesList messages={messages} />
                   </div>
-
-                  {/* Messages Card */}
-                  <MessagesList messages={messages} />
-
-                  {/* Courses Card */}
-                  <CoursesList courses={[]} />
-
-                  {/* Registrations Card */}
-                  <RegistrationsList registrations={[]} />
-                </div>
+                </>
               ) : (
-                // Normal dashboard with data
-                <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
-                  <UpcomingClassCard classData={upcomingClass} />
-                  <MessagesList messages={messages} />
-                  <CoursesList courses={dashboardCourses} />
-                  <RegistrationsList registrations={registrations} />
-                </div>
+                <>
+                  <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-2">
+                      <UpcomingClassCard classData={upcomingClass} />
+                    </div>
+                    <div className="flex flex-col">
+                      <h2 className="type-title mb-3 text-foreground">I dag</h2>
+                      <Card className="h-full p-6">
+                        <div className="grid h-full grid-cols-1 gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+                              <Calendar className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="type-meta text-muted-foreground">Kurs i dag</p>
+                              <p className="type-heading-3 mt-1 text-foreground">{todayCourseCount}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+                              <UserPlus className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="type-meta text-muted-foreground">Nye påmeldinger</p>
+                              <p className="type-heading-3 mt-1 text-foreground">{recentSignupsCount}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+                              <MessageSquare className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="type-meta text-muted-foreground">Siste meldinger</p>
+                              <p className="type-heading-3 mt-1 text-foreground">{recentMessageCount}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <CoursesList courses={dashboardCourses} />
+                    <RegistrationsList registrations={registrations} />
+                    <MessagesList messages={messages} />
+                  </div>
+                </>
               )}
             </motion.div>
           </div>
@@ -584,12 +642,12 @@ const TeacherDashboard = () => {
 
               <div className="flex flex-col gap-3 py-2">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg bg-muted border border-border p-2">
+                  <div className="mt-0.5 rounded-lg border border-border bg-surface-muted p-2">
                     <Shield className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="type-label text-foreground">Trygt og sikkert</p>
+                    <p className="type-meta mt-0.5 text-muted-foreground">
                       Pengene fra bookinger overføres direkte til din konto. Ease tar ingen del av betalingen.
                     </p>
                   </div>
@@ -598,8 +656,8 @@ const TeacherDashboard = () => {
                 <Separator />
 
                 <div>
-                  <p className="text-xs font-medium text-foreground mb-2">Du trenger</p>
-                  <ul className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                  <p className="type-meta mb-2 text-foreground">Du trenger</p>
+                  <ul className="type-meta flex flex-col gap-1.5 text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
                       Bankkonto for utbetalinger
@@ -619,7 +677,7 @@ const TeacherDashboard = () => {
                 <button
                   onClick={() => setShowStripeExplainer(false)}
                   disabled={connectingStripe}
-                  className="text-xs text-muted-foreground hover:text-foreground smooth-transition py-1 disabled:opacity-50 disabled:pointer-events-none"
+                  className="type-meta py-1 text-muted-foreground smooth-transition hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
                 >
                   Jeg gjør dette senere
                 </button>

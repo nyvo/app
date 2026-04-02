@@ -6,64 +6,70 @@
 
 @theme {
   /* ============================================
-     EASE DESIGN SYSTEM V3.0 — shadcn Neutral
+     EASE DESIGN SYSTEM V4.0 — Minimal Semantic Color
      ============================================
 
-     Based on shadcn/ui v2 neutral theme.
-     Pure neutral grays, white page background,
-     two text colors (foreground + muted-foreground).
+     Small token set, warm neutrals, restrained green brand accent.
+     App code should think in roles, not in near-duplicate palettes.
 
-     Key changes from V2.4:
-     - Page bg: white (was zinc-100)
-     - Input border = card border (was darker)
-     - Radius: 0.625rem / 10px (was 1rem / 16px)
-     - Text: 2 levels (was 3 — tertiary removed)
+     Foundation roles:
+     - background: page canvas
+     - surface: default card / panel / popover
+     - surface-muted: softer inset sections
+     - foreground: primary readable text
+     - muted-foreground: secondary/supporting text
+     - border: default borders and dividers
+     - primary: branded action/selection color
+
+     Compatibility aliases are kept for shadcn-style primitives.
   */
 
   /* ── Core Palette ── */
-  --color-background: #FFFFFF;
-  --color-foreground: #1A1A1A;
-  --color-card: #FFFFFF;
-  --color-card-foreground: #1A1A1A;
-  --color-popover: #FFFFFF;
-  --color-popover-foreground: #1A1A1A;
+  --color-background: #FDFBF7;
+  --color-foreground: #44403C;
+
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F5F5F4;
+  --color-surface-elevated: #FFFFFF;
+
+  /* Compatibility aliases for existing primitives */
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-foreground);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-foreground);
 
   /* ── Primary ── */
-  --color-primary: #0F0F12;
-  --color-primary-foreground: #FAFAFA;
+  --color-primary: #354F41;
+  --color-primary-foreground: #FAFAF9;
 
-  /* ── Secondary ── */
-  --color-secondary: #F4F4F5;
-  --color-secondary-foreground: #0F0F12;
-
-  /* ── Muted ── */
-  --color-muted: #F5F5F5;
-  --color-muted-foreground: #737373;
-
-  /* ── Accent ── */
-  --color-accent: #F5F5F5;
-  --color-accent-foreground: #1C1C1C;
+  /* Compatibility neutral aliases */
+  --color-secondary: var(--color-surface-muted);
+  --color-secondary-foreground: #292524;
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: #78716C;
+  --color-accent: var(--color-surface-muted);
+  --color-accent-foreground: #292524;
 
   /* ── Destructive ── */
-  --color-destructive: #DC2626;
-
-  /* ── Borders & Input ── */
-  --color-border: #E5E5E5;
-  --color-input: #E5E5E5;
-  --color-ring: #A3A3A3;
+  --color-destructive: #EF4444;
 
   /* ── Radius ── */
   --radius: 0.625rem;
 
+  /* ── Borders & Input ── */
+  --color-border: #E7E5E4;
+  --color-input: #E7E5E4;
+  --color-ring: #D6D3D1;
+
   /* ── Sidebar ── */
-  --color-sidebar: #FAFAFA;
-  --color-sidebar-foreground: #1A1A1A;
-  --color-sidebar-primary: #0F0F12;
-  --color-sidebar-primary-foreground: #FAFAFA;
-  --color-sidebar-accent: #F5F5F5;
-  --color-sidebar-accent-foreground: #1C1C1C;
-  --color-sidebar-border: #E5E5E5;
-  --color-sidebar-ring: #A3A3A3;
+  --color-sidebar: #F7F5F2;
+  --color-sidebar-foreground: #44403C;
+  --color-sidebar-primary: var(--color-primary);
+  --color-sidebar-primary-foreground: var(--color-primary-foreground);
+  --color-sidebar-accent: #FFFFFF;
+  --color-sidebar-accent-foreground: #292524;
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-ring: var(--color-ring);
 
   /* ── Chart Colors ── */
   --color-chart-1: #E36D2D;
@@ -116,9 +122,9 @@
   --color-overlay: rgba(0, 0, 0, 0.3);
 
   /* ── Dark Surface (emphasis cards, hero) ── */
-  --color-surface-emphasis: #27272A;
-  --color-surface-emphasis-foreground: #FAFAFA;
-  --gradient-dark-card: linear-gradient(to bottom right, #27272A, #09090B);
+  --color-surface-emphasis: #2E3F36;
+  --color-surface-emphasis-foreground: #FAFAF9;
+  --gradient-dark-card: linear-gradient(to bottom right, #31443A, #243228);
 
   /* ── Font Families ── */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -139,32 +145,35 @@
 
 /* ── Dark Mode ── */
 .dark {
-  --color-background: #1A1A1A;
-  --color-foreground: #FAFAFA;
-  --color-card: #262626;
-  --color-card-foreground: #FAFAFA;
-  --color-popover: #262626;
-  --color-popover-foreground: #FAFAFA;
-  --color-primary: #E5E5E5;
-  --color-primary-foreground: #0F0F12;
-  --color-secondary: #2E2E30;
-  --color-secondary-foreground: #FAFAFA;
-  --color-muted: #2C2C2C;
-  --color-muted-foreground: #A3A3A3;
-  --color-accent: #404040;
-  --color-accent-foreground: #FAFAFA;
-  --color-destructive: #E55555;
+  --color-background: #1F1D1A;
+  --color-foreground: #F7F5F2;
+  --color-surface: #292725;
+  --color-surface-muted: #32302D;
+  --color-surface-elevated: #302D2A;
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-foreground);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-foreground);
+  --color-primary: #B7D0C1;
+  --color-primary-foreground: #1F2A24;
+  --color-secondary: var(--color-surface-muted);
+  --color-secondary-foreground: var(--color-foreground);
+  --color-muted: var(--color-surface-muted);
+  --color-muted-foreground: #B0AAA3;
+  --color-accent: #3A3734;
+  --color-accent-foreground: var(--color-foreground);
+  --color-destructive: #F87171;
   --color-border: rgba(255, 255, 255, 0.1);
   --color-input: rgba(255, 255, 255, 0.15);
-  --color-ring: #737373;
-  --color-sidebar: #262626;
-  --color-sidebar-foreground: #FAFAFA;
-  --color-sidebar-primary: #4F7BE8;
-  --color-sidebar-primary-foreground: #FAFAFA;
-  --color-sidebar-accent: #2C2C2C;
-  --color-sidebar-accent-foreground: #FAFAFA;
+  --color-ring: rgba(183, 208, 193, 0.45);
+  --color-sidebar: #262321;
+  --color-sidebar-foreground: var(--color-foreground);
+  --color-sidebar-primary: var(--color-primary);
+  --color-sidebar-primary-foreground: var(--color-primary-foreground);
+  --color-sidebar-accent: #312E2B;
+  --color-sidebar-accent-foreground: var(--color-foreground);
   --color-sidebar-border: rgba(255, 255, 255, 0.1);
-  --color-sidebar-ring: #737373;
+  --color-sidebar-ring: var(--color-ring);
 }
 
 @layer base {
@@ -174,7 +183,7 @@
 
   body {
     background-color: var(--color-background);
-    color: var(--color-muted-foreground);
+    color: var(--color-foreground);
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
@@ -192,12 +201,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #C4C4C4;
+    background-color: var(--color-ring);
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #A3A3A3;
+    background-color: var(--color-muted-foreground);
   }
 
   ::-webkit-scrollbar-corner {
@@ -207,7 +216,7 @@
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #C4C4C4 transparent;
+    scrollbar-color: var(--color-ring) transparent;
   }
 
   /* Override browser autofill styles */
@@ -223,8 +232,8 @@
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus,
   select:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-    -webkit-text-fill-color: #1A1A1A !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+    -webkit-text-fill-color: var(--color-foreground) !important;
     transition: background-color 5000s ease-in-out 0s;
   }
 }
@@ -240,10 +249,114 @@
     box-shadow: var(--tw-ring-shadow);
   }
 
-  /* Font Utility Classes */
-  .font-geist {
+  /* Semantic Typography */
+  .type-display-1,
+  .type-display-2,
+  .type-heading-1,
+  .type-heading-2,
+  .type-heading-3,
+  .type-title,
+  .type-body-lg,
+  .type-body,
+  .type-body-sm,
+  .type-label,
+  .type-label-sm,
+  .type-meta,
+  .type-eyebrow {
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
+    font-style: normal;
+  }
+
+  .type-display-1 {
+    font-size: 56px;
+    line-height: 60px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .type-display-2 {
+    font-size: 40px;
+    line-height: 44px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  .type-heading-1 {
+    font-size: 32px;
+    line-height: 38px;
+    font-weight: 600;
     letter-spacing: -0.02em;
+  }
+
+  .type-heading-2 {
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .type-heading-3 {
+    font-size: 20px;
+    line-height: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .type-title {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .type-body-lg {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .type-body {
+    font-size: 14px;
+    line-height: 22px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .type-body-sm {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .type-label {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .type-label-sm {
+    font-size: 13px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .type-meta {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .type-eyebrow {
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   /* iOS-style Easing — inputs, selects, interactive controls */
@@ -265,8 +378,8 @@
 
   /* Selection styling */
   ::selection {
-    background-color: #C4C4C4;
-    color: #1A1A1A;
+    background-color: var(--color-surface-muted);
+    color: var(--color-foreground);
   }
 
   /* Hide scrollbar utility */
@@ -287,11 +400,11 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #C4C4C4;
+    background: var(--color-ring);
     border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #A3A3A3;
+    background: var(--color-muted-foreground);
   }
 
   /* Safe area padding for iOS */
@@ -401,4 +514,3 @@ html body [data-sonner-toast] [data-cancel]:hover {
   background-color: var(--color-muted) !important;
   border-color: var(--color-input) !important;
 }
-

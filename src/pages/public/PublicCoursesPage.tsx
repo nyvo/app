@@ -158,7 +158,7 @@ const PublicCoursesPage = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
               <Leaf className="h-4 w-4 text-foreground" />
             </div>
-            <span className="text-sm font-medium tracking-tight text-foreground">Ease</span>
+            <span className="type-title text-foreground">Ease</span>
           </Link>
 
           {user && userType === 'student' ? (
@@ -201,7 +201,7 @@ const PublicCoursesPage = () => {
         {/* Error State */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-lg font-medium text-foreground mb-2">{error}</h3>
+            <h3 className="type-title mb-2 text-foreground">{error}</h3>
             <Button asChild variant="link" className="text-muted-foreground">
               <Link to="/">Gå til forsiden</Link>
             </Button>
@@ -223,7 +223,7 @@ const PublicCoursesPage = () => {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary border border-primary/70">
-                    <span className="text-2xl font-medium text-primary-foreground">
+                    <span className="type-display-2 text-primary-foreground">
                       {organization.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -232,19 +232,19 @@ const PublicCoursesPage = () => {
 
               {/* Text Info */}
               <div className="space-y-2 flex-1 min-w-0">
-                <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">
+                <h1 className="type-heading-1 text-foreground">
                   {organization.name}
                 </h1>
 
                 {organization.city && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="type-body flex items-center gap-1.5 text-muted-foreground">
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                     {organization.city}
                   </div>
                 )}
 
                 {organization.description && (
-                  <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed pt-1">
+                  <p className="type-body max-w-2xl pt-1 text-muted-foreground leading-relaxed">
                     {organization.description}
                   </p>
                 )}
@@ -266,10 +266,10 @@ const PublicCoursesPage = () => {
             {/* Empty State */}
             {isEmpty && (
               <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg border-border bg-background">
-                <p className="text-sm font-medium text-foreground">
+                <p className="type-title text-foreground">
                   {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="type-body mt-1 text-muted-foreground">
                   {hasCoursesButNoResults
                     ? 'Prøv et annet søkeord.'
                     : 'Det er ingen planlagte kurs for øyeblikket.'}
@@ -282,7 +282,7 @@ const PublicCoursesPage = () => {
               {/* Kursrekker Section */}
               {!isEmpty && kursrekker.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="text-sm font-medium text-foreground mb-6">
+                  <h2 className="type-title mb-6 text-foreground">
                     Kursrekker
                   </h2>
                   <PublicCourseTable
@@ -296,7 +296,7 @@ const PublicCoursesPage = () => {
               {/* Arrangementer Section */}
               {!isEmpty && arrangementer.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="text-sm font-medium text-foreground mb-6">
+                  <h2 className="type-title mb-6 text-foreground">
                     Arrangementer
                   </h2>
                   <PublicCourseTable

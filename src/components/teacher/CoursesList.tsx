@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import type { Course } from '@/types/dashboard';
 
 interface CoursesListProps {
@@ -55,45 +56,40 @@ function CourseRow({ course }: { course: Course }) {
   return (
     <Link
       to={`/teacher/courses/${course.id}`}
-      className="flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-muted smooth-transition relative focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
+      className="group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50"
     >
       <div className="flex flex-col min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-medium text-foreground truncate">
+          <span className="type-label text-foreground truncate">
             {course.title}
           </span>
           {course.time && (
-            <span className="text-xs text-muted-foreground">{course.time}</span>
+            <span className="type-meta text-muted-foreground">{course.time}</span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{course.subtitle}</p>
+        <p className="type-body-sm mt-0.5 truncate text-muted-foreground">{course.subtitle}</p>
       </div>
     </Link>
   );
 }
 
-function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
+function CoursesEmptyCard({ timeFilter }: { timeFilter: 'today' | 'week' }) {
   return (
-    <div className="p-8 flex flex-col items-center justify-center text-center">
-      <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-3">
-        <CalendarPlus className="size-4 text-muted-foreground" />
-      </div>
-      <p className="text-sm font-medium text-foreground">
-        {timeFilter === 'today' ? 'Ingen kurs i dag' : 'Ingen kurs denne uken'}
-      </p>
-      <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
-        {timeFilter === 'today'
-          ? 'Ingen kurs i dag.'
-          : 'Ingen kurs denne uken.'}
-      </p>
-      <Link
-        to="/teacher/courses"
-        className="text-xs text-muted-foreground hover:text-foreground mt-3 smooth-transition inline-flex items-center gap-1"
-      >
-        Se alle kurs
-        <ChevronRight className="h-3 w-3" />
-      </Link>
-    </div>
+    <EmptyState
+      icon={CalendarPlus}
+      title={timeFilter === 'today' ? 'Ingen kurs i dag' : 'Ingen kurs denne uken'}
+      description={timeFilter === 'today' ? 'Ingen kurs i dag.' : 'Ingen kurs denne uken.'}
+      variant="compact"
+      action={(
+        <Link
+          to="/teacher/courses"
+          className="type-meta inline-flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
+        >
+          Se alle kurs
+          <ChevronRight className="h-3 w-3" />
+        </Link>
+      )}
+    />
   );
 }
 
@@ -104,13 +100,13 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
   );
 
   return (
-    <div className="col-span-1 md:col-span-3 lg:col-span-4">
-      <h2 className="text-sm font-medium text-foreground mb-3">Dagens kurs</h2>
+    <div className="flex flex-col">
+      <h2 className="type-title mb-3 text-foreground">Dagens kurs</h2>
 
       <Card className="overflow-hidden">
-      <div className="px-2 py-3">
+      <div className="px-3 py-3">
         {todayCourses.length === 0 ? (
-          <EmptyState timeFilter="today" />
+          <CoursesEmptyCard timeFilter="today" />
         ) : (
           <div className="divide-y divide-border">
             {todayCourses.map((course) => (

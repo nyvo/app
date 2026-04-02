@@ -36,7 +36,7 @@ export function AuthLayout({
 
   return (
     <div className={cn(
-      "min-h-screen w-full text-foreground font-geist antialiased flex flex-col selection:bg-muted selection:text-foreground",
+      "min-h-screen w-full text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground",
       isStudent ? "bg-background" : "bg-background"
     )}>
       {/* Header */}
@@ -45,7 +45,7 @@ export function AuthLayout({
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-medium tracking-tight text-foreground">
+          <span className="type-title text-foreground">
             Ease
           </span>
         </Link>
@@ -72,11 +72,11 @@ export function AuthLayout({
             className="w-full flex flex-col items-center"
           >
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+              <h1 className="type-heading-1 text-foreground">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-muted-foreground text-sm">{subtitle}</p>
+                <p className="type-body text-muted-foreground">{subtitle}</p>
               )}
             </div>
 

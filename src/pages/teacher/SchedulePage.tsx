@@ -280,16 +280,16 @@ export const SchedulePage = () => {
                     key={day.name}
                     className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-background/50' : ''} ${day.isWeekend ? 'bg-background' : ''}`}
                   >
-                    <span className={`text-xxs font-medium ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {day.name}
                     </span>
                     <span
-                      className={`size-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                      className={`type-label flex size-7 items-center justify-center rounded-full ${
                         day.isToday
                           ? 'bg-primary text-primary-foreground'
                           : day.isWeekend
-                          ? 'text-muted-foreground group-hover:bg-muted'
-                          : 'text-muted-foreground group-hover:bg-muted'
+                          ? 'text-muted-foreground group-hover:bg-surface-muted'
+                          : 'text-muted-foreground group-hover:bg-surface-muted'
                       }`}
                     >
                       {day.date}
@@ -304,7 +304,7 @@ export const SchedulePage = () => {
                 {!hasEventsThisWeek && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                     <div className="pointer-events-auto text-center">
-                      <p className="text-sm text-muted-foreground">Ingen timer denne uken</p>
+                      <p className="type-body text-muted-foreground">Ingen timer denne uken</p>
                     </div>
                   </div>
                 )}
@@ -316,7 +316,7 @@ export const SchedulePage = () => {
                     style={{ top: `${currentTimePosition}px` }}
                     aria-hidden="true"
                   >
-                    <div className="w-[60px] text-right pr-2 text-xxs font-medium text-primary">
+                    <div className="type-meta w-[60px] pr-2 text-right text-primary">
                       {currentTimeString}
                     </div>
                     <div className="h-px flex-1 bg-primary opacity-50" />

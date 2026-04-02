@@ -45,14 +45,14 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="mb-2 text-lg font-medium text-foreground">
               Noe gikk galt
             </h1>
-            <p className="mb-6 text-sm text-muted-foreground">
+            <p className="type-body mb-6 text-muted-foreground">
               En uventet feil oppstod. Prøv å laste siden på nytt.
             </p>
             <Button onClick={this.handleReload}>
               Last siden på nytt
             </Button>
             {import.meta.env.DEV && this.state.error && (
-              <pre className="mt-6 max-h-40 overflow-auto rounded-lg bg-background p-3 text-left text-xs text-status-error-text">
+              <pre className="type-meta mt-6 max-h-40 overflow-auto rounded-lg bg-background p-3 text-left text-status-error-text">
                 {this.state.error.message}
               </pre>
             )}

@@ -89,28 +89,28 @@ function PaymentForm({
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+        className="type-meta flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
         Tilbake
       </button>
 
       {/* Order summary */}
-      <div className="rounded-lg bg-muted p-4 space-y-3">
+      <div className="space-y-3 rounded-lg bg-surface-muted p-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-foreground">{courseName}</span>
-          <span className="text-sm text-foreground">{formatKroner(price)}</span>
+          <span className="type-body text-foreground">{courseName}</span>
+          <span className="type-body text-foreground">{formatKroner(price)}</span>
         </div>
         {calculateServiceFee(price) > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Servicegebyr</span>
-            <span className="text-sm text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
+            <span className="type-body text-muted-foreground">Servicegebyr</span>
+            <span className="type-body text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
           </div>
         )}
         <Separator />
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-foreground">Totalt</span>
-          <span className="text-sm font-medium text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
+          <span className="type-label text-foreground">Totalt</span>
+          <span className="type-label text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
         </div>
       </div>
 
@@ -148,7 +148,7 @@ function PaymentForm({
         Betal {formatKroner(calculateTotalPrice(price))}
       </Button>
 
-      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+      <p className="type-meta flex items-center justify-center gap-1 text-center text-muted-foreground">
         <CreditCard className="h-3 w-3" />
         Sikker betaling via Stripe
       </p>
@@ -187,15 +187,16 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
     if (isMobile) {
       return {
         '.Tab': {
-          border: '1px solid #d4d4d8',
+          border: '1px solid #E7E5E4',
           borderRadius: '8px',
+          backgroundColor: '#FFFFFF',
         },
         '.Tab:hover': {
-          border: '1px solid #a1a1aa',
+          border: '1px solid #D6D3D1',
         },
         '.Tab--selected': {
-          border: '1px solid #18181b',
-          boxShadow: '0 0 0 1px #18181b',
+          border: '1px solid #354F41',
+          boxShadow: '0 0 0 1px #354F41',
         },
         '.Error': {
           fontSize: '12px',
@@ -205,36 +206,37 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
 
     return {
       '.Input': {
-        border: '1px solid #d4d4d8',
+        border: '1px solid #E7E5E4',
         padding: '10px 16px',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-        backgroundColor: '#fafafa',
+        backgroundColor: '#FFFFFF',
       },
       '.Input:hover': {
-        border: '1px solid #a1a1aa',
+        border: '1px solid #D6D3D1',
       },
       '.Input:focus': {
-        border: '1px solid #a1a1aa',
-        backgroundColor: '#ffffff',
-        boxShadow: '0 0 0 2px rgba(161,161,170,0.5)',
+        border: '1px solid #D6D3D1',
+        backgroundColor: '#FFFFFF',
+        boxShadow: '0 0 0 2px rgba(214, 211, 209, 0.5)',
         outline: 'none',
       },
       '.Label': {
         fontSize: '12px',
         fontWeight: '500',
-        color: '#52525B',
+        color: '#78716C',
         marginBottom: '6px',
       },
       '.Tab': {
-        border: '1px solid #d4d4d8',
+        border: '1px solid #E7E5E4',
         borderRadius: '8px',
+        backgroundColor: '#FFFFFF',
       },
       '.Tab:hover': {
-        border: '1px solid #a1a1aa',
+        border: '1px solid #D6D3D1',
       },
       '.Tab--selected': {
-        border: '1px solid #18181b',
-        boxShadow: '0 0 0 1px #18181b',
+        border: '1px solid #354F41',
+        boxShadow: '0 0 0 1px #354F41',
       },
       '.Error': {
         fontSize: '12px',
@@ -252,18 +254,18 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
         appearance: {
           theme: 'flat',
           variables: {
-            colorPrimary: '#18181b',
-            colorBackground: '#ffffff',
-            colorText: '#18181b',
-            colorTextSecondary: '#71717a',
-            colorTextPlaceholder: '#a1a1aa',
-            colorDanger: '#dc2626',
-            fontFamily: 'Geist, system-ui, -apple-system, sans-serif',
+            colorPrimary: '#354F41',
+            colorBackground: '#FFFFFF',
+            colorText: '#44403C',
+            colorTextSecondary: '#78716C',
+            colorTextPlaceholder: '#A8A29E',
+            colorDanger: '#EF4444',
+            fontFamily: 'Geist Sans, system-ui, -apple-system, sans-serif',
             fontSizeBase: '14px',
             fontSizeSm: '12px',
             borderRadius: '8px',
             spacingUnit: '4px',
-            focusBoxShadow: '0 0 0 2px rgba(161,161,170,0.5)',
+            focusBoxShadow: '0 0 0 2px rgba(214, 211, 209, 0.5)',
             focusOutline: 'none',
           },
           rules: appearanceRules as Record<string, Record<string, string>>,

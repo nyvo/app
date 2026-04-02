@@ -170,10 +170,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           {/* Tid og Sted */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-foreground">Tid og sted</h2>
+              <h2 className="type-title text-foreground">Tid og sted</h2>
               <button
                 onClick={onNavigateToSettings}
-                className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
+                className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
               >
                 Rediger
               </button>
@@ -183,8 +183,8 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <div className="flex items-start gap-3">
                   <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Dato</p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="type-meta mb-0.5 text-muted-foreground">Dato</p>
+                    <p className="type-label text-foreground">
                       {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
                     </p>
                   </div>
@@ -192,11 +192,11 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <div className="flex items-start gap-3">
                   <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Tidspunkt</p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="type-meta mb-0.5 text-muted-foreground">Tidspunkt</p>
+                    <p className="type-label text-foreground">
                       {course.timeSchedule || 'Ikke angitt'}
                       {course.durationMinutes > 0 && (
-                        <span className="text-muted-foreground font-normal ml-1">({course.durationMinutes} min)</span>
+                        <span className="type-body-sm ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
                       )}
                     </p>
                   </div>
@@ -204,15 +204,15 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <div className="flex items-start gap-3">
                   <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Sted</p>
-                    <p className="text-sm font-medium text-foreground">{course.location || 'Ikke angitt'}</p>
+                    <p className="type-meta mb-0.5 text-muted-foreground">Sted</p>
+                    <p className="type-label text-foreground">{course.location || 'Ikke angitt'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Banknote className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Pris</p>
-                    <p className="text-sm font-medium text-foreground">{formatKroner(course.price)}</p>
+                    <p className="type-meta mb-0.5 text-muted-foreground">Pris</p>
+                    <p className="type-label text-foreground">{formatKroner(course.price)}</p>
                   </div>
                 </div>
               </div>
@@ -222,16 +222,16 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           {/* Om Kurset */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-foreground">Om kurset</h2>
+              <h2 className="type-title text-foreground">Om kurset</h2>
               <button
                 onClick={onNavigateToSettings}
-                className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
+                className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
               >
                 Rediger
               </button>
             </div>
             <Card className="overflow-hidden">
-              <div className="p-6 flex flex-col sm:flex-row gap-6">
+              <div className="flex flex-col gap-6 p-6 sm:flex-row">
                 {/* Image / Upload */}
                 {course.imageUrl ? (
                   <div className="w-full sm:w-48 aspect-video sm:aspect-square rounded-lg overflow-hidden shrink-0">
@@ -251,7 +251,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                       className="hidden"
                     />
                     <div
-                      className="w-full sm:w-48 aspect-video sm:aspect-square bg-muted rounded-lg border border-dashed border-input flex flex-col items-center justify-center group cursor-pointer smooth-transition hover:bg-muted/50"
+                      className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-input bg-surface-muted smooth-transition hover:bg-surface-muted/50 sm:w-48 sm:aspect-square"
                       onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isUploadingQuickImage && quickImageInputRef.current?.click(); } }}
                       role="button"
@@ -261,12 +261,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                       {isUploadingQuickImage ? (
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Spinner size="sm" />
-                          <span className="text-xs font-medium">Laster opp</span>
+                          <span className="type-meta text-foreground">Laster opp</span>
                         </div>
                       ) : (
                         <div className="text-center">
                           <Image className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
-                          <span className="text-xs font-medium text-muted-foreground">Last opp bilde</span>
+                          <span className="type-meta text-muted-foreground">Last opp bilde</span>
                         </div>
                       )}
                     </div>
@@ -277,19 +277,19 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <div className="flex-1 min-w-0 space-y-4">
                   {/* Description — always same layout, just different content */}
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Kort beskrivelse</p>
+                    <p className="type-meta mb-1 text-muted-foreground">Kort beskrivelse</p>
                     {course.description ? (
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="type-body text-muted-foreground leading-relaxed">
                         {course.description}
                       </p>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">
+                      <p className="type-body text-muted-foreground">
                         Ingen beskrivelse lagt til
                       </p>
                     )}
                   </div>
                   {course.description2 && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="type-body text-muted-foreground leading-relaxed">
                       {course.description2}
                     </p>
                   )}
@@ -297,7 +297,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   {/* Målgruppe & Nivå */}
                   {course.level && (
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Målgruppe & Nivå</p>
+                      <p className="type-meta mb-1.5 text-muted-foreground">Målgruppe & Nivå</p>
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="secondary">
                           {course.level}
@@ -332,10 +332,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           {recentParticipants.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-medium text-foreground">Nylige påmeldinger</h2>
+                <h2 className="type-title text-foreground">Nylige påmeldinger</h2>
                 <button
                   onClick={onNavigateToParticipants}
-                  className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition inline-flex items-center gap-1"
+                  className="type-meta inline-flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
                 >
                   Se alle {totalParticipantCount}
                   <ArrowRight className="h-3 w-3" />
@@ -343,15 +343,15 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               </div>
               <Card className="overflow-hidden divide-y divide-border">
                 {recentParticipants.map((p) => (
-                  <div key={p.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="size-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
-                      <span className="text-xs font-medium text-muted-foreground">
+                  <div key={p.id} className="flex items-center gap-3 px-6 py-3">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted">
+                      <span className="type-meta text-muted-foreground">
                         {p.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground truncate">{p.name}</p>
-                      <p className="text-xs font-medium text-muted-foreground truncate">{p.email}</p>
+                      <p className="type-label truncate text-foreground">{p.name}</p>
+                      <p className="type-meta truncate text-muted-foreground">{p.email}</p>
                     </div>
                     <StatusBadge status={p.status} size="sm" />
                   </div>
@@ -367,7 +367,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           {/* Kapasitet */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-medium text-foreground">Kapasitet</h2>
+              <h2 className="type-title text-foreground">Kapasitet</h2>
               {course.capacity > 0 && (
                 course.enrolled >= course.capacity ? (
                   <StatusIndicator
@@ -385,17 +385,17 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             </div>
             <Card className="p-6">
               <div className="flex items-end gap-1 mb-4">
-                <span className="text-3xl font-medium text-foreground leading-none">
+                <span className="type-display-2 leading-none text-foreground">
                   {course.enrolled ?? 0}
                 </span>
-                <span className="text-sm text-muted-foreground mb-0.5">
+                <span className="type-body-sm mb-0.5 text-muted-foreground">
                   / {course.capacity} deltakere
                 </span>
               </div>
 
               {/* Progress bar */}
               <div
-                className="w-full bg-muted rounded-full h-1.5 mb-2 overflow-hidden"
+                className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted"
                 role="progressbar"
                 aria-valuenow={course.enrolled}
                 aria-valuemin={0}
@@ -409,13 +409,13 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   />
                 )}
               </div>
-              <p className="text-xs font-medium text-muted-foreground text-right">{fillPercent}% fylt opp</p>
+              <p className="type-meta text-right text-muted-foreground">{fillPercent}% fylt opp</p>
             </Card>
           </div>
 
           {/* Quick Actions */}
           <div>
-            <h2 className="text-sm font-medium text-foreground mb-3">Handlinger</h2>
+            <h2 className="type-title mb-3 text-foreground">Handlinger</h2>
             <div className="flex flex-col gap-2">
               <Button
                 variant="outline"

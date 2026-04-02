@@ -10,7 +10,7 @@ interface DayColumnProps {
 
 export function DayColumn({ isToday, isWeekend, events }: DayColumnProps) {
   return (
-    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-muted/30' : ''} ${isWeekend ? 'bg-background' : ''}`}>
+    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface-muted/40' : ''} ${isWeekend ? 'bg-background' : ''}`}>
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {TIME_SLOTS.map((time) => (

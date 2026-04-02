@@ -90,21 +90,21 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
 
   return (
     <div
-      className="group px-2 rounded-lg smooth-transition hover:bg-muted/50 border-b border-border last:border-b-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 outline-none"
+      className="group cursor-pointer rounded-lg border-b border-border px-2 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 last:border-b-0"
       onClick={() => navigate(`/teacher/courses/${course.courseId}`)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${course.courseId}`); } }}
       role="button"
       tabIndex={0}
       aria-label={`Åpne kurs: ${course.courseTitle}`}
     >
-      <div className="py-3 flex items-center gap-3">
+      <div className="flex items-center gap-3 py-3">
         {/* Date badge */}
         <DateBadge dateStr={course.sessionDate} />
 
         {/* Center: title + meta */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-            <h3 className="text-sm font-medium text-foreground truncate">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <h3 className="type-label truncate text-foreground">
               {course.courseTitle}
             </h3>
             {course.courseStatus === 'draft' ? (
@@ -134,9 +134,9 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
             ) : null}
           </div>
 
-          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             {(course.startTime || course.endTime) && (
-              <span className="text-xs text-muted-foreground">
+              <span className="type-meta text-muted-foreground">
                 {(() => {
                   const d = new Date(course.sessionDate + 'T12:00:00');
                   const day = d.toLocaleDateString('nb-NO', { weekday: 'short' });
@@ -146,16 +146,16 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
               </span>
             )}
             {weekLabel && (
-              <span className="text-xs text-muted-foreground">
+              <span className="type-meta text-muted-foreground">
                 {weekLabel}
               </span>
             )}
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="type-meta inline-flex items-center gap-1 text-muted-foreground">
               <Users className="h-3 w-3" />
               {enrollmentLabel}
             </span>
             {course.location && (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="type-meta inline-flex items-center gap-1 text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span className="truncate max-w-[120px]">{course.location}</span>
               </span>
@@ -164,8 +164,8 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
         </div>
 
         {/* Right: price + chevron */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-medium text-foreground">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="type-label text-foreground">
             {formatKroner(course.price)}
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-muted-foreground smooth-transition" />
@@ -194,7 +194,7 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
   return (
     <section>
       {showHeader && (
-        <h2 className="text-sm font-medium text-foreground pb-3 border-t border-border pt-4">
+        <h2 className="type-title border-t border-border pb-3 pt-4 text-foreground">
           {label}
         </h2>
       )}
@@ -253,7 +253,7 @@ export function CourseListSkeleton() {
   return (
     <div>
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="px-2 py-3 flex items-center gap-3 border-b border-border last:border-b-0">
+        <div key={i} className="flex items-center gap-3 border-b border-border px-2 py-3 last:border-b-0">
           <div className="w-11 h-11 rounded-lg border border-border shrink-0 flex flex-col items-center justify-center gap-0.5">
             <Skeleton className="h-2 w-5 rounded-sm" />
             <Skeleton className="h-3 w-4 rounded-sm" />

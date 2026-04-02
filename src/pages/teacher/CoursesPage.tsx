@@ -14,6 +14,7 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { SearchInput } from '@/components/ui/search-input';
 import { cn } from '@/lib/utils';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
@@ -204,11 +205,11 @@ const CoursesPage = () => {
           transition={pageTransition}
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">Mine kurs</h1>
+              <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
               {!showCoursesEmptyState && (
-                <p className="text-sm text-muted-foreground mt-1">Oversikt over kursene dine.</p>
+                <p className="type-body mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
               )}
             </div>
             {!showCoursesEmptyState && (
@@ -223,7 +224,7 @@ const CoursesPage = () => {
 
           {/* Search */}
           {!showCoursesEmptyState && (
-            <div className="pb-4">
+            <div className="pb-2">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
@@ -252,55 +253,87 @@ const CoursesPage = () => {
           ) : showCoursesEmptyState ? (
             <CoursesEmptyState />
           ) : (
-            <div>
+            <div className="space-y-10">
               {/* Current courses */}
               {filteredCurrentRows.length === 0 && searchQuery ? (
                 filteredPastRows.length === 0 && (
-                  <EmptyState
-                    icon={Calendar}
-                    title="Ingen kurs funnet"
-                    description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
-                  />
+                  <section className="flex flex-col gap-3">
+                    <div>
+                      <h2 className="type-title text-foreground">Aktive kurs</h2>
+                    </div>
+                    <Card className="p-6">
+                      <EmptyState
+                        icon={Calendar}
+                        title="Ingen kurs funnet"
+                        description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
+                        className="py-8"
+                      />
+                    </Card>
+                  </section>
                 )
               ) : filteredCurrentRows.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title="Ingen aktive kurs"
-                  description="Opprett et kurs for å komme i gang."
-                  action={
-                    <Button asChild size="sm">
-                      <Link to="/teacher/new-course">Opprett kurs</Link>
-                    </Button>
-                  }
-                />
+                <section className="flex flex-col gap-3">
+                  <div>
+                    <h2 className="type-title text-foreground">Aktive kurs</h2>
+                  </div>
+                  <Card className="p-6">
+                    <EmptyState
+                      icon={Calendar}
+                      title="Ingen aktive kurs"
+                      description="Opprett et kurs for å komme i gang."
+                      action={
+                        <Button asChild size="sm">
+                          <Link to="/teacher/new-course">Opprett kurs</Link>
+                        </Button>
+                      }
+                      className="py-8"
+                    />
+                  </Card>
+                </section>
               ) : (
-                <CourseListView courses={filteredCurrentRows} />
+                <section className="flex flex-col gap-3">
+                  <div>
+                    <h2 className="type-title text-foreground">Aktive kurs</h2>
+                  </div>
+                  <Card className="overflow-hidden p-2 sm:p-3">
+                    <CourseListView courses={filteredCurrentRows} />
+                  </Card>
+                </section>
               )}
 
               {/* Past / cancelled section */}
               {pastRows.length > 0 && (
-                <div className="mt-8">
-                  <button
-                    onClick={() => setShowPast(prev => !prev)}
-                    aria-expanded={showPast}
-                    aria-controls="past-courses-section"
-                    className="flex items-center gap-2 border-t border-border pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
-                  >
-                    <ChevronRight className={cn(
-                      'h-3.5 w-3.5 text-muted-foreground smooth-transition',
-                      showPast && 'rotate-90'
-                    )} aria-hidden="true" />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {pastRows.length} tidligere kurs
-                    </span>
-                  </button>
+                <section className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="type-title text-foreground">Tidligere kurs</h2>
+                      <p className="type-body-sm mt-1 text-muted-foreground">
+                        Avsluttede og avlyste kurs holdes samlet her.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline-soft"
+                      size="compact"
+                      onClick={() => setShowPast(prev => !prev)}
+                      aria-expanded={showPast}
+                      aria-controls="past-courses-section"
+                      className="gap-2"
+                    >
+                      <ChevronRight className={cn(
+                        'h-3.5 w-3.5 smooth-transition',
+                        showPast && 'rotate-90'
+                      )} aria-hidden="true" />
+                      {showPast ? 'Skjul' : `Vis ${pastRows.length}`}
+                    </Button>
+                  </div>
 
                   {showPast && (
-                    <div id="past-courses-section" className="mt-6 opacity-60">
+                    <Card id="past-courses-section" className="overflow-hidden border-dashed border-border/80 bg-surface-muted/35 p-2 opacity-80 sm:p-3">
                       <CourseListView courses={filteredPastRows} flat />
-                    </div>
+                    </Card>
                   )}
-                </div>
+                </section>
               )}
             </div>
           )}

@@ -72,8 +72,8 @@ export const SessionList: React.FC<SessionListProps> = ({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-foreground">Kursplan</h2>
-        <span className="text-xs font-medium text-muted-foreground">
+        <h2 className="type-title text-foreground">Kursplan</h2>
+        <span className="type-meta text-muted-foreground">
           {sessions.length} {sessions.length === 1 ? sessionLabel : sessionLabelPlural}
         </span>
       </div>
@@ -87,12 +87,12 @@ export const SessionList: React.FC<SessionListProps> = ({
             return (
               <div key={session.id}>
                 {/* Session row */}
-                <div className="group px-5 py-4 flex items-center justify-between smooth-transition hover:bg-muted">
+                <div className="group flex items-center justify-between px-5 py-4 smooth-transition hover:bg-surface-muted">
                   <div className="flex items-center gap-4">
                     <DateBadge dateStr={session.originalDate?.split('T')[0]} />
                     <div>
-                      <p className="text-sm font-medium text-foreground">{session.title}</p>
-                      <p className="text-xs font-medium text-muted-foreground mt-0.5">{session.date} {session.time}</p>
+                      <p className="type-label text-foreground">{session.title}</p>
+                      <p className="type-meta mt-0.5 text-muted-foreground">{session.date} {session.time}</p>
                     </div>
                   </div>
                   {!isPast && (
@@ -108,10 +108,10 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                 {/* Inline edit panel */}
                 {isEditing && (
-                  <div className="px-5 pb-4 pt-0 border-t border-border bg-muted/30">
+                  <div className="border-t border-border bg-surface-muted/30 px-5 pb-4 pt-0">
                     <div className="pt-4 space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-foreground mb-1.5">Dato</label>
+                        <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
                         <DatePicker
                           value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
                           onChange={(date) => {
@@ -121,7 +121,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-foreground mb-1.5">Tidspunkt</label>
+                        <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
                         <TimePicker
                           value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
                           onChange={(time) => onSessionEditChange(session.id, 'time', time)}
@@ -129,7 +129,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="text-xs text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="type-meta text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
                       <div className="flex gap-2 pt-1">

@@ -91,8 +91,8 @@ const StudentDashboardPage = () => {
           <div className="rounded-full bg-status-error-bg p-3 mb-4">
             <CalendarX className="h-5 w-5 text-status-error-text" />
           </div>
-          <h2 className="text-sm font-medium text-foreground mb-2">Noe gikk galt</h2>
-          <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
+          <h2 className="type-title mb-2 text-foreground">Noe gikk galt</h2>
+          <p className="type-body mb-6 max-w-md text-muted-foreground">{error}</p>
           <Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>
         </div>
       </>
@@ -103,25 +103,25 @@ const StudentDashboardPage = () => {
     <>
       {/* Welcome / Header */}
       <div className="mb-8">
-        <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+        <h1 className="type-heading-1 text-foreground">
           Mine kurs
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="type-body mt-1 text-muted-foreground">
           Her finner du kursene dine.
         </p>
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-border rounded-none h-auto p-0 gap-8">
+        <TabsList className="mb-8 h-auto w-full justify-start gap-8 rounded-none border-b border-border bg-transparent p-0">
           <TabsTrigger 
             value="upcoming"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground ios-ease"
+            className="type-label rounded-none px-0 pb-3 text-muted-foreground transition-[border-color,color,opacity] duration-150 ease-out data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground ios-ease"
+            className="type-label rounded-none px-0 pb-3 text-muted-foreground transition-[border-color,color,opacity] duration-150 ease-out data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
           >
             Tidligere
           </TabsTrigger>
@@ -147,17 +147,17 @@ const StudentDashboardPage = () => {
             return (
               <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
                 <div>
-                  <div className="rounded-full bg-muted p-3 mb-4 mx-auto inline-flex">
+                  <div className="mx-auto mb-4 inline-flex rounded-full bg-surface-muted p-3">
                     {isNewUser ? (
                       <Search className="h-5 w-5 text-muted-foreground" />
                     ) : (
                       <CalendarX className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <h3 className="text-sm font-medium text-foreground mb-1">
+                  <h3 className="type-title mb-1 text-foreground">
                     {isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+                  <p className="type-body mb-6 max-w-xs text-muted-foreground">
                     {isNewUser
                       ? 'Se kurs i nærheten og meld deg på.'
                       : 'Du har ingen kommende kurs.'}
@@ -185,11 +185,11 @@ const StudentDashboardPage = () => {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
               <div>
-                <div className="rounded-full bg-muted p-3 mb-4 mx-auto inline-flex">
+                <div className="mx-auto mb-4 inline-flex rounded-full bg-surface-muted p-3">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <h3 className="text-sm font-medium text-foreground mb-1">Ingen tidligere kurs</h3>
-                <p className="text-sm text-muted-foreground max-w-xs">
+                <h3 className="type-title mb-1 text-foreground">Ingen tidligere kurs</h3>
+                <p className="type-body max-w-xs text-muted-foreground">
                   Du har ikke deltatt på noen kurs ennå.
                 </p>
               </div>

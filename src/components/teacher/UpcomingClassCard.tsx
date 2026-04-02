@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Clock, MapPin, ArrowRight, CalendarPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import type { UpcomingClass } from '@/types/dashboard';
 
 interface UpcomingClassCardProps {
@@ -11,98 +12,83 @@ interface UpcomingClassCardProps {
 export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
-      <div className="col-span-1 md:col-span-2 lg:col-span-2">
-        <h2 className="text-sm font-medium text-foreground mb-3">Neste kurs</h2>
-      <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-lg bg-background border border-border">
-        <div className="relative flex h-full flex-col justify-center p-6 sm:p-9 z-10">
-          {/* Main content */}
-          <div className="max-w-md">
-            <div className="mb-6">
-              <div className="mb-6 rounded-lg bg-background border border-border p-3 w-fit">
-                <Calendar className="size-6 text-muted-foreground stroke-[1.5]" />
+      <div className="flex flex-col">
+        <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>
+        <Card className="p-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-md">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-surface-muted">
+                <Calendar className="size-5 text-muted-foreground stroke-[1.5]" />
               </div>
-              <h2 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
+              <h3 className="type-heading-2 mb-2 text-foreground">
                 Ingen kommende kurs
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Opprett et kurs for å se det her.
+              </h3>
+              <p className="type-body text-muted-foreground">
+                Opprett et kurs for å se hva som skjer videre i timeplanen din.
               </p>
             </div>
-
-            <div>
-              <Button asChild size="compact" className="group">
-                <Link to="/teacher/new-course">
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  Opprett første kurs
-                </Link>
-              </Button>
-            </div>
+            <Button asChild size="default" className="gap-2 self-start sm:self-auto">
+              <Link to="/teacher/new-course">
+                <CalendarPlus className="h-4 w-4" />
+                Opprett første kurs
+              </Link>
+            </Button>
           </div>
-        </div>
-      </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="col-span-1 md:col-span-2 lg:col-span-2">
-      <h2 className="text-sm font-medium text-foreground mb-3">Neste kurs</h2>
-    <Link
-      to={`/teacher/courses/${classData.id}`}
-      className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-lg bg-primary text-primary-foreground border border-primary/80 smooth-transition hover:bg-primary/80 cursor-pointer block"
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary z-0"></div>
+    <div className="flex flex-col">
+      <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>
+      <Card className="overflow-hidden border-primary/20 bg-primary text-primary-foreground">
+        <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="mb-4 flex items-center gap-3">
+              <Badge variant="outline" className="gap-2 border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
+                {classData.startsIn}
+              </Badge>
+            </div>
 
+            <h3 className="type-heading-2 mb-3 text-primary-foreground">
+              {classData.title}
+            </h3>
 
-      <div className="relative flex h-full flex-col justify-between z-10 p-6 sm:p-9">
-        <div className="flex items-start justify-between gap-2">
-          <Badge variant="outline" className="gap-2 bg-primary/20 border-primary/70 px-3 py-1.5 text-primary-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
-            {classData.startsIn}
-          </Badge>
-        </div>
+            <div className="type-label flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/80">
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 opacity-70" />
+                {classData.date}
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock className="h-4 w-4 opacity-70" />
+                {classData.startTime} - {classData.endTime}
+              </span>
+              <span className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 opacity-70" />
+                {classData.location}
+              </span>
+            </div>
+          </div>
 
-        <div>
-          <h2 className="font-geist text-2xl sm:text-3xl font-medium tracking-tight mb-4 sm:mb-5 text-primary-foreground leading-tight">
-            {classData.title.includes(':') ? (
-              <>{classData.title.split(':')[0]}:<br />{classData.title.split(':').slice(1).join(':')}</>
-            ) : (
-              classData.title
-            )}
-          </h2>
+          <div className="flex flex-col gap-4 md:min-w-[200px] md:items-end">
+            <div className="rounded-lg border border-primary-foreground/15 bg-primary-foreground/8 px-4 py-3">
+              <p className="type-meta text-primary-foreground/70">Påmeldte</p>
+              <p className="type-title mt-1 text-primary-foreground">
+                {classData.capacity > 0 ? `${classData.attendees}/${classData.capacity}` : `${classData.attendees} påmeldt`}
+              </p>
+            </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-5 text-xs sm:text-sm font-medium text-primary-foreground/80">
-            <span className="flex items-center gap-1.5 sm:gap-2">
-              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70" />
-              {classData.date}
-            </span>
-            <span className="flex items-center gap-1.5 sm:gap-2">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70" />
-              {classData.startTime} - {classData.endTime}
-            </span>
-            <span className="flex items-center gap-1.5 sm:gap-2">
-              <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-70" />
-              {classData.location}
-            </span>
+            <Button asChild variant="outline-soft" size="compact" className="border-primary-foreground/15 bg-background text-foreground hover:bg-surface-muted">
+              <span>
+                Gå til kurs
+                <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </Button>
           </div>
         </div>
-
-        <div className="mt-4 sm:mt-6 flex items-end justify-between gap-4">
-          <div className="flex flex-col gap-0.5 sm:gap-1">
-            <span className="text-xs sm:text-sm text-muted-foreground">Påmeldte</span>
-            <span className="text-base sm:text-lg font-medium text-primary-foreground tracking-tight">
-              {classData.capacity > 0 ? `${classData.attendees}/${classData.capacity}` : `${classData.attendees} påmeldt`}
-            </span>
-          </div>
-          <Button asChild variant="outline-soft" size="compact" className="bg-background text-foreground border-input hover:bg-muted">
-            <span>
-              Gå til kurs
-              <ArrowRight className="h-3.5 w-3.5" />
-            </span>
-          </Button>
-        </div>
-      </div>
-    </Link>
+      </Card>
     </div>
   );
 };

@@ -44,14 +44,14 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           to={studioUrl}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity"
         >
-          <span className="text-sm font-medium tracking-widest uppercase text-foreground">
+          <span className="type-eyebrow text-foreground">
             {initials}
           </span>
         </Link>
 
         {/* Right side */}
         <div className="flex items-center gap-6">
-          <span className="text-xs text-muted-foreground font-medium hidden sm:block">
+          <span className="type-meta hidden text-muted-foreground sm:block">
             Påmelding
           </span>
 
@@ -59,7 +59,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button aria-label="Brukermeny" className="size-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted smooth-transition">
+                <button aria-label="Brukermeny" className="flex size-8 items-center justify-center rounded-full bg-surface-muted smooth-transition hover:bg-surface">
                   <User className="size-4 text-foreground" />
                 </button>
               </DropdownMenuTrigger>
@@ -95,7 +95,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/student/login"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="type-meta text-muted-foreground transition-colors hover:text-foreground"
             >
               Logg inn
             </Link>

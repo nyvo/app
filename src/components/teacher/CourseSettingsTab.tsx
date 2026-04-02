@@ -105,11 +105,11 @@ export const CourseSettingsTab = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
       <div className="lg:col-span-2 flex flex-col">
-        <h3 className="text-sm font-medium text-foreground mb-3">Generelt</h3>
+        <h3 className="type-title mb-3 text-foreground">Generelt</h3>
         <Card className="p-6 h-full flex flex-col flex-1">
           <div className="space-y-4 flex-1">
             <div>
-              <label htmlFor="settings-title" className="block text-xs font-medium text-foreground mb-1.5">Navn på kurs</label>
+              <label htmlFor="settings-title" className="type-label-sm mb-1.5 block text-foreground">Navn på kurs</label>
               <Input
                 id="settings-title"
                 type="text"
@@ -119,7 +119,7 @@ export const CourseSettingsTab = ({
             </div>
 
             <div>
-              <label htmlFor="settings-description" className="block text-xs font-medium text-foreground mb-1.5">Beskrivelse</label>
+              <label htmlFor="settings-description" className="type-label-sm mb-1.5 block text-foreground">Beskrivelse</label>
               <Textarea
                 id="settings-description"
                 rows={6}
@@ -133,7 +133,7 @@ export const CourseSettingsTab = ({
 
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
       <Card className="lg:col-span-1 lg:row-span-2 p-6 flex flex-col h-full">
-        <h3 className="text-sm font-medium text-foreground mb-6">Kursbilde</h3>
+        <h3 className="type-title mb-6 text-foreground">Kursbilde</h3>
         <div className="flex-1 min-h-[200px] flex flex-col">
           <div className="flex-1 relative rounded-lg overflow-hidden bg-transparent">
             <ImageUpload
@@ -157,11 +157,11 @@ export const CourseSettingsTab = ({
       </Card>
 
       {/* Tile 3: Schedule - Span 1 */}
-      <Card className="p-6 flex flex-col">
-        <h3 className="text-sm font-medium text-foreground mb-6">Tidspunkt</h3>
-        <div className="space-y-4 flex-1">
+      <Card className="flex flex-col p-6">
+        <h3 className="type-title mb-6 text-foreground">Tidspunkt</h3>
+        <div className="flex-1 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Dato</label>
+            <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
             <DatePicker
               value={settingsDate}
               onChange={onDateChange}
@@ -169,14 +169,14 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Tidspunkt</label>
+            <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
             <TimePicker
               value={settingsTime}
               onChange={(time) => onTimeChange(time)}
             />
           </div>
           <div>
-            <label id="settings-duration-label" className="block text-xs font-medium text-foreground mb-1.5">Varighet</label>
+            <label id="settings-duration-label" className="type-label-sm mb-1.5 block text-foreground">Varighet</label>
             <Select
               value={settingsDuration?.toString() || ""}
               onValueChange={(val) => onDurationChange(parseInt(val))}
@@ -201,8 +201,8 @@ export const CourseSettingsTab = ({
       </Card>
 
       {/* Tile 4: Capacity - Span 1 */}
-      <Card className="p-6 flex flex-col">
-        <h3 className="text-sm font-medium text-foreground mb-6">Kapasitet</h3>
+      <Card className="flex flex-col p-6">
+        <h3 className="type-title mb-6 text-foreground">Kapasitet</h3>
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
             <Button
@@ -215,8 +215,8 @@ export const CourseSettingsTab = ({
               <Minus className="h-4 w-4" />
             </Button>
             <div className="text-center">
-              <span className="block text-3xl font-normal text-foreground tracking-tight">{maxParticipants}</span>
-              <span className="text-xs text-muted-foreground font-medium">Plasser</span>
+              <span className="type-display-2 block text-foreground">{maxParticipants}</span>
+              <span className="type-meta text-muted-foreground">Plasser</span>
             </div>
             <Button
               variant="outline-soft"
@@ -230,7 +230,7 @@ export const CourseSettingsTab = ({
           {/* Capacity warning - shows when at minimum */}
           {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
             <Alert variant="warning" size="sm" icon={false} className="mt-2 justify-center">
-              <p className="text-xs text-status-warning-text text-center">
+              <p className="type-meta text-center text-status-warning-text">
                 Kan ikke reduseres – {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}
               </p>
             </Alert>
@@ -239,15 +239,15 @@ export const CourseSettingsTab = ({
       </Card>
 
       {/* Tile 5: Practical Info - Span 3 */}
-      <Card className="lg:col-span-3 p-6 flex flex-col">
+      <Card className="flex flex-col p-6 lg:col-span-3">
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-foreground">Praktisk info</h3>
-          <p className="text-xs text-muted-foreground mt-1">Hjelp elevene dine med å komme forberedt</p>
+          <h3 className="type-title text-foreground">Praktisk info</h3>
+          <p className="type-meta mt-1 text-muted-foreground">Hjelp elevene dine med å komme forberedt</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
+        <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Audience Level - Segmented pills (single-select) */}
           <div>
-            <label className="block text-xs font-medium text-foreground mb-2.5">Nivå</label>
+            <label className="type-label-sm mb-2.5 block text-foreground">Nivå</label>
             <div className="flex flex-wrap gap-2">
               {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
                 <button
@@ -255,7 +255,7 @@ export const CourseSettingsTab = ({
                   type="button"
                   onClick={() => onAudienceLevelChange(opt.value)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-xs border smooth-transition',
+                    'type-meta rounded-md border px-3 py-1.5 smooth-transition',
                     settingsAudienceLevel === opt.value
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
@@ -265,14 +265,14 @@ export const CourseSettingsTab = ({
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">
+            <p className="type-meta mt-1.5 text-muted-foreground">
               Velg det laveste nivået som passer.
             </p>
           </div>
 
           {/* Equipment - Radio buttons (single factual statement) */}
           <div>
-            <label className="block text-xs font-medium text-foreground mb-2.5">Utstyr</label>
+            <label className="type-label-sm mb-2.5 block text-foreground">Utstyr</label>
             <RadioGroup
               value={settingsEquipment}
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
@@ -280,7 +280,7 @@ export const CourseSettingsTab = ({
               {EQUIPMENT_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-0.5">
                   <RadioGroupItem value={opt.value} />
-                  <span className="text-sm text-foreground">{opt.label}</span>
+                  <span className="type-body text-foreground">{opt.label}</span>
                 </label>
               ))}
             </RadioGroup>
@@ -288,7 +288,7 @@ export const CourseSettingsTab = ({
 
           {/* Arrival - Dropdown select */}
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Oppmøte før start</label>
+            <label className="type-label-sm mb-1.5 block text-foreground">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
@@ -308,7 +308,7 @@ export const CourseSettingsTab = ({
 
           {/* Custom Bullets */}
           <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">Egne punkter</label>
+            <label className="type-label-sm mb-1.5 block text-foreground">Egne punkter</label>
             <div className="space-y-2">
               {settingsCustomBullets.map((bullet, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export const CourseSettingsTab = ({
                       updated[i] = e.target.value;
                       onCustomBulletsChange(updated);
                     }}
-                    className="flex-1 h-9 text-sm"
+                    className="type-body flex-1 h-9"
                   />
                   <button
                     type="button"
@@ -338,7 +338,7 @@ export const CourseSettingsTab = ({
                 <button
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
+                  className="type-meta text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
                 >
                   <Plus className="h-3 w-3" />
                   Legg til
@@ -356,7 +356,7 @@ export const CourseSettingsTab = ({
       <Alert variant="error" icon={false} className="lg:col-span-3 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <AlertTitle variant="error" className="text-sm">Avlys kurs</AlertTitle>
+            <AlertTitle variant="error" className="type-title">Avlys kurs</AlertTitle>
             <AlertDescription variant="error">
               {refundPreview.count > 0
                 ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
@@ -378,7 +378,7 @@ export const CourseSettingsTab = ({
       <div className="lg:col-span-3 flex justify-end gap-3 pt-2">
         {saveError && (
           <Alert variant="error" size="sm" icon={Info} className="mr-auto">
-            <span className="text-sm text-status-error-text">{saveError}</span>
+            <span className="type-body text-status-error-text">{saveError}</span>
           </Alert>
         )}
 

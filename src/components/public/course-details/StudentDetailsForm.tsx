@@ -42,7 +42,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="firstName"
-            className="text-xs font-medium text-foreground mb-1.5 block"
+            className="type-label-sm mb-1.5 block text-foreground"
           >
             Fornavn
           </label>
@@ -64,14 +64,14 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             aria-describedby={touched.firstName && errors.firstName ? 'firstName-error' : undefined}
           />
           {touched.firstName && errors.firstName && (
-            <p id="firstName-error" role="alert" className="text-xs text-destructive">Skriv inn fornavnet ditt</p>
+            <p id="firstName-error" role="alert" className="type-meta text-destructive">Skriv inn fornavnet ditt</p>
           )}
         </div>
 
         <div className="space-y-2">
           <label
             htmlFor="lastName"
-            className="text-xs font-medium text-foreground mb-1.5 block"
+            className="type-label-sm mb-1.5 block text-foreground"
           >
             Etternavn
           </label>
@@ -93,7 +93,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
             aria-describedby={touched.lastName && errors.lastName ? 'lastName-error' : undefined}
           />
           {touched.lastName && errors.lastName && (
-            <p id="lastName-error" role="alert" className="text-xs text-destructive">Skriv inn etternavnet ditt</p>
+            <p id="lastName-error" role="alert" className="type-meta text-destructive">Skriv inn etternavnet ditt</p>
           )}
         </div>
       </div>
@@ -102,7 +102,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="text-xs font-medium text-foreground mb-1.5 block"
+          className="type-label-sm mb-1.5 block text-foreground"
         >
           E-post
         </label>
@@ -124,7 +124,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           aria-describedby={touched.email && errors.email ? 'email-booking-error' : undefined}
         />
         {touched.email && errors.email && (
-          <p id="email-booking-error" role="alert" className="text-xs text-destructive">Ugyldig e-post</p>
+          <p id="email-booking-error" role="alert" className="type-meta text-destructive">Ugyldig e-post</p>
         )}
       </div>
 
@@ -132,9 +132,9 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="message"
-          className="text-xs font-medium text-foreground mb-1.5 block"
+          className="type-label-sm mb-1.5 block text-foreground"
         >
-          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
+          Beskjed til instruktør <span className="type-body-sm text-muted-foreground">(valgfritt)</span>
         </label>
         <Textarea
           id="message"
@@ -163,7 +163,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           aria-describedby={touched.termsAccepted && errors.termsAccepted ? 'terms-error' : undefined}
           aria-required="true"
         />
-        <label htmlFor="termsAccepted" className="text-xs text-muted-foreground select-none">
+        <label htmlFor="termsAccepted" className="type-meta select-none text-muted-foreground">
           Jeg godtar{' '}
           <Link
             to="/terms"
@@ -176,7 +176,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         </label>
       </div>
       {touched.termsAccepted && errors.termsAccepted && (
-        <p id="terms-error" role="alert" className="text-xs text-destructive -mt-2">
+        <p id="terms-error" role="alert" className="type-meta -mt-2 text-destructive">
           Du må godta vilkårene for å gå videre
         </p>
       )}

@@ -32,9 +32,9 @@ export function MobileDayView({
   const selectedDay = weekDays[selectedDayIndex];
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden">
       {/* Day selector */}
-      <div className="border-b border-border bg-background px-4 py-3 shrink-0">
+      <div className="shrink-0 border-b border-border bg-background px-4 py-3">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {weekDays.map((day, index) => (
             <button
@@ -42,16 +42,16 @@ export function MobileDayView({
               onClick={() => onDaySelect(index)}
               aria-pressed={selectedDayIndex === index}
               aria-current={day.isToday ? 'date' : undefined}
-              className={`flex flex-col items-center justify-center min-w-[52px] h-16 rounded-lg smooth-transition cursor-pointer ${
+              className={`flex h-16 min-w-[56px] cursor-pointer flex-col items-center justify-center rounded-md smooth-transition ${
                 selectedDayIndex === index
                   ? 'bg-primary text-primary-foreground'
                   : day.isToday
-                  ? 'bg-muted text-foreground border border-border'
-                  : 'bg-background hover:bg-muted text-muted-foreground'
+                  ? 'bg-surface-muted text-foreground border border-border'
+                  : 'bg-background hover:bg-surface-muted text-muted-foreground'
               }`}
             >
-              <span className="text-xs font-medium">{day.name.slice(0, 3)}</span>
-              <span className="text-lg font-medium mt-0.5">{day.date}</span>
+              <span className="type-meta">{day.name.slice(0, 3)}</span>
+              <span className="type-title mt-0.5">{day.date}</span>
             </button>
           ))}
         </div>
@@ -67,8 +67,8 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-status-error-bg border border-status-error-border">
                 <CalendarDays className="h-7 w-7 text-status-error-text" />
               </div>
-              <h3 className="text-sm font-medium text-foreground mb-1">Noe gikk galt</h3>
-              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <h3 className="type-title mb-1 text-foreground">Noe gikk galt</h3>
+              <p className="type-body mb-4 text-muted-foreground">{error}</p>
               <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
@@ -78,8 +78,8 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
                 <CalendarDays className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-sm font-medium text-foreground mb-1">Ingen timer denne uken</h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="type-title mb-1 text-foreground">Ingen timer denne uken</h3>
+              <p className="type-body mb-4 text-muted-foreground">
                 {!hasCourses
                   ? 'Opprett et kurs for å komme i gang.'
                   : 'Ingen planlagte timer denne uken.'}
@@ -98,16 +98,16 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
                 <CalendarDays className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="text-sm font-medium text-foreground mb-1">
+              <h3 className="type-title mb-1 text-foreground">
                 Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="type-body text-muted-foreground">
                 Velg en annen dag for å se timer.
               </p>
             </div>
           </div>
         ) : (
-          <div className="p-4 space-y-3">
+          <div className="space-y-3 p-4">
             {[...dayEvents]
               .sort((a, b) => a.startTime.localeCompare(b.startTime))
               .map((event) => (

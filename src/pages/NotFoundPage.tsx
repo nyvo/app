@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 const NotFoundPage = () => {
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground font-geist antialiased flex flex-col selection:bg-muted selection:text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -15,7 +15,7 @@ const NotFoundPage = () => {
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-medium tracking-tight text-foreground">
+          <span className="type-title text-foreground">
             Ease
           </span>
         </Link>
@@ -34,10 +34,10 @@ const NotFoundPage = () => {
           </div>
 
           {/* Message */}
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-3">
+          <h1 className="type-heading-1 mb-3 text-foreground">
             Siden ble ikke funnet
           </h1>
-          <p className="text-muted-foreground text-sm mb-8">
+          <p className="type-body mb-8 text-muted-foreground">
             Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
           </p>
 

@@ -9,7 +9,7 @@ export interface TicketSelectorProps {
 
 /**
  * Order summary card — shows course fee, service fee, and total
- * Matches Stripe's embedded order summary styling (bg-muted, no border)
+ * Matches Stripe's embedded order summary styling with a muted inset surface.
  */
 export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   const basePrice = price || 0;
@@ -21,17 +21,17 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="rounded-lg bg-muted p-4 space-y-3">
+    <div className="space-y-3 rounded-lg bg-surface-muted p-4">
       {/* Course fee */}
       <div className="flex justify-between items-center">
-        <span className="text-sm text-foreground">Kursavgift</span>
-        <span className="text-sm text-foreground">{formatKroner(basePrice)}</span>
+        <span className="type-body text-foreground">Kursavgift</span>
+        <span className="type-body text-foreground">{formatKroner(basePrice)}</span>
       </div>
 
       {/* Service fee */}
       <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">Servicegebyr</span>
-        <span className="text-sm text-muted-foreground">{formatKroner(serviceFee)}</span>
+        <span className="type-body text-muted-foreground">Servicegebyr</span>
+        <span className="type-body text-muted-foreground">{formatKroner(serviceFee)}</span>
       </div>
 
       {/* Divider */}
@@ -39,8 +39,8 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
 
       {/* Total */}
       <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-foreground">Totalt</span>
-        <span className="text-sm font-medium text-foreground">{formatKroner(total)}</span>
+        <span className="type-label text-foreground">Totalt</span>
+        <span className="type-label text-foreground">{formatKroner(total)}</span>
       </div>
     </div>
   );

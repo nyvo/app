@@ -16,36 +16,36 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
     <Link
       to={`/teacher/courses/${event.courseId}`}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
-      className={`block rounded-lg p-4 smooth-transition cursor-pointer border border-border ${
+      className={`block rounded-lg border border-border p-4 smooth-transition cursor-pointer ${
         isCompleted
-          ? 'bg-muted'
+          ? 'bg-surface-muted'
           : isActive
           ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
-          : 'bg-background hover:bg-muted/50'
+          : 'bg-background hover:bg-surface-muted/50'
       }`}
     >
       {/* Title row — most scannable */}
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-sm font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+        <p className={`type-label truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
           {event.title}
         </p>
         {isActive && (
-          <Badge variant="secondary" className="bg-status-confirmed-bg text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border border-0 shrink-0">
+          <Badge variant="secondary" className="shrink-0 border-0 bg-status-confirmed-bg text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
             Pågår
           </Badge>
         )}
         {isCompleted && (
-          <span className="text-xs font-medium text-muted-foreground shrink-0">Fullført</span>
+          <span className="type-meta shrink-0 text-muted-foreground">Fullført</span>
         )}
       </div>
 
       {/* Time + signups — secondary row */}
-      <div className={`flex items-center justify-between mt-1 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-        <span className="text-xs">
+      <div className="mt-1 flex items-center justify-between text-muted-foreground">
+        <span className="type-meta">
           {formatTime(event.startTime)}–{formatTime(event.endTime)}
         </span>
         {!isCompleted && (
-          <span className="flex items-center gap-1 text-xs">
+          <span className="type-meta flex items-center gap-1">
             <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
           </span>

@@ -342,14 +342,14 @@ const PublicCourseDetailPage = () => {
         <header className="border-b border-border bg-background">
           <div className="mx-auto flex max-w-4xl items-center justify-between px-6 h-16">
             <Link to={backUrl} className="flex items-center gap-2">
-              <span className="text-sm font-medium tracking-widest uppercase text-foreground">Ease</span>
+              <span className="type-eyebrow text-foreground">Ease</span>
             </Link>
           </div>
         </header>
         <main className="pt-24 px-6">
           <div className="mx-auto max-w-3xl">
             <div className="rounded-lg border border-destructive/30 bg-background p-12 text-center">
-              <p className="text-sm text-destructive mb-4">{fetchError || 'Kurset ble ikke funnet'}</p>
+              <p className="type-body mb-4 text-destructive">{fetchError || 'Kurset ble ikke funnet'}</p>
               <Button asChild variant="outline" size="compact">
                 <Link to={backUrl}>
                   <ChevronLeft className="h-4 w-4 mr-1" />

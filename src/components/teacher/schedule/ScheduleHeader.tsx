@@ -27,38 +27,38 @@ export function ScheduleHeader({
   const dateRange = formatWeekRange(displayedMonday, displayedSunday);
 
   return (
-    <header className="flex flex-col gap-4 border-b border-border bg-background px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-4 shrink-0 z-20">
+    <header className="z-20 flex shrink-0 flex-col gap-4 border-b border-border bg-background px-4 pb-4 pt-6 sm:px-6 lg:px-8 lg:pt-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
-          <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">
+          <h1 className="type-heading-1 text-foreground">
             Timeplan
           </h1>
           {hasCourses && (
             <>
               <div className="h-4 w-px bg-border" />
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   onClick={onPreviousWeek}
-                  className="rounded-lg h-7 w-7"
+                  className="rounded-md"
                   aria-label="Forrige uke"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <div className="flex flex-col items-center min-w-[140px]">
-                  <span className="text-sm font-medium text-foreground">
+                <div className="flex min-w-[148px] flex-col items-center">
+                  <span className="type-title text-foreground">
                     Uke {weekNumber}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="type-meta text-muted-foreground">
                     {dateRange}
                   </span>
                 </div>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   onClick={onNextWeek}
-                  className="rounded-lg h-7 w-7"
+                  className="rounded-md"
                   aria-label="Neste uke"
                 >
                   <ChevronRight className="h-4 w-4" />

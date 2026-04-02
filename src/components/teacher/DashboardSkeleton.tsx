@@ -41,7 +41,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </SkeletonCard>
 
       {/* Messages Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[280px] sm:h-[360px] rounded-lg bg-muted border border-border overflow-hidden flex flex-col">
+      <div className="col-span-1 h-[280px] overflow-hidden rounded-lg border border-border bg-surface-muted flex flex-col sm:h-[360px] md:col-span-3 lg:col-span-2">
         <div className="flex items-center justify-between p-6 pb-4">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-3 w-12" />
@@ -63,7 +63,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Courses Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-lg bg-muted border border-border p-6">
+      <div className="col-span-1 rounded-lg border border-border bg-surface-muted p-6 md:col-span-3 lg:col-span-4">
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-7 w-36 rounded-lg" />
@@ -90,14 +90,14 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Registrations Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-lg bg-muted border border-border overflow-hidden">
+      <div className="col-span-1 overflow-hidden rounded-lg border border-border bg-surface-muted md:col-span-3 lg:col-span-4">
         <div className="flex items-center justify-between p-6 sm:p-6 pb-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-12" />
         </div>
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-3.5 rounded-lg border border-border bg-muted/30">
+            <div key={i} className="rounded-lg border border-border bg-surface-muted/30 p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3 w-16" />

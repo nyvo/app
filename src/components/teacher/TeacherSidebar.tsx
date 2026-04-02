@@ -150,8 +150,8 @@ export const TeacherSidebar = () => {
                     size="sm"
                   />
                   <div className="flex flex-1 flex-col items-start overflow-hidden">
-                    <span className="truncate text-sm font-medium">{profile?.name || currentOrganization?.name || 'Konto'}</span>
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="type-label truncate">{profile?.name || currentOrganization?.name || 'Konto'}</span>
+                    <span className="type-meta truncate text-muted-foreground">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
                   </div>
@@ -164,8 +164,8 @@ export const TeacherSidebar = () => {
                 className="w-[--radix-dropdown-menu-trigger-width]"
               >
                 <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium text-foreground truncate">{profile?.name || currentOrganization?.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+                  <p className="type-label truncate text-foreground">{profile?.name || currentOrganization?.name}</p>
+                  <p className="type-meta truncate text-muted-foreground">{profile?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

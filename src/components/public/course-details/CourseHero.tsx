@@ -24,12 +24,12 @@ export const CourseHero: React.FC<CourseHeroProps> = ({ title, spotsAvailable })
   return (
     <div>
       {availability && (
-        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted text-muted-foreground text-xs font-medium mb-4">
+        <div className="type-meta mb-4 inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-1 text-muted-foreground">
           <span className={`w-1.5 h-1.5 rounded-full ${availability.dotClass}`} />
           {availability.text}
         </div>
       )}
-      <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
+      <h1 className="type-heading-1 text-foreground">
         {title}
       </h1>
     </div>

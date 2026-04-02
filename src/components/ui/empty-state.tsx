@@ -8,7 +8,7 @@ interface EmptyStateProps {
   description?: string
   action?: React.ReactNode
   className?: string
-  variant?: 'default' | 'public'
+  variant?: 'default' | 'public' | 'compact'
 }
 
 /**
@@ -23,27 +23,32 @@ export const EmptyState = React.memo(function EmptyState({
   variant = 'default'
 }: EmptyStateProps) {
   const isPublic = variant === 'public'
+  const isCompact = variant === 'compact'
 
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-12 px-4 text-center',
+        'flex flex-col items-center justify-center px-4 text-center',
+        isCompact ? 'py-8' : 'py-12',
         className
       )}
     >
       {Icon && (
         <div className={cn(
-          'mb-4 rounded-full p-3',
-          isPublic ? 'bg-muted' : 'bg-surface-secondary'
+          'mb-4 flex items-center justify-center rounded-lg border border-border',
+          isCompact ? 'size-10' : 'size-12',
+          isPublic ? 'bg-surface-muted' : 'bg-background'
         )}>
-          <Icon className="h-6 w-6 text-muted-foreground" />
+          <Icon className={cn(isCompact ? 'size-4' : 'size-5', 'text-muted-foreground')} />
         </div>
       )}
-      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+      <h3 className="type-title text-foreground">{title}</h3>
       {description && (
-        <p className="mt-1 text-sm text-muted-foreground max-w-sm">{description}</p>
+        <p className={cn('mt-1 text-muted-foreground', isCompact ? 'type-body-sm max-w-xs' : 'type-body max-w-sm')}>
+          {description}
+        </p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {action && <div className={cn(isCompact ? 'mt-4' : 'mt-6')}>{action}</div>}
     </div>
   )
 })

@@ -31,7 +31,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="font-geist text-xl font-medium text-foreground tracking-tight">
+            <Link to="/" className="type-title text-foreground">
               Ease
             </Link>
             
@@ -39,13 +39,13 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             <nav className="hidden md:flex items-center gap-1" aria-label="Studentnavigasjon">
               <Link
                 to="/student/dashboard"
-                className="px-3 py-2 text-sm font-medium text-foreground bg-muted rounded-lg transition-colors"
+                className="type-label rounded-lg bg-surface-muted px-3 py-2 text-foreground transition-colors"
               >
                 Mine kurs
               </Link>
               <Link
                 to="/student/messages"
-                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors flex items-center gap-1.5"
+                className="type-label flex items-center gap-1.5 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
               >
                 <MessageCircle className="h-4 w-4" />
                 Meldinger
@@ -79,9 +79,9 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5 text-sm">
-                  <p className="font-medium text-foreground">{profile?.name || 'Deltaker'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                <div className="px-2 py-1.5">
+                  <p className="type-label text-foreground">{profile?.name || 'Deltaker'}</p>
+                  <p className="type-meta truncate text-muted-foreground">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/student/profile')} className="cursor-pointer">
@@ -107,7 +107,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       {/* Footer */}
       <footer className="border-t border-border py-6 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-xs text-muted-foreground">
+          <p className="type-meta text-muted-foreground">
             Trenger du hjelp? <a href="mailto:support@ease.no" className="underline hover:text-muted-foreground smooth-transition">Kontakt oss</a>
           </p>
         </div>

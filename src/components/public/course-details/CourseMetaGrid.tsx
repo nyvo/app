@@ -43,10 +43,10 @@ export const CourseMetaGrid: React.FC<CourseMetaGridProps> = ({
       <div className="flex items-start gap-4">
         <Clock className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
         <div>
-          <div className="text-sm font-medium text-foreground">
+          <div className="type-label text-foreground">
             {dateInfo?.dayName}, {dateOnly}
           </div>
-          <div className="text-sm text-muted-foreground mt-1">
+          <div className="type-body mt-1 text-muted-foreground">
             {time}{duration ? ` — ${formatDuration(duration)}` : ''}
           </div>
         </div>
@@ -56,11 +56,11 @@ export const CourseMetaGrid: React.FC<CourseMetaGridProps> = ({
       <div className="flex items-start gap-4">
         <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
         <div>
-          <div className="text-sm font-medium text-foreground">
+          <div className="type-label text-foreground">
             {venueName}
           </div>
           {venueAddress && (
-            <div className="text-sm text-muted-foreground mt-1">
+            <div className="type-body mt-1 text-muted-foreground">
               {venueAddress}
             </div>
           )}
