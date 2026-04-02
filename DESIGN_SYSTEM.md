@@ -337,16 +337,6 @@ Examples:
 - Don’t use large scale transforms or shadow jumps.
 - Don’t animate high-frequency actions just because motion is available.
 
-### Do / Don’t
-
-- Do use `6px`, `8px`, and `12px` intentionally by role.
-- Do keep dashboard spacing tighter than public-page spacing.
-- Do let controls share one baseline rhythm.
-- Don’t mix `rounded-md`, `rounded-lg`, `rounded-xl`, and `rounded-2xl` randomly.
-- Don’t leave old Shadcn control defaults in place if they fight the system.
-
----
-
 ## Surface Basics
 
 ### Principles
@@ -407,6 +397,489 @@ The section header should not decide the page layout. It only gives the content 
 - Don’t turn every block into a featured card.
 - Don’t treat bento layouts as a system rule.
 - Don’t invent new surface types without a clear structural role.
+
+---
+
+## Page Patterns
+
+### Principles
+
+- Page patterns should stay structural, not decorative.
+- Reuse the same page-shell logic across admin views before inventing new layouts.
+- Keep page patterns broad enough that content can evolve without rewriting the system.
+- Let density change by page type, not by arbitrary styling.
+
+### List Page
+
+Use this for operational overview pages built around filtering, scanning, and sectioned lists.
+
+Structure:
+
+- page header
+- tool row
+- primary section
+- secondary section when needed
+
+Rules:
+
+- The page header sets purpose and primary action.
+- Search and filters belong in a dedicated tool row below the header.
+- The primary section should contain the current or most important content set.
+- Secondary sections should feel quieter than the primary section.
+
+Examples:
+
+- `CoursesPage`
+- `SignupsPage`
+
+### Split View
+
+Use this for master-detail workflows where the user scans a list and works inside a selected detail pane.
+
+Structure:
+
+- page header
+- contained split-view shell
+- list pane
+- detail pane
+
+Rules:
+
+- The split-view shell should be one clear surface, not many nested cards.
+- The list pane should optimize for scanning and quick switching.
+- The detail pane should hold the deeper context and action area.
+- Empty states should stay inside the relevant pane, not break the overall layout.
+
+Examples:
+
+- `MessagesPage`
+
+### Schedule View
+
+Use this for calendar-driven pages where navigation and temporal context are part of the primary workflow.
+
+Structure:
+
+- page header
+- contained schedule shell
+- internal control bar
+- calendar or schedule content area
+
+Rules:
+
+- Keep the page header outside the schedule shell.
+- Put view-specific controls inside the schedule shell, close to the calendar content.
+- Use compact density inside schedule content when scanning matters.
+- Avoid turning the schedule page into a dashboard of unrelated cards.
+
+Examples:
+
+- `SchedulePage`
+
+### Settings / Profile
+
+Use this for settings, profile, and account-management flows.
+
+Structure:
+
+- page header
+- stacked sections
+- optional supporting copy per section
+- one primary form or content surface per section
+
+Rules:
+
+- Default to calm density.
+- Let supporting explanation sit outside or above the main surface when possible.
+- Avoid mixing too many form sections into a single large container.
+- Keep the page readable before making it compact.
+
+Examples:
+
+- `TeacherProfilePage`
+
+### Detail With Tabs
+
+Use this for deeper management pages where one entity has multiple subviews.
+
+Structure:
+
+- page header
+- optional action row
+- tab navigation
+- tab content surface
+
+Rules:
+
+- The page header defines the entity and page-level actions.
+- Tabs separate subviews, not page identity.
+- Tab content should reuse the existing section and surface rules.
+- Do not make every tab feel like a new page layout system.
+
+Examples:
+
+- `CourseDetailPage`
+
+### Do / Don’t
+
+- Do reuse existing page patterns before inventing a new one.
+- Do let page type decide density and structure.
+- Do keep page headers outside the main content surface.
+- Don’t treat a one-off layout as a new system pattern too early.
+- Don’t let every page solve header, filters, and sections differently.
+- Don’t make internal tab content ignore the main surface rules.
+
+---
+
+## Data Display Patterns
+
+### Principles
+
+- Data-display patterns should optimize for scanning before decoration.
+- Tooling, summaries, and rows should support the page pattern instead of competing with it.
+- Use the smallest pattern that fits the job.
+- Keep stats, tables, and list rows visually calm even when the content is operational.
+
+### Tool Row
+
+Use this for search, filters, segmented controls, and lightweight bulk actions.
+
+Structure:
+
+- search first
+- filters second
+- secondary actions last
+
+Rules:
+
+- Place the tool row directly below the page header.
+- Keep the row in one clear band before the primary section.
+- Prefer wrapping cleanly on smaller screens over squeezing controls too tightly.
+- Do not split related search and filter controls into separate random blocks.
+
+Examples:
+
+- `CoursesPage`
+- `SignupsPage`
+
+### Stats Row
+
+Use this for compact operational summaries near the top of a page or section.
+
+Structure:
+
+- short label
+- strong value
+- optional short supporting context
+
+Rules:
+
+- Keep stats compact and easy to compare.
+- Use them for orientation, not storytelling.
+- Avoid making every stat tile a featured card.
+- Prefer one calm row of summaries over many isolated widgets.
+
+Examples:
+
+- dashboard summary blocks
+- quick operational counts on overview pages
+
+### Operational List
+
+Use this for grouped rows, expandable rows, or admin lists where scanning matters more than rich layout.
+
+Structure:
+
+- list shell
+- repeated rows
+- optional grouped headers
+- optional inline expansion
+
+Rules:
+
+- Rows should read clearly from title to metadata to status.
+- Keep expansion content visually connected to the parent row.
+- Use compact density inside the row while keeping the outer section calm.
+- Prefer a single list surface over many small nested cards.
+
+Examples:
+
+- `CourseListView`
+- `SignupGroup`
+- dashboard list sections
+
+### Table Shell
+
+Use this when the content is truly tabular and benefits from aligned columns.
+
+Structure:
+
+- section header outside
+- one table surface
+- clear header row
+- predictable body rows
+
+Rules:
+
+- Only use a table when column alignment improves scanning.
+- Keep table chrome restrained.
+- Use compact density inside rows, not around the whole page.
+- Empty states and loading states should stay inside the table shell.
+
+Examples:
+
+- participant lists
+- public course table
+
+### Empty State
+
+Use shared empty-state patterns instead of custom one-off placeholders.
+
+Rules:
+
+- Choose the density by context:
+  - `default` for page-level empty states
+  - `compact` for card and section-level empty states
+  - `public` for external-facing flows
+- Keep the hierarchy consistent: icon, title, body, action.
+- Empty states should support the surrounding pattern, not reset it.
+
+Examples:
+
+- `EmptyState`
+- `CoursesEmptyState`
+- `SmartSignupsView` empty states
+
+### Do / Don’t
+
+- Do keep tool rows, stats, and lists subordinate to the page structure.
+- Do use operational lists for scanning-heavy content before reaching for tables.
+- Do keep empty states inside the shell they belong to.
+- Don’t turn every summary into a standalone tile grid.
+- Don’t use tables when a structured list communicates the content more clearly.
+- Don’t break page rhythm by placing search, filters, and empty states in unrelated containers.
+
+---
+
+## Navigation Patterns
+
+### Principles
+
+- Navigation should orient the user before it decorates the UI.
+- Use the smallest navigation pattern that matches the scope of the decision.
+- Keep global, local, and contextual navigation clearly separated.
+- Selected states should be calm, obvious, and structurally consistent.
+
+### Sidebar Navigation
+
+Use this for primary product navigation across the teacher/admin app shell.
+
+Structure:
+
+- app-level destinations
+- optional grouped sections
+- utility or account actions in the footer
+
+Rules:
+
+- The sidebar owns product-level movement between major areas.
+- Items should scan quickly and feel stable across pages.
+- Keep labels short and clear.
+- Do not overload the sidebar with page-level actions or temporary filters.
+
+Examples:
+
+- teacher app shell sidebar
+
+### Tabs
+
+Use this for sibling subviews inside one page or one entity.
+
+Structure:
+
+- tab list
+- tab triggers
+- tab content
+
+Rules:
+
+- Tabs switch subviews, not page identity.
+- Keep tab labels short and parallel.
+- Use tabs when the user stays in the same object or workflow.
+- Do not use tabs where a separate page pattern would be clearer.
+
+Examples:
+
+- `CourseDetailPage`
+- student dashboard tabs
+
+### Filter Tabs
+
+Use this for local content filtering inside a page section or operational view.
+
+Structure:
+
+- compact tab row
+- filter options
+- shared content region
+
+Rules:
+
+- Filter tabs change the view of the same content set.
+- Keep them lightweight and subordinate to the page header.
+- Prefer filter tabs over full navigation when the scope is local.
+- Do not treat filter tabs as if they were primary navigation.
+
+Examples:
+
+- `CourseDetailPage` subview filters
+- compact status or mode switching
+
+### Breadcrumbs
+
+Use this for hierarchical context only when the user benefits from seeing the parent path.
+
+Rules:
+
+- Breadcrumbs provide location, not primary navigation.
+- Keep them quiet and secondary to the page header.
+- Use them on deeper management pages, not simple top-level pages.
+- Omit them when the path adds noise instead of clarity.
+
+Examples:
+
+- `CreateCoursePage`
+- `CourseDetailPage`
+
+### Contextual Actions
+
+Use this for actions that belong to the current page, section, or selected item.
+
+Rules:
+
+- Page-level actions belong in the page header or tool row.
+- Section-level actions belong near the relevant section header.
+- Item-level actions belong inside the item or detail pane.
+- Do not hide basic navigation inside action patterns.
+
+Examples:
+
+- page CTAs in headers
+- section actions beside list headings
+- row-level actions in detail tabs
+
+### Do / Don’t
+
+- Do use the sidebar for major product areas and tabs for sibling subviews.
+- Do use filter tabs for local state changes inside the same page.
+- Do keep breadcrumbs secondary and quiet.
+- Don’t use tabs and breadcrumbs to solve the same problem.
+- Don’t overload the sidebar with contextual actions.
+- Don’t let local filters masquerade as global navigation.
+
+---
+
+## Feedback Patterns
+
+### Principles
+
+- Feedback should clarify state, not interrupt by default.
+- Use the lightest pattern that communicates the issue or outcome.
+- Keep success states quieter than error and warning states.
+- Prefer inline or contextual feedback before reaching for global notifications.
+
+### Inline Validation
+
+Use this for field-specific problems, hints, and validation messages.
+
+Rules:
+
+- Keep the message directly tied to the relevant field.
+- Show errors in place, below or adjacent to the control.
+- Use calm helper text when there is no problem.
+- Do not force the user to interpret a global error for a local field issue.
+
+Examples:
+
+- auth form fields
+- image upload validation
+- date picker validation
+
+### Inline Status
+
+Use this for row-level or item-level state inside lists, tables, cards, and schedule items.
+
+Rules:
+
+- Inline status should support scanning without dominating the row.
+- Use badges or indicators for concise state, not explanatory paragraphs.
+- Silence “healthy” states when density matters and exceptions are the focus.
+- Keep exception states visible and consistent.
+
+Examples:
+
+- `PaymentBadge`
+- `StatusBadge`
+- `StatusIndicator`
+
+### Error State
+
+Use this when a section, pane, or page cannot load or complete its intended task.
+
+Rules:
+
+- Keep the error inside the shell it belongs to whenever possible.
+- Provide a retry action when recovery is realistic.
+- Use the shared error-state pattern instead of custom ad hoc warning blocks.
+- Reserve stronger visual emphasis for blocking errors, not small warnings.
+
+Examples:
+
+- `ErrorState`
+- schedule loading errors
+- contained pane failures
+
+### Toasts
+
+Use this for transient system feedback after actions or async outcomes.
+
+Rules:
+
+- Use toasts for confirmation, completion, or unexpected failure that is not tied to one visible field.
+- Keep toast copy short and specific.
+- Do not rely on toasts for primary guidance or required instructions.
+- Avoid stacking many toasts for one workflow.
+
+Examples:
+
+- OAuth/auth outcomes
+- copy/share actions
+- async completion feedback
+
+### Alerts And Banners
+
+Use this for important contextual feedback that should remain visible longer than a toast.
+
+Rules:
+
+- Use alerts inside the relevant page or form context.
+- Use banners sparingly for broader page-level notices.
+- Keep them informative and actionable.
+- Do not turn every warning into a full-width banner.
+
+Examples:
+
+- blocking signup/auth errors
+- setup-complete or onboarding notices
+
+### Do / Don’t
+
+- Do prefer inline and contextual feedback before global interruption.
+- Do keep row-level statuses concise and scannable.
+- Do use shared error and empty-state components.
+- Don’t use a toast for every successful click.
+- Don’t show loud success UI where silence is clearer.
+- Don’t invent new feedback styles when a shared badge, alert, or error state already fits.
 
 ---
 

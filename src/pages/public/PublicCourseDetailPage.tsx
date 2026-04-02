@@ -6,6 +6,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { checkCourseAvailability, createSignup, sendSignupConfirmationEmail } from '@/services/signups';
 import { createPaymentIntent } from '@/services/checkout';
@@ -328,37 +329,44 @@ const PublicCourseDetailPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center" role="status" aria-live="polite">
-        <Spinner size="xl" aria-hidden="true" />
+      <div className="flex min-h-screen w-full items-center justify-center bg-background" role="status" aria-live="polite">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Spinner size="xl" aria-hidden="true" />
+          <p className="type-body text-muted-foreground">Laster kurs</p>
+        </div>
         <span className="sr-only">Laster kurs</span>
       </div>
     );
   }
 
-  // Error state
+  const backUrl = slug ? `/studio/${slug}` : '/';
+
   if (fetchError || !course) {
-    const backUrl = slug ? `/studio/${slug}` : '/';
     return (
       <div className="min-h-screen w-full bg-background">
         <header className="border-b border-border bg-background">
-          <div className="mx-auto flex max-w-4xl items-center justify-between px-6 h-16">
-            <Link to={backUrl} className="flex items-center gap-2">
-              <span className="type-eyebrow text-foreground">Ease</span>
+          <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
+            <Link to={backUrl} className="type-title text-foreground">
+              Ease
             </Link>
           </div>
         </header>
-        <main className="pt-24 px-6">
-          <div className="mx-auto max-w-3xl">
-            <Card className="border-destructive/30 p-12 text-center">
-              <p className="type-body mb-4 text-destructive">{fetchError || 'Kurset ble ikke funnet'}</p>
-              <Button asChild variant="outline" size="compact">
-                <Link to={backUrl}>
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Tilbake til kurs
-                </Link>
-              </Button>
-            </Card>
-          </div>
+        <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+          <Card className="border-border bg-surface">
+            <EmptyState
+              title={fetchError || 'Kurset ble ikke funnet'}
+              description="Siden kan være flyttet, utilgjengelig eller ikke lenger aktiv."
+              variant="public"
+              action={
+                <Button asChild variant="outline" size="compact">
+                  <Link to={backUrl}>
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Tilbake til kurs
+                  </Link>
+                </Button>
+              }
+            />
+          </Card>
         </main>
       </div>
     );
@@ -382,8 +390,8 @@ const PublicCourseDetailPage = () => {
       />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+      <main className="mx-auto max-w-5xl px-6 py-8 md:py-16">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-12">
           {/* Left Column — Course Info (5/12), hidden on mobile during payment */}
           <div className={`md:col-span-5 space-y-12 ${clientSecret ? 'hidden md:block' : ''}`}>
             {/* Hero + Description grouped tightly */}

@@ -1,13 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarPlus, CalendarDays } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { PageLoader } from '@/components/ui/page-loader';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
+import { pageVariants, pageTransition } from '@/lib/motion';
 import {
   getOsloTime,
   getWeekNumber,
@@ -219,19 +222,24 @@ export const SchedulePage = () => {
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-background h-full">
+    <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
       <MobileTeacherHeader title="Timeplan" />
 
-      <ScheduleHeader
-        weekNumber={displayedWeekNumber}
-        displayedMonday={displayedMonday}
-        displayedSunday={displayedSunday}
-        weekOffset={weekOffset}
-        onPreviousWeek={goToPreviousWeek}
-        onNextWeek={goToNextWeek}
-        onGoToToday={goToCurrentWeek}
-        hasCourses={!isFullyEmpty}
-      />
+      <motion.header
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        transition={pageTransition}
+      >
+        <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
+          <div className="mb-8">
+            <h1 className="type-heading-1 text-foreground">Timeplan</h1>
+            <p className="type-body mt-1 text-muted-foreground">
+              Planlegg uken, følg kommende økter og få oversikt over kapasitet.
+            </p>
+          </div>
+        </div>
+      </motion.header>
 
       {/* Full empty: no courses at all */}
       {isFullyEmpty ? (
@@ -250,106 +258,138 @@ export const SchedulePage = () => {
           }
         />
       ) : isMobile ? (
-        <MobileDayView
-          weekDays={weekDays}
-          selectedDayIndex={selectedDayIndex}
-          onDaySelect={setSelectedDayIndex}
-          events={currentEvents}
-          isLoading={isLoading}
-          error={error}
-          onRetry={loadScheduleData}
-          hasEventsThisWeek={hasEventsThisWeek}
-          hasCourses={courses.length > 0}
-        />
+        <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
+          <Card className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl">
+            <ScheduleHeader
+              weekNumber={displayedWeekNumber}
+              displayedMonday={displayedMonday}
+              displayedSunday={displayedSunday}
+              weekOffset={weekOffset}
+              onPreviousWeek={goToPreviousWeek}
+              onNextWeek={goToNextWeek}
+              onGoToToday={goToCurrentWeek}
+              hasCourses={!isFullyEmpty}
+            />
+            <MobileDayView
+              weekDays={weekDays}
+              selectedDayIndex={selectedDayIndex}
+              onDaySelect={setSelectedDayIndex}
+              events={currentEvents}
+              isLoading={isLoading}
+              error={error}
+              onRetry={loadScheduleData}
+              hasEventsThisWeek={hasEventsThisWeek}
+              hasCourses={courses.length > 0}
+            />
+          </Card>
+        </div>
       ) : (
         /* Desktop week view */
-        <div className="flex-1 bg-background relative flex flex-col overflow-auto">
-          {isLoading && (
-            <PageLoader variant="overlay" message="Laster timeplan" />
-          )}
+        <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
+          <Card className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl">
+            <ScheduleHeader
+              weekNumber={displayedWeekNumber}
+              displayedMonday={displayedMonday}
+              displayedSunday={displayedSunday}
+              weekOffset={weekOffset}
+              onPreviousWeek={goToPreviousWeek}
+              onNextWeek={goToNextWeek}
+              onGoToToday={goToCurrentWeek}
+              hasCourses={!isFullyEmpty}
+            />
 
-          {error && !isLoading ? (
-            <DesktopError error={error} onRetry={loadScheduleData} />
-          ) : !isLoading && (
-            <>
-              {/* Sticky day headers */}
-              <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background min-w-[1040px]">
-                <div className="border-r border-border p-3 bg-background" />
-                {weekDays.map((day) => (
-                  <div
-                    key={day.name}
-                    className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-background/50' : ''} ${day.isWeekend ? 'bg-background' : ''}`}
-                  >
-                    <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {day.name}
-                    </span>
-                    <span
-                      className={`type-label flex size-7 items-center justify-center rounded-full ${
-                        day.isToday
-                          ? 'bg-primary text-primary-foreground'
-                          : day.isWeekend
-                          ? 'text-muted-foreground group-hover:bg-surface-muted'
-                          : 'text-muted-foreground group-hover:bg-surface-muted'
-                      }`}
-                    >
-                      {day.date}
-                    </span>
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background">
+              {isLoading && (
+                <PageLoader variant="overlay" message="Laster timeplan" />
+              )}
+
+              {error && !isLoading ? (
+                <DesktopError error={error} onRetry={loadScheduleData} />
+              ) : !isLoading && (
+                <>
+                  {/* Sticky day headers */}
+                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
+                    <div className="border-r border-border bg-background p-3" />
+                    {weekDays.map((day) => (
+                      <div
+                        key={day.name}
+                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-background/50' : ''} ${day.isWeekend ? 'bg-background' : ''}`}
+                      >
+                        <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          {day.name}
+                        </span>
+                        <span
+                          className={`type-label flex size-7 items-center justify-center rounded-full ${
+                            day.isToday
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground group-hover:bg-surface-muted'
+                          }`}
+                        >
+                          {day.date}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Grid content */}
-              <div className="relative grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] min-w-[1040px] flex-1">
-                {/* Empty week overlay */}
-                {!hasEventsThisWeek && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <div className="pointer-events-auto text-center">
-                      <p className="type-body text-muted-foreground">Ingen timer denne uken</p>
+                  {/* Grid content */}
+                  <div className="relative grid min-w-[1040px] flex-1 grid-cols-[60px_repeat(7,minmax(140px,1fr))]">
+                    {/* Empty week overlay */}
+                    {!hasEventsThisWeek && (
+                      <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+                        <div className="pointer-events-auto">
+                          <EmptyState
+                            icon={CalendarDays}
+                            title="Ingen timer denne uken"
+                            description="Ingen planlagte timer denne uken."
+                            variant="compact"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Current time indicator */}
+                    {showTimeIndicator && (
+                      <div
+                        className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
+                        style={{ top: `${currentTimePosition}px` }}
+                        aria-hidden="true"
+                      >
+                        <div className="type-meta w-[60px] pr-2 text-right text-primary">
+                          {currentTimeString}
+                        </div>
+                        <div className="h-px flex-1 bg-primary opacity-50" />
+                        <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary" />
+                      </div>
+                    )}
+
+                    {/* Time column */}
+                    <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
+                      {TIME_SLOTS.map((time) => (
+                        <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
+                          {time}
+                        </div>
+                      ))}
                     </div>
+
+                    {/* Day columns */}
+                    {weekDays.map((day, index) => (
+                      <DayColumn
+                        key={day.name}
+                        isToday={day.isToday}
+                        isWeekend={day.isWeekend}
+                        events={currentEvents[index] || []}
+                      />
+                    ))}
                   </div>
-                )}
-
-                {/* Current time indicator */}
-                {showTimeIndicator && (
-                  <div
-                    className="absolute left-0 right-0 z-10 flex items-center pointer-events-none"
-                    style={{ top: `${currentTimePosition}px` }}
-                    aria-hidden="true"
-                  >
-                    <div className="type-meta w-[60px] pr-2 text-right text-primary">
-                      {currentTimeString}
-                    </div>
-                    <div className="h-px flex-1 bg-primary opacity-50" />
-                    <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary" />
-                  </div>
-                )}
-
-                {/* Time column */}
-                <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
-                  {TIME_SLOTS.map((time) => (
-                    <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
-                      {time}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Day columns */}
-                {weekDays.map((day, index) => (
-                  <DayColumn
-                    key={day.name}
-                    isToday={day.isToday}
-                    isWeekend={day.isWeekend}
-                    events={currentEvents[index] || []}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+                </>
+              )}
+            </div>
+          </Card>
         </div>
       )}
 
       <EmptyStateToggle />
-    </div>
+    </main>
   );
 };
 

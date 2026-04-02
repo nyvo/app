@@ -6,11 +6,13 @@ import {
   User,
   LogOut,
   BookOpen,
+  Search,
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SearchInput } from '@/components/ui/search-input';
+import { EmptyState } from '@/components/ui/empty-state';
 import { PublicCourseTable } from '@/components/public/PublicCourseTable';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
@@ -211,81 +213,97 @@ const PublicCoursesPage = () => {
 
         {/* Organization Content */}
         {organization && !loading && !error && (
-          <>
+          <div className="space-y-12">
             {/* Hero Section - Studio Info */}
-            <header className="mb-12 flex items-start gap-6">
+            <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+              <div className="flex items-start gap-6">
               {/* Logo */}
-              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-lg shrink-0">
-                {organization.logo_url ? (
-                  <img
-                    src={organization.logo_url}
-                    alt={organization.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary border border-primary/70">
-                    <span className="type-display-2 text-primary-foreground">
-                      {organization.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </div>
+                <div className="h-20 w-20 overflow-hidden rounded-lg shrink-0 md:h-24 md:w-24">
+                  {organization.logo_url ? (
+                    <img
+                      src={organization.logo_url}
+                      alt={organization.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-lg border border-primary/70 bg-primary">
+                      <span className="type-display-2 text-primary-foreground">
+                        {organization.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
               {/* Text Info */}
-              <div className="space-y-2 flex-1 min-w-0">
-                <h1 className="type-heading-1 text-foreground">
-                  {organization.name}
-                </h1>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <h1 className="type-heading-1 text-foreground">
+                    {organization.name}
+                  </h1>
 
-                {organization.city && (
-                  <div className="type-body flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                    {organization.city}
+                  {organization.city && (
+                    <div className="type-body flex items-center gap-1.5 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      {organization.city}
+                    </div>
+                  )}
+
+                  {organization.description && (
+                    <p className="type-body max-w-2xl pt-1 leading-relaxed text-muted-foreground">
+                      {organization.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {courses.length > 2 && (
+                <Card className="border-border bg-surface-muted p-5">
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="type-title text-foreground">Finn riktig kurs</p>
+                      <p className="type-body-sm text-muted-foreground">
+                        Søk etter kurs, instruktør eller sted.
+                      </p>
+                    </div>
+                    <SearchInput
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      placeholder="Søk etter kurs, instruktør eller sted"
+                      aria-label="Søk etter kurs"
+                    />
                   </div>
-                )}
-
-                {organization.description && (
-                  <p className="type-body max-w-2xl pt-1 text-muted-foreground leading-relaxed">
-                    {organization.description}
-                  </p>
-                )}
-              </div>
+                </Card>
+              )}
             </header>
-
-            {/* Search */}
-            {courses.length > 2 && (
-              <div className="max-w-md mb-10">
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Søk etter kurs, instruktør eller sted"
-                  aria-label="Søk etter kurs"
-                />
-              </div>
-            )}
 
             {/* Empty State */}
             {isEmpty && (
-              <Card className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="type-title text-foreground">
-                  {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
-                </p>
-                <p className="type-body mt-1 text-muted-foreground">
-                  {hasCoursesButNoResults
-                    ? 'Prøv et annet søkeord.'
-                    : 'Det er ingen planlagte kurs for øyeblikket.'}
-                </p>
+              <Card className="border-border bg-surface">
+                <EmptyState
+                  icon={hasCoursesButNoResults ? Search : BookOpen}
+                  title={hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
+                  description={
+                    hasCoursesButNoResults
+                      ? 'Prøv et annet søkeord.'
+                      : 'Det er ingen planlagte kurs for øyeblikket.'
+                  }
+                  variant="public"
+                />
               </Card>
             )}
 
             {/* Course Lists — narrower container within the wider page */}
-            <div className="max-w-4xl mx-auto">
+            <div className="mx-auto max-w-4xl">
               {/* Kursrekker Section */}
               {!isEmpty && kursrekker.length > 0 && (
-                <section className="mb-12">
-                  <h2 className="type-title mb-6 text-foreground">
-                    Kursrekker
-                  </h2>
+                <section className="space-y-5">
+                  <div className="space-y-1">
+                    <h2 className="type-title text-foreground">
+                      Kursrekker
+                    </h2>
+                    <p className="type-body-sm text-muted-foreground">
+                      Faste kurs over flere uker.
+                    </p>
+                  </div>
                   <PublicCourseTable
                     courses={kursrekker}
                     studioSlug={slug || ''}
@@ -296,10 +314,15 @@ const PublicCoursesPage = () => {
 
               {/* Arrangementer Section */}
               {!isEmpty && arrangementer.length > 0 && (
-                <section className="mb-12">
-                  <h2 className="type-title mb-6 text-foreground">
-                    Arrangementer
-                  </h2>
+                <section className="space-y-5 pt-12">
+                  <div className="space-y-1">
+                    <h2 className="type-title text-foreground">
+                      Arrangementer
+                    </h2>
+                    <p className="type-body-sm text-muted-foreground">
+                      Enkeltkurs, workshops og kommende arrangementer.
+                    </p>
+                  </div>
                   <PublicCourseTable
                     courses={arrangementer}
                     studioSlug={slug || ''}
@@ -308,7 +331,7 @@ const PublicCoursesPage = () => {
                 </section>
               )}
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>

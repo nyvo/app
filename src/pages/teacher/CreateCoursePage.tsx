@@ -362,13 +362,16 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
-        <MobileTeacherHeader title="Opprett kurs" />
+    <div className="flex min-h-full flex-1 flex-col bg-background">
+      <MobileTeacherHeader title="Opprett kurs" />
 
-        {/* Header with Breadcrumbs */}
-        <header className="bg-background border-b border-border shrink-0">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
-            <Breadcrumb className="mb-2">
+      <div
+        ref={contentScrollRef}
+        className="custom-scrollbar flex-1 overflow-y-auto"
+      >
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
+          <header className="space-y-3">
+            <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
@@ -381,29 +384,26 @@ const CreateCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="type-heading-1 text-foreground">
-              Opprett nytt kurs
-            </h1>
-            <p className="type-body mt-1 text-muted-foreground">
-              Sett opp et nytt kurs eller arrangement.
-            </p>
-          </div>
-        </header>
+            <div className="space-y-1">
+              <h1 className="type-heading-1 text-foreground">
+                Opprett nytt kurs
+              </h1>
+              <p className="type-body text-muted-foreground">
+                Sett opp et nytt kurs eller arrangement.
+              </p>
+            </div>
+          </header>
 
-        {/* Stepper + Form */}
-        <div
-          ref={contentScrollRef}
-          className="flex-1 overflow-y-auto custom-scrollbar"
-        >
-              <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-                <Stepper
-                  steps={CREATE_COURSE_STEPS}
-                  currentStep={currentStep}
-                  onStepSelect={(index) => index < currentStep && setCurrentStep(index)}
-                  className="mb-8"
-                />
-              </div>
-              <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-10">
+          <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
+            <Stepper
+              steps={CREATE_COURSE_STEPS}
+              currentStep={currentStep}
+              onStepSelect={(index) => index < currentStep && setCurrentStep(index)}
+            />
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface p-6 sm:p-8">
+            <div className="pb-2">
                 {currentStep === 0 && (
               <motion.div
                 key="step-0"
@@ -943,12 +943,14 @@ const CreateCoursePage = () => {
               </section>
               </motion.div>
             )}
-              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <footer className="bg-background/80 backdrop-blur-lg border-t border-border py-4 px-4 sm:px-6 shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <div className="max-w-2xl mx-auto flex flex-col gap-3">
+      {/* Footer */}
+      <footer className="shrink-0 border-t border-border bg-background/80 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg sm:px-6">
+        <div className="mx-auto flex max-w-3xl flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <p className="type-body text-center text-destructive">
@@ -1038,8 +1040,7 @@ const CreateCoursePage = () => {
                   )}
             </div>
           </div>
-        </footer>
-
+      </footer>
     </div>
   );
 };

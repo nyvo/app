@@ -629,12 +629,17 @@ const CourseDetailPage = () => {
 
   return (
     <>
-    <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
+    <main className="flex-1 flex min-h-screen flex-col overflow-y-auto bg-background">
         <MobileTeacherHeader title="Kurs" />
 
-        {/* Page Content — integrated layout, no separate white header */}
-        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-6xl mx-auto w-full">
+        <motion.header
+          variants={tabVariants}
+          initial="initial"
+          animate="animate"
+          transition={tabTransition}
+        >
+          <div className="px-4 pb-0 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+            <div className="mx-auto w-full max-w-6xl">
 
             {/* Alert Banners */}
             {courseData?.status === 'draft' && !currentOrganization?.stripe_onboarding_complete && (
@@ -774,6 +779,13 @@ const CourseDetailPage = () => {
                 )}
               </div>
             </div>
+            </div>
+          </div>
+        </motion.header>
+
+        {/* Page Content */}
+        <div className="flex-1 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-10">
+          <div className="mx-auto w-full max-w-6xl">
 
             {/* Tabs */}
             <div className="mb-8">
@@ -931,7 +943,7 @@ const CourseDetailPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Add Participant Dialog */}
       <AddParticipantDialog

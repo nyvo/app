@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Infinity } from 'lucide-react'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
 import { cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
 import type { AuthContext } from '@/lib/auth-routes'
 
 interface AuthLayoutProps {
@@ -52,37 +53,35 @@ export function AuthLayout({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-sm mx-auto py-12">
-        {customContent ? (
-          <motion.div
-            variants={authPageVariants}
-            initial="initial"
-            animate="animate"
-            transition={authPageTransition}
-            className="w-full flex flex-col items-center"
-          >
-            {children}
-          </motion.div>
-        ) : (
-          <motion.div
-            variants={authPageVariants}
-            initial="initial"
-            animate="animate"
-            transition={authPageTransition}
-            className="w-full flex flex-col items-center"
-          >
-            <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="type-heading-1 text-foreground">
-                {title}
-              </h1>
-              {subtitle && (
-                <p className="type-body text-muted-foreground">{subtitle}</p>
-              )}
-            </div>
+      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">
+        <motion.div
+          variants={authPageVariants}
+          initial="initial"
+          animate="animate"
+          transition={authPageTransition}
+          className="w-full max-w-md"
+        >
+          <Card className="border-border bg-surface p-6 sm:p-8">
+            {customContent ? (
+              <div className="flex flex-col items-center">
+                {children}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className="mb-8 w-full space-y-2 text-center">
+                  <h1 className="type-heading-1 text-foreground">
+                    {title}
+                  </h1>
+                  {subtitle && (
+                    <p className="type-body text-muted-foreground">{subtitle}</p>
+                  )}
+                </div>
 
-            {children}
-          </motion.div>
-        )}
+                {children}
+              </div>
+            )}
+          </Card>
+        </motion.div>
       </main>
 
       {/* Footer */}

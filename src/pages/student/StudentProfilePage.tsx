@@ -49,18 +49,18 @@ const StudentProfilePage = () => {
 
   return (
     <>
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
+      <div className="mx-auto max-w-3xl space-y-8">
+        <div className="space-y-1">
           <h1 className="type-heading-1 text-foreground">
             Min profil
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="type-body text-muted-foreground">
             Kontoinformasjon
           </p>
         </div>
 
-        <Card className="overflow-hidden">
-          <div className="p-6 space-y-6">
+        <Card className="overflow-hidden border-border bg-surface">
+          <div className="space-y-8 p-6 sm:p-8">
 
             {/* Name */}
             <div className="flex items-start gap-4">
@@ -134,7 +134,7 @@ const StudentProfilePage = () => {
           </div>
 
           {isDirty && (
-            <div className="px-6 py-4 border-t border-border flex justify-end">
+            <div className="flex justify-end border-t border-border bg-surface-muted/50 px-6 py-4 sm:px-8">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}

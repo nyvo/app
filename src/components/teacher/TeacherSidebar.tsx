@@ -155,9 +155,9 @@ export const TeacherSidebar = () => {
                     src={profile?.avatar_url}
                     size="sm"
                   />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{profile?.name || currentOrganization?.name || 'Konto'}</span>
-                    <span className="truncate text-xs text-muted-foreground">
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="type-label-sm truncate text-foreground">{profile?.name || currentOrganization?.name || 'Konto'}</span>
+                    <span className="type-meta truncate text-muted-foreground">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
                   </div>
@@ -171,15 +171,15 @@ export const TeacherSidebar = () => {
                 className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
               >
                 <DropdownMenuLabel className="p-0 font-normal">
-                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left">
                     <UserAvatar
                       name={profile?.name}
                       src={profile?.avatar_url}
                       size="sm"
                     />
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">{profile?.name || currentOrganization?.name}</span>
-                      <span className="truncate text-xs">{profile?.email}</span>
+                    <div className="grid flex-1 text-left leading-tight">
+                      <span className="type-label-sm truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
+                      <span className="type-meta truncate text-muted-foreground">{profile?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

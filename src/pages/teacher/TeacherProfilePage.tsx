@@ -389,28 +389,37 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background h-full flex flex-col">
+    <main className="flex-1 min-h-screen overflow-y-auto bg-background">
         <MobileTeacherHeader title="Innstillinger" />
+
+        <motion.header
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          transition={pageTransition}
+        >
+          <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-8">
+                  <h1 className="type-heading-1 text-foreground">
+                      Innstillinger
+                  </h1>
+                  <p className="type-body mt-1 text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
+              </div>
+            </div>
+          </div>
+        </motion.header>
 
         <motion.div
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 pb-24"
+          className="px-6 pb-24 lg:px-8"
         >
-
-            {/* Header Section */}
-            <header className="mb-8">
-                <h1 className="type-heading-1 mb-2 text-foreground">
-                    Innstillinger
-                </h1>
-                <p className="type-body text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
-            </header>
-
-            <div className="divide-y divide-border">
+          <div className="mx-auto max-w-5xl space-y-10">
                   {/* Personlig informasjon */}
-                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pb-10">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Personlig informasjon</h2>
                       <p className="type-body mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
@@ -501,7 +510,7 @@ const TeacherProfilePage = () => {
                   </section>
 
                   {/* Konto & Sikkerhet */}
-                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Konto & Sikkerhet</h2>
                       <p className="type-body mt-1 text-muted-foreground">Betalinger, passord og sikkerhet.</p>
@@ -699,7 +708,7 @@ const TeacherProfilePage = () => {
                   </section>
 
                   {/* E-postvarslinger */}
-                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">E-postvarslinger</h2>
                       <p className="type-body mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
@@ -760,7 +769,7 @@ const TeacherProfilePage = () => {
                   </section>
 
                   {/* Slett konto */}
-                  <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Slett konto</h2>
                       <p className="type-body mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
@@ -814,7 +823,7 @@ const TeacherProfilePage = () => {
                           </div>
                       </Card>
                   </section>
-            </div>
+          </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (
@@ -832,7 +841,7 @@ const TeacherProfilePage = () => {
             )}
 
         </motion.div>
-    </div>
+    </main>
   );
 };
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -113,27 +114,35 @@ const StudentMessagesPage = () => {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-8 space-y-1">
         <h1 className="type-heading-1 text-foreground">Meldinger</h1>
-        <p className="text-muted-foreground mt-1">Kommuniser med instruktørene dine</p>
+        <p className="type-body text-muted-foreground">Kommuniser med instruktørene dine</p>
       </div>
 
-      <Card className="overflow-hidden flex h-[calc(100vh-280px)] min-h-[400px]">
+      <Card className="flex min-h-[480px] overflow-hidden border-border bg-surface">
         {/* Conversation List */}
         <div className={cn(
           'w-full md:w-80 lg:w-96 flex-col border-r border-border',
           activeConversation ? 'hidden md:flex' : 'flex'
         )}>
+          <div className="border-b border-border px-5 py-4">
+            <div className="space-y-1">
+              <h2 className="type-title text-foreground">Samtaler</h2>
+              <p className="type-body-sm text-muted-foreground">
+                Meldinger knyttet til kursene dine.
+              </p>
+            </div>
+          </div>
           <div className="flex-1 overflow-y-auto">
             {loading ? (
               <SectionLoader size="md" />
             ) : conversations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
-                <p className="type-title text-foreground">Ingen meldinger</p>
-                <p className="type-body mt-1 text-muted-foreground">
-                  Du kan sende melding til instruktører fra kursoversikten.
-                </p>
-              </div>
+              <EmptyState
+                title="Ingen meldinger"
+                description="Du kan sende melding til instruktører fra kursoversikten."
+                variant="compact"
+                className="min-h-40"
+              />
             ) : (
               <div className="p-3 space-y-1">
                 {conversations.map((conversation) => (
@@ -213,9 +222,12 @@ const StudentMessagesPage = () => {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
                 {currentMessages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    <p className="type-body">Ingen meldinger ennå</p>
-                  </div>
+                  <EmptyState
+                    title="Ingen meldinger ennå"
+                    description="Samtalen er tom så langt."
+                    variant="compact"
+                    className="h-full justify-center"
+                  />
                 ) : (
                   currentMessages.map((message) => {
                     // is_outgoing = true means teacher sent it = incoming for student
@@ -297,9 +309,12 @@ const StudentMessagesPage = () => {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p className="type-body">Velg en samtale</p>
-            </div>
+            <EmptyState
+              title="Velg en samtale"
+              description="Åpne en samtale for å lese eller sende meldinger."
+              variant="compact"
+              className="h-full justify-center"
+            />
           )}
         </div>
       </Card>

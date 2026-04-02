@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchUpcomingSignups, fetchPastSignups, type StudentSignupWithCourse } from '@/services/studentSignups';
 import { BookingCard } from '@/components/student/BookingCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EmptyState } from '@/components/ui/empty-state';
 import { CalendarX, Clock, Search } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
@@ -102,11 +103,11 @@ const StudentDashboardPage = () => {
   return (
     <>
       {/* Welcome / Header */}
-      <div className="mb-8">
+      <div className="mb-8 space-y-1">
         <h1 className="type-heading-1 text-foreground">
           Mine kurs
         </h1>
-        <p className="type-body mt-1 text-muted-foreground">
+        <p className="type-body text-muted-foreground">
           Her finner du kursene dine.
         </p>
       </div>
@@ -145,27 +146,21 @@ const StudentDashboardPage = () => {
               : false;
 
             return (
-              <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
-                <div>
-                  <div className="mx-auto mb-4 inline-flex rounded-full bg-surface-muted p-3">
-                    {isNewUser ? (
-                      <Search className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <CalendarX className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <h3 className="type-title mb-1 text-foreground">
-                    {isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
-                  </h3>
-                  <p className="type-body mb-6 max-w-xs text-muted-foreground">
-                    {isNewUser
+              <div className="rounded-lg border border-border bg-surface">
+                <EmptyState
+                  icon={isNewUser ? Search : CalendarX}
+                  title={isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
+                  description={
+                    isNewUser
                       ? 'Se kurs i nærheten og meld deg på.'
-                      : 'Du har ingen kommende kurs.'}
-                  </p>
-                  <Button onClick={() => window.open('/', '_self')} variant="default">
-                    {isNewUser ? 'Se kurs' : 'Finn kurs'}
-                  </Button>
-                </div>
+                      : 'Du har ingen kommende kurs.'
+                  }
+                  action={
+                    <Button onClick={() => window.open('/', '_self')} variant="default">
+                      {isNewUser ? 'Se kurs' : 'Finn kurs'}
+                    </Button>
+                  }
+                />
               </div>
             );
           })()}
@@ -183,16 +178,12 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
-              <div>
-                <div className="mx-auto mb-4 inline-flex rounded-full bg-surface-muted p-3">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <h3 className="type-title mb-1 text-foreground">Ingen tidligere kurs</h3>
-                <p className="type-body max-w-xs text-muted-foreground">
-                  Du har ikke deltatt på noen kurs ennå.
-                </p>
-              </div>
+            <div className="rounded-lg border border-border bg-surface">
+              <EmptyState
+                icon={Clock}
+                title="Ingen tidligere kurs"
+                description="Du har ikke deltatt på noen kurs ennå."
+              />
             </div>
           )}
         </TabsContent>
