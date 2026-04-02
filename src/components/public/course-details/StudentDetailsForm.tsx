@@ -42,7 +42,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="firstName"
-            className="text-xs font-medium text-text-primary mb-1.5 block"
+            className="text-xs font-medium text-foreground mb-1.5 block"
           >
             Fornavn
           </label>
@@ -71,7 +71,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
         <div className="space-y-2">
           <label
             htmlFor="lastName"
-            className="text-xs font-medium text-text-primary mb-1.5 block"
+            className="text-xs font-medium text-foreground mb-1.5 block"
           >
             Etternavn
           </label>
@@ -102,7 +102,7 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="text-xs font-medium text-text-primary mb-1.5 block"
+          className="text-xs font-medium text-foreground mb-1.5 block"
         >
           E-post
         </label>
@@ -132,9 +132,9 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
       <div className="space-y-2">
         <label
           htmlFor="message"
-          className="text-xs font-medium text-text-primary mb-1.5 block"
+          className="text-xs font-medium text-foreground mb-1.5 block"
         >
-          Beskjed til instruktør <span className="text-text-tertiary">(valgfritt)</span>
+          Beskjed til instruktør <span className="text-muted-foreground">(valgfritt)</span>
         </label>
         <Textarea
           id="message"
@@ -163,11 +163,11 @@ export const StudentDetailsForm: React.FC<StudentDetailsFormProps> = ({
           aria-describedby={touched.termsAccepted && errors.termsAccepted ? 'terms-error' : undefined}
           aria-required="true"
         />
-        <label htmlFor="termsAccepted" className="text-xs text-text-secondary select-none">
+        <label htmlFor="termsAccepted" className="text-xs text-muted-foreground select-none">
           Jeg godtar{' '}
           <Link
             to="/terms"
-            className="text-text-primary underline decoration-zinc-300 underline-offset-2 hover:decoration-zinc-500"
+            className="text-foreground underline decoration-border underline-offset-2 hover:decoration-muted-foreground"
             target="_blank"
             rel="noopener noreferrer"
           >

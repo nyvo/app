@@ -88,7 +88,7 @@ const StudentRegisterPage = () => {
             email: (
               <>
                 {AUTH_ERRORS.emailAlreadyRegistered}.{' '}
-                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-text-primary">
+                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-foreground">
                   Logg inn her
                 </Link>
               </>
@@ -115,9 +115,9 @@ const StudentRegisterPage = () => {
       title="Opprett konto"
       subtitle="Opprett en konto for å melde deg på kurs og holde oversikt over påmeldingene dine."
       footer={
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-muted-foreground">
           Har du allerede en konto?{' '}
-          <Link to={ROUTES.login} className="text-text-primary font-medium hover:underline">
+          <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
             Logg inn
           </Link>
         </p>
@@ -127,9 +127,9 @@ const StudentRegisterPage = () => {
         <GoogleAuthButton redirectTo={`${window.location.origin}/student/dashboard`} />
 
         <div className="flex items-center gap-3" aria-hidden="true">
-          <div className="flex-1 h-px bg-zinc-200" />
-          <span className="text-xs text-text-tertiary">eller</span>
-          <div className="flex-1 h-px bg-zinc-200" />
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">eller</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
       </div>
 
@@ -187,9 +187,9 @@ const StudentRegisterPage = () => {
           Opprett konto
         </Button>
 
-        <p className="text-center text-xs text-text-secondary pt-2">
+        <p className="text-center text-xs text-muted-foreground pt-2">
           Ved å opprette konto godtar du{' '}
-          <Link to="/terms" className="underline hover:text-text-primary">
+          <Link to="/terms" className="underline hover:text-foreground">
             vilkår
           </Link>
           .

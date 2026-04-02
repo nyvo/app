@@ -54,6 +54,7 @@ function mapCourseToComponentFormat(courseData: Course & { signups_count: number
     imageUrl: courseData.image_url || null,
     startDate: courseData.start_date || null,
     endDate: courseData.end_date || null,
+    createdAt: courseData.created_at || null,
     practicalInfo: (courseData.practical_info as unknown as PracticalInfo | null) ?? null,
   };
 }

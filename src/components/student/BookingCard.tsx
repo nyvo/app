@@ -84,21 +84,21 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
   }, [navigate]);
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
+    <div className="bg-background rounded-lg border border-border p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* Left: Date Box */}
-      <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-surface border border-zinc-100 shrink-0">
+      <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-background border border-border shrink-0">
         {startDate && isValid(startDate) ? (
           <>
-            <span className="text-sm font-medium text-text-secondary">
+            <span className="text-sm font-medium text-muted-foreground">
               {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
             </span>
-            <span className="text-3xl font-medium text-text-primary">
+            <span className="text-3xl font-medium text-foreground">
               {format(startDate, 'd')}
             </span>
           </>
         ) : (
-          <span className="text-xs text-text-secondary">—</span>
+          <span className="text-xs text-muted-foreground">—</span>
         )}
       </div>
 
@@ -106,24 +106,24 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       <div className="flex-1 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-             <div className="md:hidden flex items-center gap-2 text-sm text-text-secondary mb-1">
+             <div className="md:hidden flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Calendar className="h-4 w-4" />
                 <span>{dateStr}</span>
              </div>
-             <h3 className="text-sm font-medium text-text-primary leading-tight">
+             <h3 className="text-sm font-medium text-foreground leading-tight">
                {course.title}
              </h3>
           </div>
           {getPaymentBadge(signup.payment_status || 'pending')}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
            <div className="flex items-center gap-1.5">
-             <Clock className="h-4 w-4 text-text-tertiary" />
+             <Clock className="h-4 w-4 text-muted-foreground" />
              <span>{timeStr || 'Tid mangler'}</span>
            </div>
            <div className="flex items-center gap-1.5">
-             <MapPin className="h-4 w-4 text-text-tertiary" />
+             <MapPin className="h-4 w-4 text-muted-foreground" />
              <span>{course.location || 'Sted mangler'}</span>
            </div>
         </div>
@@ -135,15 +135,15 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
               src={course.instructor.avatar_url}
               size="xs"
             />
-            <span className="text-sm text-text-secondary">
-              Med <span className="font-medium text-text-primary">{course.instructor.name}</span>
+            <span className="text-sm text-muted-foreground">
+              Med <span className="font-medium text-foreground">{course.instructor.name}</span>
             </span>
           </div>
         )}
       </div>
 
       {/* Right: Actions */}
-      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 border-zinc-100 w-full md:w-auto md:min-w-[140px]">
+      <div className="flex flex-row md:flex-col items-center md:items-end justify-end md:justify-center gap-2 pt-4 md:pt-0 md:pl-4 border-t md:border-t-0 border-border w-full md:w-auto md:min-w-[140px]">
          <Button 
            variant="outline-soft" 
            size="sm" 
@@ -157,7 +157,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
          {canCancel ? (
            <AlertDialog>
              <AlertDialogTrigger asChild>
-               <Button variant="ghost" size="sm" className="w-full justify-center text-text-secondary hover:text-status-error-text hover:bg-status-error-bg">
+               <Button variant="ghost" size="sm" className="w-full justify-center text-muted-foreground hover:text-status-error-text hover:bg-status-error-bg">
                  Avbestill
                </Button>
              </AlertDialogTrigger>

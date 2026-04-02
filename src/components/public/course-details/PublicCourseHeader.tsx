@@ -37,21 +37,21 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
     .join('/');
 
   return (
-    <header className="border-b border-zinc-200">
+    <header className="border-b border-border">
       <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand mark */}
         <Link
           to={studioUrl}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity"
         >
-          <span className="text-sm font-medium tracking-widest uppercase text-text-primary">
+          <span className="text-sm font-medium tracking-widest uppercase text-foreground">
             {initials}
           </span>
         </Link>
 
         {/* Right side */}
         <div className="flex items-center gap-6">
-          <span className="text-xs text-text-secondary font-medium hidden sm:block">
+          <span className="text-xs text-muted-foreground font-medium hidden sm:block">
             Påmelding
           </span>
 
@@ -59,8 +59,8 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button aria-label="Brukermeny" className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 smooth-transition">
-                  <User className="h-4 w-4 text-text-primary" />
+                <button aria-label="Brukermeny" className="size-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted smooth-transition">
+                  <User className="size-4 text-foreground" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -70,7 +70,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                       to="/student/dashboard"
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <BookOpen className="h-4 w-4" />
+                      <BookOpen className="size-4" />
                       <span>Mine påmeldinger</span>
                     </Link>
                   </DropdownMenuItem>
@@ -78,7 +78,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                 {userType === 'teacher' && (
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                      <BookOpen className="h-4 w-4" />
+                      <BookOpen className="size-4" />
                       <span>Oversikt</span>
                     </Link>
                   </DropdownMenuItem>
@@ -87,7 +87,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                   onClick={onSignOut}
                   className="flex items-center gap-2 cursor-pointer"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="size-4" />
                   <span>Logg ut</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -95,7 +95,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/student/login"
-              className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Logg inn
             </Link>

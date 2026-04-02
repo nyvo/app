@@ -25,13 +25,13 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-zinc-200 sticky top-0 z-50">
+      <header className="bg-background border-b border-border sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}
           <div className="flex items-center gap-8">
-            <Link to="/" className="font-geist text-xl font-medium text-text-primary tracking-tight">
+            <Link to="/" className="font-geist text-xl font-medium text-foreground tracking-tight">
               Ease
             </Link>
             
@@ -39,13 +39,13 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             <nav className="hidden md:flex items-center gap-1" aria-label="Studentnavigasjon">
               <Link
                 to="/student/dashboard"
-                className="px-3 py-2 text-sm font-medium text-text-primary bg-surface-elevated rounded-lg transition-colors"
+                className="px-3 py-2 text-sm font-medium text-foreground bg-muted rounded-lg transition-colors"
               >
                 Mine kurs
               </Link>
               <Link
                 to="/student/messages"
-                className="px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-elevated rounded-lg transition-colors flex items-center gap-1.5"
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors flex items-center gap-1.5"
               >
                 <MessageCircle className="h-4 w-4" />
                 Meldinger
@@ -74,14 +74,14 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
                     email={user?.email}
                     src={profile?.avatar_url}
                     size="lg"
-                    ringClassName="border border-zinc-200 transition-colors group-hover:border-zinc-300"
+                    ringClassName="border border-border transition-colors group-hover:border-input"
                   />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm">
-                  <p className="font-medium text-text-primary">{profile?.name || 'Deltaker'}</p>
-                  <p className="text-xs text-text-secondary truncate">{user?.email}</p>
+                  <p className="font-medium text-foreground">{profile?.name || 'Deltaker'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/student/profile')} className="cursor-pointer">
@@ -105,10 +105,10 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-100 py-6 mt-auto">
+      <footer className="border-t border-border py-6 mt-auto">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-xs text-text-tertiary">
-            Trenger du hjelp? <a href="mailto:support@ease.no" className="underline hover:text-text-secondary smooth-transition">Kontakt oss</a>
+          <p className="text-xs text-muted-foreground">
+            Trenger du hjelp? <a href="mailto:support@ease.no" className="underline hover:text-muted-foreground smooth-transition">Kontakt oss</a>
           </p>
         </div>
       </footer>

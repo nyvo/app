@@ -9,6 +9,7 @@ import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS, AUTH_HINTS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
+import { Separator } from '@/components/ui/separator'
 
 const ROUTES = AUTH_ROUTES.teacher
 
@@ -63,7 +64,7 @@ const SignupPage = () => {
             email: (
               <>
                 {AUTH_ERRORS.emailAlreadyRegistered}.{' '}
-                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-text-primary">
+                <Link to={ROUTES.login} state={{ email: formData.email }} className="underline hover:text-foreground">
                   Logg inn her
                 </Link>
               </>
@@ -91,9 +92,9 @@ const SignupPage = () => {
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
       footer={
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-muted-foreground">
           Har du allerede en konto?{' '}
-          <Link to={ROUTES.login} className="text-text-primary font-medium hover:underline">
+          <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
             Logg inn
           </Link>
         </p>
@@ -103,9 +104,9 @@ const SignupPage = () => {
         <GoogleAuthButton redirectTo={`${window.location.origin}/teacher`} />
 
         <div className="flex items-center gap-3" aria-hidden="true">
-          <div className="flex-1 h-px bg-zinc-200" />
-          <span className="text-xs text-text-tertiary">eller</span>
-          <div className="flex-1 h-px bg-zinc-200" />
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">eller</span>
+          <Separator className="flex-1" />
         </div>
       </div>
 
@@ -151,9 +152,9 @@ const SignupPage = () => {
           Opprett konto
         </Button>
 
-        <p className="text-center text-xs text-text-secondary pt-2">
+        <p className="text-center text-xs text-muted-foreground pt-2">
           Ved å opprette konto godtar du{' '}
-          <Link to="/terms" className="underline hover:text-text-primary">
+          <Link to="/terms" className="underline hover:text-foreground">
             vilkår
           </Link>
           .

@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import type { AudienceLevel, EquipmentInfo } from '@/types/practicalInfo';
 import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
 
@@ -103,11 +105,11 @@ export const CourseSettingsTab = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
       <div className="lg:col-span-2 flex flex-col">
-        <h3 className="text-sm font-medium text-text-primary mb-3">Generelt</h3>
-        <div className="bg-white rounded-xl border border-zinc-200 p-6 h-full flex flex-col flex-1">
+        <h3 className="text-sm font-medium text-foreground mb-3">Generelt</h3>
+        <Card className="p-6 h-full flex flex-col flex-1">
           <div className="space-y-4 flex-1">
             <div>
-              <label htmlFor="settings-title" className="block text-xs font-medium text-text-primary mb-1.5">Navn på kurs</label>
+              <label htmlFor="settings-title" className="block text-xs font-medium text-foreground mb-1.5">Navn på kurs</label>
               <Input
                 id="settings-title"
                 type="text"
@@ -117,7 +119,7 @@ export const CourseSettingsTab = ({
             </div>
 
             <div>
-              <label htmlFor="settings-description" className="block text-xs font-medium text-text-primary mb-1.5">Beskrivelse</label>
+              <label htmlFor="settings-description" className="block text-xs font-medium text-foreground mb-1.5">Beskrivelse</label>
               <Textarea
                 id="settings-description"
                 rows={6}
@@ -126,14 +128,14 @@ export const CourseSettingsTab = ({
               />
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
-      <div className="lg:col-span-1 lg:row-span-2 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col h-full">
-        <h3 className="text-sm font-medium text-text-primary mb-6">Kursbilde</h3>
+      <Card className="lg:col-span-1 lg:row-span-2 p-6 flex flex-col h-full">
+        <h3 className="text-sm font-medium text-foreground mb-6">Kursbilde</h3>
         <div className="flex-1 min-h-[200px] flex flex-col">
-          <div className="flex-1 relative rounded-lg overflow-hidden bg-input-bg">
+          <div className="flex-1 relative rounded-lg overflow-hidden bg-transparent">
             <ImageUpload
               value={settingsImageUrl}
               onChange={(file) => {
@@ -152,14 +154,14 @@ export const CourseSettingsTab = ({
             />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tile 3: Schedule - Span 1 */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
-        <h3 className="text-sm font-medium text-text-primary mb-6">Tidspunkt</h3>
+      <Card className="p-6 flex flex-col">
+        <h3 className="text-sm font-medium text-foreground mb-6">Tidspunkt</h3>
         <div className="space-y-4 flex-1">
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Dato</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">Dato</label>
             <DatePicker
               value={settingsDate}
               onChange={onDateChange}
@@ -167,19 +169,19 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Tidspunkt</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">Tidspunkt</label>
             <TimePicker
               value={settingsTime}
               onChange={(time) => onTimeChange(time)}
             />
           </div>
           <div>
-            <label id="settings-duration-label" className="block text-xs font-medium text-text-primary mb-1.5">Varighet</label>
+            <label id="settings-duration-label" className="block text-xs font-medium text-foreground mb-1.5">Varighet</label>
             <Select
               value={settingsDuration?.toString() || ""}
               onValueChange={(val) => onDurationChange(parseInt(val))}
             >
-              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 bg-input-bg border-zinc-300">
+              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 bg-transparent border-input">
                 <SelectValue placeholder="Velg" />
               </SelectTrigger>
               <SelectContent>
@@ -196,11 +198,11 @@ export const CourseSettingsTab = ({
             </Select>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tile 4: Capacity - Span 1 */}
-      <div className="bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
-        <h3 className="text-sm font-medium text-text-primary mb-6">Kapasitet</h3>
+      <Card className="p-6 flex flex-col">
+        <h3 className="text-sm font-medium text-foreground mb-6">Kapasitet</h3>
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-4">
             <Button
@@ -213,8 +215,8 @@ export const CourseSettingsTab = ({
               <Minus className="h-4 w-4" />
             </Button>
             <div className="text-center">
-              <span className="block text-3xl font-normal text-text-primary tracking-tight">{maxParticipants}</span>
-              <span className="text-xs text-text-secondary font-medium">Plasser</span>
+              <span className="block text-3xl font-normal text-foreground tracking-tight">{maxParticipants}</span>
+              <span className="text-xs text-muted-foreground font-medium">Plasser</span>
             </div>
             <Button
               variant="outline-soft"
@@ -234,18 +236,18 @@ export const CourseSettingsTab = ({
             </Alert>
           )}
         </div>
-      </div>
+      </Card>
 
       {/* Tile 5: Practical Info - Span 3 */}
-      <div className="lg:col-span-3 bg-white rounded-xl border border-zinc-200 p-6 flex flex-col">
+      <Card className="lg:col-span-3 p-6 flex flex-col">
         <div className="mb-6">
-          <h3 className="text-sm font-medium text-text-primary">Praktisk info</h3>
-          <p className="text-xs text-text-tertiary mt-1">Hjelp elevene dine med å komme forberedt</p>
+          <h3 className="text-sm font-medium text-foreground">Praktisk info</h3>
+          <p className="text-xs text-muted-foreground mt-1">Hjelp elevene dine med å komme forberedt</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           {/* Audience Level - Segmented pills (single-select) */}
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-2.5">Nivå</label>
+            <label className="block text-xs font-medium text-foreground mb-2.5">Nivå</label>
             <div className="flex flex-wrap gap-2">
               {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
                 <button
@@ -255,22 +257,22 @@ export const CourseSettingsTab = ({
                   className={cn(
                     'px-3 py-1.5 rounded-full text-xs border smooth-transition',
                     settingsAudienceLevel === opt.value
-                      ? 'bg-zinc-900 text-white border-zinc-900'
-                      : 'bg-white text-text-secondary border-zinc-200 hover:border-zinc-300 hover:text-text-primary'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
                   )}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-text-secondary mt-1.5">
+            <p className="text-[11px] text-muted-foreground mt-1.5">
               Velg det laveste nivået som passer.
             </p>
           </div>
 
           {/* Equipment - Radio buttons (single factual statement) */}
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-2.5">Utstyr</label>
+            <label className="block text-xs font-medium text-foreground mb-2.5">Utstyr</label>
             <RadioGroup
               value={settingsEquipment}
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
@@ -278,7 +280,7 @@ export const CourseSettingsTab = ({
               {EQUIPMENT_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-0.5">
                   <RadioGroupItem value={opt.value} />
-                  <span className="text-sm text-text-primary">{opt.label}</span>
+                  <span className="text-sm text-foreground">{opt.label}</span>
                 </label>
               ))}
             </RadioGroup>
@@ -286,12 +288,12 @@ export const CourseSettingsTab = ({
 
           {/* Arrival - Dropdown select */}
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Oppmøte før start</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
             >
-              <SelectTrigger className="w-full sm:w-48 h-11 bg-input-bg border-zinc-300">
+              <SelectTrigger className="w-full sm:w-48 h-11 bg-transparent border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -306,7 +308,7 @@ export const CourseSettingsTab = ({
 
           {/* Custom Bullets */}
           <div>
-            <label className="block text-xs font-medium text-text-primary mb-1.5">Egne punkter</label>
+            <label className="block text-xs font-medium text-foreground mb-1.5">Egne punkter</label>
             <div className="space-y-2">
               {settingsCustomBullets.map((bullet, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -325,7 +327,7 @@ export const CourseSettingsTab = ({
                   <button
                     type="button"
                     onClick={() => onCustomBulletsChange(settingsCustomBullets.filter((_, j) => j !== i))}
-                    className="text-text-tertiary hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                    className="text-muted-foreground hover:text-destructive p-2.5 -m-1.5 smooth-transition"
                     aria-label={`Fjern punkt ${i + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -336,7 +338,7 @@ export const CourseSettingsTab = ({
                 <button
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 smooth-transition"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
                 >
                   <Plus className="h-3 w-3" />
                   Legg til
@@ -345,7 +347,10 @@ export const CourseSettingsTab = ({
             </div>
           </div>
         </div>
-      </div>
+      </Card>
+
+      {/* Danger Zone separator */}
+      <Separator className="lg:col-span-3 mt-2" />
 
       {/* Tile 6: Danger Zone - Span 3 */}
       <Alert variant="error" icon={false} className="lg:col-span-3 p-6">

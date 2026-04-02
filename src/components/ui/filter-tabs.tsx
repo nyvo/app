@@ -38,7 +38,7 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "gap-0.5 bg-zinc-200/60 p-1 rounded-md"
+            variant === "contained" ? "gap-0.5 bg-muted p-1 rounded-md"
               : variant === "pill" ? "gap-1.5"
               : "gap-1 border-b border-border",
             className
@@ -69,16 +69,16 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-white border border-zinc-200 text-text-primary rounded-lg"
-            : "text-text-secondary hover:text-text-primary hover:bg-zinc-50 rounded-lg border border-transparent"
+            ? "bg-background border border-border text-foreground rounded-lg"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg border border-transparent"
         case "contained":
           return isActive
-            ? "text-text-primary"
-            : "bg-transparent text-text-secondary hover:text-text-primary"
+            ? "text-foreground"
+            : "bg-transparent text-muted-foreground hover:text-foreground"
         default:
           return isActive
-            ? "text-text-primary"
-            : "text-text-secondary hover:text-text-primary"
+            ? "text-foreground"
+            : "text-muted-foreground hover:text-foreground"
       }
     }
 
@@ -91,7 +91,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         onClick={() => context.onValueChange(value)}
         className={cn(
           "relative shrink-0 font-medium ios-ease cursor-pointer transition-colors",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           variant === "default"
             ? "text-xs px-3 py-2 -mb-px"
             : variant === "pill"
@@ -104,7 +104,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "contained" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute inset-0 bg-white rounded-[5px] shadow-[0_1px_2px_0_rgba(0,0,0,0.04)]"
+            className="absolute inset-0 bg-background rounded-[5px] "
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}
@@ -112,7 +112,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "default" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute bottom-0 left-0 right-0 h-0.5 bg-text-primary"
+            className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}

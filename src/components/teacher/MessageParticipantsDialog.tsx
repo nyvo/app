@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { sendEmail } from '@/services/emails';
 import { logger } from '@/lib/logger';
 
@@ -122,14 +123,14 @@ export function MessageParticipantsDialog({
         </DialogHeader>
 
         <div>
-        <label htmlFor="participant-message" className="block text-xs font-medium text-text-primary mb-1.5">Melding</label>
-        <textarea
+        <label htmlFor="participant-message" className="block text-xs font-medium text-foreground mb-1.5">Melding</label>
+        <Textarea
           id="participant-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Skriv meldingen din"
           rows={5}
-          className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+          className="resize-none"
           disabled={isSending}
         />
         </div>

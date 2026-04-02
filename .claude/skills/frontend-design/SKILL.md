@@ -49,7 +49,7 @@ Generic AI UI has tells. Avoid all of these:
 1. **Use existing components**: Check `src/components/ui/` before building custom. Compose from shadcn primitives.
 2. **Section titles above cards**: Never put a section header inside a card container.
 3. **Cards**: `rounded-xl bg-white p-6 border border-zinc-200`. Clickable cards add `hover:bg-zinc-50/50`.
-4. **Text colors**: Use `text-text-primary`, `text-text-secondary`, `text-text-tertiary` — never hardcoded `text-zinc-*`.
+4. **Text colors**: Use `text-foreground`, `text-muted-foreground`, `text-muted-foreground` — never hardcoded `text-zinc-*`.
 5. **Currency**: Always `formatKroner()` from `@/lib/utils`. Never inline `kr` formatting.
 6. **Page structure**: `SidebarProvider` + `TeacherSidebar` + `main` with `bg-surface`. Use `MobileTeacherHeader` for mobile.
 7. **Page headers**: `px-6 lg:px-8 pt-6 lg:pt-8 pb-0` with `font-geist text-2xl font-medium tracking-tight` for H1.

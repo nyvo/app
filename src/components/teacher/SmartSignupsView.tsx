@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Calendar, CheckCircle, Archive } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SignupGroup } from './SignupGroup';
 import type { ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupGroup as SignupGroupType, ModeFilter } from '@/hooks/use-grouped-signups';
@@ -165,13 +167,13 @@ export function SmartSignupsView({
       <div className="space-y-3" role="status" aria-live="polite">
         <span className="sr-only">Henter påmeldinger</span>
         {[1, 2, 3].map(i => (
-          <div key={i} className="py-3.5 border-b border-zinc-100 animate-pulse">
+          <div key={i} className="py-3.5 border-b border-border">
             <div className="flex items-center gap-3 mb-2">
-              <div className="h-4 w-48 bg-surface-elevated rounded" />
+              <Skeleton className="h-4 w-48" />
             </div>
             <div className="flex items-center gap-4">
-              <div className="h-3 w-32 bg-surface-elevated rounded" />
-              <div className="h-3 w-20 bg-surface-elevated rounded" />
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-20" />
             </div>
           </div>
         ))}
@@ -186,22 +188,24 @@ export function SmartSignupsView({
 
     return (
       <div className="flex flex-col items-center pt-[20vh] text-center">
-        <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
-          <IconComponent className="w-4 h-4 text-text-secondary" />
+        <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-4">
+          <IconComponent className="size-4 text-muted-foreground" />
         </div>
-        <h3 className="font-geist text-sm font-medium text-text-primary">
+        <h3 className="font-geist text-sm font-medium text-foreground">
           {emptyState.title}
         </h3>
-        <p className="mt-1 text-sm text-text-secondary max-w-sm">
+        <p className="mt-1 text-sm text-muted-foreground max-w-sm">
           {emptyState.description}
         </p>
         {emptyState.showClearAction && onClearFilters && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClearFilters}
-            className="mt-4 text-xs text-text-secondary hover:text-text-primary underline underline-offset-2 transition-colors"
+            className="mt-4 text-xs underline underline-offset-2"
           >
             Nullstill filter
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -233,10 +237,10 @@ export function SmartSignupsView({
       <div className="space-y-10">
         {sections.map(section => (
           <div key={section.label}>
-            <h3 className="text-sm font-medium text-text-primary pb-3">
+            <h3 className="text-sm font-medium text-foreground pb-3">
               {section.label}
             </h3>
-            <div className="border-t border-zinc-200">
+            <div className="border-t border-border">
               {section.groups.map(group => (
                 <SignupGroup
                   key={group.key}
@@ -254,20 +258,22 @@ export function SmartSignupsView({
       {(isTruncated || visibleCount > INITIAL_VISIBLE) && (
         <div className="flex justify-center gap-3 pt-6 pb-2">
           {isTruncated && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
             >
               Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-            </button>
+            </Button>
           )}
           {visibleCount > INITIAL_VISIBLE && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
             >
               Vis færre
-            </button>
+            </Button>
           )}
         </div>
       )}

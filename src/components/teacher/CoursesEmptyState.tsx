@@ -6,14 +6,14 @@ export const CoursesEmptyState = () => {
   return (
     <div className="flex flex-col items-center pt-[20vh]">
       <div className="flex flex-col items-center text-center">
-        <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
-          <Calendar className="w-4 h-4 text-text-secondary" />
+        <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-4">
+          <Calendar className="size-4 text-muted-foreground" />
         </div>
 
-        <h2 className="font-geist text-sm font-medium text-text-primary">
+        <h2 className="font-geist text-sm font-medium text-foreground">
           Ingen kurs ennå
         </h2>
-        <p className="mt-1 text-sm text-text-secondary max-w-xs">
+        <p className="mt-1 text-sm text-muted-foreground max-w-xs">
           Opprett ditt første kurs for å komme i gang.
         </p>
 

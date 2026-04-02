@@ -48,7 +48,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const showPayment = !!clientSecret;
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200">
+    <div className="bg-background rounded-lg border border-border">
       {/* Step header */}
       <PriceHeader
         label={showPayment ? 'Betaling' : 'Påmelding'}
@@ -104,7 +104,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 ) : (
                   <Button
                     type="submit"
-                    className="w-full bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg text-sm font-medium py-3 h-auto"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/80 rounded-lg text-sm font-medium py-3 h-auto"
                     loading={submitting}
                     loadingText="Behandler"
                   >

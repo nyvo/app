@@ -10,7 +10,7 @@ interface PageLoaderProps {
 const variantClasses = {
   default: 'flex items-center justify-center h-64',
   fullscreen: 'flex items-center justify-center h-screen',
-  overlay: 'absolute inset-0 z-30 flex items-center justify-center bg-white',
+  overlay: 'absolute inset-0 z-30 flex items-center justify-center bg-background',
 }
 
 function PageLoader({
@@ -27,7 +27,7 @@ function PageLoader({
       <div className="text-center">
         <Spinner size="xl" className="mx-auto" />
         {message && (
-          <p className="mt-4 text-sm text-text-secondary">{message}</p>
+          <p className="mt-4 text-sm text-muted-foreground">{message}</p>
         )}
         <span className="sr-only">{message || 'Laster'}</span>
       </div>

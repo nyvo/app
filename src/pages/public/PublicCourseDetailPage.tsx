@@ -327,7 +327,7 @@ const PublicCourseDetailPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-white flex items-center justify-center" role="status" aria-live="polite">
+      <div className="min-h-screen w-full bg-background flex items-center justify-center" role="status" aria-live="polite">
         <Spinner size="xl" aria-hidden="true" />
         <span className="sr-only">Laster kurs</span>
       </div>
@@ -338,17 +338,17 @@ const PublicCourseDetailPage = () => {
   if (fetchError || !course) {
     const backUrl = slug ? `/studio/${slug}` : '/';
     return (
-      <div className="min-h-screen w-full bg-white">
-        <header className="border-b border-zinc-200 bg-white">
+      <div className="min-h-screen w-full bg-background">
+        <header className="border-b border-border bg-background">
           <div className="mx-auto flex max-w-4xl items-center justify-between px-6 h-16">
             <Link to={backUrl} className="flex items-center gap-2">
-              <span className="text-sm font-medium tracking-widest uppercase text-text-primary">Ease</span>
+              <span className="text-sm font-medium tracking-widest uppercase text-foreground">Ease</span>
             </Link>
           </div>
         </header>
         <main className="pt-24 px-6">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-xl border border-destructive/30 bg-white p-12 text-center">
+            <div className="rounded-lg border border-destructive/30 bg-background p-12 text-center">
               <p className="text-sm text-destructive mb-4">{fetchError || 'Kurset ble ikke funnet'}</p>
               <Button asChild variant="outline" size="compact">
                 <Link to={backUrl}>
@@ -370,7 +370,7 @@ const PublicCourseDetailPage = () => {
   const isAuthStudent = Boolean(user && userType === 'student');
 
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-background">
       {/* Header */}
       <PublicCourseHeader
         organizationSlug={slug || ''}

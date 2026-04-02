@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime } from './utils';
 
@@ -15,37 +16,37 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
     <Link
       to={`/teacher/courses/${event.courseId}`}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
-      className={`block rounded-xl p-4 smooth-transition cursor-pointer border border-zinc-200 ${
+      className={`block rounded-lg p-4 smooth-transition cursor-pointer border border-border ${
         isCompleted
-          ? 'bg-zinc-50'
+          ? 'bg-muted'
           : isActive
-          ? 'bg-white ring-2 ring-zinc-900/20 ring-offset-1'
-          : 'bg-white hover:bg-zinc-50/50'
+          ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
+          : 'bg-background hover:bg-muted/50'
       }`}
     >
       {/* Title row — most scannable */}
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-sm font-medium truncate ${isCompleted ? 'text-text-tertiary' : 'text-text-primary'}`}>
+        <p className={`text-sm font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
           {event.title}
         </p>
         {isActive && (
-          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 shrink-0">
+          <Badge variant="secondary" className="bg-status-confirmed-bg text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border border-0 shrink-0">
             Pågår
-          </span>
+          </Badge>
         )}
         {isCompleted && (
-          <span className="text-xs font-medium text-text-tertiary shrink-0">Fullført</span>
+          <span className="text-xs font-medium text-muted-foreground shrink-0">Fullført</span>
         )}
       </div>
 
       {/* Time + signups — secondary row */}
-      <div className={`flex items-center justify-between mt-1 ${isCompleted ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+      <div className={`flex items-center justify-between mt-1 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
         <span className="text-xs">
           {formatTime(event.startTime)}–{formatTime(event.endTime)}
         </span>
         {!isCompleted && (
           <span className="flex items-center gap-1 text-xs">
-            <Users className="h-3.5 w-3.5 text-text-tertiary" aria-hidden="true" />
+            <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
           </span>
         )}

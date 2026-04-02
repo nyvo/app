@@ -23,7 +23,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
   return (
     <div className={cn(
       "px-2 rounded-lg smooth-transition",
-      isExpanded ? "bg-white border border-zinc-200" : "hover:bg-zinc-50/50 border-b border-zinc-100"
+      isExpanded ? "bg-background border border-border" : "hover:bg-muted/50 border-b border-border"
     )}>
       {/* Group Header */}
       <button
@@ -36,7 +36,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-            <h3 className="text-sm font-medium text-text-primary truncate">
+            <h3 className="text-sm font-medium text-foreground truncate">
               {group.courseTitle}
             </h3>
             {group.hasExceptions && (
@@ -54,9 +54,9 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
           </div>
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             {group.classTime && (
-              <span className="text-xs text-text-secondary">{group.classTime}</span>
+              <span className="text-xs text-muted-foreground">{group.classTime}</span>
             )}
-            <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               {group.capacity ? `${group.counts.confirmed}/${group.capacity}` : `${group.counts.confirmed}`} påmeldt
             </span>
@@ -65,7 +65,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 
         <ChevronRight
           className={cn(
-            'h-5 w-5 text-text-tertiary transition-transform flex-shrink-0',
+            'h-5 w-5 text-muted-foreground transition-transform flex-shrink-0',
             isExpanded && 'rotate-90'
           )}
         />
@@ -73,10 +73,10 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
 
       {/* Expanded Content — single flat list, exceptions first */}
       {isExpanded && (
-        <div id={`group-content-${group.key}`} className="pl-4 ml-2 border-l-2 border-zinc-200 mt-2 pb-2">
+        <div id={`group-content-${group.key}`} className="pl-4 ml-2 border-l-2 border-border mt-2 pb-2">
           {/* All participants in one flat list — no separation */}
           {(group.signups.exceptions.length > 0 || group.signups.confirmed.length > 0 || group.signups.cancelled.length > 0) ? (
-            <div className="divide-y divide-zinc-100">
+            <div className="divide-y divide-border">
               {group.signups.exceptions.map(signup => (
                 <ParticipantRow key={signup.id} signup={signup} actionHandlers={actionHandlers} />
               ))}
@@ -89,7 +89,7 @@ export function SignupGroup({ group, defaultExpanded = false, actionHandlers }: 
             </div>
           ) : (
             <div className="py-6 text-center">
-              <p className="text-sm text-text-secondary">Ingen aktive påmeldinger</p>
+              <p className="text-sm text-muted-foreground">Ingen aktive påmeldinger</p>
             </div>
           )}
         </div>
@@ -121,11 +121,11 @@ function ParticipantRow({
       <div className="flex-1 min-w-0">
         <p className={cn(
           "text-sm font-medium truncate",
-          isCancelled ? "text-text-secondary line-through" : "text-text-primary"
+          isCancelled ? "text-muted-foreground line-through" : "text-foreground"
         )}>
           {signup.participantName}
         </p>
-        <p className="text-xs text-text-secondary truncate">{signup.participantEmail}</p>
+        <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
       </div>
       {/* Payment badge as proper badge (not colored text) */}
       <PaymentBadge status={signup.paymentStatus} size="sm" mode="badge" />

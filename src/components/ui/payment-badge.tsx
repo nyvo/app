@@ -1,4 +1,3 @@
-import { XCircle } from 'lucide-react';
 import { StatusIndicator, type IndicatorVariant, type IndicatorMode, type IndicatorSize } from './status-indicator';
 
 export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
@@ -84,7 +83,7 @@ export function PaymentBadge({
       mode={mode}
       size={indicatorSize}
       label={label}
-      icon={config.showIcon ? XCircle : undefined}
+      icon={undefined}
       ariaLabel={`Betaling: ${label}`}
       className={className}
     />

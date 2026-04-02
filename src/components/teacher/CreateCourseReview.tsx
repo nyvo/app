@@ -44,10 +44,10 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2.5">
-        <Icon className="h-4 w-4 text-text-tertiary shrink-0" />
-        <span className="text-sm text-text-primary">{label}</span>
+        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span className="text-sm text-foreground">{label}</span>
       </div>
-      <div className={`text-sm text-right ${muted ? 'text-text-tertiary' : 'text-text-primary'}`}>
+      <div className={`text-sm text-right ${muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {children}
       </div>
     </div>
@@ -65,14 +65,14 @@ function SectionDivider({
   first?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-zinc-200' : 'border-y border-zinc-200'} bg-surface-elevated`}>
-      <span className="text-xs font-medium text-text-tertiary">{label}</span>
+    <div className={`flex items-center justify-between -mx-6 px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'} bg-muted`}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {onEdit && (
         <button
           type="button"
           onClick={onEdit}
           aria-label={`Endre ${label.toLowerCase()}`}
-          className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
         >
           Endre
         </button>
@@ -105,7 +105,7 @@ export function CreateCourseReview({
   );
 
   return (
-    <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
+    <div className="rounded-lg bg-background border border-border overflow-hidden">
       {/* Image banner */}
       {imagePreviewUrl && (
         <div className="h-40 overflow-hidden">
@@ -117,7 +117,7 @@ export function CreateCourseReview({
         {/* Section 1 — Course details */}
         <SectionDivider first label="Detaljer" onEdit={onEditStep ? () => onEditStep(0) : undefined} />
 
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-border">
           <Row icon={Info} label="Tittel">{title}</Row>
           <Row icon={Info} label="Type">{courseTypeLabel}</Row>
           {description?.trim() && (
@@ -138,7 +138,7 @@ export function CreateCourseReview({
         {/* Section 2 — Schedule & logistics */}
         <SectionDivider label="Tid og sted" onEdit={onEditStep ? () => onEditStep(1) : undefined} />
 
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-border">
           <Row icon={Calendar} label="Startdato">{startDateLabel}</Row>
           <Row icon={Clock} label="Tid og varighet">{timeAndDurationLabel}</Row>
           {weeksLabel != null && (
@@ -151,7 +151,7 @@ export function CreateCourseReview({
         {/* Section 3 — Pricing */}
         <SectionDivider label="Pris" onEdit={onEditStep ? () => onEditStep(2) : undefined} />
 
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-border">
           <Row icon={Banknote} label="Pris per deltaker">{priceLabel}</Row>
           {practicalInfoLabel && (
             <Row icon={Info} label="Praktisk info">{practicalInfoLabel}</Row>

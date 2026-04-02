@@ -72,8 +72,8 @@ const StudentForgotPasswordPage = () => {
         title=""
         customContent
         footer={
-          <p className="text-xs text-text-secondary">
-            <Link to={ROUTES.login} className="text-text-primary font-medium hover:underline">
+          <p className="text-xs text-muted-foreground">
+            <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
               Til innlogging
             </Link>
           </p>
@@ -84,18 +84,18 @@ const StudentForgotPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
             Sjekk e-posten din
           </h1>
-          <p className="text-text-secondary text-sm">
+          <p className="text-muted-foreground text-sm">
             Vi har sendt en innloggingslenke til{' '}
-            <span className="font-medium text-text-primary">{formData.email}</span>
+            <span className="font-medium text-foreground">{formData.email}</span>
           </p>
         </div>
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="text-xs text-text-secondary leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {AUTH_HINTS.checkSpam}
             </p>
           </Alert>
@@ -122,9 +122,9 @@ const StudentForgotPasswordPage = () => {
       title="Glemt passord?"
       subtitle="Skriv inn e-posten din, så sender vi en innloggingslenke."
       footer={
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-muted-foreground">
           Husker du passordet ditt?{' '}
-          <Link to={ROUTES.login} className="text-text-primary font-medium hover:underline">
+          <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
             Logg inn
           </Link>
         </p>

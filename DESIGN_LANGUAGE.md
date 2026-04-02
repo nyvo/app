@@ -233,11 +233,11 @@ All reference apps place section/group titles above their content areas, not ins
 
 ### Open Layouts Over Card-Heavy Layouts
 
-Fewer bordered containers. Sections separated by whitespace and subtle dividers (`border-b border-zinc-100`), not by wrapping everything in a bordered card. Cards are for distinct, self-contained content — not generic wrappers.
+Fewer bordered containers. Sections separated by whitespace and subtle dividers (`border-b border-border`), not by wrapping everything in a bordered card. Cards are for distinct, self-contained content — not generic wrappers.
 
 ### Subtle Dividers
 
-Replace bordered mini-cards in lists with simple `border-b border-zinc-100` row dividers. Cleaner, less visual noise.
+Replace bordered mini-cards in lists with simple `border-b border-border` row dividers. Cleaner, less visual noise.
 
 ### What Works Well (Do Not Change)
 

@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import type { Course } from '@/types/dashboard';
 
 interface CoursesListProps {
@@ -54,18 +55,18 @@ function CourseRow({ course }: { course: Course }) {
   return (
     <Link
       to={`/teacher/courses/${course.id}`}
-      className="flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-zinc-50 smooth-transition relative focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none"
+      className="flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-muted smooth-transition relative focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
     >
       <div className="flex flex-col min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-medium text-text-primary truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {course.title}
           </span>
           {course.time && (
-            <span className="text-xs text-text-secondary">{course.time}</span>
+            <span className="text-xs text-muted-foreground">{course.time}</span>
           )}
         </div>
-        <p className="text-xs text-text-secondary truncate mt-0.5">{course.subtitle}</p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{course.subtitle}</p>
       </div>
     </Link>
   );
@@ -74,20 +75,20 @@ function CourseRow({ course }: { course: Course }) {
 function EmptyState({ timeFilter }: { timeFilter: 'today' | 'week' }) {
   return (
     <div className="p-8 flex flex-col items-center justify-center text-center">
-      <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
-        <CalendarPlus className="w-4 h-4 text-text-secondary" />
+      <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-3">
+        <CalendarPlus className="size-4 text-muted-foreground" />
       </div>
-      <p className="text-sm font-medium text-text-primary">
+      <p className="text-sm font-medium text-foreground">
         {timeFilter === 'today' ? 'Ingen kurs i dag' : 'Ingen kurs denne uken'}
       </p>
-      <p className="text-xs text-text-secondary mt-1 max-w-xs mx-auto">
+      <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
         {timeFilter === 'today'
           ? 'Ingen kurs i dag.'
           : 'Ingen kurs denne uken.'}
       </p>
       <Link
         to="/teacher/courses"
-        className="text-xs text-text-secondary hover:text-text-primary mt-3 smooth-transition inline-flex items-center gap-1"
+        className="text-xs text-muted-foreground hover:text-foreground mt-3 smooth-transition inline-flex items-center gap-1"
       >
         Se alle kurs
         <ChevronRight className="h-3 w-3" />
@@ -104,21 +105,21 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
 
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-4">
-      <h2 className="text-sm font-medium text-text-primary mb-3">Dagens kurs</h2>
+      <h2 className="text-sm font-medium text-foreground mb-3">Dagens kurs</h2>
 
-      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
+      <Card className="overflow-hidden">
       <div className="px-2 py-3">
         {todayCourses.length === 0 ? (
           <EmptyState timeFilter="today" />
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-border">
             {todayCourses.map((course) => (
               <CourseRow key={course.id} course={course} />
             ))}
           </div>
         )}
       </div>
-      </div>
+      </Card>
     </div>
   );
 });

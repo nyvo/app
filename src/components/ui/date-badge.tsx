@@ -18,20 +18,20 @@ export function DateBadge({ dateStr, date: dateProp }: DateBadgeProps) {
     const parts = dateStr.split('-');
     date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   } else {
-    return <div className="w-11 h-11 rounded-lg bg-surface-elevated" />;
+    return <div className="w-11 h-11 rounded-lg bg-muted" />;
   }
 
   if (isNaN(date.getTime())) {
-    return <div className="w-11 h-11 rounded-lg bg-surface-elevated" />;
+    return <div className="w-11 h-11 rounded-lg bg-muted" />;
   }
 
   const month = MONTHS[date.getMonth()];
   const day = date.getDate();
 
   return (
-    <div className="w-11 h-11 rounded-lg border border-border bg-white flex flex-col items-center justify-center shrink-0 overflow-hidden">
-      <span className="text-[10px] font-medium uppercase leading-none text-text-tertiary">{month}</span>
-      <span className="text-base font-medium leading-tight text-text-primary">{day}</span>
+    <div className="w-11 h-11 rounded-lg border border-border bg-background flex flex-col items-center justify-center shrink-0 overflow-hidden">
+      <span className="text-[10px] font-medium uppercase leading-none text-muted-foreground">{month}</span>
+      <span className="text-base font-medium leading-tight text-foreground">{day}</span>
     </div>
   );
 }

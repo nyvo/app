@@ -36,16 +36,16 @@ export function AuthLayout({
 
   return (
     <div className={cn(
-      "min-h-screen w-full text-text-primary font-geist antialiased flex flex-col selection:bg-zinc-200 selection:text-zinc-900",
-      isStudent ? "bg-surface" : "bg-surface"
+      "min-h-screen w-full text-foreground font-geist antialiased flex flex-col selection:bg-muted selection:text-foreground",
+      isStudent ? "bg-background" : "bg-background"
     )}>
       {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none mx-auto">
-          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-white">
+          <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="text-lg font-medium tracking-tighter text-text-primary">
+          <span className="text-lg font-medium tracking-tight text-foreground">
             Ease
           </span>
         </Link>
@@ -72,11 +72,11 @@ export function AuthLayout({
             className="w-full flex flex-col items-center"
           >
             <div className="text-center mb-8 space-y-2 w-full">
-              <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+              <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
                 {title}
               </h1>
               {subtitle && (
-                <p className="text-text-secondary text-sm">{subtitle}</p>
+                <p className="text-muted-foreground text-sm">{subtitle}</p>
               )}
             </div>
 
@@ -87,7 +87,7 @@ export function AuthLayout({
 
       {/* Footer */}
       {footer && (
-        <footer className="py-6 text-center border-t border-border bg-surface">
+        <footer className="py-6 text-center border-t border-border bg-background">
           {footer}
         </footer>
       )}

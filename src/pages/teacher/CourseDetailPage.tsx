@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, MoreHorizontal, EyeOff } from 'lucide-react';
+import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -474,43 +474,46 @@ const CourseDetailPage = () => {
   // Loading state
   if (isLoading) {
     return (
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
           <MobileTeacherHeader title="Kurs" />
-
-          <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
+          <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-6xl mx-auto w-full">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-                <div>
-                  <Breadcrumb className="mb-1">
-                    <BreadcrumbList>
-                      <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                          <Link to="/teacher/courses">Kurs</Link>
-                        </BreadcrumbLink>
-                      </BreadcrumbItem>
-                      <BreadcrumbSeparator />
-                      <BreadcrumbItem>
-                        <Skeleton className="h-4 w-24" />
-                      </BreadcrumbItem>
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                  <Skeleton className="h-7 w-56" />
+              <div className="mb-8">
+                <Breadcrumb className="mb-2">
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <Link to="/teacher/courses">Kurs</Link>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <Skeleton className="h-4 w-24" />
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+                <Skeleton className="h-8 w-64 mb-3" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="mb-8">
+                <FilterTabs value="overview" onValueChange={() => {}}>
+                  <FilterTab value="overview">Oversikt</FilterTab>
+                  <FilterTab value="participants">Deltakere</FilterTab>
+                  <FilterTab value="settings">Innstillinger</FilterTab>
+                </FilterTabs>
+              </div>
+              <div className="animate-pulse">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 space-y-8">
+                    <Skeleton className="h-48 rounded-lg" />
+                    <Skeleton className="h-64 rounded-lg" />
+                  </div>
+                  <div className="space-y-8">
+                    <Skeleton className="h-48 rounded-lg" />
+                    <Skeleton className="h-32 rounded-lg" />
+                  </div>
                 </div>
               </div>
-              <FilterTabs value="overview" onValueChange={() => {}}>
-                <FilterTab value="overview">Oversikt</FilterTab>
-                <FilterTab value="participants">Deltakere</FilterTab>
-                <FilterTab value="settings">Innstillinger</FilterTab>
-              </FilterTabs>
-            </div>
-          </header>
-          <div className="flex-1 p-6 lg:p-10">
-            <div className="max-w-6xl mx-auto w-full animate-pulse space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <Skeleton className="h-48 rounded-xl lg:col-span-8" />
-                <Skeleton className="h-48 rounded-xl lg:col-span-4" />
-              </div>
-              <Skeleton className="h-64 rounded-xl" />
             </div>
           </div>
         </main>
@@ -520,13 +523,13 @@ const CourseDetailPage = () => {
   // Error or not found state
   if (error || !courseData) {
     return (
-      <main className="flex-1 flex flex-col min-h-screen bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen bg-background">
           <MobileTeacherHeader title="Kurs" />
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
-            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight mb-2">Kurs ikke funnet</h1>
-            <p className="text-text-secondary">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
+            <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight mb-2">Kurs ikke funnet</h1>
+            <p className="text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
         </main>
@@ -628,16 +631,70 @@ const CourseDetailPage = () => {
 
   return (
     <>
-    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
         <MobileTeacherHeader title="Kurs" />
 
-        {/* Header Section */}
-        <header className="bg-white border-b border-border pt-6 pb-0 px-6 lg:px-10 shrink-0 z-10">
+        {/* Page Content — integrated layout, no separate white header */}
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
           <div className="max-w-6xl mx-auto w-full">
-            {/* Breadcrumbs & Actions */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+
+            {/* Alert Banners */}
+            {courseData?.status === 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="warning" className="mb-6">
+                <div>
+                  <AlertTitle variant="warning">Kurset er ikke publisert</AlertTitle>
+                  <AlertDescription variant="warning">
+                    Sett opp betalinger for å publisere kurset og begynne å ta imot påmeldinger.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+            {courseData?.status === 'draft' && currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="info" className="mb-6">
+                <div>
+                  <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
+                  <AlertDescription variant="info">
+                    Publiser kurset for å gjøre det synlig og ta imot påmeldinger.
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
+            {courseData?.status !== 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+              <Alert variant="warning" className="mb-6">
+                <div>
+                  <AlertTitle variant="warning">Koble til Stripe for å motta betalinger</AlertTitle>
+                  <AlertDescription variant="warning">
+                    Kurset er aktivt, men du kan ikke motta kortbetalinger før Stripe-kontoen din er ferdig satt opp.
+                  </AlertDescription>
+                  <div className="mt-3">
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      loading={connectingStripe}
+                      loadingText="Sender deg til Stripe …"
+                      onClick={async () => {
+                        if (!currentOrganization?.id) return;
+                        setConnectingStripe(true);
+                        const { data, error } = await createStripeConnectLink(currentOrganization.id);
+                        if (error || !data?.url) {
+                          toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
+                          setConnectingStripe(false);
+                          return;
+                        }
+                        window.location.href = data.url;
+                      }}
+                    >
+                      Gjør ferdig oppsett
+                    </Button>
+                  </div>
+                </div>
+              </Alert>
+            )}
+
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <Breadcrumb className="mb-1">
+                <Breadcrumb className="mb-2">
                   <BreadcrumbList>
                     <BreadcrumbItem>
                       <BreadcrumbLink asChild>
@@ -650,25 +707,34 @@ const CourseDetailPage = () => {
                     </BreadcrumbItem>
                   </BreadcrumbList>
                 </Breadcrumb>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary truncate">
-                    {course.title}
-                  </h1>
+                <h1 className="font-geist text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
+                  {course.title}
+                </h1>
+                <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                   {courseData?.status === 'draft' && (
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="inline-flex items-center gap-1.5 rounded-md bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                    <span className="inline-flex items-center gap-1.5 rounded-md bg-status-confirmed-bg px-2 py-0.5 text-xs font-medium text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
+                      <span className="relative flex size-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75" />
+                        <span className="relative inline-flex rounded-full size-1.5 bg-status-confirmed-text" />
+                      </span>
                       Aktiv
                     </span>
                   )}
                   {courseData?.status === 'completed' && (
                     <StatusBadge status="completed" size="sm" />
                   )}
+                  {course.createdAt && (
+                    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      Opprettet {formatDateNorwegian(new Date(course.createdAt), 'd. MMM')}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {courseData?.status === 'draft' ? (
                   <Button
                     size="compact"
@@ -711,77 +777,24 @@ const CourseDetailPage = () => {
               </div>
             </div>
 
-            {/* Draft course banner */}
-            {courseData?.status === 'draft' && !currentOrganization?.stripe_onboarding_complete && (
-              <Alert variant="warning" className="mb-4">
-                <div>
-                  <AlertTitle variant="warning">Kurset er ikke publisert</AlertTitle>
-                  <AlertDescription variant="warning">
-                    Sett opp betalinger for å publisere kurset og begynne å ta imot påmeldinger.
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
-            {courseData?.status === 'draft' && currentOrganization?.stripe_onboarding_complete && (
-              <Alert variant="info" className="mb-4">
-                <div>
-                  <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
-                  <AlertDescription variant="info">
-                    Publiser kurset for å gjøre det synlig og ta imot påmeldinger.
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
-            {/* Stripe not set up on a published course (edge case) */}
-            {courseData?.status !== 'draft' && !currentOrganization?.stripe_onboarding_complete && (
-              <Alert variant="warning" className="mb-4">
-                <div>
-                  <AlertTitle variant="warning">Betalinger er ikke satt opp</AlertTitle>
-                  <AlertDescription variant="warning">
-                    Kurset kan ikke motta påmeldinger før betalinger er satt opp.
-                  </AlertDescription>
-                  <div className="mt-3">
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      loading={connectingStripe}
-                      loadingText="Sender deg til Stripe …"
-                      onClick={async () => {
-                        if (!currentOrganization?.id) return;
-                        setConnectingStripe(true);
-                        const { data, error } = await createStripeConnectLink(currentOrganization.id);
-                        if (error || !data?.url) {
-                          toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-                          setConnectingStripe(false);
-                          return;
-                        }
-                        window.location.href = data.url;
-                      }}
-                    >
-                      Sett opp betalinger
-                    </Button>
-                  </div>
-                </div>
-              </Alert>
-            )}
-
             {/* Tabs */}
-            <FilterTabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
-              <FilterTab value="overview">Oversikt</FilterTab>
-              <FilterTab value="participants" className="flex items-center gap-1.5">
-                Deltakere
-                <span className="px-2.5 py-0.5 rounded-lg bg-surface-elevated text-xs font-medium text-text-primary">
-                  {course.enrolled}
-                </span>
-              </FilterTab>
-              <FilterTab value="settings">Innstillinger</FilterTab>
-            </FilterTabs>
-          </div>
-        </header>
+            <div className="mb-8">
+              <FilterTabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+                <FilterTab value="overview">Oversikt</FilterTab>
+                <FilterTab value="participants">
+                  <span className="inline-flex items-center gap-2.5">
+                    Deltakere
+                    <span className="px-2 py-0.5 rounded-lg bg-muted text-xs font-medium text-muted-foreground">
+                      {course.enrolled}
+                    </span>
+                  </span>
+                </FilterTab>
+                <FilterTab value="settings">Innstillinger</FilterTab>
+              </FilterTabs>
+            </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 p-6 lg:p-10" role="tabpanel">
-          <div className="max-w-6xl mx-auto w-full">
+            {/* Tab Content */}
+            <div role="tabpanel">
             <AnimatePresence mode="wait">
 
             {/* TAB 1: OVERSIKT (Overview) */}
@@ -824,9 +837,12 @@ const CourseDetailPage = () => {
                   isUploadingQuickImage={isUploadingQuickImage}
                   quickImageInputRef={quickImageInputRef}
                   onQuickImageUpload={handleQuickImageUpload}
-                  onCancelCourse={() => setShowCancelPreview(true)}
                   onMessageParticipants={() => setMessageDialogOpen(true)}
+                  onAddParticipant={() => setAddParticipantDialogOpen(true)}
                   onNavigateToSettings={() => setActiveTab('settings')}
+                  onNavigateToParticipants={() => setActiveTab('participants')}
+                  recentParticipants={displayParticipants.slice(0, 5)}
+                  totalParticipantCount={displayParticipants.length}
                   kursplanRef={kursplanRef}
                 />
               </motion.div>
@@ -852,14 +868,6 @@ const CourseDetailPage = () => {
                   actionHandlers={participantActionHandlers}
                 />
 
-                {/* Add Participant Dialog */}
-                <AddParticipantDialog
-                  open={addParticipantDialogOpen}
-                  onOpenChange={setAddParticipantDialogOpen}
-                  courseId={id!}
-                  organizationId={currentOrganization?.id || ''}
-                  onSuccess={refetchParticipants}
-                />
               </motion.div>
             )}
 
@@ -922,9 +930,19 @@ const CourseDetailPage = () => {
             )}
 
             </AnimatePresence>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Add Participant Dialog */}
+      <AddParticipantDialog
+        open={addParticipantDialogOpen}
+        onOpenChange={setAddParticipantDialogOpen}
+        courseId={id!}
+        organizationId={currentOrganization?.id || ''}
+        onSuccess={refetchParticipants}
+      />
 
       {/* Message Participants Dialog */}
       <MessageParticipantsDialog
@@ -987,20 +1005,20 @@ const CourseDetailPage = () => {
             {refundPreview.count > 0 && (
               <div className="space-y-4">
                 <div>
-                  <span className="block text-xs font-medium text-text-primary mb-2">
+                  <span className="block text-xs font-medium text-foreground mb-2">
                     Refunderes
                   </span>
-                  <div className="rounded-xl border border-zinc-200 bg-surface/50 overflow-hidden max-h-[200px] overflow-y-auto">
+                  <div className="rounded-lg border border-border bg-background/50 overflow-hidden max-h-[200px] overflow-y-auto">
                     {refundPreview.participants.map((p, i) => (
                       <div
                         key={p.id}
                         className={cn(
                           'flex items-center justify-between px-6 py-4',
-                          i < refundPreview.participants.length - 1 && 'border-b border-zinc-100'
+                          i < refundPreview.participants.length - 1 && 'border-b border-border'
                         )}
                       >
-                        <span className="text-sm text-text-primary">{p.participant_name || p.participant_email}</span>
-                        <span className="text-sm text-text-secondary tabular-nums">{formatKroner(p.amount_paid)}</span>
+                        <span className="text-sm text-foreground">{p.participant_name || p.participant_email}</span>
+                        <span className="text-sm text-muted-foreground tabular-nums">{formatKroner(p.amount_paid)}</span>
                       </div>
                     ))}
                   </div>
@@ -1008,15 +1026,15 @@ const CourseDetailPage = () => {
 
                 {/* Refund total */}
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs font-medium text-text-secondary">Totalt refusjon</span>
-                  <span className="text-sm font-medium text-text-primary tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
+                  <span className="text-xs font-medium text-muted-foreground">Totalt refusjon</span>
+                  <span className="text-sm font-medium text-foreground tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Frosted footer */}
-          <AlertDialogFooter className="border-t border-zinc-200 bg-white p-6 flex-row justify-end gap-3 sm:space-x-0">
+          <AlertDialogFooter className="border-t border-border bg-background p-6 flex-row justify-end gap-3 sm:space-x-0">
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
               variant="destructive-outline"

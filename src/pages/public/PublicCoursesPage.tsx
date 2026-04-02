@@ -150,21 +150,21 @@ const PublicCoursesPage = () => {
   const hasCoursesButNoResults = !loading && courses.length > 0 && filteredCourses.length === 0;
 
   return (
-    <div className="min-h-screen w-full bg-surface text-sidebar-foreground overflow-x-hidden font-sans">
+    <div className="min-h-screen w-full bg-background text-sidebar-foreground overflow-x-hidden">
       {/* Minimal Navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-md border-b border-zinc-200">
+      <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface border border-zinc-100 group-hover:border-zinc-400 transition-colors">
-              <Leaf className="h-4 w-4 text-text-primary" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
+              <Leaf className="h-4 w-4 text-foreground" />
             </div>
-            <span className="text-sm font-medium tracking-tight text-text-primary">Ease</span>
+            <span className="text-sm font-medium tracking-tight text-foreground">Ease</span>
           </Link>
 
           {user && userType === 'student' ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="compact" className="gap-2 text-text-secondary hover:text-text-primary">
+                <Button variant="ghost" size="compact" className="gap-2 text-muted-foreground hover:text-foreground">
                   <User className="h-3.5 w-3.5" />
                   {profile?.name?.split(' ')[0] || 'Profil'}
                 </Button>
@@ -201,8 +201,8 @@ const PublicCoursesPage = () => {
         {/* Error State */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-lg font-medium text-text-primary mb-2">{error}</h3>
-            <Button asChild variant="link" className="text-text-secondary">
+            <h3 className="text-lg font-medium text-foreground mb-2">{error}</h3>
+            <Button asChild variant="link" className="text-muted-foreground">
               <Link to="/">Gå til forsiden</Link>
             </Button>
           </div>
@@ -214,7 +214,7 @@ const PublicCoursesPage = () => {
             {/* Hero Section - Studio Info */}
             <header className="mb-12 flex items-start gap-6">
               {/* Logo */}
-              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-xl shrink-0">
+              <div className="h-20 w-20 md:h-24 md:w-24 overflow-hidden rounded-lg shrink-0">
                 {organization.logo_url ? (
                   <img
                     src={organization.logo_url}
@@ -222,8 +222,8 @@ const PublicCoursesPage = () => {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700">
-                    <span className="text-2xl font-medium text-white">
+                  <div className="flex h-full w-full items-center justify-center rounded-lg bg-primary border border-primary/70">
+                    <span className="text-2xl font-medium text-primary-foreground">
                       {organization.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -232,19 +232,19 @@ const PublicCoursesPage = () => {
 
               {/* Text Info */}
               <div className="space-y-2 flex-1 min-w-0">
-                <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">
+                <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">
                   {organization.name}
                 </h1>
 
                 {organization.city && (
-                  <div className="flex items-center gap-1.5 text-sm text-text-secondary">
-                    <MapPin className="h-3.5 w-3.5 text-text-tertiary" />
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                     {organization.city}
                   </div>
                 )}
 
                 {organization.description && (
-                  <p className="max-w-2xl text-sm text-text-secondary leading-relaxed pt-1">
+                  <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed pt-1">
                     {organization.description}
                   </p>
                 )}
@@ -265,11 +265,11 @@ const PublicCoursesPage = () => {
 
             {/* Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-zinc-200 bg-white">
-                <p className="text-sm font-medium text-text-primary">
+              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg border-border bg-background">
+                <p className="text-sm font-medium text-foreground">
                   {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
                 </p>
-                <p className="text-sm text-text-secondary mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {hasCoursesButNoResults
                     ? 'Prøv et annet søkeord.'
                     : 'Det er ingen planlagte kurs for øyeblikket.'}
@@ -282,7 +282,7 @@ const PublicCoursesPage = () => {
               {/* Kursrekker Section */}
               {!isEmpty && kursrekker.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="text-sm font-medium text-text-primary mb-6">
+                  <h2 className="text-sm font-medium text-foreground mb-6">
                     Kursrekker
                   </h2>
                   <PublicCourseTable
@@ -296,7 +296,7 @@ const PublicCoursesPage = () => {
               {/* Arrangementer Section */}
               {!isEmpty && arrangementer.length > 0 && (
                 <section className="mb-12">
-                  <h2 className="text-sm font-medium text-text-primary mb-6">
+                  <h2 className="text-sm font-medium text-foreground mb-6">
                     Arrangementer
                   </h2>
                   <PublicCourseTable

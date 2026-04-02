@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { Card } from '@/components/ui/card';
 import type { Message } from '@/types/dashboard';
 
 interface MessagesListProps {
@@ -12,25 +13,25 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
   return (
     <div className="col-span-1 md:col-span-3 lg:col-span-2 flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-text-primary">Meldinger</h3>
-        <Link to="/teacher/messages" className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors">Se alle</Link>
+        <h3 className="text-sm font-medium text-foreground">Meldinger</h3>
+        <Link to="/teacher/messages" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Se alle</Link>
       </div>
-      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden flex flex-col flex-1 min-h-[280px]">
-      <div className="flex-1 overflow-y-auto px-2 py-3 divide-y divide-zinc-100 flex flex-col">
+      <Card className="overflow-hidden flex flex-col flex-1 min-h-[280px]">
+      <div className="flex-1 overflow-y-auto px-2 py-3 divide-y divide-border flex flex-col">
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
-              <MessageSquare className="w-4 h-4 text-text-secondary" />
+            <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-3">
+              <MessageSquare className="size-4 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-text-primary">Alt oppdatert</p>
-            <p className="text-xs text-text-secondary mt-1">Ingen nye henvendelser fra elever.</p>
+            <p className="text-sm font-medium text-foreground">Alt oppdatert</p>
+            <p className="text-xs text-muted-foreground mt-1">Ingen nye henvendelser fra elever.</p>
           </div>
         ) : (
           messages.map((message) => (
           <Link
             key={message.id}
             to={`/teacher/messages/${message.id}`}
-            className="group flex items-center gap-3.5 p-3 rounded-lg hover:bg-zinc-50 cursor-pointer smooth-transition focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none"
+            className="group flex items-center gap-3.5 p-3 rounded-lg hover:bg-muted cursor-pointer smooth-transition focus-visible:ring-2 focus-visible:ring-ring/50 outline-none"
           >
             <div className="relative flex-shrink-0">
               <UserAvatar
@@ -42,14 +43,14 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline mb-0.5">
-                <p className="text-sm font-medium text-text-primary truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {message.sender.name}
                 </p>
-                <span className="text-xs font-normal text-text-secondary flex-shrink-0 ml-1.5">
+                <span className="text-xs font-normal text-muted-foreground flex-shrink-0 ml-1.5">
                   {message.timestamp}
                 </span>
               </div>
-              <p className="text-sm text-text-secondary truncate group-hover:text-text-primary transition-colors">
+              <p className="text-sm text-muted-foreground truncate group-hover:text-foreground transition-colors">
                 {message.content}
               </p>
             </div>
@@ -57,7 +58,7 @@ export const MessagesList = memo(function MessagesList({ messages }: MessagesLis
         ))
         )}
       </div>
-      </div>
+      </Card>
     </div>
   );
 });

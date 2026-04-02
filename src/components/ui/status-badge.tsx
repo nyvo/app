@@ -1,4 +1,3 @@
-import { XCircle } from 'lucide-react';
 import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
 import type { SignupStatus } from '@/types/dashboard';
 
@@ -86,7 +85,7 @@ export function StatusBadge({
       mode="badge"
       size={indicatorSize}
       label={label}
-      icon={config.showIcon ? XCircle : undefined}
+      icon={undefined}
       ariaLabel={`Status: ${label}`}
       className={className}
     />

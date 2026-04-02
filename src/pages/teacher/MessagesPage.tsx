@@ -274,7 +274,7 @@ const MessagesPage = () => {
 
 
   return (
-      <main className="flex-1 flex flex-col h-dvh overflow-hidden bg-surface">
+      <main className="flex-1 flex flex-col h-dvh overflow-hidden bg-background">
         <MobileTeacherHeader title="Meldinger" />
 
         {/* Messages Layout: Split View */}
@@ -287,13 +287,13 @@ const MessagesPage = () => {
         >
           {/* Conversation List (Left Panel) */}
           <div className={cn(
-            'w-full md:w-80 lg:w-96 flex-col border-r border-zinc-200 bg-surface',
+            'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-background',
             activeConversation || isComposing ? 'hidden md:flex' : 'flex'
           )}>
             {/* List Header */}
             <div className="p-6 pb-2">
               <div className="flex items-center justify-between mb-4">
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Meldinger</h1>
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">Meldinger</h1>
                 <Button
                   onClick={handleStartNewMessage}
                   size="compact"
@@ -321,8 +321,8 @@ const MessagesPage = () => {
                 <SectionLoader size="md" />
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
-                  <p className="text-sm font-medium text-text-primary">Ingen meldinger</p>
-                  <p className="text-sm text-text-secondary mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
+                  <p className="text-sm font-medium text-foreground">Ingen meldinger</p>
+                  <p className="text-sm text-muted-foreground mt-1">{searchQuery ? 'Ingen treff.' : 'Nye meldinger vises her.'}</p>
                 </div>
               ) : (
                 filteredConversations.map((conversation) => {
@@ -330,12 +330,12 @@ const MessagesPage = () => {
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-xl ios-ease text-left group relative border ${
+                  className={`w-full flex items-start gap-3 p-3 rounded-lg ios-ease text-left group relative border ${
                     activeConversation?.id === conversation.id && !isComposing
-                      ? 'bg-white border-zinc-200'
+                      ? 'bg-background border-border'
                       : conversation.is_read
-                      ? 'border-transparent hover:bg-surface-elevated opacity-70 hover:opacity-100'
-                      : 'border-transparent hover:bg-surface-elevated'
+                      ? 'border-transparent hover:bg-muted opacity-70 hover:opacity-100'
+                      : 'border-transparent hover:bg-muted'
                   }`}
                 >
                   <div className="relative shrink-0">
@@ -357,23 +357,23 @@ const MessagesPage = () => {
                       <span
                         className={`text-sm font-medium truncate ${
                           activeConversation?.id === conversation.id && !isComposing
-                            ? 'text-text-primary'
-                            : conversation.is_read ? 'text-text-secondary' : 'text-text-primary'
+                            ? 'text-foreground'
+                            : conversation.is_read ? 'text-muted-foreground' : 'text-foreground'
                         }`}
                       >
                         {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                       </span>
-                      <span className="text-xs text-text-secondary">
+                      <span className="text-xs text-muted-foreground">
                         {formatMessageTimestamp(conversation.updated_at)}
                       </span>
                     </div>
                     <p
                       className={`text-sm truncate ${
                         conversation.unread_count > 0
-                          ? 'text-text-primary font-medium'
+                          ? 'text-foreground font-medium'
                           : activeConversation?.id === conversation.id
-                          ? 'text-text-secondary font-medium'
-                          : 'text-text-secondary'
+                          ? 'text-muted-foreground font-medium'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {conversation.last_message?.content || 'Ingen meldinger'}
@@ -390,27 +390,27 @@ const MessagesPage = () => {
 
           {/* Chat View (Main Area) */}
           <div className={cn(
-            'flex-1 flex-col h-full bg-surface relative',
+            'flex-1 flex-col h-full bg-background relative',
             activeConversation || isComposing ? 'flex' : 'hidden md:flex'
           )}>
 
             {/* Composing New Message View */}
             {isComposing ? (
-              <div className="flex-1 flex flex-col h-full bg-surface">
-                 <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
+              <div className="flex-1 flex flex-col h-full bg-background">
+                 <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
                     <div className="flex items-center gap-3">
                       <button
                         onClick={handleCancelComposition}
-                        className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary cursor-pointer"
+                        className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground cursor-pointer"
                         aria-label="Tilbake"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
-                      <h3 className="text-sm font-medium text-text-primary">Ny melding</h3>
+                      <h3 className="text-sm font-medium text-foreground">Ny melding</h3>
                     </div>
                     <button
                       onClick={handleCancelComposition}
-                      className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-elevated rounded-full transition-colors cursor-pointer"
+                      className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors cursor-pointer"
                       aria-label="Lukk ny melding"
                     >
                       <X className="h-4 w-4" />
@@ -419,9 +419,9 @@ const MessagesPage = () => {
 
                 <div className="p-6 space-y-6">
                   <div className="space-y-2">
-                    <label htmlFor="compose-recipient" className="text-xs font-medium text-text-primary ml-1">Til</label>
+                    <label htmlFor="compose-recipient" className="text-xs font-medium text-foreground ml-1">Til</label>
                     <div className="relative group">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary group-focus-within:text-text-primary transition-colors pointer-events-none" />
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
                         <Input
                           id="compose-recipient"
                           type="text"
@@ -435,8 +435,8 @@ const MessagesPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <label htmlFor="compose-message-body" className="text-xs font-medium text-text-primary ml-1">Melding</label>
-                    <div className="rounded-xl bg-white p-3 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 ios-ease">
+                    <label htmlFor="compose-message-body" className="text-xs font-medium text-foreground ml-1">Melding</label>
+                    <div className="rounded-lg bg-background p-3 border border-border focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                         <Textarea
                           id="compose-message-body"
                           rows={8}
@@ -447,12 +447,12 @@ const MessagesPage = () => {
                         />
                         <div className="flex items-center justify-between pt-3 mt-2 border-t border-surface-elevated">
                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Legg til vedlegg">
+                              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Legg til vedlegg">
                                 <Paperclip />
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Velg emoji">
+                                  <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Velg emoji">
                                     <Smile />
                                   </Button>
                                 </DropdownMenuTrigger>
@@ -463,7 +463,7 @@ const MessagesPage = () => {
                                         key={emoji}
                                         onClick={() => setNewMessageBody(prev => prev + emoji)}
                                         aria-label={emoji}
-                                        className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
+                                        className="text-xl p-2 hover:bg-muted rounded transition-colors"
                                       >
                                         <span aria-hidden="true">{emoji}</span>
                                       </button>
@@ -496,10 +496,10 @@ const MessagesPage = () => {
             ) : (
               <>
                 {/* Regular Chat Header */}
-            <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-surface/90 backdrop-blur-sm z-10">
+            <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
                 <button
-                  className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary"
+                  className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake til samtaler"
                 >
@@ -519,8 +519,8 @@ const MessagesPage = () => {
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-text-primary truncate">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
-                          <p className="text-xs text-text-secondary truncate">
+                  <h3 className="text-sm font-medium text-foreground truncate">{activeConversation.participant?.name || activeConversation.participant?.email || 'Ukjent'}</h3>
+                          <p className="text-xs text-muted-foreground truncate">
                             {activeConversation.participant?.email || 'Elev'}
                           </p>
                         </div>
@@ -532,7 +532,7 @@ const MessagesPage = () => {
                     {/* Removed Phone and Zap icons */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-primary rounded-full" aria-label="Flere handlinger">
+                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground rounded-full" aria-label="Flere handlinger">
                   <MoreHorizontal />
                 </Button>
                       </DropdownMenuTrigger>
@@ -553,10 +553,10 @@ const MessagesPage = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar flex flex-col">
                   {!activeConversation ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
-                        <p className="text-sm text-text-secondary">Velg en samtale fra listen til venstre</p>
+                        <p className="text-sm text-muted-foreground">Velg en samtale fra listen til venstre</p>
                     </div>
                   ) : currentMessages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-text-secondary">
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                         <p>Ingen meldinger i samtalen ennå</p>
                       </div>
                   ) : (
@@ -592,22 +592,22 @@ const MessagesPage = () => {
 
                   <div className={`flex flex-col gap-1 ${message.is_outgoing ? 'items-end' : ''}`}>
                     <div
-                      className={`px-4 py-3 rounded-xl ${
+                      className={`px-4 py-3 rounded-lg ${
                         message.is_outgoing
                           ? 'bg-primary text-primary-foreground rounded-br-sm'
-                          : 'bg-white rounded-bl-sm'
+                          : 'bg-background rounded-bl-sm'
                       }`}
                     >
                       <p
                         className={`text-sm leading-relaxed ${
-                          message.is_outgoing ? '' : 'text-text-primary'
+                          message.is_outgoing ? '' : 'text-foreground'
                         }`}
                       >
                         {message.content}
                       </p>
                     </div>
                     <span
-                      className={`text-xs text-text-secondary flex items-center gap-1 ${
+                      className={`text-xs text-muted-foreground flex items-center gap-1 ${
                         message.is_outgoing ? 'pr-1' : 'pl-1'
                       }`}
                     >
@@ -625,8 +625,8 @@ const MessagesPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="p-6 pt-2 bg-surface">
-              <div className="flex flex-col gap-2 rounded-xl bg-white p-2 border border-zinc-200 focus-within:ring-2 focus-within:ring-zinc-400/50 ios-ease relative">
+            <div className="p-6 pt-2 bg-background">
+              <div className="flex flex-col gap-2 rounded-lg bg-background p-2 border border-border focus-within:ring-2 focus-within:ring-ring/50 ios-ease relative">
                 <Textarea
                   rows={1}
                   placeholder="Skriv en melding"
@@ -648,14 +648,14 @@ const MessagesPage = () => {
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          className="text-text-tertiary hover:text-text-secondary"
+                          className="text-muted-foreground hover:text-muted-foreground"
                           aria-label="Legg til vedlegg"
                         >
                           <Paperclip />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" className="text-text-tertiary hover:text-text-secondary" aria-label="Velg emoji">
+                            <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Velg emoji">
                               <Smile />
                             </Button>
                           </DropdownMenuTrigger>
@@ -666,7 +666,7 @@ const MessagesPage = () => {
                                   key={emoji}
                                   onClick={() => setMessageText(prev => prev + emoji)}
                                   aria-label={emoji}
-                                  className="text-xl p-2 hover:bg-surface-elevated rounded transition-colors"
+                                  className="text-xl p-2 hover:bg-muted rounded transition-colors"
                                 >
                                   <span aria-hidden="true">{emoji}</span>
                                 </button>
@@ -695,8 +695,8 @@ const MessagesPage = () => {
                       </Button>
                 </div>
               </div>
-              <p className="text-xs text-text-secondary text-center mt-3">
-                Trykk <span className="font-medium text-text-secondary">Enter</span> for å sende
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Trykk <span className="font-medium text-muted-foreground">Enter</span> for å sende
               </p>
             </div>
               </>

@@ -27,10 +27,10 @@ export function ScheduleHeader({
   const dateRange = formatWeekRange(displayedMonday, displayedSunday);
 
   return (
-    <header className="flex flex-col gap-4 border-b border-border bg-white px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-4 shrink-0 z-20">
+    <header className="flex flex-col gap-4 border-b border-border bg-background px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-4 shrink-0 z-20">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
-          <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
+          <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">
             Timeplan
           </h1>
           {hasCourses && (
@@ -47,10 +47,10 @@ export function ScheduleHeader({
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <div className="flex flex-col items-center min-w-[140px]">
-                  <span className="text-sm font-medium text-text-primary">
+                  <span className="text-sm font-medium text-foreground">
                     Uke {weekNumber}
                   </span>
-                  <span className="text-xs text-text-tertiary">
+                  <span className="text-xs text-muted-foreground">
                     {dateRange}
                   </span>
                 </div>

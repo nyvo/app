@@ -14,6 +14,7 @@ import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -432,7 +433,7 @@ const TeacherDashboard = () => {
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
 
   return (
-      <main className="flex-1 overflow-y-auto bg-surface h-screen">
+      <main className="flex-1 overflow-y-auto bg-background h-screen">
           <MobileTeacherHeader title="Oversikt" />
 
           <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
@@ -444,8 +445,8 @@ const TeacherDashboard = () => {
             >
               <header className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium text-text-tertiary mb-2">Oversikt</p>
-                  <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Oversikt</p>
+                  <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
                 </div>
@@ -466,22 +467,24 @@ const TeacherDashboard = () => {
 
 
               {showSetupBanner && !isLoading && (
-                <div className="mb-6 rounded-xl border border-zinc-200 bg-white px-4 py-3 flex items-center justify-between gap-3">
+                <div className="mb-6 rounded-lg border border-border bg-background px-4 py-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="h-3 w-3" />
                     </div>
-                    <p className="text-sm text-text-primary font-medium">
+                    <p className="text-sm text-foreground font-medium">
                       Alt er klart — du kan nå ta imot påmeldinger og betalinger
                     </p>
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowSetupBanner(false)}
-                    className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-elevated transition-colors duration-200 shrink-0"
+                    className="h-8 w-8 shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -495,8 +498,8 @@ const TeacherDashboard = () => {
                   <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
-                  <h3 className="font-geist text-sm font-medium text-text-primary mb-1">Kunne ikke laste oversikten</h3>
-                  <p className="text-sm text-text-secondary max-w-xs mb-4">{loadError}</p>
+                  <h3 className="font-geist text-sm font-medium text-foreground mb-1">Kunne ikke laste oversikten</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs mb-4">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
@@ -519,17 +522,17 @@ const TeacherDashboard = () => {
                 <div className="grid auto-rows-min grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-4">
                   {/* Primary Action Card */}
                   <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                  <h3 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h3>
-                  <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-xl bg-white border border-border">
+                  <h3 className="text-sm font-medium text-foreground mb-3">Kom i gang</h3>
+                  <div className="group relative h-[280px] sm:h-[360px] overflow-hidden rounded-lg bg-background border border-border">
                     <div className="relative flex h-full flex-col justify-center z-10 p-9">
                       <div className="max-w-md">
-                        <div className="mb-6 rounded-xl bg-surface border border-zinc-200 p-3 w-fit">
-                          <Plus className="h-6 w-6 text-text-tertiary stroke-[1.5]" />
+                        <div className="mb-6 rounded-lg bg-background border border-border p-3 w-fit">
+                          <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
                         </div>
-                        <h2 className="font-geist text-2xl font-medium tracking-tight mb-2 text-text-primary leading-tight">
+                        <h2 className="font-geist text-2xl font-medium tracking-tight mb-2 text-foreground leading-tight">
                           Opprett ditt første kurs
                         </h2>
-                        <p className="text-sm text-text-secondary mb-8">
+                        <p className="text-sm text-muted-foreground mb-8">
                           Opprett et kurs for å motta påmeldinger og administrere timeplanen din.
                         </p>
                         <Button
@@ -581,28 +584,28 @@ const TeacherDashboard = () => {
 
               <div className="flex flex-col gap-3 py-2">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg bg-surface-elevated border border-zinc-200 p-2">
-                    <Shield className="h-4 w-4 text-text-tertiary" />
+                  <div className="mt-0.5 rounded-lg bg-muted border border-border p-2">
+                    <Shield className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-text-primary">Trygt og sikkert</p>
-                    <p className="text-xs text-text-secondary mt-0.5">
+                    <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Pengene fra bookinger overføres direkte til din konto. Ease tar ingen del av betalingen.
                     </p>
                   </div>
                 </div>
 
-                <div className="h-px bg-zinc-100" />
+                <Separator />
 
                 <div>
-                  <p className="text-xs font-medium text-text-primary mb-2">Du trenger</p>
-                  <ul className="flex flex-col gap-1.5 text-xs text-text-secondary">
+                  <p className="text-xs font-medium text-foreground mb-2">Du trenger</p>
+                  <ul className="flex flex-col gap-1.5 text-xs text-muted-foreground">
                     <li className="flex items-center gap-2">
-                      <span className="h-1 w-1 rounded-full bg-zinc-400 shrink-0" />
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
                       Bankkonto for utbetalinger
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="h-1 w-1 rounded-full bg-zinc-400 shrink-0" />
+                      <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
                       Organisasjonsnummer (valgfritt)
                     </li>
                   </ul>
@@ -616,7 +619,7 @@ const TeacherDashboard = () => {
                 <button
                   onClick={() => setShowStripeExplainer(false)}
                   disabled={connectingStripe}
-                  className="text-xs text-text-tertiary hover:text-text-primary smooth-transition py-1 disabled:opacity-50 disabled:pointer-events-none"
+                  className="text-xs text-muted-foreground hover:text-foreground smooth-transition py-1 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Jeg gjør dette senere
                 </button>

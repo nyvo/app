@@ -54,14 +54,14 @@ const DatePicker = ({
           disabled={disabled}
           className={cn(
             // Base styles matching Input component - V2.3: rounded-lg for sharp, precise interactive elements
-            'h-11 w-full rounded-lg border border-zinc-300 bg-input-bg px-4 text-sm text-text-primary',
+            'h-11 w-full rounded-lg border border-input bg-transparent px-4 text-sm text-foreground',
             'flex items-center justify-between',
             // Hover state matching Input
             'hover:border-ring ios-ease',
             // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
-            'focus:outline-none focus:bg-white focus:border-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50',
+            'focus:outline-none focus:bg-background focus:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
             // Placeholder style when no value
-            !value && 'text-text-tertiary',
+            !value && 'text-muted-foreground',
             // Disabled state
             'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
             // Error state
@@ -69,10 +69,10 @@ const DatePicker = ({
             className
           )}
         >
-          <span className={cn(!value && 'text-text-tertiary')}>
+          <span className={cn(!value && 'text-muted-foreground')}>
             {value ? formatDateNorwegian(value) : placeholder}
           </span>
-          <ChevronDown className={cn('h-4 w-4 text-text-tertiary shrink-0', error && 'text-destructive')} />
+          <ChevronDown className={cn('h-4 w-4 text-muted-foreground shrink-0', error && 'text-destructive')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className='w-auto overflow-hidden p-0' align='start' showOverlay>
@@ -90,7 +90,7 @@ const DatePicker = ({
             months: "relative flex flex-col gap-4",
             month: "flex flex-col gap-5",
             weekdays: "flex justify-between",
-            weekday: "text-text-tertiary w-11 text-center text-xs font-normal",
+            weekday: "text-muted-foreground w-11 text-center text-xs font-normal",
             week: "flex justify-between w-full mt-1",
             day: "h-11 w-11 p-0 text-center",
           }}

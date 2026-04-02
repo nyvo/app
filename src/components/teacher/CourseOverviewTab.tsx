@@ -4,16 +4,20 @@ import {
   MapPin,
   Clock,
   Mail,
-  Info,
   Image,
-  Archive,
+  UserPlus,
+  Banknote,
+  ArrowRight,
 } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { StatusIndicator } from '@/components/ui/status-indicator';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { SessionCalendar } from '@/components/teacher/SessionCalendar';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { Badge } from '@/components/ui/badge';
+import { SessionList } from '@/components/teacher/SessionList';
 import { formatKroner } from '@/lib/utils';
+import type { SignupStatus } from '@/types/dashboard';
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
@@ -21,15 +25,11 @@ function formatDateRange(startDate?: string | null, endDate?: string | null): st
 
   const start = new Date(startDate);
 
-  // Validate start date
   if (isNaN(start.getTime())) return null;
 
   const end = endDate ? new Date(endDate) : null;
 
-  // Validate end date if provided
   if (end && isNaN(end.getTime())) return null;
-
-  // Validate end is not before start
   if (end && end.getTime() < start.getTime()) return null;
 
   const formatDay = (date: Date) => date.getDate();
@@ -37,7 +37,6 @@ function formatDateRange(startDate?: string | null, endDate?: string | null): st
   const formatYear = (date: Date) => date.getFullYear();
 
   if (!end) {
-    // Single date - show full format
     return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
   }
 
@@ -45,19 +44,15 @@ function formatDateRange(startDate?: string | null, endDate?: string | null): st
   const sameMonth = sameYear && start.getMonth() === end.getMonth();
   const sameDay = sameMonth && start.getDate() === end.getDate();
 
-  // Same day - just show single date
   if (sameDay) {
     return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
   }
 
   if (sameMonth) {
-    // Same month: "17. – 28. jan 2025"
     return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
   } else if (sameYear) {
-    // Same year: "17. jan – 7. feb 2025"
     return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
   } else {
-    // Different years: "17. des 2024 – 7. jan 2025"
     return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
   }
 }
@@ -80,6 +75,13 @@ interface SessionEditHandlers {
   onSessionEditChange: (weekId: string, field: 'date' | 'time', value: Date | string) => void;
   onSessionEditCancel: (weekId: string) => void;
   onSaveSession: (sessionId: string) => void;
+}
+
+interface RecentParticipant {
+  id: string;
+  name: string;
+  email: string;
+  status: SignupStatus;
 }
 
 interface CourseOverviewTabProps {
@@ -120,11 +122,16 @@ interface CourseOverviewTabProps {
   isUploadingQuickImage: boolean;
   quickImageInputRef: React.RefObject<HTMLInputElement | null>;
 
+  // Recent participants
+  recentParticipants: RecentParticipant[];
+  totalParticipantCount: number;
+
   // Callbacks
   onQuickImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onCancelCourse: () => void;
   onMessageParticipants: () => void;
+  onAddParticipant: () => void;
   onNavigateToSettings: () => void;
+  onNavigateToParticipants: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -141,31 +148,226 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   isUploadingQuickImage,
   quickImageInputRef,
   onQuickImageUpload,
-  onCancelCourse,
   onMessageParticipants,
+  onAddParticipant,
   onNavigateToSettings,
+  onNavigateToParticipants,
+  recentParticipants,
+  totalParticipantCount,
   kursplanRef,
 }) => {
+  const fillPercent = course.capacity > 0
+    ? Math.min(Math.round((course.enrolled / course.capacity) * 100), 100)
+    : 0;
+
   return (
-    <div className="space-y-6">
-      {/* Top Row: Enrollment & Logistics */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Enrollment Card (8 cols) */}
-        <div className="lg:col-span-8">
-          <h2 className="text-sm font-medium text-text-primary mb-3">
-            Påmelding
-          </h2>
-          <div className="rounded-xl bg-white p-6 border border-zinc-200">
-            <div className="flex items-end justify-between gap-2 mb-3 flex-wrap">
-              <div className="flex items-end gap-3">
-                <span className="text-2xl font-medium tracking-tight text-text-primary">
-                  {course.enrolled ?? 0}
-                </span>
-                <span className="text-sm text-text-secondary mb-0.5">
-                  av {course.capacity} påmeldte
-                </span>
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {/* ── LEFT COLUMN (2 cols) ── */}
+        <div className="lg:col-span-2 space-y-8">
+
+          {/* Tid og Sted */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-foreground">Tid og sted</h2>
+              <button
+                onClick={onNavigateToSettings}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
+              >
+                Rediger
+              </button>
+            </div>
+            <Card className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
+                <div className="flex items-start gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Dato</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Tidspunkt</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {course.timeSchedule || 'Ikke angitt'}
+                      {course.durationMinutes > 0 && (
+                        <span className="text-muted-foreground font-normal ml-1">({course.durationMinutes} min)</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Sted</p>
+                    <p className="text-sm font-medium text-foreground">{course.location || 'Ikke angitt'}</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Banknote className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">Pris</p>
+                    <p className="text-sm font-medium text-foreground">{formatKroner(course.price)}</p>
+                  </div>
+                </div>
               </div>
-              {/* Enrollment status badge */}
+            </Card>
+          </div>
+
+          {/* Om Kurset */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-foreground">Om kurset</h2>
+              <button
+                onClick={onNavigateToSettings}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
+              >
+                Rediger
+              </button>
+            </div>
+            <Card className="overflow-hidden">
+              <div className="p-6 flex flex-col sm:flex-row gap-6">
+                {/* Image / Upload */}
+                {course.imageUrl ? (
+                  <div className="w-full sm:w-48 aspect-video sm:aspect-square rounded-lg overflow-hidden shrink-0">
+                    <img
+                      src={course.imageUrl}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="shrink-0">
+                    <input
+                      ref={quickImageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={onQuickImageUpload}
+                      className="hidden"
+                    />
+                    <div
+                      className="w-full sm:w-48 aspect-video sm:aspect-square bg-muted rounded-lg border border-dashed border-input flex flex-col items-center justify-center group cursor-pointer smooth-transition hover:bg-muted/50"
+                      onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isUploadingQuickImage && quickImageInputRef.current?.click(); } }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Last opp forsidebilde"
+                    >
+                      {isUploadingQuickImage ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Spinner size="sm" />
+                          <span className="text-xs font-medium">Laster opp</span>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Image className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
+                          <span className="text-xs font-medium text-muted-foreground">Last opp bilde</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Description + Metadata */}
+                <div className="flex-1 min-w-0 space-y-4">
+                  {/* Description — always same layout, just different content */}
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Kort beskrivelse</p>
+                    {course.description ? (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {course.description}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        Ingen beskrivelse lagt til
+                      </p>
+                    )}
+                  </div>
+                  {course.description2 && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {course.description2}
+                    </p>
+                  )}
+
+                  {/* Målgruppe & Nivå */}
+                  {course.level && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Målgruppe & Nivå</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary">
+                          {course.level}
+                        </Badge>
+                        {course.courseType === 'kursrekke' && (
+                          <Badge variant="secondary">
+                            Voksne
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Kursplan (Session List) — multi-day courses only */}
+          {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
+            <div ref={kursplanRef}>
+              <SessionList
+                sessions={generatedCourseWeeks}
+                sessionLabel={sessionLabel}
+                sessionLabelPlural={sessionLabelPlural}
+                hasRealSessions={hasRealSessions}
+                sessionEditHandlers={sessionEditHandlers}
+              />
+            </div>
+          )}
+
+          {/* Nylige Påmeldinger */}
+          {recentParticipants.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-medium text-foreground">Nylige påmeldinger</h2>
+                <button
+                  onClick={onNavigateToParticipants}
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition inline-flex items-center gap-1"
+                >
+                  Se alle {totalParticipantCount}
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+              <Card className="overflow-hidden divide-y divide-border">
+                {recentParticipants.map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="size-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {p.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">{p.name}</p>
+                      <p className="text-xs font-medium text-muted-foreground truncate">{p.email}</p>
+                    </div>
+                    <StatusBadge status={p.status} size="sm" />
+                  </div>
+                ))}
+              </Card>
+            </div>
+          )}
+        </div>
+
+        {/* ── RIGHT COLUMN (sidebar) ── */}
+        <div className="space-y-8">
+
+          {/* Kapasitet */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-foreground">Kapasitet</h2>
               {course.capacity > 0 && (
                 course.enrolled >= course.capacity ? (
                   <StatusIndicator
@@ -175,204 +377,67 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     label="Fullt"
                   />
                 ) : (
-                  <span className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-xxs font-medium text-text-secondary mb-0.5">
+                  <Badge variant="secondary" className="bg-status-info-bg text-status-info-text ring-1 ring-inset ring-status-info-border border-0">
                     {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-                  </span>
+                  </Badge>
                 )
               )}
             </div>
-            {/* Progress Bar */}
-            <div className="w-full bg-surface-elevated rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={course.enrolled} aria-valuemin={0} aria-valuemax={course.capacity} aria-label={`${course.enrolled} av ${course.capacity} påmeldte`}>
-              {course.enrolled > 0 && course.capacity > 0 && (
-                <div
-                  className="bg-primary h-2 rounded-full ios-ease"
-                  style={{ width: `${Math.min((course.enrolled / course.capacity) * 100, 100)}%` }}
-                />
-              )}
-            </div>
-          </div>
-        </div>
+            <Card className="p-6">
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-3xl font-medium text-foreground leading-none">
+                  {course.enrolled ?? 0}
+                </span>
+                <span className="text-sm text-muted-foreground mb-0.5">
+                  / {course.capacity} deltakere
+                </span>
+              </div>
 
-        {/* Logistics Card (4 cols) */}
-        <div className="lg:col-span-4">
-          <h2 className="text-sm font-medium text-text-primary mb-3">
-            Tid og sted
-          </h2>
-          <div className="rounded-xl bg-white p-6 border border-zinc-200 flex flex-col justify-center space-y-4">
-            <div className="flex items-center gap-2.5">
-              <Calendar className="h-4 w-4 text-text-tertiary shrink-0" />
-              <p className="text-sm text-text-primary leading-none">
-                {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
-              </p>
-            </div>
-            <div className="h-px bg-zinc-100 w-full" />
-            <div className="flex items-center gap-2.5">
-              <Clock className="h-4 w-4 text-text-tertiary shrink-0" />
-              <p className="text-sm text-text-primary leading-none">
-                {course.date || `${course.durationMinutes} min`}
-                {course.date && ` (${course.durationMinutes} min)`}
-              </p>
-            </div>
-            <div className="h-px bg-zinc-100 w-full" />
-            <div className="flex items-center gap-2.5">
-              <MapPin className="h-4 w-4 text-text-tertiary shrink-0" />
-              <p className="text-sm text-text-primary leading-none">{course.location}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Middle Section: Content & Admin Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Main Column: Description & Course Plan (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          {/* Description Card */}
-          <div>
-            <h2 className="text-sm font-medium text-text-primary mb-3">Om kurset</h2>
-            <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
-              {/* Course Image */}
-              {course.imageUrl ? (
-                <div className="h-48 overflow-hidden">
-                  <img
-                    src={course.imageUrl}
-                    alt={course.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="p-6 pb-0">
-                  <input
-                    ref={quickImageInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={onQuickImageUpload}
-                    className="hidden"
-                  />
+              {/* Progress bar */}
+              <div
+                className="w-full bg-muted rounded-full h-1.5 mb-2 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={course.enrolled}
+                aria-valuemin={0}
+                aria-valuemax={course.capacity}
+                aria-label={`${course.enrolled} av ${course.capacity} deltakere`}
+              >
+                {course.enrolled > 0 && course.capacity > 0 && (
                   <div
-                    className="h-40 bg-surface/30 rounded-xl border border-zinc-200 flex items-center justify-center group cursor-pointer smooth-transition hover:bg-zinc-50/50 focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none"
-                    onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isUploadingQuickImage && quickImageInputRef.current?.click(); } }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Last opp forsidebilde"
-                  >
-                    {isUploadingQuickImage ? (
-                      <div className="flex items-center gap-2 text-text-secondary">
-                        <Spinner size="sm" />
-                        <span className="text-xs font-medium">Laster opp</span>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <div className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white border border-zinc-200 mb-2 smooth-transition">
-                          <Image className="h-4 w-4 text-text-tertiary" />
-                        </div>
-                        <p className="text-xs font-medium text-text-primary">Legg til forsidebilde</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Description Content */}
-              <div className="p-6">
-                {course.description ? (
-                  <div className="max-w-lg">
-                    <p className="text-sm text-text-secondary leading-relaxed mb-4">
-                      {course.description}
-                    </p>
-                    {course.description2 && (
-                      <p className="text-sm text-text-secondary leading-relaxed">
-                        {course.description2}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-surface/30 rounded-xl border border-zinc-200 p-6 flex flex-col items-center justify-center text-center">
-                    <div className="bg-white p-2 rounded-xl border border-zinc-200 mb-3">
-                      <Info className="h-4 w-4 text-text-tertiary" />
-                    </div>
-                    <p className="text-sm text-text-primary font-medium mb-1">Ingen beskrivelse</p>
-                    <p className="text-xs text-text-secondary mb-4">
-                      Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.
-                    </p>
-                    <Button variant="outline-soft" size="compact" onClick={onNavigateToSettings}>
-                      Legg til beskrivelse
-                    </Button>
-                  </div>
+                    className="bg-primary h-1.5 rounded-full ios-ease"
+                    style={{ width: `${fillPercent}%` }}
+                  />
                 )}
               </div>
-            </div>
+              <p className="text-xs font-medium text-muted-foreground text-right">{fillPercent}% fylt opp</p>
+            </Card>
           </div>
 
-          {/* Course Plan Calendar - Only show for multi-day courses */}
-          {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
-            <div ref={kursplanRef}>
-              <SessionCalendar
-                sessions={generatedCourseWeeks}
-                sessionLabel={sessionLabel}
-                sessionLabelPlural={sessionLabelPlural}
-                hasRealSessions={hasRealSessions}
-                sessionEditHandlers={sessionEditHandlers}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Right Sidebar: Administration (4 cols) */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Admin Card */}
+          {/* Quick Actions */}
           <div>
-            <h2 className="text-sm font-medium text-text-primary mb-3">
-              Administrasjon
-            </h2>
-            <div className="rounded-xl bg-white p-6 border border-zinc-200">
-              <div className="mb-5">
-                <span className="text-xs text-text-secondary block mb-1">Pris per deltaker</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-medium text-text-primary">
-                    {formatKroner(course.price)}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <Button
-                  variant="default"
-                  size="compact"
-                  className="w-full justify-center"
-                  disabled={course.enrolled === 0}
-                  onClick={onMessageParticipants}
-                >
-                  <Mail className="h-4 w-4" />
-                  Melding til deltakere
-                </Button>
-                <Button
-                  variant="outline"
-                  size="compact"
-                  className="w-full justify-center text-destructive border-status-error-border hover:bg-status-error-bg"
-                  onClick={onCancelCourse}
-                >
-                  <Archive className="h-4 w-4" />
-                  Avlys kurs
-                </Button>
-              </div>
+            <h2 className="text-sm font-medium text-foreground mb-3">Handlinger</h2>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                size="compact"
+                className="w-full justify-start"
+                onClick={onAddParticipant}
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Legg til deltaker
+              </Button>
+              <Button
+                variant="outline"
+                size="compact"
+                className="w-full justify-start"
+                disabled={course.enrolled === 0}
+                onClick={onMessageParticipants}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Send melding til alle
+              </Button>
             </div>
           </div>
-
-          {/* Tips Card — only when image or description is missing */}
-          {(!course.imageUrl || !course.description) && (
-            <Alert variant="info">
-              <div>
-                <AlertTitle variant="info">Tips for synlighet</AlertTitle>
-                <AlertDescription variant="info">
-                  {!course.imageUrl && !course.description
-                    ? 'Legg til bilde og beskrivelse så deltakerne vet hva kurset handler om.'
-                    : !course.imageUrl
-                      ? 'Legg til et forsidebilde så kurset blir lettere å finne.'
-                      : 'Legg til en beskrivelse for å fortelle deltakerne hva kurset handler om.'}
-                </AlertDescription>
-              </div>
-            </Alert>
-          )}
         </div>
       </div>
     </div>

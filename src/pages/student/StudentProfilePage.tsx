@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { User, Mail, Phone, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
@@ -50,24 +51,24 @@ const StudentProfilePage = () => {
     <>
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">
+          <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">
             Min profil
           </h1>
-          <p className="text-text-secondary mt-1">
+          <p className="text-muted-foreground mt-1">
             Kontoinformasjon
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="p-6 space-y-6">
 
             {/* Name */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 h-8 w-8 rounded-lg bg-surface-elevated flex items-center justify-center text-text-secondary shrink-0">
-                <User className="h-4 w-4" />
+              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                <User className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-name" className="block text-xs font-medium text-text-primary mb-1.5">
+                <label htmlFor="student-name" className="block text-xs font-medium text-foreground mb-1.5">
                   Navn
                 </label>
                 <Input
@@ -81,14 +82,14 @@ const StudentProfilePage = () => {
 
             {/* Email (read-only) */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 h-8 w-8 rounded-lg bg-surface-elevated flex items-center justify-center text-text-secondary shrink-0">
-                <Mail className="h-4 w-4" />
+              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                <Mail className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-secondary mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   E-post
                 </label>
-                <p className="text-sm text-text-primary py-2">
+                <p className="text-sm text-foreground py-2">
                   {user?.email}
                 </p>
               </div>
@@ -96,11 +97,11 @@ const StudentProfilePage = () => {
 
             {/* Phone */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 h-8 w-8 rounded-lg bg-surface-elevated flex items-center justify-center text-text-secondary shrink-0">
-                <Phone className="h-4 w-4" />
+              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                <Phone className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-phone" className="block text-xs font-medium text-text-primary mb-1.5">
+                <label htmlFor="student-phone" className="block text-xs font-medium text-foreground mb-1.5">
                   Telefon
                 </label>
                 <Input
@@ -115,14 +116,14 @@ const StudentProfilePage = () => {
 
             {/* Member since (read-only) */}
             <div className="flex items-start gap-4">
-              <div className="mt-1 h-8 w-8 rounded-lg bg-surface-elevated flex items-center justify-center text-text-secondary shrink-0">
-                <Calendar className="h-4 w-4" />
+              <div className="mt-1 size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                <Calendar className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-medium text-text-secondary mb-1">
+                <label className="block text-xs font-medium text-muted-foreground mb-1">
                   Medlem siden
                 </label>
-                <p className="text-sm text-text-primary py-2">
+                <p className="text-sm text-foreground py-2">
                   {profile?.created_at
                     ? format(new Date(profile.created_at), 'd. MMMM yyyy', { locale: nb })
                     : 'Ukjent'}
@@ -133,7 +134,7 @@ const StudentProfilePage = () => {
           </div>
 
           {isDirty && (
-            <div className="px-6 py-4 border-t border-zinc-200 flex justify-end">
+            <div className="px-6 py-4 border-t border-border flex justify-end">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
@@ -143,7 +144,7 @@ const StudentProfilePage = () => {
               </Button>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </>
   );

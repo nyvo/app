@@ -41,7 +41,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </SkeletonCard>
 
       {/* Messages Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[280px] sm:h-[360px] rounded-xl bg-surface-elevated border border-border overflow-hidden flex flex-col">
+      <div className="col-span-1 md:col-span-3 lg:col-span-2 h-[280px] sm:h-[360px] rounded-lg bg-muted border border-border overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-3 w-12" />
@@ -49,7 +49,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
         <div className="flex-1 p-2 space-y-2">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="flex items-center gap-3.5 p-3">
-              <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+              <Skeleton className="size-10 rounded-full flex-shrink-0" />
               <div className="flex-1 space-y-1.5">
                 <div className="flex justify-between items-baseline">
                   <Skeleton className="h-4 w-24" />
@@ -63,7 +63,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Courses Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-xl bg-surface-elevated border border-border p-6">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-lg bg-muted border border-border p-6">
         <div className="flex items-center justify-between mb-6">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-7 w-36 rounded-lg" />
@@ -74,7 +74,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
               <div className="w-14 flex-shrink-0">
                 <Skeleton className="h-4 w-10" />
               </div>
-              <div className="flex-1 rounded-lg bg-surface/50 border border-zinc-100 p-3.5 flex justify-between items-center">
+              <div className="flex-1 rounded-lg bg-background/50 border border-border p-3.5 flex justify-between items-center">
                 <div className="flex items-center gap-3.5">
                   <Skeleton className="h-2 w-2 rounded-full" />
                   <div className="space-y-1.5">
@@ -90,14 +90,14 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
       </div>
 
       {/* Registrations Card */}
-      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-xl bg-surface-elevated border border-border overflow-hidden">
+      <div className="col-span-1 md:col-span-3 lg:col-span-4 rounded-lg bg-muted border border-border overflow-hidden">
         <div className="flex items-center justify-between p-6 sm:p-6 pb-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-12" />
         </div>
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 space-y-2">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-3.5 rounded-lg border border-zinc-100 bg-surface/30">
+            <div key={i} className="p-3.5 rounded-lg border border-border bg-muted/30">
               <div className="flex items-center justify-between gap-3">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-3 w-16" />

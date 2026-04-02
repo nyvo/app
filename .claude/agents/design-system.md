@@ -47,13 +47,13 @@ For every violation found:
 
 | Element | Required Classes | Common Mistakes |
 |---------|-----------------|-----------------|
-| Page title | `font-geist text-2xl font-medium tracking-tight text-text-primary` | Using `text-xl`, missing `tracking-tight` |
-| Section header | `text-sm font-medium text-text-primary mb-3` | Using `text-lg`, `text-xl`, placing inside cards |
-| Card header | `text-sm font-medium text-text-primary` | Using `text-base`, `font-semibold` |
-| Body text | `text-sm text-text-secondary` | Using `text-xs` for body, `text-base` for body |
-| Micro-label | `text-xs font-medium text-text-tertiary` | Using `text-text-secondary` for labels |
-| Form label | `text-xs font-medium text-text-primary mb-1.5` | Wrong color, wrong spacing |
-| Dialog title | `text-lg font-medium text-text-primary` | Using `text-xl`, `font-semibold` |
+| Page title | `font-geist text-2xl font-medium tracking-tight text-foreground` | Using `text-xl`, missing `tracking-tight` |
+| Section header | `text-sm font-medium text-foreground mb-3` | Using `text-lg`, `text-xl`, placing inside cards |
+| Card header | `text-sm font-medium text-foreground` | Using `text-base`, `font-semibold` |
+| Body text | `text-sm text-muted-foreground` | Using `text-xs` for body, `text-base` for body |
+| Micro-label | `text-xs font-medium text-muted-foreground` | Using `text-muted-foreground` for labels |
+| Form label | `text-xs font-medium text-foreground mb-1.5` | Wrong color, wrong spacing |
+| Dialog title | `text-lg font-medium text-foreground` | Using `text-xl`, `font-semibold` |
 
 ### Banned Patterns
 
@@ -61,7 +61,7 @@ For every violation found:
 - `text-base` for body text — only for lead/marketing text
 - `text-lg` or `text-xl` for section/card headers — must be `text-sm font-medium`
 - `tracking-tight` on anything other than `text-2xl` page titles
-- Hardcoded `text-zinc-*` colors — use `text-text-primary/secondary/tertiary`
+- Hardcoded `text-zinc-*` colors — use `text-foreground/secondary/tertiary`
 - Hardcoded `bg-zinc-*` — use semantic tokens (`bg-surface`, `bg-canvas`, `bg-surface-elevated`)
 - `shadow-sm`, `shadow-md`, `shadow` — shadows are disabled, use borders
 - `rounded-3xl` — use `rounded-xl` everywhere
@@ -70,17 +70,17 @@ For every violation found:
 ### Card Patterns
 
 - Cards: `rounded-xl bg-white border border-zinc-200 p-6`
-- Section header above card: `text-sm font-medium text-text-primary mb-3`
+- Section header above card: `text-sm font-medium text-foreground mb-3`
 - List dividers: `border-zinc-100` (not `border-zinc-200`)
 - Card borders: `border-zinc-200`
 - Input borders: `border-zinc-300` (darker than cards)
 
 ### Colors
 
-- Primary text: `text-text-primary` (not `text-zinc-900` or `text-black`)
-- Secondary text: `text-text-secondary` (not `text-zinc-500` or `text-gray-600`)
-- Tertiary text: `text-text-tertiary` (not `text-zinc-400`)
-- Icons: `text-text-tertiary` for structural icons
+- Primary text: `text-foreground` (not `text-zinc-900` or `text-black`)
+- Secondary text: `text-muted-foreground` (not `text-zinc-500` or `text-gray-600`)
+- Tertiary text: `text-muted-foreground` (not `text-zinc-400`)
+- Icons: `text-muted-foreground` for structural icons
 - Page background: `bg-surface` (not `bg-zinc-100` or `bg-gray-50`)
 
 ### Currency

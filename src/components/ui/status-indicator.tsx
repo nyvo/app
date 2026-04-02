@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { AlertTriangle, XCircle, Clock } from 'lucide-react';
 
-export type IndicatorVariant = 'success' | 'warning' | 'error' | 'neutral' | 'critical';
+export type IndicatorVariant = 'success' | 'warning' | 'error' | 'neutral' | 'critical' | 'info';
 export type IndicatorMode = 'badge' | 'inline' | 'text-icon';
 export type IndicatorSize = 'xs' | 'sm' | 'md';
 
@@ -24,32 +24,37 @@ const variantConfig: Record<IndicatorVariant, {
   defaultIcon?: React.ComponentType<{ className?: string }>;
 }> = {
   success: {
-    bg: 'bg-green-50',
-    text: 'text-green-700',
-    ring: 'ring-green-600/20',
+    bg: 'bg-status-confirmed-bg',
+    text: 'text-status-confirmed-text',
+    ring: 'ring-status-confirmed-border',
   },
   warning: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    ring: 'ring-amber-600/20',
+    bg: 'bg-status-warning-bg',
+    text: 'text-status-warning-text',
+    ring: 'ring-status-warning-border',
     defaultIcon: Clock,
   },
   error: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    ring: 'ring-red-600/20',
+    bg: 'bg-status-error-bg',
+    text: 'text-status-error-text',
+    ring: 'ring-status-error-border',
     defaultIcon: XCircle,
   },
   neutral: {
-    bg: 'bg-zinc-50',
-    text: 'text-zinc-600',
-    ring: 'ring-zinc-500/20',
+    bg: 'bg-status-cancelled-bg',
+    text: 'text-status-cancelled-text',
+    ring: 'ring-status-cancelled-border',
   },
   critical: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    ring: 'ring-red-600/20',
+    bg: 'bg-status-error-bg',
+    text: 'text-status-error-text',
+    ring: 'ring-status-error-border',
     defaultIcon: AlertTriangle,
+  },
+  info: {
+    bg: 'bg-status-info-bg',
+    text: 'text-status-info-text',
+    ring: 'ring-status-info-border',
   },
 };
 

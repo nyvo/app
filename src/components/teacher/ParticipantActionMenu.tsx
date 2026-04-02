@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MoreHorizontal, CheckCircle, XCircle, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
 import {
@@ -68,8 +69,10 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            className="h-8 w-8 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-zinc-50 smooth-transition text-text-tertiary hover:text-text-secondary flex-shrink-0"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="min-h-[44px] min-w-[44px] flex-shrink-0"
             aria-label="Handlinger"
             disabled={loading}
           >
@@ -78,14 +81,14 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             ) : (
               <MoreHorizontal className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
 
           {/* Exception resolution actions — only for problem signups */}
           {exceptionType === 'payment_failed' && (
             <>
-              <DropdownMenuLabel className="text-xs text-text-secondary font-normal">
+              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                 Betaling feilet
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -108,7 +111,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
 
           {exceptionType === 'pending_payment' && (
             <>
-              <DropdownMenuLabel className="text-xs text-text-secondary font-normal">
+              <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                 Venter på betaling
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -150,18 +153,18 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <div className="rounded-xl border border-zinc-200 bg-surface/50 px-4 py-3">
+                <div className="rounded-lg border border-border bg-background/50 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-text-primary">{signup.participantName}</p>
-                      <p className="text-xs text-text-secondary">{signup.participantEmail}</p>
+                      <p className="text-sm font-medium text-foreground">{signup.participantName}</p>
+                      <p className="text-xs text-muted-foreground">{signup.participantEmail}</p>
                     </div>
                     {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                      <span className="text-sm font-medium text-text-primary tabular-nums">{formatKroner(signup.amountPaid)}</span>
+                      <span className="text-sm font-medium text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
                     )}
                   </div>
                 </div>
-                <p className="text-sm text-text-secondary">
+                <p className="text-sm text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
                     ? 'Deltakeren har betalt og får refusjon via Stripe.'
                     : 'Dette kan ikke angres.'}

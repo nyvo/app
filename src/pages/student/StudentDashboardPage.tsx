@@ -78,7 +78,7 @@ const StudentDashboardPage = () => {
       <>
         <div className="flex flex-col items-center justify-center min-h-[60vh]" role="status" aria-live="polite">
           <Spinner size="xl" className="mb-4" aria-hidden="true" />
-          <p className="text-text-secondary">Henter kurs</p>
+          <p className="text-muted-foreground">Henter kurs</p>
         </div>
       </>
     );
@@ -91,8 +91,8 @@ const StudentDashboardPage = () => {
           <div className="rounded-full bg-status-error-bg p-3 mb-4">
             <CalendarX className="h-5 w-5 text-status-error-text" />
           </div>
-          <h2 className="text-sm font-medium text-text-primary mb-2">Noe gikk galt</h2>
-          <p className="text-text-secondary mb-6 max-w-md">{error}</p>
+          <h2 className="text-sm font-medium text-foreground mb-2">Noe gikk galt</h2>
+          <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
           <Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>
         </div>
       </>
@@ -103,25 +103,25 @@ const StudentDashboardPage = () => {
     <>
       {/* Welcome / Header */}
       <div className="mb-8">
-        <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+        <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
           Mine kurs
         </h1>
-        <p className="text-text-secondary mt-1">
+        <p className="text-muted-foreground mt-1">
           Her finner du kursene dine.
         </p>
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-zinc-200 rounded-none h-auto p-0 gap-8">
+        <TabsList className="mb-8 w-full justify-start bg-transparent border-b border-border rounded-none h-auto p-0 gap-8">
           <TabsTrigger 
             value="upcoming"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary ios-ease"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground ios-ease"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-text-secondary data-[state=active]:text-text-primary ios-ease"
+            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none pb-3 px-0 text-sm font-medium text-muted-foreground data-[state=active]:text-foreground ios-ease"
           >
             Tidligere
           </TabsTrigger>
@@ -145,19 +145,19 @@ const StudentDashboardPage = () => {
               : false;
 
             return (
-              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
                 <div>
-                  <div className="rounded-full bg-surface-elevated p-3 mb-4 mx-auto inline-flex">
+                  <div className="rounded-full bg-muted p-3 mb-4 mx-auto inline-flex">
                     {isNewUser ? (
-                      <Search className="h-5 w-5 text-text-tertiary" />
+                      <Search className="h-5 w-5 text-muted-foreground" />
                     ) : (
-                      <CalendarX className="h-5 w-5 text-text-tertiary" />
+                      <CalendarX className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <h3 className="text-sm font-medium text-text-primary mb-1">
+                  <h3 className="text-sm font-medium text-foreground mb-1">
                     {isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
                   </h3>
-                  <p className="text-sm text-text-secondary mb-6 max-w-xs">
+                  <p className="text-sm text-muted-foreground mb-6 max-w-xs">
                     {isNewUser
                       ? 'Se kurs i nærheten og meld deg på.'
                       : 'Du har ingen kommende kurs.'}
@@ -183,13 +183,13 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-xl border border-zinc-200">
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-background rounded-lg border border-border">
               <div>
-                <div className="rounded-full bg-surface-elevated p-3 mb-4 mx-auto inline-flex">
-                  <Clock className="h-5 w-5 text-text-tertiary" />
+                <div className="rounded-full bg-muted p-3 mb-4 mx-auto inline-flex">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <h3 className="text-sm font-medium text-text-primary mb-1">Ingen tidligere kurs</h3>
-                <p className="text-sm text-text-secondary max-w-xs">
+                <h3 className="text-sm font-medium text-foreground mb-1">Ingen tidligere kurs</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">
                   Du har ikke deltatt på noen kurs ennå.
                 </p>
               </div>

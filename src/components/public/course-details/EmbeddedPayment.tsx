@@ -4,8 +4,10 @@ import type { StripeError } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Lock, ChevronLeft } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 export interface EmbeddedPaymentProps {
   clientSecret: string
@@ -87,28 +89,28 @@ function PaymentForm({
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
         Tilbake
       </button>
 
       {/* Order summary */}
-      <div className="rounded-xl bg-surface-elevated p-4 space-y-3">
+      <div className="rounded-lg bg-muted p-4 space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-sm text-text-primary">{courseName}</span>
-          <span className="text-sm text-text-primary">{formatKroner(price)}</span>
+          <span className="text-sm text-foreground">{courseName}</span>
+          <span className="text-sm text-foreground">{formatKroner(price)}</span>
         </div>
         {calculateServiceFee(price) > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">Servicegebyr</span>
-            <span className="text-sm text-text-secondary">{formatKroner(calculateServiceFee(price))}</span>
+            <span className="text-sm text-muted-foreground">Servicegebyr</span>
+            <span className="text-sm text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
           </div>
         )}
-        <div className="border-t border-zinc-200" />
+        <Separator />
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-text-primary">Totalt</span>
-          <span className="text-sm font-medium text-text-primary">{formatKroner(calculateTotalPrice(price))}</span>
+          <span className="text-sm font-medium text-foreground">Totalt</span>
+          <span className="text-sm font-medium text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
         </div>
       </div>
 
@@ -128,9 +130,9 @@ function PaymentForm({
 
       {/* Error display */}
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
+        <Alert variant="error" size="sm">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* Submit button */}
@@ -146,7 +148,7 @@ function PaymentForm({
         Betal {formatKroner(calculateTotalPrice(price))}
       </Button>
 
-      <p className="text-center text-xs text-text-secondary flex items-center justify-center gap-1">
+      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
         <CreditCard className="h-3 w-3" />
         Sikker betaling via Stripe
       </p>

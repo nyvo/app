@@ -59,9 +59,9 @@ function getTimeRange(course: PublicCourseWithDetails): string {
  * Dot color class based on availability variant.
  */
 const DOT_COLORS: Record<string, string> = {
-  success: 'bg-green-500',
-  warning: 'bg-amber-500',
-  neutral: 'bg-zinc-400',
+  success: 'bg-status-confirmed-text',
+  warning: 'bg-status-warning-text',
+  neutral: 'bg-muted-foreground',
 };
 
 function getStatusInfo(spotsAvailable: number) {
@@ -102,12 +102,12 @@ function DifficultyDots({ level }: { level: CourseLevel | null }) {
             key={i}
             className={cn(
               'h-2 w-2 rounded-full transition-colors',
-              i < info.dots ? 'bg-zinc-600' : 'bg-zinc-200'
+              i < info.dots ? 'bg-muted-foreground' : 'bg-border'
             )}
           />
         ))}
       </div>
-      <span className="text-xs text-text-secondary">{info.label}</span>
+      <span className="text-xs text-muted-foreground">{info.label}</span>
     </div>
   );
 }
@@ -152,16 +152,16 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               className={cn(
                 "smooth-transition",
                 isExpanded
-                  ? "rounded-xl border border-zinc-200 bg-white/60 my-2"
-                  : "border-b border-zinc-200 last:border-b-0"
+                  ? "rounded-lg border border-border bg-background/60 my-2"
+                  : "border-b border-border last:border-b-0"
               )}
             >
               {/* Row */}
               <div
                 className={cn(
                   "group flex items-center gap-4 px-6 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-zinc-50/30",
-                  isExpanded && "bg-zinc-50/30"
+                  isFull ? "opacity-40" : "hover:bg-muted/30",
+                  isExpanded && "bg-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
                 role="row"
@@ -171,22 +171,22 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 {/* Chevron */}
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-text-tertiary shrink-0 transition-transform duration-200",
+                    "h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200",
                     isExpanded && "rotate-180"
                   )}
                 />
 
                 {/* Left group: Class name + meta line */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {course.title}
                   </p>
                   <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-xs text-text-secondary">
+                    <span className="text-xs text-muted-foreground">
                       {getDisplayDate(course)} · {getTimeRange(course)}
                     </span>
                     {!isFull && (
-                      <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
@@ -197,10 +197,10 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 {/* Right group: Price/Full + CTA */}
                 <div className="flex items-center gap-4 shrink-0" data-action>
                   {isFull ? (
-                    <span className="text-xs font-medium text-text-primary">Fullt</span>
+                    <span className="text-xs font-medium text-foreground">Fullt</span>
                   ) : (
                     <>
-                      <span className="text-sm font-medium text-text-primary">
+                      <span className="text-sm font-medium text-foreground">
                         {formatPrice(course.price)}
                       </span>
                       <Button
@@ -248,35 +248,35 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               className={cn(
                 "smooth-transition",
                 isExpanded
-                  ? "rounded-xl border border-zinc-200 bg-white/60 my-2"
-                  : "border-b border-zinc-200 last:border-b-0"
+                  ? "rounded-lg border border-border bg-background/60 my-2"
+                  : "border-b border-border last:border-b-0"
               )}
             >
               {/* Row */}
               <div
                 className={cn(
                   "group flex items-center gap-3 px-4 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-zinc-50/30",
-                  isExpanded && "bg-zinc-50/30"
+                  isFull ? "opacity-40" : "hover:bg-muted/30",
+                  isExpanded && "bg-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
               >
                 <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {course.title}
                   </p>
-                  <p className="text-xs text-text-secondary">
+                  <p className="text-xs text-muted-foreground">
                     {getDisplayDate(course)} · {getTimeRange(course)}
                   </p>
                   <div className="flex items-center gap-3">
                     {!isFull && (
-                      <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
                     )}
                     {!isFull && (
-                      <span className="text-xs text-text-secondary">
+                      <span className="text-xs text-muted-foreground">
                         {formatPrice(course.price)}
                       </span>
                     )}
@@ -284,7 +284,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 </div>
                 <div className="shrink-0 flex items-center gap-2" data-action>
                   {isFull ? (
-                    <span className="text-xs font-medium text-text-primary">Fullt</span>
+                    <span className="text-xs font-medium text-foreground">Fullt</span>
                   ) : (
                     <Button
                       variant="outline"
@@ -300,7 +300,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 </div>
                 <ChevronDown
                   className={cn(
-                    "h-3.5 w-3.5 text-text-tertiary shrink-0 transition-transform duration-200",
+                    "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200",
                     isExpanded && "rotate-180"
                   )}
                 />
@@ -343,7 +343,7 @@ function DesktopPreview({ course }: PreviewProps) {
   if (!hasContent) {
     return (
       <div className="px-6 pb-6 pt-1">
-        <span className="text-sm text-text-secondary">Ingen tilleggsinformasjon</span>
+        <span className="text-sm text-muted-foreground">Ingen tilleggsinformasjon</span>
       </div>
     );
   }
@@ -352,7 +352,7 @@ function DesktopPreview({ course }: PreviewProps) {
     <div className="px-6 pb-6 pt-1 space-y-3">
       {/* Description */}
       {hasDescription && (
-        <p className="text-sm text-text-secondary leading-relaxed line-clamp-3">
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -367,15 +367,15 @@ function DesktopPreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="text-xs text-text-secondary">
+            <span className="text-xs text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
         )}
         {hasLocation && (
           <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-text-tertiary" />
-            <span className="text-xs text-text-secondary">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
               {course.location}
             </span>
           </div>
@@ -394,7 +394,7 @@ function MobilePreview({ course }: PreviewProps) {
   return (
     <div className="px-4 pb-4 space-y-3">
       {hasDescription && (
-        <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -408,15 +408,15 @@ function MobilePreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="text-xs text-text-secondary">
+            <span className="text-xs text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
         )}
         {hasLocation && (
           <div className="flex items-center gap-1.5">
-            <MapPin className="h-3 w-3 text-text-tertiary" />
-            <span className="text-xs text-text-secondary">
+            <MapPin className="h-3 w-3 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
               {course.location}
             </span>
           </div>

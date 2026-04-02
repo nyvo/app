@@ -9,6 +9,7 @@ import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
+import { Separator } from '@/components/ui/separator'
 
 const ROUTES = AUTH_ROUTES.teacher
 
@@ -88,9 +89,9 @@ const LoginPage = () => {
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
       footer={
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-muted-foreground">
           Har du ikke konto?{' '}
-          <Link to={ROUTES.signup} className="text-text-primary font-medium hover:underline">
+          <Link to={ROUTES.signup} className="text-foreground font-medium hover:underline">
             Opprett konto
           </Link>
         </p>
@@ -100,9 +101,9 @@ const LoginPage = () => {
         <GoogleAuthButton redirectTo={`${window.location.origin}/teacher`} />
 
         <div className="flex items-center gap-3" aria-hidden="true">
-          <div className="flex-1 h-px bg-zinc-200" />
-          <span className="text-xs text-text-tertiary">eller</span>
-          <div className="flex-1 h-px bg-zinc-200" />
+          <Separator className="flex-1" />
+          <span className="text-xs text-muted-foreground">eller</span>
+          <Separator className="flex-1" />
         </div>
       </div>
 
@@ -132,7 +133,7 @@ const LoginPage = () => {
           labelExtra={
             <Link
               to={ROUTES.forgotPassword}
-              className="text-xs text-text-secondary hover:text-text-primary transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Glemt passord?
             </Link>

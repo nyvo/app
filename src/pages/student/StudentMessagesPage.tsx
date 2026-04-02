@@ -3,6 +3,7 @@ import { ChevronLeft, Send, CheckCheck } from 'lucide-react';
 import { SectionLoader } from '@/components/ui/section-loader';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -113,14 +114,14 @@ const StudentMessagesPage = () => {
   return (
     <>
       <div className="mb-6">
-        <h1 className="font-geist tracking-tight text-2xl font-medium text-text-primary">Meldinger</h1>
-        <p className="text-text-secondary mt-1">Kommuniser med instruktørene dine</p>
+        <h1 className="font-geist tracking-tight text-2xl font-medium text-foreground">Meldinger</h1>
+        <p className="text-muted-foreground mt-1">Kommuniser med instruktørene dine</p>
       </div>
 
-      <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden flex h-[calc(100vh-280px)] min-h-[400px]">
+      <Card className="overflow-hidden flex h-[calc(100vh-280px)] min-h-[400px]">
         {/* Conversation List */}
         <div className={cn(
-          'w-full md:w-80 lg:w-96 flex-col border-r border-zinc-200',
+          'w-full md:w-80 lg:w-96 flex-col border-r border-border',
           activeConversation ? 'hidden md:flex' : 'flex'
         )}>
           <div className="flex-1 overflow-y-auto">
@@ -128,8 +129,8 @@ const StudentMessagesPage = () => {
               <SectionLoader size="md" />
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-center px-4 mt-8">
-                <p className="text-sm font-medium text-text-primary">Ingen meldinger</p>
-                <p className="text-sm text-text-secondary mt-1">
+                <p className="text-sm font-medium text-foreground">Ingen meldinger</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   Du kan sende melding til instruktører fra kursoversikten.
                 </p>
               </div>
@@ -140,10 +141,10 @@ const StudentMessagesPage = () => {
                     key={conversation.id}
                     onClick={() => handleSelectConversation(conversation)}
                     className={cn(
-                      'w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors',
+                      'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-colors',
                       activeConversation?.id === conversation.id
-                        ? 'bg-surface-elevated'
-                        : 'hover:bg-surface-elevated'
+                        ? 'bg-muted'
+                        : 'hover:bg-muted'
                     )}
                   >
                     <UserAvatar
@@ -153,18 +154,18 @@ const StudentMessagesPage = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-sm font-medium text-text-primary truncate">
+                        <span className="text-sm font-medium text-foreground truncate">
                           {conversation.participant?.name || 'Ukjent'}
                         </span>
-                        <span className="text-xs text-text-secondary shrink-0 ml-2">
+                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
                           {formatMessageTimestamp(conversation.updated_at)}
                         </span>
                       </div>
                       <p className={cn(
                         'text-sm truncate',
                         conversation.unread_count > 0
-                          ? 'text-text-primary font-medium'
-                          : 'text-text-secondary'
+                          ? 'text-foreground font-medium'
+                          : 'text-muted-foreground'
                       )}>
                         {conversation.last_message?.content || 'Ingen meldinger'}
                       </p>
@@ -187,9 +188,9 @@ const StudentMessagesPage = () => {
           {activeConversation ? (
             <>
               {/* Chat Header */}
-              <header className="flex items-center gap-3 px-6 py-4 border-b border-zinc-200">
+              <header className="flex items-center gap-3 px-6 py-4 border-b border-border">
                 <button
-                  className="md:hidden p-2 -ml-2 text-text-secondary hover:text-text-primary"
+                  className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake"
                 >
@@ -201,7 +202,7 @@ const StudentMessagesPage = () => {
                   size="lg"
                 />
                 <div className="min-w-0">
-                  <h3 className="text-sm font-medium text-text-primary truncate">
+                  <h3 className="text-sm font-medium text-foreground truncate">
                     {activeConversation.participant?.name || 'Ukjent'}
                   </h3>
                 </div>
@@ -210,7 +211,7 @@ const StudentMessagesPage = () => {
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col">
                 {currentMessages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-text-secondary">
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
                     <p className="text-sm">Ingen meldinger ennå</p>
                   </div>
                 ) : (
@@ -235,19 +236,19 @@ const StudentMessagesPage = () => {
                         )}
                         <div className={cn('flex flex-col gap-1', isFromStudent ? 'items-end' : '')}>
                           <div className={cn(
-                            'px-4 py-3 rounded-xl',
+                            'px-4 py-3 rounded-lg',
                             isFromStudent
                               ? 'bg-primary text-primary-foreground rounded-br-sm'
-                              : 'bg-surface-elevated rounded-bl-sm'
+                              : 'bg-muted rounded-bl-sm'
                           )}>
                             <p className={cn(
                               'text-sm leading-relaxed',
-                              isFromStudent ? '' : 'text-text-primary'
+                              isFromStudent ? '' : 'text-foreground'
                             )}>
                               {message.content}
                             </p>
                           </div>
-                          <span className="text-xs text-text-secondary flex items-center gap-1 px-1">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 px-1">
                             {formatMessageTimestamp(message.created_at)}
                             {isFromStudent && message.is_read && (
                               <CheckCheck className="h-3 w-3 text-status-confirmed-text" />
@@ -261,7 +262,7 @@ const StudentMessagesPage = () => {
               </div>
 
               {/* Input */}
-              <div className="p-4 border-t border-zinc-200">
+              <div className="p-4 border-t border-border">
                 <div className="flex gap-2">
                   <Textarea
                     rows={1}
@@ -294,12 +295,12 @@ const StudentMessagesPage = () => {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full text-text-secondary">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               <p className="text-sm">Velg en samtale</p>
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </>
   );
 };

@@ -140,7 +140,7 @@ export function ImageUpload({
       {displayUrl ? (
         // Image preview state
         <div className="relative group h-full">
-          <div className="relative h-full rounded-xl overflow-hidden border border-border bg-surface-elevated">
+          <div className="relative h-full rounded-lg overflow-hidden border border-border bg-muted">
             <img src={displayUrl} alt="Kursbilde" className="w-full h-full object-cover" />
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -179,26 +179,26 @@ export function ImageUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
-            relative h-full rounded-xl border
+            relative h-full rounded-lg border
             flex flex-col items-center justify-center gap-3 cursor-pointer
-            smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/50
+            smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
             ${
               dragActive
-                ? 'border-ring bg-surface'
-                : 'border-zinc-300 bg-input-bg hover:border-ring'
+                ? 'border-ring bg-background'
+                : 'border-input bg-transparent hover:border-ring'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-destructive' : ''}
           `}
         >
-          <div className="h-10 w-10 rounded-xl bg-white border border-zinc-300 flex items-center justify-center">
-            <ImagePlus className="h-5 w-5 text-text-tertiary" />
+          <div className="h-10 w-10 rounded-lg bg-background border border-input flex items-center justify-center">
+            <ImagePlus className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-text-primary">
+            <p className="text-sm font-medium text-foreground">
               {dragActive ? 'Slipp for å laste opp' : 'Legg til bilde'}
             </p>
-            <p className="text-xs text-text-secondary mt-1">Dra og slipp, eller velg fil</p>
+            <p className="text-xs text-muted-foreground mt-1">Dra og slipp, eller velg fil</p>
           </div>
         </div>
       )}

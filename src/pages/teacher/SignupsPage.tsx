@@ -284,7 +284,7 @@ export const SignupsPage = () => {
   }), [loadSignups]);
 
   return (
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
         <MobileTeacherHeader title="Påmeldinger" />
 
         {/* Header */}
@@ -296,8 +296,8 @@ export const SignupsPage = () => {
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
           <div className="mb-8">
-            <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">Påmeldinger</h1>
-            <p className="text-sm text-text-secondary mt-1">Oversikt over deltakere og påmeldinger.</p>
+            <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">Påmeldinger</h1>
+            <p className="text-sm text-muted-foreground mt-1">Oversikt over deltakere og påmeldinger.</p>
           </div>
 
           {/* Filters row */}
@@ -343,13 +343,13 @@ export const SignupsPage = () => {
                     onClick={() => setShowPast(prev => !prev)}
                     aria-expanded={showPast}
                     aria-controls="past-signups-section"
-                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
+                    className="flex items-center gap-2 border-t border-border pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
                   >
                     <ChevronRight className={cn(
-                      'h-3.5 w-3.5 text-text-tertiary smooth-transition',
+                      'h-3.5 w-3.5 text-muted-foreground smooth-transition',
                       showPast && 'rotate-90'
                     )} aria-hidden="true" />
-                    <span className="text-sm font-medium text-text-tertiary">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {pastGroups.length} avsluttede kurs
                     </span>
                   </button>

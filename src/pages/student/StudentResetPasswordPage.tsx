@@ -87,7 +87,7 @@ const StudentResetPasswordPage = () => {
   // Loading
   if (isValidSession === null) {
     return (
-      <div className="min-h-screen w-full bg-surface text-text-primary font-geist antialiased flex items-center justify-center">
+      <div className="min-h-screen w-full bg-background text-foreground font-geist antialiased flex items-center justify-center">
         <Spinner size="xl" />
       </div>
     )
@@ -102,10 +102,10 @@ const StudentResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
             Ugyldig lenke
           </h1>
-          <p className="text-text-secondary text-sm">
+          <p className="text-muted-foreground text-sm">
             Lenken er utløpt eller fungerer ikke.
           </p>
         </div>
@@ -131,10 +131,10 @@ const StudentResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary">
+          <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground">
             Passordet er oppdatert
           </h1>
-          <p className="text-text-secondary text-sm">
+          <p className="text-muted-foreground text-sm">
             Du kan nå logge inn med det nye passordet.
           </p>
         </div>
@@ -155,7 +155,7 @@ const StudentResetPasswordPage = () => {
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-muted-foreground">
           Trenger du hjelp?
         </p>
       }
@@ -185,9 +185,9 @@ const StudentResetPasswordPage = () => {
           onBlur={() => handleBlur('confirmPassword')}
         />
 
-        <div className="p-3 rounded-lg bg-surface-elevated">
-          <p className="text-xs text-text-secondary font-medium mb-1">Krav</p>
-          <ul className="text-xs text-text-secondary space-y-0.5 ml-3">
+        <div className="p-3 rounded-lg bg-muted">
+          <p className="text-xs text-muted-foreground font-medium mb-1">Krav</p>
+          <ul className="text-xs text-muted-foreground space-y-0.5 ml-3">
             <li className="list-disc">Minst 8 tegn</li>
           </ul>
         </div>

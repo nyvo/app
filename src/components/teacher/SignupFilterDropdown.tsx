@@ -4,6 +4,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,16 +30,20 @@ export function SignupFilterDropdown({ value, onChange, counts }: SignupFilterDr
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className={cn(
-          'flex items-center gap-2 h-10 rounded-lg border px-3 py-2 text-xs font-medium ios-ease whitespace-nowrap cursor-pointer',
-          value !== 'all'
-            ? 'bg-white text-text-primary border-border'
-            : 'bg-white text-text-secondary border-border hover:bg-surface-elevated hover:text-text-primary'
-        )}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            'gap-2 whitespace-nowrap',
+            value !== 'all'
+              ? 'text-foreground'
+              : 'text-muted-foreground'
+          )}
+        >
           <Filter className="h-3.5 w-3.5" />
           Filter: {currentLabel}
           <ChevronDown className="ml-1 h-3.5 w-3.5" />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         {COMBINED_FILTER_OPTIONS.map(option => {

@@ -1,7 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Users, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { DateBadge } from '@/components/ui/date-badge';
 import { formatTimeRange } from '@/utils/dateFormatting';
 import { formatKroner } from '@/lib/utils';
@@ -88,7 +90,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
 
   return (
     <div
-      className="group px-2 rounded-lg smooth-transition hover:bg-zinc-50/50 border-b border-zinc-100 last:border-b-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-zinc-400/50 focus-visible:ring-offset-2 outline-none"
+      className="group px-2 rounded-lg smooth-transition hover:bg-muted/50 border-b border-border last:border-b-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 outline-none"
       onClick={() => navigate(`/teacher/courses/${course.courseId}`)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${course.courseId}`); } }}
       role="button"
@@ -102,7 +104,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
         {/* Center: title + meta */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-            <h3 className="text-sm font-medium text-text-primary truncate">
+            <h3 className="text-sm font-medium text-foreground truncate">
               {course.courseTitle}
             </h3>
             {course.courseStatus === 'draft' ? (
@@ -134,7 +136,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
 
           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
             {(course.startTime || course.endTime) && (
-              <span className="text-xs text-text-secondary">
+              <span className="text-xs text-muted-foreground">
                 {(() => {
                   const d = new Date(course.sessionDate + 'T12:00:00');
                   const day = d.toLocaleDateString('nb-NO', { weekday: 'short' });
@@ -144,16 +146,16 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
               </span>
             )}
             {weekLabel && (
-              <span className="text-xs text-text-secondary">
+              <span className="text-xs text-muted-foreground">
                 {weekLabel}
               </span>
             )}
-            <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               {enrollmentLabel}
             </span>
             {course.location && (
-              <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span className="truncate max-w-[120px]">{course.location}</span>
               </span>
@@ -163,10 +165,10 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
 
         {/* Right: price + chevron */}
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-medium text-text-primary">
+          <span className="text-sm font-medium text-foreground">
             {formatKroner(course.price)}
           </span>
-          <ChevronRight className="h-4 w-4 text-text-tertiary group-hover:text-text-secondary smooth-transition" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-muted-foreground smooth-transition" />
         </div>
       </div>
     </div>
@@ -192,7 +194,7 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
   return (
     <section>
       {showHeader && (
-        <h2 className="text-sm font-medium text-text-primary pb-3 border-t border-zinc-200 pt-4">
+        <h2 className="text-sm font-medium text-foreground pb-3 border-t border-border pt-4">
           {label}
         </h2>
       )}
@@ -200,20 +202,22 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
       {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
         <div className="flex justify-center gap-3 pt-4 pb-2">
           {remainingCount > 0 && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
             >
               Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-            </button>
+            </Button>
           )}
           {visibleCount > INITIAL_VISIBLE && (
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-              className="text-sm font-medium text-text-secondary hover:text-text-primary px-4 py-2 rounded-lg border border-border hover:bg-surface-elevated smooth-transition"
             >
               Vis færre
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -247,18 +251,18 @@ export function CourseListView({ courses, flat = false }: CourseListViewProps) {
 
 export function CourseListSkeleton() {
   return (
-    <div className="animate-pulse">
+    <div>
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="px-2 py-3 flex items-center gap-3 border-b border-zinc-100 last:border-b-0">
-          <div className="w-11 h-11 rounded-lg border border-border bg-surface-elevated shrink-0 flex flex-col items-center justify-center gap-0.5">
-            <div className="h-2 w-5 bg-zinc-200 rounded-sm" />
-            <div className="h-3 w-4 bg-zinc-200 rounded-sm" />
+        <div key={i} className="px-2 py-3 flex items-center gap-3 border-b border-border last:border-b-0">
+          <div className="w-11 h-11 rounded-lg border border-border shrink-0 flex flex-col items-center justify-center gap-0.5">
+            <Skeleton className="h-2 w-5 rounded-sm" />
+            <Skeleton className="h-3 w-4 rounded-sm" />
           </div>
           <div className="flex-1 space-y-1.5">
-            <div className="h-4 w-40 bg-surface-elevated rounded" />
-            <div className="h-3 w-52 bg-surface-elevated rounded" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-52" />
           </div>
-          <div className="h-4 w-16 bg-surface-elevated rounded shrink-0" />
+          <Skeleton className="h-4 w-16 shrink-0" />
         </div>
       ))}
     </div>

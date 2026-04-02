@@ -30,15 +30,15 @@ export const InstructorCard: React.FC<InstructorCardProps> = ({ instructor }) =>
         size="md"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-text-primary">{name}</div>
+        <div className="text-sm font-medium text-foreground">{name}</div>
         {role && (
-          <div className="text-xs text-text-secondary">{role}</div>
+          <div className="text-xs text-muted-foreground">{role}</div>
         )}
       </div>
       {profileUrl && (
         <Link
           to={profileUrl}
-          className="text-xs font-medium text-text-secondary hover:text-text-primary transition-colors shrink-0"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0"
         >
           Se profil
         </Link>

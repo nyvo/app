@@ -43,19 +43,19 @@ const StudentConfirmEmailPage = () => {
 
   return (
     <AuthLayout context="student" title="" customContent>
-      <div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center mb-6">
-        <Mail className="w-5 h-5 text-text-secondary" />
+      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-6">
+        <Mail className="w-5 h-5 text-muted-foreground" />
       </div>
 
-      <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+      <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
         Sjekk e-posten din
       </h1>
 
-      <p className="text-text-secondary text-sm leading-relaxed mb-8 text-center">
+      <p className="text-muted-foreground text-sm leading-relaxed mb-8 text-center">
         {email ? (
           <>
             Vi har sendt en bekreftelseslenke til{' '}
-            <span className="font-medium text-text-primary">{email}</span>.
+            <span className="font-medium text-foreground">{email}</span>.
             Du må bekrefte e-posten før du kan logge inn.
           </>
         ) : (
@@ -81,7 +81,7 @@ const StudentConfirmEmailPage = () => {
         </Button>
       </div>
 
-      <p className="text-xs text-text-secondary mt-6 text-center">
+      <p className="text-xs text-muted-foreground mt-6 text-center">
         {AUTH_HINTS.checkSpamAlt}
       </p>
     </AuthLayout>

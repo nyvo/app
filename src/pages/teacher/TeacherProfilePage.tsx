@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -388,7 +389,7 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto bg-surface h-screen flex flex-col">
+    <main className="flex-1 overflow-y-auto bg-background h-screen flex flex-col">
         <MobileTeacherHeader title="Innstillinger" />
 
         <motion.div
@@ -401,23 +402,23 @@ const TeacherProfilePage = () => {
 
             {/* Header Section */}
             <header className="mb-8">
-                <h1 className="font-geist text-2xl font-medium tracking-tight text-text-primary mb-2">
+                <h1 className="font-geist text-2xl font-medium tracking-tight text-foreground mb-2">
                     Innstillinger
                 </h1>
-                <p className="text-sm text-text-secondary">Din profil, varslinger og kontoinnstillinger.</p>
+                <p className="text-sm text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
             </header>
 
             <div className="divide-y divide-border">
                   {/* Personlig informasjon */}
                   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pb-10">
                     <div>
-                      <h2 className="text-sm font-medium text-text-primary">Personlig informasjon</h2>
-                      <p className="text-sm text-text-secondary mt-1">Navn, e-post og informasjon om studioet ditt.</p>
+                      <h2 className="text-sm font-medium text-foreground">Personlig informasjon</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
-                    <div className="md:col-span-2 rounded-xl bg-white p-6 md:p-8 border border-zinc-200">
+                    <Card className="md:col-span-2 p-6 md:p-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="profile-firstname" className="block text-xs font-medium text-text-primary mb-1.5">Fornavn</label>
+                            <label htmlFor="profile-firstname" className="block text-xs font-medium text-foreground mb-1.5">Fornavn</label>
                             <Input
                                 id="profile-firstname"
                                 type="text"
@@ -432,7 +433,7 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="profile-lastname" className="block text-xs font-medium text-text-primary mb-1.5">Etternavn</label>
+                            <label htmlFor="profile-lastname" className="block text-xs font-medium text-foreground mb-1.5">Etternavn</label>
                             <Input
                                 id="profile-lastname"
                                 type="text"
@@ -447,7 +448,7 @@ const TeacherProfilePage = () => {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-email" className="block text-xs font-medium text-text-primary mb-1.5">E-post</label>
+                            <label htmlFor="profile-email" className="block text-xs font-medium text-foreground mb-1.5">E-post</label>
                             <Input
                                 id="profile-email"
                                 type="email"
@@ -459,12 +460,12 @@ const TeacherProfilePage = () => {
                             {errors.email && touched.email ? (
                               <p className="text-xs text-destructive font-medium mt-1.5">{errors.email}</p>
                             ) : (
-                              <p className="text-xs text-text-secondary mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              <p className="text-xs text-muted-foreground mt-1.5">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-city" className="block text-xs font-medium text-text-primary mb-1.5">By / Sted</label>
+                            <label htmlFor="profile-city" className="block text-xs font-medium text-foreground mb-1.5">By / Sted</label>
                             <Input
                                 id="profile-city"
                                 type="text"
@@ -472,11 +473,11 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => setCity(e.target.value)}
                                 placeholder="F.eks. Oslo"
                             />
-                            <p className="text-xs text-text-secondary mt-1.5">Vises på din offentlige studioside.</p>
+                            <p className="text-xs text-muted-foreground mt-1.5">Vises på din offentlige studioside.</p>
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-description" className="block text-xs font-medium text-text-primary mb-1.5">Om studioet</label>
+                            <label htmlFor="profile-description" className="block text-xs font-medium text-foreground mb-1.5">Om studioet</label>
                             <Textarea
                                 id="profile-description"
                                 rows={4}
@@ -490,27 +491,27 @@ const TeacherProfilePage = () => {
                                 {errors.studioDescription && touched.studioDescription ? (
                                   <span className="text-destructive font-medium">{errors.studioDescription}</span>
                                 ) : (
-                                  <span className="text-text-secondary">Vises på din offentlige studioside.</span>
+                                  <span className="text-muted-foreground">Vises på din offentlige studioside.</span>
                                 )}
-                                <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-text-secondary'}>{studioDescription.length}/500</span>
+                                <span className={studioDescription.length > 500 ? 'text-destructive font-medium' : 'text-muted-foreground'}>{studioDescription.length}/500</span>
                             </div>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   </section>
 
                   {/* Konto & Sikkerhet */}
                   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
                     <div>
-                      <h2 className="text-sm font-medium text-text-primary">Konto & Sikkerhet</h2>
-                      <p className="text-sm text-text-secondary mt-1">Betalinger, passord og sikkerhet.</p>
+                      <h2 className="text-sm font-medium text-foreground">Konto & Sikkerhet</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Betalinger, passord og sikkerhet.</p>
                     </div>
-                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                    <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
                           {/* Betalinger */}
-                          <div className="flex items-center justify-between p-4 hover:bg-surface-elevated transition-colors">
+                          <div className="flex items-center justify-between p-4 hover:bg-muted transition-colors">
                               <div>
-                                  <span className="text-sm font-medium text-text-primary block">Betalinger</span>
-                                  <span className="text-xs text-text-secondary block">
+                                  <span className="text-sm font-medium text-foreground block">Betalinger</span>
+                                  <span className="text-xs text-muted-foreground block">
                                       {isStripeConnected ? 'Tilkoblet Stripe' : 'Sett opp Stripe for å motta betaling.'}
                                   </span>
                               </div>
@@ -542,8 +543,8 @@ const TeacherProfilePage = () => {
                           <div className="p-4">
                               <div className="flex items-center justify-between">
                                   <div>
-                                      <span className="text-sm font-medium text-text-primary block">Endre passord</span>
-                                      <span className="text-xs text-text-secondary block">Oppdater passordet ditt.</span>
+                                      <span className="text-sm font-medium text-foreground block">Endre passord</span>
+                                      <span className="text-xs text-muted-foreground block">Oppdater passordet ditt.</span>
                                   </div>
                                   <Button
                                       variant={passwordExpanded ? 'ghost' : 'outline'}
@@ -565,9 +566,9 @@ const TeacherProfilePage = () => {
 
                               {/* Expanded password form */}
                               {passwordExpanded && (
-                                  <div className="mt-4 pt-4 border-t border-zinc-100 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                  <div className="mt-4 pt-4 border-t border-border space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                       <div>
-                                          <label htmlFor="current-password" className="block text-xs font-medium text-text-primary mb-1.5">Nåværende passord</label>
+                                          <label htmlFor="current-password" className="block text-xs font-medium text-foreground mb-1.5">Nåværende passord</label>
                                           <div className="relative">
                                               <Input
                                                   id="current-password"
@@ -580,7 +581,7 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                   aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -592,7 +593,7 @@ const TeacherProfilePage = () => {
                                       </div>
 
                                       <div>
-                                          <label htmlFor="new-password" className="block text-xs font-medium text-text-primary mb-1.5">Nytt passord</label>
+                                          <label htmlFor="new-password" className="block text-xs font-medium text-foreground mb-1.5">Nytt passord</label>
                                           <div className="relative">
                                               <Input
                                                   id="new-password"
@@ -605,7 +606,7 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -614,12 +615,12 @@ const TeacherProfilePage = () => {
                                           {passwordErrors.newPassword ? (
                                               <p className="text-xs text-destructive font-medium mt-1.5">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p className="text-xs text-text-secondary mt-1.5">Minimum 8 tegn.</p>
+                                              <p className="text-xs text-muted-foreground mt-1.5">Minimum 8 tegn.</p>
                                           )}
                                       </div>
 
                                       <div>
-                                          <label htmlFor="confirm-password" className="block text-xs font-medium text-text-primary mb-1.5">Bekreft nytt passord</label>
+                                          <label htmlFor="confirm-password" className="block text-xs font-medium text-foreground mb-1.5">Bekreft nytt passord</label>
                                           <Input
                                               id="confirm-password"
                                               type={showNewPassword ? 'text' : 'password'}
@@ -660,10 +661,10 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Logg ut alle enheter */}
-                          <div className="flex items-center justify-between p-4 hover:bg-surface-elevated transition-colors">
+                          <div className="flex items-center justify-between p-4 hover:bg-muted transition-colors">
                               <div>
-                                  <span className="text-sm font-medium text-text-primary block">Logg ut alle enheter</span>
-                                  <span className="text-xs text-text-secondary block">Logger deg ut overalt.</span>
+                                  <span className="text-sm font-medium text-foreground block">Logg ut alle enheter</span>
+                                  <span className="text-xs text-muted-foreground block">Logger deg ut overalt.</span>
                               </div>
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
@@ -694,20 +695,20 @@ const TeacherProfilePage = () => {
                                   </AlertDialogContent>
                               </AlertDialog>
                           </div>
-                      </div>
+                      </Card>
                   </section>
 
                   {/* E-postvarslinger */}
                   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
                     <div>
-                      <h2 className="text-sm font-medium text-text-primary">E-postvarslinger</h2>
-                      <p className="text-sm text-text-secondary mt-1">Velg hvilke e-poster du vil motta.</p>
+                      <h2 className="text-sm font-medium text-foreground">E-postvarslinger</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Velg hvilke e-poster du vil motta.</p>
                     </div>
-                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 divide-y divide-zinc-100 overflow-hidden">
+                    <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
                           <div className="flex items-center justify-between p-4">
                               <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-text-primary">Nye påmeldinger</span>
-                                  <span className="text-xs text-text-secondary">Få e-post når noen melder seg på kurset ditt.</span>
+                                  <span className="text-sm font-medium text-foreground">Nye påmeldinger</span>
+                                  <span className="text-xs text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -719,8 +720,8 @@ const TeacherProfilePage = () => {
 
                           <div className="flex items-center justify-between p-4">
                               <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-text-primary">Avbestillinger</span>
-                                  <span className="text-xs text-text-secondary">Få e-post når noen avbestiller.</span>
+                                  <span className="text-sm font-medium text-foreground">Avbestillinger</span>
+                                  <span className="text-xs text-muted-foreground">Få e-post når noen avbestiller.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -732,8 +733,8 @@ const TeacherProfilePage = () => {
 
                           <div className="flex items-center justify-between p-4">
                               <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-text-primary">Nye meldinger</span>
-                                  <span className="text-xs text-text-secondary">Få e-post når du mottar en ny melding.</span>
+                                  <span className="text-sm font-medium text-foreground">Nye meldinger</span>
+                                  <span className="text-xs text-muted-foreground">Få e-post når du mottar en ny melding.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -745,8 +746,8 @@ const TeacherProfilePage = () => {
 
                           <div className="flex items-center justify-between p-4">
                               <div className="flex flex-col">
-                                  <span className="text-sm font-medium text-text-primary">Nyheter fra Ease</span>
-                                  <span className="text-xs text-text-secondary">Tips, oppdateringer og nyheter på e-post.</span>
+                                  <span className="text-sm font-medium text-foreground">Nyheter fra Ease</span>
+                                  <span className="text-xs text-muted-foreground">Tips, oppdateringer og nyheter på e-post.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -755,20 +756,20 @@ const TeacherProfilePage = () => {
                                   aria-label="Nyheter fra Ease"
                               />
                           </div>
-                      </div>
+                      </Card>
                   </section>
 
                   {/* Slett konto */}
                   <section className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 py-10">
                     <div>
-                      <h2 className="text-sm font-medium text-text-primary">Slett konto</h2>
-                      <p className="text-sm text-text-secondary mt-1">Permanent sletting av kontoen din.</p>
+                      <h2 className="text-sm font-medium text-foreground">Slett konto</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Permanent sletting av kontoen din.</p>
                     </div>
-                    <div className="md:col-span-2 rounded-xl bg-white border border-zinc-200 p-4">
+                    <Card className="md:col-span-2 p-4">
                           <div className="flex items-center justify-between">
                               <div>
-                                  <span className="text-sm font-medium text-text-primary block">Slett kontoen din</span>
-                                  <span className="text-xs text-text-secondary block">All data slettes permanent.</span>
+                                  <span className="text-sm font-medium text-foreground block">Slett kontoen din</span>
+                                  <span className="text-xs text-muted-foreground block">All data slettes permanent.</span>
                               </div>
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>
@@ -788,7 +789,7 @@ const TeacherProfilePage = () => {
                                           </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <div className="py-2">
-                                          <label className="block text-xs font-medium text-text-primary mb-1.5">
+                                          <label className="block text-xs font-medium text-foreground mb-1.5">
                                               Skriv SLETT for å bekrefte
                                           </label>
                                           <Input
@@ -811,13 +812,13 @@ const TeacherProfilePage = () => {
                                   </AlertDialogContent>
                               </AlertDialog>
                           </div>
-                      </div>
+                      </Card>
                   </section>
             </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (
-              <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-white/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
+              <div className="fixed bottom-0 left-0 right-0 md:static md:mt-8 bg-background/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-t border-border md:border-none p-4 md:p-0 flex justify-end gap-3 z-30">
                   <Button variant="ghost" size="compact" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
                   <Button
                     size="compact"

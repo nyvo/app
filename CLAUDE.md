@@ -46,12 +46,23 @@
 5. **Document Results**: Add review section to `tasks/todo.md`
 6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
 
-## Formatting Utilities (MUST USE)
+## Formatting & Copy Rules
 
 - **Currency**: Always use `formatKroner()` from `@/lib/utils` to display NOK amounts. Never write `${amount} kr` inline — it skips the Norwegian thousands separator (e.g. `2200 kr` vs correct `2 200 kr`).
   - Returns `"Gratis"` for 0/null, otherwise `"1 200 kr"` with proper `nb-NO` locale formatting.
   - In Supabase Edge Functions: use the local `formatKr()` helper in `send-email/index.ts` (same logic, can't import from `@/lib`).
-- **Copy/text**: Follow `COPY_STYLE_GUIDE.md` for all Norwegian text — currency format, date format, domain terms, tone.
+- **Copy/text**: Follow `COPY_STYLE_GUIDE.md` for all Norwegian text.
+- **Dates**: `nb-NO` locale. Format: `22. mars 2026`, `kl. 18:00`
+- **Tone**: Professional but warm. `du/deg` (informal). Active voice.
+- **Domain terms**: Kurs, deltaker, påmelding, avbestilling, instruktør
+- **Emojis**: Never use emojis in the UI
+- **Banned copy**: "Vennligst", exclamation marks, translated English patterns
+
+## Git
+
+- Commit after each completed fix or feature, not in bulk
+- After committing, suggest pushing to GitHub (but wait for user confirmation)
+- Don't amend previous commits — always create new ones
 
 ## Core Principles
 
@@ -61,8 +72,7 @@
 
 ## Design System
 
-Before writing ANY UI code, read `DESIGN_SYSTEM.md` for tokens, typography, and component patterns.
-- Reference implementation: `CourseOverviewTab.tsx` — the gold standard for section/card layout
-- Norwegian copy rules: `COPY_STYLE_GUIDE.md`
-- Design philosophy: `DESIGN_LANGUAGE.md`
+- Read `DESIGN_SYSTEM.md` before writing UI code
 - Use shadcn primitives over custom UI
+- The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance
+- If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing

@@ -2,183 +2,186 @@
 @import url('https://cdn.jsdelivr.net/npm/geist@1.3.0/dist/sans/index.css');
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
   /* ============================================
-     EASE DESIGN SYSTEM V2.4 - Shadowless Zinc
+     EASE DESIGN SYSTEM V3.0 — shadcn Neutral
      ============================================
 
-     Key Principles:
-     - Cool Zinc palette for crisp, modern AI-tool aesthetic
-     - Page floor (#F4F4F5 Zinc-100) with white card contrast
-     - Dark primary (#09090B Zinc-950) for strong button contrast
-     - Shadowless hierarchy via White-on-Zinc-100 layering + borders
-     - Cards: rounded-xl (12px), Buttons/Inputs: rounded-lg (8px)
+     Based on shadcn/ui v2 neutral theme.
+     Pure neutral grays, white page background,
+     two text colors (foreground + muted-foreground).
+
+     Key changes from V2.4:
+     - Page bg: white (was zinc-100)
+     - Input border = card border (was darker)
+     - Radius: 0.625rem / 10px (was 1rem / 16px)
+     - Text: 2 levels (was 3 — tertiary removed)
   */
 
-  /* Zinc Scale — uses Tailwind's built-in zinc-* palette.
-     Reference: zinc-50 #FAFAFA … zinc-950 #09090B */
-
-  /* Base Colors */
-  --color-background: #F4F4F5;
-  --color-foreground: #09090B;
+  /* ── Core Palette ── */
+  --color-background: #FFFFFF;
+  --color-foreground: #1A1A1A;
   --color-card: #FFFFFF;
-  --color-card-foreground: #09090B;
+  --color-card-foreground: #1A1A1A;
   --color-popover: #FFFFFF;
-  --color-popover-foreground: #09090B;
+  --color-popover-foreground: #1A1A1A;
 
-  /* Brand Colors - Dark Primary Theme (Zinc-950)
-     Dark primary provides strong contrast against light surfaces */
-  --color-primary: #09090B;
+  /* ── Primary ── */
+  --color-primary: #0F0F12;
   --color-primary-foreground: #FAFAFA;
-  --color-primary-soft: #18181B;
-  --color-primary-light: #3F3F46;
-  --color-primary-dark: #09090B;
 
-  /* Secondary & Accent - Zinc-200 for secondary backgrounds */
-  --color-secondary: #E4E4E7;
-  --color-secondary-foreground: #09090B;
-  --color-accent: #F4F4F5;
-  --color-accent-foreground: #09090B;
+  /* ── Secondary ── */
+  --color-secondary: #F4F4F5;
+  --color-secondary-foreground: #0F0F12;
 
-  /* Muted & Subtle - Zinc scale */
-  --color-muted: #F4F4F5;
-  --color-muted-foreground: #71717A;
+  /* ── Muted ── */
+  --color-muted: #F5F5F5;
+  --color-muted-foreground: #737373;
 
-  /* UI Elements - Zinc scale
-     Card borders: Zinc-200, Input borders: Zinc-300 (darker = "inset" look) */
-  --color-border: #E4E4E7;
-  --color-input: #D4D4D8;
-  --color-ring: rgba(161, 161, 170, 0.4);
+  /* ── Accent ── */
+  --color-accent: #F5F5F5;
+  --color-accent-foreground: #1C1C1C;
 
-  /* Primary Muted - for success/selected backgrounds */
-  --color-primary-muted: #FEF3C7;
-  --radius: 1rem;
+  /* ── Destructive ── */
+  --color-destructive: #DC2626;
 
-  /* Feedback Colors */
-  --color-destructive: var(--color-red-500);
-  --color-destructive-foreground: var(--color-zinc-50);
+  /* ── Borders & Input ── */
+  --color-border: #E5E5E5;
+  --color-input: #E5E5E5;
+  --color-ring: #A3A3A3;
+
+  /* ── Radius ── */
+  --radius: 0.625rem;
+
+  /* ── Sidebar ── */
+  --color-sidebar: #FAFAFA;
+  --color-sidebar-foreground: #1A1A1A;
+  --color-sidebar-primary: #0F0F12;
+  --color-sidebar-primary-foreground: #FAFAFA;
+  --color-sidebar-accent: #F5F5F5;
+  --color-sidebar-accent-foreground: #1C1C1C;
+  --color-sidebar-border: #E5E5E5;
+  --color-sidebar-ring: #A3A3A3;
+
+  /* ── Chart Colors ── */
+  --color-chart-1: #E36D2D;
+  --color-chart-2: #2B9A8F;
+  --color-chart-3: #2F4F6F;
+  --color-chart-4: #E0A526;
+  --color-chart-5: #D4891A;
+
+  /* ── Feedback Colors ── */
   --color-success: var(--color-green-500);
   --color-success-foreground: var(--color-zinc-50);
   --color-warning: var(--color-orange-500);
   --color-warning-foreground: var(--color-zinc-50);
 
-  /* Course Type Colors */
-  --color-course-series: var(--color-teal-400);
-  --color-course-series-ring: var(--color-teal-200);
-
-  /* Third-party Brand Colors */
-  --color-vipps: #FF5B24;
-  --color-vipps-hover: #E84E1B;
-  --color-partner-fiken: #5239ba;
-
-  /* Growth/Positive Indicator */
-  --color-growth-bg: var(--color-green-50);
-  --color-growth-text: var(--color-green-700);
-
-  /* Sidebar Colors - Zinc-50 surface for subtle hierarchy vs white cards */
-  --color-sidebar: #FAFAFA;
-  --color-sidebar-foreground: #3F3F46;
-  --color-sidebar-primary: #09090B;
-  --color-sidebar-primary-foreground: #FAFAFA;
-  --color-sidebar-accent: #F4F4F5;
-  --color-sidebar-accent-foreground: #09090B;
-  --color-sidebar-border: #E4E4E7;
-  --color-sidebar-ring: #09090B;
-
-  /* Text Colors - Zinc scale
-     Primary: Zinc-950, Secondary: Zinc-500, Tertiary: Zinc-400 */
-  --color-text-primary: #09090B;
-  --color-text-secondary: #52525B;
-  --color-text-tertiary: #A1A1AA;
-
-  /* Surface Hierarchy (V2.7)
-     canvas   = page "floor" (Zinc-100) — everything sits on this
-     surface  = page "floor" (Zinc-100) — legacy alias for canvas
-     card     = content containers (White) — defined above as --color-card
-     field    = input backgrounds (Zinc-200/white blend)
-     overlay  = modal/dialog backdrops
-     emphasis = high-attention dark surface (Zinc-800) */
-  --color-canvas: #F4F4F5;
-  --color-surface: #F4F4F5;
-  --color-surface-elevated: #E4E4E7;
-  --color-surface-emphasis: #27272A;
-  --color-surface-emphasis-foreground: #FAFAFA;
-  --color-field: rgba(255, 255, 255, 0.5);
-  --color-input-bg: rgba(255, 255, 255, 0.5);
-  --color-overlay: rgba(0, 0, 0, 0.3);
-
-  /* Brand Dark Variations */
-  --color-primary-darker: #09090B;
-  --color-primary-accent: #18181B;
-
-  /* Status: Confirmed (green) */
+  /* ── Status Colors ── */
   --color-status-confirmed-bg: var(--color-green-50);
   --color-status-confirmed-border: var(--color-green-200);
   --color-status-confirmed-text: var(--color-green-800);
 
-  /* Status: Warning (amber) */
   --color-status-warning-bg: var(--color-amber-50);
   --color-status-warning-border: var(--color-amber-200);
   --color-status-warning-text: var(--color-amber-900);
 
-  /* Status: Cancelled (zinc) */
   --color-status-cancelled-bg: var(--color-zinc-100);
   --color-status-cancelled-border: var(--color-zinc-300);
   --color-status-cancelled-text: var(--color-zinc-700);
 
-  /* Status: Error (red) */
   --color-status-error-bg: var(--color-red-50);
   --color-status-error-border: var(--color-red-200);
   --color-status-error-text: var(--color-red-700);
 
-  /* Status: Info (blue) - for check-ins, info badges */
   --color-status-info-bg: var(--color-blue-50);
   --color-status-info-border: var(--color-blue-200);
   --color-status-info-text: var(--color-blue-900);
 
-  /* Font Families */
+  /* ── Course Type Colors ── */
+  --color-course-series: var(--color-teal-400);
+  --color-course-series-ring: var(--color-teal-200);
+
+  /* ── Third-party Brand Colors ── */
+  --color-vipps: #FF5B24;
+  --color-vipps-hover: #E84E1B;
+  --color-partner-fiken: #5239ba;
+
+  /* ── Growth Indicator ── */
+  --color-growth-bg: var(--color-green-50);
+  --color-growth-text: var(--color-green-700);
+
+  /* ── Overlay ── */
+  --color-overlay: rgba(0, 0, 0, 0.3);
+
+  /* ── Dark Surface (emphasis cards, hero) ── */
+  --color-surface-emphasis: #27272A;
+  --color-surface-emphasis-foreground: #FAFAFA;
+  --gradient-dark-card: linear-gradient(to bottom right, #27272A, #09090B);
+
+  /* ── Font Families ── */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
   --font-family-geist: 'Geist Sans', system-ui, -apple-system, sans-serif;
 
-  /* Custom Font Sizes - Refined for legibility */
+  /* ── Custom Font Sizes ── */
   --text-xxs: 11px;
   --text-xxs--line-height: 16px;
 
-  /* Custom Shadows - Disabled for V2.4 Shadowless Design
-     Hierarchy is achieved through borders and background contrast */
+  /* ── Shadows — Disabled ── */
   --shadow-xs: none;
   --shadow-sm: none;
   --shadow: none;
   --shadow-md: none;
   --shadow-lg: none;
   --shadow-xl: none;
+}
 
-  /* Card Border Tokens */
-  --color-card-border: #E4E4E7;
-  --color-card-border-hover: #A1A1AA;
-
-  /* Divider color - softer than border for internal dividers */
-  --color-divider: #F4F4F5;
-
-  /* Dark Card Gradient - for stat cards and dark UI elements */
-  --gradient-dark-card: linear-gradient(to bottom right, #27272A, #09090B);
+/* ── Dark Mode ── */
+.dark {
+  --color-background: #1A1A1A;
+  --color-foreground: #FAFAFA;
+  --color-card: #262626;
+  --color-card-foreground: #FAFAFA;
+  --color-popover: #262626;
+  --color-popover-foreground: #FAFAFA;
+  --color-primary: #E5E5E5;
+  --color-primary-foreground: #0F0F12;
+  --color-secondary: #2E2E30;
+  --color-secondary-foreground: #FAFAFA;
+  --color-muted: #2C2C2C;
+  --color-muted-foreground: #A3A3A3;
+  --color-accent: #404040;
+  --color-accent-foreground: #FAFAFA;
+  --color-destructive: #E55555;
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-input: rgba(255, 255, 255, 0.15);
+  --color-ring: #737373;
+  --color-sidebar: #262626;
+  --color-sidebar-foreground: #FAFAFA;
+  --color-sidebar-primary: #4F7BE8;
+  --color-sidebar-primary-foreground: #FAFAFA;
+  --color-sidebar-accent: #2C2C2C;
+  --color-sidebar-accent-foreground: #FAFAFA;
+  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-ring: #737373;
 }
 
 @layer base {
   * {
-    border-color: #E4E4E7;
+    border-color: var(--color-border);
   }
 
   body {
-    background-color: var(--color-surface);
-    color: var(--color-text-secondary);
+    background-color: var(--color-background);
+    color: var(--color-muted-foreground);
     font-family: 'Geist Sans', system-ui, -apple-system, sans-serif;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom scrollbar - Minimal, elegant design */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
@@ -189,12 +192,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #D4D4D8;
+    background-color: #C4C4C4;
     border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #A1A1AA;
+    background-color: #A3A3A3;
   }
 
   ::-webkit-scrollbar-corner {
@@ -204,10 +207,10 @@
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #D4D4D8 transparent;
+    scrollbar-color: #C4C4C4 transparent;
   }
 
-  /* Override browser autofill styles (Chrome, Safari, Edge) */
+  /* Override browser autofill styles */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
@@ -221,23 +224,20 @@
   select:-webkit-autofill:focus,
   select:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px white inset !important;
-    -webkit-text-fill-color: #09090B !important;
+    -webkit-text-fill-color: #1A1A1A !important;
     transition: background-color 5000s ease-in-out 0s;
   }
 }
 
 @layer components {
-  /* Focus Ring - DS standard for interactive elements */
+  /* Focus Ring — flush 3px, no offset (shadcn v2 standard) */
   .focus-ring {
     outline: none;
   }
   .focus-ring:focus-visible {
-    --tw-ring-offset-width: 2px;
-    --tw-ring-offset-color: white;
-    --tw-ring-color: rgba(161, 161, 170, 0.4);
-    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+    --tw-ring-color: var(--color-ring);
+    --tw-ring-shadow: 0 0 0 3px var(--tw-ring-color);
+    box-shadow: var(--tw-ring-shadow);
   }
 
   /* Font Utility Classes */
@@ -246,22 +246,27 @@
     letter-spacing: -0.02em;
   }
 
-  /* Transition Utilities */
-
-  /* iOS-style Easing - slightly slower, more fluid */
+  /* iOS-style Easing — inputs, selects, interactive controls */
   .ios-ease {
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: border-color 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                background-color 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
-  /* Smooth Transition - faster, snappier for UI elements */
+  /* Smooth Transition — hover states, list items, buttons */
   .smooth-transition {
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                background-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* Selection styling */
   ::selection {
-    background-color: #D4D4D8;
-    color: #09090B;
+    background-color: #C4C4C4;
+    color: #1A1A1A;
   }
 
   /* Hide scrollbar utility */
@@ -273,7 +278,7 @@
     scrollbar-width: none;
   }
 
-  /* Custom scrollbar for containers - inherits global minimal style */
+  /* Custom scrollbar for containers */
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
     height: 4px;
@@ -282,16 +287,14 @@
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #D4D4D8;
+    background: #C4C4C4;
     border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #A1A1AA;
+    background: #A3A3A3;
   }
 
-  /* Mobile-first responsive utilities */
-
-  /* Safe area padding for iOS devices with notches */
+  /* Safe area padding for iOS */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -300,13 +303,13 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  /* Touch-friendly minimum tap targets */
+  /* Touch-friendly tap targets */
   .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Prevent text selection on touch interactions */
+  /* Prevent text selection */
   .no-select {
     -webkit-user-select: none;
     user-select: none;
@@ -319,32 +322,30 @@
   }
 }
 
-/* Sonner Toast - Neutral Card + Colored Icon
-   One neutral card for all types. Only the icon carries the status color.
-   NOTE: These styles are OUTSIDE @layer components to ensure they override
-   Sonner's injected styles which are not layered */
+/* ── Sonner Toast Overrides ──
+   Neutral card for all types. Only icon carries status color.
+   Outside @layer to override Sonner's injected styles. */
 [data-sonner-toaster] {
-  --border-radius: 12px;
+  --border-radius: 10px;
 }
 
-/* All toasts — neutral card (zinc-50 bg, zinc-200 border, dark text) */
 html body [data-sonner-toast] {
   --normal-bg: var(--color-card);
   --normal-border: var(--color-border);
-  --normal-text: var(--color-text-primary);
+  --normal-text: var(--color-foreground);
 
   font-family: 'Geist Sans', system-ui, -apple-system, sans-serif !important;
   background-color: var(--color-card) !important;
   border: 1px solid var(--color-border) !important;
-  border-radius: 12px !important;
-  color: var(--color-text-primary) !important;
+  border-radius: 10px !important;
+  color: var(--color-foreground) !important;
   box-shadow: none !important;
   padding: 10px 12px !important;
   gap: 8px !important;
 }
 
 html body [data-sonner-toast] [data-title] {
-  color: var(--color-text-primary) !important;
+  color: var(--color-foreground) !important;
   font-weight: 500 !important;
   font-size: 13px !important;
 }
@@ -355,13 +356,11 @@ html body [data-sonner-toast] [data-description] {
   font-weight: 400 !important;
 }
 
-/* Icon sizing */
 html body [data-sonner-toast] [data-icon] svg {
   width: 16px !important;
   height: 16px !important;
 }
 
-/* Icon colors — only the icon changes per type */
 html body [data-sonner-toast][data-type="success"] [data-icon] svg {
   color: var(--color-green-600) !important;
 }
@@ -375,7 +374,6 @@ html body [data-sonner-toast][data-type="info"] [data-icon] svg {
   color: var(--color-blue-600) !important;
 }
 
-/* Main Action Button — dark on light */
 html body [data-sonner-toast] [data-button]:not([data-cancel]) {
   background-color: var(--color-primary) !important;
   color: var(--color-primary-foreground) !important;
@@ -387,11 +385,6 @@ html body [data-sonner-toast] [data-button]:not([data-cancel]) {
   transition: background-color 0.2s !important;
 }
 
-html body [data-sonner-toast] [data-button]:not([data-cancel]):hover {
-  background-color: var(--color-primary-soft) !important;
-}
-
-/* Cancel Button — subtle outline */
 html body [data-sonner-toast] [data-cancel] {
   color: var(--color-muted-foreground) !important;
   background-color: transparent !important;
@@ -400,13 +393,12 @@ html body [data-sonner-toast] [data-cancel] {
   font-weight: 500 !important;
   font-size: 12px !important;
   padding: 6px 12px !important;
-  transition: all 0.2s !important;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s !important;
 }
 
 html body [data-sonner-toast] [data-cancel]:hover {
-  color: var(--color-text-primary) !important;
-  background-color: var(--color-surface) !important;
+  color: var(--color-foreground) !important;
+  background-color: var(--color-muted) !important;
   border-color: var(--color-input) !important;
 }
-
 

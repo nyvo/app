@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarPlus, CalendarDays } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { PageLoader } from '@/components/ui/page-loader';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
@@ -217,7 +219,7 @@ export const SchedulePage = () => {
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden bg-surface h-screen">
+    <main className="flex-1 flex flex-col overflow-hidden bg-background h-screen">
       <MobileTeacherHeader title="Timeplan" />
 
       <ScheduleHeader
@@ -233,23 +235,20 @@ export const SchedulePage = () => {
 
       {/* Full empty: no courses at all */}
       {isFullyEmpty ? (
-        <div className="flex flex-col items-center pt-[20vh]">
-          <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
-            <CalendarDays className="w-4 h-4 text-text-secondary" />
-          </div>
-          <h2 className="font-geist text-sm font-medium text-text-primary">
-            Ingen kurs ennå
-          </h2>
-          <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
-            Opprett et kurs for å komme i gang.
-          </p>
-          <Button asChild size="default" className="gap-2 mt-6">
-            <Link to="/teacher/new-course">
-              <CalendarPlus className="h-4 w-4" />
-              Opprett nytt kurs
-            </Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={CalendarDays}
+          title="Ingen kurs ennå"
+          description="Opprett et kurs for å komme i gang."
+          className="pt-[20vh] py-0"
+          action={
+            <Button asChild size="default" className="gap-2">
+              <Link to="/teacher/new-course">
+                <CalendarPlus className="h-4 w-4" />
+                Opprett nytt kurs
+              </Link>
+            </Button>
+          }
+        />
       ) : isMobile ? (
         <MobileDayView
           weekDays={weekDays}
@@ -264,7 +263,7 @@ export const SchedulePage = () => {
         />
       ) : (
         /* Desktop week view */
-        <div className="flex-1 bg-white relative flex flex-col overflow-auto">
+        <div className="flex-1 bg-background relative flex flex-col overflow-auto">
           {isLoading && (
             <PageLoader variant="overlay" message="Laster timeplan" />
           )}
@@ -274,23 +273,23 @@ export const SchedulePage = () => {
           ) : !isLoading && (
             <>
               {/* Sticky day headers */}
-              <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-zinc-200 bg-white min-w-[1040px]">
-                <div className="border-r border-border p-3 bg-surface" />
+              <div className="sticky top-0 z-20 grid grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background min-w-[1040px]">
+                <div className="border-r border-border p-3 bg-background" />
                 {weekDays.map((day) => (
                   <div
                     key={day.name}
-                    className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface/50' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
+                    className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-background/50' : ''} ${day.isWeekend ? 'bg-background' : ''}`}
                   >
-                    <span className={`text-xxs font-medium ${day.isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
+                    <span className={`text-xxs font-medium ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {day.name}
                     </span>
                     <span
-                      className={`h-7 w-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                      className={`size-7 rounded-full flex items-center justify-center text-sm font-medium ${
                         day.isToday
                           ? 'bg-primary text-primary-foreground'
                           : day.isWeekend
-                          ? 'text-text-tertiary group-hover:bg-surface-elevated'
-                          : 'text-text-secondary group-hover:bg-surface-elevated'
+                          ? 'text-muted-foreground group-hover:bg-muted'
+                          : 'text-muted-foreground group-hover:bg-muted'
                       }`}
                     >
                       {day.date}
@@ -305,7 +304,7 @@ export const SchedulePage = () => {
                 {!hasEventsThisWeek && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                     <div className="pointer-events-auto text-center">
-                      <p className="text-sm text-text-secondary">Ingen timer denne uken</p>
+                      <p className="text-sm text-muted-foreground">Ingen timer denne uken</p>
                     </div>
                   </div>
                 )}
@@ -326,9 +325,9 @@ export const SchedulePage = () => {
                 )}
 
                 {/* Time column */}
-                <div className="flex flex-col border-r border-zinc-200 bg-surface text-xxs font-medium text-text-secondary">
+                <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
                   {TIME_SLOTS.map((time) => (
-                    <div key={time} className="h-[100px] border-b border-zinc-200/50 px-2 py-1">
+                    <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
                       {time}
                     </div>
                   ))}
@@ -356,20 +355,11 @@ export const SchedulePage = () => {
 
 function DesktopError({ error, onRetry }: { error: string; onRetry: () => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center pt-[20vh]">
-      <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-4">
-        <CalendarDays className="w-4 h-4 text-text-secondary" />
-      </div>
-      <h3 className="font-geist text-sm font-medium text-text-primary">
-        Noe gikk galt
-      </h3>
-      <p className="mt-1 text-sm text-text-secondary max-w-xs text-center">
-        {error}
-      </p>
-      <Button onClick={onRetry} size="compact" className="gap-2 mt-6">
-        Prøv på nytt
-      </Button>
-    </div>
+    <ErrorState
+      message={error}
+      onRetry={onRetry}
+      className="flex-1 pt-[20vh] h-auto"
+    />
   );
 }
 

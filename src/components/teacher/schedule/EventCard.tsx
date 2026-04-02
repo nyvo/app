@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime, getEventStyle } from './utils';
 
@@ -20,22 +21,22 @@ export function EventCard({ event }: EventCardProps) {
     <Link
       to={`/teacher/courses/${event.courseId}`}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
-      className={`absolute left-1 right-1 rounded-lg p-2 smooth-transition cursor-pointer group overflow-hidden block border border-zinc-200 ${
+      className={`absolute left-1 right-1 rounded-lg p-2 smooth-transition cursor-pointer group overflow-hidden block border border-border ${
         isCompleted
-          ? 'bg-zinc-50'
+          ? 'bg-muted'
           : isActive
-          ? 'bg-white ring-2 ring-zinc-900/20 ring-offset-1'
-          : 'bg-white hover:bg-zinc-50/50'
+          ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
+          : 'bg-background hover:bg-muted/50'
       }`}
       style={positionStyle}
     >
       {isCompact ? (
         /* Single-line for very short sessions (<36 min) */
         <div className="flex items-center gap-1.5">
-          <p className={`text-xs font-medium truncate ${isCompleted ? 'text-text-tertiary' : 'text-text-primary'}`}>
+          <p className={`text-xs font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
             {event.title}
           </p>
-          <span className={`text-xs shrink-0 ${isCompleted ? 'text-text-tertiary' : 'text-text-tertiary'}`}>
+          <span className={`text-xs shrink-0 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
             {formatTime(event.startTime)}
           </span>
         </div>
@@ -43,24 +44,24 @@ export function EventCard({ event }: EventCardProps) {
         <>
           {/* Title first — the most important for scanning */}
           <div className="flex items-start justify-between gap-1">
-            <p className={`text-xs font-medium truncate ${isCompleted ? 'text-text-tertiary' : 'text-text-primary'}`}>
+            <p className={`text-xs font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
               {event.title}
             </p>
             {isActive && (
-              <span className="inline-flex items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xxs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 shrink-0">
+              <Badge variant="secondary" className="bg-status-confirmed-bg text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border border-0 text-xxs px-1.5 py-0.5 shrink-0">
                 Pågår
-              </span>
+              </Badge>
             )}
           </div>
 
           {/* Time + signups on one line — secondary info */}
-          <div className={`flex items-center justify-between mt-1 ${isCompleted ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+          <div className={`flex items-center justify-between mt-1 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
             <span className="text-xs">
               {formatTime(event.startTime)}–{formatTime(event.endTime)}
             </span>
             {!isCompleted && (
               <span className="flex items-center gap-1 text-xs">
-                <Users className="h-3 w-3 text-text-tertiary" aria-hidden="true" />
+                <Users className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                 {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
               </span>
             )}

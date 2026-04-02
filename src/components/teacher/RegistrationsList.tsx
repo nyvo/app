@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Card } from '@/components/ui/card';
 import { extractDayName } from '@/utils/dateFormatting';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import type { Registration } from '@/types/dashboard';
@@ -47,28 +48,28 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
     <div className="col-span-1 md:col-span-3 lg:col-span-4">
       {/* Section Header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-medium text-text-primary">Siste påmeldinger</h2>
+        <h2 className="text-sm font-medium text-foreground">Siste påmeldinger</h2>
         <Link
           to="/teacher/signups"
-          className="text-xs font-medium text-text-secondary hover:text-text-primary smooth-transition"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
         >
           Se alle
         </Link>
       </div>
 
-      <div className="rounded-xl bg-white border border-zinc-200 overflow-hidden">
+      <Card className="overflow-hidden">
       {displayedRegistrations.length === 0 ? (
         /* Empty State */
         <div className="p-8 flex flex-col items-center justify-center text-center">
-          <div className="w-10 h-10 rounded-xl border border-zinc-200 bg-white flex items-center justify-center mb-3">
-            <UserPlus className="w-4 h-4 text-text-secondary" />
+          <div className="size-10 rounded-lg border border-border bg-background flex items-center justify-center mb-3">
+            <UserPlus className="size-4 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-text-primary">Ingen nye påmeldinger</p>
-          <p className="text-xs text-text-secondary mt-1">Nye påmeldinger vises her.</p>
+          <p className="text-sm font-medium text-foreground">Ingen nye påmeldinger</p>
+          <p className="text-xs text-muted-foreground mt-1">Nye påmeldinger vises her.</p>
         </div>
       ) : (
         /* Activity Feed - Simple list rows */
-        <div className="px-2 py-3 divide-y divide-zinc-100">
+        <div className="px-2 py-3 divide-y divide-border">
           {displayedRegistrations.map((registration) => {
             const dayName = extractDayName(registration.courseTime);
             const startTime = extractTimeFromSchedule(registration.courseTime)?.time ?? '';
@@ -78,25 +79,25 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
                 key={registration.id}
                 to="/teacher/signups"
                 className={cn(
-                  "flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-zinc-50 smooth-transition relative focus-visible:ring-2 focus-visible:ring-zinc-400/50 outline-none",
+                  "flex items-center justify-between gap-4 p-3 rounded-lg group hover:bg-muted smooth-transition relative focus-visible:ring-2 focus-visible:ring-ring/50 outline-none",
                   // Left accent for exception rows (payment failed, offer expiring, pending payment)
                   registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
                 )}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {registration.participant.name}
                   </p>
-                  <p className="flex items-center gap-1.5 text-xs text-text-secondary mt-0.5">
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                     <span className="truncate">{registration.course}</span>
-                    <span className="text-text-tertiary mx-1.5">·</span>
+                    <span className="text-muted-foreground mx-1.5">·</span>
                     <span className="truncate">
                       {dayName}{startTime && ` kl. ${startTime}`}
                     </span>
                   </p>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-xs text-text-secondary">
+                  <span className="text-xs text-muted-foreground">
                     {registration.registeredAt}
                   </span>
                 </div>
@@ -105,7 +106,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
           })}
         </div>
       )}
-      </div>
+      </Card>
     </div>
   );
 });

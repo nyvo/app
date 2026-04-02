@@ -362,11 +362,11 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
         <MobileTeacherHeader title="Opprett kurs" />
 
         {/* Header with Breadcrumbs */}
-        <header className="bg-white border-b border-border shrink-0">
+        <header className="bg-background border-b border-border shrink-0">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">
             <Breadcrumb className="mb-2">
               <BreadcrumbList>
@@ -381,10 +381,10 @@ const CreateCoursePage = () => {
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">
+            <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">
               Opprett nytt kurs
             </h1>
-            <p className="text-text-secondary text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               Sett opp et nytt kurs eller arrangement.
             </p>
           </div>
@@ -417,8 +417,8 @@ const CreateCoursePage = () => {
               {/* ── Step 1: Kurstype + Detaljer ── */}
               <section>
                 <div className="mb-6">
-                  <h2 id="course-type-label" className="text-sm font-medium text-text-primary">Kurstype</h2>
-                  <p className="text-sm text-text-secondary mt-1">Hva slags kurs vil du opprette?</p>
+                  <h2 id="course-type-label" className="text-sm font-medium text-foreground">Kurstype</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
                   value={courseType}
@@ -443,13 +443,13 @@ const CreateCoursePage = () => {
 
               {/* ── Section 2: Basic Details ── */}
               <section>
-                <div className="mb-6 border-b border-zinc-100 pb-2">
-                  <h2 className="text-sm font-medium text-text-primary">Detaljer</h2>
+                <div className="mb-6 border-b border-border pb-2">
+                  <h2 className="text-sm font-medium text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
                   {/* Title */}
                   <div>
-                    <label htmlFor="create-title" className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label htmlFor="create-title" className="block text-xs font-medium text-foreground mb-1.5">
                       Tittel
                     </label>
                     <Input
@@ -478,9 +478,9 @@ const CreateCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="create-description" className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label htmlFor="create-description" className="block text-xs font-medium text-foreground mb-1.5">
                       Beskrivelse
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
                     <Textarea
                       id="create-description"
@@ -492,7 +492,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-text-secondary'}`}>
+                      <p className={`text-xs ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -500,9 +500,9 @@ const CreateCoursePage = () => {
 
                   {/* Cover Image */}
                   <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label className="block text-xs font-medium text-foreground mb-1.5">
                       Kursbilde
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
                     <div className="h-40">
                       <ImageUpload
@@ -533,7 +533,7 @@ const CreateCoursePage = () => {
                   {/* Date + Weeks row */}
                   <div className={cn("grid grid-cols-1 gap-5", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
-                      <label htmlFor="create-start-date" className="block text-xs font-medium text-text-primary mb-1.5">
+                      <label htmlFor="create-start-date" className="block text-xs font-medium text-foreground mb-1.5">
                         {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
@@ -558,7 +558,7 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label className="flex items-center gap-1 text-xs font-medium text-text-primary mb-1.5">
+                        <label className="flex items-center gap-1 text-xs font-medium text-foreground mb-1.5">
                           Uker
                           <InfoTooltip content="Hvor mange uker kurset varer" />
                         </label>
@@ -571,12 +571,12 @@ const CreateCoursePage = () => {
                               aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                               aria-invalid={showError('weeks') ? 'true' : undefined}
                               aria-required="true"
-                              className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-text-primary text-sm bg-input-bg text-left focus:outline-none focus:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/50 hover:border-zinc-400 ios-ease ${
-                                showError('weeks') ? 'border-destructive' : 'border-zinc-300'
+                              className={`flex items-center justify-between w-full h-11 rounded-lg border px-4 text-foreground text-sm bg-transparent text-left focus:outline-none focus:bg-background focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
+                                showError('weeks') ? 'border-destructive' : 'border-input'
                               }`}
                             >
-                              <span className={weeks ? 'text-text-primary' : 'text-text-tertiary'}>{weeks || 'Velg'}</span>
-                              <ChevronDown className={`h-4 w-4 text-text-tertiary transition-transform ${isWeeksOpen ? 'rotate-180' : ''} ${showError('weeks') ? 'text-destructive' : ''}`} />
+                              <span className={weeks ? 'text-foreground' : 'text-muted-foreground'}>{weeks || 'Velg'}</span>
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isWeeksOpen ? 'rotate-180' : ''} ${showError('weeks') ? 'text-destructive' : ''}`} />
                             </button>
                           </PopoverTrigger>
                           <PopoverContent align="start" className="w-[140px] p-3 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
@@ -593,7 +593,7 @@ const CreateCoursePage = () => {
                                   className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-normal transition-colors ${
                                     weeks === week.toString()
                                       ? 'bg-primary text-primary-foreground'
-                                      : 'text-sidebar-foreground hover:bg-secondary hover:text-text-primary'
+                                      : 'text-sidebar-foreground hover:bg-secondary hover:text-foreground'
                                   }`}
                                 >
                                   <span>{week}</span>
@@ -628,7 +628,7 @@ const CreateCoursePage = () => {
                   {/* Time + Duration row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="create-start-time" className="block text-xs font-medium text-text-primary mb-1.5">
+                      <label htmlFor="create-start-time" className="block text-xs font-medium text-foreground mb-1.5">
                         Starttid
                       </label>
                       <TimePicker
@@ -649,7 +649,7 @@ const CreateCoursePage = () => {
                       )}
                     </div>
                     <div>
-                      <label htmlFor="create-duration" className="block text-xs font-medium text-text-primary mb-1.5">
+                      <label htmlFor="create-duration" className="block text-xs font-medium text-foreground mb-1.5">
                         Varighet
                       </label>
                       <Select
@@ -664,8 +664,8 @@ const CreateCoursePage = () => {
                           id="create-duration"
                           onBlur={() => handleBlur('duration')}
                           className={cn(
-                            "w-full h-11 bg-input-bg",
-                            showError('duration') ? "border-destructive" : "border-zinc-300"
+                            "w-full h-11 bg-transparent",
+                            showError('duration') ? "border-destructive" : "border-input"
                           )}
                         >
                           <SelectValue placeholder="Velg" />
@@ -701,7 +701,7 @@ const CreateCoursePage = () => {
 
                   {/* Location */}
                   <div>
-                    <label htmlFor="create-location" className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label htmlFor="create-location" className="block text-xs font-medium text-foreground mb-1.5">
                       Sted
                     </label>
                     <Input
@@ -717,7 +717,7 @@ const CreateCoursePage = () => {
                       aria-required="true"
                       className={cn(
                         "w-full h-11",
-                        showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                        showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                       )}
                     />
                     {showError('location') && (
@@ -743,15 +743,15 @@ const CreateCoursePage = () => {
               >
               {/* ── Step 3: Påmelding ── */}
               <section>
-                <div className="mb-6 border-b border-zinc-100 pb-2">
-                  <h2 className="text-sm font-medium text-text-primary">Påmelding</h2>
+                <div className="mb-6 border-b border-border pb-2">
+                  <h2 className="text-sm font-medium text-foreground">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {/* Price */}
                   <div>
-                    <label htmlFor="create-price" className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label htmlFor="create-price" className="block text-xs font-medium text-foreground mb-1.5">
                       Pris
-                      <span className="ml-2 text-xs font-normal text-text-secondary">per person</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">per person</span>
                     </label>
                     <div className="relative">
                       <Input
@@ -768,11 +768,11 @@ const CreateCoursePage = () => {
                         aria-required="true"
                         className={cn(
                           "w-full h-11 pr-12",
-                          showError('price') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                          showError('price') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                         )}
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-text-secondary'}`}>kr</span>
+                        <span className={`text-xs ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
                       </div>
                     </div>
                     {showError('price') && (
@@ -785,7 +785,7 @@ const CreateCoursePage = () => {
 
                   {/* Capacity */}
                   <div>
-                    <label htmlFor="create-capacity" className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label htmlFor="create-capacity" className="block text-xs font-medium text-foreground mb-1.5">
                       Maks antall deltakere
                     </label>
                     <Input
@@ -802,7 +802,7 @@ const CreateCoursePage = () => {
                       aria-required="true"
                       className={cn(
                         "w-full h-11",
-                        showError('capacity') ? 'border-destructive focus-visible:ring-destructive' : 'border-zinc-300'
+                        showError('capacity') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                       )}
                     />
                     {showError('capacity') && (
@@ -818,15 +818,15 @@ const CreateCoursePage = () => {
               {/* ── Section 5: Praktisk info (optional) ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-sm font-medium text-text-primary">Praktisk info</h2>
-                  <p className="text-sm text-text-secondary mt-1">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
+                  <h2 className="text-sm font-medium text-foreground">Praktisk info</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
-                    <label className="block text-xs font-medium text-text-primary mb-2.5">
+                    <label className="block text-xs font-medium text-foreground mb-2.5">
                       Nivå
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
@@ -837,24 +837,24 @@ const CreateCoursePage = () => {
                           className={cn(
                             'px-3.5 py-1.5 rounded-full text-sm border smooth-transition',
                             audienceLevel === opt.value
-                              ? 'bg-zinc-900 text-white border-zinc-900'
-                              : 'bg-white text-text-secondary border-zinc-200 hover:border-zinc-300 hover:text-text-primary'
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
                           )}
                         >
                           {opt.label}
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-text-secondary mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       Velg hvem kurset passer for.
                     </p>
                   </div>
 
                   {/* Equipment - Radio buttons (single factual statement) */}
                   <div>
-                    <label className="block text-xs font-medium text-text-primary mb-2.5">
+                    <label className="block text-xs font-medium text-foreground mb-2.5">
                       Utstyr
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
                     <RadioGroup
                       value={equipment}
@@ -863,7 +863,7 @@ const CreateCoursePage = () => {
                       {EQUIPMENT_OPTIONS.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-1">
                           <RadioGroupItem value={opt.value} />
-                          <span className="text-sm text-text-primary">{opt.label}</span>
+                          <span className="text-sm text-foreground">{opt.label}</span>
                         </label>
                       ))}
                     </RadioGroup>
@@ -871,15 +871,15 @@ const CreateCoursePage = () => {
 
                   {/* Arrival time - Dropdown select */}
                   <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label className="block text-xs font-medium text-foreground mb-1.5">
                       Oppmøte før start
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Valgfritt</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Valgfritt</span>
                     </label>
                     <Select
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
                       onValueChange={(val) => setArrivalMinutes(val === ARRIVAL_NONE_VALUE ? '' : val)}
                     >
-                      <SelectTrigger className="w-full sm:w-52 h-11 bg-input-bg border-zinc-300">
+                      <SelectTrigger className="w-full sm:w-52 h-11 bg-transparent border-input">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -894,9 +894,9 @@ const CreateCoursePage = () => {
 
                   {/* Custom bullets */}
                   <div>
-                    <label className="block text-xs font-medium text-text-primary mb-1.5">
+                    <label className="block text-xs font-medium text-foreground mb-1.5">
                       Egne punkter
-                      <span className="ml-2 text-xs font-normal text-text-secondary">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
                     </label>
                     <div className="space-y-2">
                       {customBullets.map((bullet, i) => (
@@ -916,7 +916,7 @@ const CreateCoursePage = () => {
                           <button
                             type="button"
                             onClick={() => setCustomBullets(customBullets.filter((_, j) => j !== i))}
-                            className="text-text-tertiary hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                            className="text-muted-foreground hover:text-destructive p-2.5 -m-1.5 smooth-transition"
                             aria-label={`Fjern punkt ${i + 1}`}
                           >
                             <X className="h-4 w-4" />
@@ -927,7 +927,7 @@ const CreateCoursePage = () => {
                         <button
                           type="button"
                           onClick={() => setCustomBullets([...customBullets, ''])}
-                          className="text-sm text-text-secondary hover:text-text-primary flex items-center gap-1 smooth-transition"
+                          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til punkt
@@ -943,7 +943,7 @@ const CreateCoursePage = () => {
         </div>
 
         {/* Footer */}
-        <footer className="bg-white/80 backdrop-blur-lg border-t border-border py-4 px-4 sm:px-6 shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <footer className="bg-background/80 backdrop-blur-lg border-t border-border py-4 px-4 sm:px-6 shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="max-w-2xl mx-auto flex flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">

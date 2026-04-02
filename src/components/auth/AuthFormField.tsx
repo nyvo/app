@@ -26,8 +26,8 @@ interface AuthFormFieldProps {
  * Standardised auth form field. Handles label, input, error display,
  * aria-invalid propagation, and show/hide toggle for password fields.
  *
- * Follows DESIGN_SYSTEM.md: label text-xs font-medium text-text-secondary,
- * Input with border-zinc-300, aria-invalid for error styling.
+ * Follows DESIGN_SYSTEM.md: label text-xs font-medium text-muted-foreground,
+ * Input with border-input, aria-invalid for error styling.
  */
 export function AuthFormField({
   id,
@@ -54,7 +54,7 @@ export function AuthFormField({
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="block text-xs font-medium text-text-secondary"
+          className="block text-xs font-medium text-muted-foreground"
         >
           {label}
         </label>
@@ -76,7 +76,7 @@ export function AuthFormField({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
             tabIndex={-1}
             aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
           >
@@ -92,7 +92,7 @@ export function AuthFormField({
       {hasError ? (
         <p role="alert" className="text-xs text-destructive">{error}</p>
       ) : hint ? (
-        <p className={`text-xs flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-text-tertiary' : 'text-text-secondary'}`}>
+        <p className={`text-xs flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
           {hintMet && <Check className="w-3 h-3" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

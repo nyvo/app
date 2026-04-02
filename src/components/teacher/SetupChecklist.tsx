@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import type { SetupStep } from '@/hooks/use-setup-progress'
 
 interface SetupChecklistProps {
@@ -16,21 +17,21 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
   return (
     <div className="col-span-1 md:col-span-2 lg:col-span-2 flex flex-col">
-      <h2 className="text-sm font-medium text-text-primary mb-3">Kom i gang</h2>
-      <div className="rounded-xl bg-white border border-zinc-200 p-6 flex-1">
+      <h2 className="text-sm font-medium text-foreground mb-3">Kom i gang</h2>
+      <Card className="p-6 flex-1">
         {/* Progress header */}
         <div className="mb-6">
           <div className="flex items-baseline justify-between mb-1.5">
-            <p className="text-sm font-medium text-text-primary">
+            <p className="text-sm font-medium text-foreground">
               {motivationalSubtitle}
             </p>
-            <p className="text-xs text-text-tertiary">
+            <p className="text-xs text-muted-foreground">
               {completedCount} av {totalCount}
             </p>
           </div>
           {/* Progress bar */}
           <div
-            className="h-1 rounded-full bg-zinc-100 overflow-hidden"
+            className="h-1 rounded-full bg-muted overflow-hidden"
             role="progressbar"
             aria-valuenow={completedCount}
             aria-valuemin={0}
@@ -38,7 +39,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
             aria-label={`Oppsett: ${completedCount} av ${totalCount} steg fullført`}
           >
             <div
-              className="h-full rounded-full bg-zinc-900 smooth-transition"
+              className="h-full rounded-full bg-primary smooth-transition"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -54,16 +55,16 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
               <div
                 key={step.id}
                 className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-150 ${
-                  isNext ? 'bg-zinc-50' : ''
+                  isNext ? 'bg-muted' : ''
                 }`}
               >
                 {/* Step number */}
                 <span className={`text-xs font-medium shrink-0 tabular-nums mt-0.5 ${
                   step.isComplete
-                    ? 'text-text-tertiary'
+                    ? 'text-muted-foreground'
                     : isNext
-                      ? 'text-text-primary'
-                      : 'text-text-tertiary'
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
                 }`}>
                   {index + 1}
                 </span>
@@ -72,15 +73,15 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm ${
                     step.isComplete
-                      ? 'text-text-tertiary'
+                      ? 'text-muted-foreground'
                       : isNext
-                        ? 'font-medium text-text-primary'
-                        : 'text-text-secondary'
+                        ? 'font-medium text-foreground'
+                        : 'text-muted-foreground'
                   }`}>
                     {step.title}
                   </p>
                   {isNext && (
-                    <p className="text-xs text-text-tertiary mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {step.description}
                     </p>
                   )}
@@ -88,7 +89,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
                 {/* Completed check (right side) */}
                 {step.isComplete && (
-                  <div className="mt-0.5 shrink-0 h-5 w-5 rounded-full flex items-center justify-center bg-status-confirmed-bg border border-status-confirmed-border">
+                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-status-confirmed-bg border border-status-confirmed-border">
                     <Check className="h-3 w-3 text-status-confirmed-text" />
                   </div>
                 )}
@@ -97,13 +98,13 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 {!step.isComplete && isNext && (
                   <>
                     {isLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 text-text-tertiary animate-spin shrink-0" />
+                      <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin shrink-0" />
                     ) : step.actionHref ? (
                       <Button variant="outline" size="xs" asChild>
                         <Link to={step.actionHref}>
                           {step.actionLabel}
                           {step.timeEstimate && (
-                            <span className="text-text-tertiary font-normal ml-1">· {step.timeEstimate}</span>
+                            <span className="text-muted-foreground font-normal ml-1">· {step.timeEstimate}</span>
                           )}
                         </Link>
                       </Button>
@@ -111,7 +112,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                       <Button size="xs" onClick={step.actionOnClick}>
                         {step.actionLabel}
                         {step.timeEstimate && (
-                          <span className="text-white/60 font-normal ml-1">· {step.timeEstimate}</span>
+                          <span className="text-primary-foreground/60 font-normal ml-1">· {step.timeEstimate}</span>
                         )}
                       </Button>
                     )}
@@ -121,7 +122,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
             )
           })}
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

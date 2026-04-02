@@ -192,7 +192,7 @@ const CoursesPage = () => {
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-surface">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
 
         <MobileTeacherHeader title="Mine kurs" />
 
@@ -206,9 +206,9 @@ const CoursesPage = () => {
         >
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="font-geist text-2xl font-medium text-text-primary tracking-tight">Mine kurs</h1>
+              <h1 className="font-geist text-2xl font-medium text-foreground tracking-tight">Mine kurs</h1>
               {!showCoursesEmptyState && (
-                <p className="text-sm text-text-secondary mt-1">Oversikt over kursene dine.</p>
+                <p className="text-sm text-muted-foreground mt-1">Oversikt over kursene dine.</p>
               )}
             </div>
             {!showCoursesEmptyState && (
@@ -284,13 +284,13 @@ const CoursesPage = () => {
                     onClick={() => setShowPast(prev => !prev)}
                     aria-expanded={showPast}
                     aria-controls="past-courses-section"
-                    className="flex items-center gap-2 border-t border-zinc-200 pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
+                    className="flex items-center gap-2 border-t border-border pt-4 pb-1 w-full text-left cursor-pointer min-h-[44px]"
                   >
                     <ChevronRight className={cn(
-                      'h-3.5 w-3.5 text-text-tertiary smooth-transition',
+                      'h-3.5 w-3.5 text-muted-foreground smooth-transition',
                       showPast && 'rotate-90'
                     )} aria-hidden="true" />
-                    <span className="text-sm font-medium text-text-tertiary">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {pastRows.length} tidligere kurs
                     </span>
                   </button>

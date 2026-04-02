@@ -4,11 +4,12 @@ import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, Credit
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { pageVariants, pageTransition } from '@/lib/motion'
+import { pageVariants, pageTransition, slideVariants, slideTransition, slideTransitionFast } from '@/lib/motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { updateOrganization } from '@/services/organizations'
 import { typedFrom } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { Separator } from '@/components/ui/separator'
 
 function generateSlug(name: string): string {
   return name
@@ -56,15 +57,10 @@ interface WelcomeFlowProps {
   onComplete: () => void
 }
 
-const slideVariants = {
-  enter: { opacity: 0, x: 24 },
-  center: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -24 },
-}
-
 export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   const { profile, currentOrganization, ensureOrganization, signOut } = useAuth()
   const [step, setStep] = useState(0)
+  const keyboardNav = useRef(false)
 
   // Personal info — don't prefill if the name is just the email prefix
   const prefillName = (() => {
@@ -212,12 +208,12 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') {
-        if (e.key === 'Enter') { e.preventDefault(); advance() }
+        if (e.key === 'Enter') { e.preventDefault(); keyboardNav.current = true; advance() }
         return
       }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); goBack() }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); if (step === 0) advance() }
-      else if (e.key === 'Enter') { e.preventDefault(); advance() }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); keyboardNav.current = true; goBack() }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); keyboardNav.current = true; if (step === 0) advance() }
+      else if (e.key === 'Enter') { e.preventDefault(); keyboardNav.current = true; advance() }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -230,12 +226,12 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   ]
 
   return (
-    <main className="flex-1 overflow-y-auto bg-surface min-h-screen flex flex-col">
+    <main className="flex-1 overflow-y-auto bg-background min-h-screen flex flex-col">
       {/* Minimal top bar */}
       <div className="flex justify-end px-6 lg:px-8 pt-6 lg:pt-8">
         <button
           onClick={() => signOut()}
-          className="text-xs text-text-tertiary hover:text-text-primary smooth-transition"
+          className="text-xs text-muted-foreground hover:text-foreground smooth-transition"
         >
           Logg ut
         </button>
@@ -250,7 +246,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
           transition={pageTransition}
           className="w-full max-w-lg"
         >
-          <div className="rounded-xl bg-white border border-zinc-200 p-6 sm:p-8">
+          <div className="rounded-lg bg-background border border-border p-6 sm:p-8">
             {/* Step indicator */}
             {step < 2 && (
               <div className="flex gap-2 mb-8">
@@ -260,10 +256,10 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   return (
                     <div key={seg.label} className="flex-1">
                       <div className={`h-[3px] rounded-full mb-2 smooth-transition ${
-                        isActive || isDone ? 'bg-zinc-900' : 'bg-zinc-200'
+                        isActive || isDone ? 'bg-primary' : 'bg-border'
                       }`} />
                       <p className={`text-xs smooth-transition ${
-                        isActive ? 'font-medium text-text-primary' : 'text-text-tertiary'
+                        isActive ? 'font-medium text-foreground' : 'text-muted-foreground'
                       }`}>
                         {seg.label}
                       </p>
@@ -282,19 +278,20 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.2 }}
+                  transition={keyboardNav.current ? slideTransitionFast : slideTransition}
+                  onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-text-primary mb-1">
+                  <h2 className="text-lg font-medium text-foreground mb-1">
                     Først litt om deg
                   </h2>
-                  <p className="text-sm text-text-secondary mb-6">
+                  <p className="text-sm text-muted-foreground mb-6">
                     Navnet og byen din vises på kurssiden din, så elevene vet hvem du er.
                   </p>
 
                   <div className="flex flex-col gap-4 mb-8">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="welcome-first-name" className="text-xs font-medium text-text-primary mb-1.5 block">
+                        <label htmlFor="welcome-first-name" className="text-xs font-medium text-foreground mb-1.5 block">
                           Fornavn
                         </label>
                         <Input
@@ -312,7 +309,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         )}
                       </div>
                       <div>
-                        <label htmlFor="welcome-last-name" className="text-xs font-medium text-text-primary mb-1.5 block">
+                        <label htmlFor="welcome-last-name" className="text-xs font-medium text-foreground mb-1.5 block">
                           Etternavn
                         </label>
                         <Input
@@ -331,7 +328,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                     </div>
 
                     <div>
-                      <label htmlFor="welcome-city" className="text-xs font-medium text-text-primary mb-1.5 block">
+                      <label htmlFor="welcome-city" className="text-xs font-medium text-foreground mb-1.5 block">
                         By / Sted
                       </label>
                       <Input
@@ -346,7 +343,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       {cityError ? (
                         <p id="welcome-city-error" className="text-xs text-destructive mt-1.5" role="alert">{cityError}</p>
                       ) : (
-                        <p id="welcome-city-hint" className="text-xs text-text-tertiary mt-1.5">
+                        <p id="welcome-city-hint" className="text-xs text-muted-foreground mt-1.5">
                           Hjelper elever å finne kurs i nærheten.
                         </p>
                       )}
@@ -368,21 +365,22 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.2 }}
+                  transition={keyboardNav.current ? slideTransitionFast : slideTransition}
+                  onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-text-primary mb-1">
+                  <h2 className="text-lg font-medium text-foreground mb-1">
                     Om virksomheten din
                   </h2>
-                  <p className="text-sm text-text-secondary mb-6">
+                  <p className="text-sm text-muted-foreground mb-6">
                     Dette brukes på din offentlige kursside. Har du et organisasjonsnummer? Da fyller vi ut automatisk.
                   </p>
 
                   <div className="flex flex-col gap-4 mb-8">
                     {/* Org number lookup */}
                     <div>
-                      <label htmlFor="welcome-org-nr" className="text-xs font-medium text-text-primary mb-1.5 block">
+                      <label htmlFor="welcome-org-nr" className="text-xs font-medium text-foreground mb-1.5 block">
                         Organisasjonsnummer
-                        <span className="text-text-tertiary font-normal ml-1">(valgfritt)</span>
+                        <span className="text-muted-foreground font-normal ml-1">(valgfritt)</span>
                       </label>
                       <div className="relative">
                         <Input
@@ -396,14 +394,14 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           {isLookingUp ? (
-                            <Loader2 className="h-4 w-4 text-text-tertiary animate-spin" />
+                            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
                           ) : (
-                            <Search className="h-4 w-4 text-text-tertiary" />
+                            <Search className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
                       </div>
                       {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
-                        <p className="text-xs text-text-tertiary mt-1.5">
+                        <p className="text-xs text-muted-foreground mt-1.5">
                           Fant ingen treff. Fyll inn manuelt under.
                         </p>
                       )}
@@ -411,30 +409,30 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Lookup result card */}
                     {lookupDone && lookupResult && (
-                      <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
+                      <div className="rounded-lg border border-border bg-muted/50 p-4">
                         <div className="flex items-start gap-3">
-                          <div className="mt-0.5 rounded-lg bg-white border border-zinc-200 p-2">
-                            <Building className="h-4 w-4 text-text-tertiary" />
+                          <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
+                            <Building className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-text-primary truncate">
+                              <p className="text-sm font-medium text-foreground truncate">
                                 {lookupResult.name}
                               </p>
                               <Check className="h-3.5 w-3.5 text-status-confirmed-text shrink-0" />
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                               {lookupResult.orgForm && (
-                                <span className="text-xs text-text-secondary">{lookupResult.orgForm}</span>
+                                <span className="text-xs text-muted-foreground">{lookupResult.orgForm}</span>
                               )}
                               {lookupResult.city && (
-                                <span className="flex items-center gap-1 text-xs text-text-secondary">
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                   <MapPin className="h-3 w-3" />
                                   {lookupResult.city}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-text-secondary mt-1 tabular-nums">
+                            <p className="text-xs text-muted-foreground mt-1 tabular-nums">
                               Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
                             </p>
                           </div>
@@ -443,11 +441,11 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                     )}
 
                     {/* Divider */}
-                    <div className="h-px bg-zinc-100" />
+                    <Separator />
 
                     {/* Studio name */}
                     <div>
-                      <label htmlFor="welcome-studio" className="text-xs font-medium text-text-primary mb-1.5 block">
+                      <label htmlFor="welcome-studio" className="text-xs font-medium text-foreground mb-1.5 block">
                         Navn på virksomheten
                       </label>
                       <Input
@@ -464,7 +462,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       {studioError ? (
                         <p id="welcome-studio-error" className="text-xs text-destructive mt-1.5" role="alert">{studioError}</p>
                       ) : (
-                        <p className="text-xs text-text-tertiary mt-1.5">
+                        <p className="text-xs text-muted-foreground mt-1.5">
                           Vises på din offentlige kursside. Du kan endre dette senere.
                         </p>
                       )}
@@ -502,12 +500,13 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{ duration: 0.2 }}
+                  transition={keyboardNav.current ? slideTransitionFast : slideTransition}
+                  onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-lg font-medium text-text-primary mb-2">
+                  <h2 className="text-lg font-medium text-foreground mb-2">
                     {displayName ? `Bra, ${displayName} — grunnlaget er på plass` : 'Grunnlaget er på plass'}
                   </h2>
-                  <p className="text-sm text-text-secondary leading-relaxed mb-6">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                     To steg igjen før du kan ta imot påmeldinger og betaling.
                   </p>
 
@@ -517,11 +516,11 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       { icon: BookOpen, label: 'Opprett ditt første kurs', time: 'ca. 3 min' },
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-zinc-200">
-                          <item.icon className="h-3 w-3 text-text-tertiary" />
+                        <div className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-border">
+                          <item.icon className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <span className="text-sm text-text-primary">{item.label}</span>
-                        <span className="text-xs text-text-tertiary ml-auto">{item.time}</span>
+                        <span className="text-sm text-foreground">{item.label}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{item.time}</span>
                       </div>
                     ))}
                   </div>
