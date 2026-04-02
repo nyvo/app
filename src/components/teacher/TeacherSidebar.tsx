@@ -27,11 +27,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -58,6 +60,7 @@ export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, userRole, currentOrganization } = useAuth();
+  const { isMobile } = useSidebar();
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
@@ -143,15 +146,18 @@ export const TeacherSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
                   <UserAvatar
                     name={profile?.name}
                     src={profile?.avatar_url}
                     size="sm"
                   />
-                  <div className="flex flex-1 flex-col items-start overflow-hidden">
-                    <span className="type-label truncate">{profile?.name || currentOrganization?.name || 'Konto'}</span>
-                    <span className="type-meta truncate text-muted-foreground">
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{profile?.name || currentOrganization?.name || 'Konto'}</span>
+                    <span className="truncate text-xs text-muted-foreground">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
                   </div>
@@ -159,14 +165,24 @@ export const TeacherSidebar = () => {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side="top"
-                align="start"
-                className="w-[--radix-dropdown-menu-trigger-width]"
+                side={isMobile ? "bottom" : "right"}
+                align="end"
+                sideOffset={4}
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
               >
-                <div className="px-2 py-1.5">
-                  <p className="type-label truncate text-foreground">{profile?.name || currentOrganization?.name}</p>
-                  <p className="type-meta truncate text-muted-foreground">{profile?.email}</p>
-                </div>
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <UserAvatar
+                      name={profile?.name}
+                      src={profile?.avatar_url}
+                      size="sm"
+                    />
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-medium">{profile?.name || currentOrganization?.name}</span>
+                      <span className="truncate text-xs">{profile?.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/teacher/profile">
