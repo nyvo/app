@@ -286,7 +286,7 @@ export const SignupsPage = () => {
   }), [loadSignups]);
 
   return (
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
+      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Påmeldinger" />
 
         {/* Header */}
@@ -393,7 +393,7 @@ export const SignupsPage = () => {
             </div>
           )}
         </div>
-      </main>
+      </div>
   );
 };
 

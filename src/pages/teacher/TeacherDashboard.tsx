@@ -447,7 +447,7 @@ const TeacherDashboard = () => {
   const recentMessageCount = messages.length;
 
   return (
-      <main className="flex-1 overflow-y-auto bg-background h-screen">
+      <div className="flex-1 overflow-y-auto bg-background h-full">
           <MobileTeacherHeader title="Oversikt" />
 
           <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
@@ -686,7 +686,7 @@ const TeacherDashboard = () => {
               </div>
             </DialogContent>
           </Dialog>
-        </main>
+        </div>
   );
 };
 

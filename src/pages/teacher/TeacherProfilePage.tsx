@@ -389,7 +389,7 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto bg-background h-screen flex flex-col">
+    <div className="flex-1 overflow-y-auto bg-background h-full flex flex-col">
         <MobileTeacherHeader title="Innstillinger" />
 
         <motion.div
@@ -832,7 +832,7 @@ const TeacherProfilePage = () => {
             )}
 
         </motion.div>
-    </main>
+    </div>
   );
 };
 

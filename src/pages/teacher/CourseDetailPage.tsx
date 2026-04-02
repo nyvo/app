@@ -474,7 +474,7 @@ const CourseDetailPage = () => {
   // Loading state
   if (isLoading) {
     return (
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
+      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
           <MobileTeacherHeader title="Kurs" />
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-6xl mx-auto w-full">
@@ -514,14 +514,14 @@ const CourseDetailPage = () => {
               </div>
             </div>
           </div>
-        </main>
+        </div>
     );
   }
 
   // Error or not found state
   if (error || !courseData) {
     return (
-      <main className="flex-1 flex flex-col min-h-screen bg-background">
+      <div className="flex-1 flex flex-col min-h-full bg-background">
           <MobileTeacherHeader title="Kurs" />
 
           <div className="flex-1 flex items-center justify-center text-center">
@@ -530,7 +530,7 @@ const CourseDetailPage = () => {
             <p className="text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
-        </main>
+        </div>
     );
   }
 
@@ -629,7 +629,7 @@ const CourseDetailPage = () => {
 
   return (
     <>
-    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
+    <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Kurs" />
 
         {/* Page Content — integrated layout, no separate white header */}
@@ -931,7 +931,7 @@ const CourseDetailPage = () => {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Add Participant Dialog */}
       <AddParticipantDialog

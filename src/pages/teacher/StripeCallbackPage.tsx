@@ -99,7 +99,7 @@ const StripeCallbackPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-md mx-auto py-12">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 w-full max-w-md mx-auto py-12">
         <div className="w-full flex flex-col items-center text-center">
           {state === 'loading' && (
             <>
@@ -183,7 +183,7 @@ const StripeCallbackPage = () => {
             </>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };

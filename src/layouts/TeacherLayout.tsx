@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { WelcomeFlow } from '@/components/teacher/WelcomeFlow';
@@ -16,7 +16,9 @@ export default function TeacherLayout() {
       ) : (
         <SidebarProvider>
           <TeacherSidebar />
-          <Outlet />
+          <SidebarInset>
+            <Outlet />
+          </SidebarInset>
         </SidebarProvider>
       )}
     </ProtectedRoute>

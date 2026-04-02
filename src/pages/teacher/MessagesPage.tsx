@@ -276,7 +276,7 @@ const MessagesPage = () => {
 
 
   return (
-      <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
+      <div className="flex-1 flex min-h-full flex-col overflow-hidden bg-background">
         <MobileTeacherHeader title="Meldinger" />
 
         <motion.header
@@ -738,7 +738,7 @@ const MessagesPage = () => {
           </div>
           </Card>
         </motion.div>
-      </main>
+      </div>
   );
 };
 

@@ -219,7 +219,7 @@ export const SchedulePage = () => {
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden bg-background h-screen">
+    <div className="flex-1 flex flex-col overflow-hidden bg-background h-full">
       <MobileTeacherHeader title="Timeplan" />
 
       <ScheduleHeader
@@ -349,7 +349,7 @@ export const SchedulePage = () => {
       )}
 
       <EmptyStateToggle />
-    </main>
+    </div>
   );
 };
 

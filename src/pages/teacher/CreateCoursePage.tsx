@@ -362,7 +362,7 @@ const CreateCoursePage = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-background">
+    <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Opprett kurs" />
 
         {/* Header with Breadcrumbs */}
@@ -1040,7 +1040,7 @@ const CreateCoursePage = () => {
           </div>
         </footer>
 
-    </main>
+    </div>
   );
 };
 
