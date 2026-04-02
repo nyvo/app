@@ -913,25 +913,29 @@ const CreateCoursePage = () => {
                             }}
                             className="h-11 flex-1"
                           />
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
                             type="button"
                             onClick={() => setCustomBullets(customBullets.filter((_, j) => j !== i))}
-                            className="text-muted-foreground hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                            className="text-muted-foreground hover:text-destructive hover:bg-transparent"
                             aria-label={`Fjern punkt ${i + 1}`}
                           >
                             <X className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </div>
                       ))}
                       {customBullets.length < CUSTOM_BULLETS_MAX_COUNT && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           type="button"
                           onClick={() => setCustomBullets([...customBullets, ''])}
-                          className="type-body text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
+                          className="type-body text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til punkt
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -973,14 +977,16 @@ const CreateCoursePage = () => {
                       </button>
                     )}
                   </div>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     type="button"
                     onClick={() => setSubmitError(null)}
-                    className="text-destructive/60 hover:text-destructive transition-colors p-1 -m-1 rounded shrink-0"
+                    className="text-destructive/60 hover:text-destructive hover:bg-transparent shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </Alert>
             )}

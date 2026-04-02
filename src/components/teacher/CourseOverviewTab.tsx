@@ -171,12 +171,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="type-title text-foreground">Tid og sted</h2>
-              <button
-                onClick={onNavigateToSettings}
-                className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
-              >
+              <Button variant="ghost" size="sm" onClick={onNavigateToSettings} className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground">
                 Rediger
-              </button>
+              </Button>
             </div>
             <Card className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
@@ -223,12 +220,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="type-title text-foreground">Om kurset</h2>
-              <button
-                onClick={onNavigateToSettings}
-                className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
-              >
+              <Button variant="ghost" size="sm" onClick={onNavigateToSettings} className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground">
                 Rediger
-              </button>
+              </Button>
             </div>
             <Card className="overflow-hidden">
               <div className="flex flex-col gap-6 p-6 sm:flex-row">
@@ -333,13 +327,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="type-title text-foreground">Nylige påmeldinger</h2>
-                <button
-                  onClick={onNavigateToParticipants}
-                  className="type-meta inline-flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
-                >
+                <Button variant="ghost" size="sm" onClick={onNavigateToParticipants} className="type-meta h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground">
                   Se alle {totalParticipantCount}
                   <ArrowRight className="h-3 w-3" />
-                </button>
+                </Button>
               </div>
               <Card className="overflow-hidden divide-y divide-border">
                 {recentParticipants.map((p) => (

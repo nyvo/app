@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export interface CourseDescriptionProps {
   description?: string | null;
@@ -59,13 +60,15 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
         )}
       </div>
       {needsTruncation && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="type-meta mt-1.5 text-foreground transition-colors hover:text-muted-foreground"
+          className="type-meta text-foreground h-auto p-0 mt-1.5 hover:bg-transparent hover:text-muted-foreground"
         >
           {expanded ? 'Vis mindre' : 'Les mer'}
-        </button>
+        </Button>
       )}
     </div>
   );

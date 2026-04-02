@@ -189,13 +189,15 @@ const StudentMessagesPage = () => {
             <>
               {/* Chat Header */}
               <header className="flex items-center gap-3 px-6 py-4 border-b border-border">
-                <button
-                  className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="md:hidden -ml-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake"
                 >
                   <ChevronLeft className="h-6 w-6" />
-                </button>
+                </Button>
                 <UserAvatar
                   name={activeConversation.participant?.name}
                   src={activeConversation.participant?.avatar_url}

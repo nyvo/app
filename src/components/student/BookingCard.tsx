@@ -87,7 +87,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
     <div className="bg-background rounded-lg border border-border p-4 sm:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
       
       {/* Left: Date Box */}
-      <div className="hidden md:flex flex-col items-center justify-center w-24 h-24 rounded-lg bg-background border border-border shrink-0">
+      <div className="hidden md:flex flex-col items-center justify-center size-24 rounded-lg bg-background border border-border shrink-0">
         {startDate && isValid(startDate) ? (
           <>
             <span className="type-label text-muted-foreground">

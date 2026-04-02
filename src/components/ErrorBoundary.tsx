@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 interface Props {
   children: ReactNode
@@ -41,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-background p-8 text-center">
+          <Card className="w-full max-w-md p-8 text-center">
             <h1 className="mb-2 text-lg font-medium text-foreground">
               Noe gikk galt
             </h1>
@@ -56,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 {this.state.error.message}
               </pre>
             )}
-          </div>
+          </Card>
         </div>
       )
     }

@@ -324,25 +324,29 @@ export const CourseSettingsTab = ({
                     }}
                     className="type-body flex-1 h-9"
                   />
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     type="button"
                     onClick={() => onCustomBulletsChange(settingsCustomBullets.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-destructive p-2.5 -m-1.5 smooth-transition"
+                    className="text-muted-foreground hover:text-destructive hover:bg-transparent"
                     aria-label={`Fjern punkt ${i + 1}`}
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               ))}
               {settingsCustomBullets.length < CUSTOM_BULLETS_MAX_COUNT && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="type-meta text-muted-foreground hover:text-foreground flex items-center gap-1 smooth-transition"
+                  className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                 >
                   <Plus className="h-3 w-3" />
                   Legg til
-                </button>
+                </Button>
               )}
             </div>
           </div>

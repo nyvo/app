@@ -254,7 +254,7 @@ export function CourseListSkeleton() {
     <div>
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-center gap-3 border-b border-border px-2 py-3 last:border-b-0">
-          <div className="w-11 h-11 rounded-lg border border-border shrink-0 flex flex-col items-center justify-center gap-0.5">
+          <div className="size-11 rounded-lg border border-border shrink-0 flex flex-col items-center justify-center gap-0.5">
             <Skeleton className="h-2 w-5 rounded-sm" />
             <Skeleton className="h-3 w-4 rounded-sm" />
           </div>

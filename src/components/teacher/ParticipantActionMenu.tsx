@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MoreHorizontal, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
 import {
@@ -153,7 +154,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <div className="rounded-lg border border-border bg-background/50 px-4 py-3">
+                <Card className="bg-background/50 px-4 py-3">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="type-label text-foreground">{signup.participantName}</p>
@@ -163,7 +164,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                       <span className="type-label text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
                     )}
                   </div>
-                </div>
+                </Card>
                 <p className="type-body text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
                     ? 'Deltakeren har betalt og får refusjon via Stripe.'

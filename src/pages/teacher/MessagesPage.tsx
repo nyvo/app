@@ -421,22 +421,26 @@ const MessagesPage = () => {
               <div className="flex h-full flex-1 flex-col bg-background">
                  <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
                     <div className="flex items-center gap-3">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={handleCancelComposition}
-                        className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground cursor-pointer"
+                        className="md:hidden -ml-2 text-muted-foreground hover:text-foreground"
                         aria-label="Tilbake"
                       >
                         <ChevronLeft className="h-6 w-6" />
-                      </button>
+                      </Button>
                     <h3 className="type-title text-foreground">Ny melding</h3>
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={handleCancelComposition}
-                      className="cursor-pointer rounded-full p-2 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                      className="rounded-full text-muted-foreground hover:text-foreground"
                       aria-label="Lukk ny melding"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                 </header>
 
                 <div className="p-6 space-y-6">
@@ -520,13 +524,15 @@ const MessagesPage = () => {
                 {/* Regular Chat Header */}
             <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
               <div className="flex items-center gap-3">
-                <button
-                  className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="md:hidden -ml-2 text-muted-foreground hover:text-foreground"
                   onClick={() => setActiveConversation(null)}
                   aria-label="Tilbake til samtaler"
                 >
                   <ChevronLeft className="h-6 w-6" />
-                </button>
+                </Button>
 
                     {activeConversation && (() => {
                       return (

@@ -97,8 +97,8 @@ const StudentResetPasswordPage = () => {
   if (isValidSession === false) {
     return (
       <AuthLayout context="student" title="" customContent>
-        <div className="w-16 h-16 rounded-full bg-status-error-bg flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-status-error-text" />
+        <div className="size-16 rounded-full bg-status-error-bg flex items-center justify-center mb-4">
+          <AlertCircle className="size-8 text-status-error-text" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -126,8 +126,8 @@ const StudentResetPasswordPage = () => {
   if (resetSuccess) {
     return (
       <AuthLayout context="student" title="" customContent>
-        <div className="w-16 h-16 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
-          <CheckCircle2 className="w-8 h-8 text-status-confirmed-text" />
+        <div className="size-16 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+          <CheckCircle2 className="size-8 text-status-confirmed-text" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">

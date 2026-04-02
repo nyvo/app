@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Calendar, Clock, MapPin, Users, Banknote, Info, ImageOff, Image } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -68,14 +69,16 @@ function SectionDivider({
     <div className={`flex items-center justify-between -mx-6 bg-surface-muted px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'}`}>
       <span className="type-meta text-muted-foreground">{label}</span>
       {onEdit && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           type="button"
           onClick={onEdit}
           aria-label={`Endre ${label.toLowerCase()}`}
-          className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
+          className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
         >
           Endre
-        </button>
+        </Button>
       )}
     </div>
   );

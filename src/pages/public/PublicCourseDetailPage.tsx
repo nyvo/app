@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { checkCourseAvailability, createSignup, sendSignupConfirmationEmail } from '@/services/signups';
 import { createPaymentIntent } from '@/services/checkout';
@@ -348,7 +349,7 @@ const PublicCourseDetailPage = () => {
         </header>
         <main className="pt-24 px-6">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-lg border border-destructive/30 bg-background p-12 text-center">
+            <Card className="border-destructive/30 p-12 text-center">
               <p className="type-body mb-4 text-destructive">{fetchError || 'Kurset ble ikke funnet'}</p>
               <Button asChild variant="outline" size="compact">
                 <Link to={backUrl}>
@@ -356,7 +357,7 @@ const PublicCourseDetailPage = () => {
                   Tilbake til kurs
                 </Link>
               </Button>
-            </div>
+            </Card>
           </div>
         </main>
       </div>

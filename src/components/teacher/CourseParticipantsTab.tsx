@@ -175,12 +175,9 @@ export const CourseParticipantsTab = ({
                   <td colSpan={6} className="py-12 text-center">
                     <p className="type-body text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                     {hasActiveFilters && (
-                      <button
-                        onClick={clearFilters}
-                        className="type-meta mt-2 text-primary hover:underline"
-                      >
+                      <Button variant="link" size="sm" onClick={clearFilters} className="type-meta text-primary">
                         Nullstill filter
-                      </button>
+                      </Button>
                     )}
                   </td>
                 </tr>

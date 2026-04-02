@@ -81,9 +81,9 @@ export function AuthFormField({
             aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
           >
             {showPassword ? (
-              <EyeOff className="w-4 h-4" />
+              <EyeOff className="size-4" />
             ) : (
-              <Eye className="w-4 h-4" />
+              <Eye className="size-4" />
             )}
           </button>
         )}
@@ -93,7 +93,7 @@ export function AuthFormField({
         <p role="alert" className="type-meta text-destructive">{error}</p>
       ) : hint ? (
         <p className={`type-meta flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-          {hintMet && <Check className="w-3 h-3" />}
+          {hintMet && <Check className="size-3" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>
       ) : null}

@@ -173,7 +173,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {/* Header */}
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0 ${
+                    className={`size-10 rounded-lg flex flex-col items-center justify-center shrink-0 ${
                       selectedSession.isNext
                         ? 'bg-primary text-primary-foreground'
                         : 'border border-border text-muted-foreground'

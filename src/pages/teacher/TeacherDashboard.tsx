@@ -481,7 +481,7 @@ const TeacherDashboard = () => {
 
 
               {showSetupBanner && !isLoading && (
-                <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                <Card className="mb-6 flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="h-3 w-3" />
@@ -499,7 +499,7 @@ const TeacherDashboard = () => {
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
-                </div>
+                </Card>
               )}
 
               {isLoading ? (
@@ -544,7 +544,7 @@ const TeacherDashboard = () => {
                 <>
                   <div className="mb-8">
                     <h3 className="type-title mb-3 text-foreground">Kom i gang</h3>
-                    <div className="group relative overflow-hidden rounded-lg border border-border bg-background">
+                    <Card className="group relative overflow-hidden">
                       <div className="relative z-10 flex flex-col justify-center p-6 sm:p-8">
                         <div className="max-w-xl">
                           <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
@@ -568,7 +568,7 @@ const TeacherDashboard = () => {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   </div>
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <CoursesList courses={[]} />
@@ -674,13 +674,15 @@ const TeacherDashboard = () => {
                 <Button onClick={handleConnectStripe} loading={connectingStripe} loadingText="Kobler til">
                   Gå videre til oppsett
                 </Button>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowStripeExplainer(false)}
                   disabled={connectingStripe}
-                  className="type-meta py-1 text-muted-foreground smooth-transition hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                  className="type-meta text-muted-foreground w-full"
                 >
                   Jeg gjør dette senere
-                </button>
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

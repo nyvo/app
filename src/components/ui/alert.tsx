@@ -39,6 +39,15 @@ const variantTextColor: Record<string, string> = {
   neutral: "text-muted-foreground",
 }
 
+const variantTextColorMuted: Record<string, string> = {
+  info: "text-status-info-text/80",
+  success: "text-status-confirmed-text/80",
+  warning: "text-status-warning-text/80",
+  error: "text-status-error-text/80",
+  destructive: "text-destructive/80",
+  neutral: "text-muted-foreground/80",
+}
+
 const defaultIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   info: Info,
   success: CheckCircle2,
@@ -103,7 +112,7 @@ function AlertDescription({
     <div
       className={cn(
         "text-sm [&_p]:leading-relaxed",
-        variant ? `${variantTextColor[variant]}/80` : "",
+        variant ? variantTextColorMuted[variant] : "",
         className
       )}
       {...props}

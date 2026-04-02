@@ -96,13 +96,15 @@ export const SessionList: React.FC<SessionListProps> = ({
                     </div>
                   </div>
                   {!isPast && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleEditClick(session.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground smooth-transition p-1 rounded-md"
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
                       aria-label={`Rediger ${session.title}`}
                     >
                       <Pencil className="h-4 w-4" />
-                    </button>
+                    </Button>
                   )}
                 </div>
 

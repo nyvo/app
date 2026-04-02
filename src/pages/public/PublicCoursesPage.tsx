@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { SearchInput } from '@/components/ui/search-input';
 import { PublicCourseTable } from '@/components/public/PublicCourseTable';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
@@ -265,7 +266,7 @@ const PublicCoursesPage = () => {
 
             {/* Empty State */}
             {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg border-border bg-background">
+              <Card className="flex flex-col items-center justify-center py-16 text-center">
                 <p className="type-title text-foreground">
                   {hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
                 </p>
@@ -274,7 +275,7 @@ const PublicCoursesPage = () => {
                     ? 'Prøv et annet søkeord.'
                     : 'Det er ingen planlagte kurs for øyeblikket.'}
                 </p>
-              </div>
+              </Card>
             )}
 
             {/* Course Lists — narrower container within the wider page */}

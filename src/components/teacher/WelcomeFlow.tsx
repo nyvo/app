@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { pageVariants, pageTransition, slideVariants, slideTransition, slideTransitionFast } from '@/lib/motion'
 import { useAuth } from '@/contexts/AuthContext'
@@ -229,12 +230,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
     <main className="flex-1 overflow-y-auto bg-background min-h-screen flex flex-col">
       {/* Minimal top bar */}
       <div className="flex justify-end px-6 lg:px-8 pt-6 lg:pt-8">
-        <button
-          onClick={() => signOut()}
-          className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
-        >
+        <Button variant="ghost" size="sm" onClick={() => signOut()} className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground">
           Logg ut
-        </button>
+        </Button>
       </div>
 
       {/* Centered card */}
@@ -409,7 +407,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Lookup result card */}
                     {lookupDone && lookupResult && (
-                      <div className="rounded-lg border border-border bg-surface-muted/50 p-4">
+                      <Card className="bg-surface-muted/50 p-4">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
                             <Building className="h-4 w-4 text-muted-foreground" />
@@ -437,7 +435,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                             </p>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     )}
 
                     {/* Divider */}

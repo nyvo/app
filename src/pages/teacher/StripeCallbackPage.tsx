@@ -89,7 +89,7 @@ const StripeCallbackPage = () => {
       {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
+          <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
           <span className="type-title text-foreground">
@@ -117,8 +117,8 @@ const StripeCallbackPage = () => {
 
           {state === 'incomplete' && (
             <>
-              <div className="w-12 h-12 rounded-full bg-status-warning-bg flex items-center justify-center mb-6">
-                <AlertCircle className="w-5 h-5 text-status-warning-text" />
+              <div className="size-12 rounded-full bg-status-warning-bg flex items-center justify-center mb-6">
+                <AlertCircle className="size-5 text-status-warning-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
                 Betalingsoppsettet er ikke fullført
@@ -144,8 +144,8 @@ const StripeCallbackPage = () => {
 
           {state === 'error' && (
             <>
-              <div className="w-12 h-12 rounded-full bg-status-error-bg flex items-center justify-center mb-6">
-                <AlertCircle className="w-5 h-5 text-status-error-text" />
+              <div className="size-12 rounded-full bg-status-error-bg flex items-center justify-center mb-6">
+                <AlertCircle className="size-5 text-status-error-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
                 Noe gikk galt
@@ -171,8 +171,8 @@ const StripeCallbackPage = () => {
 
           {state === 'success' && (
             <>
-              <div className="w-12 h-12 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
-                <CheckCircle2 className="w-5 h-5 text-status-confirmed-text" />
+              <div className="size-12 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+                <CheckCircle2 className="size-5 text-status-confirmed-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
                 Betalinger er klare

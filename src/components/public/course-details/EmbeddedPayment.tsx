@@ -85,15 +85,17 @@ function PaymentForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Back button */}
-      <button
+      <Button
+        variant="ghost"
+        size="sm"
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="type-meta flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+        className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
         Tilbake
-      </button>
+      </Button>
 
       {/* Order summary */}
       <div className="space-y-3 rounded-lg bg-surface-muted p-4">
