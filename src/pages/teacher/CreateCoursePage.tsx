@@ -561,7 +561,7 @@ const CreateCoursePage = () => {
                               aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                               aria-invalid={showError('weeks') ? 'true' : undefined}
                               aria-required="true"
-                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-background px-4 text-left text-foreground focus:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
+                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-surface px-4 text-left text-foreground focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
                                 showError('weeks') ? 'border-destructive' : 'border-input'
                               }`}
                             >
@@ -816,7 +816,7 @@ const CreateCoursePage = () => {
                             'type-label rounded-md border px-3.5 py-1.5 smooth-transition',
                             audienceLevel === opt.value
                               ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
+                              : 'bg-surface text-muted-foreground border-border hover:border-input hover:text-foreground'
                           )}
                         >
                           {opt.label}

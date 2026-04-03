@@ -224,7 +224,7 @@ const CoursesPage = () => {
 
           {/* Search */}
           {!showCoursesEmptyState && (
-            <div className="pb-2">
+            <div className="pb-5">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
