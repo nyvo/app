@@ -89,7 +89,7 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
                   <span>Min profil</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-status-error-text cursor-pointer focus:text-status-error-text focus:bg-status-error-bg/10">
+                <DropdownMenuItem onClick={handleSignOut} className="text-primary cursor-pointer focus:text-primary">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logg ut</span>
                 </DropdownMenuItem>

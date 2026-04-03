@@ -179,7 +179,7 @@ const PublicCoursesPage = () => {
                     Mine påmeldinger
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 text-status-error-text">
+                <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 text-primary">
                   <LogOut className="h-4 w-4" />
                   Logg ut
                 </DropdownMenuItem>

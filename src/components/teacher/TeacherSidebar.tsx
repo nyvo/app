@@ -197,7 +197,7 @@ export const TeacherSidebar = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-destructive hover:text-destructive focus:text-destructive [&_svg]:text-destructive"
+                  className="text-primary hover:text-primary focus:text-primary [&_svg]:text-primary"
                 >
                   <LogOut />
                   Logg ut

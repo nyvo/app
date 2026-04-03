@@ -303,10 +303,10 @@ const MessagesPage = () => {
           transition={pageTransition}
           className="flex min-h-0 flex-1 px-6 pb-6 lg:px-8 lg:pb-8"
         >
-          <Card className="flex min-h-0 w-full overflow-hidden rounded-xl">
+          <Card className="flex min-h-0 w-full overflow-hidden rounded-xl bg-surface">
           {/* Conversation List (Left Panel) */}
           <div className={cn(
-            'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-background',
+            'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-surface',
             activeConversation || isComposing ? 'hidden md:flex' : 'flex'
           )}>
             {/* List Header */}
@@ -412,14 +412,14 @@ const MessagesPage = () => {
 
           {/* Chat View (Main Area) */}
           <div className={cn(
-            'relative flex-1 flex-col bg-background',
+            'relative flex-1 flex-col bg-surface',
             activeConversation || isComposing ? 'flex' : 'hidden md:flex'
           )}>
 
             {/* Composing New Message View */}
             {isComposing ? (
-              <div className="flex h-full flex-1 flex-col bg-background">
-                 <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
+              <div className="flex h-full flex-1 flex-col bg-surface">
+                 <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-6 py-4 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
                       <Button
                         variant="ghost"
@@ -462,7 +462,7 @@ const MessagesPage = () => {
 
                   <div className="space-y-3">
                     <label htmlFor="compose-message-body" className="type-label-sm ml-1 text-foreground">Melding</label>
-                    <div className="rounded-lg bg-background p-3 border border-border focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+                    <div className="rounded-lg border border-border bg-surface p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                         <Textarea
                           id="compose-message-body"
                           rows={8}
@@ -522,7 +522,7 @@ const MessagesPage = () => {
             ) : (
               <>
                 {/* Regular Chat Header */}
-            <header className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-border bg-background/90 backdrop-blur-sm z-10">
+            <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-6 py-4 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -566,7 +566,7 @@ const MessagesPage = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem
-                          className="text-destructive focus:text-destructive focus:bg-destructive/5 [&_svg]:text-destructive"
+                          className="text-primary focus:text-primary [&_svg]:text-primary"
                           onClick={handleDeleteConversation}
                         >
                           <Trash2 />
@@ -659,8 +659,8 @@ const MessagesPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="p-6 pt-2 bg-background">
-              <div className="flex flex-col gap-2 rounded-lg bg-background p-2 border border-border focus-within:ring-2 focus-within:ring-ring/50 ios-ease relative">
+            <div className="bg-surface p-6 pt-2">
+              <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface p-2 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                 <Textarea
                   rows={1}
                   placeholder="Skriv en melding"

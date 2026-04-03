@@ -9,7 +9,7 @@
      EASE DESIGN SYSTEM V4.0 — Minimal Semantic Color
      ============================================
 
-     Small token set, warm neutrals, restrained green brand accent.
+     Small token set, charcoal-neutral foundation.
      App code should think in roles, not in near-duplicate palettes.
 
      Foundation roles:
@@ -25,11 +25,11 @@
   */
 
   /* ── Core Palette ── */
-  --color-background: #FDFBF7;
-  --color-foreground: #44403C;
+  --color-background: #F8F8F7;
+  --color-foreground: #34322D;
 
   --color-surface: #FFFFFF;
-  --color-surface-muted: #F5F5F4;
+  --color-surface-muted: #FAFAF9;
   --color-surface-elevated: #FFFFFF;
 
   /* Compatibility aliases for existing primitives */
@@ -39,16 +39,16 @@
   --color-popover-foreground: var(--color-foreground);
 
   /* ── Primary ── */
-  --color-primary: #354F41;
-  --color-primary-foreground: #FAFAF9;
+  --color-primary: #1A1A19;
+  --color-primary-foreground: #FFFFFF;
 
   /* Compatibility neutral aliases */
   --color-secondary: var(--color-surface-muted);
-  --color-secondary-foreground: #292524;
+  --color-secondary-foreground: #34322D;
   --color-muted: var(--color-surface-muted);
-  --color-muted-foreground: #78716C;
+  --color-muted-foreground: #5E5E5B;
   --color-accent: var(--color-surface-muted);
-  --color-accent-foreground: #292524;
+  --color-accent-foreground: #34322D;
 
   /* ── Destructive ── */
   --color-destructive: #EF4444;
@@ -57,18 +57,18 @@
   --radius: 0.625rem;
 
   /* ── Borders & Input ── */
-  --color-border: #E7E5E4;
-  --color-input: #E7E5E4;
-  --color-ring: #D6D3D1;
+  --color-border: rgb(0 0 0 / 0.06);
+  --color-input: rgb(0 0 0 / 0.08);
+  --color-ring: rgb(0 0 0 / 0.18);
 
   /* ── Sidebar ── */
-  --color-sidebar: #F7F5F2;
-  --color-sidebar-foreground: #44403C;
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-foreground: #34322D;
   --color-sidebar-primary: var(--color-primary);
   --color-sidebar-primary-foreground: var(--color-primary-foreground);
-  --color-sidebar-accent: #FFFFFF;
-  --color-sidebar-accent-foreground: #292524;
-  --color-sidebar-border: var(--color-border);
+  --color-sidebar-accent: #F8F8F7;
+  --color-sidebar-accent-foreground: #34322D;
+  --color-sidebar-border: rgb(0 0 0 / 0.08);
   --color-sidebar-ring: var(--color-ring);
 
   /* ── Chart Colors ── */
@@ -79,9 +79,9 @@
   --color-chart-5: #D4891A;
 
   /* ── Feedback Colors ── */
-  --color-success: var(--color-green-500);
+  --color-success: #25BA3B;
   --color-success-foreground: var(--color-zinc-50);
-  --color-warning: var(--color-orange-500);
+  --color-warning: #EFA201;
   --color-warning-foreground: var(--color-zinc-50);
 
   /* ── Status Colors ── */
@@ -122,9 +122,9 @@
   --color-overlay: rgba(0, 0, 0, 0.3);
 
   /* ── Dark Surface (emphasis cards, hero) ── */
-  --color-surface-emphasis: #2E3F36;
-  --color-surface-emphasis-foreground: #FAFAF9;
-  --gradient-dark-card: linear-gradient(to bottom right, #31443A, #243228);
+  --color-surface-emphasis: #1A1A19;
+  --color-surface-emphasis-foreground: #FFFFFF;
+  --gradient-dark-card: linear-gradient(to bottom right, #2C2C2C, #1A1A19);
 
   /* ── Font Families ── */
   --font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
@@ -145,34 +145,34 @@
 
 /* ── Dark Mode ── */
 .dark {
-  --color-background: #1F1D1A;
-  --color-foreground: #F7F5F2;
-  --color-surface: #292725;
-  --color-surface-muted: #32302D;
-  --color-surface-elevated: #302D2A;
+  --color-background: #272728;
+  --color-foreground: #DADADA;
+  --color-surface: #161618;
+  --color-surface-muted: #383739;
+  --color-surface-elevated: #383739;
   --color-card: var(--color-surface);
   --color-card-foreground: var(--color-foreground);
   --color-popover: var(--color-surface);
   --color-popover-foreground: var(--color-foreground);
-  --color-primary: #B7D0C1;
-  --color-primary-foreground: #1F2A24;
+  --color-primary: #FFFFFF;
+  --color-primary-foreground: #1A1A19;
   --color-secondary: var(--color-surface-muted);
   --color-secondary-foreground: var(--color-foreground);
   --color-muted: var(--color-surface-muted);
-  --color-muted-foreground: #B0AAA3;
-  --color-accent: #3A3734;
+  --color-muted-foreground: #ACACAC;
+  --color-accent: #383739;
   --color-accent-foreground: var(--color-foreground);
   --color-destructive: #F87171;
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-input: rgba(255, 255, 255, 0.15);
-  --color-ring: rgba(183, 208, 193, 0.45);
-  --color-sidebar: #262321;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: rgba(255, 255, 255, 0.12);
+  --color-ring: rgba(255, 255, 255, 0.22);
+  --color-sidebar: #161618;
   --color-sidebar-foreground: var(--color-foreground);
   --color-sidebar-primary: var(--color-primary);
   --color-sidebar-primary-foreground: var(--color-primary-foreground);
-  --color-sidebar-accent: #312E2B;
+  --color-sidebar-accent: #272728;
   --color-sidebar-accent-foreground: var(--color-foreground);
-  --color-sidebar-border: rgba(255, 255, 255, 0.1);
+  --color-sidebar-border: rgba(255, 255, 255, 0.10);
   --color-sidebar-ring: var(--color-ring);
 }
 

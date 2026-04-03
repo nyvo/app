@@ -259,7 +259,7 @@ export const SchedulePage = () => {
         />
       ) : isMobile ? (
         <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
-          <Card className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl">
+          <Card className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-surface">
             <ScheduleHeader
               weekNumber={displayedWeekNumber}
               displayedMonday={displayedMonday}
@@ -286,7 +286,7 @@ export const SchedulePage = () => {
       ) : (
         /* Desktop week view */
         <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
-          <Card className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl">
+          <Card className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-surface">
             <ScheduleHeader
               weekNumber={displayedWeekNumber}
               displayedMonday={displayedMonday}
@@ -298,7 +298,7 @@ export const SchedulePage = () => {
               hasCourses={!isFullyEmpty}
             />
 
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-surface">
               {isLoading && (
                 <PageLoader variant="overlay" message="Laster timeplan" />
               )}
@@ -308,12 +308,12 @@ export const SchedulePage = () => {
               ) : !isLoading && (
                 <>
                   {/* Sticky day headers */}
-                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
-                    <div className="border-r border-border bg-background p-3" />
+                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-surface">
+                    <div className="border-r border-border bg-surface p-3" />
                     {weekDays.map((day) => (
                       <div
                         key={day.name}
-                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-background/50' : ''} ${day.isWeekend ? 'bg-background' : ''}`}
+                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface-muted/60' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
                       >
                         <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {day.name}
@@ -363,7 +363,7 @@ export const SchedulePage = () => {
                     )}
 
                     {/* Time column */}
-                    <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
+                    <div className="flex flex-col border-r border-border bg-surface text-xxs font-medium text-muted-foreground">
                       {TIME_SLOTS.map((time) => (
                         <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
                           {time}

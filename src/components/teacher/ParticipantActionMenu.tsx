@@ -138,7 +138,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             <DropdownMenuItem
               onClick={() => setConfirmDialog('cancel')}
               disabled={loading}
-              className="text-destructive focus:text-destructive"
+              className="text-primary focus:text-primary"
             >
               <XCircle className="h-4 w-4 mr-2" />
               Avbestill påmelding

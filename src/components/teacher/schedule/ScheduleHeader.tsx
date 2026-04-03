@@ -27,7 +27,7 @@ export function ScheduleHeader({
   const dateRange = formatWeekRange(displayedMonday, displayedSunday);
 
   return (
-    <header className="z-20 flex shrink-0 flex-col gap-4 border-b border-border bg-background px-4 py-4 sm:px-5">
+    <header className="z-20 flex shrink-0 flex-col gap-4 border-b border-border bg-surface px-4 py-4 sm:px-5">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-1.5">
           <Button
