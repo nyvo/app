@@ -124,6 +124,8 @@ Worth stronger customization:
   - Softer inset blocks, grouped sections, gentle contrast areas
 - `border`
   - Default dividers and borders
+- `border-strong`
+  - Prominent structural edges where surfaces need clear separation — page container edges, card borders, elevated panels against a canvas
 - `ring`
   - Focus/selection ring
 - `primary`
@@ -139,13 +141,21 @@ Worth stronger customization:
 ### Sidebar Tokens
 
 - `sidebar`
+  - Sidebar background — the canvas that the page container sits on top of
 - `sidebar-foreground`
+  - Default sidebar text
 - `sidebar-primary`
+  - Branded action inside sidebar
 - `sidebar-primary-foreground`
+  - Text on sidebar primary
 - `sidebar-accent`
+  - Hover and selected state for sidebar items — visibly darker than the sidebar background
 - `sidebar-accent-foreground`
+  - Text on sidebar accent
 - `sidebar-border`
+  - Sidebar dividers
 - `sidebar-ring`
+  - Sidebar focus ring
 
 ### Compatibility Aliases
 
@@ -163,11 +173,13 @@ Do not treat those aliases as the main design language when writing app UI.
 
 - Page background: `background`
 - Card or modal: `surface`
-- Form control or upload/drop area: `surface`
+- Form control (input, select, textarea, search): `background`
 - Inset group / empty state shell / subtle block: `surface-muted`
 - Main text: `foreground`
 - Secondary text: `muted-foreground`
-- Default divider/input border: `border`
+- Default divider: `border`
+- Interactive control border (inputs, selects, search, filter tabs, outline buttons): `border-input`
+- Card border / page container edge: `border-strong`
 - Focus outline: `ring`
 - CTA / selected state / active accent: `primary`
 
@@ -251,10 +263,11 @@ Examples:
 - Buttons
   - default: `h-11 px-4`, `6px` radius
   - compact: `h-9 px-3`, `6px` radius
-- Inputs and selects
-  - `h-11 px-4`, `6px` radius
+- Inputs, selects, search, and filter tabs
+  - `h-11 px-4`, `8px` radius (`rounded-lg`)
+  - All tool-row controls must share the same height and radius
 - Textareas
-  - `px-4 py-3`, `6px` radius
+  - `px-4 py-3`, `8px` radius (`rounded-lg`)
 - Cards, popovers, dropdown menus
   - `8px` radius
 - Dialogs and larger modal shells
@@ -338,6 +351,14 @@ Examples:
 - Don’t use large scale transforms or shadow jumps.
 - Don’t animate high-frequency actions just because motion is available.
 
+## Shadows
+
+- All global shadow tokens (`shadow-xs` through `shadow-xl`) are currently set to `none`.
+- Default to borderless, shadowless surfaces. Use `border-strong` for structural separation.
+- Subtle custom shadows may be used sparingly for specific structural elements like the page container edge or card elevation when needed.
+
+---
+
 ## Surface Basics
 
 ### Principles
@@ -350,7 +371,7 @@ Examples:
 ### Surface Types
 
 - `surface`
-  - the default white app surface
+  - the default app surface (`surface`)
   - cards, panels, table shells, split panes, settings blocks
 - `surface-muted`
   - softer inset or grouped surface
@@ -680,6 +701,19 @@ Structure:
 - app-level destinations
 - optional grouped sections
 - utility or account actions in the footer
+- collapse toggle on same line as logo in the header
+
+Layout:
+
+- The sidebar uses `variant="inset"`. The `sidebar` token acts as the canvas. The main page container (`background`) sits on top with a rounded top-left corner (`rounded-tl-2xl`), a top margin, and a `border-strong` edge on top and left. This creates a "paper on canvas" effect.
+- When the sidebar is collapsed, the page container transitions to full-bleed: no margin, no rounded corner, no border.
+- The collapse toggle replaces the sidebar rail. When expanded, a toggle button sits next to the logo. When collapsed, hovering over the logo icon swaps it to the toggle icon to expand.
+
+Typography:
+
+- Section group labels: regular weight (`400`)
+- Menu items: `font-medium` (`500`)
+- Selected items do not get bolder text — selection is communicated only through `sidebar-accent` background
 
 Rules:
 

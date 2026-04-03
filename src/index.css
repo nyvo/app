@@ -26,10 +26,10 @@
   */
 
   /* ── Core Palette ── */
-  --color-background: #F8F8F7;
+  --color-background: #FFFFFF;
   --color-foreground: #34322D;
 
-  --color-surface: #FFFFFF;
+  --color-surface: #F8F8F7;
   --color-surface-muted: #FAFAF9;
   --color-surface-subtle: #F2F2F0;
   --color-surface-elevated: #FFFFFF;
@@ -60,15 +60,16 @@
 
   /* ── Borders & Input ── */
   --color-border: rgb(0 0 0 / 0.06);
+  --color-border-strong: rgb(0 0 0 / 0.10);
   --color-input: rgb(0 0 0 / 0.08);
   --color-ring: rgb(0 0 0 / 0.18);
 
   /* ── Sidebar ── */
-  --color-sidebar: #FFFFFF;
+  --color-sidebar: #F8F8F7;
   --color-sidebar-foreground: #34322D;
   --color-sidebar-primary: var(--color-primary);
   --color-sidebar-primary-foreground: var(--color-primary-foreground);
-  --color-sidebar-accent: #F8F8F7;
+  --color-sidebar-accent: #EDEDEC;
   --color-sidebar-accent-foreground: #34322D;
   --color-sidebar-border: rgb(0 0 0 / 0.08);
   --color-sidebar-ring: var(--color-ring);
@@ -167,6 +168,7 @@
   --color-accent-foreground: var(--color-foreground);
   --color-destructive: #F87171;
   --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
   --color-input: rgba(255, 255, 255, 0.12);
   --color-ring: rgba(255, 255, 255, 0.22);
   --color-sidebar: #161618;

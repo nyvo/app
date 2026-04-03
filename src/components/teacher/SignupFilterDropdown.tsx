@@ -32,7 +32,7 @@ export function SignupFilterDropdown({ value, onChange, counts }: SignupFilterDr
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline-soft"
-          size="sm"
+          size="default"
           className={cn(
             'gap-2 whitespace-nowrap',
             value !== 'all'

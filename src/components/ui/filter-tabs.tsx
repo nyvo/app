@@ -38,9 +38,9 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "gap-0.5 rounded-lg bg-surface p-1 border border-border"
+            variant === "contained" ? "h-11 gap-0.5 rounded-lg bg-surface p-1 border border-input"
               : variant === "pill" ? "gap-1.5"
-              : "gap-1 rounded-lg bg-surface-muted p-1",
+              : "h-11 gap-1 rounded-lg bg-surface-muted p-1",
             className
           )}
           role="tablist"
@@ -93,10 +93,10 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
           "relative shrink-0 cursor-pointer font-medium ios-ease transition-[background-color,color,opacity,box-shadow]",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           variant === "default"
-            ? "type-label-sm px-3 py-2 rounded-md"
+            ? "type-label-sm px-3 py-2 rounded-lg"
             : variant === "pill"
               ? "type-label-sm px-3 py-1.5 rounded-lg"
-              : "type-label-sm px-2.5 py-1.5 rounded-md text-center whitespace-nowrap",
+              : "type-label-sm px-2.5 py-1.5 rounded-lg text-center whitespace-nowrap",
           getStyles(),
           className
         )}
@@ -104,7 +104,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "contained" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute inset-0 rounded-md bg-surface"
+            className="absolute inset-0 rounded-lg bg-surface"
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}
