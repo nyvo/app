@@ -468,7 +468,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Button variant="outline" onClick={() => setStep(0)}>
+                    <Button variant="outline-soft" onClick={() => setStep(0)}>
                       <ArrowLeft className="h-3.5 w-3.5" />
                       Tilbake
                     </Button>

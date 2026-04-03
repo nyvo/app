@@ -203,7 +203,7 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
         <div className="flex justify-center gap-3 pt-4 pb-2">
           {remainingCount > 0 && (
             <Button
-              variant="outline"
+              variant="outline-soft"
               size="sm"
               onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
             >
@@ -212,7 +212,7 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
           )}
           {visibleCount > INITIAL_VISIBLE && (
             <Button
-              variant="outline"
+              variant="outline-soft"
               size="sm"
               onClick={() => setVisibleCount(INITIAL_VISIBLE)}
             >

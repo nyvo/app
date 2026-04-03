@@ -2,8 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { addDays, format } from 'date-fns';
-import { nb } from 'date-fns/locale';
+import { addDays } from 'date-fns';
 import {
   Layers,
   CalendarDays,
@@ -33,9 +32,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Stepper } from '@/components/ui/stepper';
@@ -180,13 +178,6 @@ const CreateCoursePage = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges, isSubmitting]);
-
-  // End date derived from startDate + weeks
-  const endDate = useMemo(() => {
-    if (!startDate || courseType !== 'series') return null;
-    const weeksNum = parseInt(weeks) || 1;
-    return addDays(startDate, (weeksNum - 1) * 7);
-  }, [startDate, weeks, courseType]);
 
   // Fetch existing sessions for the selected date(s) to show overlap warnings
   const [existingSessions, setExistingSessions] = useState<ExistingSession[]>([]);
@@ -394,7 +385,7 @@ const CreateCoursePage = () => {
             </div>
           </header>
 
-          <div className="rounded-xl border border-border bg-surface p-4 sm:p-6">
+          <div className="rounded-xl bg-surface-muted/50 p-4 sm:p-5">
             <Stepper
               steps={CREATE_COURSE_STEPS}
               currentStep={currentStep}
@@ -443,7 +434,7 @@ const CreateCoursePage = () => {
 
               {/* ── Section 2: Basic Details ── */}
               <section>
-                <div className="mb-6 border-b border-border pb-2">
+                <div className="mb-6">
                   <h2 className="type-title text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
@@ -558,9 +549,8 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label className="type-label-sm mb-1.5 flex items-center gap-1 text-foreground">
+                        <label className="type-label-sm mb-1.5 block text-foreground">
                           Uker
-                          <InfoTooltip content="Hvor mange uker kurset varer" />
                         </label>
                         <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
                           <PopoverTrigger asChild>
@@ -571,7 +561,7 @@ const CreateCoursePage = () => {
                               aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
                               aria-invalid={showError('weeks') ? 'true' : undefined}
                               aria-required="true"
-                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-transparent px-4 text-left text-foreground focus:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
+                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-background px-4 text-left text-foreground focus:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
                                 showError('weeks') ? 'border-destructive' : 'border-input'
                               }`}
                             >
@@ -613,18 +603,6 @@ const CreateCoursePage = () => {
                     )}
                   </div>
 
-                  {/* Schedule summary */}
-                  {courseType === 'series' && endDate && startDate && parseInt(weeks) >= 2 && (
-                    <Alert variant="info" size="sm" icon={CalendarDays}>
-                      <AlertTitle variant="info">
-                        Hver {format(startDate, 'EEEE', { locale: nb })} i {weeks} uker
-                      </AlertTitle>
-                      <AlertDescription variant="info">
-                        {format(startDate, 'd. MMM', { locale: nb })} – {format(endDate, 'd. MMM yyyy', { locale: nb })}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
                   {/* Time + Duration row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
@@ -664,7 +642,7 @@ const CreateCoursePage = () => {
                           id="create-duration"
                           onBlur={() => handleBlur('duration')}
                           className={cn(
-                            "w-full h-11 bg-transparent",
+                            "w-full h-11",
                             showError('duration') ? "border-destructive" : "border-input"
                           )}
                         >
@@ -743,7 +721,7 @@ const CreateCoursePage = () => {
               >
               {/* ── Step 3: Påmelding ── */}
               <section>
-                <div className="mb-6 border-b border-border pb-2">
+                <div className="mb-6">
                   <h2 className="type-title text-foreground">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -879,7 +857,7 @@ const CreateCoursePage = () => {
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
                       onValueChange={(val) => setArrivalMinutes(val === ARRIVAL_NONE_VALUE ? '' : val)}
                     >
-                      <SelectTrigger className="w-full sm:w-52 h-11 bg-transparent border-input">
+                      <SelectTrigger className="w-full sm:w-52 h-11 border-input">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

@@ -9,6 +9,8 @@ import type { Registration } from '@/types/dashboard';
 
 interface RegistrationsListProps {
   registrations: Registration[];
+  hideHeader?: boolean;
+  hideCard?: boolean;
 }
 
 /** Maximum age in days for a signup to appear in the "recent" feed */
@@ -36,7 +38,7 @@ const isRecentSignup = (createdAt: string): boolean => {
  * Only shows signups from the last 7 days to keep the feed fresh and relevant.
  * Each signup renders as an individual mini-card with border for visual separation.
  */
-export const RegistrationsList = memo(function RegistrationsList({ registrations }: RegistrationsListProps) {
+export const RegistrationsList = memo(function RegistrationsList({ registrations, hideHeader = false, hideCard = false }: RegistrationsListProps) {
   // Filter to recent signups (last 7 days), then limit to 3
   const displayedRegistrations = useMemo(() => {
     return registrations
@@ -44,69 +46,66 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
       .slice(0, 3);
   }, [registrations]);
 
+  const content = displayedRegistrations.length === 0 ? (
+    <div className="flex flex-col items-center justify-center p-8 text-center">
+      <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-background">
+        <UserPlus className="size-4 text-muted-foreground" />
+      </div>
+      <p className="type-title text-foreground">Ingen nye påmeldinger</p>
+      <p className="type-body-sm mt-1 text-muted-foreground">Nye påmeldinger vises her.</p>
+    </div>
+  ) : (
+    <div className={cn("divide-y divide-border", hideCard ? "" : "px-3 py-3")}>
+      {displayedRegistrations.map((registration) => {
+        const dayName = extractDayName(registration.courseTime);
+        const startTime = extractTimeFromSchedule(registration.courseTime)?.time ?? '';
+
+        return (
+          <Link
+            key={registration.id}
+            to="/teacher/signups"
+            className={cn(
+              "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50",
+              registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
+            )}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="type-label truncate text-foreground">
+                {registration.participant.name}
+              </p>
+              <p className="type-meta mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+                <span className="truncate">{registration.course}</span>
+                <span className="text-muted-foreground mx-1.5">·</span>
+                <span className="truncate">
+                  {dayName}{startTime && ` kl. ${startTime}`}
+                </span>
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="type-meta text-muted-foreground">
+                {registration.registeredAt}
+              </span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="flex flex-col">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="type-title text-foreground">Siste påmeldinger</h2>
-        <Link
-          to="/teacher/signups"
-          className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
-        >
-          Se alle
-        </Link>
-      </div>
-
-      <Card className="overflow-hidden">
-      {displayedRegistrations.length === 0 ? (
-        /* Empty State */
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-background">
-            <UserPlus className="size-4 text-muted-foreground" />
-          </div>
-          <p className="type-title text-foreground">Ingen nye påmeldinger</p>
-          <p className="type-body-sm mt-1 text-muted-foreground">Nye påmeldinger vises her.</p>
-        </div>
-      ) : (
-        /* Activity Feed - Simple list rows */
-        <div className="divide-y divide-border px-3 py-3">
-          {displayedRegistrations.map((registration) => {
-            const dayName = extractDayName(registration.courseTime);
-            const startTime = extractTimeFromSchedule(registration.courseTime)?.time ?? '';
-
-            return (
-              <Link
-                key={registration.id}
-                to="/teacher/signups"
-                className={cn(
-                  "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50",
-                  // Left accent for exception rows (payment failed, offer expiring, pending payment)
-                  registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
-                )}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="type-label truncate text-foreground">
-                    {registration.participant.name}
-                  </p>
-                  <p className="type-meta mt-0.5 flex items-center gap-1.5 text-muted-foreground">
-                    <span className="truncate">{registration.course}</span>
-                    <span className="text-muted-foreground mx-1.5">·</span>
-                    <span className="truncate">
-                      {dayName}{startTime && ` kl. ${startTime}`}
-                    </span>
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="type-meta text-muted-foreground">
-                    {registration.registeredAt}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+      {!hideHeader && (
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="type-title text-foreground">Siste påmeldinger</h2>
+          <Link
+            to="/teacher/signups"
+            className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
+          >
+            Se alle
+          </Link>
         </div>
       )}
-      </Card>
+      {hideCard ? content : <Card className="overflow-hidden">{content}</Card>}
     </div>
   );
 });

@@ -254,7 +254,7 @@ export function SmartSignupsView({
         <div className="flex justify-center gap-3 pt-6 pb-2">
           {isTruncated && (
             <Button
-              variant="outline"
+              variant="outline-soft"
               size="sm"
               onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
             >
@@ -263,7 +263,7 @@ export function SmartSignupsView({
           )}
           {visibleCount > INITIAL_VISIBLE && (
             <Button
-              variant="outline"
+              variant="outline-soft"
               size="sm"
               onClick={() => setVisibleCount(INITIAL_VISIBLE)}
             >

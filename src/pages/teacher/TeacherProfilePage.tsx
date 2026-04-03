@@ -517,7 +517,7 @@ const TeacherProfilePage = () => {
                     </div>
                     <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
                           {/* Betalinger */}
-                          <div className="flex items-center justify-between p-4 transition-colors hover:bg-surface-muted">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div>
                                   <span className="type-label block text-foreground">Betalinger</span>
                                   <span className="type-meta block text-muted-foreground">
@@ -528,7 +528,7 @@ const TeacherProfilePage = () => {
                                   {!isStripeConnected && hasStripeAccount && (
                                       <Button
                                           variant="ghost"
-                                          size="xs"
+                                          size="compact"
                                           onClick={handleCheckStripeStatus}
                                           loading={checkingStripeStatus}
                                           loadingText="Sjekker"
@@ -537,8 +537,8 @@ const TeacherProfilePage = () => {
                                       </Button>
                                   )}
                                   <Button
-                                      variant="outline"
-                                      size="xs"
+                                      variant="outline-soft"
+                                      size="compact"
                                       onClick={handleStripeAction}
                                       loading={stripeLoading}
                                       loadingText={isStripeConnected ? 'Åpner' : 'Sender deg til Stripe …'}
@@ -549,15 +549,15 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Endre passord */}
-                          <div className="p-4">
+                          <div className="px-6 py-5">
                               <div className="flex items-center justify-between">
                                   <div>
                                       <span className="type-label block text-foreground">Endre passord</span>
                                       <span className="type-meta block text-muted-foreground">Oppdater passordet ditt.</span>
                                   </div>
                                   <Button
-                                      variant={passwordExpanded ? 'ghost' : 'outline'}
-                                      size="xs"
+                                      variant={passwordExpanded ? 'ghost' : 'outline-soft'}
+                                      size="compact"
                                       onClick={() => {
                                           setPasswordExpanded(!passwordExpanded);
                                           setPasswordErrors({});
@@ -575,7 +575,7 @@ const TeacherProfilePage = () => {
 
                               {/* Expanded password form */}
                               {passwordExpanded && (
-                                  <div className="mt-4 pt-4 border-t border-border space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                  <div className="mt-5 space-y-4 rounded-lg bg-surface-subtle p-5 animate-in fade-in slide-in-from-top-1 duration-200">
                                       <div>
                                           <label htmlFor="current-password" className="type-label-sm mb-1.5 block text-foreground">Nåværende passord</label>
                                           <div className="relative">
@@ -670,7 +670,7 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Logg ut alle enheter */}
-                          <div className="flex items-center justify-between p-4 transition-colors hover:bg-surface-muted">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div>
                                   <span className="type-label block text-foreground">Logg ut alle enheter</span>
                                   <span className="type-meta block text-muted-foreground">Logger deg ut overalt.</span>
@@ -678,8 +678,8 @@ const TeacherProfilePage = () => {
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                       <Button
-                                          variant="outline"
-                                          size="xs"
+                                          variant="outline-soft"
+                                          size="compact"
                                           className="ml-4 shrink-0"
                                       >
                                           Logg ut alle
@@ -714,7 +714,7 @@ const TeacherProfilePage = () => {
                       <p className="type-body mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
                     </div>
                     <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
-                          <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div className="flex flex-col">
                                   <span className="type-label text-foreground">Nye påmeldinger</span>
                                   <span className="type-meta text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
@@ -727,7 +727,7 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div className="flex flex-col">
                                   <span className="type-label text-foreground">Avbestillinger</span>
                                   <span className="type-meta text-muted-foreground">Få e-post når noen avbestiller.</span>
@@ -740,7 +740,7 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div className="flex flex-col">
                                   <span className="type-label text-foreground">Nye meldinger</span>
                                   <span className="type-meta text-muted-foreground">Få e-post når du mottar en ny melding.</span>
@@ -753,7 +753,7 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center justify-between px-6 py-5">
                               <div className="flex flex-col">
                                   <span className="type-label text-foreground">Nyheter fra Ease</span>
                                   <span className="type-meta text-muted-foreground">Tips, oppdateringer og nyheter på e-post.</span>
@@ -775,7 +775,7 @@ const TeacherProfilePage = () => {
                       <p className="type-body mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
                     </div>
                     <Card className="p-6 md:col-span-2">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between rounded-lg bg-surface-subtle px-5 py-5">
                               <div>
                                   <span className="type-label block text-foreground">Slett kontoen din</span>
                                   <span className="type-meta block text-muted-foreground">All data slettes permanent.</span>
@@ -783,8 +783,8 @@ const TeacherProfilePage = () => {
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>
                                       <Button
-                                          variant="destructive"
-                                          size="xs"
+                                          variant="destructive-outline"
+                                          size="compact"
                                           className="ml-4 shrink-0"
                                       >
                                           Slett konto

@@ -48,21 +48,26 @@ const StudentProfilePage = () => {
   };
 
   return (
-    <>
-      <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div className="space-y-1">
+        <h1 className="type-heading-1 text-foreground">
+          Min profil
+        </h1>
+        <p className="type-body text-muted-foreground">
+          Oppdater kontaktinformasjonen din og se kontodetaljer.
+        </p>
+      </div>
+
+      <section className="space-y-4">
         <div className="space-y-1">
-          <h1 className="type-heading-1 text-foreground">
-            Min profil
-          </h1>
-          <p className="type-body text-muted-foreground">
-            Kontoinformasjon
+          <h2 className="type-title text-foreground">Kontoinformasjon</h2>
+          <p className="type-body-sm text-muted-foreground">
+            Endringer her brukes når du melder deg på kurs og kommuniserer med instruktører.
           </p>
         </div>
 
         <Card className="overflow-hidden border-border bg-surface">
           <div className="space-y-8 p-6 sm:p-8">
-
-            {/* Name */}
             <div className="flex items-start gap-4">
               <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <User className="size-4" />
@@ -80,7 +85,6 @@ const StudentProfilePage = () => {
               </div>
             </div>
 
-            {/* Email (read-only) */}
             <div className="flex items-start gap-4">
               <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Mail className="size-4" />
@@ -95,7 +99,6 @@ const StudentProfilePage = () => {
               </div>
             </div>
 
-            {/* Phone */}
             <div className="flex items-start gap-4">
               <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Phone className="size-4" />
@@ -114,7 +117,6 @@ const StudentProfilePage = () => {
               </div>
             </div>
 
-            {/* Member since (read-only) */}
             <div className="flex items-start gap-4">
               <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
                 <Calendar className="size-4" />
@@ -130,7 +132,6 @@ const StudentProfilePage = () => {
                 </p>
               </div>
             </div>
-
           </div>
 
           {isDirty && (
@@ -145,8 +146,8 @@ const StudentProfilePage = () => {
             </div>
           )}
         </Card>
-      </div>
-    </>
+      </section>
+    </div>
   );
 };
 

@@ -5,22 +5,21 @@ import { Info, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground flex items-start gap-3 [&_svg]:shrink-0 [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4",
+  "relative flex w-full items-start gap-3 rounded-lg bg-surface-subtle p-4 text-foreground [&_svg]:mt-0.5 [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
-        destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-        info: "bg-status-info-bg border-status-info-border [&_svg]:text-status-info-text",
-        success: "bg-status-confirmed-bg border-status-confirmed-border [&_svg]:text-status-confirmed-text",
-        warning: "bg-status-warning-bg border-status-warning-border [&_svg]:text-status-warning-text",
-        error: "bg-status-error-bg border-status-error-border [&_svg]:text-status-error-text",
-        neutral: "bg-muted border-transparent [&_svg]:text-muted-foreground",
+        default: "[&_svg]:text-foreground",
+        destructive: "[&_svg]:text-destructive",
+        info: "[&_svg]:text-status-info-text",
+        success: "[&_svg]:text-status-confirmed-text",
+        warning: "[&_svg]:text-status-warning-text",
+        error: "[&_svg]:text-status-error-text",
+        neutral: "[&_svg]:text-muted-foreground",
       },
       size: {
-        default: "p-4 rounded-lg",
-        sm: "p-3 rounded-lg",
+        default: "p-4",
+        sm: "p-3",
       },
     },
     defaultVariants: {
@@ -31,21 +30,23 @@ const alertVariants = cva(
 )
 
 const variantTextColor: Record<string, string> = {
+  default: "text-foreground",
   info: "text-status-info-text",
   success: "text-status-confirmed-text",
   warning: "text-status-warning-text",
   error: "text-status-error-text",
   destructive: "text-destructive",
-  neutral: "text-muted-foreground",
+  neutral: "text-foreground",
 }
 
 const variantTextColorMuted: Record<string, string> = {
-  info: "text-status-info-text/80",
-  success: "text-status-confirmed-text/80",
-  warning: "text-status-warning-text/80",
-  error: "text-status-error-text/80",
-  destructive: "text-destructive/80",
-  neutral: "text-muted-foreground/80",
+  default: "text-muted-foreground",
+  info: "text-muted-foreground",
+  success: "text-muted-foreground",
+  warning: "text-muted-foreground",
+  error: "text-muted-foreground",
+  destructive: "text-muted-foreground",
+  neutral: "text-muted-foreground",
 }
 
 const defaultIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -94,7 +95,7 @@ function AlertTitle({
   return (
     <h5
       className={cn(
-        "mb-1 font-medium leading-none tracking-tight",
+        "type-label mb-1 text-foreground",
         variant ? variantTextColor[variant] : "",
         className
       )}
@@ -111,7 +112,7 @@ function AlertDescription({
   return (
     <div
       className={cn(
-        "text-sm [&_p]:leading-relaxed",
+        "type-body-sm text-muted-foreground [&_p]:leading-relaxed",
         variant ? variantTextColorMuted[variant] : "",
         className
       )}

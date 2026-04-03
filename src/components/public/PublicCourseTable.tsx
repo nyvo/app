@@ -204,7 +204,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                         {formatPrice(course.price)}
                       </span>
                       <Button
-                        variant="outline"
+                        variant="outline-soft"
                         size="compact"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -287,7 +287,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                     <span className="type-meta text-foreground">Fullt</span>
                   ) : (
                     <Button
-                      variant="outline"
+                      variant="outline-soft"
                       size="compact"
                       onClick={(e) => {
                         e.stopPropagation();

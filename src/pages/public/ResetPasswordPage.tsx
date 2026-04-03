@@ -99,7 +99,7 @@ const ResetPasswordPage = () => {
   if (isValidSession === false) {
     return (
       <AuthLayout context="teacher" title="" customContent>
-        <div className="size-16 rounded-full bg-status-error-bg flex items-center justify-center mb-4">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
           <AlertCircle className="size-8 text-status-error-text" />
         </div>
 
@@ -116,7 +116,7 @@ const ResetPasswordPage = () => {
           <Button asChild className="w-full h-11">
             <Link to={ROUTES.forgotPassword}>Be om ny lenke</Link>
           </Button>
-          <Button asChild variant="outline" className="w-full h-11">
+          <Button asChild variant="outline-soft" className="w-full h-11">
             <Link to={ROUTES.login}>Til innlogging</Link>
           </Button>
         </div>
@@ -128,7 +128,7 @@ const ResetPasswordPage = () => {
   if (resetSuccess) {
     return (
       <AuthLayout context="teacher" title="" customContent>
-        <div className="size-16 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
           <CheckCircle2 className="size-8 text-status-confirmed-text" />
         </div>
 

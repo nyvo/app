@@ -4,10 +4,11 @@ import { fetchUpcomingSignups, fetchPastSignups, type StudentSignupWithCourse } 
 import { BookingCard } from '@/components/student/BookingCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
-import { CalendarX, Clock, Search } from 'lucide-react';
+import { AlertCircle, CalendarX, Clock, Search } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
+import { Card } from '@/components/ui/card';
 
 const StudentDashboardPage = () => {
   const { user } = useAuth();
@@ -76,34 +77,43 @@ const StudentDashboardPage = () => {
 
   if (isLoading) {
     return (
-      <>
-        <div className="flex flex-col items-center justify-center min-h-[60vh]" role="status" aria-live="polite">
-          <Spinner size="xl" className="mb-4" aria-hidden="true" />
-          <p className="text-muted-foreground">Henter kurs</p>
+      <div className="space-y-8">
+        <div className="space-y-1">
+          <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
+          <p className="type-body text-muted-foreground">Her finner du kursene dine.</p>
         </div>
-      </>
+        <Card className="border-border bg-surface">
+          <div className="flex min-h-[320px] flex-col items-center justify-center" role="status" aria-live="polite">
+            <Spinner size="xl" className="mb-4" aria-hidden="true" />
+            <p className="type-body text-muted-foreground">Henter kurs</p>
+          </div>
+        </Card>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <div className="rounded-full bg-status-error-bg p-3 mb-4">
-            <CalendarX className="h-5 w-5 text-status-error-text" />
-          </div>
-          <h2 className="type-title mb-2 text-foreground">Noe gikk galt</h2>
-          <p className="type-body mb-6 max-w-md text-muted-foreground">{error}</p>
-          <Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>
+      <div className="space-y-8">
+        <div className="space-y-1">
+          <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
+          <p className="type-body text-muted-foreground">Her finner du kursene dine.</p>
         </div>
-      </>
+        <Card className="border-border bg-surface">
+          <EmptyState
+            icon={AlertCircle}
+            title="Noe gikk galt"
+            description={error}
+            action={<Button onClick={loadData} variant="outline-soft">Prøv på nytt</Button>}
+          />
+        </Card>
+      </div>
     );
   }
 
   return (
-    <>
-      {/* Welcome / Header */}
-      <div className="mb-8 space-y-1">
+    <div className="space-y-8">
+      <div className="space-y-1">
         <h1 className="type-heading-1 text-foreground">
           Mine kurs
         </h1>
@@ -113,16 +123,16 @@ const StudentDashboardPage = () => {
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="mb-8 h-auto w-full justify-start gap-8 rounded-none border-b border-border bg-transparent p-0">
+        <TabsList className="mb-6">
           <TabsTrigger 
             value="upcoming"
-            className="type-label rounded-none px-0 pb-3 text-muted-foreground transition-[border-color,color,opacity] duration-150 ease-out data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
+            className="type-label"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="type-label rounded-none px-0 pb-3 text-muted-foreground transition-[border-color,color,opacity] duration-150 ease-out data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
+            className="type-label"
           >
             Tidligere
           </TabsTrigger>
@@ -188,8 +198,7 @@ const StudentDashboardPage = () => {
           )}
         </TabsContent>
       </Tabs>
-
-    </>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { DateBadge } from '@/components/ui/date-badge';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface CourseWeek {
   id: string;
@@ -47,13 +48,15 @@ function isSessionPast(dateStr: string): boolean {
 
 export const SessionList: React.FC<SessionListProps> = ({
   sessions,
-  sessionLabel,
-  sessionLabelPlural,
+  sessionLabel: _sessionLabel,
+  sessionLabelPlural: _sessionLabelPlural,
   hasRealSessions,
   sessionEditHandlers,
 }) => {
   const { sessionEdits, savingSessionId, onSessionEditChange, onSessionEditCancel, onSaveSession } = sessionEditHandlers;
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const visibleSessions = showAll || sessions.length <= 6 ? sessions : sessions.slice(0, 6);
 
   const handleEditClick = (sessionId: string) => {
     setEditingSessionId(editingSessionId === sessionId ? null : sessionId);
@@ -71,70 +74,100 @@ export const SessionList: React.FC<SessionListProps> = ({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="type-title text-foreground">Kursplan</h2>
-        <span className="type-meta text-muted-foreground">
-          {sessions.length} {sessions.length === 1 ? sessionLabel : sessionLabelPlural}
-        </span>
+      <div className="mb-3 flex items-end justify-between gap-4">
+        <div className="space-y-0.5">
+          <h2 className="type-title text-foreground">Kursplan</h2>
+          <p className="type-body-sm text-muted-foreground">
+            Dette kurset varer i {sessions.length} {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
+          </p>
+        </div>
+        {sessions.length > 6 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAll((current) => !current)}
+            className="type-meta h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+          >
+            {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+          </Button>
+        )}
       </div>
 
-      <div className="rounded-lg bg-background border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <div className="divide-y divide-border">
-          {sessions.map((session) => {
+          {visibleSessions.map((session) => {
             const isPast = isSessionPast(session.originalDate);
             const isEditing = editingSessionId === session.id && !isPast;
 
             return (
               <div key={session.id}>
                 {/* Session row */}
-                <div className="group flex items-center justify-between px-5 py-4 smooth-transition hover:bg-surface-muted">
-                  <div className="flex items-center gap-4">
-                    <DateBadge dateStr={session.originalDate?.split('T')[0]} />
-                    <div>
-                      <p className="type-label text-foreground">{session.title}</p>
+                <div
+                  className={`group flex items-center justify-between gap-4 px-5 py-4 smooth-transition ${
+                    isPast ? 'bg-surface-muted/30 text-muted-foreground' : 'hover:bg-surface-muted/60'
+                  }`}
+                >
+                  <div className={`flex min-w-0 items-center gap-4 ${isPast ? 'opacity-60' : ''}`}>
+                    <DateBadge
+                      dateStr={session.originalDate?.split('T')[0]}
+                      className={isPast ? 'border-border/70 bg-surface-muted text-muted-foreground' : undefined}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={`type-label ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
+                        {!isPast && session.isNext ? (
+                          <Badge variant="secondary" className="border border-border bg-surface-muted text-foreground">
+                            Neste
+                          </Badge>
+                        ) : null}
+                      </div>
                       <p className="type-meta mt-0.5 text-muted-foreground">{session.date} {session.time}</p>
                     </div>
                   </div>
                   {!isPast && (
                     <Button
                       variant="ghost"
-                      size="icon-sm"
+                      size="sm"
                       onClick={() => handleEditClick(session.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                      className="type-meta h-auto px-2 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-transparent hover:text-foreground"
                       aria-label={`Rediger ${session.title}`}
                     >
-                      <Pencil className="h-4 w-4" />
+                      Rediger
                     </Button>
                   )}
                 </div>
 
                 {/* Inline edit panel */}
                 {isEditing && (
-                  <div className="border-t border-border bg-surface-muted/30 px-5 pb-4 pt-0">
-                    <div className="pt-4 space-y-3">
-                      <div>
-                        <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
-                        <DatePicker
-                          value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
-                          onChange={(date) => {
-                            if (date) onSessionEditChange(session.id, 'date', date);
-                          }}
-                          placeholder={session.date}
-                        />
-                      </div>
-                      <div>
-                        <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
-                        <TimePicker
-                          value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
-                          onChange={(time) => onSessionEditChange(session.id, 'time', time)}
-                        />
+                  <div className="border-t border-border bg-surface-muted/40 px-5 py-4">
+                    <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
+                          <DatePicker
+                            value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
+                            onChange={(date) => {
+                              if (date) onSessionEditChange(session.id, 'date', date);
+                            }}
+                            placeholder={session.date}
+                          />
+                        </div>
+                        <div>
+                          <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
+                          <TimePicker
+                            value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
+                            onChange={(time) => onSessionEditChange(session.id, 'time', time)}
+                          />
+                        </div>
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
                         <p className="type-meta text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
-                      <div className="flex gap-2 pt-1">
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
                           size="compact"

@@ -16,6 +16,7 @@
      - background: page canvas
      - surface: default card / panel / popover
      - surface-muted: softer inset sections
+     - surface-subtle: stronger neutral inset surfaces for alerts and passive action blocks
      - foreground: primary readable text
      - muted-foreground: secondary/supporting text
      - border: default borders and dividers
@@ -30,6 +31,7 @@
 
   --color-surface: #FFFFFF;
   --color-surface-muted: #FAFAF9;
+  --color-surface-subtle: #F2F2F0;
   --color-surface-elevated: #FFFFFF;
 
   /* Compatibility aliases for existing primitives */
@@ -149,6 +151,7 @@
   --color-foreground: #DADADA;
   --color-surface: #161618;
   --color-surface-muted: #383739;
+  --color-surface-subtle: #313033;
   --color-surface-elevated: #383739;
   --color-card: var(--color-surface);
   --color-card-foreground: var(--color-foreground);

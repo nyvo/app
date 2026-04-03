@@ -1,7 +1,8 @@
-import { Plus, Minus, Info, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Info, X } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -16,8 +17,8 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { AudienceLevel, EquipmentInfo } from '@/types/practicalInfo';
 import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
 
@@ -101,13 +102,43 @@ export const CourseSettingsTab = ({
   onSave,
   onCancel,
 }: CourseSettingsTabProps) => {
+  const minParticipants = Math.max(currentEnrolled || 1, 1);
+  const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
+
+  useEffect(() => {
+    setParticipantsInput(String(maxParticipants));
+  }, [maxParticipants]);
+
+  const commitParticipantsInput = () => {
+    const trimmed = participantsInput.trim();
+
+    if (trimmed === '') {
+      setParticipantsInput(String(maxParticipants));
+      return;
+    }
+
+    const parsed = Number(trimmed);
+    if (Number.isNaN(parsed)) {
+      setParticipantsInput(String(maxParticipants));
+      return;
+    }
+
+    const normalized = Math.max(minParticipants, Math.floor(parsed));
+    if (normalized !== maxParticipants) {
+      onMaxParticipantsChange(normalized);
+    }
+    setParticipantsInput(String(normalized));
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Tile 1: Main Info (Title, Desc) - Span 2 */}
-      <div className="lg:col-span-2 flex flex-col">
-        <h3 className="type-title mb-3 text-foreground">Generelt</h3>
-        <Card className="p-6 h-full flex flex-col flex-1">
-          <div className="space-y-4 flex-1">
+    <div className="space-y-8">
+      <section className="space-y-3">
+        <div>
+          <h3 className="type-title text-foreground">Generelt</h3>
+          <p className="type-body-sm text-muted-foreground">Oppdater navn, beskrivelse og forsidebilde for kurset.</p>
+        </div>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <div className="space-y-4">
             <div>
               <label htmlFor="settings-title" className="type-label-sm mb-1.5 block text-foreground">Navn på kurs</label>
               <Input
@@ -128,38 +159,42 @@ export const CourseSettingsTab = ({
               />
             </div>
           </div>
-        </Card>
-      </div>
 
-      {/* Tile 2: Media (Image) - Span 1, Row Span 2 */}
-      <Card className="lg:col-span-1 lg:row-span-2 p-6 flex flex-col h-full">
-        <h3 className="type-title mb-6 text-foreground">Kursbilde</h3>
-        <div className="flex-1 min-h-[200px] flex flex-col">
-          <div className="flex-1 relative rounded-lg overflow-hidden bg-transparent">
-            <ImageUpload
-              value={settingsImageUrl}
-              onChange={(file) => {
-                onImageFileChange(file);
-                if (!file && settingsImageUrl) {
-                  onImageRemove();
-                }
-              }}
-              onRemove={() => {
-                if (settingsImageUrl) {
-                  onImageRemove();
-                }
-              }}
-              disabled={isSaving}
-              className="h-full w-full absolute inset-0"
-            />
+          <div className="space-y-2">
+            <div>
+              <h4 className="type-label text-foreground">Kursbilde</h4>
+              <p className="type-body-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
+            </div>
+            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-surface">
+              <ImageUpload
+                value={settingsImageUrl}
+                onChange={(file) => {
+                  onImageFileChange(file);
+                  if (!file && settingsImageUrl) {
+                    onImageRemove();
+                  }
+                }}
+                onRemove={() => {
+                  if (settingsImageUrl) {
+                    onImageRemove();
+                  }
+                }}
+                disabled={isSaving}
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* Tile 3: Schedule - Span 1 */}
-      <Card className="flex flex-col p-6">
-        <h3 className="type-title mb-6 text-foreground">Tidspunkt</h3>
-        <div className="flex-1 space-y-4">
+      <Separator />
+
+      <section className="space-y-3">
+        <div>
+          <h3 className="type-title text-foreground">Tid og kapasitet</h3>
+          <p className="type-body-sm text-muted-foreground">Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
             <DatePicker
@@ -181,7 +216,7 @@ export const CourseSettingsTab = ({
               value={settingsDuration?.toString() || ""}
               onValueChange={(val) => onDurationChange(parseInt(val))}
             >
-              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 bg-transparent border-input">
+              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 border-input">
                 <SelectValue placeholder="Velg" />
               </SelectTrigger>
               <SelectContent>
@@ -197,55 +232,54 @@ export const CourseSettingsTab = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </Card>
-
-      {/* Tile 4: Capacity - Span 1 */}
-      <Card className="flex flex-col p-6">
-        <h3 className="type-title mb-6 text-foreground">Kapasitet</h3>
-        <div className="flex-1 flex flex-col items-center justify-center gap-2">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline-soft"
-              size="icon"
-              onClick={() => onMaxParticipantsChange(Math.max(currentEnrolled || 1, maxParticipants - 1))}
-              disabled={maxParticipants <= (currentEnrolled || 1)}
-              aria-label="Reduser antall plasser"
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <div className="text-center">
-              <span className="type-display-2 block text-foreground">{maxParticipants}</span>
-              <span className="type-meta text-muted-foreground">Plasser</span>
-            </div>
-            <Button
-              variant="outline-soft"
-              size="icon"
-              onClick={() => onMaxParticipantsChange(maxParticipants + 1)}
-              aria-label="Øk antall plasser"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+          <div>
+            <label className="type-label-sm mb-1.5 block text-foreground">Kapasitet</label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={participantsInput}
+              onChange={(e) => {
+                const nextValue = e.target.value.replace(/[^\d]/g, '');
+                setParticipantsInput(nextValue);
+              }}
+              onBlur={commitParticipantsInput}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  commitParticipantsInput();
+                }
+              }}
+              className="text-left"
+              aria-label="Antall plasser"
+            />
+            {currentEnrolled > 0 && (
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <p className="type-meta text-muted-foreground">
+                  {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''} akkurat nå
+                </p>
+                <InfoTooltip content={`Kan ikke settes lavere enn ${currentEnrolled} fordi det allerede er ${currentEnrolled} påmeldt${currentEnrolled > 1 ? 'e' : ''}.`} />
+              </div>
+            )}
           </div>
-          {/* Capacity warning - shows when at minimum */}
-          {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
-            <Alert variant="warning" size="sm" icon={false} className="mt-2 justify-center">
-              <p className="type-meta text-center text-status-warning-text">
-                Kan ikke reduseres – {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}
-              </p>
-            </Alert>
-          )}
         </div>
-      </Card>
+        {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
+          <Alert variant="warning" size="sm" icon={false}>
+            <p className="type-meta text-status-warning-text">
+              Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
+            </p>
+          </Alert>
+        )}
+      </section>
 
-      {/* Tile 5: Practical Info - Span 3 */}
-      <Card className="flex flex-col p-6 lg:col-span-3">
-        <div className="mb-6">
+      <Separator />
+
+      <section className="space-y-3">
+        <div>
           <h3 className="type-title text-foreground">Praktisk info</h3>
-          <p className="type-meta mt-1 text-muted-foreground">Hjelp elevene dine med å komme forberedt</p>
+          <p className="type-body-sm text-muted-foreground">Hjelp deltakerne å møte forberedt med tydelig informasjon.</p>
         </div>
-        <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2">
-          {/* Audience Level - Segmented pills (single-select) */}
+        <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <label className="type-label-sm mb-2.5 block text-foreground">Nivå</label>
             <div className="flex flex-wrap gap-2">
@@ -270,7 +304,6 @@ export const CourseSettingsTab = ({
             </p>
           </div>
 
-          {/* Equipment - Radio buttons (single factual statement) */}
           <div>
             <label className="type-label-sm mb-2.5 block text-foreground">Utstyr</label>
             <RadioGroup
@@ -278,7 +311,7 @@ export const CourseSettingsTab = ({
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
             >
               {EQUIPMENT_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-0.5">
+                <label key={opt.value} className="flex cursor-pointer items-center gap-2.5 py-0.5">
                   <RadioGroupItem value={opt.value} />
                   <span className="type-body text-foreground">{opt.label}</span>
                 </label>
@@ -286,14 +319,13 @@ export const CourseSettingsTab = ({
             </RadioGroup>
           </div>
 
-          {/* Arrival - Dropdown select */}
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
             >
-              <SelectTrigger className="w-full sm:w-48 h-11 bg-transparent border-input">
+              <SelectTrigger className="h-11 w-full sm:w-48 border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -306,7 +338,6 @@ export const CourseSettingsTab = ({
             </Select>
           </div>
 
-          {/* Custom Bullets */}
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Egne punkter</label>
             <div className="space-y-2">
@@ -351,35 +382,36 @@ export const CourseSettingsTab = ({
             </div>
           </div>
         </div>
-      </Card>
+      </section>
 
-      {/* Danger Zone separator */}
-      <Separator className="lg:col-span-3 mt-2" />
+      <Separator className="mt-2" />
 
-      {/* Tile 6: Danger Zone - Span 3 */}
-      <Alert variant="error" icon={false} className="lg:col-span-3 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <AlertTitle variant="error" className="type-title">Avlys kurs</AlertTitle>
-            <AlertDescription variant="error">
+      <section className="space-y-3">
+        <div>
+          <h3 className="type-title text-foreground">Avlys kurs</h3>
+          <p className="type-body-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
+        </div>
+        <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-subtle px-4 py-4 sm:flex-row sm:items-center">
+          <div className="space-y-1">
+            <p className="type-label text-foreground">Dette kan ikke angres.</p>
+            <p className="type-body-sm text-muted-foreground">
               {refundPreview.count > 0
                 ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
                 : 'Kurset vil bli avlyst.'}
-            </AlertDescription>
+            </p>
           </div>
           <Button
-            variant="outline-soft"
+            variant="destructive-outline"
             size="compact"
-            className="border-status-error-border text-status-error-text hover:bg-status-error-bg whitespace-nowrap shrink-0"
+            className="shrink-0 whitespace-nowrap"
             onClick={onCancelCourse}
           >
             Avlys kurs
           </Button>
         </div>
-      </Alert>
+      </section>
 
-      {/* Actions Bar */}
-      <div className="lg:col-span-3 flex justify-end gap-3 pt-2">
+      <div className="flex justify-end gap-3 pt-2">
         {saveError && (
           <Alert variant="error" size="sm" icon={Info} className="mr-auto">
             <span className="type-body text-status-error-text">{saveError}</span>
@@ -396,7 +428,10 @@ export const CourseSettingsTab = ({
         </Button>
         <Button
           size="compact"
-          onClick={onSave}
+          onClick={() => {
+            commitParticipantsInput();
+            onSave();
+          }}
           disabled={isSaving || !isDirty}
         >
           {isSaving ? (

@@ -7,10 +7,11 @@ import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { cn, formatKroner } from '@/lib/utils';
 import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
 import { teacherCancelSignup, sendPaymentLink, markPaymentResolved } from '@/services/signups';
@@ -496,11 +497,13 @@ const CourseDetailPage = () => {
                 <Skeleton className="h-4 w-32" />
               </div>
               <div className="mb-8">
-                <FilterTabs value="overview" onValueChange={() => {}}>
-                  <FilterTab value="overview">Oversikt</FilterTab>
-                  <FilterTab value="participants">Deltakere</FilterTab>
-                  <FilterTab value="settings">Innstillinger</FilterTab>
-                </FilterTabs>
+                <Tabs value="overview">
+                  <TabsList>
+                    <TabsTrigger value="overview" className="type-label">Oversikt</TabsTrigger>
+                    <TabsTrigger value="participants" className="type-label">Deltakere</TabsTrigger>
+                    <TabsTrigger value="settings" className="type-label">Innstillinger</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
@@ -652,16 +655,6 @@ const CourseDetailPage = () => {
                 </div>
               </Alert>
             )}
-            {courseData?.status === 'draft' && currentOrganization?.stripe_onboarding_complete && (
-              <Alert variant="info" className="mb-6">
-                <div>
-                  <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
-                  <AlertDescription variant="info">
-                    Publiser kurset for å gjøre det synlig og ta imot påmeldinger.
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
             {courseData?.status !== 'draft' && !currentOrganization?.stripe_onboarding_complete && (
               <Alert variant="warning" className="mb-6">
                 <div>
@@ -718,12 +711,11 @@ const CourseDetailPage = () => {
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-status-confirmed-bg px-2 py-0.5 text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
-                      <span className="relative flex size-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-confirmed-text opacity-75" />
-                        <span className="relative inline-flex rounded-full size-1.5 bg-status-confirmed-text" />
+                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-surface-subtle px-2 py-0.5 text-foreground">
+                      <span className="inline-flex size-1.5 rounded-full bg-foreground/70" />
+                      <span>
+                        {courseData?.status === 'upcoming' ? 'Kommende' : 'Aktiv'}
                       </span>
-                      Aktiv
                     </span>
                   )}
                   {courseData?.status === 'completed' && (
@@ -737,18 +729,30 @@ const CourseDetailPage = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
                 {courseData?.status === 'draft' ? (
-                  <Button
-                    size="compact"
-                    onClick={handlePublish}
-                    loading={isPublishing}
-                    loadingText="Publiserer …"
-                  >
-                    Publiser kurs
-                  </Button>
-                ) : (
                   <>
+                    <Button
+                      size="compact"
+                      onClick={handlePublish}
+                      loading={isPublishing}
+                      loadingText="Publiserer …"
+                    >
+                      Publiser kurs
+                    </Button>
+                    {currentOrganization?.stripe_onboarding_complete && (
+                      <Alert variant="info" size="sm" className="max-w-sm">
+                        <div>
+                          <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
+                          <AlertDescription variant="info">
+                            Publiser kurset for å gjøre det synlig og ta imot påmeldinger.
+                          </AlertDescription>
+                        </div>
+                      </Alert>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
                     <ShareCoursePopover
                       courseUrl={currentOrganization?.slug ? `${window.location.origin}/studio/${currentOrganization.slug}/${id}` : ''}
                       courseTitle={courseData?.title}
@@ -775,7 +779,7 @@ const CourseDetailPage = () => {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -786,26 +790,27 @@ const CourseDetailPage = () => {
         {/* Page Content */}
         <div className="flex-1 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-10">
           <div className="mx-auto w-full max-w-6xl">
+            <Card className="overflow-hidden border-border bg-surface">
+              <div className="border-b border-border bg-surface-muted/40 px-6 py-3 sm:px-8">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
+                  <TabsList className="bg-transparent p-0">
+                    <TabsTrigger value="overview" className="type-label">Oversikt</TabsTrigger>
+                    <TabsTrigger value="participants" className="type-label">
+                      <span className="inline-flex items-center gap-2.5">
+                        Deltakere
+                        <span className="type-meta rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
+                          {course.enrolled}
+                        </span>
+                      </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="type-label">Innstillinger</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
 
-            {/* Tabs */}
-            <div className="mb-8">
-              <FilterTabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
-                <FilterTab value="overview">Oversikt</FilterTab>
-                <FilterTab value="participants">
-                  <span className="inline-flex items-center gap-2.5">
-                    Deltakere
-                    <span className="type-meta rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
-                      {course.enrolled}
-                    </span>
-                  </span>
-                </FilterTab>
-                <FilterTab value="settings">Innstillinger</FilterTab>
-              </FilterTabs>
-            </div>
-
-            {/* Tab Content */}
-            <div role="tabpanel">
-            <AnimatePresence mode="wait">
+              <div className="px-6 py-8 sm:px-8">
+                <div role="tabpanel">
+                <AnimatePresence mode="wait">
 
             {/* TAB 1: OVERSIKT (Overview) */}
             {activeTab === 'overview' && (
@@ -848,9 +853,6 @@ const CourseDetailPage = () => {
                   quickImageInputRef={quickImageInputRef}
                   onQuickImageUpload={handleQuickImageUpload}
                   onMessageParticipants={() => setMessageDialogOpen(true)}
-                  onAddParticipant={() => setAddParticipantDialogOpen(true)}
-                  onNavigateToSettings={() => setActiveTab('settings')}
-                  onNavigateToParticipants={() => setActiveTab('participants')}
                   recentParticipants={displayParticipants.slice(0, 5)}
                   totalParticipantCount={displayParticipants.length}
                   kursplanRef={kursplanRef}
@@ -939,8 +941,10 @@ const CourseDetailPage = () => {
               </motion.div>
             )}
 
-            </AnimatePresence>
-            </div>
+                </AnimatePresence>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </main>
@@ -985,7 +989,6 @@ const CourseDetailPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <Button
-              size="compact"
               variant="destructive-outline"
               onClick={handleUnpublish}
               loading={isUnpublishing}
@@ -999,56 +1002,49 @@ const CourseDetailPage = () => {
 
       {/* Cancel Course Preview Dialog */}
       <AlertDialog open={showCancelPreview} onOpenChange={setShowCancelPreview}>
-        <AlertDialogContent className="gap-0 p-0 overflow-hidden ios-ease">
-          {/* Modal body */}
-          <div className="p-8 space-y-6">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Avlyse kurset?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {refundPreview.count > 0
-                  ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet på e-post.`
-                  : 'Kurset vil bli avlyst.'}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avlyse kurset?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {refundPreview.count > 0
+                ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet på e-post.`
+                : 'Kurset vil bli avlyst.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-            {/* Participants list */}
-            {refundPreview.count > 0 && (
-              <div className="space-y-4">
-                <div>
-                  <span className="type-label-sm mb-2 block text-foreground">
-                    Refunderes
-                  </span>
-                  <div className="rounded-lg border border-border bg-background/50 overflow-hidden max-h-[200px] overflow-y-auto">
-                    {refundPreview.participants.map((p, i) => (
-                      <div
-                        key={p.id}
-                        className={cn(
-                          'flex items-center justify-between px-6 py-4',
-                          i < refundPreview.participants.length - 1 && 'border-b border-border'
-                        )}
-                      >
-                        <span className="type-body text-foreground">{p.participant_name || p.participant_email}</span>
-                        <span className="type-body text-muted-foreground tabular-nums">{formatKroner(p.amount_paid)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Refund total */}
-                <div className="flex items-center justify-between px-1">
-                  <span className="type-meta text-muted-foreground">Totalt refusjon</span>
-                  <span className="type-label text-foreground tabular-nums">{formatKroner(refundPreview.totalAmount)}</span>
+          {refundPreview.count > 0 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <span className="type-label-sm block text-foreground">
+                  Refunderes
+                </span>
+                <div className="max-h-[200px] overflow-y-auto">
+                  {refundPreview.participants.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className={cn(
+                        'flex items-center justify-between py-3',
+                        i < refundPreview.participants.length - 1 && 'border-b border-border'
+                      )}
+                    >
+                      <span className="type-body text-foreground">{p.participant_name || p.participant_email}</span>
+                      <span className="type-body-sm tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Frosted footer */}
-          <AlertDialogFooter className="border-t border-border bg-background p-6 flex-row justify-end gap-3 sm:space-x-0">
+              <div className="flex items-center justify-between rounded-lg bg-surface-subtle px-4 py-3">
+                <span className="type-meta text-muted-foreground">Totalt refusjon</span>
+                <span className="type-label tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
               variant="destructive-outline"
-              size="sm"
               onClick={(e) => {
                 e.preventDefault();
                 handleDeleteCourse();

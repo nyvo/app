@@ -117,7 +117,7 @@ const StripeCallbackPage = () => {
 
           {state === 'incomplete' && (
             <>
-              <div className="size-12 rounded-full bg-status-warning-bg flex items-center justify-center mb-6">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
                 <AlertCircle className="size-5 text-status-warning-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
@@ -144,7 +144,7 @@ const StripeCallbackPage = () => {
 
           {state === 'error' && (
             <>
-              <div className="size-12 rounded-full bg-status-error-bg flex items-center justify-center mb-6">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
                 <AlertCircle className="size-5 text-status-error-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
@@ -171,7 +171,7 @@ const StripeCallbackPage = () => {
 
           {state === 'success' && (
             <>
-              <div className="size-12 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
                 <CheckCircle2 className="size-5 text-status-confirmed-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">

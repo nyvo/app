@@ -100,7 +100,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin shrink-0" />
                     ) : step.actionHref ? (
-                      <Button variant="outline" size="xs" asChild>
+                      <Button variant="outline-soft" size="compact" asChild>
                         <Link to={step.actionHref}>
                           {step.actionLabel}
                           {step.timeEstimate && (
@@ -109,7 +109,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                         </Link>
                       </Button>
                     ) : (
-                      <Button size="xs" onClick={step.actionOnClick}>
+                      <Button size="compact" onClick={step.actionOnClick}>
                         {step.actionLabel}
                         {step.timeEstimate && (
                           <span className="text-primary-foreground/60 font-normal ml-1">· {step.timeEstimate}</span>

@@ -330,10 +330,12 @@ const PublicCourseDetailPage = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background" role="status" aria-live="polite">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Spinner size="xl" aria-hidden="true" />
-          <p className="type-body text-muted-foreground">Laster kurs</p>
-        </div>
+        <Card className="w-full max-w-lg border-border bg-surface">
+          <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 text-center">
+            <Spinner size="xl" aria-hidden="true" />
+            <p className="type-body text-muted-foreground">Laster kurs</p>
+          </div>
+        </Card>
         <span className="sr-only">Laster kurs</span>
       </div>
     );
@@ -390,10 +392,10 @@ const PublicCourseDetailPage = () => {
       />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-5xl px-6 py-8 md:py-16">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-12">
+      <main className="mx-auto max-w-6xl px-6 py-8 md:py-14">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-14">
           {/* Left Column — Course Info (5/12), hidden on mobile during payment */}
-          <div className={`md:col-span-5 space-y-12 ${clientSecret ? 'hidden md:block' : ''}`}>
+          <div className={`md:col-span-5 space-y-10 ${clientSecret ? 'hidden md:block' : ''}`}>
             {/* Hero + Description grouped tightly */}
             <div className="space-y-4">
               <CourseHero

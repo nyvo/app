@@ -52,7 +52,7 @@ export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: 
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="outline-soft"
       onClick={handleClick}
       loading={isLoading}
       loadingText={label}

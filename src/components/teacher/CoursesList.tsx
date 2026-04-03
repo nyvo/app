@@ -7,6 +7,7 @@ import type { Course } from '@/types/dashboard';
 
 interface CoursesListProps {
   courses: Course[];
+  hideHeader?: boolean;
 }
 
 
@@ -93,7 +94,7 @@ function CoursesEmptyCard({ timeFilter }: { timeFilter: 'today' | 'week' }) {
   );
 }
 
-export const CoursesList = memo(function CoursesList({ courses }: CoursesListProps) {
+export const CoursesList = memo(function CoursesList({ courses, hideHeader = false }: CoursesListProps) {
   const todayCourses = useMemo(
     () => sortChronologically(courses.filter(c => isToday(c.date))),
     [courses]
@@ -101,7 +102,7 @@ export const CoursesList = memo(function CoursesList({ courses }: CoursesListPro
 
   return (
     <div className="flex flex-col">
-      <h2 className="type-title mb-3 text-foreground">Dagens kurs</h2>
+      {!hideHeader && <h2 className="type-title mb-3 text-foreground">Dagens kurs</h2>}
 
       <Card className="overflow-hidden">
       <div className="px-3 py-3">

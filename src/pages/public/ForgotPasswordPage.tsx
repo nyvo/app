@@ -79,7 +79,7 @@ const ForgotPasswordPage = () => {
           </p>
         }
       >
-        <div className="size-16 rounded-full bg-status-confirmed-bg flex items-center justify-center mb-6">
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
           <CheckCircle2 className="size-8 text-status-confirmed-text" />
         </div>
 
@@ -105,7 +105,7 @@ const ForgotPasswordPage = () => {
               setEmailSent(false)
               resetForm()
             }}
-            variant="outline"
+            variant="outline-soft"
             className="w-full h-11"
           >
             Send på nytt

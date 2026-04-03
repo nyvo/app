@@ -53,18 +53,8 @@ const DatePicker = ({
           type="button"
           disabled={disabled}
           className={cn(
-            // Base styles matching Input component - V2.3: rounded-lg for sharp, precise interactive elements
-            'h-11 w-full rounded-lg border border-input bg-transparent px-4 text-sm text-foreground',
-            'flex items-center justify-between',
-            // Hover state matching Input
-            'hover:border-ring ios-ease',
-            // V2.2 Elevated Contrast: crisp 2px offset ring with soft stone color
-            'focus:outline-none focus:bg-background focus:border-ring focus-visible:ring-2 focus-visible:ring-ring/50',
-            // Placeholder style when no value
+            'flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
             !value && 'text-muted-foreground',
-            // Disabled state
-            'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
-            // Error state
             error && 'border-destructive',
             className
           )}

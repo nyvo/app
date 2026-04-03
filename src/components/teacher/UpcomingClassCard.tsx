@@ -7,13 +7,14 @@ import type { UpcomingClass } from '@/types/dashboard';
 
 interface UpcomingClassCardProps {
   classData: UpcomingClass | null;
+  hideHeader?: boolean;
 }
 
-export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
+export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingClassCardProps) => {
   if (!classData) {
     return (
       <div className="flex flex-col">
-        <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>
+        {!hideHeader && <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>}
         <Card className="p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-md">
@@ -41,7 +42,7 @@ export const UpcomingClassCard = ({ classData }: UpcomingClassCardProps) => {
 
   return (
     <div className="flex flex-col">
-      <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>
+      {!hideHeader && <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>}
       <Card className="overflow-hidden border-primary/20 bg-primary text-primary-foreground">
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0 flex-1">

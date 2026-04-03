@@ -157,7 +157,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
          {canCancel ? (
            <AlertDialog>
              <AlertDialogTrigger asChild>
-               <Button variant="ghost" size="sm" className="w-full justify-center text-muted-foreground hover:text-status-error-text hover:bg-status-error-bg">
+               <Button variant="outline-soft" size="sm" className="w-full justify-center">
                  Avbestill
                </Button>
              </AlertDialogTrigger>
@@ -173,7 +173,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
                  <AlertDialogAction
                    onClick={handleCancellation}
                    disabled={isCancelling}
-                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground border-none"
+                   className="bg-destructive text-destructive-foreground hover:bg-destructive/92"
                  >
                    {isCancelling ? 'Avbestiller' : 'Avbestill'}
                  </AlertDialogAction>

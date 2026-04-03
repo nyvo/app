@@ -509,7 +509,7 @@ const TeacherDashboard = () => {
                 </div>
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <div className="mb-4 rounded-full bg-status-error-bg p-4 border border-status-error-border">
+                  <div className="mb-4 rounded-full bg-surface-subtle p-4">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
                   <h3 className="type-title mb-1 text-foreground">Kunne ikke laste oversikten</h3>
@@ -534,10 +534,35 @@ const TeacherDashboard = () => {
                       loadingStepId={connectingStripe ? 'stripe' : undefined}
                     />
                   </div>
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <CoursesList courses={dashboardCourses} />
-                    <RegistrationsList registrations={registrations} />
-                    <MessagesList messages={messages} />
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                    <div className="space-y-6">
+                      <section className="space-y-3">
+                        <h2 className="type-title text-foreground">Dagens kurs</h2>
+                        <CoursesList courses={dashboardCourses} hideHeader />
+                      </section>
+                    </div>
+                    <div className="space-y-6">
+                      <Card className="overflow-hidden">
+                        <div className="border-b border-border px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
+                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <RegistrationsList registrations={registrations} hideHeader hideCard />
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Meldinger</h2>
+                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <MessagesList messages={messages} hideHeader hideCard />
+                        </div>
+                      </Card>
+                    </div>
                   </div>
                 </>
               ) : (showEmptyState || !hasCourses) ? (
@@ -570,21 +595,54 @@ const TeacherDashboard = () => {
                       </div>
                     </Card>
                   </div>
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <CoursesList courses={[]} />
-                    <RegistrationsList registrations={[]} />
-                    <MessagesList messages={messages} />
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                    <div className="space-y-6">
+                      <section className="space-y-3">
+                        <h2 className="type-title text-foreground">Dagens kurs</h2>
+                        <CoursesList courses={[]} hideHeader />
+                      </section>
+                    </div>
+                    <div className="space-y-6">
+                      <Card className="overflow-hidden">
+                        <div className="border-b border-border px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
+                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <RegistrationsList registrations={[]} hideHeader hideCard />
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Meldinger</h2>
+                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <MessagesList messages={messages} hideHeader hideCard />
+                        </div>
+                      </Card>
+                    </div>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                      <UpcomingClassCard classData={upcomingClass} />
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                    <div className="space-y-6">
+                      <section className="space-y-3">
+                        <h2 className="type-title text-foreground">Neste kurs</h2>
+                        <UpcomingClassCard classData={upcomingClass} hideHeader />
+                      </section>
+                      <section className="space-y-3">
+                        <h2 className="type-title text-foreground">Dagens kurs</h2>
+                        <CoursesList courses={dashboardCourses} hideHeader />
+                      </section>
                     </div>
-                    <div className="flex flex-col">
-                      <h2 className="type-title mb-3 text-foreground">I dag</h2>
-                      <Card className="h-full p-6">
+                    <div className="space-y-6">
+                      <section>
+                        <h2 className="type-title mb-3 text-foreground">I dag</h2>
+                        <Card className="p-6">
                         <div className="grid h-full grid-cols-1 gap-4">
                           <div className="flex items-start gap-3">
                             <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
@@ -616,13 +674,29 @@ const TeacherDashboard = () => {
                             </div>
                           </div>
                         </div>
+                        </Card>
+                      </section>
+                      <Card className="overflow-hidden">
+                        <div className="border-b border-border px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
+                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <RegistrationsList registrations={registrations} hideHeader hideCard />
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <h2 className="type-title text-foreground">Meldinger</h2>
+                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                              Se alle
+                            </Link>
+                          </div>
+                          <MessagesList messages={messages} hideHeader hideCard />
+                        </div>
                       </Card>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <CoursesList courses={dashboardCourses} />
-                    <RegistrationsList registrations={registrations} />
-                    <MessagesList messages={messages} />
                   </div>
                 </>
               )}

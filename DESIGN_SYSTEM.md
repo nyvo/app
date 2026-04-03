@@ -163,6 +163,7 @@ Do not treat those aliases as the main design language when writing app UI.
 
 - Page background: `background`
 - Card or modal: `surface`
+- Form control or upload/drop area: `surface`
 - Inset group / empty state shell / subtle block: `surface-muted`
 - Main text: `foreground`
 - Secondary text: `muted-foreground`
@@ -887,9 +888,19 @@ Examples:
 
 All form inputs use shared components: `<Input>`, `<Textarea>`, `<Select>`, `<Checkbox>`.
 
+Use `surface` for:
+- input fills
+- select triggers
+- date/time pickers
+- upload and drop areas
+
+Use `background` for:
+- the page canvas
+- only the rare controls that should intentionally disappear into the page
+
 **Input styling:**
 ```
-h-11, rounded-md, border border-input, bg-transparent, px-4
+h-11, rounded-lg, border border-input, bg-surface, px-4
 Focus: border-ring + ring-2 ring-ring/50
 Hover: border-ring
 Error: border-destructive + ring-destructive/20

@@ -156,8 +156,8 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center">
         <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-info-bg">
-            <Spinner size="xl" className="text-status-info-text" />
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
+            <Spinner size="xl" className="text-foreground" />
           </div>
           <p className="type-label mb-2 text-foreground">{getLoadingMessage()}</p>
           <p className="type-body text-muted-foreground">
@@ -188,14 +188,14 @@ const CheckoutSuccessPage = () => {
         </header>
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
-            <Card className="border-destructive/30 p-8 md:p-12">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-error-bg">
+            <Card className="p-8 md:p-12">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
               <h1 className="type-heading-1 mb-3 text-foreground">
                 Noe gikk galt
               </h1>
-              <p className="text-muted-foreground mb-8">{error}</p>
+              <p className="type-body text-muted-foreground mb-8">{error}</p>
               <Button asChild variant="default">
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
@@ -258,7 +258,7 @@ const CheckoutSuccessPage = () => {
 
             {/* Left Column: Success Message */}
             <div className="flex flex-col justify-center text-center md:text-left pt-4 md:pt-8">
-              <div className="mx-auto md:mx-0 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-status-confirmed-bg">
+              <div className="mx-auto md:mx-0 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
 
@@ -297,7 +297,7 @@ const CheckoutSuccessPage = () => {
                         Mine kurs
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" size="default" className="w-full sm:w-auto">
+                    <Button asChild variant="outline-soft" size="default" className="w-full sm:w-auto">
                       <Link to={studioUrl}>Se flere kurs</Link>
                     </Button>
                   </>

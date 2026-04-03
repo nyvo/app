@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { MoreHorizontal, CheckCircle, XCircle, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
 import {
@@ -154,17 +153,15 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
-                <Card className="bg-background/50 px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="type-label text-foreground">{signup.participantName}</p>
-                      <p className="type-meta text-muted-foreground">{signup.participantEmail}</p>
-                    </div>
-                    {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                      <span className="type-label text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
-                    )}
+                <div className="flex items-center justify-between py-1">
+                  <div className="space-y-1">
+                    <p className="type-label text-foreground">{signup.participantName}</p>
+                    <p className="type-meta text-muted-foreground">{signup.participantEmail}</p>
                   </div>
-                </Card>
+                  {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
+                    <span className="type-label text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
+                  )}
+                </div>
                 <p className="type-body text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
                     ? 'Deltakeren har betalt og får refusjon via Stripe.'
@@ -176,7 +173,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-status-error-bg border-status-error-border text-status-error-text hover:bg-status-error-bg/80"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/92"
               onClick={() => {
                 const hasRefund = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
                 setConfirmDialog(null);

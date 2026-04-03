@@ -24,7 +24,7 @@ interface FilterTabsProps {
   onValueChange: (value: string) => void
   children: React.ReactNode
   className?: string
-  /** "default" has border styling, "contained" adds surface-elevated background, "pill" uses solid primary for active */
+  /** Compact filter controls. "default" is segmented, "contained" is tighter, "pill" is strongest emphasis. */
   variant?: "default" | "contained" | "pill"
 }
 
@@ -38,9 +38,9 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "gap-0.5 bg-muted p-1 rounded-md"
+            variant === "contained" ? "gap-0.5 rounded-lg bg-surface p-1 border border-border"
               : variant === "pill" ? "gap-1.5"
-              : "gap-1 border-b border-border",
+              : "gap-1 rounded-lg bg-surface-muted p-1",
             className
           )}
           role="tablist"
@@ -69,16 +69,16 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
       switch (variant) {
         case "pill":
           return isActive
-            ? "bg-background border border-border text-foreground rounded-lg"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg border border-transparent"
+            ? "bg-primary text-primary-foreground rounded-lg"
+            : "text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg border border-transparent"
         case "contained":
           return isActive
-            ? "text-foreground"
+            ? "bg-surface text-foreground shadow-sm"
             : "bg-transparent text-muted-foreground hover:text-foreground"
         default:
           return isActive
-            ? "text-foreground"
-            : "text-muted-foreground hover:text-foreground"
+            ? "bg-surface text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-surface/70"
       }
     }
 
@@ -90,13 +90,13 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         aria-selected={isActive}
         onClick={() => context.onValueChange(value)}
         className={cn(
-          "relative shrink-0 font-medium ios-ease cursor-pointer transition-colors",
+          "relative shrink-0 cursor-pointer font-medium ios-ease transition-[background-color,color,opacity,box-shadow]",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           variant === "default"
-            ? "text-xs px-3 py-2 -mb-px"
+            ? "type-label-sm px-3 py-2 rounded-md"
             : variant === "pill"
-              ? "text-xs px-3 py-1.5 rounded-lg"
-              : "text-xs px-2 py-1 rounded-[5px] text-center whitespace-nowrap",
+              ? "type-label-sm px-3 py-1.5 rounded-lg"
+              : "type-label-sm px-2.5 py-1.5 rounded-md text-center whitespace-nowrap",
           getStyles(),
           className
         )}
@@ -104,18 +104,11 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "contained" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute inset-0 bg-background rounded-[5px] "
+            className="absolute inset-0 rounded-md bg-surface"
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}
         <span className="relative z-10">{children}</span>
-        {variant === "default" && isActive && (
-          <motion.div
-            layoutId={context.layoutId}
-            className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
-            transition={{ type: "spring", stiffness: 500, damping: 35 }}
-          />
-        )}
       </button>
     )
   }
