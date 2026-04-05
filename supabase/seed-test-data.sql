@@ -43,7 +43,7 @@ BEGIN
   -- ============================================
   -- LOOK UP YOUR ORG AND USER
   -- ============================================
-  v_user_id := 'f9b299ff-0e5a-4eca-8404-756c177f61a8'; -- nyvo77@gmail.com
+  v_user_id := '5b9e6705-a7fd-4785-8476-c0eb4ea88ce9'; -- nyvo77@gmail.com
 
   SELECT om.organization_id INTO v_org_id
   FROM org_members om
