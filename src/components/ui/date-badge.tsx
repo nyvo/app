@@ -10,8 +10,8 @@ interface DateBadgeProps {
 }
 
 /**
- * Compact calendar-page date display.
- * Month abbreviation on top, day number below.
+ * Calendar-page style date display.
+ * Colored month strip on top, day number below.
  */
 export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps) {
   let date: Date;
@@ -34,12 +34,16 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
   return (
     <div
       className={cn(
-        "flex h-11 w-11 shrink-0 flex-col items-center justify-center overflow-hidden rounded-lg border border-border bg-background",
+        "flex h-11 w-11 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
         className
       )}
     >
-      <span className="text-[10px] font-medium uppercase leading-none text-muted-foreground">{month}</span>
-      <span className="text-base font-medium leading-tight text-foreground">{day}</span>
+      <div className="flex h-3.5 items-center justify-center bg-surface-subtle">
+        <span className="type-meta text-[9px] uppercase leading-none tracking-[0.06em] text-muted-foreground">{month}</span>
+      </div>
+      <div className="flex flex-1 items-center justify-center">
+        <span className="text-base font-semibold leading-none text-foreground">{day}</span>
+      </div>
     </div>
   );
 }

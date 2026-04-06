@@ -29,7 +29,7 @@
   --color-background: #FFFFFF;
   --color-foreground: #34322D;
 
-  --color-surface: #F8F8F7;
+  --color-surface: #FFFFFF;
   --color-surface-muted: #FAFAF9;
   --color-surface-subtle: #F2F2F0;
   --color-surface-elevated: #FFFFFF;
@@ -86,6 +86,8 @@
   --color-success-foreground: var(--color-zinc-50);
   --color-warning: #EFA201;
   --color-warning-foreground: var(--color-zinc-50);
+  --color-info: #FDF3E0;
+  --color-info-foreground: var(--color-foreground);
 
   /* ── Status Colors ── */
   --color-status-confirmed-bg: var(--color-green-50);
@@ -139,7 +141,7 @@
 
   /* ── Shadows — Disabled ── */
   --shadow-xs: none;
-  --shadow-sm: none;
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
   --shadow: none;
   --shadow-md: none;
   --shadow-lg: none;
@@ -237,7 +239,7 @@
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus,
   select:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-background) inset !important;
     -webkit-text-fill-color: var(--color-foreground) !important;
     transition: background-color 5000s ease-in-out 0s;
   }
@@ -287,29 +289,29 @@
   }
 
   .type-heading-1 {
-    font-size: 32px;
-    line-height: 38px;
+    font-size: 28px;
+    line-height: 34px;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
   .type-heading-2 {
-    font-size: 24px;
-    line-height: 30px;
+    font-size: 22px;
+    line-height: 28px;
     font-weight: 600;
     letter-spacing: -0.015em;
   }
 
   .type-heading-3 {
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 18px;
+    line-height: 24px;
     font-weight: 600;
     letter-spacing: -0.01em;
   }
 
   .type-title {
-    font-size: 18px;
-    line-height: 24px;
+    font-size: 17px;
+    line-height: 22px;
     font-weight: 500;
     letter-spacing: -0.01em;
   }

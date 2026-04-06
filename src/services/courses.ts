@@ -714,6 +714,175 @@ export async function fetchWeekSessions(organizationId: string, limit = 6): Prom
   return { data: results, error: null }
 }
 
+// Fetch the next N upcoming sessions (future only, no week limit)
+export async function fetchNextSessions(organizationId: string, limit = 3): Promise<{
+  data: Array<{
+    session: CourseSession
+    course: Course
+  }> | null
+  error: Error | null
+}> {
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data: sessionsData, error: sessionsError } = await supabase
+    .from('course_sessions')
+    .select(`
+      *,
+      course:courses!inner(*)
+    `)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .neq('course.status', 'completed')
+    .gte('session_date', today)
+    .eq('status', 'upcoming')
+    .order('session_date', { ascending: true })
+    .order('start_time', { ascending: true })
+    .limit(limit + 5) // fetch extra to filter out past start times
+
+  if (sessionsError) {
+    return { data: null, error: sessionsError as Error }
+  }
+
+  if (!sessionsData || sessionsData.length === 0) {
+    return { data: [], error: null }
+  }
+
+  // Filter out sessions whose start time has already passed today
+  const now = new Date()
+  const typedResults = sessionsData as unknown as SessionWithFullCourseJoin[]
+  const filtered = typedResults.filter(session => {
+    if (session.session_date > today) return true
+    // Same day — check if start time is in the future
+    const timeParts = session.start_time?.split(':')
+    if (!timeParts || timeParts.length < 2) return false
+    const sessionTime = new Date()
+    sessionTime.setHours(Number(timeParts[0]), Number(timeParts[1]), 0, 0)
+    return sessionTime.getTime() > now.getTime()
+  })
+
+  return {
+    data: filtered.slice(0, limit).map(session => ({
+      session: {
+        id: session.id,
+        course_id: session.course_id,
+        session_number: session.session_number,
+        session_date: session.session_date,
+        start_time: session.start_time,
+        end_time: session.end_time,
+        status: session.status,
+        notes: session.notes,
+        created_at: session.created_at,
+        updated_at: session.updated_at,
+      } as CourseSession,
+      course: session.course as Course,
+    })),
+    error: null,
+  }
+}
+
+// Fetch the active course closest to full capacity
+export async function fetchNearestFullCourse(organizationId: string): Promise<{
+  data: { course: Course; attendees: number; capacity: number } | null
+  error: Error | null
+}> {
+  // Get all active courses with max_participants set
+  const { data: courses, error: coursesError } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .in('status', ['active', 'upcoming'])
+    .gt('max_participants', 0)
+
+  if (coursesError) {
+    return { data: null, error: coursesError as Error }
+  }
+
+  if (!courses || courses.length === 0) {
+    return { data: null, error: null }
+  }
+
+  // Get signup counts for these courses
+  const courseIds = courses.map((c: any) => c.id)
+  const { data: signupCounts, error: countError } = await supabase
+    .from('signups')
+    .select('course_id')
+    .in('course_id', courseIds)
+    .eq('status', 'confirmed')
+
+  if (countError) {
+    return { data: null, error: countError as Error }
+  }
+
+  // Count signups per course
+  const counts: Record<string, number> = {}
+  for (const s of (signupCounts || []) as Array<{ course_id: string }>) {
+    counts[s.course_id] = (counts[s.course_id] || 0) + 1
+  }
+
+  // Find the course closest to full (>=80% and not already full)
+  let bestCourse: Course | null = null
+  let bestRatio = 0
+  let bestAttendees = 0
+
+  for (const course of courses as any[]) {
+    const attendees = counts[course.id] || 0
+    const capacity = course.max_participants || 0
+    if (capacity === 0) continue
+    const ratio = attendees / capacity
+    if (ratio >= 0.8 && ratio < 1 && ratio > bestRatio) {
+      bestCourse = course as unknown as Course
+      bestRatio = ratio
+      bestAttendees = attendees
+    }
+  }
+
+  if (!bestCourse) {
+    return { data: null, error: null }
+  }
+
+  return {
+    data: {
+      course: bestCourse,
+      attendees: bestAttendees,
+      capacity: bestCourse.max_participants || 0,
+    },
+    error: null,
+  }
+}
+
+// Fetch today's sessions only
+export async function fetchTodaySessions(organizationId: string): Promise<{
+  data: Array<{ session: CourseSession; course: Course }> | null
+  error: Error | null
+}> {
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('course_sessions')
+    .select(`*, course:courses!inner(*)`)
+    .eq('course.organization_id', organizationId)
+    .neq('course.status', 'cancelled')
+    .eq('session_date', today)
+    .eq('status', 'upcoming')
+    .order('start_time', { ascending: true })
+
+  if (error) return { data: null, error: error as Error }
+  if (!data || data.length === 0) return { data: [], error: null }
+
+  const typed = data as unknown as SessionWithFullCourseJoin[]
+  return {
+    data: typed.map(s => ({
+      session: {
+        id: s.id, course_id: s.course_id, session_number: s.session_number,
+        session_date: s.session_date, start_time: s.start_time, end_time: s.end_time,
+        status: s.status, notes: s.notes, created_at: s.created_at, updated_at: s.updated_at,
+      } as CourseSession,
+      course: s.course as Course,
+    })),
+    error: null,
+  }
+}
+
 // Type for session schedule table rows (teacher admin view)
 export interface SessionScheduleRow {
   sessionId: string

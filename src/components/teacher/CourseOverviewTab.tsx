@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -112,16 +111,11 @@ interface CourseOverviewTabProps {
   // Session editing (grouped)
   sessionEditHandlers: SessionEditHandlers;
 
-  // Image upload
-  isUploadingQuickImage: boolean;
-  quickImageInputRef: React.RefObject<HTMLInputElement | null>;
-
   // Recent participants
   recentParticipants: RecentParticipant[];
   totalParticipantCount: number;
 
   // Callbacks
-  onQuickImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMessageParticipants: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
@@ -136,9 +130,6 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   generatedCourseWeeks,
   hasRealSessions,
   sessionEditHandlers,
-  isUploadingQuickImage,
-  quickImageInputRef,
-  onQuickImageUpload,
   onMessageParticipants,
   recentParticipants,
   totalParticipantCount: _totalParticipantCount,
@@ -231,34 +222,8 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 />
               </div>
             ) : (
-              <div>
-                <input
-                  ref={quickImageInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={onQuickImageUpload}
-                  className="hidden"
-                />
-                <div
-                  className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center border border-dashed border-input bg-surface-muted smooth-transition hover:bg-surface-muted/50 lg:aspect-square"
-                  onClick={() => !isUploadingQuickImage && quickImageInputRef.current?.click()}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isUploadingQuickImage && quickImageInputRef.current?.click(); } }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Last opp forsidebilde"
-                >
-                  {isUploadingQuickImage ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Spinner size="sm" />
-                      <span className="type-meta text-foreground">Laster opp</span>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
-                      <span className="type-meta text-muted-foreground">Last opp bilde</span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex aspect-video w-full flex-col items-center justify-center bg-surface-muted lg:aspect-square">
+                <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
               </div>
             )}
           </Card>

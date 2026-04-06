@@ -18,7 +18,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { SearchInput } from '@/components/ui/search-input';
@@ -279,38 +278,21 @@ const MessagesPage = () => {
       <div className="flex-1 flex min-h-full flex-col overflow-hidden bg-background">
         <MobileTeacherHeader title="Meldinger" />
 
-        <motion.header
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-        >
-          <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
-            <div className="mb-8">
-              <h1 className="type-heading-1 text-foreground">Meldinger</h1>
-              <p className="type-body mt-1 text-muted-foreground">
-                Hold oversikt over samtaler med elever og svar raskt ved behov.
-              </p>
-            </div>
-          </div>
-        </motion.header>
-
-        {/* Messages Layout: Split View */}
+        {/* Messages Layout: Split View — full screen */}
         <motion.div
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="flex min-h-0 flex-1 px-6 pb-6 lg:px-8 lg:pb-8"
+          className="flex min-h-0 flex-1"
         >
-          <Card className="flex min-h-0 w-full overflow-hidden rounded-xl bg-surface">
           {/* Conversation List (Left Panel) */}
           <div className={cn(
-            'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-surface',
+            'w-full md:w-80 lg:w-96 flex-col border-r border-border bg-background',
             activeConversation || isComposing ? 'hidden md:flex' : 'flex'
           )}>
             {/* List Header */}
-            <div className="border-b border-border px-5 py-5">
+            <div className="border-b border-border px-6 py-5 lg:px-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="type-title text-foreground">Samtaler</h2>
                 <Button
@@ -335,7 +317,7 @@ const MessagesPage = () => {
             </div>
 
             {/* Conversations Scroll Area */}
-            <div className="custom-scrollbar flex-1 space-y-2 overflow-y-auto px-4 py-4">
+            <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-3">
               {loading ? (
                 <SectionLoader size="md" />
               ) : filteredConversations.length === 0 ? (
@@ -412,14 +394,14 @@ const MessagesPage = () => {
 
           {/* Chat View (Main Area) */}
           <div className={cn(
-            'relative flex-1 flex-col bg-surface',
+            'relative flex-1 flex-col bg-background',
             activeConversation || isComposing ? 'flex' : 'hidden md:flex'
           )}>
 
             {/* Composing New Message View */}
             {isComposing ? (
-              <div className="flex h-full flex-1 flex-col bg-surface">
-                 <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-6 py-4 backdrop-blur-sm">
+              <div className="flex h-full flex-1 flex-col bg-background">
+                 <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-6 py-4 backdrop-blur-sm">
                     <div className="flex items-center gap-3">
                       <Button
                         variant="ghost"
@@ -462,7 +444,7 @@ const MessagesPage = () => {
 
                   <div className="space-y-3">
                     <label htmlFor="compose-message-body" className="type-label-sm ml-1 text-foreground">Melding</label>
-                    <div className="rounded-lg border border-border bg-surface p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+                    <div className="rounded-lg border border-border bg-surface-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                         <Textarea
                           id="compose-message-body"
                           rows={8}
@@ -522,7 +504,7 @@ const MessagesPage = () => {
             ) : (
               <>
                 {/* Regular Chat Header */}
-            <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-6 py-4 backdrop-blur-sm">
+            <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-6 py-4 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -659,8 +641,8 @@ const MessagesPage = () => {
             </div>
 
             {/* Input Area */}
-            <div className="bg-surface p-6 pt-2">
-              <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface p-2 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+            <div className="bg-background p-6 pt-2">
+              <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface-muted p-2 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
                 <Textarea
                   rows={1}
                   placeholder="Skriv en melding"
@@ -736,7 +718,6 @@ const MessagesPage = () => {
               </>
             )}
           </div>
-          </Card>
         </motion.div>
       </div>
   );

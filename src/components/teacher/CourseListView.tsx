@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DateBadge } from '@/components/ui/date-badge';
@@ -90,7 +91,7 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
 
   return (
     <div
-      className="group cursor-pointer rounded-lg border-b border-border px-2 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 last:border-b-0"
+      className="group cursor-pointer rounded-lg px-2 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2"
       onClick={() => navigate(`/teacher/courses/${course.courseId}`)}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/teacher/courses/${course.courseId}`); } }}
       role="button"
@@ -194,33 +195,35 @@ function CourseGroup({ label, courses, showHeader }: { label: string; courses: S
   return (
     <section>
       {showHeader && (
-        <h2 className="type-title border-t border-border pb-3 pt-4 text-foreground">
+        <h2 className="type-title pb-3 text-foreground">
           {label}
         </h2>
       )}
-      {visible.map(c => <CourseRow key={c.sessionId} course={c} />)}
-      {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
-        <div className="flex justify-center gap-3 pt-4 pb-2">
-          {remainingCount > 0 && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-            >
-              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-            </Button>
-          )}
-          {visibleCount > INITIAL_VISIBLE && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-            >
-              Vis færre
-            </Button>
-          )}
-        </div>
-      )}
+      <Card className="overflow-hidden p-2 sm:p-3">
+        {visible.map(c => <CourseRow key={c.sessionId} course={c} />)}
+        {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
+          <div className="flex justify-center gap-3 pt-4 pb-2">
+            {remainingCount > 0 && (
+              <Button
+                variant="outline-soft"
+                size="sm"
+                onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+              >
+                Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
+              </Button>
+            )}
+            {visibleCount > INITIAL_VISIBLE && (
+              <Button
+                variant="outline-soft"
+                size="sm"
+                onClick={() => setVisibleCount(INITIAL_VISIBLE)}
+              >
+                Vis færre
+              </Button>
+            )}
+          </div>
+        )}
+      </Card>
     </section>
   );
 }
@@ -253,7 +256,7 @@ export function CourseListSkeleton() {
   return (
     <div>
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center gap-3 border-b border-border px-2 py-3 last:border-b-0">
+        <div key={i} className="flex items-center gap-3 px-2 py-3">
           <div className="size-11 rounded-lg border border-border shrink-0 flex flex-col items-center justify-center gap-0.5">
             <Skeleton className="h-2 w-5 rounded-sm" />
             <Skeleton className="h-3 w-4 rounded-sm" />

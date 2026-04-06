@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { SignupFilterDropdown, type CombinedFilter } from '@/components/teacher/SignupFilterDropdown';
 import { ErrorState } from '@/components/ui/error-state';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
 
@@ -303,7 +303,7 @@ export const SignupsPage = () => {
           </div>
 
           {/* Filters row */}
-          <div className="flex flex-col gap-3 pb-2 md:flex-row md:items-center">
+          <div className="flex flex-col gap-3 pb-4 md:flex-row md:items-center">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
@@ -327,56 +327,34 @@ export const SignupsPage = () => {
             />
           ) : (
             <div className="flex-1 space-y-10">
-              <section className="flex flex-col gap-3">
-                <div>
-                  <h2 className="type-title text-foreground">Aktive påmeldinger</h2>
-                  <p className="type-body-sm mt-1 text-muted-foreground">
-                    Følg opp deltakere, betalinger og kurs med åpne plasser.
-                  </p>
-                </div>
-                <Card className="overflow-hidden p-3 sm:p-4">
-                  <SmartSignupsView
-                    groups={groups}
-                    stats={stats}
-                    isLoading={loading}
-                    isEmpty={displaySignups.length === 0}
-                    hasFilters={hasActiveFilters || combinedFilter !== 'all'}
-                    mode="active"
-                    onClearFilters={clearFilters}
-                    actionHandlers={actionHandlers}
-                  />
-                </Card>
-              </section>
+              <SmartSignupsView
+                groups={groups}
+                stats={stats}
+                isLoading={loading}
+                isEmpty={displaySignups.length === 0}
+                hasFilters={hasActiveFilters || combinedFilter !== 'all'}
+                mode="active"
+                onClearFilters={clearFilters}
+                actionHandlers={actionHandlers}
+              />
 
               {/* Past / ended section */}
               {!loading && pastGroups.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h2 className="type-title text-foreground">Avsluttede kurs</h2>
-                      <p className="type-body-sm mt-1 text-muted-foreground">
-                        Tidligere påmeldinger holdes samlet her for oppslag og historikk.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline-soft"
-                      size="compact"
-                      onClick={() => setShowPast(prev => !prev)}
-                      aria-expanded={showPast}
-                      aria-controls="past-signups-section"
-                      className="gap-2"
-                    >
-                      <ChevronRight className={cn(
-                        'h-3.5 w-3.5 smooth-transition',
-                        showPast && 'rotate-90'
-                      )} aria-hidden="true" />
-                      {showPast ? 'Skjul' : `Vis ${pastGroups.length}`}
-                    </Button>
+                <Collapsible open={showPast} onOpenChange={setShowPast}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="type-title text-foreground">Avsluttede kurs</h2>
+                    <CollapsibleTrigger asChild>
+                      <Button size="sm" className="gap-1.5">
+                        {showPast ? 'Skjul' : `Vis ${pastGroups.length}`}
+                        <ChevronDown className={cn(
+                          'h-3.5 w-3.5 smooth-transition',
+                          showPast && 'rotate-180'
+                        )} />
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
-
-                  {showPast && (
-                    <Card id="past-signups-section" className="overflow-hidden border-dashed border-border/80 bg-surface-muted/35 p-3 opacity-80 sm:p-4">
+                  <CollapsibleContent>
+                    <div className="pt-3 opacity-80">
                       <SmartSignupsView
                         groups={pastGroups}
                         stats={stats}
@@ -386,9 +364,9 @@ export const SignupsPage = () => {
                         mode="ended"
                         actionHandlers={actionHandlers}
                       />
-                    </Card>
-                  )}
-                </section>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
           )}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
@@ -8,7 +8,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -40,6 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { createStripeConnectLink } from '@/services/stripe-connect';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
@@ -57,6 +57,7 @@ const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
+  const { setBreadcrumbs } = useTeacherShell();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [_startDate, _setStartDate] = useState<Date | undefined>(new Date());
@@ -103,13 +104,20 @@ const CourseDetailPage = () => {
   // Delete state
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Quick image upload (from overview placeholder)
-  const quickImageInputRef = useRef<HTMLInputElement>(null);
-  const [isUploadingQuickImage, setIsUploadingQuickImage] = useState(false);
 
   // Session editing state (kept in page since it's UI-only)
   const [sessionEdits, setSessionEdits] = useState<Record<string, { date?: Date; time?: string }>>({});
   const [savingSessionId, setSavingSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: 'Hjem', to: '/teacher' },
+      { label: 'Kurs', to: '/teacher/courses' },
+      { label: courseData?.title || 'Kursdetaljer' },
+    ]);
+
+    return () => setBreadcrumbs(null);
+  }, [courseData?.title, setBreadcrumbs]);
 
   // Dirty state tracking for settings tab
   const isSettingsDirty = useMemo(() => {
@@ -480,19 +488,6 @@ const CourseDetailPage = () => {
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-6xl mx-auto w-full">
               <div className="mb-8">
-                <Breadcrumb className="mb-2">
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to="/teacher/courses">Kurs</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <Skeleton className="h-4 w-24" />
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
                 <Skeleton className="h-8 w-64 mb-3" />
                 <Skeleton className="h-4 w-32" />
               </div>
@@ -578,55 +573,6 @@ const CourseDetailPage = () => {
   const hasRealSessions = sessions.length > 0;
 
 
-  // Handle quick image upload from overview placeholder
-  const handleQuickImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !id) return;
-
-    // Validate file type
-    const acceptedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!acceptedTypes.includes(file.type)) {
-      setSaveError('Ugyldig filtype. Bruk JPG, PNG eller WebP.');
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setSaveError('Bildet er for stort. Maks 5MB.');
-      return;
-    }
-
-    setIsUploadingQuickImage(true);
-    setSaveError(null);
-
-    try {
-      const { url, error: uploadError } = await uploadCourseImage(id, file);
-      if (uploadError) {
-        setSaveError(uploadError.message);
-        return;
-      }
-
-      // Update course with new image URL
-      const { error: updateError } = await updateCourse(id, { image_url: url });
-      if (updateError) {
-        setSaveError(updateError.message || 'Kunne ikke lagre bildet');
-        return;
-      }
-
-      // Update local state
-      setCourseData(prev => prev ? { ...prev, imageUrl: url || null } : null);
-      setSettingsImageUrl(url);
-      toast.success('Bilde lastet opp');
-    } catch {
-      setSaveError('Kunne ikke laste opp bildet. Prøv igjen.');
-    } finally {
-      setIsUploadingQuickImage(false);
-      // Reset input so same file can be selected again
-      if (quickImageInputRef.current) {
-        quickImageInputRef.current.value = '';
-      }
-    }
-  };
 
   const spotsLeft = course.capacity - course.enrolled;
 
@@ -690,19 +636,6 @@ const CourseDetailPage = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <Breadcrumb className="mb-2">
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink asChild>
-                        <Link to="/teacher/courses">Kurs</Link>
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{course.title}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
                 <h1 className="type-heading-1 text-foreground">
                   {course.title}
                 </h1>
@@ -849,9 +782,6 @@ const CourseDetailPage = () => {
                     },
                     onSaveSession: handleSaveSession,
                   }}
-                  isUploadingQuickImage={isUploadingQuickImage}
-                  quickImageInputRef={quickImageInputRef}
-                  onQuickImageUpload={handleQuickImageUpload}
                   onMessageParticipants={() => setMessageDialogOpen(true)}
                   recentParticipants={displayParticipants.slice(0, 5)}
                   totalParticipantCount={displayParticipants.length}

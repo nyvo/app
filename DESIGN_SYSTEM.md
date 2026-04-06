@@ -26,10 +26,10 @@
 
 - `type-display-1`: `56 / 60`, `600`, `-0.03em`
 - `type-display-2`: `40 / 44`, `600`, `-0.025em`
-- `type-heading-1`: `32 / 38`, `600`, `-0.02em`
-- `type-heading-2`: `24 / 30`, `600`, `-0.015em`
-- `type-heading-3`: `20 / 26`, `600`, `-0.01em`
-- `type-title`: `18 / 24`, `500`, `-0.01em`
+- `type-heading-1`: `28 / 34`, `600`, `-0.02em`
+- `type-heading-2`: `22 / 28`, `600`, `-0.015em`
+- `type-heading-3`: `18 / 24`, `600`, `-0.01em`
+- `type-title`: `17 / 22`, `500`, `-0.01em`
 - `type-body-lg`: `16 / 24`, `400`, `0`
 - `type-body`: `14 / 22`, `400`, `0`
 - `type-body-sm`: `13 / 20`, `400`, `0`
@@ -41,7 +41,8 @@
 ### Usage Map
 
 - Page title: `type-heading-1`
-- Section title: `type-heading-2`
+- Large section heading: `type-heading-2`
+- Operational section title: `type-title`
 - Card title: `type-title`
 - Main readable content: `type-body`
 - Supporting copy: `type-body-sm`
@@ -63,6 +64,9 @@ Examples:
 
 - Sidebar button: `type-label`
 - Compact sidebar item: `type-label-sm`
+- Dashboard/page title: `type-heading-1`
+- Large content section heading: `type-heading-2`
+- Dashboard section title: `type-title`
 - Empty state title: `type-title`
 - Empty state description: `type-body-sm`
 - Form label: `type-label-sm`
@@ -705,9 +709,9 @@ Structure:
 
 Layout:
 
-- The sidebar uses `variant="inset"`. The `sidebar` token acts as the canvas. The main page container (`background`) sits on top with a rounded top-left corner (`rounded-tl-2xl`), a top margin, and a `border-strong` edge on top and left. This creates a "paper on canvas" effect.
-- When the sidebar is collapsed, the page container transitions to full-bleed: no margin, no rounded corner, no border.
-- The collapse toggle replaces the sidebar rail. When expanded, a toggle button sits next to the logo. When collapsed, hovering over the logo icon swaps it to the toggle icon to expand.
+- The sidebar token acts as the canvas. The main page surface (`background`) may sit on top with a distinct top-left corner, top offset, and `border-strong` edge to create a "paper on canvas" effect.
+- When the sidebar is collapsed, the page surface can return to a flush, full-bleed layout with no extra framing.
+- The collapse control belongs in the header area and should remain directly accessible in both expanded and collapsed states.
 
 Typography:
 

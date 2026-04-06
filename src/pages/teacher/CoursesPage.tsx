@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
-  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -15,7 +15,9 @@ import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { SearchInput } from '@/components/ui/search-input';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { cn } from '@/lib/utils';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +70,7 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
+  const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
@@ -192,6 +195,11 @@ const CoursesPage = () => {
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
+  useEffect(() => {
+    setAction(null);
+    return () => setAction(null);
+  }, [setAction]);
+
   return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
 
@@ -205,7 +213,7 @@ const CoursesPage = () => {
           transition={pageTransition}
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="mb-8 flex items-start justify-between gap-4">
             <div>
               <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
               {!showCoursesEmptyState && (
@@ -213,10 +221,10 @@ const CoursesPage = () => {
               )}
             </div>
             {!showCoursesEmptyState && (
-              <Button asChild size="compact" className="gap-2">
+              <Button asChild size="sm" className="gap-1.5">
                 <Link to="/teacher/new-course">
                   <CalendarPlus className="h-3.5 w-3.5" />
-                  <span>Opprett kurs</span>
+                  Opprett kurs
                 </Link>
               </Button>
             )}
@@ -224,7 +232,7 @@ const CoursesPage = () => {
 
           {/* Search */}
           {!showCoursesEmptyState && (
-            <div className="pb-5">
+            <div className="pb-4">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
@@ -257,83 +265,54 @@ const CoursesPage = () => {
               {/* Current courses */}
               {filteredCurrentRows.length === 0 && searchQuery ? (
                 filteredPastRows.length === 0 && (
-                  <section className="flex flex-col gap-3">
-                    <div>
-                      <h2 className="type-title text-foreground">Aktive kurs</h2>
-                    </div>
-                    <Card className="p-6">
-                      <EmptyState
-                        icon={Calendar}
-                        title="Ingen kurs funnet"
-                        description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
-                        className="py-8"
-                      />
-                    </Card>
-                  </section>
-                )
-              ) : filteredCurrentRows.length === 0 ? (
-                <section className="flex flex-col gap-3">
-                  <div>
-                    <h2 className="type-title text-foreground">Aktive kurs</h2>
-                  </div>
                   <Card className="p-6">
                     <EmptyState
                       icon={Calendar}
-                      title="Ingen aktive kurs"
-                      description="Opprett et kurs for å komme i gang."
-                      action={
-                        <Button asChild size="sm">
-                          <Link to="/teacher/new-course">Opprett kurs</Link>
-                        </Button>
-                      }
+                      title="Ingen kurs funnet"
+                      description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
                       className="py-8"
                     />
                   </Card>
-                </section>
+                )
+              ) : filteredCurrentRows.length === 0 ? (
+                <Card className="p-6">
+                  <EmptyState
+                    icon={Calendar}
+                    title="Ingen aktive kurs"
+                    description="Opprett et kurs for å komme i gang."
+                    action={
+                      <Button asChild size="sm">
+                        <Link to="/teacher/new-course">Opprett kurs</Link>
+                      </Button>
+                    }
+                    className="py-8"
+                  />
+                </Card>
               ) : (
-                <section className="flex flex-col gap-3">
-                  <div>
-                    <h2 className="type-title text-foreground">Aktive kurs</h2>
-                  </div>
-                  <Card className="overflow-hidden p-2 sm:p-3">
-                    <CourseListView courses={filteredCurrentRows} />
-                  </Card>
-                </section>
+                <CourseListView courses={filteredCurrentRows} />
               )}
 
               {/* Past / cancelled section */}
               {pastRows.length > 0 && (
-                <section className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h2 className="type-title text-foreground">Tidligere kurs</h2>
-                      <p className="type-body-sm mt-1 text-muted-foreground">
-                        Avsluttede og avlyste kurs holdes samlet her.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline-soft"
-                      size="compact"
-                      onClick={() => setShowPast(prev => !prev)}
-                      aria-expanded={showPast}
-                      aria-controls="past-courses-section"
-                      className="gap-2"
-                    >
-                      <ChevronRight className={cn(
-                        'h-3.5 w-3.5 smooth-transition',
-                        showPast && 'rotate-90'
-                      )} aria-hidden="true" />
-                      {showPast ? 'Skjul' : `Vis ${pastRows.length}`}
-                    </Button>
+                <Collapsible open={showPast} onOpenChange={setShowPast}>
+                  <div className="flex items-center justify-between">
+                    <h2 className="type-title text-foreground">Tidligere kurs</h2>
+                    <CollapsibleTrigger asChild>
+                      <Button size="sm" className="gap-1.5">
+                        {showPast ? 'Skjul' : `Vis ${pastRows.length}`}
+                        <ChevronDown className={cn(
+                          'h-3.5 w-3.5 smooth-transition',
+                          showPast && 'rotate-180'
+                        )} />
+                      </Button>
+                    </CollapsibleTrigger>
                   </div>
-
-                  {showPast && (
-                    <Card id="past-courses-section" className="overflow-hidden border-dashed border-border/80 bg-surface-muted/35 p-2 opacity-80 sm:p-3">
+                  <CollapsibleContent>
+                    <div className="pt-3 opacity-80">
                       <CourseListView courses={filteredPastRows} flat />
-                    </Card>
-                  )}
-                </section>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               )}
             </div>
           )}

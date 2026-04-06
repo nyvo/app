@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
 import {
   Leaf,
   Home,
@@ -81,6 +80,8 @@ export const TeacherSidebar = () => {
     navigate('/login');
   };
 
+  const sidebarToggleLabel = isCollapsed ? 'Vis sidemeny' : 'Skjul sidemeny';
+
   const isActive = (href: string) => {
     if (href === '/teacher') {
       return location.pathname === '/teacher' || location.pathname === '/teacher/';
@@ -97,31 +98,37 @@ export const TeacherSidebar = () => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center">
-              <SidebarMenuButton asChild size="lg" className="flex-1">
-                <a href="/teacher">
-                  <div className="group/logo relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                    <Leaf className={`h-4 w-4 transition-opacity ${isCollapsed ? 'group-hover/logo:opacity-0' : ''}`} />
-                    {isCollapsed && (
-                      <PanelLeft
-                        className="absolute h-4 w-4 opacity-0 group-hover/logo:opacity-100 transition-opacity"
-                        onClick={(e) => { e.preventDefault(); toggleSidebar(); }}
-                      />
-                    )}
-                  </div>
-                  <span className="font-medium">Ease</span>
-                </a>
-              </SidebarMenuButton>
-              {!isCollapsed && (
+            {isCollapsed ? (
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="flex h-12 w-full items-center justify-center rounded-lg text-sidebar-foreground outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2"
+                aria-label={sidebarToggleLabel}
+                title={sidebarToggleLabel}
+              >
+                <PanelLeft className="h-4 w-4" />
+              </button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <SidebarMenuButton asChild size="lg" className="flex-1">
+                  <Link to="/teacher">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                      <Leaf className="h-4 w-4" />
+                    </div>
+                    <span className="font-medium">Ease</span>
+                  </Link>
+                </SidebarMenuButton>
                 <button
+                  type="button"
                   onClick={toggleSidebar}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-sidebar-accent smooth-transition shrink-0"
-                  aria-label="Skjul sidemeny"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2"
+                  aria-label={sidebarToggleLabel}
+                  title={sidebarToggleLabel}
                 >
                   <PanelLeft className="h-4 w-4" />
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -167,10 +174,7 @@ export const TeacherSidebar = () => {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className={cn(
-                    "rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
-                    !isCollapsed && "bg-background"
-                  )}
+                  className="rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <UserAvatar
                     name={profile?.name}
@@ -190,7 +194,7 @@ export const TeacherSidebar = () => {
                 side={isMobile ? "bottom" : "right"}
                 align="end"
                 sideOffset={4}
-                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg bg-background border-sidebar-border text-sidebar-foreground [&_[role=menuitem]]:focus:bg-sidebar-accent [&_[role=menuitem]]:focus:text-sidebar-accent-foreground"
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg border border-sidebar-border bg-background text-sidebar-foreground [&_[role=menuitem]]:focus:bg-sidebar-accent [&_[role=menuitem]]:focus:text-sidebar-accent-foreground"
               >
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left">

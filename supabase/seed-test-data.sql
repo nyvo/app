@@ -523,7 +523,7 @@ BEGIN
     (v_org_id, c_long_desc, 'Torbjørn Knutsen', 'torbjorn.knutsen@example.com', 'confirmed', 'paid', 2200.00),
     (v_org_id, c_long_desc, 'Anette Rustad', 'anette.rustad@example.com', 'confirmed', 'paid', 2200.00),
     (v_org_id, c_long_desc, 'Stian Myhre', 'stian.myhre@example.com', 'confirmed', 'paid', 2200.00),
-    (v_org_id, c_long_desc, 'Karianne Fjeld', 'karianne.fjeld@example.com', 'confirmed', 'pending', NULL),
+    (v_org_id, c_long_desc, 'Karianne Fjeld', 'karianne.fjeld@example.com', 'cancelled', 'refunded', 2200.00),
     (v_org_id, c_long_desc, 'Per Arne Holmen', 'perarne.holmen@example.com', 'cancelled', 'refunded', 2200.00);
 
   -- ============================================

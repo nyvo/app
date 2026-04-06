@@ -3,15 +3,19 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, X, Check, Shield, Calendar, UserPlus, MessageSquare } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check, Shield } from 'lucide-react';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { UpcomingClassCard } from '@/components/teacher/UpcomingClassCard';
 import { SetupChecklist } from '@/components/teacher/SetupChecklist';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
+import { DashboardAttentionPanel, type DashboardAttentionItem } from '@/components/teacher/DashboardAttentionPanel';
+import { DashboardUpcomingList } from '@/components/teacher/DashboardUpcomingList';
+import { DashboardTodayPanel } from '@/components/teacher/DashboardTodayPanel';
+import { DashboardRegistrationsCard } from '@/components/teacher/DashboardRegistrationsCard';
+import { DashboardMessagesCard } from '@/components/teacher/DashboardMessagesCard';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -26,10 +30,11 @@ import {
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { typedFrom } from '@/lib/supabase';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
-import { fetchCourses, fetchUpcomingSession, fetchWeekSessions } from '@/services/courses';
+import { fetchCourses, fetchNextSessions, fetchNearestFullCourse, fetchTodaySessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
@@ -41,7 +46,6 @@ import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
   CourseStyleType as DashboardCourseType,
-  UpcomingClass,
   Registration,
   SignupStatus,
   Message as DashboardMessage,
@@ -59,6 +63,7 @@ function mapSessionForDashboard(session: CourseSession, course: CourseDB): Dashb
     time: session.start_time?.slice(0, 5) || (extractTimeFromSchedule(course.time_schedule)?.time ?? ''),
     type: styleType as DashboardCourseType,
     date: session.session_date || undefined,
+    imageUrl: course.image_url,
   };
 }
 
@@ -125,84 +130,24 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
     registeredAt: formatRelativeTimePast(signup.created_at || ''),
     createdAt: signup.created_at || '',
     status: signup.status as SignupStatus,
+    isVerified: !!signup.profile,
     hasException,
+    paymentStatus: signup.payment_status || undefined,
   };
 }
 
-// Calculate "starts in" text
-function calculateStartsIn(sessionDate: string, startTime: string): string {
-  const now = new Date();
-
-  // Validate time string format
-  const timeParts = startTime?.split(':');
-  if (!timeParts || timeParts.length < 2) {
-    return 'Tid mangler';
-  }
-
-  const hours = Number(timeParts[0]);
-  const minutes = Number(timeParts[1]);
-
-  // Validate parsed numbers
-  if (isNaN(hours) || isNaN(minutes)) {
-    return 'Ugyldig tid';
-  }
-
-  const sessionDateTime = new Date(sessionDate);
-
-  // Validate date
-  if (isNaN(sessionDateTime.getTime())) {
-    return 'Ugyldig dato';
-  }
-
-  sessionDateTime.setHours(hours, minutes, 0, 0);
-
-  const diffMs = sessionDateTime.getTime() - now.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMs < 0) return 'Pågår nå';
-  if (diffMins < 60) return `Starter om ${diffMins} min`;
-  if (diffHours < 24) return `Starter om ${diffHours} ${diffHours === 1 ? 'time' : 'timer'}`;
-  if (diffDays === 1) return 'Starter i morgen';
-  return `Starter om ${diffDays} dager`;
-}
-
-// Format session date for display
-function formatSessionDate(sessionDate: string): string {
-  const date = new Date(sessionDate);
-
-  // Validate date
-  if (isNaN(date.getTime())) {
-    return 'Ugyldig dato';
-  }
-
-  return date.toLocaleDateString('nb-NO', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-}
 
 const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
-
-function isTodayDate(dateString?: string): boolean {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return false;
-  const now = new Date();
-  return date.getFullYear() === now.getFullYear()
-    && date.getMonth() === now.getMonth()
-    && date.getDate() === now.getDate();
-}
 
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization, profile, refreshOrganizations } = useAuth();
+  const { setBreadcrumbs } = useTeacherShell();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[]>([]);
-  const [upcomingClass, setUpcomingClass] = useState<UpcomingClass | null>(null);
+  const [todayCourses, setTodayCourses] = useState<DashboardCourse[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [messages, setMessages] = useState<DashboardMessage[]>([]);
+  const [capacityCourse, setCapacityCourse] = useState<{ id: string; title: string; attendees: number; capacity: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [hasCourses, setHasCourses] = useState(false);
@@ -285,57 +230,44 @@ const TeacherDashboard = () => {
     return () => { isActive = false; };
   }, [currentOrganization?.id, currentOrganization?.stripe_account_id, currentOrganization?.stripe_onboarding_complete, refreshOrganizations]);
 
-  // Shared processing: takes the 5 parallel fetch results and updates all dashboard state.
-  // Callers handle loading/error state themselves; this function is pure data processing + setters.
+  // Shared processing: takes parallel fetch results and updates all dashboard state.
   function processDashboardResults(
     coursesResult: Awaited<ReturnType<typeof fetchCourses>>,
-    weekSessionsResult: Awaited<ReturnType<typeof fetchWeekSessions>>,
-    upcomingResult: Awaited<ReturnType<typeof fetchUpcomingSession>>,
+    nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
+    todaySessionsResult: Awaited<ReturnType<typeof fetchTodaySessions>>,
+    capacityResult: Awaited<ReturnType<typeof fetchNearestFullCourse>>,
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
     messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
   ) {
-    // Process courses - use week sessions (has actual session dates for this week)
+    // Check if user has any courses at all
     const hasAnyCourses = (coursesResult.data && coursesResult.data.length > 0) ||
-      (weekSessionsResult.data && weekSessionsResult.data.length > 0);
+      (nextSessionsResult.data && nextSessionsResult.data.length > 0);
     setHasCourses(!!hasAnyCourses);
 
-    if (weekSessionsResult.data && weekSessionsResult.data.length > 0) {
-      const sessionCourses = weekSessionsResult.data.map(({ session, course }) =>
+    // Process next sessions
+    if (nextSessionsResult.data && nextSessionsResult.data.length > 0) {
+      setDashboardCourses(nextSessionsResult.data.map(({ session, course }) =>
         mapSessionForDashboard(session, course)
-      );
-      setDashboardCourses(sessionCourses);
+      ));
     } else {
-      // No sessions this week — show empty state in the courses card
       setDashboardCourses([]);
     }
 
-    // Process upcoming session
-    if (upcomingResult.data) {
-      const { session, course, attendeeCount } = upcomingResult.data;
-
-      const duration = course.duration || 60;
-      const timeParts = session.start_time?.split(':');
-      const startHours = timeParts?.[0] ? Number(timeParts[0]) : 0;
-      const startMins = timeParts?.[1] ? Number(timeParts[1]) : 0;
-      const endDate = session.session_date ? new Date(session.session_date) : new Date();
-      endDate.setHours(startHours, startMins + duration, 0, 0);
-      const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
-      const formatTime = (time: string | null) => time?.slice(0, 5) || '';
-
-      setUpcomingClass({
-        id: course.id,
-        title: course.title,
-        type: course.course_type as DashboardCourseType,
-        startTime: formatTime(session.start_time),
-        endTime: formatTime(session.end_time) || endTime,
-        date: formatSessionDate(session.session_date),
-        location: course.location || 'Ikke angitt',
-        attendees: attendeeCount,
-        capacity: course.max_participants || 0,
-        startsIn: calculateStartsIn(session.session_date, session.start_time),
-      });
+    // Process today's sessions
+    if (todaySessionsResult.data && todaySessionsResult.data.length > 0) {
+      setTodayCourses(todaySessionsResult.data.map(({ session, course }) =>
+        mapSessionForDashboard(session, course)
+      ));
     } else {
-      setUpcomingClass(null);
+      setTodayCourses([]);
+    }
+
+    // Process capacity warning (independent of upcoming sessions)
+    if (capacityResult.data) {
+      const { course, attendees, capacity } = capacityResult.data;
+      setCapacityCourse({ id: course.id, title: course.title, attendees, capacity });
+    } else {
+      setCapacityCourse(null);
     }
 
     // Process signups
@@ -359,18 +291,18 @@ const TeacherDashboard = () => {
 
     try {
       // Fetch all data in parallel (silently, no loading state for real-time updates)
-      const [coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
+      const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult] = await Promise.all([
         fetchCourses(currentOrganization.id),
-        fetchWeekSessions(currentOrganization.id, 6),
-        fetchUpcomingSession(currentOrganization.id),
+        fetchNextSessions(currentOrganization.id, 3),
+        fetchTodaySessions(currentOrganization.id),
+        fetchNearestFullCourse(currentOrganization.id),
         fetchRecentSignups(currentOrganization.id, 4),
         fetchRecentConversations(currentOrganization.id, 4),
       ]);
 
-      processDashboardResults(coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult);
+      processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult);
     } catch (err) {
       logger.error('Dashboard refetch error:', err);
-      // Don't show error for real-time updates, keep existing data
     }
   }, [currentOrganization?.id]);
 
@@ -404,10 +336,11 @@ const TeacherDashboard = () => {
 
       try {
         // Fetch all data in parallel
-        const [coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult] = await Promise.all([
+        const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult] = await Promise.all([
           fetchCourses(currentOrganization.id),
-          fetchWeekSessions(currentOrganization.id, 6),
-          fetchUpcomingSession(currentOrganization.id),
+          fetchNextSessions(currentOrganization.id, 3),
+          fetchTodaySessions(currentOrganization.id),
+          fetchNearestFullCourse(currentOrganization.id),
           fetchRecentSignups(currentOrganization.id, 4),
           fetchRecentConversations(currentOrganization.id, 4),
         ]);
@@ -419,7 +352,7 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        processDashboardResults(coursesResult, weekSessionsResult, upcomingResult, signupsResult, messagesResult);
+        processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult);
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {
@@ -442,40 +375,96 @@ const TeacherDashboard = () => {
 
   // Personal name (first word) if set, otherwise fall back to org name
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
-  const todayCourseCount = dashboardCourses.filter((course) => isTodayDate(course.date)).length;
-  const recentSignupsCount = registrations.length;
   const recentMessageCount = messages.length;
+  const paymentFollowUpCount = registrations.filter((registration) => registration.hasException).length;
+  const attentionItems: DashboardAttentionItem[] = [
+    paymentFollowUpCount > 0
+      ? {
+          id: 'payments',
+          title: `${paymentFollowUpCount} ${paymentFollowUpCount === 1 ? 'betaling må' : 'betalinger må'} følges opp`,
+          to: '/teacher/signups',
+          icon: 'payment',
+        }
+      : null,
+    recentMessageCount > 0
+      ? {
+          id: 'messages',
+          title: `${recentMessageCount} ${recentMessageCount === 1 ? 'ny melding' : 'nye meldinger'}`,
+          to: '/teacher/messages',
+          icon: 'message',
+        }
+      : null,
+    capacityCourse
+      ? {
+          id: 'capacity',
+          title: `${capacityCourse.title} er snart fullt`,
+          description: `${capacityCourse.attendees}/${capacityCourse.capacity} plasser er fylt.`,
+          to: `/teacher/courses/${capacityCourse.id}`,
+          icon: 'schedule',
+        }
+      : null,
+  ].filter((item): item is DashboardAttentionItem => item !== null);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: 'Hjem', to: '/teacher' },
+      { label: 'Oversikt' },
+    ]);
+    return () => setBreadcrumbs(null);
+  }, [setBreadcrumbs]);
 
   return (
       <div className="flex-1 overflow-y-auto bg-background h-full">
           <MobileTeacherHeader title="Oversikt" />
 
-          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:px-8 lg:py-8">
+          <div className="w-full px-6 pt-6 pb-6 lg:px-8 lg:pt-8 lg:pb-8">
             <motion.div
               variants={pageVariants}
               initial="initial"
               animate="animate"
               transition={pageTransition}
             >
-              <header className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-                <div className="space-y-1">
-                  <p className="type-eyebrow mb-2 text-muted-foreground">Oversikt</p>
+              <header className="mb-8">
+                <div className="flex items-start justify-between gap-4">
                   <h1 className="type-heading-1 text-foreground">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
+                  {!isLoading && !loadError && isSetupComplete && hasCourses && (
+                    <Button asChild size="sm" className="hidden gap-1.5 md:inline-flex">
+                      <Link to="/teacher/new-course">
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                        Opprett kurs
+                      </Link>
+                    </Button>
+                  )}
                 </div>
-                {/* Only show button when we have courses (not in empty state) */}
-                {!showEmptyState && hasCourses && (
-                  <Button
-                    asChild
-                    size="compact"
-                    className="hidden md:flex gap-2"
-                  >
-                    <Link to="/teacher/new-course">
-                      <CalendarPlus className="h-3.5 w-3.5" />
-                      Nytt kurs
-                    </Link>
-                  </Button>
+                {!isLoading && !loadError && isSetupComplete && hasCourses && (
+                  <div className="mt-4 flex items-center gap-2 md:hidden">
+                    <Button asChild size="sm" className="gap-1.5">
+                      <Link to="/teacher/new-course">
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                        Opprett kurs
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
+                      <Link to="/teacher/schedule">
+                        <Calendar className="h-3.5 w-3.5" />
+                        Timeplan
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
+                      <Link to="/teacher/signups">
+                        <Users className="h-3.5 w-3.5" />
+                        Påmeldinger
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
+                      <Link to="/teacher/messages">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        Meldinger
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </header>
 
@@ -628,75 +617,16 @@ const TeacherDashboard = () => {
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr)_300px] xl:items-start">
                     <div className="space-y-6">
-                      <section className="space-y-3">
-                        <h2 className="type-title text-foreground">Neste kurs</h2>
-                        <UpcomingClassCard classData={upcomingClass} hideHeader />
-                      </section>
-                      <section className="space-y-3">
-                        <h2 className="type-title text-foreground">Dagens kurs</h2>
-                        <CoursesList courses={dashboardCourses} hideHeader />
-                      </section>
+                      <DashboardAttentionPanel items={attentionItems} />
+                      <DashboardUpcomingList courses={dashboardCourses} />
+                      <DashboardMessagesCard messages={messages} />
                     </div>
-                    <div className="space-y-6">
-                      <section>
-                        <h2 className="type-title mb-3 text-foreground">I dag</h2>
-                        <Card className="p-6">
-                        <div className="grid h-full grid-cols-1 gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <p className="type-meta text-muted-foreground">Kurs i dag</p>
-                              <p className="type-heading-3 mt-1 text-foreground">{todayCourseCount}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-3">
-                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
-                              <UserPlus className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <p className="type-meta text-muted-foreground">Nye påmeldinger</p>
-                              <p className="type-heading-3 mt-1 text-foreground">{recentSignupsCount}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-start gap-3">
-                            <div className="flex size-10 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
-                              <MessageSquare className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <p className="type-meta text-muted-foreground">Siste meldinger</p>
-                              <p className="type-heading-3 mt-1 text-foreground">{recentMessageCount}</p>
-                            </div>
-                          </div>
-                        </div>
-                        </Card>
-                      </section>
-                      <Card className="overflow-hidden">
-                        <div className="border-b border-border px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
-                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <RegistrationsList registrations={registrations} hideHeader hideCard />
-                        </div>
-                        <div className="px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Meldinger</h2>
-                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <MessagesList messages={messages} hideHeader hideCard />
-                        </div>
-                      </Card>
-                    </div>
+                    <aside className="space-y-6 xl:border-l xl:border-border xl:pl-6">
+                      <DashboardTodayPanel courses={todayCourses} />
+                      <DashboardRegistrationsCard registrations={registrations} />
+                    </aside>
                   </div>
                 </>
               )}

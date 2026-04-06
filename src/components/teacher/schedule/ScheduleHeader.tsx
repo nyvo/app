@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatWeekRange } from '@/utils/dateUtils';
 
@@ -27,8 +27,8 @@ export function ScheduleHeader({
   const dateRange = formatWeekRange(displayedMonday, displayedSunday);
 
   return (
-    <header className="z-20 flex shrink-0 flex-col gap-4 border-b border-border bg-surface px-4 py-4 sm:px-5">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+    <header className="z-20 flex shrink-0 items-center justify-between gap-4 bg-background px-6 pt-6 pb-4 lg:px-8 lg:pt-8">
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <Button
             variant="ghost"
@@ -60,27 +60,25 @@ export function ScheduleHeader({
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={onGoToToday}
-            variant="outline-soft"
-            size="compact"
-            disabled={weekOffset === 0 || !hasCourses}
-            className="hidden md:flex"
-          >
-            Denne uken
-          </Button>
-
-          {hasCourses && (
-            <Button asChild size="compact" className="gap-2">
-              <Link to="/teacher/new-course" aria-label="Nytt kurs">
-                <CalendarPlus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Nytt kurs</span>
-              </Link>
-            </Button>
-          )}
-        </div>
+        <Button
+          onClick={onGoToToday}
+          variant="outline-soft"
+          size="sm"
+          disabled={weekOffset === 0 || !hasCourses}
+          className="hidden md:flex"
+        >
+          Denne uken
+        </Button>
       </div>
+
+      {hasCourses && (
+        <Button asChild size="sm" className="gap-1.5">
+          <Link to="/teacher/new-course">
+            <CalendarPlus className="h-3.5 w-3.5" />
+            Opprett kurs
+          </Link>
+        </Button>
+      )}
     </header>
   );
 }

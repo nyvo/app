@@ -20,110 +20,64 @@ interface StatusIndicatorProps {
 const variantConfig: Record<IndicatorVariant, {
   bg: string;
   text: string;
-  ring: string;
   defaultIcon?: React.ComponentType<{ className?: string }>;
 }> = {
   success: {
     bg: 'bg-status-confirmed-bg',
     text: 'text-status-confirmed-text',
-    ring: 'ring-status-confirmed-border',
   },
   warning: {
     bg: 'bg-status-warning-bg',
     text: 'text-status-warning-text',
-    ring: 'ring-status-warning-border',
     defaultIcon: Clock,
   },
   error: {
     bg: 'bg-status-error-bg',
     text: 'text-status-error-text',
-    ring: 'ring-status-error-border',
     defaultIcon: XCircle,
   },
   neutral: {
     bg: 'bg-status-cancelled-bg',
     text: 'text-status-cancelled-text',
-    ring: 'ring-status-cancelled-border',
   },
   critical: {
     bg: 'bg-status-error-bg',
     text: 'text-status-error-text',
-    ring: 'ring-status-error-border',
     defaultIcon: AlertTriangle,
   },
   info: {
     bg: 'bg-status-info-bg',
     text: 'text-status-info-text',
-    ring: 'ring-status-info-border',
-  },
-};
-
-const modeConfig: Record<IndicatorMode, {
-  borderRadius: string;
-  padding: string;
-  bgOpacity: string;
-  showRing: boolean;
-}> = {
-  badge: {
-    borderRadius: 'rounded-md',
-    padding: 'px-2 py-0.5',
-    bgOpacity: '',
-    showRing: true,
-  },
-  inline: {
-    borderRadius: 'rounded-md',
-    padding: 'px-1.5 py-0.5',
-    bgOpacity: '/70',
-    showRing: false,
-  },
-  'text-icon': {
-    borderRadius: '',
-    padding: '',
-    bgOpacity: '',
-    showRing: false,
   },
 };
 
 const sizeConfig: Record<IndicatorSize, {
-  fontSize: string;
+  typography: string;
   iconSize: string;
+  padding: string;
 }> = {
   xs: {
-    fontSize: 'text-xxs',
+    typography: 'type-meta',
     iconSize: 'h-2.5 w-2.5',
+    padding: 'px-1.5 py-px',
   },
   sm: {
-    fontSize: 'text-xs',
+    typography: 'type-meta',
     iconSize: 'h-3 w-3',
+    padding: 'px-2 py-0.5',
   },
   md: {
-    fontSize: 'text-xs',
+    typography: 'type-label-sm',
     iconSize: 'h-3.5 w-3.5',
+    padding: 'px-2.5 py-0.5',
   },
 };
 
 /**
- * StatusIndicator - Unified component for all status, payment, and exception badges
+ * StatusIndicator - Unified component for all status, payment, and exception badges.
  *
- * Replaces ad-hoc badge implementations across the Teacher Dashboard.
+ * Uses semantic typography classes and design system tokens.
  * Ensures WCAG compliance by never relying on color alone.
- *
- * @example
- * // Status badge in table
- * <StatusIndicator variant="success" label="Påmeldt" />
- *
- * @example
- * // Payment badge (subtle, secondary)
- * <StatusIndicator variant="warning" mode="inline" label="Venter" />
- *
- * @example
- * // Exception badge (critical, with icon)
- * <StatusIndicator
- *   variant="critical"
- *   label="Betaling feilet"
- *   icon={AlertTriangle}
- *   ariaLabel="Krever oppmerksomhet: Betaling feilet"
- * />
  */
 export function StatusIndicator({
   variant,
@@ -137,15 +91,11 @@ export function StatusIndicator({
   ariaLabel,
 }: StatusIndicatorProps) {
   const config = variantConfig[variant];
-  const modeStyles = modeConfig[mode];
   const sizeStyles = sizeConfig[size];
 
-  // Determine which icon to display
   const DisplayIcon = Icon || (showIcon ? config.defaultIcon : undefined);
-  // Critical variant should always show icons for accessibility
   const shouldShowIcon = DisplayIcon || variant === 'critical';
 
-  // ARIA role: critical badges are alerts, others are status
   const role = variant === 'critical' ? 'alert' : 'status';
   const finalAriaLabel = ariaLabel || `Status: ${label}`;
 
@@ -156,8 +106,8 @@ export function StatusIndicator({
         role={role}
         aria-label={finalAriaLabel}
         className={cn(
-          'inline-flex items-center gap-1 font-medium',
-          sizeStyles.fontSize,
+          'inline-flex items-center gap-1',
+          sizeStyles.typography,
           config.text,
           className
         )}
@@ -171,21 +121,16 @@ export function StatusIndicator({
   }
 
   // Badge or Inline mode (with background)
-  const borderRadiusClass = modeStyles.borderRadius;
-
   return (
     <span
       role={role}
       aria-label={finalAriaLabel}
       className={cn(
-        'inline-flex items-center gap-1 font-medium',
-        config.bg + modeStyles.bgOpacity,
-        modeStyles.showRing && `ring-1 ring-inset ${config.ring}`,
-        borderRadiusClass,
-        modeStyles.padding,
-        sizeStyles.fontSize,
+        'inline-flex items-center gap-1 rounded-md',
+        mode === 'inline' ? `${config.bg}/70` : config.bg,
+        sizeStyles.padding,
+        sizeStyles.typography,
         config.text,
-        variant === 'critical' && '',
         className
       )}
     >

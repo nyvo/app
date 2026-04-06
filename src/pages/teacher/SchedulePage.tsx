@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarPlus, CalendarDays } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { PageLoader } from '@/components/ui/page-loader';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import {
   getOsloTime,
   getWeekNumber,
@@ -35,6 +33,7 @@ import type { ScheduleEvent, SessionWithCourse } from '@/components/teacher/sche
 export const SchedulePage = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
+  const { setAction } = useTeacherShell();
   const isMobile = useIsMobile();
 
   // Data fetching state
@@ -221,25 +220,14 @@ export const SchedulePage = () => {
 
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
+  useEffect(() => {
+    setAction(null);
+    return () => setAction(null);
+  }, [setAction]);
+
   return (
     <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
       <MobileTeacherHeader title="Timeplan" />
-
-      <motion.header
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-      >
-        <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
-          <div className="mb-8">
-            <h1 className="type-heading-1 text-foreground">Timeplan</h1>
-            <p className="type-body mt-1 text-muted-foreground">
-              Planlegg uken, følg kommende økter og få oversikt over kapasitet.
-            </p>
-          </div>
-        </div>
-      </motion.header>
 
       {/* Full empty: no courses at all */}
       {isFullyEmpty ? (
@@ -252,14 +240,13 @@ export const SchedulePage = () => {
             <Button asChild size="default" className="gap-2">
               <Link to="/teacher/new-course">
                 <CalendarPlus className="h-4 w-4" />
-                Opprett nytt kurs
+                Opprett kurs
               </Link>
             </Button>
           }
         />
       ) : isMobile ? (
-        <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
-          <Card className="flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-surface">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ScheduleHeader
               weekNumber={displayedWeekNumber}
               displayedMonday={displayedMonday}
@@ -281,12 +268,10 @@ export const SchedulePage = () => {
               hasEventsThisWeek={hasEventsThisWeek}
               hasCourses={courses.length > 0}
             />
-          </Card>
         </div>
       ) : (
         /* Desktop week view */
-        <div className="flex flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
-          <Card className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-surface">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ScheduleHeader
               weekNumber={displayedWeekNumber}
               displayedMonday={displayedMonday}
@@ -298,7 +283,7 @@ export const SchedulePage = () => {
               hasCourses={!isFullyEmpty}
             />
 
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-surface">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background">
               {isLoading && (
                 <PageLoader variant="overlay" message="Laster timeplan" />
               )}
@@ -308,12 +293,12 @@ export const SchedulePage = () => {
               ) : !isLoading && (
                 <>
                   {/* Sticky day headers */}
-                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-surface">
-                    <div className="border-r border-border bg-surface p-3" />
+                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
+                    <div className="border-r border-border bg-background p-3" />
                     {weekDays.map((day) => (
                       <div
                         key={day.name}
-                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-surface-elevated py-3 ${day.isToday ? 'bg-surface-muted/60' : ''} ${day.isWeekend ? 'bg-surface' : ''}`}
+                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-border py-3 ${day.isToday ? 'bg-surface-muted/40' : 'bg-background'}`}
                       >
                         <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {day.name}
@@ -363,7 +348,7 @@ export const SchedulePage = () => {
                     )}
 
                     {/* Time column */}
-                    <div className="flex flex-col border-r border-border bg-surface text-xxs font-medium text-muted-foreground">
+                    <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
                       {TIME_SLOTS.map((time) => (
                         <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
                           {time}
@@ -376,7 +361,6 @@ export const SchedulePage = () => {
                       <DayColumn
                         key={day.name}
                         isToday={day.isToday}
-                        isWeekend={day.isWeekend}
                         events={currentEvents[index] || []}
                       />
                     ))}
@@ -384,7 +368,6 @@ export const SchedulePage = () => {
                 </>
               )}
             </div>
-          </Card>
         </div>
       )}
 

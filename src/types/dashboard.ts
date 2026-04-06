@@ -11,6 +11,7 @@ export interface UpcomingClass {
   attendees: number;
   capacity: number;
   startsIn: string;
+  imageUrl?: string | null;
 }
 
 export interface Message {
@@ -32,6 +33,7 @@ export interface Course {
   type: CourseStyleType;
   /** ISO date string for the next session/start date */
   date?: string;
+  imageUrl?: string | null;
 }
 
 export interface TeacherStats {
@@ -60,8 +62,11 @@ export interface Registration {
   /** ISO timestamp for filtering by age */
   createdAt: string;
   status: SignupStatus;
+  /** Signed up from a registered account (not a guest) */
+  isVerified?: boolean;
   /** Indicates signup needs teacher attention (payment failed, offer expiring, etc.) */
   hasException?: boolean;
+  paymentStatus?: string;
 }
 
 // Signups page types
