@@ -49,14 +49,14 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
         )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-[calc(100vw-2rem)] sm:w-[360px] p-0 bg-background rounded-2xl border border-border overflow-hidden"
+        className="w-[calc(100vw-2rem)] sm:w-[360px] p-0 bg-background rounded-lg border border-border overflow-hidden"
         align="start"
       >
         {/* Header */}
         <div className="px-6 pt-5 pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-medium text-foreground">Del dette kurset</h3>
+              <h3 className="type-label text-foreground">Del dette kurset</h3>
               <p className="text-xs text-muted-foreground mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>

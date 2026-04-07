@@ -320,7 +320,7 @@ const PublicCoursesPage = () => {
                       Arrangementer
                     </h2>
                     <p className="type-body-sm text-muted-foreground">
-                      Enkeltkurs, workshops og kommende arrangementer.
+                      Enkeltkurs og kommende arrangementer.
                     </p>
                   </div>
                   <PublicCourseTable

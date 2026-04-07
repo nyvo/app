@@ -335,7 +335,7 @@ const SidebarInset = React.forwardRef<
         "relative flex w-full flex-1 flex-col bg-background md:overflow-hidden transition-[margin,border-radius] duration-200 ease-linear",
         "md:peer-data-[variant=inset]:ml-0",
         "md:mt-2 md:rounded-tl-2xl md:border-t md:border-l md:border-border-strong md:shadow-[inset_1px_1px_0_0_rgba(0,0,0,0.02),-1px_-1px_4px_rgba(0,0,0,0.015)]",
-        "md:peer-data-[state=collapsed]:mt-0 md:peer-data-[state=collapsed]:rounded-none md:peer-data-[state=collapsed]:border-0 md:peer-data-[state=collapsed]:shadow-none",
+        "md:peer-data-[state=collapsed]:mt-0 md:peer-data-[state=collapsed]:rounded-none",
         className
       )}
       {...props}

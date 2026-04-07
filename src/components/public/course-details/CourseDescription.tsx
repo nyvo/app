@@ -56,7 +56,7 @@ export const CourseDescription: React.FC<CourseDescriptionProps> = ({
           )}
         </div>
         {needsTruncation && !expanded && (
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         )}
       </div>
       {needsTruncation && (

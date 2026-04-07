@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { addDays } from 'date-fns';
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, fetchExistingSessions } from '@/services/courses';
 import type { ExistingSession } from '@/services/courses';
@@ -35,7 +36,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Stepper } from '@/components/ui/stepper';
 
 import { tabVariants, tabTransition } from '@/lib/motion';
@@ -70,6 +70,7 @@ const CREATE_COURSE_STEPS = [
 const CreateCoursePage = () => {
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
+  const { setBreadcrumbs } = useTeacherShell();
 
   // Stepper state (0, 1, 2)
   const [currentStep, setCurrentStep] = useState(0);
@@ -101,6 +102,16 @@ const CreateCoursePage = () => {
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: 'Hjem', to: '/teacher' },
+      { label: 'Kurs', to: '/teacher/courses' },
+      { label: 'Opprett kurs' },
+    ]);
+
+    return () => setBreadcrumbs(null);
+  }, [setBreadcrumbs]);
 
 
   // Refs for scroll-to-error and content area (scroll to top on step change)
@@ -356,33 +367,18 @@ const CreateCoursePage = () => {
     <div className="flex min-h-full flex-1 flex-col bg-background">
       <MobileTeacherHeader title="Opprett kurs" />
 
-      <div
+        <div
         ref={contentScrollRef}
         className="custom-scrollbar flex-1 overflow-y-auto"
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-          <header className="space-y-3">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link to="/teacher/courses">Kurs</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Opprett nytt kurs</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="space-y-1">
-              <h1 className="type-heading-1 text-foreground">
-                Opprett nytt kurs
-              </h1>
-              <p className="type-body text-muted-foreground">
-                Sett opp et nytt kurs eller arrangement.
-              </p>
-            </div>
+          <header className="space-y-1">
+            <h1 className="type-heading-1 text-foreground">
+              Opprett kurs
+            </h1>
+            <p className="type-body text-muted-foreground">
+              Sett opp et nytt kurs eller arrangement.
+            </p>
           </header>
 
           <div className="rounded-xl bg-surface-muted/50 p-4 sm:p-5">
@@ -427,7 +423,7 @@ const CreateCoursePage = () => {
                     value="single"
                     icon={CalendarDays}
                     title="Arrangement"
-                    description="For enkeltkurs, workshops eller arrangementer."
+                    description="For enkeltkurs og arrangementer."
                   />
                 </RadioGroup>
               </section>

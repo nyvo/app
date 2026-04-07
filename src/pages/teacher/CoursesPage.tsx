@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
-  ChevronDown,
 } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -14,8 +13,6 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { cn } from '@/lib/utils';
@@ -72,12 +69,12 @@ const CoursesPage = () => {
   const { currentOrganization } = useAuth();
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'draft' | 'past'>('all');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPast, setShowPast] = useState(false);
 
   // Fetch courses from Supabase
   const loadData = useCallback(async () => {
@@ -147,51 +144,62 @@ const CoursesPage = () => {
     loadData();
   }, [loadData]);
 
-  // Classify courses by dates, not status
-  const { currentRows, pastRows } = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const current: SessionScheduleRow[] = [];
-    const past: SessionScheduleRow[] = [];
-
-    for (const c of courses) {
-      const row = mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id]);
-
-      if (c.status === 'cancelled') {
-        past.push(row);
-      } else {
-        const cutoff = c.end_date || c.start_date;
-        if (cutoff && cutoff < today) {
-          past.push(row);
-        } else {
-          current.push(row);
-        }
-      }
-    }
-
-    return { currentRows: current, pastRows: past };
+  // Map all courses to rows
+  const allRows = useMemo(() => {
+    return courses.map(c => ({
+      row: mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id]),
+      course: c,
+    }));
   }, [courses, signupsCounts, nextSessionDates]);
 
-  // Search filtering
-  const filterBySearch = useCallback((rows: SessionScheduleRow[]) => {
-    if (!searchQuery.trim()) return rows;
-    const q = searchQuery.toLowerCase().trim();
-    return rows.filter(r =>
-      r.courseTitle.toLowerCase().includes(q) ||
-      r.location.toLowerCase().includes(q)
-    );
-  }, [searchQuery]);
-
-  const filteredCurrentRows = useMemo(() => filterBySearch(currentRows), [currentRows, filterBySearch]);
-  const filteredPastRows = useMemo(() => filterBySearch(pastRows), [pastRows, filterBySearch]);
-
-  // Auto-expand past section when search finds results there
-  useEffect(() => {
-    if (searchQuery.trim() && filteredPastRows.length > 0) {
-      setShowPast(true);
-    } else if (!searchQuery.trim()) {
-      setShowPast(false);
+  // Filter counts for pills
+  const filterCounts = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const counts = { all: 0, active: 0, upcoming: 0, draft: 0, past: 0 };
+    for (const { course } of allRows) {
+      counts.all++;
+      if (course.status === 'active') counts.active++;
+      else if (course.status === 'upcoming') counts.upcoming++;
+      else if (course.status === 'draft') counts.draft++;
+      const cutoff = course.end_date || course.start_date;
+      if (course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today)) {
+        counts.past++;
+      }
     }
-  }, [searchQuery, filteredPastRows.length]);
+    return counts;
+  }, [allRows]);
+
+  // Apply status + search filters, sort by next session date
+  const filteredRows = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const q = searchQuery.toLowerCase().trim();
+
+    return allRows
+      .filter(({ row, course }) => {
+        // Status filter
+        if (statusFilter === 'active' && course.status !== 'active') return false;
+        if (statusFilter === 'upcoming' && course.status !== 'upcoming') return false;
+        if (statusFilter === 'draft' && course.status !== 'draft') return false;
+        if (statusFilter === 'past') {
+          const cutoff = course.end_date || course.start_date;
+          const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
+          if (!isPast) return false;
+        }
+        if (statusFilter === 'all') {
+          // Default: hide past/cancelled
+          const cutoff = course.end_date || course.start_date;
+          const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
+          if (isPast) return false;
+        }
+
+        // Search filter
+        if (q && !row.courseTitle.toLowerCase().includes(q) && !row.location.toLowerCase().includes(q)) return false;
+
+        return true;
+      })
+      .map(({ row }) => row)
+      .sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
+  }, [allRows, statusFilter, searchQuery]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -230,9 +238,9 @@ const CoursesPage = () => {
             )}
           </div>
 
-          {/* Search */}
+          {/* Search + Filters */}
           {!showCoursesEmptyState && (
-            <div className="pb-4">
+            <div className="flex flex-col gap-3 pb-4">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
@@ -240,6 +248,32 @@ const CoursesPage = () => {
                 aria-label="Søk etter kurs"
                 className="max-w-xs"
               />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {([
+                  { value: 'all', label: 'Alle' },
+                  { value: 'active', label: 'Aktive' },
+                  { value: 'upcoming', label: 'Kommende' },
+                  { value: 'draft', label: 'Utkast' },
+                  { value: 'past', label: 'Tidligere' },
+                ] as const).map(({ value, label }) => {
+                  const count = filterCounts[value];
+                  if (value !== 'all' && count === 0) return null;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setStatusFilter(value)}
+                      className={cn(
+                        'type-label-sm rounded-md px-3 py-1.5 smooth-transition',
+                        statusFilter === value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-surface-muted text-muted-foreground hover:bg-surface-subtle hover:text-foreground'
+                      )}
+                    >
+                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </motion.header>
@@ -260,61 +294,15 @@ const CoursesPage = () => {
             />
           ) : showCoursesEmptyState ? (
             <CoursesEmptyState />
+          ) : filteredRows.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title={searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her'}
+              description={searchQuery ? 'Prøv et annet søkeord eller fjern søket.' : 'Prøv et annet filter.'}
+              className="py-16"
+            />
           ) : (
-            <div className="space-y-10">
-              {/* Current courses */}
-              {filteredCurrentRows.length === 0 && searchQuery ? (
-                filteredPastRows.length === 0 && (
-                  <Card className="p-6">
-                    <EmptyState
-                      icon={Calendar}
-                      title="Ingen kurs funnet"
-                      description="Prøv et annet søkeord eller fjern søket for å se alle kurs."
-                      className="py-8"
-                    />
-                  </Card>
-                )
-              ) : filteredCurrentRows.length === 0 ? (
-                <Card className="p-6">
-                  <EmptyState
-                    icon={Calendar}
-                    title="Ingen aktive kurs"
-                    description="Opprett et kurs for å komme i gang."
-                    action={
-                      <Button asChild size="sm">
-                        <Link to="/teacher/new-course">Opprett kurs</Link>
-                      </Button>
-                    }
-                    className="py-8"
-                  />
-                </Card>
-              ) : (
-                <CourseListView courses={filteredCurrentRows} />
-              )}
-
-              {/* Past / cancelled section */}
-              {pastRows.length > 0 && (
-                <Collapsible open={showPast} onOpenChange={setShowPast}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="type-title text-foreground">Tidligere kurs</h2>
-                    <CollapsibleTrigger asChild>
-                      <Button size="sm" className="gap-1.5">
-                        {showPast ? 'Skjul' : `Vis ${pastRows.length}`}
-                        <ChevronDown className={cn(
-                          'h-3.5 w-3.5 smooth-transition',
-                          showPast && 'rotate-180'
-                        )} />
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="pt-3 opacity-80">
-                      <CourseListView courses={filteredPastRows} flat />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-            </div>
+            <CourseListView courses={filteredRows} />
           )}
         </div>
         <EmptyStateToggle />

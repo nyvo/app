@@ -4,17 +4,16 @@ import type { ScheduleEvent } from './types';
 
 interface DayColumnProps {
   isToday: boolean;
-  isWeekend: boolean;
   events: ScheduleEvent[];
 }
 
-export function DayColumn({ isToday, isWeekend, events }: DayColumnProps) {
+export function DayColumn({ isToday, events }: DayColumnProps) {
   return (
-    <div className={`relative border-r border-surface-elevated ${isToday ? 'bg-surface-muted/40' : ''} ${isWeekend ? 'bg-background' : ''}`}>
+    <div className={`relative border-r border-border bg-background ${isToday ? 'bg-surface-muted/30' : ''}`}>
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {TIME_SLOTS.map((time) => (
-          <div key={time} className="h-[100px] border-b border-surface-elevated" />
+          <div key={time} className="h-[100px] border-b border-border/70" />
         ))}
       </div>
 

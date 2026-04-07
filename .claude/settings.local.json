@@ -110,9 +110,18 @@
       "Bash(vercel --prod --yes)",
       "Bash(git rebase:*)",
       "Bash(GIT_EDITOR=true git rebase --continue)",
-      "Bash(git -c core.editor=true rebase --continue)"
+      "Bash(git -c core.editor=true rebase --continue)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "mcp__shadcn__search_items_in_registries",
+      "mcp__shadcn__get_add_command_for_items"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase",
+    "shadcn"
+  ]
 }

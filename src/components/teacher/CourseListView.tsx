@@ -1,8 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Users, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DateBadge } from '@/components/ui/date-badge';
@@ -72,16 +71,7 @@ const SHOW_ALL_THRESHOLD = 2; // if only this many remain after expanding, just 
 
 interface CourseListViewProps {
   courses: SessionScheduleRow[];
-  flat?: boolean;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  'course-series': 'Kursrekker',
-  'event': 'Arrangementer',
-  'online': 'Nettkurs',
-};
-
-const TYPE_ORDER = ['course-series', 'event', 'online'];
 
 function CourseRow({ course }: { course: SessionScheduleRow }) {
   const navigate = useNavigate();
@@ -176,78 +166,42 @@ function CourseRow({ course }: { course: SessionScheduleRow }) {
   );
 }
 
-function CourseGroup({ label, courses, showHeader }: { label: string; courses: SessionScheduleRow[]; showHeader: boolean }) {
+export function CourseListView({ courses }: CourseListViewProps) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE);
   }, [courses]);
 
-  const sorted = useMemo(
-    () => [...courses].sort((a, b) => a.sessionDate.localeCompare(b.sessionDate)),
-    [courses]
-  );
-  // If showing more would leave only a few stragglers, just show all
-  const effectiveVisible = (sorted.length - visibleCount) <= SHOW_ALL_THRESHOLD ? sorted.length : visibleCount;
-  const visible = sorted.slice(0, effectiveVisible);
-  const remainingCount = sorted.length - effectiveVisible;
+  const effectiveVisible = (courses.length - visibleCount) <= SHOW_ALL_THRESHOLD ? courses.length : visibleCount;
+  const visible = courses.slice(0, effectiveVisible);
+  const remainingCount = courses.length - effectiveVisible;
 
   return (
-    <section>
-      {showHeader && (
-        <h2 className="type-title pb-3 text-foreground">
-          {label}
-        </h2>
+    <div>
+      {visible.map(c => <CourseRow key={c.sessionId} course={c} />)}
+      {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
+        <div className="flex justify-center gap-3 pt-4 pb-2">
+          {remainingCount > 0 && (
+            <Button
+              variant="outline-soft"
+              size="sm"
+              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
+            >
+              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
+            </Button>
+          )}
+          {visibleCount > INITIAL_VISIBLE && (
+            <Button
+              variant="outline-soft"
+              size="sm"
+              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
+            >
+              Vis færre
+            </Button>
+          )}
+        </div>
       )}
-      <Card className="overflow-hidden p-2 sm:p-3">
-        {visible.map(c => <CourseRow key={c.sessionId} course={c} />)}
-        {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
-          <div className="flex justify-center gap-3 pt-4 pb-2">
-            {remainingCount > 0 && (
-              <Button
-                variant="outline-soft"
-                size="sm"
-                onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-              >
-                Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-              </Button>
-            )}
-            {visibleCount > INITIAL_VISIBLE && (
-              <Button
-                variant="outline-soft"
-                size="sm"
-                onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-              >
-                Vis færre
-              </Button>
-            )}
-          </div>
-        )}
-      </Card>
-    </section>
-  );
-}
-
-export function CourseListView({ courses, flat = false }: CourseListViewProps) {
-  const groups = useMemo(() => {
-    const grouped: Record<string, SessionScheduleRow[]> = {};
-    for (const course of courses) {
-      const type = course.courseType || 'event';
-      if (!grouped[type]) grouped[type] = [];
-      grouped[type].push(course);
-    }
-    return TYPE_ORDER
-      .filter(t => grouped[t]?.length)
-      .map(t => ({ label: TYPE_LABELS[t] || t, courses: grouped[t] }));
-  }, [courses]);
-
-  const showHeaders = !flat && groups.length > 1;
-
-  return (
-    <div className={showHeaders ? 'space-y-10' : undefined}>
-      {groups.map(group => (
-        <CourseGroup key={group.label} label={group.label} courses={group.courses} showHeader={showHeaders} />
-      ))}
     </div>
   );
 }

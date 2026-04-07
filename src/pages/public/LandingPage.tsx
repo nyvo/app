@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatKroner } from '@/lib/utils';
 import {
   scrollVariants,
   scrollFadeVariants,
@@ -205,7 +206,7 @@ const LandingPage = () => {
                       </span>
                     </div>
                   </div>
-                  <p className="type-label text-foreground">250 kr</p>
+                  <p className="type-label text-foreground">{formatKroner(250)}</p>
                 </div>
                 <div className="type-meta mb-3 flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="size-3" /> Majorstuen Studio
@@ -336,7 +337,7 @@ const LandingPage = () => {
                         Total omsetning
                       </p>
                       <p className="text-3xl font-medium text-foreground mt-1">
-                        42 500 kr
+                        {formatKroner(42500)}
                       </p>
                     </div>
                     <Badge variant="secondary" className="bg-status-confirmed-bg text-status-confirmed-text border-0">
@@ -416,7 +417,7 @@ const LandingPage = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="type-meta text-foreground">Kvittering for Morning Flow</p>
-                  <p className="type-meta text-muted-foreground">250 kr · Sendt til deltaker</p>
+                  <p className="type-meta text-muted-foreground">{`${formatKroner(250)} · Sendt til deltaker`}</p>
                 </div>
               </div>
             </div>

@@ -53,7 +53,7 @@ const DatePicker = ({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-11 w-full items-center justify-between rounded-md border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
+            'flex h-11 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
             !value && 'text-muted-foreground',
             error && 'border-destructive',
             className

@@ -402,7 +402,7 @@ export function AddParticipantDialog({
                     disabled={isSubmitting}
                     className={`type-meta cursor-pointer flex-1 py-1.5 px-3 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
                       paymentMarked === option.value
-                            ? 'border-text-primary text-foreground'
+                            ? 'border-primary text-foreground'
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >

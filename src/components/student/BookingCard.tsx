@@ -93,7 +93,7 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
             <span className="type-label text-muted-foreground">
               {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
             </span>
-            <span className="text-3xl font-medium text-foreground">
+            <span className="type-heading-1 text-foreground">
               {format(startDate, 'd')}
             </span>
           </>

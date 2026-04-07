@@ -384,6 +384,7 @@ const TeacherDashboard = () => {
           title: `${paymentFollowUpCount} ${paymentFollowUpCount === 1 ? 'betaling må' : 'betalinger må'} følges opp`,
           to: '/teacher/signups',
           icon: 'payment',
+          variant: 'warning',
         }
       : null,
     recentMessageCount > 0
@@ -392,6 +393,7 @@ const TeacherDashboard = () => {
           title: `${recentMessageCount} ${recentMessageCount === 1 ? 'ny melding' : 'nye meldinger'}`,
           to: '/teacher/messages',
           icon: 'message',
+          variant: 'neutral',
         }
       : null,
     capacityCourse
@@ -401,6 +403,7 @@ const TeacherDashboard = () => {
           description: `${capacityCourse.attendees}/${capacityCourse.capacity} plasser er fylt.`,
           to: `/teacher/courses/${capacityCourse.id}`,
           icon: 'schedule',
+          variant: 'success',
         }
       : null,
   ].filter((item): item is DashboardAttentionItem => item !== null);
