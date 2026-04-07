@@ -1,18 +1,16 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import { SignupFilterDropdown, type CombinedFilter } from '@/components/teacher/SignupFilterDropdown';
+import { PAYMENT_FILTER_OPTIONS, type PaymentFilter } from '@/components/teacher/SignupFilterDropdown';
+
 import { ErrorState } from '@/components/ui/error-state';
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
 
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import type { SignupStatus } from '@/components/ui/status-badge';
-import type { PaymentStatus } from '@/components/ui/payment-badge';
+import type { SignupStatus } from '@/types/database';
+import type { PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
 import { SearchInput } from '@/components/ui/search-input';
-import { SmartSignupsView } from '@/components/teacher/SmartSignupsView';
+import { SignupListView } from '@/components/teacher/SignupListView';
 import { toast } from 'sonner';
 import { friendlyError } from '@/lib/error-messages';
 import {
@@ -23,12 +21,6 @@ import {
   type SignupWithDetails,
 } from '@/services/signups';
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
-import {
-  useGroupedSignups,
-  type SignupDisplay,
-  type StatusFilter,
-  type PaymentFilter,
-} from '@/hooks/use-grouped-signups';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { typedFrom } from '@/lib/supabase';
@@ -63,7 +55,13 @@ function formatRelativeDate(dateString: string): string {
   return `${date.getDate()}. ${months[date.getMonth()]}`;
 }
 
-// Combined signup filter — merges status + payment into one meaningful dropdown
+// Detect payment exception for action menu context
+function detectException(signup: SignupDisplay): ExceptionType | null {
+  if (signup.paymentStatus === 'failed') return 'payment_failed';
+  if (signup.paymentStatus === 'pending' && signup.status === 'confirmed') return 'pending_payment';
+  return null;
+}
+
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
@@ -72,10 +70,7 @@ export const SignupsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Filters state
-  const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all');
-  const [showPast, setShowPast] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<PaymentFilter>('all');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -95,7 +90,7 @@ export const SignupsPage = () => {
     const signupsData = data || [];
     setSignups(signupsData);
 
-    // Fetch next upcoming session date per course (for DateBadge)
+    // Fetch next upcoming session date per course (for display)
     const courseIds = [...new Set(signupsData.map(s => s.course_id).filter(Boolean))];
     if (courseIds.length > 0) {
       const today = new Date().toISOString().split('T')[0];
@@ -122,16 +117,12 @@ export const SignupsPage = () => {
     loadSignups();
   }, [loadSignups]);
 
-  // Transform signups to display format
+  // Transform signups to display format, sorted by newest first
   const displaySignups: SignupDisplay[] = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
 
-    return signups.map(signup => {
+    const mapped = signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
-      // Date priority for DateBadge:
-      // 1. class_date (drop-in signups with a specific session)
-      // 2. Next upcoming session (fetched from course_sessions)
-      // 3. start_date as fallback
       const courseId = signup.course?.id || signup.course_id;
       const displayDate = signup.class_date
         || nextSessionDates[courseId]
@@ -139,13 +130,12 @@ export const SignupsPage = () => {
         || null;
       const displayTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
 
-      // A course has ended if its dates are in the past (same logic as courses page)
       const courseEndDate = signup.course?.end_date;
       const courseStartDate = signup.course?.start_date;
       const cutoffDate = courseEndDate || courseStartDate;
       const courseEnded = cutoffDate != null && cutoffDate < todayStr;
 
-      return {
+      const display: SignupDisplay = {
         id: signup.id,
         courseId: signup.course?.id || signup.course_id,
         participantName: signup.participant_name || signup.profile?.name || 'Ukjent',
@@ -165,95 +155,71 @@ export const SignupsPage = () => {
         courseEnded,
         courseCapacity: signup.course?.max_participants ?? null,
       };
+
+      // Annotate with exception type for action menu
+      display.exceptionType = detectException(display);
+
+      return display;
     });
+
+    // Sort by newest signup first
+    mapped.sort((a, b) => b.registeredAtDate.getTime() - a.registeredAtDate.getTime());
+
+    return mapped;
   }, [signups, nextSessionDates]);
 
-  // Count signups per filter option (active signups only)
-  const filterCounts = useMemo((): Record<CombinedFilter, number> => {
-    const active = displaySignups.filter(s => !s.courseEnded && s.status !== 'cancelled' && s.status !== 'course_cancelled');
-
-    const counts: Record<CombinedFilter, number> = {
-      all: active.length,
-      pending_payment: 0,
-      payment_failed: 0,
-      cancelled: 0,
+  // Filter counts for pills
+  const filterCounts = useMemo((): Record<PaymentFilter, number> => {
+    const counts: Record<PaymentFilter, number> = {
+      all: displaySignups.length,
+      pending: 0,
+      paid: 0,
       refunded: 0,
     };
-    for (const s of active) {
-      if (s.paymentStatus === 'pending' && s.status === 'confirmed') counts.pending_payment++;
-      if (s.paymentStatus === 'failed') counts.payment_failed++;
-      if (s.status === 'cancelled' || s.status === 'course_cancelled') counts.cancelled++;
+    for (const s of displaySignups) {
+      if ((s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed') counts.pending++;
+      if (s.paymentStatus === 'paid') counts.paid++;
       if (s.paymentStatus === 'refunded') counts.refunded++;
     }
     return counts;
   }, [displaySignups]);
 
-  // Map combined filter to hook params
-  const hookFilters = useMemo(() => {
-    let statusFilter: StatusFilter = 'all';
-    let paymentFilter: PaymentFilter = 'all';
+  // Apply filter + search
+  const filteredSignups = useMemo(() => {
+    let result = displaySignups;
 
-    switch (combinedFilter) {
-      case 'cancelled':
-        statusFilter = 'cancelled';
-        break;
-      case 'refunded':
-        paymentFilter = 'refunded';
-        break;
+    // Payment filter
+    if (activeFilter === 'pending') {
+      result = result.filter(s =>
+        (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
+      );
+    } else if (activeFilter === 'paid') {
+      result = result.filter(s => s.paymentStatus === 'paid');
+    } else if (activeFilter === 'refunded') {
+      result = result.filter(s => s.paymentStatus === 'refunded');
     }
 
-    return { statusFilter, paymentFilter };
-  }, [combinedFilter]);
-
-  // Pre-filter for combined filter options that the hook can't handle directly
-  const filteredDisplaySignups = useMemo(() => {
-    if (combinedFilter === 'pending_payment') {
-      return displaySignups.filter(s => s.paymentStatus === 'pending' && s.status === 'confirmed');
+    // Search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(s =>
+        s.participantName.toLowerCase().includes(query) ||
+        s.participantEmail.toLowerCase().includes(query)
+      );
     }
-    if (combinedFilter === 'payment_failed') {
-      return displaySignups.filter(s => s.paymentStatus === 'failed');
-    }
-    return displaySignups;
-  }, [displaySignups, combinedFilter]);
 
-  // Active signups (main view)
-  const { groups, stats, hasActiveFilters } = useGroupedSignups(filteredDisplaySignups, {
-    modeFilter: 'active',
-    timeFilter: null,
-    statusFilter: hookFilters.statusFilter,
-    paymentFilter: hookFilters.paymentFilter,
-    searchQuery,
-  });
-
-  // Past signups — only date-based (courseEnded), no cancelled-signup mixing
-  const pastDisplaySignups = useMemo(
-    () => displaySignups.filter(s => s.courseEnded),
-    [displaySignups]
-  );
-  const { groups: pastGroups } = useGroupedSignups(pastDisplaySignups, {
-    modeFilter: 'ended',
-    timeFilter: null,
-    statusFilter: 'all',
-    paymentFilter: 'all',
-    searchQuery,
-  });
-
-  // Auto-expand past section when search finds results there
-  useEffect(() => {
-    if (searchQuery.trim() && pastGroups.length > 0) {
-      setShowPast(true);
-    } else if (!searchQuery.trim()) {
-      setShowPast(false);
-    }
-  }, [searchQuery, pastGroups.length]);
+    return result;
+  }, [displaySignups, activeFilter, searchQuery]);
 
   const clearFilters = () => {
-    setCombinedFilter('all');
+    setActiveFilter('all');
     setSearchQuery('');
   };
 
+  const hasFilters = activeFilter !== 'all' || searchQuery.trim() !== '';
+
   // ============================================
-  // EXCEPTION ACTION HANDLERS
+  // ACTION HANDLERS
   // ============================================
 
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
@@ -302,17 +268,35 @@ export const SignupsPage = () => {
             <p className="type-body mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
           </div>
 
-          {/* Filters row */}
-          <div className="flex flex-col gap-3 pb-4 md:flex-row md:items-center">
+          {/* Search + Filters */}
+          <div className="flex flex-col gap-3 pb-4">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Søk etter navn eller e-post"
               aria-label="Søk etter deltakere"
-              className="flex-1 max-w-xs"
+              className="max-w-xs"
             />
-            <div className="flex items-center gap-2 flex-wrap">
-              <SignupFilterDropdown value={combinedFilter} onChange={setCombinedFilter} counts={filterCounts} />
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
+                const count = filterCounts[value];
+                if (value !== 'all' && count === 0) return null;
+                const isActive = activeFilter === value;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => setActiveFilter(value)}
+                    className={cn(
+                      'type-label-sm rounded-md px-3 py-1.5 smooth-transition',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-surface-muted text-muted-foreground hover:bg-surface-subtle hover:text-foreground'
+                    )}
+                  >
+                    {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </motion.header>
@@ -326,49 +310,14 @@ export const SignupsPage = () => {
               onRetry={loadSignups}
             />
           ) : (
-            <div className="flex-1 space-y-10">
-              <SmartSignupsView
-                groups={groups}
-                stats={stats}
-                isLoading={loading}
-                isEmpty={displaySignups.length === 0}
-                hasFilters={hasActiveFilters || combinedFilter !== 'all'}
-                mode="active"
-                onClearFilters={clearFilters}
-                actionHandlers={actionHandlers}
-              />
-
-              {/* Past / ended section */}
-              {!loading && pastGroups.length > 0 && (
-                <Collapsible open={showPast} onOpenChange={setShowPast}>
-                  <div className="flex items-center justify-between">
-                    <h2 className="type-title text-foreground">Avsluttede kurs</h2>
-                    <CollapsibleTrigger asChild>
-                      <Button size="sm" className="gap-1.5">
-                        {showPast ? 'Skjul' : `Vis ${pastGroups.length}`}
-                        <ChevronDown className={cn(
-                          'h-3.5 w-3.5 smooth-transition',
-                          showPast && 'rotate-180'
-                        )} />
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent>
-                    <div className="pt-3 opacity-80">
-                      <SmartSignupsView
-                        groups={pastGroups}
-                        stats={stats}
-                        isLoading={false}
-                        isEmpty={false}
-                        hasFilters={false}
-                        mode="ended"
-                        actionHandlers={actionHandlers}
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
-            </div>
+            <SignupListView
+              signups={filteredSignups}
+              isLoading={loading}
+              isEmpty={displaySignups.length === 0}
+              hasFilters={hasFilters}
+              onClearFilters={clearFilters}
+              actionHandlers={actionHandlers}
+            />
           )}
         </div>
       </div>

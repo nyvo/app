@@ -21,6 +21,30 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type OrgMemberRole = 'owner' | 'admin' | 'teacher'
 export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
 export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
+export type ExceptionType = 'payment_failed' | 'pending_payment'
+
+// Display type for signup rows (participant-first view)
+export interface SignupDisplay {
+  id: string;
+  courseId: string;
+  participantName: string;
+  participantEmail: string;
+  className: string;
+  classDate: string;
+  classTime: string;
+  classDateTime: Date;
+  registeredAt: string;
+  registeredAtDate: Date;
+  status: SignupStatus;
+  paymentStatus: PaymentStatus;
+  note?: string;
+  amountPaid?: number | null;
+  stripePaymentIntentId?: string | null;
+  organizationId?: string;
+  exceptionType?: ExceptionType | null;
+  courseEnded?: boolean;
+  courseCapacity?: number | null;
+}
 
 export interface Database {
   public: {

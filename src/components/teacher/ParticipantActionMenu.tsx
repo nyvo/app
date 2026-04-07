@@ -21,8 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { ExceptionType } from '@/hooks/use-grouped-signups';
-import type { PaymentStatus } from '@/types/database';
+import type { ExceptionType, PaymentStatus } from '@/types/database';
 
 /** Minimal shape the action menu needs — satisfied by both SignupDisplay and DisplayParticipant */
 export interface ActionableParticipant {

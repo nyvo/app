@@ -13,7 +13,7 @@ import { NotePopover } from '@/components/ui/note-popover';
 import { Card } from '@/components/ui/card';
 import { ParticipantActionMenu, type ParticipantActionHandlers, type ActionableParticipant } from './ParticipantActionMenu';
 import { SignupFilterDropdown, type CombinedFilter } from './SignupFilterDropdown';
-import type { ExceptionType } from '@/hooks/use-grouped-signups';
+import type { ExceptionType } from '@/types/database';
 
 export interface DisplayParticipant {
   id: string;
@@ -71,14 +71,13 @@ export const CourseParticipantsTab = ({
   const filterCounts = useMemo((): Record<CombinedFilter, number> => {
     const counts: Record<CombinedFilter, number> = {
       all: participants.length,
-      pending_payment: 0,
-      payment_failed: 0,
+      payment_issues: 0,
       cancelled: 0,
       refunded: 0,
+      ended: 0,
     };
     for (const p of participants) {
-      if (p.paymentStatus === 'pending' && p.status === 'confirmed') counts.pending_payment++;
-      if (p.paymentStatus === 'failed') counts.payment_failed++;
+      if ((p.paymentStatus === 'pending' && p.status === 'confirmed') || p.paymentStatus === 'failed') counts.payment_issues++;
       if (p.status === 'cancelled' || p.status === 'course_cancelled') counts.cancelled++;
       if (p.paymentStatus === 'refunded') counts.refunded++;
     }
@@ -91,11 +90,8 @@ export const CourseParticipantsTab = ({
 
     // Combined filter
     switch (combinedFilter) {
-      case 'pending_payment':
-        result = result.filter(p => p.paymentStatus === 'pending' && p.status === 'confirmed');
-        break;
-      case 'payment_failed':
-        result = result.filter(p => p.paymentStatus === 'failed');
+      case 'payment_issues':
+        result = result.filter(p => (p.paymentStatus === 'pending' && p.status === 'confirmed') || p.paymentStatus === 'failed');
         break;
       case 'cancelled':
         result = result.filter(p => p.status === 'cancelled' || p.status === 'course_cancelled');

@@ -8,14 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type CombinedFilter = 'all' | 'pending_payment' | 'payment_failed' | 'cancelled' | 'refunded';
+// New payment-focused filters (used by SignupsPage)
+export type PaymentFilter = 'all' | 'pending' | 'paid' | 'refunded';
+
+export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string }> = [
+  { value: 'all', label: 'Alle' },
+  { value: 'pending', label: 'Betalingsproblemer' },
+  { value: 'paid', label: 'Betalt' },
+  { value: 'refunded', label: 'Refundert' },
+];
+
+// Combined filter (used by CourseParticipantsTab)
+export type CombinedFilter = 'all' | 'payment_issues' | 'cancelled' | 'refunded' | 'ended';
 
 export const COMBINED_FILTER_OPTIONS: Array<{ value: CombinedFilter; label: string }> = [
   { value: 'all', label: 'Alle' },
-  { value: 'pending_payment', label: 'Venter betaling' },
-  { value: 'payment_failed', label: 'Betaling feilet' },
+  { value: 'payment_issues', label: 'Betalingsproblemer' },
   { value: 'cancelled', label: 'Avbestilt' },
   { value: 'refunded', label: 'Refundert' },
+  { value: 'ended', label: 'Avsluttede kurs' },
 ];
 
 interface SignupFilterDropdownProps {
