@@ -28,7 +28,7 @@ const NotFoundPage = () => {
         <div className="text-center max-w-md">
           {/* 404 Number */}
           <div className="mb-6">
-            <span className="text-8xl md:text-9xl font-medium text-muted select-none">
+            <span className="type-display-1 text-muted select-none">
               404
             </span>
           </div>

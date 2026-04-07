@@ -171,10 +171,10 @@ const StudentMessagesPage = () => {
                         </span>
                       </div>
                       <p className={cn(
-                        'type-body truncate',
+                        'truncate',
                         conversation.unread_count > 0
-                          ? 'text-foreground font-medium'
-                          : 'text-muted-foreground'
+                          ? 'type-label text-foreground'
+                          : 'type-body text-muted-foreground'
                       )}>
                         {conversation.last_message?.content || 'Ingen meldinger'}
                       </p>

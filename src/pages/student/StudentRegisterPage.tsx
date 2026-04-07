@@ -117,7 +117,7 @@ const StudentRegisterPage = () => {
       footer={
         <p className="type-meta text-muted-foreground">
           Har du allerede en konto?{' '}
-          <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
+          <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
             Logg inn
           </Link>
         </p>

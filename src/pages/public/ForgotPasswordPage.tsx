@@ -73,7 +73,7 @@ const ForgotPasswordPage = () => {
         customContent
         footer={
           <p className="type-meta text-muted-foreground">
-            <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
+            <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
               Til innlogging
             </Link>
           </p>
@@ -124,7 +124,7 @@ const ForgotPasswordPage = () => {
       footer={
         <p className="type-meta text-muted-foreground">
           Husker du passordet ditt?{' '}
-          <Link to={ROUTES.login} className="text-foreground font-medium hover:underline">
+          <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
             Logg inn
           </Link>
         </p>

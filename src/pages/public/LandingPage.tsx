@@ -61,7 +61,7 @@ const LandingPage = () => {
               for yogastudioer.
             </h1>
 
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-7 font-normal">
+            <p className="type-body-lg text-muted-foreground mb-7">
               Automatiser påmeldinger, betaling og regnskap. Alt på ett sted.
             </p>
 
@@ -109,7 +109,7 @@ const LandingPage = () => {
           <h2 className="type-heading-1 mb-4 text-foreground">
             Hvordan det fungerer
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="type-body-lg text-muted-foreground">
             Fra planlegging til utbetaling på 1-2-3.
           </p>
         </motion.div>
@@ -290,7 +290,7 @@ const LandingPage = () => {
           <h2 className="type-heading-1 mb-4 text-foreground">
             Alt du trenger
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="type-body-lg text-muted-foreground">
             Alt for å drive studioet ditt.
           </p>
         </motion.div>
@@ -316,7 +316,7 @@ const LandingPage = () => {
                 <h3 className="type-heading-3 mb-4 text-foreground">
                   Inntekter på autopilot.
                 </h3>
-                <p className="text-muted-foreground text-lg leading-relaxed mb-8">
+                <p className="type-body-lg text-muted-foreground mb-8">
                   Slipp fakturaer og manuell oppfølging. Pengene kommer inn når
                   deltakeren melder seg på.
                 </p>
@@ -336,7 +336,7 @@ const LandingPage = () => {
                       <p className="type-label text-muted-foreground">
                         Total omsetning
                       </p>
-                      <p className="text-3xl font-medium text-foreground mt-1">
+                      <p className="type-heading-1 text-foreground mt-1">
                         {formatKroner(42500)}
                       </p>
                     </div>
@@ -440,7 +440,7 @@ const LandingPage = () => {
             <h2 className="type-heading-1 mb-4 text-primary-foreground">
               Bygget for yogastudioer i Norge
             </h2>
-            <p className="text-muted-foreground text-base md:text-lg max-w-xl mx-auto mb-12">
+            <p className="type-body-lg text-muted-foreground max-w-xl mx-auto mb-12">
               Ease håndterer påmelding, betaling og regnskap. Du fokuserer på undervisningen.
             </p>
           </motion.div>
@@ -453,15 +453,15 @@ const LandingPage = () => {
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-12"
           >
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="text-2xl font-medium text-primary-foreground">100 %</p>
+              <p className="type-heading-2 text-primary-foreground">100 %</p>
               <p className="type-body mt-1 text-muted-foreground">Norsk</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="text-2xl font-medium text-primary-foreground">Gratis</p>
+              <p className="type-heading-2 text-primary-foreground">Gratis</p>
               <p className="type-body mt-1 text-muted-foreground">Ingen månedskostnad</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="text-2xl font-medium text-primary-foreground">Fiken</p>
+              <p className="type-heading-2 text-primary-foreground">Fiken</p>
               <p className="type-body mt-1 text-muted-foreground">Automatisk bokføring</p>
             </motion.div>
           </motion.div>
@@ -523,7 +523,7 @@ const LandingPage = () => {
                 <span className="type-display-2 text-foreground">
                   Gratis
                 </span>
-                <span className="text-muted-foreground font-medium">/ mnd</span>
+                <span className="type-label text-muted-foreground">/ mnd</span>
               </div>
               <p className="type-meta mt-2 text-muted-foreground">
                 Ingen kort nødvendig.

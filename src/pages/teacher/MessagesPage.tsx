@@ -372,12 +372,12 @@ const MessagesPage = () => {
                       </span>
                     </div>
                     <p
-                      className={`type-body truncate ${
+                      className={`truncate ${
                         conversation.unread_count > 0
                           ? 'type-label text-foreground'
                           : activeConversation?.id === conversation.id
                           ? 'type-label text-muted-foreground'
-                          : 'text-muted-foreground'
+                          : 'type-body text-muted-foreground'
                       }`}
                     >
                       {conversation.last_message?.content || 'Ingen meldinger'}

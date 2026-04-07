@@ -266,9 +266,9 @@ const CheckoutSuccessPage = () => {
                 {isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført'}
               </h1>
 
-              <div className="text-muted-foreground mb-6 text-base leading-relaxed">
+              <div className="type-body-lg text-muted-foreground mb-6">
                 {signup ? (
-                  <p>Du er påmeldt <span className="font-medium text-foreground">{signup.course.title}</span>.</p>
+                  <p>Du er påmeldt <span className="type-label text-foreground">{signup.course.title}</span>.</p>
                 ) : (
                   <p>{isFreeSignup ? 'Du er nå påmeldt.' : 'Betalingen er bekreftet.'}</p>
                 )}
@@ -280,7 +280,7 @@ const CheckoutSuccessPage = () => {
                   <AlertTitle variant="info" className="type-title">Bekreftelse sendt</AlertTitle>
                   <AlertDescription variant="info">
                     {signup ? (
-                      <>Kvittering sendt til <span className="font-medium">{signup.participant_email}</span>.</>
+                      <>Kvittering sendt til <span className="type-label">{signup.participant_email}</span>.</>
                     ) : (
                       <>Kvittering sendt til e-postadressen du oppga.</>
                     )}
@@ -363,7 +363,7 @@ const CheckoutSuccessPage = () => {
                     <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
-                    <span className="font-medium text-xl text-foreground">{formatKroner(signup.amount_paid)}</span>
+                    <span className="type-heading-2 text-foreground">{formatKroner(signup.amount_paid)}</span>
                   </div>
                 </div>
               </Card>

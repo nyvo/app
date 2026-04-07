@@ -91,7 +91,7 @@ const LoginPage = () => {
       footer={
         <p className="type-meta text-muted-foreground">
           Har du ikke konto?{' '}
-          <Link to={ROUTES.signup} className="text-foreground font-medium hover:underline">
+          <Link to={ROUTES.signup} className="type-label text-foreground hover:underline">
             Opprett konto
           </Link>
         </p>
