@@ -1,76 +1,75 @@
-import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
+import { Repeat, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime, getEventStyle } from './utils';
 
 interface EventCardProps {
   event: ScheduleEvent;
+  isSelected?: boolean;
+  onSelect?: (event: ScheduleEvent) => void;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
   const positionStyle = getEventStyle(event.startTime, event.endTime);
   const isCompleted = event.status === 'completed';
   const isActive = event.status === 'active';
 
-  // Calculate card height to determine density
   const heightPx = parseFloat(positionStyle.height);
   const isCompact = heightPx < 60;
 
+  const TypeIcon = event.courseType === 'event' ? Calendar : Repeat;
+
   return (
-    <Link
-      to={`/teacher/courses/${event.courseId}`}
+    <button
+      type="button"
+      onClick={() => onSelect?.(event)}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
-      className={`group absolute left-1 right-1 block overflow-hidden rounded-lg border border-border p-2 smooth-transition cursor-pointer ${
+      className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border p-1 text-left smooth-transition cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
         isCompleted
-          ? 'bg-surface-muted'
+          ? 'border-border/50'
           : isActive
-          ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
-          : 'bg-background hover:bg-surface-muted/50'
+          ? 'border-primary/30 ring-1 ring-primary/20'
+          : isSelected
+          ? 'border-primary/30 ring-1 ring-primary/20'
+          : 'border-border hover:border-border'
       }`}
       style={positionStyle}
     >
-      {isCompact ? (
-        /* Single-line for very short sessions (<36 min) */
-        <div className="flex items-center gap-1.5">
-          <p className={`type-meta truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
-            {event.title}
-          </p>
-          <span className={`type-meta shrink-0 ${isCompleted ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-            {formatTime(event.startTime)}
-          </span>
-        </div>
-      ) : (
-        <>
-          {/* Title first — the most important for scanning */}
-          <div className="flex items-start justify-between gap-1.5">
-            <p className={`type-meta truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+      <div className="bg-surface-muted rounded-md h-full p-2 flex flex-col">
+        {isCompact ? (
+          <div className="flex items-center gap-1.5">
+            <TypeIcon className="size-3 shrink-0 text-muted-foreground" />
+            <p className="type-meta truncate text-foreground">
               {event.title}
             </p>
-            {isActive && (
-              <Badge variant="secondary" className="shrink-0 border-0 bg-status-confirmed-bg px-1.5 py-0.5 text-xxs text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
-                Pågår
-              </Badge>
-            )}
-          </div>
-
-          {/* Time + signups on one line — secondary info */}
-          <div className="mt-1 flex items-center justify-between text-muted-foreground">
-            <span className="type-meta">
-              {formatTime(event.startTime)}–{formatTime(event.endTime)}
+            <span className="type-meta shrink-0 text-muted-foreground">
+              {formatTime(event.startTime)}
             </span>
-            {!isCompleted && (
-              <span className="type-meta flex items-center gap-1">
-                <Users className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
-              </span>
-            )}
-            {isCompleted && (
-              <span className="type-meta">Fullført</span>
-            )}
           </div>
-        </>
-      )}
-    </Link>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <TypeIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                <p className={`type-label-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+                  {event.title}
+                </p>
+              </div>
+              {isActive && (
+                <Badge variant="secondary" className="shrink-0 border-0 bg-status-confirmed-bg px-1.5 py-0.5 text-xxs text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
+                  Pågår
+                </Badge>
+              )}
+            </div>
+            <div className="mt-auto pt-1.5">
+              <p className="type-meta text-muted-foreground/60">Tidspunkt</p>
+              <p className="type-meta text-muted-foreground">
+                {formatTime(event.startTime)} – {formatTime(event.endTime)}
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </button>
   );
 }

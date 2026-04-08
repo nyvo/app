@@ -10,6 +10,7 @@ export interface ScheduleEvent {
   status?: 'completed' | 'upcoming' | 'active';
   signups: number;
   maxCapacity: number | null;
+  courseType?: 'course-series' | 'event' | 'online';
 }
 
 export interface SessionWithCourse extends CourseSession {

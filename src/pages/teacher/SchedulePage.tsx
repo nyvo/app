@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarPlus, CalendarDays } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -11,7 +12,6 @@ import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import {
   getOsloTime,
-  getWeekNumber,
   getMondayOfWeek,
   generateWeekDays,
 } from '@/utils/dateUtils';
@@ -24,6 +24,7 @@ import {
   DayColumn,
   MobileDayView,
   ScheduleHeader,
+  EventSidebar,
   TIME_SLOTS,
   calculateEndTime,
   formatTime,
@@ -36,7 +37,7 @@ export const SchedulePage = () => {
   const { setAction } = useTeacherShell();
   const isMobile = useIsMobile();
 
-  // Data fetching state
+  // Data state
   const [courses, setCourses] = useState<Course[]>([]);
   const [sessions, setSessions] = useState<SessionWithCourse[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
@@ -47,6 +48,9 @@ export const SchedulePage = () => {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(getOsloTime);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  const [selectedEventDate, setSelectedEventDate] = useState<string | undefined>();
 
   // Update current time every minute
   useEffect(() => {
@@ -56,7 +60,7 @@ export const SchedulePage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate displayed week bounds (return new Date to avoid memo mutation)
+  // Week bounds
   const displayedMonday = useMemo(() => {
     const today = getOsloTime();
     const monday = getMondayOfWeek(today);
@@ -71,7 +75,7 @@ export const SchedulePage = () => {
     return sunday;
   }, [displayedMonday]);
 
-  // Fetch courses and sessions
+  // Fetch data
   const loadScheduleData = useCallback(async () => {
     if (!currentOrganization) return;
 
@@ -125,13 +129,13 @@ export const SchedulePage = () => {
     loadScheduleData();
   }, [loadScheduleData]);
 
-  // Filter sessions to displayed week and transform to events
-  const currentEvents = useMemo(() => {
+  // Build events by day, tracking session dates
+  const { currentEvents, sessionDates } = useMemo(() => {
     const mondayStr = displayedMonday.toISOString().split('T')[0];
     const sundayStr = displayedSunday.toISOString().split('T')[0];
     const eventsByDay: Record<number, ScheduleEvent[]> = {};
+    const dates: Record<string, string> = {};
 
-    // Hoist time computation outside loop
     const now = getOsloTime();
     const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -170,13 +174,16 @@ export const SchedulePage = () => {
         status,
         signups: signupsCounts[session.course.id] || 0,
         maxCapacity: session.course.max_participants,
+        courseType: session.course.course_type as 'course-series' | 'event' | 'online',
       };
+
+      dates[session.id] = sessionDate;
 
       if (!eventsByDay[dayIndex]) eventsByDay[dayIndex] = [];
       eventsByDay[dayIndex].push(event);
     }
 
-    return eventsByDay;
+    return { currentEvents: eventsByDay, sessionDates: dates };
   }, [sessions, displayedMonday, displayedSunday, signupsCounts]);
 
   const weekDays = useMemo(() => {
@@ -190,8 +197,6 @@ export const SchedulePage = () => {
       if (todayIndex !== -1) setSelectedDayIndex(todayIndex);
     }
   }, [isMobile, weekOffset, weekDays]);
-
-  const displayedWeekNumber = useMemo(() => getWeekNumber(displayedMonday), [displayedMonday]);
 
   // Current time indicator
   const currentTimePosition = useMemo(() => {
@@ -218,6 +223,11 @@ export const SchedulePage = () => {
   const goToNextWeek = () => setWeekOffset(prev => Math.min(prev + 1, 52));
   const goToCurrentWeek = () => setWeekOffset(0);
 
+  const handleSelectEvent = useCallback((event: ScheduleEvent) => {
+    setSelectedEvent(prev => prev?.id === event.id ? null : event);
+    setSelectedEventDate(sessionDates[event.id]);
+  }, [sessionDates]);
+
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
   useEffect(() => {
@@ -225,11 +235,17 @@ export const SchedulePage = () => {
     return () => setAction(null);
   }, [setAction]);
 
+  // Clear selection on view/week change
+  useEffect(() => {
+    setSelectedEvent(null);
+  }, [viewMode, weekOffset]);
+
+  const showSidebar = !!selectedEvent && !isMobile;
+
   return (
     <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
       <MobileTeacherHeader title="Timeplan" />
 
-      {/* Full empty: no courses at all */}
       {isFullyEmpty ? (
         <EmptyState
           icon={CalendarDays}
@@ -247,67 +263,73 @@ export const SchedulePage = () => {
         />
       ) : isMobile ? (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <ScheduleHeader
-              weekNumber={displayedWeekNumber}
-              displayedMonday={displayedMonday}
-              displayedSunday={displayedSunday}
-              weekOffset={weekOffset}
-              onPreviousWeek={goToPreviousWeek}
-              onNextWeek={goToNextWeek}
-              onGoToToday={goToCurrentWeek}
-              hasCourses={!isFullyEmpty}
-            />
-            <MobileDayView
-              weekDays={weekDays}
-              selectedDayIndex={selectedDayIndex}
-              onDaySelect={setSelectedDayIndex}
-              events={currentEvents}
-              isLoading={isLoading}
-              error={error}
-              onRetry={loadScheduleData}
-              hasEventsThisWeek={hasEventsThisWeek}
-              hasCourses={courses.length > 0}
-            />
+          <ScheduleHeader
+            displayedMonday={displayedMonday}
+            weekOffset={weekOffset}
+            viewMode="day"
+            onViewModeChange={() => {}}
+            onPreviousWeek={goToPreviousWeek}
+            onNextWeek={goToNextWeek}
+            onGoToToday={goToCurrentWeek}
+            hasCourses={!isFullyEmpty}
+          />
+          <MobileDayView
+            weekDays={weekDays}
+            selectedDayIndex={selectedDayIndex}
+            onDaySelect={setSelectedDayIndex}
+            events={currentEvents}
+            isLoading={isLoading}
+            error={error}
+            onRetry={loadScheduleData}
+            hasEventsThisWeek={hasEventsThisWeek}
+            hasCourses={courses.length > 0}
+          />
         </div>
       ) : (
-        /* Desktop week view */
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        /* Desktop */
+        <div className="flex min-h-0 flex-1 gap-3 overflow-hidden px-6 py-6 lg:px-8 lg:py-8">
+          {/* Calendar section */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
             <ScheduleHeader
-              weekNumber={displayedWeekNumber}
               displayedMonday={displayedMonday}
-              displayedSunday={displayedSunday}
               weekOffset={weekOffset}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
               onPreviousWeek={goToPreviousWeek}
               onNextWeek={goToNextWeek}
               onGoToToday={goToCurrentWeek}
               hasCourses={!isFullyEmpty}
             />
 
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background rounded-xl">
               {isLoading && (
                 <PageLoader variant="overlay" message="Laster timeplan" />
               )}
 
               {error && !isLoading ? (
-                <DesktopError error={error} onRetry={loadScheduleData} />
-              ) : !isLoading && (
+                <ErrorState
+                  message={error}
+                  onRetry={loadScheduleData}
+                  className="flex-1 pt-[20vh] h-auto"
+                />
+              ) : !isLoading && viewMode === 'week' && (
                 <>
                   {/* Sticky day headers */}
-                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
-                    <div className="border-r border-border bg-background p-3" />
+                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background rounded-t-xl">
+                    <div />
                     {weekDays.map((day) => (
                       <div
                         key={day.name}
-                        className={`group flex flex-col items-center justify-center gap-0.5 border-r border-border py-3 ${day.isToday ? 'bg-surface-muted/40' : 'bg-background'}`}
+                        className="flex items-center justify-center gap-1.5 py-3"
                       >
-                        <span className={`type-eyebrow ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        <span className={`type-meta ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {day.name}
                         </span>
                         <span
-                          className={`type-label flex size-7 items-center justify-center rounded-full ${
+                          className={`type-label-sm flex size-7 items-center justify-center rounded-full ${
                             day.isToday
                               ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground group-hover:bg-surface-muted'
+                              : 'text-muted-foreground'
                           }`}
                         >
                           {day.date}
@@ -316,9 +338,7 @@ export const SchedulePage = () => {
                     ))}
                   </div>
 
-                  {/* Grid content */}
                   <div className="relative grid min-w-[1040px] flex-1 grid-cols-[60px_repeat(7,minmax(140px,1fr))]">
-                    {/* Empty week overlay */}
                     {!hasEventsThisWeek && (
                       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                         <div className="pointer-events-auto">
@@ -332,7 +352,6 @@ export const SchedulePage = () => {
                       </div>
                     )}
 
-                    {/* Current time indicator */}
                     {showTimeIndicator && (
                       <div
                         className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
@@ -342,32 +361,99 @@ export const SchedulePage = () => {
                         <div className="type-meta w-[60px] pr-2 text-right text-primary">
                           {currentTimeString}
                         </div>
-                        <div className="h-px flex-1 bg-primary opacity-50" />
-                        <div className="absolute left-[60px] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary" />
+                        <div className="h-px flex-1 bg-primary/40" />
+                        <div className="absolute left-[60px] size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary" />
                       </div>
                     )}
 
-                    {/* Time column */}
-                    <div className="flex flex-col border-r border-border bg-background text-xxs font-medium text-muted-foreground">
+                    <div className="flex flex-col bg-background">
                       {TIME_SLOTS.map((time) => (
-                        <div key={time} className="h-[100px] border-b border-border/50 px-2 py-1">
-                          {time}
+                        <div key={time} className="h-[100px] border-b border-border/60 px-2 py-1">
+                          <span className="type-meta text-muted-foreground/60">{time.replace(':00', '')}</span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Day columns */}
                     {weekDays.map((day, index) => (
                       <DayColumn
                         key={day.name}
                         isToday={day.isToday}
                         events={currentEvents[index] || []}
+                        selectedEventId={selectedEvent?.id}
+                        onSelectEvent={handleSelectEvent}
                       />
                     ))}
                   </div>
                 </>
               )}
+
+              {!isLoading && viewMode === 'day' && (
+                <div className="p-6">
+                  {(() => {
+                    const todayIndex = weekDays.findIndex(d => d.isToday);
+                    const dayIndex = todayIndex !== -1 ? todayIndex : 0;
+                    const dayEvents = (currentEvents[dayIndex] || []).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                    if (dayEvents.length === 0) {
+                      return (
+                        <EmptyState
+                          icon={CalendarDays}
+                          title="Ingen timer i dag"
+                          description="Ingen planlagte timer i dag."
+                          variant="compact"
+                          className="py-16"
+                        />
+                      );
+                    }
+
+                    return (
+                      <div className="max-w-xl space-y-2">
+                        {dayEvents.map(event => (
+                          <button
+                            key={event.id}
+                            type="button"
+                            onClick={() => handleSelectEvent(event)}
+                            className={`w-full text-left rounded-lg border border-border p-4 smooth-transition outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                              selectedEvent?.id === event.id
+                                ? 'bg-primary/5 ring-1 ring-primary/20'
+                                : 'hover:bg-surface-muted/40'
+                            }`}
+                          >
+                            <p className="type-label text-foreground">{event.title}</p>
+                            <p className="type-meta text-muted-foreground mt-0.5">
+                              {formatTime(event.startTime)} – {formatTime(event.endTime)}
+                              {event.location !== 'Ikke angitt' && ` · ${event.location}`}
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Detail sidebar — separate container */}
+          <AnimatePresence>
+            {showSidebar && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 320, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                className="shrink-0 overflow-hidden"
+              >
+                <div className="w-80 min-w-80 rounded-xl border border-border bg-background self-start">
+                  <EventSidebar
+                    event={selectedEvent}
+                    sessionDate={selectedEventDate}
+                    onClose={() => setSelectedEvent(null)}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -375,15 +461,5 @@ export const SchedulePage = () => {
     </main>
   );
 };
-
-function DesktopError({ error, onRetry }: { error: string; onRetry: () => void }) {
-  return (
-    <ErrorState
-      message={error}
-      onRetry={onRetry}
-      className="flex-1 pt-[20vh] h-auto"
-    />
-  );
-}
 
 export default SchedulePage;
