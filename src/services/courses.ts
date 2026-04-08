@@ -900,6 +900,8 @@ export interface SessionScheduleRow {
   courseStartDate: string | null
   courseEndDate?: string | null
   totalWeeks?: number | null
+  timeSchedule?: string | null
+  imageUrl?: string | null
 }
 
 

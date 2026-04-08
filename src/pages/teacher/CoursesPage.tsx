@@ -61,6 +61,8 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
     courseStartDate: course.start_date,
     courseEndDate: course.end_date,
     totalWeeks: course.total_weeks,
+    timeSchedule: course.time_schedule || null,
+    imageUrl: course.image_url || null,
   };
 }
 
