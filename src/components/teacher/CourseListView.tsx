@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,14 +57,6 @@ function formatScheduleLabel(timeSchedule: string | null | undefined, startTime:
   return startTime || timeSchedule;
 }
 
-const INITIAL_VISIBLE = 5;
-const LOAD_MORE_INCREMENT = 5;
-const SHOW_ALL_THRESHOLD = 2;
-
-interface CourseListViewProps {
-  courses: SessionScheduleRow[];
-}
-
 function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   const [failed, setFailed] = useState(false);
   const handleError = useCallback(() => setFailed(true), []);
@@ -87,7 +79,7 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-function CourseCard({ course }: { course: SessionScheduleRow }) {
+export function CourseCard({ course }: { course: SessionScheduleRow }) {
   const urgency = getUrgencyInfo(course);
   const enrollmentLabel = getEnrollmentLabel(course);
   const scheduleLabel = formatScheduleLabel(course.timeSchedule, course.startTime);
@@ -137,42 +129,53 @@ function CourseCard({ course }: { course: SessionScheduleRow }) {
   );
 }
 
+const ITEMS_PER_PAGE = 6;
+
+interface CourseListViewProps {
+  courses: SessionScheduleRow[];
+}
+
 export function CourseListView({ courses }: CourseListViewProps) {
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
+    setCurrentPage(0);
   }, [courses]);
 
-  const effectiveVisible = (courses.length - visibleCount) <= SHOW_ALL_THRESHOLD ? courses.length : visibleCount;
-  const visible = courses.slice(0, effectiveVisible);
-  const remainingCount = courses.length - effectiveVisible;
+  const totalPages = Math.ceil(courses.length / ITEMS_PER_PAGE);
+  const pageStart = currentPage * ITEMS_PER_PAGE;
+  const visible = courses.slice(pageStart, pageStart + ITEMS_PER_PAGE);
 
   return (
     <div>
       <div className="flex flex-col gap-2">
         {visible.map(c => <CourseCard key={c.sessionId} course={c} />)}
       </div>
-      {(remainingCount > 0 || visibleCount > INITIAL_VISIBLE) && (
-        <div className="flex justify-center gap-3 pt-6 pb-2">
-          {remainingCount > 0 && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-            >
-              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-            </Button>
-          )}
-          {visibleCount > INITIAL_VISIBLE && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-            >
-              Vis færre
-            </Button>
-          )}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-6 pb-2">
+          <Button
+            variant="outline-soft"
+            size="sm"
+            onClick={() => setCurrentPage(p => p - 1)}
+            disabled={currentPage === 0}
+            className="gap-1"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            Forrige
+          </Button>
+          <span className="type-meta text-muted-foreground">
+            Side {currentPage + 1} av {totalPages}
+          </span>
+          <Button
+            variant="outline-soft"
+            size="sm"
+            onClick={() => setCurrentPage(p => p + 1)}
+            disabled={currentPage >= totalPages - 1}
+            className="gap-1"
+          >
+            Neste
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
       )}
     </div>

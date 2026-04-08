@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseCard, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
@@ -71,7 +71,7 @@ const CoursesPage = () => {
   const { currentOrganization } = useAuth();
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'draft' | 'past'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'past'>('all');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
@@ -154,54 +154,72 @@ const CoursesPage = () => {
     }));
   }, [courses, signupsCounts, nextSessionDates]);
 
-  // Filter counts for pills
+  // Split published vs drafts
+  const { publishedRows, draftRows } = useMemo(() => {
+    const published: typeof allRows = [];
+    const drafts: typeof allRows = [];
+    for (const item of allRows) {
+      if (item.course.status === 'draft') {
+        drafts.push(item);
+      } else {
+        published.push(item);
+      }
+    }
+    return { publishedRows: published, draftRows: drafts };
+  }, [allRows]);
+
+  // Filter counts for pills (published only, no drafts)
   const filterCounts = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const counts = { all: 0, active: 0, upcoming: 0, draft: 0, past: 0 };
-    for (const { course } of allRows) {
+    const counts = { all: 0, active: 0, upcoming: 0, past: 0 };
+    for (const { course } of publishedRows) {
       counts.all++;
       if (course.status === 'active') counts.active++;
       else if (course.status === 'upcoming') counts.upcoming++;
-      else if (course.status === 'draft') counts.draft++;
       const cutoff = course.end_date || course.start_date;
       if (course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today)) {
         counts.past++;
       }
     }
     return counts;
-  }, [allRows]);
+  }, [publishedRows]);
 
-  // Apply status + search filters, sort by next session date
+  // Apply status + search filters to published courses
   const filteredRows = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const q = searchQuery.toLowerCase().trim();
 
-    return allRows
+    return publishedRows
       .filter(({ row, course }) => {
-        // Status filter
         if (statusFilter === 'active' && course.status !== 'active') return false;
         if (statusFilter === 'upcoming' && course.status !== 'upcoming') return false;
-        if (statusFilter === 'draft' && course.status !== 'draft') return false;
         if (statusFilter === 'past') {
           const cutoff = course.end_date || course.start_date;
           const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
           if (!isPast) return false;
         }
         if (statusFilter === 'all') {
-          // Default: hide past/cancelled
           const cutoff = course.end_date || course.start_date;
           const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
           if (isPast) return false;
         }
 
-        // Search filter
         if (q && !row.courseTitle.toLowerCase().includes(q) && !row.location.toLowerCase().includes(q)) return false;
 
         return true;
       })
       .map(({ row }) => row)
       .sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
-  }, [allRows, statusFilter, searchQuery]);
+  }, [publishedRows, statusFilter, searchQuery]);
+
+  // Filter drafts by search query
+  const filteredDraftRows = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return draftRows.map(({ row }) => row);
+    return draftRows
+      .filter(({ row }) => row.courseTitle.toLowerCase().includes(q) || row.location.toLowerCase().includes(q))
+      .map(({ row }) => row);
+  }, [draftRows, searchQuery]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -255,7 +273,6 @@ const CoursesPage = () => {
                   { value: 'all', label: 'Alle' },
                   { value: 'active', label: 'Aktive' },
                   { value: 'upcoming', label: 'Kommende' },
-                  { value: 'draft', label: 'Utkast' },
                   { value: 'past', label: 'Tidligere' },
                 ] as const).map(({ value, label }) => {
                   const count = filterCounts[value];
@@ -296,6 +313,18 @@ const CoursesPage = () => {
             />
           ) : (
             <CourseListView courses={filteredRows} />
+          )}
+
+          {/* Drafts section */}
+          {!isLoading && !error && !showCoursesEmptyState && filteredDraftRows.length > 0 && (
+            <section className="mt-8">
+              <h2 className="type-title text-foreground mb-3">
+                Utkast ({filteredDraftRows.length})
+              </h2>
+              <div className="flex flex-col gap-2">
+                {filteredDraftRows.map(c => <CourseCard key={c.sessionId} course={c} />)}
+              </div>
+            </section>
           )}
         </div>
         <EmptyStateToggle />
