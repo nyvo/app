@@ -8,14 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// New payment-focused filters (used by SignupsPage)
-export type PaymentFilter = 'all' | 'pending' | 'paid' | 'refunded';
+import { Users, AlertTriangle, RotateCcw, Archive, type LucideIcon } from 'lucide-react';
 
-export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string }> = [
-  { value: 'all', label: 'Alle' },
-  { value: 'pending', label: 'Betalingsproblemer' },
-  { value: 'paid', label: 'Betalt' },
-  { value: 'refunded', label: 'Refundert' },
+// New payment-focused filters (used by SignupsPage)
+export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';
+
+export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string; icon: LucideIcon }> = [
+  { value: 'all', label: 'Alle', icon: Users },
+  { value: 'pending', label: 'Betalingsproblemer', icon: AlertTriangle },
+  { value: 'refunded', label: 'Refundert', icon: RotateCcw },
+  { value: 'archived', label: 'Arkiv', icon: Archive },
 ];
 
 // Combined filter (used by CourseParticipantsTab)

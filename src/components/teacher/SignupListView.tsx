@@ -83,7 +83,7 @@ export function SignupListView({
 
   return (
     <div>
-      <div className="overflow-hidden rounded-lg border border-border divide-y divide-border">
+      <div className="overflow-hidden rounded-lg border border-strong divide-y divide-border">
         {visibleSignups.map(signup => (
           <SignupRow
             key={signup.id}

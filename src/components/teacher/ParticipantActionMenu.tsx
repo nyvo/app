@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, XCircle, Send } from 'lucide-react';
+import { MoreHorizontal, CheckCircle, XCircle, Send, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -33,6 +33,7 @@ export interface ActionableParticipant {
   amountPaid?: number | null;
   exceptionType?: ExceptionType | null;
   status?: string;
+  stripePaymentIntentId?: string | null;
 }
 
 export interface ParticipantActionHandlers {
@@ -63,6 +64,13 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
   };
 
   const { exceptionType } = signup;
+  const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
+  const hasExceptionActions = !!exceptionType;
+  const hasBaseActions = !isCancelled;
+  const hasStripeLink = !!signup.stripePaymentIntentId;
+
+  // Don't render menu if there are no actions to show
+  if (!hasExceptionActions && !hasBaseActions && !hasStripeLink) return null;
 
   return (
     <>
@@ -141,6 +149,23 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
               <XCircle className="h-4 w-4 mr-2" />
               Avbestill påmelding
             </DropdownMenuItem>
+          )}
+
+          {/* Stripe link — for signups with a payment intent */}
+          {signup.stripePaymentIntentId && (
+            <>
+              {hasBaseActions && <DropdownMenuSeparator />}
+              <DropdownMenuItem asChild>
+                <a
+                  href={`https://dashboard.stripe.com/payments/${signup.stripePaymentIntentId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Se i Stripe
+                </a>
+              </DropdownMenuItem>
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

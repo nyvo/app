@@ -7,8 +7,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import type { SignupStatus } from '@/types/database';
-import type { PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
+import type { SignupStatus, PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
 import { SearchInput } from '@/components/ui/search-input';
 import { SignupListView } from '@/components/teacher/SignupListView';
 import { toast } from 'sonner';
@@ -22,7 +21,7 @@ import {
 } from '@/services/signups';
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { typedFrom } from '@/lib/supabase';
 
 // Format date for display
@@ -128,7 +127,8 @@ export const SignupsPage = () => {
         || nextSessionDates[courseId]
         || signup.course?.start_date
         || null;
-      const displayTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
+      const rawTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
+      const displayTime = rawTime ? rawTime.slice(0, 5) : '';
 
       const courseEndDate = signup.course?.end_date;
       const courseStartDate = signup.course?.start_date;
@@ -168,17 +168,17 @@ export const SignupsPage = () => {
     return mapped;
   }, [signups, nextSessionDates]);
 
-  // Filter counts for pills
+  // Filter counts for pills (payment filters count within active signups only)
   const filterCounts = useMemo((): Record<PaymentFilter, number> => {
+    const active = displaySignups.filter(s => !s.courseEnded);
     const counts: Record<PaymentFilter, number> = {
-      all: displaySignups.length,
+      all: active.length,
       pending: 0,
-      paid: 0,
       refunded: 0,
+      archived: displaySignups.filter(s => s.courseEnded).length,
     };
-    for (const s of displaySignups) {
+    for (const s of active) {
       if ((s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed') counts.pending++;
-      if (s.paymentStatus === 'paid') counts.paid++;
       if (s.paymentStatus === 'refunded') counts.refunded++;
     }
     return counts;
@@ -188,15 +188,20 @@ export const SignupsPage = () => {
   const filteredSignups = useMemo(() => {
     let result = displaySignups;
 
-    // Payment filter
-    if (activeFilter === 'pending') {
-      result = result.filter(s =>
-        (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
-      );
-    } else if (activeFilter === 'paid') {
-      result = result.filter(s => s.paymentStatus === 'paid');
-    } else if (activeFilter === 'refunded') {
-      result = result.filter(s => s.paymentStatus === 'refunded');
+    // Filter by active/archived + payment status
+    if (activeFilter === 'archived') {
+      result = result.filter(s => s.courseEnded);
+    } else {
+      // All non-archived filters work within active signups only
+      result = result.filter(s => !s.courseEnded);
+
+      if (activeFilter === 'pending') {
+        result = result.filter(s =>
+          (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
+        );
+      } else if (activeFilter === 'refunded') {
+        result = result.filter(s => s.paymentStatus === 'refunded');
+      }
     }
 
     // Search
@@ -277,27 +282,20 @@ export const SignupsPage = () => {
               aria-label="Søk etter deltakere"
               className="max-w-xs"
             />
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
+            <FilterTabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)} variant="pill">
+              {PAYMENT_FILTER_OPTIONS.map(({ value, label, icon: Icon }) => {
                 const count = filterCounts[value];
                 if (value !== 'all' && count === 0) return null;
-                const isActive = activeFilter === value;
                 return (
-                  <button
-                    key={value}
-                    onClick={() => setActiveFilter(value)}
-                    className={cn(
-                      'type-label-sm rounded-md px-3 py-1.5 smooth-transition',
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-surface-muted text-muted-foreground hover:bg-surface-subtle hover:text-foreground'
-                    )}
-                  >
-                    {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                  </button>
+                  <FilterTab key={value} value={value}>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                    </span>
+                  </FilterTab>
                 );
               })}
-            </div>
+            </FilterTabs>
           </div>
         </motion.header>
 

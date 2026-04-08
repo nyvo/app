@@ -15,7 +15,7 @@ import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseL
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { cn } from '@/lib/utils';
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -248,7 +248,7 @@ const CoursesPage = () => {
                 aria-label="Søk etter kurs"
                 className="max-w-xs"
               />
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <FilterTabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)} variant="pill">
                 {([
                   { value: 'all', label: 'Alle' },
                   { value: 'active', label: 'Aktive' },
@@ -259,21 +259,12 @@ const CoursesPage = () => {
                   const count = filterCounts[value];
                   if (value !== 'all' && count === 0) return null;
                   return (
-                    <button
-                      key={value}
-                      onClick={() => setStatusFilter(value)}
-                      className={cn(
-                        'type-label-sm rounded-md px-3 py-1.5 smooth-transition',
-                        statusFilter === value
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-surface-muted text-muted-foreground hover:bg-surface-subtle hover:text-foreground'
-                      )}
-                    >
+                    <FilterTab key={value} value={value}>
                       {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                    </button>
+                    </FilterTab>
                   );
                 })}
-              </div>
+              </FilterTabs>
             </div>
           )}
         </motion.header>
