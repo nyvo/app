@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { DateBadge } from '@/components/ui/date-badge';
+import { Card } from '@/components/ui/card';
 import type { Course } from '@/types/dashboard';
 
 interface DashboardUpcomingListProps {
@@ -33,7 +34,7 @@ function formatFullDay(dateStr?: string): string {
   return day.charAt(0).toUpperCase() + day.slice(1);
 }
 
-function CourseCard({
+function CourseRow({
   id,
   title,
   dateStr,
@@ -49,7 +50,7 @@ function CourseCard({
   return (
     <Link
       to={`/teacher/courses/${id}`}
-      className="group flex items-center gap-3 overflow-hidden rounded-lg border border-border bg-surface-muted p-3 outline-none smooth-transition hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="group flex items-center gap-2 sm:gap-3 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:bg-surface-muted/50"
     >
       <DateBadge dateStr={dateStr} />
       <div className="min-w-0 flex-1">
@@ -70,16 +71,16 @@ export function DashboardUpcomingList({ courses }: DashboardUpcomingListProps) {
   return (
     <section>
       <h2 className="type-title mb-3 text-foreground">Neste aktiviteter</h2>
-
-      {sorted.length === 0 ? (
+      <Card className="p-3 sm:p-4">
+        {sorted.length === 0 ? (
         <div className="py-3">
           <p className="type-label text-foreground">Ingen kommende kurs</p>
           <p className="type-body-sm mt-1 text-muted-foreground">Opprett kurs for å fylle timeplanen.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-1">
           {sorted.map((course) => (
-            <CourseCard
+            <CourseRow
               key={`${course.id}-${course.date}-${course.time}`}
               id={course.id}
               title={course.title}
@@ -88,7 +89,8 @@ export function DashboardUpcomingList({ courses }: DashboardUpcomingListProps) {
             />
           ))}
         </div>
-      )}
+        )}
+      </Card>
     </section>
   );
 }

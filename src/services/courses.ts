@@ -850,6 +850,63 @@ export async function fetchNearestFullCourse(organizationId: string): Promise<{
   }
 }
 
+// Fetch upcoming courses with low enrollment (starting within 7 days, <40% filled)
+export async function fetchLowEnrollmentCourses(organizationId: string): Promise<{
+  data: Array<{ course: Course; signups: number; capacity: number }> | null
+  error: Error | null
+}> {
+  const now = new Date()
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const todayStr = now.toISOString().split('T')[0]
+  const cutoffStr = sevenDaysFromNow.toISOString().split('T')[0]
+
+  // Get upcoming courses with capacity set that start within 7 days
+  const { data: courses, error: coursesError } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .eq('status', 'upcoming')
+    .gt('max_participants', 0)
+    .gte('start_date', todayStr)
+    .lte('start_date', cutoffStr)
+
+  if (coursesError) {
+    return { data: null, error: coursesError as Error }
+  }
+
+  if (!courses || courses.length === 0) {
+    return { data: [], error: null }
+  }
+
+  // Get signup counts for these courses
+  const courseIds = courses.map((c: any) => c.id)
+  const { data: signupRows, error: countError } = await supabase
+    .from('signups')
+    .select('course_id')
+    .in('course_id', courseIds)
+    .eq('status', 'confirmed')
+
+  if (countError) {
+    return { data: null, error: countError as Error }
+  }
+
+  const counts: Record<string, number> = {}
+  for (const s of (signupRows || []) as Array<{ course_id: string }>) {
+    counts[s.course_id] = (counts[s.course_id] || 0) + 1
+  }
+
+  // Filter to courses with <40% enrollment
+  const lowEnrollment = (courses as any[])
+    .map(course => {
+      const signups = counts[course.id] || 0
+      const capacity = course.max_participants || 0
+      return { course: course as unknown as Course, signups, capacity }
+    })
+    .filter(({ signups, capacity }) => capacity > 0 && signups / capacity < 0.4)
+
+  return { data: lowEnrollment, error: null }
+}
+
 // Fetch today's sessions only
 export async function fetchTodaySessions(organizationId: string): Promise<{
   data: Array<{ session: CourseSession; course: Course }> | null

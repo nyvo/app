@@ -11,7 +11,7 @@ import { SetupChecklist } from '@/components/teacher/SetupChecklist';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
-import { DashboardAttentionPanel, type DashboardAttentionItem } from '@/components/teacher/DashboardAttentionPanel';
+import { DashboardKpiRow, type KpiItem } from '@/components/teacher/DashboardKpiRow';
 import { DashboardUpcomingList } from '@/components/teacher/DashboardUpcomingList';
 import { DashboardTodayPanel } from '@/components/teacher/DashboardTodayPanel';
 import { DashboardRegistrationsCard } from '@/components/teacher/DashboardRegistrationsCard';
@@ -34,7 +34,7 @@ import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { typedFrom } from '@/lib/supabase';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
-import { fetchCourses, fetchNextSessions, fetchNearestFullCourse, fetchTodaySessions } from '@/services/courses';
+import { fetchCourses, fetchNextSessions, fetchNearestFullCourse, fetchTodaySessions, fetchLowEnrollmentCourses } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
@@ -82,6 +82,7 @@ function mapConversationToMessage(conversation: ConversationWithDetails): Dashbo
     content: lastMessage?.content || 'Ingen meldinger',
     timestamp,
     isOnline: false, // We don't track online status yet
+    unreadCount: conversation.unread_count,
   };
 }
 
@@ -139,6 +140,12 @@ function mapSignupToRegistration(signup: SignupWithDetails): Registration {
 
 const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
+const sectionTransition = {
+  duration: 0.18,
+  delay: 0.06,
+  ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+};
+
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization, profile, refreshOrganizations } = useAuth();
@@ -148,6 +155,7 @@ const TeacherDashboard = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [messages, setMessages] = useState<DashboardMessage[]>([]);
   const [capacityCourse, setCapacityCourse] = useState<{ id: string; title: string; attendees: number; capacity: number } | null>(null);
+  const [lowEnrollmentCourses, setLowEnrollmentCourses] = useState<Array<{ id: string; title: string; signups: number; capacity: number }>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const [hasCourses, setHasCourses] = useState(false);
@@ -238,6 +246,7 @@ const TeacherDashboard = () => {
     capacityResult: Awaited<ReturnType<typeof fetchNearestFullCourse>>,
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
     messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
+    lowEnrollmentResult: Awaited<ReturnType<typeof fetchLowEnrollmentCourses>>,
   ) {
     // Check if user has any courses at all
     const hasAnyCourses = (coursesResult.data && coursesResult.data.length > 0) ||
@@ -283,6 +292,18 @@ const TeacherDashboard = () => {
     } else {
       setMessages([]);
     }
+
+    // Process low enrollment warnings
+    if (lowEnrollmentResult.data && lowEnrollmentResult.data.length > 0) {
+      setLowEnrollmentCourses(lowEnrollmentResult.data.map(({ course, signups, capacity }) => ({
+        id: course.id,
+        title: course.title,
+        signups,
+        capacity,
+      })));
+    } else {
+      setLowEnrollmentCourses([]);
+    }
   }
 
   // Refetch function for real-time updates (memoized to prevent subscription loops)
@@ -291,16 +312,17 @@ const TeacherDashboard = () => {
 
     try {
       // Fetch all data in parallel (silently, no loading state for real-time updates)
-      const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult] = await Promise.all([
+      const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult] = await Promise.all([
         fetchCourses(currentOrganization.id),
         fetchNextSessions(currentOrganization.id, 3),
         fetchTodaySessions(currentOrganization.id),
         fetchNearestFullCourse(currentOrganization.id),
         fetchRecentSignups(currentOrganization.id, 4),
         fetchRecentConversations(currentOrganization.id, 4),
+        fetchLowEnrollmentCourses(currentOrganization.id),
       ]);
 
-      processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult);
+      processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult);
     } catch (err) {
       logger.error('Dashboard refetch error:', err);
     }
@@ -336,13 +358,14 @@ const TeacherDashboard = () => {
 
       try {
         // Fetch all data in parallel
-        const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult] = await Promise.all([
+        const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult] = await Promise.all([
           fetchCourses(currentOrganization.id),
           fetchNextSessions(currentOrganization.id, 3),
           fetchTodaySessions(currentOrganization.id),
           fetchNearestFullCourse(currentOrganization.id),
           fetchRecentSignups(currentOrganization.id, 4),
           fetchRecentConversations(currentOrganization.id, 4),
+          fetchLowEnrollmentCourses(currentOrganization.id),
         ]);
 
         if (!isActive) return;
@@ -352,7 +375,7 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult);
+        processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult);
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {
@@ -375,38 +398,47 @@ const TeacherDashboard = () => {
 
   // Personal name (first word) if set, otherwise fall back to org name
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
-  const recentMessageCount = messages.length;
+  const recentMessageCount = messages.filter((m) => m.unreadCount > 0).length;
   const paymentFollowUpCount = registrations.filter((registration) => registration.hasException).length;
-  const attentionItems: DashboardAttentionItem[] = [
-    paymentFollowUpCount > 0
-      ? {
-          id: 'payments',
-          title: `${paymentFollowUpCount} ${paymentFollowUpCount === 1 ? 'betaling må' : 'betalinger må'} følges opp`,
-          to: '/teacher/signups',
-          icon: 'payment',
-          variant: 'warning',
-        }
-      : null,
-    recentMessageCount > 0
-      ? {
-          id: 'messages',
-          title: `${recentMessageCount} ${recentMessageCount === 1 ? 'ny melding' : 'nye meldinger'}`,
-          to: '/teacher/messages',
-          icon: 'message',
-          variant: 'neutral',
-        }
-      : null,
-    capacityCourse
-      ? {
+
+  const kpiItems: KpiItem[] = [
+    {
+      id: 'payments',
+      count: paymentFollowUpCount,
+      label: 'Utestående betalinger',
+      to: '/teacher/signups',
+      icon: 'payment',
+    },
+    {
+      id: 'messages',
+      count: recentMessageCount,
+      label: 'Uleste meldinger',
+      to: '/teacher/messages',
+      icon: 'message',
+    },
+    {
+      id: 'enrollment',
+      count: lowEnrollmentCourses.length,
+      label: 'Lav påmelding',
+      to: lowEnrollmentCourses.length === 1
+        ? `/teacher/courses/${lowEnrollmentCourses[0]?.id}`
+        : '/teacher/courses',
+      icon: 'enrollment',
+      sublabel: lowEnrollmentCourses.length > 0
+        ? 'Starter innen 7 dager'
+        : undefined,
+    },
+    ...(capacityCourse
+      ? [{
           id: 'capacity',
-          title: `${capacityCourse.title} er snart fullt`,
-          description: `${capacityCourse.attendees}/${capacityCourse.capacity} plasser er fylt.`,
+          count: 1,
+          label: 'Nesten fullt',
           to: `/teacher/courses/${capacityCourse.id}`,
-          icon: 'schedule',
-          variant: 'success',
-        }
-      : null,
-  ].filter((item): item is DashboardAttentionItem => item !== null);
+          icon: 'capacity' as const,
+          sublabel: capacityCourse.title,
+        }]
+      : []),
+  ];
 
   useEffect(() => {
     setBreadcrumbs([
@@ -442,7 +474,7 @@ const TeacherDashboard = () => {
                   )}
                 </div>
                 {!isLoading && !loadError && isSetupComplete && hasCourses && (
-                  <div className="mt-4 flex items-center gap-2 md:hidden">
+                  <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
                     <Button asChild size="sm" className="gap-1.5">
                       <Link to="/teacher/new-course">
                         <CalendarPlus className="h-3.5 w-3.5" />
@@ -495,13 +527,10 @@ const TeacherDashboard = () => {
               )}
 
               {isLoading ? (
-                <div role="status" aria-live="polite">
-                  <span className="sr-only">Laster oversikt</span>
-                  <DashboardSkeleton />
-                </div>
+                <DashboardSkeleton />
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <div className="mb-4 rounded-full bg-surface-subtle p-4">
+                  <div className="mb-4 rounded-full bg-surface-muted p-4">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
                   <h3 className="type-title mb-1 text-foreground">Kunne ikke laste oversikten</h3>
@@ -526,7 +555,7 @@ const TeacherDashboard = () => {
                       loadingStepId={connectingStripe ? 'stripe' : undefined}
                     />
                   </div>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                       <section className="space-y-3">
                         <h2 className="type-title text-foreground">Dagens kurs</h2>
@@ -587,7 +616,7 @@ const TeacherDashboard = () => {
                       </div>
                     </Card>
                   </div>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,1fr)]">
+                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                       <section className="space-y-3">
                         <h2 className="type-title text-foreground">Dagens kurs</h2>
@@ -620,17 +649,23 @@ const TeacherDashboard = () => {
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr)_300px] xl:items-start">
+                  <DashboardKpiRow items={kpiItems} />
+
+                  <motion.div
+                    className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr] xl:items-start"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={sectionTransition}
+                  >
                     <div className="space-y-6">
-                      <DashboardAttentionPanel items={attentionItems} />
                       <DashboardUpcomingList courses={dashboardCourses} />
                       <DashboardMessagesCard messages={messages} />
                     </div>
-                    <aside className="space-y-6 xl:border-l xl:border-border xl:pl-6">
+                    <aside className="space-y-6">
                       <DashboardTodayPanel courses={todayCourses} />
                       <DashboardRegistrationsCard registrations={registrations} />
                     </aside>
-                  </div>
+                  </motion.div>
                 </>
               )}
             </motion.div>

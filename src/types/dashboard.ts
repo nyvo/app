@@ -23,6 +23,7 @@ export interface Message {
   content: string;
   timestamp: string;
   isOnline?: boolean;
+  unreadCount: number;
 }
 
 export interface Course {
