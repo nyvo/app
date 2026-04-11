@@ -60,9 +60,16 @@ export const TeacherSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, userRole, currentOrganization } = useAuth();
-  const { isMobile, toggleSidebar, state } = useSidebar();
+  const { isMobile, toggleSidebar, setOpenMobile, state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const [unreadMessages, setUnreadMessages] = useState(0);
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [location.pathname, isMobile, setOpenMobile]);
 
   useEffect(() => {
     if (!currentOrganization?.id) return;

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarDays, CalendarPlus } from 'lucide-react';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -30,6 +31,16 @@ export function MobileDayView({
 }: MobileDayViewProps) {
   const dayEvents = events[selectedDayIndex] || [];
   const selectedDay = weekDays[selectedDayIndex];
+  const selectedDayRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-scroll the day selector so the selected day is visible
+  useEffect(() => {
+    selectedDayRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }, [selectedDayIndex]);
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -39,6 +50,7 @@ export function MobileDayView({
           {weekDays.map((day, index) => (
             <button
               key={day.name}
+              ref={selectedDayIndex === index ? selectedDayRef : undefined}
               onClick={() => onDaySelect(index)}
               aria-pressed={selectedDayIndex === index}
               aria-current={day.isToday ? 'date' : undefined}

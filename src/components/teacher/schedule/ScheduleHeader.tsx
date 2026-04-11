@@ -11,7 +11,6 @@ interface ScheduleHeaderProps {
   onViewModeChange: (mode: 'day' | 'week') => void;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
-  onGoToToday: () => void;
   hasCourses: boolean;
 }
 
@@ -22,10 +21,10 @@ export function ScheduleHeader({
   onViewModeChange,
   onPreviousWeek,
   onNextWeek,
-  onGoToToday,
   hasCourses,
 }: ScheduleHeaderProps) {
-  const monthName = MONTH_ABBR[displayedMonday.getMonth()];
+  const MONTH_FULL = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
+  const monthName = MONTH_FULL[displayedMonday.getMonth()];
   const year = displayedMonday.getFullYear();
   const title = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${year}`;
 
@@ -71,14 +70,16 @@ export function ScheduleHeader({
         </div>
 
         <div className="flex items-center gap-3">
-          <FilterTabs
-            value={viewMode}
-            onValueChange={(v) => onViewModeChange(v as 'day' | 'week')}
-            variant="contained"
-          >
-            <FilterTab value="day">Dag</FilterTab>
-            <FilterTab value="week">Uke</FilterTab>
-          </FilterTabs>
+          <div className="hidden md:block">
+            <FilterTabs
+              value={viewMode}
+              onValueChange={(v) => onViewModeChange(v as 'day' | 'week')}
+              variant="contained"
+            >
+              <FilterTab value="day">Dag</FilterTab>
+              <FilterTab value="week">Uke</FilterTab>
+            </FilterTabs>
+          </div>
 
           {hasCourses && (
             <Button asChild size="sm" className="gap-1.5 hidden md:flex">
