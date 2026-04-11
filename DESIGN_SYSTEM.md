@@ -251,7 +251,7 @@ Examples:
 - `12px`
   - dialogs, large featured containers, larger shells
 - `full`
-  - circular and pill-specific elements only
+  - buttons, circular elements, and pill-shaped controls
 
 ### Density Rules
 
@@ -265,10 +265,10 @@ Examples:
 ### Primitive Baseline
 
 - Buttons
-  - default: `h-11 px-4`, `6px` radius
-  - compact: `h-9 px-3`, `6px` radius
+  - default: `h-11 px-4`, `full` radius (pill)
+  - compact: `h-9 px-3`, `full` radius (pill)
 - Inputs, selects, search, and filter tabs
-  - `h-11 px-4`, `8px` radius (`rounded-lg`)
+  - `h-9 px-4`, `8px` radius (`rounded-lg`)
   - All tool-row controls must share the same height and radius
 - Textareas
   - `px-4 py-3`, `8px` radius (`rounded-lg`)
@@ -938,7 +938,7 @@ Use `background` for:
 
 **Input styling:**
 ```
-h-11, rounded-lg, border border-input, bg-surface, px-4
+h-9, rounded-lg, border border-input, bg-surface, px-4
 Focus: border-ring + ring-2 ring-ring/50
 Hover: border-ring
 Error: border-destructive + ring-destructive/20

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { Spinner } from "./spinner"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[14px] font-medium ring-offset-background transition-[background-color,border-color,color,opacity,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[14px] font-medium ring-offset-background transition-[background-color,border-color,color,opacity,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 motion-reduce:transform-none [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer",
   {
     variants: {
       variant: {
@@ -25,10 +25,10 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-11 px-4",
-        xs: "h-9 px-3 text-[12px] rounded-md [&_svg]:size-3.5",
-        sm: "h-9 rounded-md px-3 text-[14px]",
-        compact: "h-9 px-3 text-[14px] rounded-md [&_svg]:size-3.5",
-        lg: "h-11 rounded-md px-8",
+        xs: "h-9 px-3 text-[12px] [&_svg]:size-3.5",
+        sm: "h-9 px-3 text-[14px]",
+        compact: "h-9 px-3 text-[14px] [&_svg]:size-3.5",
+        lg: "h-11 px-8",
         icon: "h-11 w-11",
         "icon-sm": "h-9 w-9",
       },
