@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -93,7 +94,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
     >
       <CourseImage src={course.imageUrl} alt={course.courseTitle} />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
           <h3 className="type-title truncate text-foreground">
             {course.courseTitle}
           </h3>
@@ -102,7 +103,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
               variant="neutral"
               mode="badge"
               size="sm"
-              label={course.courseStatus === 'draft' ? 'Utkast' : course.courseStatus === 'cancelled' ? 'Avlyst' : 'Avsluttet'}
+              label={course.courseStatus === 'draft' ? 'Utkast' : course.courseStatus === 'cancelled' ? 'Avlyst' : 'Fullført'}
               className="flex-shrink-0"
             />
           )}
@@ -122,7 +123,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
           )}
         </div>
       </div>
-      <span className="type-label whitespace-nowrap flex-shrink-0 text-foreground">
+      <span className="type-label whitespace-nowrap flex-shrink-0 text-foreground text-right">
         {enrollmentLabel}
       </span>
     </Link>
@@ -136,45 +137,42 @@ interface CourseListViewProps {
 }
 
 export function CourseListView({ courses }: CourseListViewProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const prevCoursesRef = useRef(courses);
 
+  // Reset visible count when course list changes (filter/search)
   useEffect(() => {
-    setCurrentPage(0);
+    if (prevCoursesRef.current !== courses) {
+      setVisibleCount(ITEMS_PER_PAGE);
+      prevCoursesRef.current = courses;
+    }
   }, [courses]);
 
-  const totalPages = Math.ceil(courses.length / ITEMS_PER_PAGE);
-  const pageStart = currentPage * ITEMS_PER_PAGE;
-  const visible = courses.slice(pageStart, pageStart + ITEMS_PER_PAGE);
+  const visible = courses.slice(0, visibleCount);
+  const hasMore = visibleCount < courses.length;
 
   return (
     <div>
       <div className="flex flex-col gap-2">
-        {visible.map(c => <CourseCard key={c.sessionId} course={c} />)}
+        {visible.map(c => (
+          <motion.div
+            key={c.sessionId}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <CourseCard course={c} />
+          </motion.div>
+        ))}
       </div>
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-6 pb-2">
+      {hasMore && (
+        <div className="flex justify-center pt-6 pb-2">
           <Button
             variant="outline-soft"
             size="sm"
-            onClick={() => setCurrentPage(p => p - 1)}
-            disabled={currentPage === 0}
-            className="gap-1"
+            onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Forrige
-          </Button>
-          <span className="type-meta text-muted-foreground">
-            Side {currentPage + 1} av {totalPages}
-          </span>
-          <Button
-            variant="outline-soft"
-            size="sm"
-            onClick={() => setCurrentPage(p => p + 1)}
-            disabled={currentPage >= totalPages - 1}
-            className="gap-1"
-          >
-            Neste
-            <ChevronRight className="h-3.5 w-3.5" />
+            Vis flere
           </Button>
         </div>
       )}
@@ -188,9 +186,9 @@ export function CourseListSkeleton() {
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
           <Skeleton className="size-14 rounded-lg shrink-0" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-5 w-44" />
-            <Skeleton className="h-3 w-32" />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <Skeleton className="h-5 w-44 max-w-full" />
+            <Skeleton className="h-3 w-32 max-w-full" />
           </div>
           <Skeleton className="h-4 w-20 shrink-0" />
         </div>

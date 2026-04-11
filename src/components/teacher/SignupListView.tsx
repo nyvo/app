@@ -41,10 +41,10 @@ export function SignupListView({
         {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="flex items-start gap-3 px-3 py-3">
             <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-3 w-48" />
-              <Skeleton className="h-3 w-56" />
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <Skeleton className="h-4 w-36 max-w-full" />
+              <Skeleton className="h-3 w-48 max-w-full" />
+              <Skeleton className="h-3 w-56 max-w-full" />
             </div>
             <Skeleton className="h-5 w-14 rounded-md" />
           </div>

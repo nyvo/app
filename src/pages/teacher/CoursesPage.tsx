@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseCard, CourseListSkeleton } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
@@ -28,18 +28,15 @@ import { typedFrom } from '@/lib/supabase';
  * Maps a Course to a SessionScheduleRow shape for display in the table.
  */
 function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: string): SessionScheduleRow {
-  // Extract start time from time_schedule (e.g. "Mandager 18:00-19:15" → "18:00")
   const timeMatch = course.time_schedule?.match(/(\d{2}:\d{2})/);
   const startTime = timeMatch ? timeMatch[1] : '';
 
-  // Calculate end time from start + duration
   let endTime = '';
   if (startTime && course.duration) {
     const [h, m] = startTime.split(':').map(Number);
     const totalMin = h * 60 + m + course.duration;
     endTime = `${Math.floor(totalMin / 60).toString().padStart(2, '0')}:${(totalMin % 60).toString().padStart(2, '0')}`;
   }
-  // Try second time from time_schedule (e.g. "18:00-19:15")
   if (!endTime) {
     const endMatch = course.time_schedule?.match(/\d{2}:\d{2}-(\d{2}:\d{2})/);
     if (endMatch) endTime = endMatch[1];
@@ -66,19 +63,20 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
   };
 }
 
+type StatusFilter = 'all' | 'active' | 'upcoming' | 'past' | 'draft';
+
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'past'>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch courses from Supabase
   const loadData = useCallback(async () => {
     if (!currentOrganization?.id) {
       setIsLoading(false);
@@ -92,14 +90,13 @@ const CoursesPage = () => {
       const coursesResult = await fetchCourses(currentOrganization.id);
 
       if (coursesResult.error) {
-        setError('Kunne ikke hente kurs. Sjekk nettilkoblingen og prøv på nytt.');
+        setError('Kunne ikke hente kurs. Sjekk nettforbindelsen og prøv på nytt.');
         return;
       }
 
       const coursesData = coursesResult.data || [];
       setCourses(coursesData);
 
-      // Fetch signups count for all courses
       const courseIds = coursesData.map(c => c.id);
 
       if (courseIds.length > 0) {
@@ -118,7 +115,6 @@ const CoursesPage = () => {
         });
         setSignupsCounts(counts);
 
-        // Fetch next upcoming session date per course (for DateBadge)
         const today = new Date().toISOString().split('T')[0];
         const { data: sessionsData } = await typedFrom('course_sessions')
           .select('course_id, session_date')
@@ -135,18 +131,16 @@ const CoursesPage = () => {
         setNextSessionDates(nextDates);
       }
     } catch {
-      setError('Kunne ikke laste inn kurs. Prøv på nytt.');
+      setError('Kunne ikke hente kurs. Prøv på nytt.');
     } finally {
       setIsLoading(false);
     }
   }, [currentOrganization?.id]);
 
-  // Initial load
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Map all courses to rows
   const allRows = useMemo(() => {
     return courses.map(c => ({
       row: mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id]),
@@ -154,72 +148,76 @@ const CoursesPage = () => {
     }));
   }, [courses, signupsCounts, nextSessionDates]);
 
-  // Split published vs drafts
-  const { publishedRows, draftRows } = useMemo(() => {
-    const published: typeof allRows = [];
-    const drafts: typeof allRows = [];
-    for (const item of allRows) {
-      if (item.course.status === 'draft') {
-        drafts.push(item);
-      } else {
-        published.push(item);
-      }
-    }
-    return { publishedRows: published, draftRows: drafts };
-  }, [allRows]);
-
-  // Filter counts for pills (published only, no drafts)
+  // Filter counts across all courses
   const filterCounts = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const counts = { all: 0, active: 0, upcoming: 0, past: 0 };
-    for (const { course } of publishedRows) {
-      counts.all++;
-      if (course.status === 'active') counts.active++;
-      else if (course.status === 'upcoming') counts.upcoming++;
+    const counts = { all: 0, active: 0, upcoming: 0, past: 0, draft: 0 };
+    for (const { course } of allRows) {
+      if (course.status === 'draft') {
+        counts.draft++;
+        counts.all++;
+        continue;
+      }
       const cutoff = course.end_date || course.start_date;
-      if (course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today)) {
+      const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
+      if (isPast) {
         counts.past++;
+      } else {
+        counts.all++;
+        if (course.status === 'active') counts.active++;
+        else if (course.status === 'upcoming') counts.upcoming++;
       }
     }
     return counts;
-  }, [publishedRows]);
+  }, [allRows]);
 
-  // Apply status + search filters to published courses
+  // Apply status + search filters
   const filteredRows = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const q = searchQuery.toLowerCase().trim();
 
-    return publishedRows
+    return allRows
       .filter(({ row, course }) => {
-        if (statusFilter === 'active' && course.status !== 'active') return false;
-        if (statusFilter === 'upcoming' && course.status !== 'upcoming') return false;
-        if (statusFilter === 'past') {
+        // Status filtering
+        if (statusFilter === 'draft') {
+          if (course.status !== 'draft') return false;
+        } else if (statusFilter === 'active') {
+          if (course.status !== 'active') return false;
+        } else if (statusFilter === 'upcoming') {
+          if (course.status !== 'upcoming') return false;
+        } else if (statusFilter === 'past') {
           const cutoff = course.end_date || course.start_date;
           const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
           if (!isPast) return false;
-        }
-        if (statusFilter === 'all') {
-          const cutoff = course.end_date || course.start_date;
-          const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
-          if (isPast) return false;
+        } else {
+          // 'all' — show everything except past
+          if (course.status === 'draft') {
+            // drafts are visible in 'all'
+          } else {
+            const cutoff = course.end_date || course.start_date;
+            const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
+            if (isPast) return false;
+          }
         }
 
+        // Search filtering
         if (q && !row.courseTitle.toLowerCase().includes(q) && !row.location.toLowerCase().includes(q)) return false;
 
         return true;
       })
       .map(({ row }) => row)
-      .sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
-  }, [publishedRows, statusFilter, searchQuery]);
-
-  // Filter drafts by search query
-  const filteredDraftRows = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return draftRows.map(({ row }) => row);
-    return draftRows
-      .filter(({ row }) => row.courseTitle.toLowerCase().includes(q) || row.location.toLowerCase().includes(q))
-      .map(({ row }) => row);
-  }, [draftRows, searchQuery]);
+      .sort((a, b) => {
+        if (statusFilter === 'past' || statusFilter === 'draft') {
+          return b.sessionDate.localeCompare(a.sessionDate);
+        }
+        if (statusFilter === 'all') {
+          const aIsDraft = a.courseStatus === 'draft';
+          const bIsDraft = b.courseStatus === 'draft';
+          if (aIsDraft !== bIsDraft) return aIsDraft ? 1 : -1;
+        }
+        return a.sessionDate.localeCompare(b.sessionDate);
+      });
+  }, [allRows, statusFilter, searchQuery]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -227,6 +225,12 @@ const CoursesPage = () => {
     setAction(null);
     return () => setAction(null);
   }, [setAction]);
+
+  const emptyDescription = statusFilter === 'draft'
+    ? 'Du har ingen utkast.'
+    : searchQuery
+    ? 'Prøv et annet søkeord eller fjern søket.'
+    : 'Prøv et annet filter.';
 
   return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
@@ -241,7 +245,7 @@ const CoursesPage = () => {
           transition={pageTransition}
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div className="mb-8 flex items-start justify-between gap-4">
+          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
               {!showCoursesEmptyState && (
@@ -260,21 +264,22 @@ const CoursesPage = () => {
 
           {/* Search + Filters */}
           {!showCoursesEmptyState && (
-            <div className="flex flex-col gap-3 pb-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 pb-4">
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Søk etter kurs"
                 aria-label="Søk etter kurs"
-                className="max-w-xs"
+                className="w-full md:flex-1 max-w-xs"
               />
-              <FilterTabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)} variant="pill">
+              <FilterTabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} variant="contained">
                 {([
-                  { value: 'all', label: 'Alle' },
-                  { value: 'active', label: 'Aktive' },
-                  { value: 'upcoming', label: 'Kommende' },
-                  { value: 'past', label: 'Tidligere' },
-                ] as const).map(({ value, label }) => {
+                  { value: 'all' as const, label: 'Alle' },
+                  { value: 'active' as const, label: 'Aktive' },
+                  { value: 'upcoming' as const, label: 'Kommende' },
+                  { value: 'past' as const, label: 'Arkiv' },
+                  { value: 'draft' as const, label: 'Utkast' },
+                ]).map(({ value, label }) => {
                   const count = filterCounts[value];
                   if (value !== 'all' && count === 0) return null;
                   return (
@@ -297,7 +302,7 @@ const CoursesPage = () => {
             </div>
           ) : error ? (
             <ErrorState
-              title="Kunne ikke laste kurs"
+              title="Kunne ikke hente kurs"
               message={error}
               onRetry={loadData}
               variant="card"
@@ -308,23 +313,11 @@ const CoursesPage = () => {
             <EmptyState
               icon={Calendar}
               title={searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her'}
-              description={searchQuery ? 'Prøv et annet søkeord eller fjern søket.' : 'Prøv et annet filter.'}
+              description={emptyDescription}
               className="py-16"
             />
           ) : (
             <CourseListView courses={filteredRows} />
-          )}
-
-          {/* Drafts section */}
-          {!isLoading && !error && !showCoursesEmptyState && filteredDraftRows.length > 0 && (
-            <section className="mt-8">
-              <h2 className="type-title text-foreground mb-3">
-                Utkast ({filteredDraftRows.length})
-              </h2>
-              <div className="flex flex-col gap-2">
-                {filteredDraftRows.map(c => <CourseCard key={c.sessionId} course={c} />)}
-              </div>
-            </section>
           )}
         </div>
         <EmptyStateToggle />

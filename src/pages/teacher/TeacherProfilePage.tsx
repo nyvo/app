@@ -389,40 +389,32 @@ const TeacherProfilePage = () => {
   };
 
   return (
-    <main className="flex-1 min-h-screen overflow-y-auto bg-background">
+    <main className="flex-1 min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Innstillinger" />
-
-        <motion.header
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-        >
-          <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
-            <div className="mx-auto max-w-5xl">
-              <div className="mb-8">
-                  <h1 className="type-heading-1 text-foreground">
-                      Innstillinger
-                  </h1>
-                  <p className="type-body mt-1 text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
-              </div>
-            </div>
-          </div>
-        </motion.header>
 
         <motion.div
           variants={pageVariants}
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="px-6 pb-24 lg:px-8"
+          className="px-6 pb-24 md:pb-8 lg:px-8"
         >
-          <div className="mx-auto max-w-5xl space-y-10">
+          <div className="pt-6 lg:pt-8">
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-6">
+                  <h1 className="type-heading-1 text-foreground">
+                      Innstillinger
+                  </h1>
+                  <p className="type-body-sm mt-1 text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
+              </div>
+            </div>
+          </div>
+          <div className="mx-auto max-w-5xl space-y-8">
                   {/* Personlig informasjon */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Personlig informasjon</h2>
-                      <p className="type-body mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
+                      <p className="type-body-sm mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
                     <Card className="md:col-span-2 p-6 md:p-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -513,11 +505,11 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Konto & Sikkerhet</h2>
-                      <p className="type-body mt-1 text-muted-foreground">Betalinger, passord og sikkerhet.</p>
+                      <p className="type-body-sm mt-1 text-muted-foreground">Betalinger, passord og sikkerhet.</p>
                     </div>
                     <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
                           {/* Betalinger */}
-                          <div className="flex items-center justify-between px-6 py-5">
+                          <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="type-label block text-foreground">Betalinger</span>
                                   <span className="type-meta block text-muted-foreground">
@@ -549,7 +541,7 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Endre passord */}
-                          <div className="px-6 py-5">
+                          <div className="px-6 py-4">
                               <div className="flex items-center justify-between">
                                   <div>
                                       <span className="type-label block text-foreground">Endre passord</span>
@@ -575,7 +567,7 @@ const TeacherProfilePage = () => {
 
                               {/* Expanded password form */}
                               {passwordExpanded && (
-                                  <div className="mt-5 space-y-4 rounded-lg bg-surface-subtle p-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                                  <div className="mt-4 space-y-4 rounded-lg bg-surface-muted p-6 animate-in fade-in slide-in-from-top-1 duration-200 ease-out">
                                       <div>
                                           <label htmlFor="current-password" className="type-label-sm mb-1.5 block text-foreground">Nåværende passord</label>
                                           <div className="relative">
@@ -590,7 +582,7 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out"
                                                   aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -615,7 +607,7 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out"
                                                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -670,7 +662,7 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Logg ut alle enheter */}
-                          <div className="flex items-center justify-between px-6 py-5">
+                          <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="type-label block text-foreground">Logg ut alle enheter</span>
                                   <span className="type-meta block text-muted-foreground">Logger deg ut overalt.</span>
@@ -711,13 +703,13 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">E-postvarslinger</h2>
-                      <p className="type-body mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
+                      <p className="type-body-sm mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
                     </div>
                     <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
-                          <div className="flex items-center justify-between px-6 py-5">
-                              <div className="flex flex-col">
-                                  <span className="type-label text-foreground">Nye påmeldinger</span>
-                                  <span className="type-meta text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
+                          <div className="flex items-center justify-between px-6 py-4">
+                              <div>
+                                  <span className="type-label block text-foreground">Nye påmeldinger</span>
+                                  <span className="type-meta block text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -727,10 +719,10 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between px-6 py-5">
-                              <div className="flex flex-col">
-                                  <span className="type-label text-foreground">Avbestillinger</span>
-                                  <span className="type-meta text-muted-foreground">Få e-post når noen avbestiller.</span>
+                          <div className="flex items-center justify-between px-6 py-4">
+                              <div>
+                                  <span className="type-label block text-foreground">Avbestillinger</span>
+                                  <span className="type-meta block text-muted-foreground">Få e-post når noen avbestiller.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -740,10 +732,10 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between px-6 py-5">
-                              <div className="flex flex-col">
-                                  <span className="type-label text-foreground">Nye meldinger</span>
-                                  <span className="type-meta text-muted-foreground">Få e-post når du mottar en ny melding.</span>
+                          <div className="flex items-center justify-between px-6 py-4">
+                              <div>
+                                  <span className="type-label block text-foreground">Nye meldinger</span>
+                                  <span className="type-meta block text-muted-foreground">Få e-post når du mottar en ny melding.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -753,10 +745,10 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between px-6 py-5">
-                              <div className="flex flex-col">
-                                  <span className="type-label text-foreground">Nyheter fra Ease</span>
-                                  <span className="type-meta text-muted-foreground">Tips, oppdateringer og nyheter på e-post.</span>
+                          <div className="flex items-center justify-between px-6 py-4">
+                              <div>
+                                  <span className="type-label block text-foreground">Nyheter fra Ease</span>
+                                  <span className="type-meta block text-muted-foreground">Tips, oppdateringer og nyheter på e-post.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -772,10 +764,10 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="type-title text-foreground">Slett konto</h2>
-                      <p className="type-body mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
+                      <p className="type-body-sm mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
                     </div>
-                    <Card className="p-6 md:col-span-2">
-                          <div className="flex items-center justify-between rounded-lg bg-surface-subtle px-5 py-5">
+                    <Card className="md:col-span-2">
+                          <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="type-label block text-foreground">Slett kontoen din</span>
                                   <span className="type-meta block text-muted-foreground">All data slettes permanent.</span>

@@ -38,14 +38,34 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "h-11 gap-0.5 rounded-lg bg-surface p-1 border border-input"
+            variant === "contained" ? "h-9 w-fit max-w-full gap-0 rounded-lg bg-surface-muted border border-input"
               : variant === "pill" ? "gap-1.5"
-              : "h-11 gap-1 rounded-lg bg-surface-muted p-1",
+              : "h-9 gap-1 rounded-lg bg-surface-muted p-1",
             className
           )}
           role="tablist"
         >
-          {children}
+          {variant === "contained"
+            ? React.Children.toArray(children).flatMap((child, i, arr) => {
+                if (i === arr.length - 1) return [child]
+                const tabValues = React.Children.toArray(children)
+                  .filter(React.isValidElement)
+                  .map((el) => (el as React.ReactElement<FilterTabProps>).props.value)
+                const currentVal = tabValues[i]
+                const nextVal = tabValues[i + 1]
+                const hideDiv = currentVal === value || nextVal === value
+                return [
+                  child,
+                  <div
+                    key={`div-${i}`}
+                    className={cn(
+                      "w-px h-4 bg-input shrink-0 transition-opacity",
+                      hideDiv && "opacity-0"
+                    )}
+                  />
+                ]
+              })
+            : children}
         </div>
       </FilterTabsContext.Provider>
     )
@@ -73,7 +93,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
             : "text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg border border-transparent"
         case "contained":
           return isActive
-            ? "bg-surface text-foreground shadow-sm"
+            ? "bg-surface text-foreground border border-border"
             : "bg-transparent text-muted-foreground hover:text-foreground"
         default:
           return isActive
@@ -96,7 +116,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
             ? "type-label-sm px-3 py-2 rounded-lg"
             : variant === "pill"
               ? "type-label-sm px-3 py-1.5 rounded-lg"
-              : "type-label-sm px-2.5 py-1.5 rounded-lg text-center whitespace-nowrap",
+              : "type-label-sm px-3.5 h-full rounded-lg text-center whitespace-nowrap",
           getStyles(),
           className
         )}
@@ -104,7 +124,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "contained" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute inset-0 rounded-lg bg-surface"
+            className="absolute inset-0 rounded-md bg-surface border border-border"
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}

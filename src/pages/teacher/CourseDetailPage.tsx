@@ -485,7 +485,7 @@ const CourseDetailPage = () => {
     return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
           <MobileTeacherHeader title="Kurs" />
-          <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex-1 px-6 lg:px-8 py-8">
             <div className="max-w-6xl mx-auto w-full">
               <div className="mb-8">
                 <Skeleton className="h-8 w-64 mb-3" />
@@ -578,7 +578,7 @@ const CourseDetailPage = () => {
 
   return (
     <>
-    <main className="flex-1 flex min-h-screen flex-col overflow-y-auto bg-background">
+    <main className="flex-1 flex min-h-full flex-col overflow-y-auto bg-background">
         <MobileTeacherHeader title="Kurs" />
 
         <motion.header
@@ -587,7 +587,7 @@ const CourseDetailPage = () => {
           animate="animate"
           transition={tabTransition}
         >
-          <div className="px-4 pb-0 pt-6 sm:px-6 lg:px-8 lg:pt-8">
+          <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
             <div className="mx-auto w-full max-w-6xl">
 
             {/* Alert Banners */}
@@ -644,7 +644,7 @@ const CourseDetailPage = () => {
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-surface-subtle px-2 py-0.5 text-foreground">
+                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-0.5 text-foreground">
                       <span className="inline-flex size-1.5 rounded-full bg-foreground/70" />
                       <span>
                         {courseData?.status === 'upcoming' ? 'Kommende' : 'Aktiv'}
@@ -721,7 +721,7 @@ const CourseDetailPage = () => {
         </motion.header>
 
         {/* Page Content */}
-        <div className="flex-1 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-10">
+        <div className="flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
           <div className="mx-auto w-full max-w-6xl">
             <Card className="overflow-hidden border-border bg-surface">
               <div className="border-b border-border bg-surface-muted/40 px-6 py-3 sm:px-8">
@@ -964,7 +964,7 @@ const CourseDetailPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg bg-surface-subtle px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg bg-surface-muted px-4 py-3">
                 <span className="type-meta text-muted-foreground">Totalt refusjon</span>
                 <span className="type-label tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>

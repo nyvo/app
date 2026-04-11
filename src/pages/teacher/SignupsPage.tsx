@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { PAYMENT_FILTER_OPTIONS, type PaymentFilter } from '@/components/teacher/SignupFilterDropdown';
-
+import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -21,7 +21,6 @@ import {
 } from '@/services/signups';
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
 import { useAuth } from '@/contexts/AuthContext';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { typedFrom } from '@/lib/supabase';
 
 // Format date for display
@@ -274,24 +273,21 @@ export const SignupsPage = () => {
           </div>
 
           {/* Search + Filters */}
-          <div className="flex flex-col gap-3 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 pb-4">
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Søk etter navn eller e-post"
+              placeholder="Søk etter navn"
               aria-label="Søk etter deltakere"
-              className="max-w-xs"
+              className="w-full md:flex-1 max-w-xs"
             />
-            <FilterTabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)} variant="pill">
-              {PAYMENT_FILTER_OPTIONS.map(({ value, label, icon: Icon }) => {
+            <FilterTabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)} variant="contained">
+              {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
                 const count = filterCounts[value];
                 if (value !== 'all' && count === 0) return null;
                 return (
                   <FilterTab key={value} value={value}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5" />
-                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                    </span>
+                    {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
                   </FilterTab>
                 );
               })}

@@ -179,8 +179,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
-                    <p className="type-label text-foreground">{signup.participantName}</p>
-                    <p className="type-meta text-muted-foreground">{signup.participantEmail}</p>
+                    <p className="type-label text-foreground truncate">{signup.participantName}</p>
+                    <p className="type-meta text-muted-foreground truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
                     <span className="type-label text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>

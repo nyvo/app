@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarPlus, CalendarDays } from 'lucide-react';
@@ -198,21 +198,6 @@ export const SchedulePage = () => {
     }
   }, [isMobile, weekOffset, weekDays]);
 
-  // Current time indicator
-  const currentTimePosition = useMemo(() => {
-    const hours = currentTime.getHours();
-    const minutes = currentTime.getMinutes();
-    return (hours - 6) * 100 + (minutes / 60) * 100;
-  }, [currentTime]);
-
-  const currentTimeString = useMemo(() => {
-    return `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`;
-  }, [currentTime]);
-
-  const showTimeIndicator = useMemo(() => {
-    const hours = currentTime.getHours();
-    return weekOffset === 0 && hours >= 6 && hours < 23;
-  }, [currentTime, weekOffset]);
 
   const hasEventsThisWeek = useMemo(() => {
     return Object.values(currentEvents).some(dayEvents => dayEvents.length > 0);
@@ -221,12 +206,17 @@ export const SchedulePage = () => {
   // Navigation
   const goToPreviousWeek = () => setWeekOffset(prev => Math.max(prev - 1, -52));
   const goToNextWeek = () => setWeekOffset(prev => Math.min(prev + 1, 52));
-  const goToCurrentWeek = () => setWeekOffset(0);
+
+
+  const calendarScrollRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const handleSelectEvent = useCallback((event: ScheduleEvent) => {
-    setSelectedEvent(prev => prev?.id === event.id ? null : event);
-    setSelectedEventDate(sessionDates[event.id]);
-  }, [sessionDates]);
+    const isDeselecting = selectedEvent?.id === event.id;
+    setSelectedEvent(isDeselecting ? null : event);
+    setSelectedEventDate(isDeselecting ? undefined : sessionDates[event.id]);
+  }, [sessionDates, selectedEvent]);
+
 
   const isFullyEmpty = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -242,8 +232,23 @@ export const SchedulePage = () => {
 
   const showSidebar = !!selectedEvent && !isMobile;
 
+  useEffect(() => {
+    if (!showSidebar || !sidebarRef.current) return;
+
+    const rect = sidebarRef.current.getBoundingClientRect();
+    const isAboveViewport = rect.top < 96;
+    const isBelowViewport = rect.top > window.innerHeight - 120;
+
+    if (isAboveViewport || isBelowViewport) {
+      sidebarRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [showSidebar, selectedEvent]);
+
   return (
-    <main className="flex-1 flex min-h-screen flex-col overflow-hidden bg-background">
+    <main className="flex-1 flex min-h-full flex-col overflow-hidden bg-background">
       <MobileTeacherHeader title="Timeplan" />
 
       {isFullyEmpty ? (
@@ -270,7 +275,7 @@ export const SchedulePage = () => {
             onViewModeChange={() => {}}
             onPreviousWeek={goToPreviousWeek}
             onNextWeek={goToNextWeek}
-            onGoToToday={goToCurrentWeek}
+
             hasCourses={!isFullyEmpty}
           />
           <MobileDayView
@@ -297,11 +302,11 @@ export const SchedulePage = () => {
               onViewModeChange={setViewMode}
               onPreviousWeek={goToPreviousWeek}
               onNextWeek={goToNextWeek}
-              onGoToToday={goToCurrentWeek}
+  
               hasCourses={!isFullyEmpty}
             />
 
-            <div className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background rounded-xl">
+            <div ref={calendarScrollRef} className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background rounded-b-xl">
               {isLoading && (
                 <PageLoader variant="overlay" message="Laster timeplan" />
               )}
@@ -352,19 +357,6 @@ export const SchedulePage = () => {
                       </div>
                     )}
 
-                    {showTimeIndicator && (
-                      <div
-                        className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
-                        style={{ top: `${currentTimePosition}px` }}
-                        aria-hidden="true"
-                      >
-                        <div className="type-meta w-[60px] pr-2 text-right text-primary">
-                          {currentTimeString}
-                        </div>
-                        <div className="h-px flex-1 bg-primary/40" />
-                        <div className="absolute left-[60px] size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary" />
-                      </div>
-                    )}
 
                     <div className="flex flex-col bg-background">
                       {TIME_SLOTS.map((time) => (
@@ -438,13 +430,14 @@ export const SchedulePage = () => {
           <AnimatePresence>
             {showSidebar && (
               <motion.div
+                ref={sidebarRef}
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 320, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                 className="shrink-0 overflow-hidden"
               >
-                <div className="w-80 min-w-80 rounded-xl border border-border bg-background self-start">
+                <div className="w-80 min-w-80 rounded-xl border border-border bg-background">
                   <EventSidebar
                     event={selectedEvent}
                     sessionDate={selectedEventDate}

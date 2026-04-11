@@ -34,7 +34,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
         className="mt-px"
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
           <p className={cn(
             "type-label truncate",
             isCancelled ? "text-muted-foreground line-through" : "text-foreground"
@@ -47,8 +47,8 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
           {signup.note && (
             <Popover>
               <PopoverTrigger asChild>
-                <button className="cursor-pointer" aria-label="Vis notat">
-                  <StatusIndicator variant="info" mode="badge" size="sm" label="Notat" />
+                <button className="cursor-pointer hover:opacity-80 smooth-transition" aria-label="Vis notat">
+                  <StatusIndicator variant="info" mode="badge" size="sm" label="Notat" icon={StickyNote} />
                 </button>
               </PopoverTrigger>
               <PopoverContent align="center" side="top" className="w-56 p-3">
@@ -66,7 +66,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
         <div className="mt-0.5 flex items-center gap-0.5 type-meta text-muted-foreground">
           <Link
             to={`/teacher/courses/${signup.courseId}`}
-            className="inline-flex items-center gap-0.5 truncate hover:text-foreground smooth-transition"
+            className="inline-flex items-center gap-0.5 truncate min-w-0 hover:text-foreground smooth-transition"
           >
             <span className="truncate">{signup.className}</span>
             <ArrowUpRight className="h-3 w-3 flex-shrink-0" />
@@ -74,7 +74,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="type-meta text-muted-foreground whitespace-nowrap">{signup.registeredAt}</span>
+        <span className="type-meta text-muted-foreground whitespace-nowrap hidden sm:inline">{signup.registeredAt}</span>
         {hasActions ? (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
         ) : (
