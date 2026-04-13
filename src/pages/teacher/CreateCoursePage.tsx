@@ -6,10 +6,8 @@ import { addDays } from 'date-fns';
 import {
   Layers,
   CalendarDays,
-  Check,
   ArrowRight,
   ArrowLeft,
-  ChevronDown,
   AlertCircle,
   X,
   Plus,
@@ -24,19 +22,21 @@ import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
-import { TimePicker } from '@/components/ui/time-picker';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { LocationCombobox } from '@/components/ui/location-combobox';
+import { useLocations } from '@/hooks/use-locations';
 import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Stepper } from '@/components/ui/stepper';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { tabVariants, tabTransition } from '@/lib/motion';
 import { cn } from '@/lib/utils';
@@ -50,11 +50,32 @@ interface FormErrors {
   title?: string;
   startDate?: string;
   startTime?: string;
-  duration?: string;
+  endTime?: string;
   weeks?: string;
   location?: string;
   price?: string;
   capacity?: string;
+}
+
+/** Generate HH:mm time slots in 15-min increments from startHour to endHour (exclusive). */
+function generateTimeSlots(startHour = 6, endHour = 23): string[] {
+  const slots: string[] = [];
+  for (let h = startHour; h < endHour; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  // Add the final hour exactly (e.g. 23:00)
+  slots.push(`${String(endHour).padStart(2, '0')}:00`);
+  return slots;
+}
+
+const ALL_TIME_SLOTS = generateTimeSlots();
+
+/** Convert HH:mm to total minutes since midnight */
+function timeToMin(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
 }
 
 
@@ -71,6 +92,7 @@ const CreateCoursePage = () => {
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
+  const { locations: savedLocations } = useLocations(currentOrganization?.id);
 
   // Stepper state (0, 1, 2)
   const [currentStep, setCurrentStep] = useState(0);
@@ -81,9 +103,8 @@ const CreateCoursePage = () => {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
-  const [duration, setDuration] = useState<number | null>(60);
+  const [endTime, setEndTime] = useState('');
   const [weeks, setWeeks] = useState('');
-  const [isWeeksOpen, setIsWeeksOpen] = useState(false);
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
   const [capacity, setCapacity] = useState('');
@@ -94,6 +115,20 @@ const CreateCoursePage = () => {
   const [equipment, setEquipment] = useState<EquipmentInfo | ''>('');
   const [arrivalMinutes, setArrivalMinutes] = useState(ARRIVAL_DEFAULT_MINUTES);
   const [customBullets, setCustomBullets] = useState<string[]>([]);
+
+  // Compute duration (minutes) from startTime + endTime
+  const duration = useMemo(() => {
+    if (!startTime || !endTime) return null;
+    const diff = timeToMin(endTime) - timeToMin(startTime);
+    return diff > 0 ? diff : null;
+  }, [startTime, endTime]);
+
+  // Smart end-time options: only times after startTime (minimum 15 min gap)
+  const endTimeSlots = useMemo(() => {
+    if (!startTime) return ALL_TIME_SLOTS;
+    const startMin = timeToMin(startTime) + 15; // at least 15 min after start
+    return ALL_TIME_SLOTS.filter((t) => timeToMin(t) >= startMin);
+  }, [startTime]);
 
   // Validation state
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -118,10 +153,10 @@ const CreateCoursePage = () => {
   const contentScrollRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const startDateRef = useRef<HTMLButtonElement>(null);
-  const startTimeRef = useRef<HTMLInputElement>(null);
-  const durationRef = useRef<HTMLButtonElement>(null);
-  const weeksRef = useRef<HTMLButtonElement>(null);
-  const locationRef = useRef<HTMLInputElement>(null);
+  const startTimeRef = useRef<HTMLButtonElement>(null);
+  const endTimeRef = useRef<HTMLButtonElement>(null);
+  const weeksRef = useRef<HTMLInputElement>(null);
+  const locationRef = useRef<HTMLButtonElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const capacityRef = useRef<HTMLInputElement>(null);
 
@@ -129,7 +164,7 @@ const CreateCoursePage = () => {
     title: titleRef,
     startDate: startDateRef,
     startTime: startTimeRef,
-    duration: durationRef,
+    endTime: endTimeRef,
     weeks: weeksRef,
     location: locationRef,
     price: priceRef,
@@ -141,21 +176,27 @@ const CreateCoursePage = () => {
     const errs: FormErrors = {};
     if (!title.trim()) errs.title = 'Gi kurset en tittel';
     if (!startDate) errs.startDate = 'Velg startdato';
-    if (!startTime) errs.startTime = 'Velg tidspunkt';
-    if (duration === null || duration <= 0) errs.duration = 'Velg varighet';
-    if (courseType === 'series' && !weeks) errs.weeks = 'Velg antall uker';
+    if (!startTime) errs.startTime = 'Velg starttid';
+    if (!endTime) errs.endTime = 'Velg sluttid';
+    else if (startTime && timeToMin(endTime) <= timeToMin(startTime)) errs.endTime = 'Sluttid må være etter starttid';
+    const weeksNum = parseInt(weeks, 10);
+    if (courseType === 'series' && !weeks) {
+      errs.weeks = 'Angi antall uker';
+    } else if (courseType === 'series' && (!isNaN(weeksNum) && (weeksNum < 1 || weeksNum > 50))) {
+      errs.weeks = 'Antall uker er utenfor gyldig område';
+    }
     if (!location.trim()) errs.location = 'Fyll inn sted';
     const priceNum = parseInt(price, 10);
     if (price === '' || isNaN(priceNum) || priceNum < 0) errs.price = 'Angi pris';
     const capacityNum = parseInt(capacity, 10);
     if (!capacity || isNaN(capacityNum) || capacityNum < 1) errs.capacity = 'Angi maks antall';
     return errs;
-  }, [title, startDate, startTime, duration, weeks, courseType, location, price, capacity]);
+  }, [title, startDate, startTime, endTime, weeks, courseType, location, price, capacity]);
 
   // Per-step required fields (stepFields[1] depends on courseType so series→single doesn't block on weeks)
   const stepFields = useMemo<(keyof FormErrors)[][]>(() => [
     ['title'],
-    ['startDate', 'startTime', 'duration', 'location', ...(courseType === 'series' ? (['weeks'] as (keyof FormErrors)[]) : [])],
+    ['startDate', 'startTime', 'endTime', 'location', ...(courseType === 'series' ? (['weeks'] as (keyof FormErrors)[]) : [])],
     ['price', 'capacity'],
   ], [courseType]);
 
@@ -172,7 +213,7 @@ const CreateCoursePage = () => {
       setSubmitError(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, startTime, duration, weeks]);
+  }, [startDate, startTime, endTime, weeks]);
 
   // Unsaved changes warning
   const hasUnsavedChanges = useMemo(() => {
@@ -304,9 +345,10 @@ const CreateCoursePage = () => {
 
       const dayName = startDate ? new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(startDate) : '';
       const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      const timeRange = endTime ? `${startTime}–${endTime}` : startTime;
       const timeSchedule = courseType === 'series'
-        ? `${capitalizedDay}er, ${startTime}`
-        : `${capitalizedDay}, ${startTime}`;
+        ? `${capitalizedDay}er, ${timeRange}`
+        : `${capitalizedDay}, ${timeRange}`;
 
       const courseData = {
         organization_id: currentOrganization.id,
@@ -381,7 +423,7 @@ const CreateCoursePage = () => {
             </p>
           </header>
 
-          <div className="rounded-xl bg-surface-muted/50 p-4 sm:p-5">
+          <div className="rounded-xl p-4 sm:p-6">
             <Stepper
               steps={CREATE_COURSE_STEPS}
               currentStep={currentStep}
@@ -451,7 +493,7 @@ const CreateCoursePage = () => {
                       aria-invalid={showError('title') ? 'true' : undefined}
                       aria-required="true"
                       className={cn(
-                        "w-full h-11",
+                        "w-full",
                         showError('title') && "border-destructive focus-visible:ring-destructive"
                       )}
                     />
@@ -518,12 +560,13 @@ const CreateCoursePage = () => {
               <section>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
-                  <div className={cn("grid grid-cols-1 gap-5", courseType === 'series' && "sm:grid-cols-2")}>
+                  <div className={cn("grid grid-cols-1 gap-6", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
                       <label htmlFor="create-start-date" className="type-label-sm mb-1.5 block text-foreground">
                         {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
+                        ref={startDateRef}
                         id="create-start-date"
                         value={startDate}
                         onChange={(date) => {
@@ -534,6 +577,8 @@ const CreateCoursePage = () => {
                         error={!!showError('startDate')}
                         placeholder="Velg dato"
                         fromDate={new Date()}
+                        aria-describedby={showError('startDate') ? 'startDate-error' : undefined}
+                        aria-invalid={showError('startDate') ? 'true' : undefined}
                       />
                       {showError('startDate') && (
                         <p id="startDate-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
@@ -545,50 +590,29 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label className="type-label-sm mb-1.5 block text-foreground">
+                        <label id="create-weeks-label" className="type-label-sm mb-1.5 block text-foreground">
                           Uker
                         </label>
-                        <Popover open={isWeeksOpen} onOpenChange={setIsWeeksOpen}>
-                          <PopoverTrigger asChild>
-                            <button
-                              ref={weeksRef}
-                              type="button"
-                              onBlur={() => handleBlur('weeks')}
-                              aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
-                              aria-invalid={showError('weeks') ? 'true' : undefined}
-                              aria-required="true"
-                              className={`type-label flex h-11 w-full items-center justify-between rounded-lg border bg-surface px-4 text-left text-foreground focus:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 hover:border-ring ios-ease ${
-                                showError('weeks') ? 'border-destructive' : 'border-input'
-                              }`}
-                            >
-                              <span className={weeks ? 'text-foreground' : 'text-muted-foreground'}>{weeks || 'Velg'}</span>
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isWeeksOpen ? 'rotate-180' : ''} ${showError('weeks') ? 'text-destructive' : ''}`} />
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent align="start" className="w-[140px] p-3 max-h-[280px] overflow-y-auto custom-scrollbar" showOverlay>
-                            <div className="flex flex-col gap-1">
-                              {Array.from({ length: 16 }, (_, i) => i + 1).map((week) => (
-                                <button
-                                  key={week}
-                                  type="button"
-                                  onClick={() => {
-                                    setWeeks(week.toString());
-                                    setIsWeeksOpen(false);
-                                    setTouched(prev => ({ ...prev, weeks: true }));
-                                  }}
-                                  className={`type-body flex items-center justify-between rounded-lg px-3 py-2 transition-colors ${
-                                    weeks === week.toString()
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'text-sidebar-foreground hover:bg-secondary hover:text-foreground'
-                                  }`}
-                                >
-                                  <span>{week}</span>
-                                  {weeks === week.toString() && <Check className="h-4 w-4" />}
-                                </button>
-                              ))}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                        <Input
+                          ref={weeksRef}
+                          id="create-weeks"
+                          type="number"
+                          inputMode="numeric"
+                          min="1"
+                          max="50"
+                          placeholder="Antall uker"
+                          value={weeks}
+                          onChange={(e) => setWeeks(e.target.value)}
+                          onBlur={() => handleBlur('weeks')}
+                          aria-labelledby="create-weeks-label"
+                          aria-describedby={showError('weeks') ? 'weeks-error' : undefined}
+                          aria-invalid={showError('weeks') ? 'true' : undefined}
+                          aria-required="true"
+                          className={cn(
+                            "w-full",
+                            showError('weeks') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
+                          )}
+                        />
                         {showError('weeks') && (
                           <p id="weeks-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                             <AlertCircle className="h-3 w-3" aria-hidden="true" />
@@ -599,66 +623,78 @@ const CreateCoursePage = () => {
                     )}
                   </div>
 
-                  {/* Time + Duration row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label htmlFor="create-start-time" className="type-label-sm mb-1.5 block text-foreground">
-                        Starttid
-                      </label>
-                      <TimePicker
-                        id="create-start-time"
-                        value={startTime}
-                        onChange={(time) => {
-                          setStartTime(time);
-                          setTouched(prev => ({ ...prev, startTime: true }));
-                        }}
-                        onBlur={() => handleBlur('startTime')}
-                        error={!!showError('startTime')}
-                      />
-                      {showError('startTime') && (
-                        <p id="startTime-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                          <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                          {errors.startTime}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label htmlFor="create-duration" className="type-label-sm mb-1.5 block text-foreground">
-                        Varighet
-                      </label>
+                  {/* Time range row */}
+                  <div>
+                    <label className="type-label-sm mb-1.5 block text-foreground">
+                      Tidspunkt
+                    </label>
+                    <div className="flex items-center gap-2">
                       <Select
-                        value={duration?.toString() || ""}
+                        value={startTime}
                         onValueChange={(val) => {
-                          setDuration(parseInt(val));
-                          setTouched(prev => ({ ...prev, duration: true }));
+                          setStartTime(val);
+                          setTouched(prev => ({ ...prev, startTime: true }));
+                          // If current endTime is now invalid (before or equal to new start), clear it
+                          if (endTime && timeToMin(endTime) <= timeToMin(val)) {
+                            setEndTime('');
+                          }
                         }}
                       >
                         <SelectTrigger
-                          ref={durationRef}
-                          id="create-duration"
-                          onBlur={() => handleBlur('duration')}
+                          ref={startTimeRef}
                           className={cn(
-                            "w-full h-11",
-                            showError('duration') ? "border-destructive" : "border-input"
+                            "w-full",
+                            showError('startTime') && 'border-destructive focus:ring-destructive'
                           )}
+                          aria-label="Starttid"
+                          aria-invalid={showError('startTime') ? 'true' : undefined}
                         >
-                          <SelectValue placeholder="Velg" />
+                          <SelectValue placeholder="Start" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
-                            <SelectItem key={mins} value={mins.toString()}>
-                              {mins < 60 ? `${mins} min` : mins % 60 > 0 ? `${Math.floor(mins / 60)}t ${mins % 60}min` : `${Math.floor(mins / 60)} ${Math.floor(mins / 60) === 1 ? 'time' : 'timer'}`}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="max-h-60">
+                          <SelectGroup>
+                            {ALL_TIME_SLOTS.map((slot) => (
+                              <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                            ))}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
-                      {showError('duration') && (
-                        <p id="duration-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                          <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                          {errors.duration}
-                        </p>
-                      )}
+
+                      <span className="type-label shrink-0 text-muted-foreground">–</span>
+
+                      <Select
+                        value={endTime}
+                        onValueChange={(val) => {
+                          setEndTime(val);
+                          setTouched(prev => ({ ...prev, endTime: true }));
+                        }}
+                      >
+                        <SelectTrigger
+                          ref={endTimeRef}
+                          className={cn(
+                            "w-full",
+                            showError('endTime') && 'border-destructive focus:ring-destructive'
+                          )}
+                          aria-label="Sluttid"
+                          aria-invalid={showError('endTime') ? 'true' : undefined}
+                        >
+                          <SelectValue placeholder="Slutt" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60">
+                          <SelectGroup>
+                            {endTimeSlots.map((slot) => (
+                              <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
                     </div>
+                    {(showError('startTime') || showError('endTime')) && (
+                      <p className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                        {errors.startTime || errors.endTime}
+                      </p>
+                    )}
                   </div>
 
                   {/* Time conflict warning */}
@@ -678,19 +714,17 @@ const CreateCoursePage = () => {
                     <label htmlFor="create-location" className="type-label-sm mb-1.5 block text-foreground">
                       Sted
                     </label>
-                    <Input
-                      ref={locationRef}
-                      id="create-location"
-                      type="text"
-                      placeholder="F.eks. Studioet, Grünerløkka"
+                    <LocationCombobox
                       value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      onBlur={() => handleBlur('location')}
-                      aria-describedby={showError('location') ? 'create-location-error' : undefined}
+                      onChange={(val) => {
+                        setLocation(val);
+                        setTouched(prev => ({ ...prev, location: true }));
+                      }}
+                      locations={savedLocations}
+                      placeholder="F.eks. Studioet, Grünerløkka"
                       aria-invalid={showError('location') ? 'true' : undefined}
-                      aria-required="true"
                       className={cn(
-                        "w-full h-11",
+                        "w-full",
                         showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                       )}
                     />
@@ -720,7 +754,7 @@ const CreateCoursePage = () => {
                 <div className="mb-6">
                   <h2 className="type-title text-foreground">Påmelding</h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Price */}
                   <div>
                     <label htmlFor="create-price" className="type-label-sm mb-1.5 block text-foreground">
@@ -741,7 +775,7 @@ const CreateCoursePage = () => {
                         aria-invalid={showError('price') ? 'true' : undefined}
                         aria-required="true"
                         className={cn(
-                          "w-full h-11 pr-12",
+                          "w-full pr-12",
                           showError('price') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                         )}
                       />
@@ -775,7 +809,7 @@ const CreateCoursePage = () => {
                       aria-invalid={showError('capacity') ? 'true' : undefined}
                       aria-required="true"
                       className={cn(
-                        "w-full h-11",
+                        "w-full",
                         showError('capacity') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
                       )}
                     />
@@ -802,23 +836,20 @@ const CreateCoursePage = () => {
                       Nivå
                       <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
-                    <div className="flex flex-wrap gap-2">
+                    <ToggleGroup
+                      type="single"
+                      value={audienceLevel}
+                      onValueChange={(value) => {
+                        setAudienceLevel((value || '') as AudienceLevel | '');
+                      }}
+                      aria-label="Velg nivå"
+                    >
                       {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setAudienceLevel(opt.value)}
-                          className={cn(
-                            'type-label rounded-md border px-3.5 py-1.5 smooth-transition',
-                            audienceLevel === opt.value
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-surface text-muted-foreground border-border hover:border-input hover:text-foreground'
-                          )}
-                        >
+                        <ToggleGroupItem key={opt.value} value={opt.value}>
                           {opt.label}
-                        </button>
+                        </ToggleGroupItem>
                       ))}
-                    </div>
+                    </ToggleGroup>
                     <p className="type-meta mt-2 text-muted-foreground">
                       Velg hvem kurset passer for.
                     </p>
@@ -853,15 +884,17 @@ const CreateCoursePage = () => {
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
                       onValueChange={(val) => setArrivalMinutes(val === ARRIVAL_NONE_VALUE ? '' : val)}
                     >
-                      <SelectTrigger className="w-full sm:w-52 h-11 border-input">
+                      <SelectTrigger className="w-full sm:w-52 border-input">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {ARRIVAL_PRESET_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          {ARRIVAL_PRESET_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -885,7 +918,7 @@ const CreateCoursePage = () => {
                               updated[i] = e.target.value;
                               setCustomBullets(updated);
                             }}
-                            className="h-11 flex-1"
+                            className="flex-1"
                           />
                           <Button
                             variant="ghost"
@@ -947,7 +980,7 @@ const CreateCoursePage = () => {
                           contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => startTimeRef.current?.focus(), 400);
                         }}
-                        className="type-meta whitespace-nowrap text-destructive underline underline-offset-2 transition-colors hover:text-destructive/80"
+                        className="type-meta whitespace-nowrap text-destructive underline underline-offset-2 transition-[color] hover:text-destructive/80"
                       >
                         Endre tidspunkt
                       </button>
