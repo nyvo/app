@@ -38,8 +38,8 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
         className
       )}
     >
-      <div className="flex h-3.5 items-center justify-center bg-surface-subtle">
-        <span className="type-meta text-[9px] uppercase leading-none tracking-[0.06em] text-muted-foreground">{month}</span>
+      <div className="flex h-3.5 items-center justify-center bg-[var(--color-primary-muted)]">
+        <span className="type-meta text-[9px] uppercase leading-none tracking-[0.06em] text-[var(--color-primary-muted-foreground)]">{month}</span>
       </div>
       <div className="flex flex-1 items-center justify-center">
         <span className="text-base font-semibold leading-none text-foreground">{day}</span>

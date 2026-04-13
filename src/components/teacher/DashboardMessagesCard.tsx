@@ -13,17 +13,7 @@ export function DashboardMessagesCard({ messages }: DashboardMessagesCardProps) 
 
   return (
     <section aria-labelledby="messages-heading">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 id="messages-heading" className="type-title text-foreground">Meldinger</h2>
-        {recentMessages.length > 0 && (
-          <Link
-            to="/teacher/messages"
-            className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
-          >
-            Se alle
-          </Link>
-        )}
-      </div>
+      <h2 id="messages-heading" className="type-title mb-3 text-foreground">Meldinger</h2>
       <Card className="p-2 sm:p-3">
         {recentMessages.length === 0 ? (
           <div className="flex items-center gap-2 sm:gap-3 px-1 py-2">
@@ -58,13 +48,6 @@ export function DashboardMessagesCard({ messages }: DashboardMessagesCardProps) 
                     {message.content}
                   </p>
                 </div>
-                {message.unreadCount > 0 && (
-                  <div className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-foreground px-1">
-                    <span className="type-meta text-[10px] leading-none text-background">
-                      {message.unreadCount > 99 ? '99+' : message.unreadCount}
-                    </span>
-                  </div>
-                )}
               </Link>
             ))}
           </div>

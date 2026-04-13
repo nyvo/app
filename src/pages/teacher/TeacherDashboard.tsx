@@ -11,7 +11,7 @@ import { SetupChecklist } from '@/components/teacher/SetupChecklist';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
-import { DashboardKpiRow, type KpiItem } from '@/components/teacher/DashboardKpiRow';
+import { DashboardPrimaryRow } from '@/components/teacher/DashboardPrimaryRow';
 import { DashboardUpcomingList } from '@/components/teacher/DashboardUpcomingList';
 import { DashboardTodayPanel } from '@/components/teacher/DashboardTodayPanel';
 import { DashboardRegistrationsCard } from '@/components/teacher/DashboardRegistrationsCard';
@@ -52,7 +52,7 @@ import type {
 } from '@/types/dashboard';
 
 // Map session + course to dashboard Course format (has actual session date)
-function mapSessionForDashboard(session: CourseSession, course: CourseDB): DashboardCourse {
+function mapSessionForDashboard(session: CourseSession, course: CourseDB, signupCount?: number): DashboardCourse {
   const styleType = course.course_type;
   const subtitle = course.location || (course.course_type === 'course-series' ? 'Kursrekke' : 'Enkeltkurs');
 
@@ -64,6 +64,8 @@ function mapSessionForDashboard(session: CourseSession, course: CourseDB): Dashb
     type: styleType as DashboardCourseType,
     date: session.session_date || undefined,
     imageUrl: course.image_url,
+    signups: signupCount,
+    capacity: course.max_participants ?? undefined,
   };
 }
 
@@ -154,8 +156,9 @@ const TeacherDashboard = () => {
   const [todayCourses, setTodayCourses] = useState<DashboardCourse[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [messages, setMessages] = useState<DashboardMessage[]>([]);
-  const [capacityCourse, setCapacityCourse] = useState<{ id: string; title: string; attendees: number; capacity: number } | null>(null);
-  const [lowEnrollmentCourses, setLowEnrollmentCourses] = useState<Array<{ id: string; title: string; signups: number; capacity: number }>>([]);
+  const [, setCapacityCourse] = useState<{ id: string; title: string; attendees: number; capacity: number } | null>(null);
+  const [, setLowEnrollmentCourses] = useState<Array<{ id: string; title: string; signups: number; capacity: number }>>([]);
+  const [activeCourseCount, setActiveCourseCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const [hasCourses, setHasCourses] = useState(false);
@@ -253,10 +256,13 @@ const TeacherDashboard = () => {
       (nextSessionsResult.data && nextSessionsResult.data.length > 0);
     setHasCourses(!!hasAnyCourses);
 
+    // Count active courses (non-cancelled returned by fetchCourses)
+    setActiveCourseCount(coursesResult.data?.length ?? 0);
+
     // Process next sessions
     if (nextSessionsResult.data && nextSessionsResult.data.length > 0) {
-      setDashboardCourses(nextSessionsResult.data.map(({ session, course }) =>
-        mapSessionForDashboard(session, course)
+      setDashboardCourses(nextSessionsResult.data.map(({ session, course, signupCount }) =>
+        mapSessionForDashboard(session, course, signupCount)
       ));
     } else {
       setDashboardCourses([]);
@@ -398,47 +404,7 @@ const TeacherDashboard = () => {
 
   // Personal name (first word) if set, otherwise fall back to org name
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
-  const recentMessageCount = messages.filter((m) => m.unreadCount > 0).length;
   const paymentFollowUpCount = registrations.filter((registration) => registration.hasException).length;
-
-  const kpiItems: KpiItem[] = [
-    {
-      id: 'payments',
-      count: paymentFollowUpCount,
-      label: 'Utestående betalinger',
-      to: '/teacher/signups',
-      icon: 'payment',
-    },
-    {
-      id: 'messages',
-      count: recentMessageCount,
-      label: 'Uleste meldinger',
-      to: '/teacher/messages',
-      icon: 'message',
-    },
-    {
-      id: 'enrollment',
-      count: lowEnrollmentCourses.length,
-      label: 'Lav påmelding',
-      to: lowEnrollmentCourses.length === 1
-        ? `/teacher/courses/${lowEnrollmentCourses[0]?.id}`
-        : '/teacher/courses',
-      icon: 'enrollment',
-      sublabel: lowEnrollmentCourses.length > 0
-        ? 'Starter innen 7 dager'
-        : undefined,
-    },
-    ...(capacityCourse
-      ? [{
-          id: 'capacity',
-          count: 1,
-          label: 'Nesten fullt',
-          to: `/teacher/courses/${capacityCourse.id}`,
-          icon: 'capacity' as const,
-          sublabel: capacityCourse.title,
-        }]
-      : []),
-  ];
 
   useEffect(() => {
     setBreadcrumbs([
@@ -649,8 +615,10 @@ const TeacherDashboard = () => {
                 </>
               ) : (
                 <>
-                  <DashboardKpiRow items={kpiItems} />
-
+                  <DashboardPrimaryRow
+                    outstandingPayments={paymentFollowUpCount}
+                    activeCourses={activeCourseCount}
+                  />
                   <motion.div
                     className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr] xl:items-start"
                     initial={{ opacity: 0, y: 4 }}

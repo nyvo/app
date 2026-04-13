@@ -1,6 +1,7 @@
 import { Link, matchPath, useLocation } from 'react-router-dom';
-import { Bell, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NotificationDropdown } from '@/components/teacher/NotificationDropdown';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -116,9 +117,7 @@ export function TeacherTopBar() {
             <Link to={action.to}>{action.label}</Link>
           </Button>
         )}
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationDropdown />
         <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
           <Link to="/teacher/profile">
             <Settings className="h-4 w-4" />

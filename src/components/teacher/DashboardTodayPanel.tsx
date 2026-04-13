@@ -20,7 +20,7 @@ export function DashboardTodayPanel({ courses }: DashboardTodayPanelProps) {
           <p className="type-label text-foreground">Ingen kurs i dag</p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="divide-y divide-border/50">
           {courses.map((course) => (
             <Link
               key={`${course.id}-${course.date}-${course.time}`}

@@ -47,7 +47,7 @@ export function DashboardRegistrationsCard({ registrations }: DashboardRegistrat
           <p className="type-label text-foreground">Ingen nye påmeldinger</p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="divide-y divide-border/50">
           {recentRegistrations.map((registration) => (
             <SignupRow key={registration.id} registration={registration} />
           ))}
