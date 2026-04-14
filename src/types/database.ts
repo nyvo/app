@@ -22,6 +22,8 @@ export type OrgMemberRole = 'owner' | 'admin' | 'teacher'
 export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
 export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
 export type ExceptionType = 'payment_failed' | 'pending_payment'
+export type NotificationType = 'payment_followup' | 'unread_message' | 'course_full' | 'low_enrollment'
+export type NotificationStatus = 'active' | 'resolved'
 
 // Display type for signup rows (participant-first view)
 export interface SignupDisplay {
@@ -454,6 +456,41 @@ export interface Database {
           updated_at?: string | null
         }
       }
+      teacher_locations: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          rooms: string[]
+          address: string | null
+          latitude: number | null
+          longitude: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          rooms?: string[]
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          rooms?: string[]
+          address?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       processed_webhook_events: {
         Row: {
           event_id: string
@@ -472,6 +509,70 @@ export interface Database {
           event_type?: string
           processed_at?: string | null
           result?: Json | null
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          organization_id: string
+          type: NotificationType
+          reference_id: string
+          title: string
+          body: string | null
+          link: string
+          group_key: string | null
+          status: NotificationStatus
+          created_at: string
+          updated_at: string
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          type: NotificationType
+          reference_id: string
+          title: string
+          body?: string | null
+          link: string
+          group_key?: string | null
+          status?: NotificationStatus
+          created_at?: string
+          updated_at?: string
+          resolved_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          type?: NotificationType
+          reference_id?: string
+          title?: string
+          body?: string | null
+          link?: string
+          group_key?: string | null
+          status?: NotificationStatus
+          created_at?: string
+          updated_at?: string
+          resolved_at?: string | null
+        }
+      }
+      notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          user_id: string
+          read_at: string
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          user_id: string
+          read_at?: string
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          user_id?: string
+          read_at?: string
         }
       }
     }
@@ -581,6 +682,24 @@ export interface Database {
         Args: Record<string, never>
         Returns: number
       }
+      get_active_notifications: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: {
+          id: string
+          organization_id: string
+          type: string
+          reference_id: string
+          title: string
+          body: string | null
+          link: string
+          group_key: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          resolved_at: string | null
+          read_at: string | null
+        }[]
+      }
     }
     Enums: {
       course_type: CourseType
@@ -629,6 +748,10 @@ export type CourseSessionUpdate = Database['public']['Tables']['course_sessions'
 export type CourseSignupPackage = Database['public']['Tables']['course_signup_packages']['Row']
 export type CourseSignupPackageInsert = Database['public']['Tables']['course_signup_packages']['Insert']
 export type CourseSignupPackageUpdate = Database['public']['Tables']['course_signup_packages']['Update']
+
+export type TeacherLocation = Database['public']['Tables']['teacher_locations']['Row']
+export type TeacherLocationInsert = Database['public']['Tables']['teacher_locations']['Insert']
+export type TeacherLocationUpdate = Database['public']['Tables']['teacher_locations']['Update']
 
 // Notification preferences stored in organizations.settings JSONB
 export interface NotificationSettings {

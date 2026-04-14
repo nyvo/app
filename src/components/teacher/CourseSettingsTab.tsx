@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Info, X } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
@@ -7,16 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
-import { TimePicker } from '@/components/ui/time-picker';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { cn } from '@/lib/utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Separator } from '@/components/ui/separator';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { AudienceLevel, EquipmentInfo } from '@/types/practicalInfo';
@@ -104,6 +104,47 @@ export const CourseSettingsTab = ({
 }: CourseSettingsTabProps) => {
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
+
+  // Time slot helpers (matching CreateCoursePage)
+  const allTimeSlots = useMemo(() => {
+    const slots: string[] = [];
+    for (let h = 6; h < 23; h++) {
+      for (const m of [0, 15, 30, 45]) {
+        slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+    }
+    slots.push('23:00');
+    return slots;
+  }, []);
+
+  const timeToMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const minToTime = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  // Derive end time from start + duration
+  const endTime = useMemo(() => {
+    if (!settingsTime || !settingsDuration) return '';
+    return minToTime(timeToMin(settingsTime) + settingsDuration);
+  }, [settingsTime, settingsDuration]);
+
+  const endTimeSlots = useMemo(() => {
+    if (!settingsTime) return allTimeSlots;
+    const startMin = timeToMin(settingsTime) + 15;
+    return allTimeSlots.filter((t) => timeToMin(t) >= startMin);
+  }, [settingsTime, allTimeSlots]);
+
+  const handleEndTimeChange = (val: string) => {
+    if (!settingsTime) return;
+    const dur = timeToMin(val) - timeToMin(settingsTime);
+    if (dur > 0) onDurationChange(dur);
+  };
 
   useEffect(() => {
     setParticipantsInput(String(maxParticipants));
@@ -194,7 +235,7 @@ export const CourseSettingsTab = ({
           <h3 className="type-title text-foreground">Tid og kapasitet</h3>
           <p className="type-body-sm text-muted-foreground">Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
             <DatePicker
@@ -205,32 +246,45 @@ export const CourseSettingsTab = ({
           </div>
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
-            <TimePicker
-              value={settingsTime}
-              onChange={(time) => onTimeChange(time)}
-            />
-          </div>
-          <div>
-            <label id="settings-duration-label" className="type-label-sm mb-1.5 block text-foreground">Varighet</label>
-            <Select
-              value={settingsDuration?.toString() || ""}
-              onValueChange={(val) => onDurationChange(parseInt(val))}
-            >
-              <SelectTrigger aria-labelledby="settings-duration-label" className="w-full h-11 border-input">
-                <SelectValue placeholder="Velg" />
-              </SelectTrigger>
-              <SelectContent>
-                {[15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240].map((mins) => (
-                  <SelectItem key={mins} value={mins.toString()}>
-                    {mins < 60
-                      ? `${mins} min`
-                      : mins % 60 === 0
-                        ? (mins === 60 ? '1 time' : `${mins / 60} timer`)
-                        : `${Math.floor(mins / 60)}t ${mins % 60}min`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select
+                value={settingsTime}
+                onValueChange={(val) => {
+                  onTimeChange(val);
+                  // If current end time is now invalid, clear duration
+                  if (endTime && timeToMin(endTime) <= timeToMin(val)) {
+                    onDurationChange(null);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full" aria-label="Starttid">
+                  <SelectValue placeholder="Start" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectGroup>
+                    {allTimeSlots.map((slot) => (
+                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <span className="type-label shrink-0 text-muted-foreground">–</span>
+              <Select
+                value={endTime}
+                onValueChange={handleEndTimeChange}
+              >
+                <SelectTrigger className="w-full" aria-label="Sluttid">
+                  <SelectValue placeholder="Slutt" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectGroup>
+                    {endTimeSlots.map((slot) => (
+                      <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
             <label className="type-label-sm mb-1.5 block text-foreground">Kapasitet</label>
@@ -282,23 +336,18 @@ export const CourseSettingsTab = ({
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <label className="type-label-sm mb-2.5 block text-foreground">Nivå</label>
-            <div className="flex flex-wrap gap-2">
+            <ToggleGroup
+              type="single"
+              value={settingsAudienceLevel}
+              onValueChange={(value) => onAudienceLevelChange((value || '') as AudienceLevel | '')}
+              aria-label="Velg nivå"
+            >
               {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => onAudienceLevelChange(opt.value)}
-                  className={cn(
-                    'type-meta rounded-md border px-3 py-1.5 smooth-transition',
-                    settingsAudienceLevel === opt.value
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-muted-foreground border-border hover:border-input hover:text-foreground'
-                  )}
-                >
+                <ToggleGroupItem key={opt.value} value={opt.value}>
                   {opt.label}
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
             <p className="type-meta mt-1.5 text-muted-foreground">
               Velg det laveste nivået som passer.
             </p>
@@ -325,7 +374,7 @@ export const CourseSettingsTab = ({
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
             >
-              <SelectTrigger className="h-11 w-full sm:w-48 border-input">
+              <SelectTrigger className="w-full sm:w-48 border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -363,7 +412,7 @@ export const CourseSettingsTab = ({
                     className="text-muted-foreground hover:text-destructive hover:bg-transparent"
                     aria-label={`Fjern punkt ${i + 1}`}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
@@ -373,10 +422,10 @@ export const CourseSettingsTab = ({
                   size="sm"
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+                  className="type-body text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                 >
-                  <Plus className="h-3 w-3" />
-                  Legg til
+                  <Plus className="h-3.5 w-3.5" />
+                  Legg til punkt
                 </Button>
               )}
             </div>
@@ -391,7 +440,7 @@ export const CourseSettingsTab = ({
           <h3 className="type-title text-foreground">Avlys kurs</h3>
           <p className="type-body-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
         </div>
-        <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-subtle px-4 py-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-muted px-4 py-4 sm:flex-row sm:items-center">
           <div className="space-y-1">
             <p className="type-label text-foreground">Dette kan ikke angres.</p>
             <p className="type-body-sm text-muted-foreground">

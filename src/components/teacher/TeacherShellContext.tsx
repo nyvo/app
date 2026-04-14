@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { useAlertItems, type AlertItem } from '@/hooks/use-alert-items';
+import { useNotifications, type Notification } from '@/hooks/use-notifications';
 
 export type TeacherShellCrumb = {
   label: string;
@@ -16,9 +16,10 @@ type TeacherShellContextValue = {
   setBreadcrumbs: (breadcrumbs: TeacherShellCrumb[] | null) => void;
   action: TeacherShellAction | null;
   setAction: (action: TeacherShellAction | null) => void;
-  alertItems: AlertItem[];
-  dismissAllAlerts: () => void;
-  dismissAlert: (id: string) => void;
+  notifications: Notification[];
+  unreadCount: number;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
 };
 
 const TeacherShellContext = createContext<TeacherShellContextValue | null>(null);
@@ -26,7 +27,7 @@ const TeacherShellContext = createContext<TeacherShellContextValue | null>(null)
 export function TeacherShellProvider({ children }: { children: ReactNode }) {
   const [breadcrumbs, setBreadcrumbs] = useState<TeacherShellCrumb[] | null>(null);
   const [action, setAction] = useState<TeacherShellAction | null>(null);
-  const { alertItems, dismissAll, dismissOne } = useAlertItems();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const value = useMemo(
     () => ({
@@ -34,11 +35,12 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
       setBreadcrumbs,
       action,
       setAction,
-      alertItems,
-      dismissAllAlerts: dismissAll,
-      dismissAlert: dismissOne,
+      notifications,
+      unreadCount,
+      markAsRead,
+      markAllAsRead,
     }),
-    [action, breadcrumbs, alertItems, dismissAll, dismissOne]
+    [action, breadcrumbs, notifications, unreadCount, markAsRead, markAllAsRead]
   );
 
   return (
@@ -58,4 +60,4 @@ export function useTeacherShell() {
   return context;
 }
 
-export type { AlertItem };
+export type { Notification };
