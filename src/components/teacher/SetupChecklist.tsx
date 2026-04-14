@@ -54,7 +54,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
             return (
               <div
                 key={step.id}
-                className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-colors duration-150 ${
+                className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-[background-color] duration-150 ${
                   isNext ? 'bg-surface-muted' : ''
                 }`}
               >

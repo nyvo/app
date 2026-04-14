@@ -105,7 +105,7 @@ export const SessionList: React.FC<SessionListProps> = ({
               <div key={session.id}>
                 {/* Session row */}
                 <div
-                  className={`group flex items-center justify-between gap-4 px-5 py-4 smooth-transition ${
+                  className={`group flex items-center justify-between gap-4 px-6 py-4 smooth-transition ${
                     isPast ? 'bg-surface-muted/30 text-muted-foreground' : 'hover:bg-surface-muted/60'
                   }`}
                 >
@@ -141,7 +141,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                 {/* Inline edit panel */}
                 {isEditing && (
-                  <div className="border-t border-border bg-surface-muted/40 px-5 py-4">
+                  <div className="border-t border-border bg-surface-muted/40 px-6 py-4">
                     <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>

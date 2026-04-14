@@ -139,7 +139,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
               classNames={{
                 root: "w-full max-w-[350px]",
                 months: "relative flex flex-col gap-4",
-                month: "flex flex-col gap-5",
+                month: "flex flex-col gap-6",
                 weekdays: "flex justify-between",
                 weekday: "type-meta text-muted-foreground w-11 text-center",
                 week: "flex justify-between w-full mt-1",

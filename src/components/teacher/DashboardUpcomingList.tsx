@@ -39,13 +39,18 @@ function CourseRow({
   title,
   dateStr,
   timeText,
+  signups,
+  capacity,
 }: {
   id: string;
   title: string;
   dateStr?: string;
   timeText?: string;
+  signups?: number;
+  capacity?: number;
 }) {
   const dayName = formatFullDay(dateStr);
+  const hasAttendance = signups != null && capacity != null && capacity > 0;
 
   return (
     <Link
@@ -59,6 +64,9 @@ function CourseRow({
           {dayName}{timeText ? ` · ${timeText}` : ''}
         </p>
       </div>
+      {hasAttendance && (
+        <span className="type-body-sm shrink-0 text-muted-foreground">{signups}/{capacity}</span>
+      )}
     </Link>
   );
 }
@@ -86,6 +94,8 @@ export function DashboardUpcomingList({ courses }: DashboardUpcomingListProps) {
               title={course.title}
               dateStr={course.date}
               timeText={course.time}
+              signups={course.signups}
+              capacity={course.capacity}
             />
           ))}
         </div>

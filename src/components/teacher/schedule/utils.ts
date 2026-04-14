@@ -21,6 +21,8 @@ export function formatTime(time: string): string {
  * Calculate CSS top/height for an event within the time grid.
  * Grid shows 06:00-22:00 at 100px per hour.
  */
+const PX_PER_HOUR = 100;
+
 export function getEventStyle(startTime: string, endTime: string): { top: string; height: string } {
   const [startHour, startMin] = startTime.split(':').map(Number);
   const [endHour, endMin] = endTime.split(':').map(Number);
@@ -30,8 +32,8 @@ export function getEventStyle(startTime: string, endTime: string): { top: string
   const clampedEndHour = Math.min(endHour, 23);
   const clampedEndMin = endHour >= 23 ? 0 : endMin;
 
-  const startOffset = (clampedStartHour - 6) * 100 + (clampedStartMin / 60) * 100;
-  const endOffset = (clampedEndHour - 6) * 100 + (clampedEndMin / 60) * 100;
+  const startOffset = (clampedStartHour - 6) * PX_PER_HOUR + (clampedStartMin / 60) * PX_PER_HOUR;
+  const endOffset = (clampedEndHour - 6) * PX_PER_HOUR + (clampedEndMin / 60) * PX_PER_HOUR;
   const duration = Math.max(endOffset - startOffset, 20);
 
   return {

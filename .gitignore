@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 .vercel
 
+# Claude Code MCP config (contains secrets)
+.claude/mcp.json
+
 # Playwright
 test-results/
 playwright-report/

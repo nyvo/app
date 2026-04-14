@@ -22,6 +22,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { LocationsManager } from '@/components/teacher/LocationsManager';
+import { useLocations } from '@/hooks/use-locations';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
 import { createStripeConnectLink, createStripeDashboardLink, checkStripeStatus } from '@/services/stripe-connect';
@@ -31,6 +33,8 @@ import type { NotificationSettings, OrganizationSettings } from '@/types/databas
 
 const TeacherProfilePage = () => {
   const { profile, currentOrganization, refreshOrganizations, updatePassword } = useAuth();
+  const { locations: savedLocations, refetch: refetchLocations } = useLocations(currentOrganization?.id);
+
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -474,31 +478,46 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => setCity(e.target.value)}
                                 placeholder="F.eks. Oslo"
                             />
-                            <p className="type-meta mt-1.5 text-muted-foreground">Vises på din offentlige studioside.</p>
+                            <p className="type-meta mt-1.5 text-muted-foreground">Vises på din offentlige side.</p>
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-description" className="type-label-sm mb-1.5 block text-foreground">Om studioet</label>
+                            <label htmlFor="profile-description" className="type-label-sm mb-1.5 block text-foreground">Om deg</label>
                             <Textarea
                                 id="profile-description"
                                 rows={4}
                                 value={studioDescription}
                                 onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
                                 onBlur={() => handleBlur('studioDescription')}
-                                placeholder="Fortell litt om studioet ditt"
+                                placeholder="Fortell litt om deg"
                                 aria-invalid={!!errors.studioDescription}
                             />
                             <div className="type-meta mt-1.5 flex justify-between">
                                 {errors.studioDescription && touched.studioDescription ? (
                                   <span className="text-destructive">{errors.studioDescription}</span>
                                 ) : (
-                                  <span className="text-muted-foreground">Vises på din offentlige studioside.</span>
+                                  <span className="text-muted-foreground">Vises på din offentlige side.</span>
                                 )}
                                 <span className={studioDescription.length > 500 ? 'text-destructive' : 'text-muted-foreground'}>{studioDescription.length}/500</span>
                             </div>
                         </div>
                       </div>
                     </Card>
+                  </section>
+
+                  {/* Steder */}
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+                    <div>
+                      <h2 className="type-title text-foreground">Steder</h2>
+                      <p className="type-body-sm mt-1 text-muted-foreground">Lagre steder du bruker ofte.</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <LocationsManager
+                        organizationId={currentOrganization?.id ?? ''}
+                        locations={savedLocations}
+                        onChanged={refetchLocations}
+                      />
+                    </div>
                   </section>
 
                   {/* Konto & Sikkerhet */}
@@ -742,19 +761,6 @@ const TeacherProfilePage = () => {
                                   checked={notifications.messages}
                                   onCheckedChange={() => handleNotificationToggle('messages')}
                                   aria-label="Nye meldinger"
-                              />
-                          </div>
-
-                          <div className="flex items-center justify-between px-6 py-4">
-                              <div>
-                                  <span className="type-label block text-foreground">Nyheter fra Ease</span>
-                                  <span className="type-meta block text-muted-foreground">Tips, oppdateringer og nyheter på e-post.</span>
-                              </div>
-                              <Switch
-                                  size="sm"
-                                  checked={notifications.marketing}
-                                  onCheckedChange={() => handleNotificationToggle('marketing')}
-                                  aria-label="Nyheter fra Ease"
                               />
                           </div>
                       </Card>

@@ -228,7 +228,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             )}
           </Card>
 
-          <div className="min-w-0 flex-1 space-y-5">
+          <div className="min-w-0 flex-1 space-y-6">
             <div>
               <p className="type-meta mb-1 text-muted-foreground">Kort beskrivelse</p>
               <p className="type-body leading-relaxed text-muted-foreground">

@@ -117,7 +117,7 @@ const StripeCallbackPage = () => {
 
           {state === 'incomplete' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
                 <AlertCircle className="size-5 text-status-warning-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
@@ -131,11 +131,11 @@ const StripeCallbackPage = () => {
                   onClick={handleRetry}
                   loading={isRetrying}
                   loadingText="Sender deg til Stripe …"
-                  className="w-full h-11"
+                  className="w-full h-9"
                 >
                   Prøv igjen
                 </Button>
-                <Button asChild variant="outline-soft" className="w-full h-11">
+                <Button asChild variant="outline-soft" className="w-full h-9">
                   <Link to="/teacher">Tilbake til oversikten</Link>
                 </Button>
               </div>
@@ -144,7 +144,7 @@ const StripeCallbackPage = () => {
 
           {state === 'error' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
                 <AlertCircle className="size-5 text-status-error-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">
@@ -158,11 +158,11 @@ const StripeCallbackPage = () => {
                   onClick={handleRetry}
                   loading={isRetrying}
                   loadingText="Sender deg til Stripe …"
-                  className="w-full h-11"
+                  className="w-full h-9"
                 >
                   Prøv igjen
                 </Button>
-                <Button asChild variant="outline-soft" className="w-full h-11">
+                <Button asChild variant="outline-soft" className="w-full h-9">
                   <Link to="/teacher">Tilbake til oversikten</Link>
                 </Button>
               </div>
@@ -171,7 +171,7 @@ const StripeCallbackPage = () => {
 
           {state === 'success' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-subtle">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
                 <CheckCircle2 className="size-5 text-status-confirmed-text" />
               </div>
               <h1 className="type-heading-1 mb-2 text-foreground">

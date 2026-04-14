@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import * as React from 'react'
 import { nb } from 'date-fns/locale'
 import { format } from 'date-fns'
 
@@ -10,20 +10,18 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
-interface DatePickerProps {
+interface DatePickerProps extends Omit<React.ComponentPropsWithoutRef<'button'>, 'value' | 'onChange'> {
   value?: Date
   onChange?: (date: Date | undefined) => void
   onBlur?: () => void
   placeholder?: string
-  className?: string
-  disabled?: boolean
   error?: boolean
-  id?: string
   /** Earliest selectable date. Days before this are greyed out. */
   fromDate?: Date
+  timeZone?: string
 }
 
-const DatePicker = ({
+const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
   value,
   onChange,
   onBlur,
@@ -32,9 +30,11 @@ const DatePicker = ({
   disabled,
   error,
   id,
-  fromDate
-}: DatePickerProps) => {
-  const [open, setOpen] = useState(false)
+  fromDate,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ...buttonProps
+}, ref) => {
+  const [open, setOpen] = React.useState(false)
 
   const formatDateNorwegian = (date: Date) => {
     return format(date, 'd. MMMM yyyy', { locale: nb })
@@ -49,15 +49,17 @@ const DatePicker = ({
     }}>
       <PopoverTrigger asChild>
         <button
+          ref={ref}
           id={id}
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-11 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
+            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
             !value && 'text-muted-foreground',
             error && 'border-destructive',
             className
           )}
+          {...buttonProps}
         >
           <span className={cn(!value && 'text-muted-foreground')}>
             {value ? formatDateNorwegian(value) : placeholder}
@@ -74,6 +76,7 @@ const DatePicker = ({
             setOpen(false)
           }}
           locale={nb}
+          timeZone={timeZone}
           disabled={fromDate ? { before: fromDate } : undefined}
           classNames={{
             root: "w-full max-w-[350px]",
@@ -88,6 +91,8 @@ const DatePicker = ({
       </PopoverContent>
     </Popover>
   )
-}
+})
+
+DatePicker.displayName = 'DatePicker'
 
 export { DatePicker }

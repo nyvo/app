@@ -38,10 +38,10 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
     : `${event.signups} påmeldte`;
 
   return (
-    <aside className="h-full">
-      <div className="p-5">
+    <aside className="h-full overflow-y-auto">
+      <div className="p-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-5">
+        <div className="flex items-start justify-between gap-2 mb-6">
           <div className="min-w-0">
             <h2 className="type-title text-foreground truncate">{event.title}</h2>
             <p className="type-meta text-muted-foreground mt-0.5">
@@ -59,7 +59,7 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
         </div>
 
         {/* Status */}
-        <div className="mb-5">
+        <div className="mb-6">
           <StatusIndicator
             variant={statusVariant}
             mode="badge"
@@ -98,7 +98,7 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
         </div>
 
         {/* Link to course */}
-        <div className="mt-6 pt-5 border-t border-border">
+        <div className="mt-6 pt-6 border-t border-border">
           <Link
             to={`/teacher/courses/${event.courseId}`}
             className="inline-flex items-center gap-1 type-label-sm text-muted-foreground hover:text-foreground smooth-transition"

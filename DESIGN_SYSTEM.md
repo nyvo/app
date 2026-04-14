@@ -251,7 +251,7 @@ Examples:
 - `12px`
   - dialogs, large featured containers, larger shells
 - `full`
-  - buttons, circular elements, and pill-shaped controls
+  - avatars and circular elements only (not buttons)
 
 ### Density Rules
 
@@ -265,8 +265,9 @@ Examples:
 ### Primitive Baseline
 
 - Buttons
-  - default: `h-11 px-4`, `full` radius (pill)
-  - compact: `h-9 px-3`, `full` radius (pill)
+  - All buttons: `rounded-lg` (8px), matching input controls
+  - default: `h-11 px-4`
+  - compact/sm: `h-9 px-3`
 - Inputs, selects, search, and filter tabs
   - `h-9 px-4`, `8px` radius (`rounded-lg`)
   - All tool-row controls must share the same height and radius

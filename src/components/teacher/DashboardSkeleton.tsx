@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton';
 
 /**
- * Dashboard Skeleton - matches the KPI row + 2-col grid layout
+ * Dashboard Skeleton - matches the Primary Row + 2-col grid layout
  */
 export const DashboardSkeleton = memo(function DashboardSkeleton() {
   return (
@@ -14,16 +14,16 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
     >
       <span className="sr-only">Laster innhold</span>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {[...Array(3)].map((_, i) => (
-          <SkeletonCard key={i} className="min-h-[100px] p-4">
+      {/* Primary Row — 2 fixed Bento cards */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        {[...Array(2)].map((_, i) => (
+          <SkeletonCard key={i} className="min-h-[100px] sm:min-h-[112px] p-4 sm:p-5">
             <div className="flex items-center justify-between">
               <Skeleton className="h-10 w-12" />
-              <Skeleton className="size-8 rounded-lg" />
+              <Skeleton className="h-5 w-5 rounded" />
             </div>
             <div className="mt-3">
-              <Skeleton className="h-4 w-28 max-w-full" />
+              <Skeleton className="h-4 w-32 max-w-full" />
             </div>
           </SkeletonCard>
         ))}

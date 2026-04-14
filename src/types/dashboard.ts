@@ -35,6 +35,10 @@ export interface Course {
   /** ISO date string for the next session/start date */
   date?: string;
   imageUrl?: string | null;
+  /** Number of confirmed signups */
+  signups?: number;
+  /** Max participants (capacity) */
+  capacity?: number;
 }
 
 export interface TeacherStats {

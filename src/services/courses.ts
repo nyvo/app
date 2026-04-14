@@ -719,6 +719,7 @@ export async function fetchNextSessions(organizationId: string, limit = 3): Prom
   data: Array<{
     session: CourseSession
     course: Course
+    signupCount: number
   }> | null
   error: Error | null
 }> {
@@ -760,8 +761,28 @@ export async function fetchNextSessions(organizationId: string, limit = 3): Prom
     return sessionTime.getTime() > now.getTime()
   })
 
+  const sliced = filtered.slice(0, limit)
+
+  // Fetch confirmed signup counts for the courses in the result
+  const courseIds = [...new Set(sliced.map(s => s.course_id))]
+  const signupCountMap: Record<string, number> = {}
+
+  if (courseIds.length > 0) {
+    const { data: countRows } = await supabase
+      .from('signups')
+      .select('course_id')
+      .in('course_id', courseIds)
+      .eq('status', 'confirmed')
+
+    if (countRows) {
+      for (const row of countRows as Array<{ course_id: string }>) {
+        signupCountMap[row.course_id] = (signupCountMap[row.course_id] || 0) + 1
+      }
+    }
+  }
+
   return {
-    data: filtered.slice(0, limit).map(session => ({
+    data: sliced.map(session => ({
       session: {
         id: session.id,
         course_id: session.course_id,
@@ -775,6 +796,7 @@ export async function fetchNextSessions(organizationId: string, limit = 3): Prom
         updated_at: session.updated_at,
       } as CourseSession,
       course: session.course as Course,
+      signupCount: signupCountMap[session.course_id] || 0,
     })),
     error: null,
   }

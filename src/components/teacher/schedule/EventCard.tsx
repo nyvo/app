@@ -25,12 +25,10 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       onClick={() => onSelect?.(event)}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
       className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg border p-1 text-left smooth-transition cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
-        isCompleted
+        isSelected
+          ? 'border-primary/30 ring-1 ring-primary/20'
+          : isCompleted
           ? 'border-border/50'
-          : isActive
-          ? 'border-primary/30 ring-1 ring-primary/20'
-          : isSelected
-          ? 'border-primary/30 ring-1 ring-primary/20'
           : 'border-border hover:border-border'
       }`}
       style={positionStyle}

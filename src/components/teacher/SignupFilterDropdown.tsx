@@ -8,15 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { Users, AlertTriangle, RotateCcw, Archive, type LucideIcon } from 'lucide-react';
+import { Users, CreditCard, Undo2, Archive, type LucideIcon } from 'lucide-react';
 
 // New payment-focused filters (used by SignupsPage)
 export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';
 
 export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string; icon: LucideIcon }> = [
   { value: 'all', label: 'Alle', icon: Users },
-  { value: 'pending', label: 'Betalingsproblemer', icon: AlertTriangle },
-  { value: 'refunded', label: 'Refundert', icon: RotateCcw },
+  { value: 'pending', label: 'Betaling', icon: CreditCard },
+  { value: 'refunded', label: 'Refundert', icon: Undo2 },
   { value: 'archived', label: 'Arkiv', icon: Archive },
 ];
 

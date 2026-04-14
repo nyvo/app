@@ -47,7 +47,7 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
                 {message.timestamp}
               </span>
             </div>
-            <p className="type-body text-muted-foreground truncate transition-colors group-hover:text-foreground">
+            <p className="type-body text-muted-foreground truncate transition-[color] group-hover:text-foreground">
               {message.content}
             </p>
           </div>
@@ -62,7 +62,7 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
       {!hideHeader && (
         <div className="mb-3 flex items-center justify-between">
           <h3 className="type-title text-foreground">Meldinger</h3>
-          <Link to="/teacher/messages" className="type-meta text-muted-foreground transition-colors hover:text-foreground">Se alle</Link>
+          <Link to="/teacher/messages" className="type-meta text-muted-foreground transition-[color] hover:text-foreground">Se alle</Link>
         </div>
       )}
       {hideCard ? content : <Card className="flex flex-1 min-h-[280px] flex-col overflow-hidden">{content}</Card>}

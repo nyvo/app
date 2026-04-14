@@ -346,10 +346,13 @@ export async function getUnreadCount(
 }
 
 // Fetch recent conversations for dashboard widget
+// Only returns conversations updated within the last 7 days
 export async function fetchRecentConversations(
   organizationId: string,
   limit: number = 5
 ): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
   const { data: conversations, error } = await supabase
     .from('conversations')
     .select(`
@@ -357,6 +360,7 @@ export async function fetchRecentConversations(
       messages(*)
     `)
     .eq('organization_id', organizationId)
+    .gte('updated_at', sevenDaysAgo)
     .order('updated_at', { ascending: false })
     .limit(limit * 2) // Fetch a bit more to allow sorting by unread
 
