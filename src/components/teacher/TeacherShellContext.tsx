@@ -18,8 +18,8 @@ type TeacherShellContextValue = {
   setAction: (action: TeacherShellAction | null) => void;
   notifications: Notification[];
   unreadCount: number;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  dismiss: (id: string) => Promise<void>;
+  dismissAll: () => Promise<void>;
 };
 
 const TeacherShellContext = createContext<TeacherShellContextValue | null>(null);
@@ -27,7 +27,7 @@ const TeacherShellContext = createContext<TeacherShellContextValue | null>(null)
 export function TeacherShellProvider({ children }: { children: ReactNode }) {
   const [breadcrumbs, setBreadcrumbs] = useState<TeacherShellCrumb[] | null>(null);
   const [action, setAction] = useState<TeacherShellAction | null>(null);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, dismiss, dismissAll } = useNotifications();
 
   const value = useMemo(
     () => ({
@@ -37,10 +37,10 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
       setAction,
       notifications,
       unreadCount,
-      markAsRead,
-      markAllAsRead,
+      dismiss,
+      dismissAll,
     }),
-    [action, breadcrumbs, notifications, unreadCount, markAsRead, markAllAsRead]
+    [action, breadcrumbs, notifications, unreadCount, dismiss, dismissAll]
   );
 
   return (
@@ -61,3 +61,4 @@ export function useTeacherShell() {
 }
 
 export type { Notification };
+export type { NotificationSeverity } from '@/hooks/use-notifications';

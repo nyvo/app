@@ -1,4 +1,4 @@
-import { supabase, typedFrom } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { NotificationType } from '@/types/database';
 
 export interface NotificationRow {
@@ -31,39 +31,25 @@ export async function fetchNotifications(
   return { data: (data as NotificationRow[]) ?? [], error: null };
 }
 
-export async function markAsRead(
-  notificationId: string,
-  userId: string
+export async function dismissNotification(
+  notificationId: string
 ): Promise<{ error: Error | null }> {
-  const { error } = await typedFrom('notification_reads')
-    .upsert(
-      { notification_id: notificationId, user_id: userId, read_at: new Date().toISOString() },
-      { onConflict: 'notification_id,user_id' }
-    );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('notifications') as any)
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+    .eq('id', notificationId);
 
   return { error: error ?? null };
 }
 
-export async function markAllAsRead(
-  organizationId: string,
-  userId: string
+export async function dismissAllNotifications(
+  organizationId: string
 ): Promise<{ error: Error | null }> {
-  const { data: notifications, error: fetchError } = await supabase
-    .from('notifications')
-    .select('id')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase.from('notifications') as any)
+    .update({ status: 'resolved', resolved_at: new Date().toISOString() })
     .eq('organization_id', organizationId)
     .eq('status', 'active');
-
-  if (fetchError || !notifications?.length) return { error: fetchError ?? null };
-
-  const rows = notifications.map((n: { id: string }) => ({
-    notification_id: n.id,
-    user_id: userId,
-    read_at: new Date().toISOString(),
-  }));
-
-  const { error } = await typedFrom('notification_reads')
-    .upsert(rows, { onConflict: 'notification_id,user_id' });
 
   return { error: error ?? null };
 }

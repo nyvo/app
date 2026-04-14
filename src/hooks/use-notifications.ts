@@ -1,15 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { CreditCard, MessageSquare, UserCheck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import {
   fetchNotifications,
-  markAsRead as markAsReadService,
-  markAllAsRead as markAllAsReadService,
+  dismissNotification as dismissService,
+  dismissAllNotifications as dismissAllService,
   type NotificationRow,
 } from '@/services/notifications';
 import { logger } from '@/lib/logger';
+
+export type NotificationSeverity = 'danger' | 'warning' | 'success' | 'neutral';
 
 export interface Notification {
   id: string;
@@ -19,7 +21,7 @@ export interface Notification {
   link: string;
   groupKey: string | null;
   icon: LucideIcon;
-  isUnread: boolean;
+  severity: NotificationSeverity;
   createdAt: string;
 }
 
@@ -30,10 +32,23 @@ const ICON_MAP: Record<NotificationRow['type'], LucideIcon> = {
   low_enrollment: Users,
 };
 
+const SEVERITY_MAP: Record<NotificationRow['type'], NotificationSeverity> = {
+  payment_followup: 'danger',
+  low_enrollment: 'warning',
+  course_full: 'success',
+  unread_message: 'neutral',
+};
+
+const SEVERITY_ORDER: Record<NotificationSeverity, number> = {
+  danger: 0,
+  warning: 1,
+  success: 2,
+  neutral: 3,
+};
+
 export function useNotifications() {
   const { currentOrganization, profile } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const hasLoadedRef = useRef(false);
 
   const orgId = currentOrganization?.id;
   const userId = profile?.id;
@@ -48,28 +63,30 @@ export function useNotifications() {
         return;
       }
 
-      setNotifications(
-        data.map((row) => ({
-          id: row.id,
-          type: row.type,
-          title: row.title,
-          body: row.body,
-          link: row.link,
-          groupKey: row.group_key,
-          icon: ICON_MAP[row.type] ?? Users,
-          isUnread: !row.read_at || new Date(row.read_at) < new Date(row.updated_at),
-          createdAt: row.created_at,
-        }))
-      );
+      const mapped = data.map((row) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        body: row.body,
+        link: row.link,
+        groupKey: row.group_key,
+        icon: ICON_MAP[row.type] ?? Users,
+        severity: SEVERITY_MAP[row.type] ?? 'neutral' as NotificationSeverity,
+        createdAt: row.created_at,
+      }));
+
+      // Sort: danger first, then warning, success, neutral
+      mapped.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+
+      setNotifications(mapped);
     } catch (err) {
       logger.error('Failed to fetch notifications:', err);
     }
   }, [orgId, userId]);
 
-  // Initial fetch
+  // Fetch when org or user changes
   useEffect(() => {
-    if (!hasLoadedRef.current && orgId && userId) {
-      hasLoadedRef.current = true;
+    if (orgId && userId) {
       refetch();
     }
   }, [orgId, userId, refetch]);
@@ -82,31 +99,26 @@ export function useNotifications() {
     orgId
   );
 
-  const unreadCount = notifications.filter((n) => n.isUnread).length;
-
-  const markAsRead = useCallback(async (notificationId: string) => {
-    if (!userId) return;
-    // Optimistic update
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? { ...n, isUnread: false } : n))
-    );
-    const { error } = await markAsReadService(notificationId, userId);
+  const dismiss = useCallback(async (notificationId: string) => {
+    // Optimistic: remove from list
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    const { error } = await dismissService(notificationId);
     if (error) {
-      logger.error('Failed to mark notification as read:', error);
+      logger.error('Failed to dismiss notification:', error);
       refetch();
     }
-  }, [userId, refetch]);
+  }, [refetch]);
 
-  const markAllAsRead = useCallback(async () => {
-    if (!orgId || !userId) return;
-    // Optimistic update
-    setNotifications((prev) => prev.map((n) => ({ ...n, isUnread: false })));
-    const { error } = await markAllAsReadService(orgId, userId);
+  const dismissAll = useCallback(async () => {
+    if (!orgId) return;
+    // Optimistic: clear list
+    setNotifications([]);
+    const { error } = await dismissAllService(orgId);
     if (error) {
-      logger.error('Failed to mark all as read:', error);
+      logger.error('Failed to dismiss all notifications:', error);
       refetch();
     }
-  }, [orgId, userId, refetch]);
+  }, [orgId, refetch]);
 
-  return { notifications, unreadCount, markAsRead, markAllAsRead };
+  return { notifications, unreadCount: notifications.length, dismiss, dismissAll };
 }
