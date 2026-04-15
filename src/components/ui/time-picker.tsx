@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Clock3 } from "lucide-react"
+import { Clock3 } from '@/lib/icons'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

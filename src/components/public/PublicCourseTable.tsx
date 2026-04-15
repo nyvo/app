@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown } from 'lucide-react';
+import { MapPin, ChevronDown } from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';

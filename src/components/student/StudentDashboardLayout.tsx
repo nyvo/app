@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { LogOut, User, Search, MessageCircle } from 'lucide-react';
+import { LogOut, User, Search, MessageCircle } from '@/lib/icons';
 
 interface StudentDashboardLayoutProps {
   children: React.ReactNode;

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { UserPlus } from 'lucide-react';
+import { UserPlus } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentBadge } from '@/components/ui/payment-badge';
 import { Card } from '@/components/ui/card';

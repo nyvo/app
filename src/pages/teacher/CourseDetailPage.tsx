@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from 'lucide-react';
+import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from '@/lib/icons';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';

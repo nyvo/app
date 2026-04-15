@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Eye,
   EyeOff,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

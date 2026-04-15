@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check, Shield } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check, Shield } from '@/lib/icons';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';

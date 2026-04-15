@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { ArrowUpRight, MoreHorizontal } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { PaymentBadge } from '@/components/ui/payment-badge';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { StickyNote } from 'lucide-react';
+import { StickyNote } from '@/lib/icons';
 import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupDisplay } from '@/types/database';
 

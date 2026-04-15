@@ -6,7 +6,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info } from '@/lib/icons';
 
 interface CourseWeek {
   id: string;

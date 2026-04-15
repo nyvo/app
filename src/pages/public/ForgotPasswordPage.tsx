@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'

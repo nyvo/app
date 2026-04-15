@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, X, Link as LinkIcon, Twitter, Linkedin, Facebook, Mail, Check } from 'lucide-react';
+import { Share2, X, Link as LinkIcon, Twitter, Linkedin, Facebook, Mail, Check } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

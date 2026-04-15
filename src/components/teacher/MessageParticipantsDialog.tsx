@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send } from '@/lib/icons';
 import { toast } from 'sonner';
 import {
   Dialog,

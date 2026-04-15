@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { User, CreditCard, BookOpen } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { User, CreditCard, BookOpen } from '@/lib/icons'
+import type { LucideIcon } from '@/lib/icons'
 import type { Organization } from '@/types/database'
 import type { Profile } from '@/types/database'
 

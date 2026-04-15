@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, X, Search, Paperclip, Smile, Send } from 'lucide-react';
+import { ChevronLeft, X, Search, Paperclip, Smile, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

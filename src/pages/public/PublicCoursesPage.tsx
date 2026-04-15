@@ -7,7 +7,7 @@ import {
   LogOut,
   BookOpen,
   Search,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

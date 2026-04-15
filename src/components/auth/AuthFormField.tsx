@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, EyeOff, Check } from 'lucide-react'
+import { Eye, EyeOff, Check } from '@/lib/icons'
 import { Input } from '@/components/ui/input'
 
 interface AuthFormFieldProps {

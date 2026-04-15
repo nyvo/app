@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin } from '@/lib/icons';
 import { formatDuration } from '@/components/public/courseCardUtils';
 
 export interface CourseMetaGridProps {

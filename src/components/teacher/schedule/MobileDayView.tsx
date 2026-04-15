@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CalendarPlus } from 'lucide-react';
+import { CalendarDays, CalendarPlus } from '@/lib/icons';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Button } from '@/components/ui/button';
 import { MobileEventCard } from './MobileEventCard';

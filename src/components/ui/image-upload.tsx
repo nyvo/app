@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { ImagePlus, X, AlertCircle } from 'lucide-react'
+import { ImagePlus, X, AlertCircle } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import {
   ACCEPTED_IMAGE_TYPES,

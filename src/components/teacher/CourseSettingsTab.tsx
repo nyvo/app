@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Plus, Info, X } from 'lucide-react';
+import { Plus, Info, X } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';

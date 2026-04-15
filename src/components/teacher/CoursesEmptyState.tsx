@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarPlus, Calendar } from 'lucide-react';
+import { CalendarPlus, Calendar } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 

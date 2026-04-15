@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@/lib/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { cn } from '@/lib/utils';
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from '@/lib/icons';
 
 interface FilterOption {
   value: string;

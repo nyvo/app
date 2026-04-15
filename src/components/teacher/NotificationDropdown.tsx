@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, CircleAlert, TriangleAlert, CircleCheck, X } from 'lucide-react';
+import { Bell, CircleAlert, TriangleAlert, CircleCheck, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
 import { nb } from 'date-fns/locale';
-import { MapPin, Calendar, Clock, MessageCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, MessageCircle } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { StatusIndicator } from '@/components/ui/status-indicator';

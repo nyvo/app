@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Card } from '@/components/ui/card';
 import type { Message } from '@/types/dashboard';

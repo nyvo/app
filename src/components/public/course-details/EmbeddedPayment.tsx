@@ -3,7 +3,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import type { StripeError } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Lock, ChevronLeft } from 'lucide-react';
+import { CreditCard, Lock, ChevronLeft } from '@/lib/icons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner } from '@/lib/utils';

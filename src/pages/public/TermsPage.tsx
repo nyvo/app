@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Infinity } from 'lucide-react';
+import { ArrowLeft, Infinity } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 

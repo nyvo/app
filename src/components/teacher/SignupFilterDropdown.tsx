@@ -5,10 +5,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown } from 'lucide-react';
+import { Filter, ChevronDown } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
-import { Users, CreditCard, Undo2, Archive, type LucideIcon } from 'lucide-react';
+import { Users, CreditCard, Undo2, Archive, type LucideIcon } from '@/lib/icons';
 
 // New payment-focused filters (used by SignupsPage)
 export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';

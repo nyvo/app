@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'

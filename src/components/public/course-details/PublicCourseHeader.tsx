@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, LogOut, BookOpen } from 'lucide-react';
+import { User, LogOut, BookOpen } from '@/lib/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,

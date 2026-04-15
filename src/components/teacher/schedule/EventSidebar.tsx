@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { X, MapPin, Users, Clock, ArrowUpRight } from 'lucide-react';
+import { X, MapPin, Users, Clock, ArrowUpRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import type { ScheduleEvent } from './types';

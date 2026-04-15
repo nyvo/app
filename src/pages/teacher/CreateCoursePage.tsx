@@ -11,7 +11,7 @@ import {
   AlertCircle,
   X,
   Plus,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';

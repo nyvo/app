@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@/lib/icons';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import { PriceHeader } from './PriceHeader';
 import { TicketSelector } from './TicketSelector';

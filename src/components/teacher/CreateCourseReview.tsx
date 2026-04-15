@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Calendar, Clock, MapPin, Users, Banknote, Info, ImageOff, Image } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Banknote, Info, ImageOff, Image } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 
 /* ------------------------------------------------------------------ */

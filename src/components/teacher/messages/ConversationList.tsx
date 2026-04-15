@@ -1,4 +1,4 @@
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { SectionLoader } from '@/components/ui/section-loader';

@@ -4,7 +4,7 @@ import * as React from 'react'
 import { nb } from 'date-fns/locale'
 import { format } from 'date-fns'
 
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from '@/lib/icons'
 
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'

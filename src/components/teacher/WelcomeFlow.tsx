@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen } from '@/lib/icons'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'

@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus } from 'lucide-react';
+import { UserPlus } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { extractDayName } from '@/utils/dateFormatting';

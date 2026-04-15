@@ -1,4 +1,4 @@
-import { CheckCheck } from 'lucide-react';
+import { CheckCheck } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatMessageTimestamp } from '@/utils/dateFormatting';
 import type { Message } from '@/types/database';

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
   CalendarPlus,
   Calendar,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';

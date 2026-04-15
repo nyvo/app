@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { CreditCard, MessageSquare, UserCheck, Users } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { CreditCard, MessageSquare, UserCheck, Users } from '@/lib/icons';
+import type { LucideIcon } from '@/lib/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import {

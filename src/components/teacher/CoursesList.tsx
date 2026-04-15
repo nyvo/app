@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, CalendarPlus } from 'lucide-react';
+import { ChevronRight, CalendarPlus } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { Course } from '@/types/dashboard';

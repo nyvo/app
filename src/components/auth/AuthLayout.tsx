@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Infinity } from 'lucide-react'
+import { Infinity } from '@/lib/icons'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'

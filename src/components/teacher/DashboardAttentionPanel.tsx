@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarClock, CheckCircle2, CreditCard, MessageSquare, Users } from 'lucide-react';
+import { CalendarClock, CheckCircle2, CreditCard, MessageSquare, Users } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 
 export type AttentionVariant = 'warning' | 'neutral' | 'success';

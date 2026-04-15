@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'

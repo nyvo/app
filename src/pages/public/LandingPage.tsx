@@ -10,7 +10,7 @@ import {
   Clock,
   MapPin,
   Calendar,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatKroner } from '@/lib/utils';

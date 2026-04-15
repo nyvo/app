@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
+import { Users } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime } from './utils';

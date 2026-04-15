@@ -1,5 +1,5 @@
 import { Link, matchPath, useLocation } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Settings } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from '@/components/teacher/NotificationDropdown';
 import {

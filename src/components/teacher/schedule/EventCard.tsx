@@ -1,4 +1,4 @@
-import { Repeat, Calendar } from 'lucide-react';
+import { Repeat, Calendar } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime, getEventStyle } from './utils';

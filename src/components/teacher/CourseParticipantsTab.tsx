@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Plus,
   FileText,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';

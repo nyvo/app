@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Calendar } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { CreditCard, Calendar } from '@/lib/icons';
+import type { LucideIcon } from '@/lib/icons';
 import { listContainerVariants, listItemVariants } from '@/lib/motion';
 
 interface BentoCardProps {

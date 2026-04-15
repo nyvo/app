@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from 'lucide-react';
+import { CheckCircle2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

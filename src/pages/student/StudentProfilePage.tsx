@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { User, Mail, Phone, Calendar } from 'lucide-react';
+import { User, Mail, Phone, Calendar } from '@/lib/icons';
 import { format } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { typedFrom } from '@/lib/supabase';

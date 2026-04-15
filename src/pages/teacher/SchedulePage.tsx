@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarPlus, CalendarDays } from 'lucide-react';
+import { CalendarPlus, CalendarDays } from '@/lib/icons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { PageLoader } from '@/components/ui/page-loader';

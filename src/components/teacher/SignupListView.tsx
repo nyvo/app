@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar } from 'lucide-react';
+import { Search, Calendar } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';

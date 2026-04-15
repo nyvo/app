@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Send } from 'lucide-react';
+import { Send } from '@/lib/icons';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useAuth } from '@/contexts/AuthContext';

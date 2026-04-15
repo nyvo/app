@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, ChevronsUpDown, MapPin, DoorOpen } from 'lucide-react';
+import { Check, ChevronsUpDown, MapPin, DoorOpen } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';

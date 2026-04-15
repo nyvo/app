@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check } from 'lucide-react';
+import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 
 export interface CourseDescriptionProps {

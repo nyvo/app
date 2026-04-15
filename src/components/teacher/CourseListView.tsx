@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';

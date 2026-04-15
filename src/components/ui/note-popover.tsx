@@ -1,4 +1,4 @@
-import { StickyNote } from 'lucide-react';
+import { StickyNote } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface NotePopoverProps {

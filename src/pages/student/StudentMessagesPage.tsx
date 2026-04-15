@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, Send, CheckCheck } from 'lucide-react';
+import { ChevronLeft, Send, CheckCheck } from '@/lib/icons';
 import { SectionLoader } from '@/components/ui/section-loader';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';

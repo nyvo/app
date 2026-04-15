@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@/lib/icons';
 import { DateBadge } from '@/components/ui/date-badge';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 
 interface CourseWeek {

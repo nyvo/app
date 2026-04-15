@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, XCircle, Send, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, CheckCircle, XCircle, Send, ExternalLink } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';

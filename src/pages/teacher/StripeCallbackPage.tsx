@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Infinity, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Infinity, CheckCircle2, AlertCircle } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';

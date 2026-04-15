@@ -1,4 +1,4 @@
-import { ChevronLeft, MoreHorizontal, Trash2, Send } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Trash2, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { UserAvatar } from '@/components/ui/user-avatar';

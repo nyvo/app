@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronsUpDown,
   PanelLeft,
-} from 'lucide-react';
+} from '@/lib/icons';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';

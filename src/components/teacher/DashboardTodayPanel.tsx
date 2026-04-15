@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays } from 'lucide-react';
+import { ArrowRight, CalendarDays } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import type { Course } from '@/types/dashboard';
 

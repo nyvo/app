@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { AlertTriangle, XCircle, Clock } from 'lucide-react';
+import { AlertTriangle, XCircle, Clock } from '@/lib/icons';
 
 export type IndicatorVariant = 'success' | 'warning' | 'error' | 'neutral' | 'critical' | 'info';
 export type IndicatorMode = 'badge' | 'inline' | 'text-icon';

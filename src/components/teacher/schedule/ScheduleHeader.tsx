@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
 import { MONTH_ABBR } from './types';

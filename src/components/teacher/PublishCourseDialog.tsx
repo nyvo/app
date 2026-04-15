@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@/lib/icons';
 import {
   Dialog,
   DialogContent,

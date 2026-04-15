@@ -4,7 +4,7 @@ import { fetchUpcomingSignups, fetchPastSignups, type StudentSignupWithCourse } 
 import { BookingCard } from '@/components/student/BookingCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
-import { AlertCircle, CalendarX, Clock, Search } from 'lucide-react';
+import { AlertCircle, CalendarX, Clock, Search } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
