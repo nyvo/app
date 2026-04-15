@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, LogOut, BookOpen } from '@/lib/icons';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +12,7 @@ import {
 export interface PublicCourseHeaderProps {
   organizationSlug: string;
   organizationName: string;
-  user: any;
+  user: SupabaseUser | null;
   userType: string | null;
   onSignOut: () => void;
 }

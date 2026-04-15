@@ -1,5 +1,5 @@
 import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
-import type { SignupStatus } from '@/types/dashboard';
+import type { SignupStatus } from '@/types/database';
 
 export type { SignupStatus };
 export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
@@ -58,15 +58,6 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-/**
- * StatusBadge - Displays signup and course status
- *
- * Uses StatusIndicator internally for consistency and accessibility.
- * Maintains backward compatible API.
- *
- * Key change from previous version: Uses rounded-md instead of rounded-full
- * for a modern, calm SaaS aesthetic.
- */
 export function StatusBadge({
   status,
   size = 'md',

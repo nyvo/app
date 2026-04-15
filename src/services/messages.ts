@@ -128,9 +128,11 @@ export async function fetchStudentConversations(
     return { data: [], error: null }
   }
 
+  const typedConversations = conversations as unknown as ConversationWithMessages[]
+
   // For student conversations, the "participant" is the organization (teacher)
   // We need to look up the organization name instead of user profiles
-  const orgIds = [...new Set(conversations.map(c => (c as any).organization_id as string))]
+  const orgIds = [...new Set(typedConversations.map(c => c.organization_id))]
   let orgsMap: Record<string, { name: string; logo_url: string | null }> = {}
   if (orgIds.length > 0) {
     const { data: orgs } = await supabase
@@ -147,14 +149,14 @@ export async function fetchStudentConversations(
     }
   }
 
-  const result: ConversationWithDetails[] = conversations.map((conv: any) => {
+  const result: ConversationWithDetails[] = typedConversations.map((conv) => {
     const messages = conv.messages || []
     const sortedMessages = [...messages].sort(
-      (a: any, b: any) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+      (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
     )
     const lastMessage = sortedMessages[0] || null
     // For students, unread messages are the outgoing ones (from teacher's perspective)
-    const unreadCount = messages.filter((m: any) => !m.is_read && m.is_outgoing).length
+    const unreadCount = messages.filter((m) => !m.is_read && m.is_outgoing).length
 
     const org = orgsMap[conv.organization_id]
     const participant = org

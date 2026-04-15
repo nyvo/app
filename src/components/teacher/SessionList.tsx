@@ -8,26 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
-
-interface CourseWeek {
-  id: string;
-  weekNum: string;
-  title: string;
-  status: string;
-  isNext: boolean;
-  date: string;
-  time: string;
-  originalDate: string;
-  originalTime: string;
-}
-
-interface SessionEditHandlers {
-  sessionEdits: Record<string, { date?: Date; time?: string }>;
-  savingSessionId: string | null;
-  onSessionEditChange: (weekId: string, field: 'date' | 'time', value: Date | string) => void;
-  onSessionEditCancel: (weekId: string) => void;
-  onSaveSession: (sessionId: string) => void;
-}
+import type { CourseWeek, SessionEditHandlers } from './session-types';
 
 interface SessionListProps {
   sessions: CourseWeek[];

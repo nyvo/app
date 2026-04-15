@@ -6,7 +6,7 @@ import {
 } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -22,10 +22,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { LocationsManager } from '@/components/teacher/LocationsManager';
-import { useLocations } from '@/hooks/use-locations';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
+import type { Json } from '@/types/database';
 import { createStripeConnectLink, createStripeDashboardLink, checkStripeStatus } from '@/services/stripe-connect';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -33,7 +32,6 @@ import type { NotificationSettings, OrganizationSettings } from '@/types/databas
 
 const TeacherProfilePage = () => {
   const { profile, currentOrganization, refreshOrganizations, updatePassword } = useAuth();
-  const { locations: savedLocations, refetch: refetchLocations } = useLocations(currentOrganization?.id);
 
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
@@ -198,7 +196,7 @@ const TeacherProfilePage = () => {
     if (profile?.id) {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const { error: profileError } = await typedFrom('profiles')
-        .update({ name: fullName } as any)
+        .update({ name: fullName })
         .eq('id', profile.id);
 
       if (profileError) {
@@ -380,7 +378,7 @@ const TeacherProfilePage = () => {
     };
 
     const { error } = await updateOrganization(currentOrganization.id, {
-      settings: newSettings as any,
+      settings: newSettings as unknown as Json,
     });
 
     if (error) {
@@ -403,15 +401,11 @@ const TeacherProfilePage = () => {
           transition={pageTransition}
           className="px-6 pb-24 md:pb-8 lg:px-8"
         >
-          <div className="pt-6 lg:pt-8">
-            <div className="mx-auto max-w-5xl">
-              <div className="mb-6">
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                      Innstillinger
-                  </h1>
-                  <p className="text-sm mt-1 text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
-              </div>
-            </div>
+          <div className="mb-10 border-b border-border pt-6 pb-8 lg:pt-8">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              Innstillinger
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
           </div>
           <div className="mx-auto max-w-5xl space-y-8">
                   {/* Personlig informasjon */}
@@ -420,7 +414,8 @@ const TeacherProfilePage = () => {
                       <h2 className="text-base font-medium text-foreground">Personlig informasjon</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
-                    <Card className="md:col-span-2 p-6 md:p-8">
+                    <Card className="md:col-span-2">
+                      <CardContent className="md:px-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="profile-firstname" className="text-xs font-medium mb-1.5 block text-foreground">Fornavn</label>
@@ -502,22 +497,8 @@ const TeacherProfilePage = () => {
                             </div>
                         </div>
                       </div>
+                      </CardContent>
                     </Card>
-                  </section>
-
-                  {/* Steder */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                    <div>
-                      <h2 className="text-base font-medium text-foreground">Steder</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Lagre steder du bruker ofte.</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <LocationsManager
-                        organizationId={currentOrganization?.id ?? ''}
-                        locations={savedLocations}
-                        onChanged={refetchLocations}
-                      />
-                    </div>
                   </section>
 
                   {/* Konto & Sikkerhet */}
@@ -526,7 +507,7 @@ const TeacherProfilePage = () => {
                       <h2 className="text-base font-medium text-foreground">Konto & Sikkerhet</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Betalinger, passord og sikkerhet.</p>
                     </div>
-                    <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
+                    <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                           {/* Betalinger */}
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
@@ -724,7 +705,7 @@ const TeacherProfilePage = () => {
                       <h2 className="text-base font-medium text-foreground">E-postvarslinger</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
                     </div>
-                    <Card className="md:col-span-2 divide-y divide-border overflow-hidden">
+                    <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Nye påmeldinger</span>
@@ -772,7 +753,7 @@ const TeacherProfilePage = () => {
                       <h2 className="text-base font-medium text-foreground">Slett konto</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
                     </div>
-                    <Card className="md:col-span-2">
+                    <Card className="md:col-span-2 gap-0 py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>

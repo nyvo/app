@@ -1,6 +1,7 @@
 import { StatusIndicator, type IndicatorVariant, type IndicatorMode, type IndicatorSize } from './status-indicator';
+import type { PaymentStatus } from '@/types/database';
 
-export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
+export type { PaymentStatus };
 export type PaymentVisibility = 'always' | 'exceptions';
 
 interface PaymentConfig {

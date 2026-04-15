@@ -153,7 +153,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
           .update({
             name: fullName || undefined,
             onboarding_completed_at: new Date().toISOString(),
-          } as any)
+          })
           .eq('id', profile.id)
         if (error) {
           logger.error('Welcome flow: profile save failed', error)

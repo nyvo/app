@@ -36,7 +36,7 @@ const StudentProfilePage = () => {
     setIsSaving(true);
 
     const { error } = await typedFrom('profiles')
-      .update({ name: name.trim(), phone: phone.trim() || null } as any)
+      .update({ name: name.trim(), phone: phone.trim() || null })
       .eq('id', profile.id);
 
     if (error) {

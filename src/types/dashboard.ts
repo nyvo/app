@@ -47,10 +47,8 @@ export interface TeacherStats {
   attendanceData: number[];
 }
 
-export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'refunded';
-
-// Status types (used by both Registration and Signup)
-export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled';
+export type { PaymentStatus, SignupStatus } from '@/types/database';
+import type { SignupStatus } from '@/types/database';
 
 export interface Registration {
   id: string;
@@ -95,7 +93,6 @@ export interface Signup {
   note?: string;
 }
 
-// --- Types for Messages Page (moved from mockData.ts) ---
 export interface Conversation {
   id: string;
   name: string;
@@ -119,7 +116,6 @@ export interface MessageDetail {
   isRead?: boolean;
 }
 
-// --- Types for Courses Page (moved from mockData.ts) ---
 export type CourseType = 'kursrekke' | 'enkeltkurs';
 
 export interface Instructor {

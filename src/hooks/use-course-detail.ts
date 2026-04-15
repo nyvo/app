@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { logger } from '@/lib/logger';
 import { fetchCourseById, fetchCourseSessions } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
@@ -133,18 +132,12 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
     async function loadSessions() {
       if (!courseId || !courseData) return;
 
-      // Fetch sessions for both course series AND multi-day events
       setSessionsLoading(true);
-      try {
-        const { data: sessionsData } = await fetchCourseSessions(courseId);
-        if (sessionsData) {
-          setSessions(sessionsData);
-        }
-      } catch (err) {
-        logger.error('Failed to load sessions:', err);
-      } finally {
-        setSessionsLoading(false);
+      const { data: sessionsData } = await fetchCourseSessions(courseId);
+      if (sessionsData) {
+        setSessions(sessionsData);
       }
+      setSessionsLoading(false);
     }
 
     loadSessions();
@@ -156,37 +149,20 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
       if (!courseId) return;
 
       setParticipantsLoading(true);
-      try {
-        const { data: participantsData, error } = await fetchSignupsByCourseWithProfiles(courseId);
-        if (error) {
-          return;
-        }
-        if (participantsData) {
-          setParticipants(participantsData);
-        }
-      } catch (err) {
-        logger.error('Failed to load participants:', err);
-      } finally {
-        setParticipantsLoading(false);
+      const { data: participantsData } = await fetchSignupsByCourseWithProfiles(courseId);
+      if (participantsData) {
+        setParticipants(participantsData);
       }
+      setParticipantsLoading(false);
     }
 
     loadParticipants();
   }, [courseId]);
 
-  // Real-time refetch for participants
   const refetchParticipants = useCallback(async () => {
     if (!courseId) return;
-
-    try {
-      const participantsResult = await fetchSignupsByCourseWithProfiles(courseId);
-
-      if (participantsResult.data) {
-        setParticipants(participantsResult.data);
-      }
-    } catch {
-      // Silent fail for real-time updates
-    }
+    const { data } = await fetchSignupsByCourseWithProfiles(courseId);
+    if (data) setParticipants(data);
   }, [courseId]);
 
   // Subscribe to real-time updates for this course's participants

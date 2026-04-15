@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 import { Settings } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,9 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { useTeacherShell, type TeacherShellCrumb } from '@/components/teacher/TeacherShellContext';
+import { cn } from '@/lib/utils';
+
+const FULL_WIDTH_ROUTES = ['/teacher/schedule', '/teacher/messages'];
 
 const teacherBreadcrumbs: Array<{
   path: string;
@@ -68,6 +72,13 @@ const teacherBreadcrumbs: Array<{
     ],
   },
   {
+    path: '/teacher/locations',
+    crumbs: [
+      { label: 'Hjem', to: '/teacher' },
+      { label: 'Steder' },
+    ],
+  },
+  {
     path: '/teacher/profile',
     crumbs: [
       { label: 'Hjem', to: '/teacher' },
@@ -88,41 +99,51 @@ export function TeacherTopBar() {
   const location = useLocation();
   const { breadcrumbs, action } = useTeacherShell();
   const crumbs = breadcrumbs ?? getBreadcrumbs(location.pathname);
+  const isFullWidth = FULL_WIDTH_ROUTES.some((route) => location.pathname.startsWith(route));
 
   return (
-    <div className="hidden h-14 shrink-0 items-center justify-between gap-4 border-b border-border px-6 md:flex lg:px-8">
-      <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="text-xs font-medium gap-2 text-muted-foreground">
-          {crumbs.map((crumb, index) => {
-            const isLast = index === crumbs.length - 1;
-
-            return (
-              <BreadcrumbItem key={`${crumb.label}-${index}`}>
-                {crumb.to && !isLast ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={crumb.to}>{crumb.label}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage className="font-medium">{crumb.label}</BreadcrumbPage>
-                )}
-                {!isLast && <BreadcrumbSeparator />}
-              </BreadcrumbItem>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="flex shrink-0 items-center gap-1">
-        {action && (
-          <Button asChild size="compact" className="gap-2">
-            <Link to={action.to}>{action.label}</Link>
-          </Button>
+    <div className="hidden h-14 shrink-0 border-b border-border md:block">
+      <div
+        className={cn(
+          'flex h-full items-center justify-between gap-4 px-6 lg:px-8',
+          !isFullWidth && 'mx-auto w-full max-w-[1600px]'
         )}
-        <NotificationDropdown />
-        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-          <Link to="/teacher/profile">
-            <Settings className="h-4 w-4" />
-          </Link>
-        </Button>
+      >
+        <Breadcrumb className="min-w-0 flex-1">
+          <BreadcrumbList className="text-xs font-medium gap-2 text-muted-foreground">
+            {crumbs.map((crumb, index) => {
+              const isLast = index === crumbs.length - 1;
+
+              return (
+                <Fragment key={`${crumb.label}-${index}`}>
+                  <BreadcrumbItem>
+                    {crumb.to && !isLast ? (
+                      <BreadcrumbLink asChild>
+                        <Link to={crumb.to}>{crumb.label}</Link>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage className="font-medium">{crumb.label}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator />}
+                </Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="flex shrink-0 items-center gap-1">
+          {action && (
+            <Button asChild size="compact" className="gap-2">
+              <Link to={action.to}>{action.label}</Link>
+            </Button>
+          )}
+          <NotificationDropdown />
+          <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+            <Link to="/teacher/profile">
+              <Settings className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

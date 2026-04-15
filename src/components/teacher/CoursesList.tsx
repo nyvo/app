@@ -3,26 +3,12 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, CalendarPlus } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { parseLocalDate } from '@/utils/dateUtils';
 import type { Course } from '@/types/dashboard';
 
 interface CoursesListProps {
   courses: Course[];
   hideHeader?: boolean;
-}
-
-
-/**
- * Parse a date string (ISO YYYY-MM-DD or full ISO) into local year/month/day.
- * Avoids timezone bugs from `new Date('YYYY-MM-DD')` which parses as UTC.
- */
-function parseLocalDate(dateString: string): { year: number; month: number; day: number } | null {
-  const parts = dateString.slice(0, 10).split('-');
-  if (parts.length < 3) return null;
-  const year = Number(parts[0]);
-  const month = Number(parts[1]);
-  const day = Number(parts[2]);
-  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-  return { year, month, day };
 }
 
 

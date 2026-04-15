@@ -11,11 +11,11 @@ import { SetupChecklist } from '@/components/teacher/SetupChecklist';
 import { MessagesList } from '@/components/teacher/MessagesList';
 import { CoursesList } from '@/components/teacher/CoursesList';
 import { RegistrationsList } from '@/components/teacher/RegistrationsList';
-import { DashboardPrimaryRow } from '@/components/teacher/DashboardPrimaryRow';
-import { DashboardUpcomingList } from '@/components/teacher/DashboardUpcomingList';
-import { DashboardTodayPanel } from '@/components/teacher/DashboardTodayPanel';
-import { DashboardRegistrationsCard } from '@/components/teacher/DashboardRegistrationsCard';
-import { DashboardMessagesCard } from '@/components/teacher/DashboardMessagesCard';
+import { QuickOverviewCard } from '@/components/teacher/dashboard/QuickOverviewCard';
+import { BusinessGlanceCard } from '@/components/teacher/dashboard/BusinessGlanceCard';
+import { UpcomingClassesCard } from '@/components/teacher/dashboard/UpcomingClassesCard';
+import { RecentActivityCard } from '@/components/teacher/dashboard/RecentActivityCard';
+import { fetchMonthStats, fetchWeekStats, type MonthStats, type WeekStats } from '@/services/dashboardStats';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,7 +34,7 @@ import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { typedFrom } from '@/lib/supabase';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
 import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
-import { fetchCourses, fetchNextSessions, fetchNearestFullCourse, fetchTodaySessions, fetchLowEnrollmentCourses } from '@/services/courses';
+import { fetchCourses, fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
@@ -152,13 +152,13 @@ const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization, profile, refreshOrganizations } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
-  const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[]>([]);
-  const [todayCourses, setTodayCourses] = useState<DashboardCourse[]>([]);
+  const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [messages, setMessages] = useState<DashboardMessage[]>([]);
-  const [, setCapacityCourse] = useState<{ id: string; title: string; attendees: number; capacity: number } | null>(null);
-  const [, setLowEnrollmentCourses] = useState<Array<{ id: string; title: string; signups: number; capacity: number }>>([]);
-  const [activeCourseCount, setActiveCourseCount] = useState(0);
+  const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
+  const [recentConversationsRaw, setRecentConversationsRaw] = useState<ConversationWithDetails[] | null>(null);
+  const [monthStats, setMonthStats] = useState<MonthStats | null>(null);
+  const [weekStats, setWeekStats] = useState<WeekStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const [hasCourses, setHasCourses] = useState(false);
@@ -214,7 +214,7 @@ const TeacherDashboard = () => {
       setShowSetupBanner(true);
       // Mark as seen in DB so it won't show on other devices
       typedFrom('profiles')
-        .update({ setup_complete_seen_at: new Date().toISOString() } as any)
+        .update({ setup_complete_seen_at: new Date().toISOString() })
         .eq('id', profile.id)
         .then();
     }
@@ -241,25 +241,16 @@ const TeacherDashboard = () => {
     return () => { isActive = false; };
   }, [currentOrganization?.id, currentOrganization?.stripe_account_id, currentOrganization?.stripe_onboarding_complete, refreshOrganizations]);
 
-  // Shared processing: takes parallel fetch results and updates all dashboard state.
   function processDashboardResults(
     coursesResult: Awaited<ReturnType<typeof fetchCourses>>,
     nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
-    todaySessionsResult: Awaited<ReturnType<typeof fetchTodaySessions>>,
-    capacityResult: Awaited<ReturnType<typeof fetchNearestFullCourse>>,
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
     messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
-    lowEnrollmentResult: Awaited<ReturnType<typeof fetchLowEnrollmentCourses>>,
   ) {
-    // Check if user has any courses at all
     const hasAnyCourses = (coursesResult.data && coursesResult.data.length > 0) ||
       (nextSessionsResult.data && nextSessionsResult.data.length > 0);
     setHasCourses(!!hasAnyCourses);
 
-    // Count active courses (non-cancelled returned by fetchCourses)
-    setActiveCourseCount(coursesResult.data?.length ?? 0);
-
-    // Process next sessions
     if (nextSessionsResult.data && nextSessionsResult.data.length > 0) {
       setDashboardCourses(nextSessionsResult.data.map(({ session, course, signupCount }) =>
         mapSessionForDashboard(session, course, signupCount)
@@ -268,47 +259,20 @@ const TeacherDashboard = () => {
       setDashboardCourses([]);
     }
 
-    // Process today's sessions
-    if (todaySessionsResult.data && todaySessionsResult.data.length > 0) {
-      setTodayCourses(todaySessionsResult.data.map(({ session, course }) =>
-        mapSessionForDashboard(session, course)
-      ));
-    } else {
-      setTodayCourses([]);
-    }
-
-    // Process capacity warning (independent of upcoming sessions)
-    if (capacityResult.data) {
-      const { course, attendees, capacity } = capacityResult.data;
-      setCapacityCourse({ id: course.id, title: course.title, attendees, capacity });
-    } else {
-      setCapacityCourse(null);
-    }
-
-    // Process signups
     if (signupsResult.data) {
       setRegistrations(signupsResult.data.map(mapSignupToRegistration));
+      setRecentSignupsRaw(signupsResult.data);
     } else {
       setRegistrations([]);
+      setRecentSignupsRaw([]);
     }
 
-    // Process messages
     if (messagesResult.data) {
       setMessages(messagesResult.data.map(mapConversationToMessage));
+      setRecentConversationsRaw(messagesResult.data);
     } else {
       setMessages([]);
-    }
-
-    // Process low enrollment warnings
-    if (lowEnrollmentResult.data && lowEnrollmentResult.data.length > 0) {
-      setLowEnrollmentCourses(lowEnrollmentResult.data.map(({ course, signups, capacity }) => ({
-        id: course.id,
-        title: course.title,
-        signups,
-        capacity,
-      })));
-    } else {
-      setLowEnrollmentCourses([]);
+      setRecentConversationsRaw([]);
     }
   }
 
@@ -316,22 +280,18 @@ const TeacherDashboard = () => {
   const refetchDashboardData = useCallback(async () => {
     if (!currentOrganization?.id) return;
 
-    try {
-      // Fetch all data in parallel (silently, no loading state for real-time updates)
-      const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult] = await Promise.all([
-        fetchCourses(currentOrganization.id),
-        fetchNextSessions(currentOrganization.id, 3),
-        fetchTodaySessions(currentOrganization.id),
-        fetchNearestFullCourse(currentOrganization.id),
-        fetchRecentSignups(currentOrganization.id, 4),
-        fetchRecentConversations(currentOrganization.id, 4),
-        fetchLowEnrollmentCourses(currentOrganization.id),
-      ]);
+    const [coursesResult, nextSessionsResult, signupsResult, messagesResult, month, week] = await Promise.all([
+      fetchCourses(currentOrganization.id),
+      fetchNextSessions(currentOrganization.id, 3),
+      fetchRecentSignups(currentOrganization.id, 4),
+      fetchRecentConversations(currentOrganization.id, 4),
+      fetchMonthStats(currentOrganization.id),
+      fetchWeekStats(currentOrganization.id),
+    ]);
 
-      processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult);
-    } catch (err) {
-      logger.error('Dashboard refetch error:', err);
-    }
+    processDashboardResults(coursesResult, nextSessionsResult, signupsResult, messagesResult);
+    setMonthStats(month);
+    setWeekStats(week);
   }, [currentOrganization?.id]);
 
   // Subscribe to real-time updates for dashboard data
@@ -363,15 +323,13 @@ const TeacherDashboard = () => {
       setLoadError(null);
 
       try {
-        // Fetch all data in parallel
-        const [coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult] = await Promise.all([
+        const [coursesResult, nextSessionsResult, signupsResult, messagesResult, month, week] = await Promise.all([
           fetchCourses(currentOrganization.id),
           fetchNextSessions(currentOrganization.id, 3),
-          fetchTodaySessions(currentOrganization.id),
-          fetchNearestFullCourse(currentOrganization.id),
           fetchRecentSignups(currentOrganization.id, 4),
           fetchRecentConversations(currentOrganization.id, 4),
-          fetchLowEnrollmentCourses(currentOrganization.id),
+          fetchMonthStats(currentOrganization.id),
+          fetchWeekStats(currentOrganization.id),
         ]);
 
         if (!isActive) return;
@@ -381,7 +339,9 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        processDashboardResults(coursesResult, nextSessionsResult, todaySessionsResult, capacityResult, signupsResult, messagesResult, lowEnrollmentResult);
+        processDashboardResults(coursesResult, nextSessionsResult, signupsResult, messagesResult);
+        setMonthStats(month);
+        setWeekStats(week);
       } catch (err) {
         logger.error('Dashboard load error:', err);
         if (isActive) {
@@ -404,7 +364,6 @@ const TeacherDashboard = () => {
 
   // Personal name (first word) if set, otherwise fall back to org name
   const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
-  const paymentFollowUpCount = registrations.filter((registration) => registration.hasException).length;
 
   useEffect(() => {
     setBreadcrumbs([
@@ -525,7 +484,7 @@ const TeacherDashboard = () => {
                     <div className="space-y-6">
                       <section className="space-y-3">
                         <h2 className="text-base font-medium text-foreground">Dagens kurs</h2>
-                        <CoursesList courses={dashboardCourses} hideHeader />
+                        <CoursesList courses={dashboardCourses ?? []} hideHeader />
                       </section>
                     </div>
                     <div className="space-y-6">
@@ -614,27 +573,17 @@ const TeacherDashboard = () => {
                   </div>
                 </>
               ) : (
-                <>
-                  <DashboardPrimaryRow
-                    outstandingPayments={paymentFollowUpCount}
-                    activeCourses={activeCourseCount}
-                  />
-                  <motion.div
-                    className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr] xl:items-start"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={sectionTransition}
-                  >
-                    <div className="space-y-6">
-                      <DashboardUpcomingList courses={dashboardCourses} />
-                      <DashboardMessagesCard messages={messages} />
-                    </div>
-                    <aside className="space-y-6">
-                      <DashboardTodayPanel courses={todayCourses} />
-                      <DashboardRegistrationsCard registrations={registrations} />
-                    </aside>
-                  </motion.div>
-                </>
+                <motion.div
+                  className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={sectionTransition}
+                >
+                  <RecentActivityCard signups={recentSignupsRaw} conversations={recentConversationsRaw} />
+                  <QuickOverviewCard stats={monthStats} />
+                  <UpcomingClassesCard courses={dashboardCourses} />
+                  <BusinessGlanceCard stats={weekStats} />
+                </motion.div>
               )}
             </motion.div>
           </div>

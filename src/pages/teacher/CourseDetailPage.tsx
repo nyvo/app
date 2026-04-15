@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn, formatKroner } from '@/lib/utils';
+import { formatLocalDateKey } from '@/utils/dateUtils';
 import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
 import { teacherCancelSignup, sendPaymentLink, markPaymentResolved } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
@@ -201,40 +202,32 @@ const CourseDetailPage = () => {
 
     setSavingSessionId(sessionId);
 
-    try {
-      const updateData: { session_date?: string; start_time?: string } = {};
+    const updateData: { session_date?: string; start_time?: string } = {};
 
-      if (edits.date) {
-        const d = edits.date;
-        updateData.session_date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      }
-      if (edits.time) {
-        updateData.start_time = edits.time;
-      }
-
-      const { data, error } = await updateCourseSession(sessionId, updateData);
-
-      if (error) {
-        return;
-      }
-
-      // Update local sessions state
-      if (data) {
-        setSessions(prev => prev.map(s => s.id === sessionId ? data : s));
-      }
-
-      // Clear edits for this session
-      setSessionEdits(prev => {
-        const newEdits = { ...prev };
-        delete newEdits[sessionId];
-        return newEdits;
-      });
-
-    } catch {
-      // Silent fail for session save
-    } finally {
-      setSavingSessionId(null);
+    if (edits.date) {
+      updateData.session_date = formatLocalDateKey(edits.date);
     }
+    if (edits.time) {
+      updateData.start_time = edits.time;
+    }
+
+    const { data, error } = await updateCourseSession(sessionId, updateData);
+    setSavingSessionId(null);
+
+    if (error) {
+      toast.error('Kunne ikke lagre endringen');
+      return;
+    }
+
+    if (data) {
+      setSessions(prev => prev.map(s => s.id === sessionId ? data : s));
+    }
+
+    setSessionEdits(prev => {
+      const newEdits = { ...prev };
+      delete newEdits[sessionId];
+      return newEdits;
+    });
   };
 
   // Handle save settings

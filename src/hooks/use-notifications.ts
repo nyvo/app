@@ -56,32 +56,28 @@ export function useNotifications() {
   const refetch = useCallback(async () => {
     if (!orgId || !userId) return;
 
-    try {
-      const { data, error } = await fetchNotifications(orgId, userId);
-      if (error) {
-        logger.error('Failed to fetch notifications:', error);
-        return;
-      }
-
-      const mapped = data.map((row) => ({
-        id: row.id,
-        type: row.type,
-        title: row.title,
-        body: row.body,
-        link: row.link,
-        groupKey: row.group_key,
-        icon: ICON_MAP[row.type] ?? Users,
-        severity: SEVERITY_MAP[row.type] ?? 'neutral' as NotificationSeverity,
-        createdAt: row.created_at,
-      }));
-
-      // Sort: danger first, then warning, success, neutral
-      mapped.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
-
-      setNotifications(mapped);
-    } catch (err) {
-      logger.error('Failed to fetch notifications:', err);
+    const { data, error } = await fetchNotifications(orgId, userId);
+    if (error) {
+      logger.error('Failed to fetch notifications:', error);
+      return;
     }
+
+    const mapped = data.map((row) => ({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      body: row.body,
+      link: row.link,
+      groupKey: row.group_key,
+      icon: ICON_MAP[row.type] ?? Users,
+      severity: SEVERITY_MAP[row.type] ?? 'neutral' as NotificationSeverity,
+      createdAt: row.created_at,
+    }));
+
+    // Sort: danger first, then warning, success, neutral
+    mapped.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+
+    setNotifications(mapped);
   }, [orgId, userId]);
 
   // Fetch when org or user changes

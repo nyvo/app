@@ -18,21 +18,16 @@ const StudentDashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
 
-  // Refetch function for real-time updates (silent, no loading state)
   const refetchData = useCallback(async () => {
     if (!user?.email || !user?.id) return;
 
-    try {
-      const [upcomingRes, pastRes] = await Promise.all([
-        fetchUpcomingSignups(user.id, user.email),
-        fetchPastSignups(user.id, user.email)
-      ]);
+    const [upcomingRes, pastRes] = await Promise.all([
+      fetchUpcomingSignups(user.id, user.email),
+      fetchPastSignups(user.id, user.email)
+    ]);
 
-      if (!upcomingRes.error) setUpcoming(upcomingRes.data || []);
-      if (!pastRes.error) setPast(pastRes.data || []);
-    } catch {
-      // Silent fail for real-time updates - keep existing data
-    }
+    if (!upcomingRes.error) setUpcoming(upcomingRes.data || []);
+    if (!pastRes.error) setPast(pastRes.data || []);
   }, [user?.id, user?.email]);
 
   // Subscribe to real-time updates for this student's signups

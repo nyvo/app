@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { SessionList } from '@/components/teacher/SessionList';
 import { formatKroner } from '@/lib/utils';
-import type { SignupStatus } from '@/types/dashboard';
+import type { SignupStatus } from '@/types/database';
+import type { CourseWeek, SessionEditHandlers } from './session-types';
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
 function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
@@ -48,26 +49,6 @@ function formatDateRange(startDate?: string | null, endDate?: string | null): st
   } else {
     return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
   }
-}
-
-interface CourseWeek {
-  id: string;
-  weekNum: string;
-  title: string;
-  status: string;
-  isNext: boolean;
-  date: string;
-  time: string;
-  originalDate: string;
-  originalTime: string;
-}
-
-interface SessionEditHandlers {
-  sessionEdits: Record<string, { date?: Date; time?: string }>;
-  savingSessionId: string | null;
-  onSessionEditChange: (weekId: string, field: 'date' | 'time', value: Date | string) => void;
-  onSessionEditCancel: (weekId: string) => void;
-  onSaveSession: (sessionId: string) => void;
 }
 
 interface RecentParticipant {

@@ -18,6 +18,7 @@ import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, fetchExistingSessions } from '@/services/courses';
 import type { ExistingSession } from '@/services/courses';
+import { formatLocalDateKey } from '@/utils/dateUtils';
 import { uploadCourseImage } from '@/services/storage';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -241,15 +242,14 @@ const CreateCoursePage = () => {
     }
 
     const dates: string[] = [];
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     if (courseType === 'series') {
       const weeksNum = parseInt(weeks) || 1;
       for (let i = 0; i < weeksNum; i++) {
-        dates.push(fmt(addDays(startDate, i * 7)));
+        dates.push(formatLocalDateKey(addDays(startDate, i * 7)));
       }
     } else {
-      dates.push(fmt(startDate));
+      dates.push(formatLocalDateKey(startDate));
     }
 
     fetchExistingSessions(currentOrganization.id, dates).then(({ data }) => {
@@ -355,9 +355,7 @@ const CreateCoursePage = () => {
         title: title.trim(),
         description: description.trim() || null,
         course_type: dbCourseType,
-        start_date: startDate
-          ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`
-          : undefined,
+        start_date: startDate ? formatLocalDateKey(startDate) : undefined,
         time_schedule: timeSchedule,
         duration: duration || 60,
         total_weeks: courseType === 'series' ? parseInt(weeks) : null,

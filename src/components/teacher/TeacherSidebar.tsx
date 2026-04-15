@@ -6,6 +6,7 @@ import {
   Inbox,
   CalendarDays,
   Calendar,
+  MapPin,
   Settings,
   HelpCircle,
   LogOut,
@@ -52,6 +53,7 @@ const navSections = [
       { icon: Calendar, label: 'Kurs', href: '/teacher/courses' },
       { icon: UserPlus, label: 'Påmeldinger', href: '/teacher/signups' },
       { icon: Inbox, label: 'Meldinger', href: '/teacher/messages' },
+      { icon: MapPin, label: 'Steder', href: '/teacher/locations' },
     ],
   },
 ];

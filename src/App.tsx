@@ -19,6 +19,7 @@ const CreateCoursePage = lazy(() => import('./pages/teacher/CreateCoursePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
+const LocationsPage = lazy(() => import('./pages/teacher/LocationsPage'));
 const StripeCallbackPage = lazy(() => import('./pages/teacher/StripeCallbackPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
@@ -76,6 +77,7 @@ const App = () => {
               <Route path="messages" element={<MessagesPage />} />
               <Route path="new-course" element={<CreateCoursePage />} />
               <Route path="profile" element={<TeacherProfilePage />} />
+              <Route path="locations" element={<LocationsPage />} />
             </Route>
             <Route path="/teacher/stripe-callback" element={<ProtectedRoute><StripeCallbackPage /></ProtectedRoute>} />
 

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, typedFrom } from '@/lib/supabase';
 import type { NotificationType } from '@/types/database';
 
 export interface NotificationRow {
@@ -34,8 +34,7 @@ export async function fetchNotifications(
 export async function dismissNotification(
   notificationId: string
 ): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('notifications') as any)
+  const { error } = await typedFrom('notifications')
     .update({ status: 'resolved', resolved_at: new Date().toISOString() })
     .eq('id', notificationId);
 
@@ -45,8 +44,7 @@ export async function dismissNotification(
 export async function dismissAllNotifications(
   organizationId: string
 ): Promise<{ error: Error | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from('notifications') as any)
+  const { error } = await typedFrom('notifications')
     .update({ status: 'resolved', resolved_at: new Date().toISOString() })
     .eq('organization_id', organizationId)
     .eq('status', 'active');

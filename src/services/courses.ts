@@ -1,5 +1,6 @@
 import { supabase, typedFrom } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { formatLocalDateKey } from '@/utils/dateUtils'
 import type {
   Course,
   CourseInsert,
@@ -235,13 +236,6 @@ function timeToMinutes(time: string): number {
   return hours * 60 + minutes
 }
 
-// Helper to format date as YYYY-MM-DD in local timezone
-function formatLocalDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 // Existing session info for conflict warnings
 export interface ExistingSession {
@@ -339,7 +333,7 @@ function generateSessionDates(
     for (let i = 0; i < courseData.total_weeks; i++) {
       const d = new Date(baseDate.getTime())
       d.setDate(baseDate.getDate() + i * 7)
-      results.push({ date: formatLocalDate(d), startTime })
+      results.push({ date: formatLocalDateKey(d), startTime })
     }
   } else if (courseData.course_type === 'event') {
     const eventDays = options?.eventDays || 1
@@ -350,7 +344,7 @@ function generateSessionDates(
       d.setDate(baseDate.getDate() + i)
       const override = overrides.find(o => o.dayIndex === i)
       results.push({
-        date: formatLocalDate(d),
+        date: formatLocalDateKey(d),
         startTime: override?.time || startTime,
       })
     }
@@ -574,145 +568,6 @@ export async function updateCourseSession(
   return { data: data as CourseSession, error: null }
 }
 
-// Fetch the next upcoming session for an organization (for dashboard)
-export async function fetchUpcomingSession(organizationId: string): Promise<{
-  data: {
-    session: CourseSession
-    course: Course
-    attendeeCount: number
-  } | null
-  error: Error | null
-}> {
-  // Get today's date in ISO format
-  const today = new Date().toISOString().split('T')[0]
-
-  // Find the next upcoming session (exclude cancelled courses)
-  const { data: sessionData, error: sessionError } = await supabase
-    .from('course_sessions')
-    .select(`
-      *,
-      course:courses!inner(
-        *
-      )
-    `)
-    .eq('course.organization_id', organizationId)
-    .neq('course.status', 'cancelled')
-    .gte('session_date', today)
-    .eq('status', 'upcoming')
-    .order('session_date', { ascending: true })
-    .order('start_time', { ascending: true })
-    .limit(1)
-    .single()
-
-  if (sessionError) {
-    // No upcoming session found is not an error
-    if (sessionError.code === 'PGRST116') {
-      return { data: null, error: null }
-    }
-    return { data: null, error: sessionError as Error }
-  }
-
-  if (!sessionData) {
-    return { data: null, error: null }
-  }
-
-  const session = sessionData as unknown as SessionWithFullCourseJoin
-  const course = session.course as Course
-
-  // Get attendee count for this course
-  const { count, error: countError } = await supabase
-    .from('signups')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', course.id)
-    .eq('status', 'confirmed')
-
-  if (countError) {
-    return { data: null, error: countError as Error }
-  }
-
-  return {
-    data: {
-      session: {
-        id: session.id,
-        course_id: session.course_id,
-        session_number: session.session_number,
-        session_date: session.session_date,
-        start_time: session.start_time,
-        end_time: session.end_time,
-        status: session.status,
-        notes: session.notes,
-        created_at: session.created_at,
-        updated_at: session.updated_at,
-      },
-      course,
-      attendeeCount: count || 0,
-    },
-    error: null,
-  }
-}
-
-// Fetch upcoming sessions for the week (for dashboard "Dine kurs" component)
-export async function fetchWeekSessions(organizationId: string, limit = 6): Promise<{
-  data: Array<{
-    session: CourseSession
-    course: Course
-  }> | null
-  error: Error | null
-}> {
-  // Get today and end of week dates
-  const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
-
-  // Get end of week (Sunday)
-  const endOfWeek = new Date(today)
-  endOfWeek.setDate(today.getDate() + (7 - today.getDay()))
-  const endOfWeekStr = endOfWeek.toISOString().split('T')[0]
-
-  const { data: sessionsData, error: sessionsError } = await supabase
-    .from('course_sessions')
-    .select(`
-      *,
-      course:courses!inner(
-        *
-      )
-    `)
-    .eq('course.organization_id', organizationId)
-    .neq('course.status', 'cancelled')
-    .neq('course.status', 'completed')
-    .gte('session_date', todayStr)
-    .lte('session_date', endOfWeekStr)
-    .eq('status', 'upcoming')
-    .order('session_date', { ascending: true })
-    .order('start_time', { ascending: true })
-    .limit(limit)
-
-  if (sessionsError) {
-    return { data: null, error: sessionsError as Error }
-  }
-
-  if (!sessionsData || sessionsData.length === 0) {
-    return { data: [], error: null }
-  }
-
-  const typedResults = sessionsData as unknown as SessionWithFullCourseJoin[]
-  const results = typedResults.map(session => ({
-    session: {
-      id: session.id,
-      course_id: session.course_id,
-      session_number: session.session_number,
-      session_date: session.session_date,
-      start_time: session.start_time,
-      end_time: session.end_time,
-      status: session.status,
-      notes: session.notes,
-      created_at: session.created_at,
-      updated_at: session.updated_at,
-    } as CourseSession,
-    course: session.course as Course,
-  }))
-
-  return { data: results, error: null }
-}
 
 // Fetch the next N upcoming sessions (future only, no week limit)
 export async function fetchNextSessions(organizationId: string, limit = 3): Promise<{
@@ -823,8 +678,8 @@ export async function fetchNearestFullCourse(organizationId: string): Promise<{
     return { data: null, error: null }
   }
 
-  // Get signup counts for these courses
-  const courseIds = courses.map((c: any) => c.id)
+  const typedCourses = courses as unknown as Course[]
+  const courseIds = typedCourses.map((c) => c.id)
   const { data: signupCounts, error: countError } = await supabase
     .from('signups')
     .select('course_id')
@@ -835,7 +690,6 @@ export async function fetchNearestFullCourse(organizationId: string): Promise<{
     return { data: null, error: countError as Error }
   }
 
-  // Count signups per course
   const counts: Record<string, number> = {}
   for (const s of (signupCounts || []) as Array<{ course_id: string }>) {
     counts[s.course_id] = (counts[s.course_id] || 0) + 1
@@ -846,13 +700,13 @@ export async function fetchNearestFullCourse(organizationId: string): Promise<{
   let bestRatio = 0
   let bestAttendees = 0
 
-  for (const course of courses as any[]) {
+  for (const course of typedCourses) {
     const attendees = counts[course.id] || 0
     const capacity = course.max_participants || 0
     if (capacity === 0) continue
     const ratio = attendees / capacity
     if (ratio >= 0.8 && ratio < 1 && ratio > bestRatio) {
-      bestCourse = course as unknown as Course
+      bestCourse = course
       bestRatio = ratio
       bestAttendees = attendees
     }
@@ -900,8 +754,8 @@ export async function fetchLowEnrollmentCourses(organizationId: string): Promise
     return { data: [], error: null }
   }
 
-  // Get signup counts for these courses
-  const courseIds = courses.map((c: any) => c.id)
+  const typedCourses = courses as unknown as Course[]
+  const courseIds = typedCourses.map((c) => c.id)
   const { data: signupRows, error: countError } = await supabase
     .from('signups')
     .select('course_id')
@@ -917,12 +771,11 @@ export async function fetchLowEnrollmentCourses(organizationId: string): Promise
     counts[s.course_id] = (counts[s.course_id] || 0) + 1
   }
 
-  // Filter to courses with <40% enrollment
-  const lowEnrollment = (courses as any[])
+  const lowEnrollment = typedCourses
     .map(course => {
       const signups = counts[course.id] || 0
       const capacity = course.max_participants || 0
-      return { course: course as unknown as Course, signups, capacity }
+      return { course, signups, capacity }
     })
     .filter(({ signups, capacity }) => capacity > 0 && signups / capacity < 0.4)
 

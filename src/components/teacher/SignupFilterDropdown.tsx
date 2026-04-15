@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 
 import { Users, CreditCard, Undo2, Archive, type LucideIcon } from '@/lib/icons';
 
-// New payment-focused filters (used by SignupsPage)
 export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';
 
 export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string; icon: LucideIcon }> = [
@@ -20,7 +19,6 @@ export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string
   { value: 'archived', label: 'Arkiv', icon: Archive },
 ];
 
-// Combined filter (used by CourseParticipantsTab)
 export type CombinedFilter = 'all' | 'payment_issues' | 'cancelled' | 'refunded' | 'ended';
 
 export const COMBINED_FILTER_OPTIONS: Array<{ value: CombinedFilter; label: string }> = [

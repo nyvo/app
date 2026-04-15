@@ -2,23 +2,36 @@ import { format } from 'date-fns';
 import { nb } from 'date-fns/locale';
 
 /**
+ * Parse a date string (ISO YYYY-MM-DD or full ISO) into local year/month/day.
+ * Avoids timezone bugs from `new Date('YYYY-MM-DD')` which parses as UTC.
+ */
+export function parseLocalDate(
+  dateString: string
+): { year: number; month: number; day: number } | null {
+  const parts = dateString.slice(0, 10).split('-');
+  if (parts.length < 3) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) return null;
+  return { year, month, day };
+}
+
+/**
+ * Format a Date as YYYY-MM-DD using local timezone (not UTC).
+ */
+export function formatLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Get the current time in Oslo timezone
  */
 export function getOsloTime(): Date {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Oslo' }));
-}
-
-/**
- * Get the ISO week number for a given date
- * @param date - The date to get the week number for
- * @returns The ISO week number (1-53)
- */
-export function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
 /**
@@ -79,22 +92,5 @@ export function generateWeekDays(
  */
 export function formatDateNorwegian(date: Date, formatString: string = 'PPP'): string {
   return format(date, formatString, { locale: nb });
-}
-
-const MONTH_ABBR = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
-
-/**
- * Format a week range for display, e.g. "31. mar – 6. apr"
- */
-export function formatWeekRange(monday: Date, sunday: Date): string {
-  const mDay = monday.getDate();
-  const mMonth = MONTH_ABBR[monday.getMonth()];
-  const sDay = sunday.getDate();
-  const sMonth = MONTH_ABBR[sunday.getMonth()];
-
-  if (monday.getMonth() === sunday.getMonth()) {
-    return `${mDay}. – ${sDay}. ${sMonth}`;
-  }
-  return `${mDay}. ${mMonth} – ${sDay}. ${sMonth}`;
 }
 
