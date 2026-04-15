@@ -259,37 +259,6 @@
     box-shadow: var(--tw-ring-shadow);
   }
 
-  /* Semantic Typography — removed in commit 4 */
-  .type-display-1,
-  .type-display-2,
-  .type-heading-1,
-  .type-heading-2,
-  .type-heading-3,
-  .type-title,
-  .type-body-lg,
-  .type-body,
-  .type-body-sm,
-  .type-label,
-  .type-label-sm,
-  .type-meta,
-  .type-eyebrow {
-    font-family: 'Geist Variable', system-ui, -apple-system, sans-serif;
-    font-style: normal;
-  }
-  .type-display-1 { font-size: 56px; line-height: 60px; font-weight: 600; letter-spacing: -0.03em; }
-  .type-display-2 { font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.025em; }
-  .type-heading-1 { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em; }
-  .type-heading-2 { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; }
-  .type-heading-3 { font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; }
-  .type-title { font-size: 17px; line-height: 22px; font-weight: 500; letter-spacing: -0.01em; }
-  .type-body-lg { font-size: 16px; line-height: 24px; font-weight: 400; }
-  .type-body { font-size: 14px; line-height: 22px; font-weight: 400; }
-  .type-body-sm { font-size: 13px; line-height: 20px; font-weight: 400; }
-  .type-label { font-size: 14px; line-height: 18px; font-weight: 500; }
-  .type-label-sm { font-size: 13px; line-height: 16px; font-weight: 500; }
-  .type-meta { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.02em; }
-  .type-eyebrow { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-
   /* iOS-style easing for inputs & interactive controls */
   .ios-ease {
     transition: border-color 0.3s cubic-bezier(0.25, 1, 0.5, 1),

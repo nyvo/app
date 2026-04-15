@@ -46,9 +46,9 @@ function Row({
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2.5">
         <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="type-body text-foreground">{label}</span>
+        <span className="text-sm text-foreground">{label}</span>
       </div>
-      <div className={`type-body text-right ${muted ? 'text-muted-foreground' : 'text-foreground'}`}>
+      <div className={`text-sm text-right ${muted ? 'text-muted-foreground' : 'text-foreground'}`}>
         {children}
       </div>
     </div>
@@ -67,7 +67,7 @@ function SectionDivider({
 }) {
   return (
     <div className={`flex items-center justify-between -mx-6 bg-surface-muted px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'}`}>
-      <span className="type-meta text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium tracking-wide text-muted-foreground">{label}</span>
       {onEdit && (
         <Button
           variant="ghost"
@@ -75,7 +75,7 @@ function SectionDivider({
           type="button"
           onClick={onEdit}
           aria-label={`Endre ${label.toLowerCase()}`}
-          className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+          className="text-xs font-medium tracking-wide text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
         >
           Endre
         </Button>

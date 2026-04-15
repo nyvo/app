@@ -123,7 +123,7 @@ export function MessageParticipantsDialog({
         </DialogHeader>
 
         <div>
-        <label htmlFor="participant-message" className="type-label-sm mb-1.5 block text-foreground">Melding</label>
+        <label htmlFor="participant-message" className="text-xs font-medium mb-1.5 block text-foreground">Melding</label>
         <Textarea
           id="participant-message"
           value={message}

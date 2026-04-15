@@ -57,17 +57,17 @@ const sizeConfig: Record<IndicatorSize, {
   padding: string;
 }> = {
   xs: {
-    typography: 'type-meta',
+    typography: 'text-xs font-medium tracking-wide',
     iconSize: 'h-2.5 w-2.5',
     padding: 'px-1.5 py-px',
   },
   sm: {
-    typography: 'type-meta',
+    typography: 'text-xs font-medium tracking-wide',
     iconSize: 'h-3 w-3',
     padding: 'px-2 py-0.5',
   },
   md: {
-    typography: 'type-label-sm',
+    typography: 'text-xs font-medium',
     iconSize: 'h-3.5 w-3.5',
     padding: 'px-2.5 py-0.5',
   },

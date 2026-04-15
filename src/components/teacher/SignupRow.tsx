@@ -36,7 +36,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
           <p className={cn(
-            "type-label truncate",
+            "text-sm font-medium truncate",
             isCancelled ? "text-muted-foreground line-through" : "text-foreground"
           )}>
             {signup.participantName}
@@ -60,10 +60,10 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
             </Popover>
           )}
         </div>
-        <p className={cn("type-meta truncate", isCancelled ? "text-muted-foreground" : "text-muted-foreground/70")}>
+        <p className={cn("text-xs font-medium tracking-wide truncate", isCancelled ? "text-muted-foreground" : "text-muted-foreground/70")}>
           {signup.participantEmail}
         </p>
-        <div className="mt-0.5 flex items-center gap-0.5 type-meta text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-0.5 text-xs font-medium tracking-wide text-muted-foreground">
           <Link
             to={`/teacher/courses/${signup.courseId}`}
             className="inline-flex items-center gap-0.5 truncate min-w-0 hover:text-foreground smooth-transition"
@@ -74,7 +74,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
         </div>
       </div>
       <div className="flex items-center gap-1 flex-shrink-0">
-        <span className="type-meta text-muted-foreground whitespace-nowrap hidden sm:inline">{signup.registeredAt}</span>
+        <span className="text-xs font-medium tracking-wide text-muted-foreground whitespace-nowrap hidden sm:inline">{signup.registeredAt}</span>
         {hasActions ? (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
         ) : (

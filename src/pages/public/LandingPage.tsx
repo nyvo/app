@@ -31,18 +31,18 @@ const LandingPage = () => {
             <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground" aria-hidden="true">
               <Infinity className="w-3.5 h-3.5" />
             </div>
-            <span className="type-title text-foreground">
+            <span className="text-base font-medium text-foreground">
               Ease
             </span>
           </Link>
           <div className="flex items-center gap-6">
-            <a href="#pricing" className="type-label hidden text-muted-foreground transition-colors hover:text-foreground md:block">
+            <a href="#pricing" className="text-sm font-medium hidden text-muted-foreground transition-colors hover:text-foreground md:block">
               Pris
             </a>
-            <a href="mailto:hei@ease.no" className="type-label hidden text-muted-foreground transition-colors hover:text-foreground md:block">
+            <a href="mailto:hei@ease.no" className="text-sm font-medium hidden text-muted-foreground transition-colors hover:text-foreground md:block">
               Kontakt
             </a>
-            <Link to="/login" className="type-label text-muted-foreground transition-colors hover:text-foreground">
+            <Link to="/login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               Logg inn
             </Link>
             <Button asChild size="sm">
@@ -56,12 +56,12 @@ const LandingPage = () => {
       <section className="relative pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="type-display-2 mb-5 text-foreground leading-tight md:text-[56px] md:leading-[60px]">
+            <h1 className="text-4xl font-semibold tracking-tight mb-5 text-foreground leading-tight md:text-[56px] md:leading-[60px]">
               Påmelding og betaling <br className="hidden md:block" />
               for yogastudioer.
             </h1>
 
-            <p className="type-body-lg text-muted-foreground mb-7">
+            <p className="text-base text-muted-foreground mb-7">
               Automatiser påmeldinger, betaling og regnskap. Alt på ett sted.
             </p>
 
@@ -106,10 +106,10 @@ const LandingPage = () => {
           transition={scrollTransition}
           className="text-center mb-16 max-w-2xl mx-auto"
         >
-          <h2 className="type-heading-1 mb-4 text-foreground">
+          <h2 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">
             Hvordan det fungerer
           </h2>
-          <p className="type-body-lg text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             Fra planlegging til utbetaling på 1-2-3.
           </p>
         </motion.div>
@@ -129,14 +129,14 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="type-label flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+                <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
                   1
                 </div>
-                <h3 className="type-title text-foreground">
+                <h3 className="text-base font-medium text-foreground">
                   Sett opp kursene dine
                 </h3>
               </div>
-              <p className="type-body-lg mb-6 text-muted-foreground">
+              <p className="text-base mb-6 text-muted-foreground">
                 Sett opp faste timer, arrangementer eller kursrekker. Gjentakelser
                 og unntak håndteres automatisk.
               </p>
@@ -145,29 +145,29 @@ const LandingPage = () => {
             <div className="absolute bottom-0 right-0 hidden h-3/4 w-1/2 translate-x-4 translate-y-4 rounded-tl-2xl border-l border-t border-border bg-surface-muted p-5 md:block">
               <div className="grid grid-cols-5 gap-2 text-center mb-3">
                 {['Man', 'Tir', 'Ons', 'Tor', 'Fre'].map((day) => (
-                  <span key={day} className="type-meta text-muted-foreground">{day}</span>
+                  <span key={day} className="text-xs font-medium tracking-wide text-muted-foreground">{day}</span>
                 ))}
               </div>
               <div className="grid grid-cols-5 gap-2">
                 <div className="col-start-1 rounded-lg bg-primary text-primary-foreground p-2">
-                  <p className="type-meta">Vinyasa</p>
-                  <p className="type-meta opacity-70">09:00</p>
+                  <p className="text-xs font-medium tracking-wide">Vinyasa</p>
+                  <p className="text-xs font-medium tracking-wide opacity-70">09:00</p>
                 </div>
                 <div className="col-start-3 rounded-lg border border-border bg-surface p-2">
-                  <p className="type-meta text-foreground">Yin Yoga</p>
-                  <p className="type-meta text-muted-foreground">18:00</p>
+                  <p className="text-xs font-medium tracking-wide text-foreground">Yin Yoga</p>
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">18:00</p>
                 </div>
                 <div className="col-start-5 rounded-lg border border-border bg-surface p-2">
-                  <p className="type-meta text-foreground">Flow</p>
-                  <p className="type-meta text-muted-foreground">10:00</p>
+                  <p className="text-xs font-medium tracking-wide text-foreground">Flow</p>
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">10:00</p>
                 </div>
                 <div className="col-start-2 rounded-lg bg-primary text-primary-foreground p-2">
-                  <p className="type-meta">Morgen</p>
-                  <p className="type-meta opacity-70">07:30</p>
+                  <p className="text-xs font-medium tracking-wide">Morgen</p>
+                  <p className="text-xs font-medium tracking-wide opacity-70">07:30</p>
                 </div>
                 <div className="col-start-4 rounded-lg border border-border bg-surface p-2 opacity-50">
-                  <p className="type-meta text-foreground">Restorative</p>
-                  <p className="type-meta text-muted-foreground">19:00</p>
+                  <p className="text-xs font-medium tracking-wide text-foreground">Restorative</p>
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">19:00</p>
                 </div>
               </div>
             </div>
@@ -180,14 +180,14 @@ const LandingPage = () => {
             className="relative overflow-hidden rounded-lg bg-background border border-border p-8 ios-ease group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="type-label flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
                 2
               </div>
-              <h3 className="type-title text-foreground">
+              <h3 className="text-base font-medium text-foreground">
                 Del lenken
               </h3>
             </div>
-            <p className="type-body-lg mb-8 text-muted-foreground">
+            <p className="text-base mb-8 text-muted-foreground">
               Del én lenke med elevene. De melder seg på og betaler selv. Ingen
               meldinger frem og tilbake.
             </p>
@@ -196,23 +196,23 @@ const LandingPage = () => {
               <div className="w-full max-w-[280px] rounded-lg border border-border bg-background p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="type-label text-foreground">Morning Flow & Coffee</p>
+                    <p className="text-sm font-medium text-foreground">Morning Flow & Coffee</p>
                     <div className="flex items-center gap-3 mt-1.5">
-                      <span className="type-meta flex items-center gap-1 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
                         <Calendar className="size-3" /> Lør, 24. sep
                       </span>
-                      <span className="type-meta flex items-center gap-1 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
                         <Clock className="size-3" /> 09:00
                       </span>
                     </div>
                   </div>
-                  <p className="type-label text-foreground">{formatKroner(250)}</p>
+                  <p className="text-sm font-medium text-foreground">{formatKroner(250)}</p>
                 </div>
-                <div className="type-meta mb-3 flex items-center gap-1.5 text-muted-foreground">
+                <div className="text-xs font-medium tracking-wide mb-3 flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="size-3" /> Majorstuen Studio
                 </div>
                 <div className="h-8 w-full bg-primary rounded-lg flex items-center justify-center">
-                  <span className="type-meta text-primary-foreground">Påmelding</span>
+                  <span className="text-xs font-medium tracking-wide text-primary-foreground">Påmelding</span>
                 </div>
               </div>
             </div>
@@ -226,14 +226,14 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
-              <div className="type-label flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
                 3
               </div>
-              <h3 className="type-title text-foreground">
+              <h3 className="text-base font-medium text-foreground">
                 Undervis
               </h3>
             </div>
-              <p className="type-body-lg text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Møt opp og gjør det du kan best. Påminnelser og
                 kvitteringer sendes automatisk.
               </p>
@@ -245,8 +245,8 @@ const LandingPage = () => {
                     <Check className="size-4" />
                   </div>
                   <div>
-                    <p className="type-meta text-foreground">Påminnelse sendt</p>
-                    <p className="type-meta text-muted-foreground">til 12 deltakere</p>
+                    <p className="text-xs font-medium tracking-wide text-foreground">Påminnelse sendt</p>
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground">til 12 deltakere</p>
                   </div>
                </div>
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
@@ -254,8 +254,8 @@ const LandingPage = () => {
                      <div className="size-1.5 rounded-full bg-status-info-text" />
                   </div>
                   <div>
-                    <p className="type-meta text-foreground">Oppmøte bekreftet</p>
-                    <p className="type-meta text-muted-foreground">Automatisk</p>
+                    <p className="text-xs font-medium tracking-wide text-foreground">Oppmøte bekreftet</p>
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground">Automatisk</p>
                   </div>
                </div>
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
@@ -263,8 +263,8 @@ const LandingPage = () => {
                     <Mail className="size-4" />
                   </div>
                   <div>
-                    <p className="type-meta text-foreground">Kvittering sendt</p>
-                    <p className="type-meta text-muted-foreground">til 12 deltakere</p>
+                    <p className="text-xs font-medium tracking-wide text-foreground">Kvittering sendt</p>
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground">til 12 deltakere</p>
                   </div>
                </div>
             </div>
@@ -287,10 +287,10 @@ const LandingPage = () => {
           transition={scrollTransition}
           className="mb-12 text-center max-w-2xl mx-auto"
         >
-          <h2 className="type-heading-1 mb-4 text-foreground">
+          <h2 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">
             Alt du trenger
           </h2>
-          <p className="type-body-lg text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             Alt for å drive studioet ditt.
           </p>
         </motion.div>
@@ -310,21 +310,21 @@ const LandingPage = () => {
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
               <div>
-                <div className="type-meta mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
+                <div className="text-xs font-medium tracking-wide mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
                   <CreditCard className="w-3.5 h-3.5" /> Betaling
                 </div>
-                <h3 className="type-heading-3 mb-4 text-foreground">
+                <h3 className="text-lg font-semibold mb-4 text-foreground">
                   Inntekter på autopilot.
                 </h3>
-                <p className="type-body-lg text-muted-foreground mb-8">
+                <p className="text-base text-muted-foreground mb-8">
                   Slipp fakturaer og manuell oppfølging. Pengene kommer inn når
                   deltakeren melder seg på.
                 </p>
                 <div className="flex gap-6">
-                  <div className="type-label flex items-center gap-2 text-foreground">
+                  <div className="text-sm font-medium flex items-center gap-2 text-foreground">
                     <Smartphone className="size-4 text-muted-foreground" /> Vipps og kort
                   </div>
-                  <div className="type-label flex items-center gap-2 text-foreground">
+                  <div className="text-sm font-medium flex items-center gap-2 text-foreground">
                     <Check className="size-4 text-muted-foreground" /> Automatiske kvitteringer
                   </div>
                 </div>
@@ -333,10 +333,10 @@ const LandingPage = () => {
                 <div className="rounded-lg border border-border bg-surface-muted/50 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
-                      <p className="type-label text-muted-foreground">
+                      <p className="text-sm font-medium text-muted-foreground">
                         Total omsetning
                       </p>
-                      <p className="type-heading-1 text-foreground mt-1">
+                      <p className="text-3xl font-semibold tracking-tight text-foreground mt-1">
                         {formatKroner(42500)}
                       </p>
                     </div>
@@ -348,7 +348,7 @@ const LandingPage = () => {
                     <div className="h-2 w-full bg-border rounded-full overflow-hidden">
                       <div className="h-full bg-primary w-[70%]"></div>
                     </div>
-                    <div className="type-meta flex justify-between text-muted-foreground">
+                    <div className="text-xs font-medium tracking-wide flex justify-between text-muted-foreground">
                       <span>1. okt</span>
                       <span>31. okt</span>
                     </div>
@@ -365,10 +365,10 @@ const LandingPage = () => {
             className="bg-background rounded-lg border border-border p-8 overflow-hidden relative group flex flex-col"
           >
             <div className="mb-8 relative z-10">
-              <div className="type-meta mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
+              <div className="text-xs font-medium tracking-wide mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
                 <ArrowRightLeft className="w-3.5 h-3.5" /> Regnskap
               </div>
-              <h3 className="type-heading-1 mb-3 text-foreground">
+              <h3 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
                 Regnskap uten hodepine.
               </h3>
               <p className="text-muted-foreground">
@@ -391,10 +391,10 @@ const LandingPage = () => {
             className="bg-background rounded-lg border border-border p-8 overflow-hidden relative group flex flex-col"
           >
             <div className="mb-8 relative z-10">
-              <div className="type-meta mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
+              <div className="text-xs font-medium tracking-wide mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-foreground">
                 <Mail className="w-3.5 h-3.5" /> Kommunikasjon
               </div>
-              <h3 className="type-heading-1 mb-3 text-foreground">
+              <h3 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
                 Aldri glem en påminnelse.
               </h3>
               <p className="text-muted-foreground">
@@ -407,8 +407,8 @@ const LandingPage = () => {
                   <Clock className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="type-meta text-foreground">Påminnelse: Yin Yoga i morgen</p>
-                  <p className="type-meta text-muted-foreground">kl. 18:00 · Majorstuen</p>
+                  <p className="text-xs font-medium tracking-wide text-foreground">Påminnelse: Yin Yoga i morgen</p>
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">kl. 18:00 · Majorstuen</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
@@ -416,8 +416,8 @@ const LandingPage = () => {
                   <Check className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="type-meta text-foreground">Kvittering for Morning Flow</p>
-                  <p className="type-meta text-muted-foreground">{`${formatKroner(250)} · Sendt til deltaker`}</p>
+                  <p className="text-xs font-medium tracking-wide text-foreground">Kvittering for Morning Flow</p>
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">{`${formatKroner(250)} · Sendt til deltaker`}</p>
                 </div>
               </div>
             </div>
@@ -437,10 +437,10 @@ const LandingPage = () => {
       >
         <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.div variants={scrollVariants} transition={scrollTransition}>
-            <h2 className="type-heading-1 mb-4 text-primary-foreground">
+            <h2 className="text-3xl font-semibold tracking-tight mb-4 text-primary-foreground">
               Bygget for yogastudioer i Norge
             </h2>
-            <p className="type-body-lg text-muted-foreground max-w-xl mx-auto mb-12">
+            <p className="text-base text-muted-foreground max-w-xl mx-auto mb-12">
               Ease håndterer påmelding, betaling og regnskap. Du fokuserer på undervisningen.
             </p>
           </motion.div>
@@ -453,16 +453,16 @@ const LandingPage = () => {
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-12"
           >
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="type-heading-2 text-primary-foreground">100 %</p>
-              <p className="type-body mt-1 text-muted-foreground">Norsk</p>
+              <p className="text-xl font-semibold tracking-tight text-primary-foreground">100 %</p>
+              <p className="text-sm mt-1 text-muted-foreground">Norsk</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="type-heading-2 text-primary-foreground">Gratis</p>
-              <p className="type-body mt-1 text-muted-foreground">Ingen månedskostnad</p>
+              <p className="text-xl font-semibold tracking-tight text-primary-foreground">Gratis</p>
+              <p className="text-sm mt-1 text-muted-foreground">Ingen månedskostnad</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary/80 border border-primary/60">
-              <p className="type-heading-2 text-primary-foreground">Fiken</p>
-              <p className="type-body mt-1 text-muted-foreground">Automatisk bokføring</p>
+              <p className="text-xl font-semibold tracking-tight text-primary-foreground">Fiken</p>
+              <p className="text-sm mt-1 text-muted-foreground">Automatisk bokføring</p>
             </motion.div>
           </motion.div>
 
@@ -490,7 +490,7 @@ const LandingPage = () => {
           transition={scrollTransition}
           className="text-center mb-16"
         >
-          <h2 className="type-heading-1 mb-4 text-foreground">
+          <h2 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">
             Enkel prismodell
           </h2>
           <p className="text-muted-foreground mb-3">
@@ -511,50 +511,50 @@ const LandingPage = () => {
             className="bg-background p-8 rounded-lg border border-border flex flex-col"
           >
             <div className="mb-6">
-              <h3 className="type-heading-3 text-foreground">
+              <h3 className="text-lg font-semibold text-foreground">
                 Gratis
               </h3>
-              <p className="type-body mt-2 text-muted-foreground">
+              <p className="text-sm mt-2 text-muted-foreground">
                 Alt du trenger for å komme i gang.
               </p>
             </div>
             <div className="mb-8 pb-8 border-b border-border">
               <div className="flex items-baseline gap-1">
-                <span className="type-display-2 text-foreground">
+                <span className="text-4xl font-semibold tracking-tight text-foreground">
                   Gratis
                 </span>
-                <span className="type-label text-muted-foreground">/ mnd</span>
+                <span className="text-sm font-medium text-muted-foreground">/ mnd</span>
               </div>
-              <p className="type-meta mt-2 text-muted-foreground">
+              <p className="text-xs font-medium tracking-wide mt-2 text-muted-foreground">
                 Ingen kort nødvendig.
               </p>
             </div>
             <ul className="space-y-4 mb-8 flex-1">
-              <li className="type-body flex items-start gap-3 text-muted-foreground">
+              <li className="text-sm flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Ubegrenset antall kurs og elever</span>
               </li>
-              <li className="type-body flex items-start gap-3 text-muted-foreground">
+              <li className="text-sm flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Nettbetaling med Vipps og kort</span>
               </li>
-              <li className="type-body flex items-start gap-3 text-muted-foreground">
+              <li className="text-sm flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Automatiske påminnelser til elever</span>
               </li>
-              <li className="type-body flex items-start gap-3 text-muted-foreground">
+              <li className="text-sm flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Fiken-integrasjon for regnskap</span>
               </li>
-              <li className="type-body flex items-start gap-3 text-muted-foreground">
+              <li className="text-sm flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
@@ -588,11 +588,11 @@ const LandingPage = () => {
                 <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                   <Infinity className="size-4" />
                 </div>
-                <span className="type-heading-3 text-foreground">
+                <span className="text-lg font-semibold text-foreground">
                   Ease
                 </span>
               </div>
-              <p className="type-body mb-6 max-w-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm mb-6 max-w-sm text-muted-foreground leading-relaxed">
                 Påmelding og betaling for yogastudioer. <br />
                 Bygget i Oslo.
               </p>
@@ -601,10 +601,10 @@ const LandingPage = () => {
               </div>
             </div>
             <div className="md:col-span-2 md:col-start-7">
-              <h4 className="type-label mb-6 text-foreground">
+              <h4 className="text-sm font-medium mb-6 text-foreground">
                 Produkt
               </h4>
-              <ul className="type-body space-y-4 text-muted-foreground">
+              <ul className="text-sm space-y-4 text-muted-foreground">
                 <li>
                   <a href="#features" className="hover:text-foreground transition-colors">
                     Funksjoner
@@ -623,10 +623,10 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="type-label mb-6 text-foreground">
+              <h4 className="text-sm font-medium mb-6 text-foreground">
                 Selskap
               </h4>
-              <ul className="type-body space-y-4 text-muted-foreground">
+              <ul className="text-sm space-y-4 text-muted-foreground">
                 <li>
                   <a href="mailto:hei@ease.no" className="hover:text-foreground transition-colors">
                     Kontakt
@@ -635,10 +635,10 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="type-label mb-6 text-foreground">
+              <h4 className="text-sm font-medium mb-6 text-foreground">
                 Juridisk
               </h4>
-              <ul className="type-body space-y-4 text-muted-foreground">
+              <ul className="text-sm space-y-4 text-muted-foreground">
                 <li>
                   <Link to="/terms" className="hover:text-foreground transition-colors">
                     Vilkår
@@ -649,13 +649,13 @@ const LandingPage = () => {
           </div>
 
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="type-meta text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">
               © {new Date().getFullYear()} Ease AS. Alle rettigheter reservert.
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="size-2 rounded-full bg-status-confirmed-text"></div>
-                <span className="type-meta text-muted-foreground">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">
                   Systemet er operativt
                 </span>
               </div>

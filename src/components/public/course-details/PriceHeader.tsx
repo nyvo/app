@@ -14,11 +14,11 @@ export const PriceHeader: React.FC<PriceHeaderProps> = ({
 }) => {
   return (
     <div className="flex justify-between items-center px-6 py-6 border-b border-border">
-      <span className="type-title text-foreground">
+      <span className="text-base font-medium text-foreground">
         {label}
       </span>
       {step && (
-        <span className="type-meta text-muted-foreground">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground">
           {step}
         </span>
       )}

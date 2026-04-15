@@ -247,9 +247,9 @@ const CoursesPage = () => {
         >
           <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
               {!showCoursesEmptyState && (
-                <p className="type-body mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
+                <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
               )}
             </div>
             {!showCoursesEmptyState && (

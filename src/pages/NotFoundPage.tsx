@@ -15,7 +15,7 @@ const NotFoundPage = () => {
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="type-title text-foreground">
+          <span className="text-base font-medium text-foreground">
             Ease
           </span>
         </Link>
@@ -28,16 +28,16 @@ const NotFoundPage = () => {
         <div className="text-center max-w-md">
           {/* 404 Number */}
           <div className="mb-6">
-            <span className="type-display-1 text-muted select-none">
+            <span className="text-6xl font-semibold tracking-tight text-muted select-none">
               404
             </span>
           </div>
 
           {/* Message */}
-          <h1 className="type-heading-1 mb-3 text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
             Siden ble ikke funnet
           </h1>
-          <p className="type-body mb-8 text-muted-foreground">
+          <p className="text-sm mb-8 text-muted-foreground">
             Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
           </p>
 

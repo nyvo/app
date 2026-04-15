@@ -150,12 +150,12 @@ export const CourseParticipantsTab = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-background/50">
-                <th scope="col" className="type-meta w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
-                <th scope="col" className="type-meta w-32 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
-                <th scope="col" className="type-meta hidden w-40 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Betaling</th>
-                <th scope="col" className="type-meta hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
-                <th scope="col" className="type-meta hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
-                <th scope="col" className="type-meta w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
+                <th scope="col" className="text-xs font-medium tracking-wide w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
+                <th scope="col" className="text-xs font-medium tracking-wide w-32 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
+                <th scope="col" className="text-xs font-medium tracking-wide hidden w-40 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Betaling</th>
+                <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
+                <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
+                <th scope="col" className="text-xs font-medium tracking-wide w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -169,9 +169,9 @@ export const CourseParticipantsTab = ({
               ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
-                    <p className="type-body text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
+                    <p className="text-sm text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                     {hasActiveFilters && (
-                      <Button variant="link" size="sm" onClick={clearFilters} className="type-meta text-primary">
+                      <Button variant="link" size="sm" onClick={clearFilters} className="text-xs font-medium tracking-wide text-primary">
                         Nullstill filter
                       </Button>
                     )}
@@ -185,8 +185,8 @@ export const CourseParticipantsTab = ({
                       <div className="flex min-w-0 items-center gap-3">
                         <UserAvatar name={participant.name} email={participant.email} size="sm" />
                         <div className="min-w-0">
-                          <p className="type-label truncate text-foreground">{participant.name}</p>
-                          <p className="type-meta truncate text-muted-foreground">{participant.email}</p>
+                          <p className="text-sm font-medium truncate text-foreground">{participant.name}</p>
+                          <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{participant.email}</p>
                         </div>
                       </div>
                     </td>

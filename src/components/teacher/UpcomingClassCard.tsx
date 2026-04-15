@@ -14,17 +14,17 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
   if (!classData) {
     return (
       <div className="flex flex-col">
-        {!hideHeader && <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>}
+        {!hideHeader && <h2 className="text-base font-medium mb-3 text-foreground">Neste kurs</h2>}
         <Card className="p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-md">
               <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-surface-muted">
                 <Calendar className="size-5 text-muted-foreground stroke-[1.5]" />
               </div>
-              <h3 className="type-heading-2 mb-2 text-foreground">
+              <h3 className="text-xl font-semibold tracking-tight mb-2 text-foreground">
                 Ingen kommende kurs
               </h3>
-              <p className="type-body text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Opprett et kurs for å se hva som skjer videre i timeplanen din.
               </p>
             </div>
@@ -42,7 +42,7 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
 
   return (
     <div className="flex flex-col">
-      {!hideHeader && <h2 className="type-title mb-3 text-foreground">Neste kurs</h2>}
+      {!hideHeader && <h2 className="text-base font-medium mb-3 text-foreground">Neste kurs</h2>}
       <Card className="overflow-hidden border-primary/20 bg-primary text-primary-foreground">
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0 flex-1">
@@ -53,11 +53,11 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
               </Badge>
             </div>
 
-            <h3 className="type-heading-2 mb-3 text-primary-foreground">
+            <h3 className="text-xl font-semibold tracking-tight mb-3 text-primary-foreground">
               {classData.title}
             </h3>
 
-            <div className="type-label flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/80">
+            <div className="text-sm font-medium flex flex-wrap items-center gap-x-4 gap-y-2 text-primary-foreground/80">
               <span className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 opacity-70" />
                 {classData.date}
@@ -75,8 +75,8 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
 
           <div className="flex flex-col gap-4 md:min-w-[200px] md:items-end">
             <div className="rounded-lg border border-primary-foreground/15 bg-primary-foreground/8 px-4 py-3">
-              <p className="type-meta text-primary-foreground/70">Påmeldte</p>
-              <p className="type-title mt-1 text-primary-foreground">
+              <p className="text-xs font-medium tracking-wide text-primary-foreground/70">Påmeldte</p>
+              <p className="text-base font-medium mt-1 text-primary-foreground">
                 {classData.capacity > 0 ? `${classData.attendees}/${classData.capacity}` : `${classData.attendees} påmeldt`}
               </p>
             </div>

@@ -33,7 +33,7 @@ export function ScheduleHeader({
       {/* Line 1: Month/year + navigation + view toggle + create */}
       <div className="flex items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <h1 className="type-heading-2 text-foreground">{title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -44,7 +44,7 @@ export function ScheduleHeader({
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="type-label px-2 text-foreground">
+            <span className="text-sm font-medium px-2 text-foreground">
               {weekOffset === 0 ? 'Denne uken' : (() => {
                 const sunday = new Date(displayedMonday);
                 sunday.setDate(displayedMonday.getDate() + 6);

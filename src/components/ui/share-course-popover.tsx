@@ -56,7 +56,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
         <div className="px-6 pt-5 pb-3">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="type-label text-foreground">Del dette kurset</h3>
+              <h3 className="text-sm font-medium text-foreground">Del dette kurset</h3>
               <p className="text-xs text-muted-foreground mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>

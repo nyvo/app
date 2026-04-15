@@ -175,13 +175,13 @@ export const CourseSettingsTab = ({
     <div className="space-y-8">
       <section className="space-y-3">
         <div>
-          <h3 className="type-title text-foreground">Generelt</h3>
-          <p className="type-body-sm text-muted-foreground">Oppdater navn, beskrivelse og forsidebilde for kurset.</p>
+          <h3 className="text-base font-medium text-foreground">Generelt</h3>
+          <p className="text-sm text-muted-foreground">Oppdater navn, beskrivelse og forsidebilde for kurset.</p>
         </div>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="space-y-4">
             <div>
-              <label htmlFor="settings-title" className="type-label-sm mb-1.5 block text-foreground">Navn på kurs</label>
+              <label htmlFor="settings-title" className="text-xs font-medium mb-1.5 block text-foreground">Navn på kurs</label>
               <Input
                 id="settings-title"
                 type="text"
@@ -191,7 +191,7 @@ export const CourseSettingsTab = ({
             </div>
 
             <div>
-              <label htmlFor="settings-description" className="type-label-sm mb-1.5 block text-foreground">Beskrivelse</label>
+              <label htmlFor="settings-description" className="text-xs font-medium mb-1.5 block text-foreground">Beskrivelse</label>
               <Textarea
                 id="settings-description"
                 rows={6}
@@ -203,8 +203,8 @@ export const CourseSettingsTab = ({
 
           <div className="space-y-2">
             <div>
-              <h4 className="type-label text-foreground">Kursbilde</h4>
-              <p className="type-body-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
+              <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
+              <p className="text-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
             </div>
             <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-surface">
               <ImageUpload
@@ -232,12 +232,12 @@ export const CourseSettingsTab = ({
 
       <section className="space-y-3">
         <div>
-          <h3 className="type-title text-foreground">Tid og kapasitet</h3>
-          <p className="type-body-sm text-muted-foreground">Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</p>
+          <h3 className="text-base font-medium text-foreground">Tid og kapasitet</h3>
+          <p className="text-sm text-muted-foreground">Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
+            <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
             <DatePicker
               value={settingsDate}
               onChange={onDateChange}
@@ -245,7 +245,7 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
+            <label className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
             <div className="flex items-center gap-2">
               <Select
                 value={settingsTime}
@@ -268,7 +268,7 @@ export const CourseSettingsTab = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <span className="type-label shrink-0 text-muted-foreground">–</span>
+              <span className="text-sm font-medium shrink-0 text-muted-foreground">–</span>
               <Select
                 value={endTime}
                 onValueChange={handleEndTimeChange}
@@ -287,7 +287,7 @@ export const CourseSettingsTab = ({
             </div>
           </div>
           <div>
-            <label className="type-label-sm mb-1.5 block text-foreground">Kapasitet</label>
+            <label className="text-xs font-medium mb-1.5 block text-foreground">Kapasitet</label>
             <Input
               type="text"
               inputMode="numeric"
@@ -309,7 +309,7 @@ export const CourseSettingsTab = ({
             />
             {currentEnrolled > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">
-                <p className="type-meta text-muted-foreground">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground">
                   {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''} akkurat nå
                 </p>
                 <InfoTooltip content={`Kan ikke settes lavere enn ${currentEnrolled} fordi det allerede er ${currentEnrolled} påmeldt${currentEnrolled > 1 ? 'e' : ''}.`} />
@@ -319,7 +319,7 @@ export const CourseSettingsTab = ({
         </div>
         {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
           <Alert variant="warning" size="sm" icon={false}>
-            <p className="type-meta text-status-warning-text">
+            <p className="text-xs font-medium tracking-wide text-status-warning-text">
               Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
             </p>
           </Alert>
@@ -330,12 +330,12 @@ export const CourseSettingsTab = ({
 
       <section className="space-y-3">
         <div>
-          <h3 className="type-title text-foreground">Praktisk info</h3>
-          <p className="type-body-sm text-muted-foreground">Hjelp deltakerne å møte forberedt med tydelig informasjon.</p>
+          <h3 className="text-base font-medium text-foreground">Praktisk info</h3>
+          <p className="text-sm text-muted-foreground">Hjelp deltakerne å møte forberedt med tydelig informasjon.</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="type-label-sm mb-2.5 block text-foreground">Nivå</label>
+            <label className="text-xs font-medium mb-2.5 block text-foreground">Nivå</label>
             <ToggleGroup
               type="single"
               value={settingsAudienceLevel}
@@ -348,13 +348,13 @@ export const CourseSettingsTab = ({
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            <p className="type-meta mt-1.5 text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
               Velg det laveste nivået som passer.
             </p>
           </div>
 
           <div>
-            <label className="type-label-sm mb-2.5 block text-foreground">Utstyr</label>
+            <label className="text-xs font-medium mb-2.5 block text-foreground">Utstyr</label>
             <RadioGroup
               value={settingsEquipment}
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
@@ -362,14 +362,14 @@ export const CourseSettingsTab = ({
               {EQUIPMENT_OPTIONS.map((opt) => (
                 <label key={opt.value} className="flex cursor-pointer items-center gap-2.5 py-0.5">
                   <RadioGroupItem value={opt.value} />
-                  <span className="type-body text-foreground">{opt.label}</span>
+                  <span className="text-sm text-foreground">{opt.label}</span>
                 </label>
               ))}
             </RadioGroup>
           </div>
 
           <div>
-            <label className="type-label-sm mb-1.5 block text-foreground">Oppmøte før start</label>
+            <label className="text-xs font-medium mb-1.5 block text-foreground">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
@@ -388,7 +388,7 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="type-label-sm mb-1.5 block text-foreground">Egne punkter</label>
+            <label className="text-xs font-medium mb-1.5 block text-foreground">Egne punkter</label>
             <div className="space-y-2">
               {settingsCustomBullets.map((bullet, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export const CourseSettingsTab = ({
                       updated[i] = e.target.value;
                       onCustomBulletsChange(updated);
                     }}
-                    className="type-body flex-1 h-9"
+                    className="text-sm flex-1 h-9"
                   />
                   <Button
                     variant="ghost"
@@ -422,7 +422,7 @@ export const CourseSettingsTab = ({
                   size="sm"
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="type-body text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+                  className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Legg til punkt
@@ -437,13 +437,13 @@ export const CourseSettingsTab = ({
 
       <section className="space-y-3">
         <div>
-          <h3 className="type-title text-foreground">Avlys kurs</h3>
-          <p className="type-body-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
+          <h3 className="text-base font-medium text-foreground">Avlys kurs</h3>
+          <p className="text-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
         </div>
         <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-muted px-4 py-4 sm:flex-row sm:items-center">
           <div className="space-y-1">
-            <p className="type-label text-foreground">Dette kan ikke angres.</p>
-            <p className="type-body-sm text-muted-foreground">
+            <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
+            <p className="text-sm text-muted-foreground">
               {refundPreview.count > 0
                 ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
                 : 'Kurset vil bli avlyst.'}
@@ -463,7 +463,7 @@ export const CourseSettingsTab = ({
       <div className="flex justify-end gap-3 pt-2">
         {saveError && (
           <Alert variant="error" size="sm" icon={Info} className="mr-auto">
-            <span className="type-body text-status-error-text">{saveError}</span>
+            <span className="text-sm text-status-error-text">{saveError}</span>
           </Alert>
         )}
 

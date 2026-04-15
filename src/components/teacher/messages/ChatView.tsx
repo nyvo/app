@@ -58,10 +58,10 @@ export function ChatView({
             />
           </div>
           <div className="min-w-0">
-            <h3 className="type-label truncate text-foreground">
+            <h3 className="text-sm font-medium truncate text-foreground">
               {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
             </h3>
-            <p className="type-meta truncate text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">
               {conversation.participant?.email || 'Elev'}
             </p>
           </div>
@@ -99,7 +99,7 @@ export function ChatView({
           <>
             {/* Time Separator */}
             <div className="flex justify-center">
-              <span className="type-eyebrow rounded-full bg-surface-muted px-3 py-1 text-muted-foreground">
+              <span className="text-xs font-semibold tracking-widest uppercase rounded-full bg-surface-muted px-3 py-1 text-muted-foreground">
                 I dag
               </span>
             </div>

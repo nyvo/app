@@ -161,7 +161,7 @@ const PublicCoursesPage = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
               <Leaf className="h-4 w-4 text-foreground" />
             </div>
-            <span className="type-title text-foreground">Ease</span>
+            <span className="text-base font-medium text-foreground">Ease</span>
           </Link>
 
           {user && userType === 'student' ? (
@@ -204,7 +204,7 @@ const PublicCoursesPage = () => {
         {/* Error State */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="type-title mb-2 text-foreground">{error}</h3>
+            <h3 className="text-base font-medium mb-2 text-foreground">{error}</h3>
             <Button asChild variant="link" className="text-muted-foreground">
               <Link to="/">Gå til forsiden</Link>
             </Button>
@@ -227,7 +227,7 @@ const PublicCoursesPage = () => {
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center rounded-lg border border-primary/70 bg-primary">
-                      <span className="type-display-2 text-primary-foreground">
+                      <span className="text-4xl font-semibold tracking-tight text-primary-foreground">
                         {organization.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -236,19 +236,19 @@ const PublicCoursesPage = () => {
 
               {/* Text Info */}
                 <div className="min-w-0 flex-1 space-y-2">
-                  <h1 className="type-heading-1 text-foreground">
+                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                     {organization.name}
                   </h1>
 
                   {organization.city && (
-                    <div className="type-body flex items-center gap-1.5 text-muted-foreground">
+                    <div className="text-sm flex items-center gap-1.5 text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                       {organization.city}
                     </div>
                   )}
 
                   {organization.description && (
-                    <p className="type-body max-w-2xl pt-1 leading-relaxed text-muted-foreground">
+                    <p className="text-sm max-w-2xl pt-1 leading-relaxed text-muted-foreground">
                       {organization.description}
                     </p>
                   )}
@@ -259,8 +259,8 @@ const PublicCoursesPage = () => {
                 <Card className="border-border bg-surface-muted p-5">
                   <div className="space-y-3">
                     <div className="space-y-1">
-                      <p className="type-title text-foreground">Finn riktig kurs</p>
-                      <p className="type-body-sm text-muted-foreground">
+                      <p className="text-base font-medium text-foreground">Finn riktig kurs</p>
+                      <p className="text-sm text-muted-foreground">
                         Søk etter kurs, instruktør eller sted.
                       </p>
                     </div>
@@ -297,10 +297,10 @@ const PublicCoursesPage = () => {
               {!isEmpty && kursrekker.length > 0 && (
                 <section className="space-y-5">
                   <div className="space-y-1">
-                    <h2 className="type-title text-foreground">
+                    <h2 className="text-base font-medium text-foreground">
                       Kursrekker
                     </h2>
-                    <p className="type-body-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Faste kurs over flere uker.
                     </p>
                   </div>
@@ -316,10 +316,10 @@ const PublicCoursesPage = () => {
               {!isEmpty && arrangementer.length > 0 && (
                 <section className="space-y-5 pt-12">
                   <div className="space-y-1">
-                    <h2 className="type-title text-foreground">
+                    <h2 className="text-base font-medium text-foreground">
                       Arrangementer
                     </h2>
-                    <p className="type-body-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       Enkeltkurs og kommende arrangementer.
                     </p>
                   </div>

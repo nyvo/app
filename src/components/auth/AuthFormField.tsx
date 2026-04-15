@@ -54,7 +54,7 @@ export function AuthFormField({
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="type-label-sm block text-muted-foreground"
+          className="text-xs font-medium block text-muted-foreground"
         >
           {label}
         </label>
@@ -90,9 +90,9 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p role="alert" className="type-meta text-destructive">{error}</p>
+        <p role="alert" className="text-xs font-medium tracking-wide text-destructive">{error}</p>
       ) : hint ? (
-        <p className={`type-meta flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+        <p className={`text-xs font-medium tracking-wide flex items-center gap-1 transition-colors duration-200 ${hintMet ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
           {hintMet && <Check className="size-3" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

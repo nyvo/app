@@ -115,9 +115,9 @@ const StudentRegisterPage = () => {
       title="Opprett konto"
       subtitle="Opprett en konto for å melde deg på kurs og holde oversikt over påmeldingene dine."
       footer={
-        <p className="type-meta text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Har du allerede en konto?{' '}
-          <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
+          <Link to={ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
           </Link>
         </p>
@@ -128,7 +128,7 @@ const StudentRegisterPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <div className="flex-1 h-px bg-border" />
-          <span className="type-meta text-muted-foreground">eller</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">eller</span>
           <div className="flex-1 h-px bg-border" />
         </div>
       </div>
@@ -174,7 +174,7 @@ const StudentRegisterPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="type-meta text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
           </Alert>
         )}
 
@@ -187,7 +187,7 @@ const StudentRegisterPage = () => {
           Opprett konto
         </Button>
 
-        <p className="type-meta pt-2 text-center text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide pt-2 text-center text-muted-foreground">
           Ved å opprette konto godtar du{' '}
           <Link to="/terms" className="underline hover:text-foreground">
             vilkår

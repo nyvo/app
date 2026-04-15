@@ -118,8 +118,8 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
       <PopoverContent align="start" className="w-[280px] p-3" showOverlay>
         <div className="flex items-center justify-between pb-3">
           <div>
-            <p className="type-label-sm text-foreground">Velg tid</p>
-            <p className="type-meta text-muted-foreground">
+            <p className="text-xs font-medium text-foreground">Velg tid</p>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">
               {isCompleteTime(value) ? value : "Skriv eller velg"}
             </p>
           </div>
@@ -138,7 +138,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
 
         <div className="grid grid-cols-[1fr_auto] gap-3">
           <div className="space-y-2">
-            <p className="type-meta text-muted-foreground">Timer</p>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">Timer</p>
             <div className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-1">
               {HOUR_OPTIONS.map((hour) => (
                 <button
@@ -147,7 +147,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleHourSelect(hour)}
                   className={cn(
-                    "type-label rounded-md border px-0 py-2 text-center transition-[background-color,border-color,color]",
+                    "text-sm font-medium rounded-md border px-0 py-2 text-center transition-[background-color,border-color,color]",
                     selectedHour === hour
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"
@@ -160,7 +160,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
           </div>
 
           <div className="space-y-2">
-            <p className="type-meta text-muted-foreground">Min</p>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">Min</p>
             <div className="flex flex-col gap-2">
               {MINUTE_OPTIONS.map((minute) => (
                 <button
@@ -169,7 +169,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleMinuteSelect(minute)}
                   className={cn(
-                    "type-label min-w-14 rounded-md border px-3 py-2 text-center transition-[background-color,border-color,color]",
+                    "text-sm font-medium min-w-14 rounded-md border px-3 py-2 text-center transition-[background-color,border-color,color]",
                     selectedMinute === minute
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"

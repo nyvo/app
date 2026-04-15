@@ -159,12 +159,12 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
             <Spinner size="xl" className="text-foreground" />
           </div>
-          <p className="type-label mb-2 text-foreground">{getLoadingMessage()}</p>
-          <p className="type-body text-muted-foreground">
+          <p className="text-sm font-medium mb-2 text-foreground">{getLoadingMessage()}</p>
+          <p className="text-sm text-muted-foreground">
             Bekrefter med banken. Ikke lukk denne siden.
           </p>
           {attemptCount > 8 && (
-            <p className="type-meta mt-4 text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide mt-4 text-muted-foreground">
               Du får beskjed når betalingen er klar.
             </p>
           )}
@@ -182,7 +182,7 @@ const CheckoutSuccessPage = () => {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
                 <Leaf className="h-5 w-5" />
               </div>
-              <span className="type-title text-foreground">Ease</span>
+              <span className="text-base font-medium text-foreground">Ease</span>
             </Link>
           </div>
         </header>
@@ -192,10 +192,10 @@ const CheckoutSuccessPage = () => {
               <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
                 <AlertCircle className="h-8 w-8 text-status-error-text" />
               </div>
-              <h1 className="type-heading-1 mb-3 text-foreground">
+              <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
                 Noe gikk galt
               </h1>
-              <p className="type-body text-muted-foreground mb-8">{error}</p>
+              <p className="text-sm text-muted-foreground mb-8">{error}</p>
               <Button asChild variant="default">
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
@@ -223,7 +223,7 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <h1 className="type-heading-1 mb-3 text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
             Betalingen er bekreftet
           </h1>
           <p className="text-muted-foreground mb-8">
@@ -247,7 +247,7 @@ const CheckoutSuccessPage = () => {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
               <Leaf className="h-5 w-5" />
             </div>
-            <span className="type-title text-foreground">Ease</span>
+            <span className="text-base font-medium text-foreground">Ease</span>
           </Link>
         </div>
       </header>
@@ -262,13 +262,13 @@ const CheckoutSuccessPage = () => {
                 <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
               </div>
 
-              <h1 className="type-heading-1 mb-4 text-foreground">
+              <h1 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">
                 {isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført'}
               </h1>
 
-              <div className="type-body-lg text-muted-foreground mb-6">
+              <div className="text-base text-muted-foreground mb-6">
                 {signup ? (
-                  <p>Du er påmeldt <span className="type-label text-foreground">{signup.course.title}</span>.</p>
+                  <p>Du er påmeldt <span className="text-sm font-medium text-foreground">{signup.course.title}</span>.</p>
                 ) : (
                   <p>{isFreeSignup ? 'Du er nå påmeldt.' : 'Betalingen er bekreftet.'}</p>
                 )}
@@ -277,10 +277,10 @@ const CheckoutSuccessPage = () => {
               {/* Email confirmation notice */}
               <Alert variant="info" icon={Mail} className="mb-8 text-left">
                 <div>
-                  <AlertTitle variant="info" className="type-title">Bekreftelse sendt</AlertTitle>
+                  <AlertTitle variant="info" className="text-base font-medium">Bekreftelse sendt</AlertTitle>
                   <AlertDescription variant="info">
                     {signup ? (
-                      <>Kvittering sendt til <span className="type-label">{signup.participant_email}</span>.</>
+                      <>Kvittering sendt til <span className="text-sm font-medium">{signup.participant_email}</span>.</>
                     ) : (
                       <>Kvittering sendt til e-postadressen du oppga.</>
                     )}
@@ -306,7 +306,7 @@ const CheckoutSuccessPage = () => {
                     <Button asChild variant="default" size="default" className="w-full sm:w-auto">
                       <Link to={studioUrl}>Se flere kurs</Link>
                     </Button>
-                    <div className="type-meta flex items-center justify-center pt-2 text-muted-foreground sm:justify-start sm:pl-4 sm:pt-0">
+                    <div className="text-xs font-medium tracking-wide flex items-center justify-center pt-2 text-muted-foreground sm:justify-start sm:pl-4 sm:pt-0">
                       <span>
                         <Link to="/student/login" className="underline underline-offset-2 hover:text-foreground">Logg inn</Link>
                         {' '}for å se kursene dine
@@ -322,17 +322,17 @@ const CheckoutSuccessPage = () => {
               <Card className="p-6 md:p-8">
                 <div className="space-y-5">
                   <div className="pb-5 border-b border-border">
-                    <span className="type-meta mb-1 block text-muted-foreground">Kurs</span>
-                    <span className="type-label block text-foreground">{signup.course.title}</span>
+                    <span className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">Kurs</span>
+                    <span className="text-sm font-medium block text-foreground">{signup.course.title}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     {signup.course.start_date && (
                       <div>
-                        <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
+                        <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
                           <Calendar className="h-3.5 w-3.5" /> Dato
                         </span>
-                        <span className="type-label text-foreground">
+                        <span className="text-sm font-medium text-foreground">
                           {formatDate(signup.course.start_date)}
                         </span>
                       </div>
@@ -340,10 +340,10 @@ const CheckoutSuccessPage = () => {
                     
                     {signup.course.time_schedule && (
                       <div>
-                        <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
+                        <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" /> Tid
                         </span>
-                        <span className="type-label text-foreground">
+                        <span className="text-sm font-medium text-foreground">
                           kl. {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
                         </span>
                       </div>
@@ -352,18 +352,18 @@ const CheckoutSuccessPage = () => {
 
                   {signup.course.location && (
                     <div>
-                      <span className="type-meta mb-1 flex items-center gap-1.5 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" /> Sted
                       </span>
-                      <span className="type-label text-foreground">{signup.course.location}</span>
+                      <span className="text-sm font-medium text-foreground">{signup.course.location}</span>
                     </div>
                   )}
 
                   <div className="pt-2 flex items-center justify-between">
-                    <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide flex items-center gap-1.5 text-muted-foreground">
                       <CreditCard className="h-3.5 w-3.5" /> Betalt
                     </span>
-                    <span className="type-heading-2 text-foreground">{formatKroner(signup.amount_paid)}</span>
+                    <span className="text-xl font-semibold tracking-tight text-foreground">{formatKroner(signup.amount_paid)}</span>
                   </div>
                 </div>
               </Card>

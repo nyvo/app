@@ -62,8 +62,8 @@ export function MobileDayView({
                   : 'bg-background hover:bg-surface-muted text-muted-foreground'
               }`}
             >
-              <span className="type-meta">{day.name.slice(0, 3)}</span>
-              <span className="type-title mt-0.5">{day.date}</span>
+              <span className="text-xs font-medium tracking-wide">{day.name.slice(0, 3)}</span>
+              <span className="text-base font-medium mt-0.5">{day.date}</span>
             </button>
           ))}
         </div>
@@ -79,8 +79,8 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-status-error-bg border border-status-error-border">
                 <CalendarDays className="h-7 w-7 text-status-error-text" />
               </div>
-              <h3 className="type-title mb-1 text-foreground">Noe gikk galt</h3>
-              <p className="type-body mb-4 text-muted-foreground">{error}</p>
+              <h3 className="text-base font-medium mb-1 text-foreground">Noe gikk galt</h3>
+              <p className="text-sm mb-4 text-muted-foreground">{error}</p>
               <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
             </div>
           </div>
@@ -90,8 +90,8 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
                 <CalendarDays className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="type-title mb-1 text-foreground">Ingen timer denne uken</h3>
-              <p className="type-body mb-4 text-muted-foreground">
+              <h3 className="text-base font-medium mb-1 text-foreground">Ingen timer denne uken</h3>
+              <p className="text-sm mb-4 text-muted-foreground">
                 {!hasCourses
                   ? 'Opprett et kurs for å komme i gang.'
                   : 'Ingen planlagte timer denne uken.'}
@@ -110,10 +110,10 @@ export function MobileDayView({
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
                 <CalendarDays className="h-7 w-7 text-muted-foreground" />
               </div>
-              <h3 className="type-title mb-1 text-foreground">
+              <h3 className="text-base font-medium mb-1 text-foreground">
                 Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
               </h3>
-              <p className="type-body text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Velg en annen dag for å se timer.
               </p>
             </div>

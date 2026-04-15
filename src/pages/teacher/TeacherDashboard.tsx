@@ -427,7 +427,7 @@ const TeacherDashboard = () => {
             >
               <header className="mb-8">
                 <div className="flex items-start justify-between gap-4">
-                  <h1 className="type-heading-1 text-foreground">
+                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                     {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                   </h1>
                   {!isLoading && !loadError && isSetupComplete && hasCourses && (
@@ -476,7 +476,7 @@ const TeacherDashboard = () => {
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="h-3 w-3" />
                     </div>
-                    <p className="type-label text-foreground">
+                    <p className="text-sm font-medium text-foreground">
                       Alt er klart — du kan nå ta imot påmeldinger og betalinger
                     </p>
                   </div>
@@ -499,8 +499,8 @@ const TeacherDashboard = () => {
                   <div className="mb-4 rounded-full bg-surface-muted p-4">
                     <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
                   </div>
-                  <h3 className="type-title mb-1 text-foreground">Kunne ikke laste oversikten</h3>
-                  <p className="type-body max-w-xs mb-4 text-muted-foreground">{loadError}</p>
+                  <h3 className="text-base font-medium mb-1 text-foreground">Kunne ikke laste oversikten</h3>
+                  <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
@@ -524,7 +524,7 @@ const TeacherDashboard = () => {
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                       <section className="space-y-3">
-                        <h2 className="type-title text-foreground">Dagens kurs</h2>
+                        <h2 className="text-base font-medium text-foreground">Dagens kurs</h2>
                         <CoursesList courses={dashboardCourses} hideHeader />
                       </section>
                     </div>
@@ -532,8 +532,8 @@ const TeacherDashboard = () => {
                       <Card className="overflow-hidden">
                         <div className="border-b border-border px-6 py-4">
                           <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
-                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                            <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
+                            <Link to="/teacher/signups" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
                               Se alle
                             </Link>
                           </div>
@@ -541,8 +541,8 @@ const TeacherDashboard = () => {
                         </div>
                         <div className="px-6 py-4">
                           <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Meldinger</h2>
-                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                            <h2 className="text-base font-medium text-foreground">Meldinger</h2>
+                            <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
                               Se alle
                             </Link>
                           </div>
@@ -555,17 +555,17 @@ const TeacherDashboard = () => {
               ) : (showEmptyState || !hasCourses) ? (
                 <>
                   <div className="mb-8">
-                    <h3 className="type-title mb-3 text-foreground">Kom i gang</h3>
+                    <h3 className="text-base font-medium mb-3 text-foreground">Kom i gang</h3>
                     <Card className="group relative overflow-hidden">
                       <div className="relative z-10 flex flex-col justify-center p-6 sm:p-8">
                         <div className="max-w-xl">
                           <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
                             <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
                           </div>
-                          <h2 className="type-heading-2 leading-tight text-foreground">
+                          <h2 className="text-xl font-semibold tracking-tight leading-tight text-foreground">
                             Opprett ditt første kurs
                           </h2>
-                          <p className="type-body mb-8 max-w-lg text-muted-foreground">
+                          <p className="text-sm mb-8 max-w-lg text-muted-foreground">
                             Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din i ditt eget tempo.
                           </p>
                           <Button
@@ -585,7 +585,7 @@ const TeacherDashboard = () => {
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
                     <div className="space-y-6">
                       <section className="space-y-3">
-                        <h2 className="type-title text-foreground">Dagens kurs</h2>
+                        <h2 className="text-base font-medium text-foreground">Dagens kurs</h2>
                         <CoursesList courses={[]} hideHeader />
                       </section>
                     </div>
@@ -593,8 +593,8 @@ const TeacherDashboard = () => {
                       <Card className="overflow-hidden">
                         <div className="border-b border-border px-6 py-4">
                           <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Siste påmeldinger</h2>
-                            <Link to="/teacher/signups" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                            <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
+                            <Link to="/teacher/signups" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
                               Se alle
                             </Link>
                           </div>
@@ -602,8 +602,8 @@ const TeacherDashboard = () => {
                         </div>
                         <div className="px-6 py-4">
                           <div className="mb-3 flex items-center justify-between">
-                            <h2 className="type-title text-foreground">Meldinger</h2>
-                            <Link to="/teacher/messages" className="type-meta text-muted-foreground smooth-transition hover:text-foreground">
+                            <h2 className="text-base font-medium text-foreground">Meldinger</h2>
+                            <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
                               Se alle
                             </Link>
                           </div>
@@ -656,8 +656,8 @@ const TeacherDashboard = () => {
                     <Shield className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="type-label text-foreground">Trygt og sikkert</p>
-                    <p className="type-meta mt-0.5 text-muted-foreground">
+                    <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
+                    <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">
                       Pengene fra bookinger overføres direkte til din konto. Ease tar ingen del av betalingen.
                     </p>
                   </div>
@@ -666,8 +666,8 @@ const TeacherDashboard = () => {
                 <Separator />
 
                 <div>
-                  <p className="type-meta mb-2 text-foreground">Du trenger</p>
-                  <ul className="type-meta flex flex-col gap-1.5 text-muted-foreground">
+                  <p className="text-xs font-medium tracking-wide mb-2 text-foreground">Du trenger</p>
+                  <ul className="text-xs font-medium tracking-wide flex flex-col gap-1.5 text-muted-foreground">
                     <li className="flex items-center gap-2">
                       <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
                       Bankkonto for utbetalinger
@@ -689,7 +689,7 @@ const TeacherDashboard = () => {
                   size="sm"
                   onClick={() => setShowStripeExplainer(false)}
                   disabled={connectingStripe}
-                  className="type-meta text-muted-foreground w-full"
+                  className="text-xs font-medium tracking-wide text-muted-foreground w-full"
                 >
                   Jeg gjør dette senere
                 </Button>

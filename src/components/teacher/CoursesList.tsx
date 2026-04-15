@@ -61,14 +61,14 @@ function CourseRow({ course }: { course: Course }) {
     >
       <div className="flex flex-col min-w-0 flex-1">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="type-label text-foreground truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {course.title}
           </span>
           {course.time && (
-            <span className="type-meta text-muted-foreground">{course.time}</span>
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">{course.time}</span>
           )}
         </div>
-        <p className="type-body-sm mt-0.5 truncate text-muted-foreground">{course.subtitle}</p>
+        <p className="text-sm mt-0.5 truncate text-muted-foreground">{course.subtitle}</p>
       </div>
     </Link>
   );
@@ -84,7 +84,7 @@ function CoursesEmptyCard({ timeFilter }: { timeFilter: 'today' | 'week' }) {
       action={(
         <Link
           to="/teacher/courses"
-          className="type-meta inline-flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
+          className="text-xs font-medium tracking-wide inline-flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
         >
           Se alle kurs
           <ChevronRight className="h-3 w-3" />
@@ -102,7 +102,7 @@ export const CoursesList = memo(function CoursesList({ courses, hideHeader = fal
 
   return (
     <div className="flex flex-col">
-      {!hideHeader && <h2 className="type-title mb-3 text-foreground">Dagens kurs</h2>}
+      {!hideHeader && <h2 className="text-base font-medium mb-3 text-foreground">Dagens kurs</h2>}
 
       <Card className="overflow-hidden">
       <div className="px-3 py-3">

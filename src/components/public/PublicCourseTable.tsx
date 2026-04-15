@@ -107,7 +107,7 @@ function DifficultyDots({ level }: { level: CourseLevel | null }) {
           />
         ))}
       </div>
-      <span className="type-meta text-muted-foreground">{info.label}</span>
+      <span className="text-xs font-medium tracking-wide text-muted-foreground">{info.label}</span>
     </div>
   );
 }
@@ -178,15 +178,15 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
 
                 {/* Left group: Class name + meta line */}
                 <div className="flex-1 min-w-0">
-                  <p className="type-label truncate text-foreground">
+                  <p className="text-sm font-medium truncate text-foreground">
                     {course.title}
                   </p>
                   <div className="flex items-center gap-3 mt-0.5">
-                    <span className="type-meta text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide text-muted-foreground">
                       {getDisplayDate(course)} · {getTimeRange(course)}
                     </span>
                     {!isFull && (
-                      <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide flex items-center gap-1.5 text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
@@ -197,10 +197,10 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 {/* Right group: Price/Full + CTA */}
                 <div className="flex items-center gap-4 shrink-0" data-action>
                   {isFull ? (
-                    <span className="type-meta text-foreground">Fullt</span>
+                    <span className="text-xs font-medium tracking-wide text-foreground">Fullt</span>
                   ) : (
                     <>
-                      <span className="type-label text-foreground">
+                      <span className="text-sm font-medium text-foreground">
                         {formatPrice(course.price)}
                       </span>
                       <Button
@@ -262,21 +262,21 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 onClick={(e) => toggleExpand(course.id, e)}
               >
                 <div className="flex-1 min-w-0 space-y-1">
-                  <p className="type-label truncate text-foreground">
+                  <p className="text-sm font-medium truncate text-foreground">
                     {course.title}
                   </p>
-                  <p className="type-meta text-muted-foreground">
+                  <p className="text-xs font-medium tracking-wide text-muted-foreground">
                     {getDisplayDate(course)} · {getTimeRange(course)}
                   </p>
                   <div className="flex items-center gap-3">
                     {!isFull && (
-                      <span className="type-meta flex items-center gap-1.5 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide flex items-center gap-1.5 text-muted-foreground">
                         <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', status.dotColor)} />
                         {status.label}
                       </span>
                     )}
                     {!isFull && (
-                      <span className="type-meta text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide text-muted-foreground">
                         {formatPrice(course.price)}
                       </span>
                     )}
@@ -284,7 +284,7 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
                 </div>
                 <div className="shrink-0 flex items-center gap-2" data-action>
                   {isFull ? (
-                    <span className="type-meta text-foreground">Fullt</span>
+                    <span className="text-xs font-medium tracking-wide text-foreground">Fullt</span>
                   ) : (
                     <Button
                       variant="outline-soft"
@@ -343,7 +343,7 @@ function DesktopPreview({ course }: PreviewProps) {
   if (!hasContent) {
     return (
       <div className="px-6 pb-6 pt-1">
-        <span className="type-body text-muted-foreground">Ingen tilleggsinformasjon</span>
+        <span className="text-sm text-muted-foreground">Ingen tilleggsinformasjon</span>
       </div>
     );
   }
@@ -352,7 +352,7 @@ function DesktopPreview({ course }: PreviewProps) {
     <div className="px-6 pb-6 pt-1 space-y-3">
       {/* Description */}
       {hasDescription && (
-        <p className="type-body text-muted-foreground leading-relaxed line-clamp-3">
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -367,7 +367,7 @@ function DesktopPreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="type-meta text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
@@ -375,7 +375,7 @@ function DesktopPreview({ course }: PreviewProps) {
         {hasLocation && (
           <div className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="type-meta text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {course.location}
             </span>
           </div>
@@ -394,7 +394,7 @@ function MobilePreview({ course }: PreviewProps) {
   return (
     <div className="px-4 pb-4 space-y-3">
       {hasDescription && (
-        <p className="type-meta text-muted-foreground leading-relaxed line-clamp-3">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground leading-relaxed line-clamp-3">
           {course.description}
         </p>
       )}
@@ -408,7 +408,7 @@ function MobilePreview({ course }: PreviewProps) {
               src={course.instructor!.avatar_url}
               size="xxs"
             />
-            <span className="type-meta text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {course.instructor!.name}
             </span>
           </div>
@@ -416,7 +416,7 @@ function MobilePreview({ course }: PreviewProps) {
         {hasLocation && (
           <div className="flex items-center gap-1.5">
             <MapPin className="h-3 w-3 text-muted-foreground" />
-            <span className="type-meta text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
               {course.location}
             </span>
           </div>

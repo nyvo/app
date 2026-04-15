@@ -33,7 +33,7 @@ export function ConversationList({
       {/* List Header */}
       <div className="border-b border-border px-4 py-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="type-title text-foreground">Samtaler</h2>
+          <h2 className="text-base font-medium text-foreground">Samtaler</h2>
           <Button onClick={onNewMessage} size="compact" className="gap-2">
             <Plus className="h-3.5 w-3.5" />
             Ny melding
@@ -89,7 +89,7 @@ export function ConversationList({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <span
-                    className={`type-label truncate ${
+                    className={`text-sm font-medium truncate ${
                       activeConversationId === conversation.id && !isComposing
                         ? 'text-foreground'
                         : conversation.is_read ? 'text-muted-foreground' : 'text-foreground'
@@ -97,17 +97,17 @@ export function ConversationList({
                   >
                     {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                   </span>
-                  <span className="type-meta text-muted-foreground">
+                  <span className="text-xs font-medium tracking-wide text-muted-foreground">
                     {formatMessageTimestamp(conversation.updated_at)}
                   </span>
                 </div>
                 <p
                   className={`truncate ${
                     conversation.unread_count > 0
-                      ? 'type-label text-foreground'
+                      ? 'text-sm font-medium text-foreground'
                       : activeConversationId === conversation.id
-                      ? 'type-label text-muted-foreground'
-                      : 'type-body text-muted-foreground'
+                      ? 'text-sm font-medium text-muted-foreground'
+                      : 'text-sm text-muted-foreground'
                   }`}
                 >
                   {conversation.last_message?.content || 'Ingen meldinger'}

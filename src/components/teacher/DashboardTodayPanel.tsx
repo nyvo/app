@@ -10,14 +10,14 @@ interface DashboardTodayPanelProps {
 export function DashboardTodayPanel({ courses }: DashboardTodayPanelProps) {
   return (
     <section>
-      <h2 className="type-title mb-3 text-foreground">I dag</h2>
+      <h2 className="text-base font-medium mb-3 text-foreground">I dag</h2>
       <Card className="p-3 sm:p-4">
         {courses.length === 0 ? (
         <div className="flex items-center gap-2 sm:gap-3 py-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground">
             <CalendarDays className="h-4 w-4" />
           </div>
-          <p className="type-label text-foreground">Ingen kurs i dag</p>
+          <p className="text-sm font-medium text-foreground">Ingen kurs i dag</p>
         </div>
       ) : (
         <div className="divide-y divide-border/50">
@@ -28,8 +28,8 @@ export function DashboardTodayPanel({ courses }: DashboardTodayPanelProps) {
               className="group flex items-center justify-between gap-3 sm:gap-4 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:bg-surface-muted/50"
             >
               <div className="min-w-0">
-                <p className="type-label truncate text-foreground">{course.title}</p>
-                <p className="type-body-sm mt-1 truncate text-muted-foreground">{course.subtitle}</p>
+                <p className="text-sm font-medium truncate text-foreground">{course.title}</p>
+                <p className="text-sm mt-1 truncate text-muted-foreground">{course.subtitle}</p>
               </div>
               <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground smooth-transition group-hover:text-foreground" />
             </Link>

@@ -107,9 +107,9 @@ const StudentLoginPage = () => {
       title="Velkommen tilbake"
       subtitle="Logg inn for å se kursene dine."
       footer={
-        <p className="type-meta text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Har du ikke konto?{' '}
-          <Link to={ROUTES.signup} className="type-label text-foreground hover:underline">
+          <Link to={ROUTES.signup} className="text-sm font-medium text-foreground hover:underline">
             Opprett konto
           </Link>
         </p>
@@ -120,7 +120,7 @@ const StudentLoginPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <div className="flex-1 h-px bg-border" />
-          <span className="type-meta text-muted-foreground">eller</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">eller</span>
           <div className="flex-1 h-px bg-border" />
         </div>
       </div>
@@ -151,7 +151,7 @@ const StudentLoginPage = () => {
           labelExtra={
             <Link
               to={ROUTES.forgotPassword}
-              className="type-meta text-muted-foreground transition-colors hover:text-foreground"
+              className="text-xs font-medium tracking-wide text-muted-foreground transition-colors hover:text-foreground"
             >
               Glemt passord?
             </Link>
@@ -160,11 +160,11 @@ const StudentLoginPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="type-meta text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
             {errors.general === AUTH_ERRORS.invalidCredentials && (
               <Link
                 to={ROUTES.forgotPassword}
-                className="type-meta mt-1.5 inline-block text-destructive underline hover:text-destructive/80"
+                className="text-xs font-medium tracking-wide mt-1.5 inline-block text-destructive underline hover:text-destructive/80"
               >
                 Tilbakestill passord
               </Link>

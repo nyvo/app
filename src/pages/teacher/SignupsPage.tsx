@@ -268,8 +268,8 @@ export const SignupsPage = () => {
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
           <div className="mb-8">
-            <h1 className="type-heading-1 text-foreground">Påmeldinger</h1>
-            <p className="type-body mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Påmeldinger</h1>
+            <p className="text-sm mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
           </div>
 
           {/* Search + Filters */}

@@ -13,14 +13,14 @@ export function DashboardMessagesCard({ messages }: DashboardMessagesCardProps) 
 
   return (
     <section aria-labelledby="messages-heading">
-      <h2 id="messages-heading" className="type-title mb-3 text-foreground">Meldinger</h2>
+      <h2 id="messages-heading" className="text-base font-medium mb-3 text-foreground">Meldinger</h2>
       <Card className="p-2 sm:p-3">
         {recentMessages.length === 0 ? (
           <div className="flex items-center gap-2 sm:gap-3 px-1 py-2">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
               <MessageSquare className="h-4 w-4" />
             </div>
-            <p className="type-label text-foreground">Ingen nye meldinger</p>
+            <p className="text-sm font-medium text-foreground">Ingen nye meldinger</p>
           </div>
         ) : (
           <div className="divide-y divide-border/50">
@@ -37,14 +37,14 @@ export function DashboardMessagesCard({ messages }: DashboardMessagesCardProps) 
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="type-label truncate text-foreground">
+                    <p className="text-sm font-medium truncate text-foreground">
                       {message.sender.name}
                     </p>
-                    <span className="type-meta shrink-0 text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide shrink-0 text-muted-foreground">
                       {message.timestamp}
                     </span>
                   </div>
-                  <p className="type-body-sm mt-0.5 truncate text-muted-foreground">
+                  <p className="text-sm mt-0.5 truncate text-muted-foreground">
                     {message.content}
                   </p>
                 </div>

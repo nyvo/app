@@ -26,7 +26,7 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
     >
       {/* Title row — most scannable */}
       <div className="flex items-start justify-between gap-3">
-        <p className={`type-label truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+        <p className={`text-sm font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
           {event.title}
         </p>
         {isActive && (
@@ -35,17 +35,17 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
           </Badge>
         )}
         {isCompleted && (
-          <span className="type-meta shrink-0 text-muted-foreground">Fullført</span>
+          <span className="text-xs font-medium tracking-wide shrink-0 text-muted-foreground">Fullført</span>
         )}
       </div>
 
       {/* Time + signups — secondary row */}
       <div className="mt-1 flex items-center justify-between text-muted-foreground">
-        <span className="type-meta">
+        <span className="text-xs font-medium tracking-wide">
           {formatTime(event.startTime)}–{formatTime(event.endTime)}
         </span>
         {!isCompleted && (
-          <span className="type-meta flex items-center gap-1">
+          <span className="text-xs font-medium tracking-wide flex items-center gap-1">
             <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
           </span>

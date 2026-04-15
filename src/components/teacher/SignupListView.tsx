@@ -64,7 +64,7 @@ export function SignupListView({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="type-meta underline underline-offset-2"
+            className="text-xs font-medium tracking-wide underline underline-offset-2"
           >
             Nullstill filter
           </Button>

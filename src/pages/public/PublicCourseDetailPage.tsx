@@ -333,7 +333,7 @@ const PublicCourseDetailPage = () => {
         <Card className="w-full max-w-lg border-border bg-surface">
           <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 text-center">
             <Spinner size="xl" aria-hidden="true" />
-            <p className="type-body text-muted-foreground">Laster kurs</p>
+            <p className="text-sm text-muted-foreground">Laster kurs</p>
           </div>
         </Card>
         <span className="sr-only">Laster kurs</span>
@@ -348,7 +348,7 @@ const PublicCourseDetailPage = () => {
       <div className="min-h-screen w-full bg-background">
         <header className="border-b border-border bg-background">
           <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
-            <Link to={backUrl} className="type-title text-foreground">
+            <Link to={backUrl} className="text-base font-medium text-foreground">
               Ease
             </Link>
           </div>

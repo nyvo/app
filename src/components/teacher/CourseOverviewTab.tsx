@@ -139,39 +139,39 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
     <div className="space-y-8">
       <section className="space-y-3">
         <div>
-          <h2 className="type-title text-foreground">Oversikt</h2>
-          <p className="type-body-sm text-muted-foreground">De viktigste detaljene om kurset samlet på ett sted.</p>
+          <h2 className="text-base font-medium text-foreground">Oversikt</h2>
+          <p className="text-sm text-muted-foreground">De viktigste detaljene om kurset samlet på ett sted.</p>
         </div>
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-10">
             <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
               <div>
-                <p className="type-meta mb-0.5 text-muted-foreground">Dato</p>
-                <p className="type-label text-foreground">
+                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Dato</p>
+                <p className="text-sm font-medium text-foreground">
                   {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
                 </p>
               </div>
               <div>
-                <p className="type-meta mb-0.5 text-muted-foreground">Tidspunkt</p>
-                <p className="type-label text-foreground">
+                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Tidspunkt</p>
+                <p className="text-sm font-medium text-foreground">
                   {course.timeSchedule || 'Ikke angitt'}
                   {course.durationMinutes > 0 && (
-                    <span className="type-body-sm ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
+                    <span className="text-sm ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="type-meta mb-0.5 text-muted-foreground">Sted</p>
-                <p className="type-label text-foreground">{course.location || 'Ikke angitt'}</p>
+                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Sted</p>
+                <p className="text-sm font-medium text-foreground">{course.location || 'Ikke angitt'}</p>
               </div>
               <div>
-                <p className="type-meta mb-0.5 text-muted-foreground">Pris</p>
-                <p className="type-label text-foreground">{formatKroner(course.price)}</p>
+                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Pris</p>
+                <p className="text-sm font-medium text-foreground">{formatKroner(course.price)}</p>
               </div>
             </div>
 
             <div className="min-w-0 xl:pl-10 xl:border-l xl:border-border">
-              <p className="type-meta mb-1 text-muted-foreground">Kapasitet</p>
-              <p className="type-title mb-2 text-foreground">
+              <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kapasitet</p>
+              <p className="text-base font-medium mb-2 text-foreground">
                 {course.enrolled ?? 0} av {course.capacity} påmeldt
               </p>
               {course.capacity > 0 && (
@@ -207,8 +207,8 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="type-title text-foreground">Om kurset</h2>
-            <p className="type-body-sm text-muted-foreground">Dette er innholdet deltakerne ser når de vurderer å melde seg på.</p>
+            <h2 className="text-base font-medium text-foreground">Om kurset</h2>
+            <p className="text-sm text-muted-foreground">Dette er innholdet deltakerne ser når de vurderer å melde seg på.</p>
           </div>
         </div>
         <div className="flex flex-col gap-6 lg:flex-row">
@@ -230,16 +230,16 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
           <div className="min-w-0 flex-1 space-y-6">
             <div>
-              <p className="type-meta mb-1 text-muted-foreground">Kort beskrivelse</p>
-              <p className="type-body leading-relaxed text-muted-foreground">
+              <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kort beskrivelse</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {course.description || 'Ingen beskrivelse lagt til'}
               </p>
             </div>
 
             {course.description2 && (
               <div>
-                <p className="type-meta mb-1 text-muted-foreground">Utfyllende tekst</p>
-                <p className="type-body leading-relaxed text-muted-foreground">
+                <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Utfyllende tekst</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
                   {course.description2}
                 </p>
               </div>
@@ -247,7 +247,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
             {course.level && (
               <div>
-                <p className="type-meta mb-1.5 text-muted-foreground">Målgruppe og nivå</p>
+                <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Målgruppe og nivå</p>
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">{course.level}</Badge>
                   {course.courseType === 'kursrekke' && (
@@ -275,19 +275,19 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
       {recentParticipants.length > 0 && (
         <section className="space-y-3">
           <div>
-            <h2 className="type-title text-foreground">Nylige påmeldinger</h2>
+            <h2 className="text-base font-medium text-foreground">Nylige påmeldinger</h2>
           </div>
           <Card className="overflow-hidden divide-y divide-border">
             {recentParticipants.map((p) => (
               <div key={p.id} className="flex items-center gap-3 px-6 py-3">
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted">
-                  <span className="type-meta text-muted-foreground">
+                  <span className="text-xs font-medium tracking-wide text-muted-foreground">
                     {p.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="type-label truncate text-foreground">{p.name}</p>
-                  <p className="type-meta truncate text-muted-foreground">{p.email}</p>
+                  <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
+                  <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{p.email}</p>
                 </div>
                 <StatusBadge status={p.status} size="sm" />
               </div>

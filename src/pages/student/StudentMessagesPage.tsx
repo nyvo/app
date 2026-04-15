@@ -115,8 +115,8 @@ const StudentMessagesPage = () => {
   return (
     <>
       <div className="mb-8 space-y-1">
-        <h1 className="type-heading-1 text-foreground">Meldinger</h1>
-        <p className="type-body text-muted-foreground">Kommuniser med instruktørene dine</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Meldinger</h1>
+        <p className="text-sm text-muted-foreground">Kommuniser med instruktørene dine</p>
       </div>
 
       <Card className="flex min-h-[480px] overflow-hidden border-border bg-surface">
@@ -127,8 +127,8 @@ const StudentMessagesPage = () => {
         )}>
           <div className="border-b border-border px-5 py-4">
             <div className="space-y-1">
-              <h2 className="type-title text-foreground">Samtaler</h2>
-              <p className="type-body-sm text-muted-foreground">
+              <h2 className="text-base font-medium text-foreground">Samtaler</h2>
+              <p className="text-sm text-muted-foreground">
                 Meldinger knyttet til kursene dine.
               </p>
             </div>
@@ -163,18 +163,18 @@ const StudentMessagesPage = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="type-label truncate text-foreground">
+                        <span className="text-sm font-medium truncate text-foreground">
                           {conversation.participant?.name || 'Ukjent'}
                         </span>
-                        <span className="type-meta ml-2 shrink-0 text-muted-foreground">
+                        <span className="text-xs font-medium tracking-wide ml-2 shrink-0 text-muted-foreground">
                           {formatMessageTimestamp(conversation.updated_at)}
                         </span>
                       </div>
                       <p className={cn(
                         'truncate',
                         conversation.unread_count > 0
-                          ? 'type-label text-foreground'
-                          : 'type-body text-muted-foreground'
+                          ? 'text-sm font-medium text-foreground'
+                          : 'text-sm text-muted-foreground'
                       )}>
                         {conversation.last_message?.content || 'Ingen meldinger'}
                       </p>
@@ -213,7 +213,7 @@ const StudentMessagesPage = () => {
                   size="lg"
                 />
                 <div className="min-w-0">
-                  <h3 className="type-label truncate text-foreground">
+                  <h3 className="text-sm font-medium truncate text-foreground">
                     {activeConversation.participant?.name || 'Ukjent'}
                   </h3>
                 </div>
@@ -256,13 +256,13 @@ const StudentMessagesPage = () => {
                               : 'bg-surface-muted rounded-bl-sm'
                           )}>
                             <p className={cn(
-                              'type-body leading-relaxed',
+                              'text-sm leading-relaxed',
                               isFromStudent ? '' : 'text-foreground'
                             )}>
                               {message.content}
                             </p>
                           </div>
-                          <span className="type-meta flex items-center gap-1 px-1 text-muted-foreground">
+                          <span className="text-xs font-medium tracking-wide flex items-center gap-1 px-1 text-muted-foreground">
                             {formatMessageTimestamp(message.created_at)}
                             {isFromStudent && message.is_read && (
                               <CheckCheck className="h-3 w-3 text-status-confirmed-text" />

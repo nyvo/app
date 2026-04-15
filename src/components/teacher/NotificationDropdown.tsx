@@ -83,12 +83,12 @@ export function NotificationDropdown() {
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="type-label text-foreground">Varsler</p>
+          <p className="text-sm font-medium text-foreground">Varsler</p>
           {hasNotifications && (
             <button
               onClick={handleDismissAll}
               disabled={dismissingAll}
-              className="type-meta text-muted-foreground smooth-transition hover:text-foreground active:scale-[0.97] disabled:opacity-50"
+              className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground active:scale-[0.97] disabled:opacity-50"
             >
               Fjern alle
             </button>
@@ -122,9 +122,9 @@ export function NotificationDropdown() {
                     >
                       <SeverityIcon className={`mt-0.5 h-4 w-4 shrink-0 ${styles.icon}`} />
                       <div className="min-w-0">
-                        <p className="type-label-sm text-foreground">{item.title}</p>
+                        <p className="text-xs font-medium text-foreground">{item.title}</p>
                         {item.body && (
-                          <p className="type-meta text-muted-foreground">{item.body}</p>
+                          <p className="text-xs font-medium tracking-wide text-muted-foreground">{item.body}</p>
                         )}
                       </div>
                     </Link>
@@ -144,7 +144,7 @@ export function NotificationDropdown() {
             </AnimatePresence>
           </div>
         ) : (
-          <p className="type-body-sm text-muted-foreground px-4 py-8 text-center">
+          <p className="text-sm text-muted-foreground px-4 py-8 text-center">
             Ingen varsler
           </p>
         )}

@@ -24,14 +24,14 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
     <div className="space-y-3 rounded-lg bg-surface-muted p-4">
       {/* Course fee */}
       <div className="flex justify-between items-center">
-        <span className="type-body text-foreground">Kursavgift</span>
-        <span className="type-body text-foreground">{formatKroner(basePrice)}</span>
+        <span className="text-sm text-foreground">Kursavgift</span>
+        <span className="text-sm text-foreground">{formatKroner(basePrice)}</span>
       </div>
 
       {/* Service fee */}
       <div className="flex justify-between items-center">
-        <span className="type-body text-muted-foreground">Servicegebyr</span>
-        <span className="type-body text-muted-foreground">{formatKroner(serviceFee)}</span>
+        <span className="text-sm text-muted-foreground">Servicegebyr</span>
+        <span className="text-sm text-muted-foreground">{formatKroner(serviceFee)}</span>
       </div>
 
       {/* Divider */}
@@ -39,8 +39,8 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
 
       {/* Total */}
       <div className="flex justify-between items-center">
-        <span className="type-label text-foreground">Totalt</span>
-        <span className="type-label text-foreground">{formatKroner(total)}</span>
+        <span className="text-sm font-medium text-foreground">Totalt</span>
+        <span className="text-sm font-medium text-foreground">{formatKroner(total)}</span>
       </div>
     </div>
   );

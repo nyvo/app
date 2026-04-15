@@ -92,9 +92,9 @@ const SignupPage = () => {
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
       footer={
-        <p className="type-meta text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Har du allerede en konto?{' '}
-          <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
+          <Link to={ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
           </Link>
         </p>
@@ -105,7 +105,7 @@ const SignupPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />
-          <span className="type-meta text-muted-foreground">eller</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">eller</span>
           <Separator className="flex-1" />
         </div>
       </div>
@@ -139,7 +139,7 @@ const SignupPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="type-meta text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
           </Alert>
         )}
 
@@ -152,7 +152,7 @@ const SignupPage = () => {
           Opprett konto
         </Button>
 
-        <p className="type-meta pt-2 text-center text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide pt-2 text-center text-muted-foreground">
           Ved å opprette konto godtar du{' '}
           <Link to="/terms" className="underline hover:text-foreground">
             vilkår

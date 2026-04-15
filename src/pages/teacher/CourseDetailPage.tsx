@@ -494,9 +494,9 @@ const CourseDetailPage = () => {
               <div className="mb-8">
                 <Tabs value="overview">
                   <TabsList>
-                    <TabsTrigger value="overview" className="type-label">Oversikt</TabsTrigger>
-                    <TabsTrigger value="participants" className="type-label">Deltakere</TabsTrigger>
-                    <TabsTrigger value="settings" className="type-label">Innstillinger</TabsTrigger>
+                    <TabsTrigger value="overview" className="text-sm font-medium">Oversikt</TabsTrigger>
+                    <TabsTrigger value="participants" className="text-sm font-medium">Deltakere</TabsTrigger>
+                    <TabsTrigger value="settings" className="text-sm font-medium">Innstillinger</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
@@ -524,7 +524,7 @@ const CourseDetailPage = () => {
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
-            <h1 className="type-heading-1 mb-2 text-foreground">Kurs ikke funnet</h1>
+            <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">Kurs ikke funnet</h1>
             <p className="text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
@@ -636,15 +636,15 @@ const CourseDetailPage = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <h1 className="type-heading-1 text-foreground">
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                   {course.title}
                 </h1>
-                <div className="type-body-sm mt-3 flex items-center gap-3 text-muted-foreground">
+                <div className="text-sm mt-3 flex items-center gap-3 text-muted-foreground">
                   {courseData?.status === 'draft' && (
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="type-meta inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-0.5 text-foreground">
+                    <span className="text-xs font-medium tracking-wide inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-0.5 text-foreground">
                       <span className="inline-flex size-1.5 rounded-full bg-foreground/70" />
                       <span>
                         {courseData?.status === 'upcoming' ? 'Kommende' : 'Aktiv'}
@@ -655,7 +655,7 @@ const CourseDetailPage = () => {
                     <StatusBadge status="completed" size="sm" />
                   )}
                   {course.createdAt && (
-                    <span className="type-meta flex items-center gap-1 text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
                       Opprettet {formatDateNorwegian(new Date(course.createdAt), 'd. MMM')}
                     </span>
@@ -727,16 +727,16 @@ const CourseDetailPage = () => {
               <div className="border-b border-border bg-surface-muted/40 px-6 py-3 sm:px-8">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
                   <TabsList className="bg-transparent p-0">
-                    <TabsTrigger value="overview" className="type-label">Oversikt</TabsTrigger>
-                    <TabsTrigger value="participants" className="type-label">
+                    <TabsTrigger value="overview" className="text-sm font-medium">Oversikt</TabsTrigger>
+                    <TabsTrigger value="participants" className="text-sm font-medium">
                       <span className="inline-flex items-center gap-2.5">
                         Deltakere
-                        <span className="type-meta rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
+                        <span className="text-xs font-medium tracking-wide rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
                           {course.enrolled}
                         </span>
                       </span>
                     </TabsTrigger>
-                    <TabsTrigger value="settings" className="type-label">Innstillinger</TabsTrigger>
+                    <TabsTrigger value="settings" className="text-sm font-medium">Innstillinger</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
@@ -945,7 +945,7 @@ const CourseDetailPage = () => {
           {refundPreview.count > 0 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <span className="type-label-sm block text-foreground">
+                <span className="text-xs font-medium block text-foreground">
                   Refunderes
                 </span>
                 <div className="max-h-[200px] overflow-y-auto">
@@ -957,16 +957,16 @@ const CourseDetailPage = () => {
                         i < refundPreview.participants.length - 1 && 'border-b border-border'
                       )}
                     >
-                      <span className="type-body text-foreground">{p.participant_name || p.participant_email}</span>
-                      <span className="type-body-sm tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
+                      <span className="text-sm text-foreground">{p.participant_name || p.participant_email}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="flex items-center justify-between rounded-lg bg-surface-muted px-4 py-3">
-                <span className="type-meta text-muted-foreground">Totalt refusjon</span>
-                <span className="type-label tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">Totalt refusjon</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>
             </div>
           )}

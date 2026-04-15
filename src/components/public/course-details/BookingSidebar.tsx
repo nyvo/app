@@ -104,7 +104,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 ) : (
                   <Button
                     type="submit"
-                    className="type-label h-auto w-full rounded-lg bg-primary py-3 text-primary-foreground hover:bg-primary/80"
+                    className="text-sm font-medium h-auto w-full rounded-lg bg-primary py-3 text-primary-foreground hover:bg-primary/80"
                     loading={submitting}
                     loadingText="Behandler"
                   >

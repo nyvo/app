@@ -113,10 +113,10 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
           "relative shrink-0 cursor-pointer font-medium ios-ease transition-[background-color,color,opacity,box-shadow]",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           variant === "default"
-            ? "type-label-sm px-3 py-2 rounded-lg"
+            ? "text-xs font-medium px-3 py-2 rounded-lg"
             : variant === "pill"
-              ? "type-label-sm px-3 py-1.5 rounded-lg"
-              : "type-label-sm px-3.5 h-full rounded-lg text-center whitespace-nowrap",
+              ? "text-xs font-medium px-3 py-1.5 rounded-lg"
+              : "text-xs font-medium px-3.5 h-full rounded-lg text-center whitespace-nowrap",
           getStyles(),
           className
         )}

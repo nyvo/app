@@ -59,13 +59,13 @@ function CourseRow({
     >
       <DateBadge dateStr={dateStr} />
       <div className="min-w-0 flex-1">
-        <h3 className="type-label truncate text-foreground">{title}</h3>
-        <p className="type-body-sm mt-0.5 truncate text-muted-foreground">
+        <h3 className="text-sm font-medium truncate text-foreground">{title}</h3>
+        <p className="text-sm mt-0.5 truncate text-muted-foreground">
           {dayName}{timeText ? ` · ${timeText}` : ''}
         </p>
       </div>
       {hasAttendance && (
-        <span className="type-body-sm shrink-0 text-muted-foreground">{signups}/{capacity}</span>
+        <span className="text-sm shrink-0 text-muted-foreground">{signups}/{capacity}</span>
       )}
     </Link>
   );
@@ -78,12 +78,12 @@ export function DashboardUpcomingList({ courses }: DashboardUpcomingListProps) {
 
   return (
     <section>
-      <h2 className="type-title mb-3 text-foreground">Neste aktiviteter</h2>
+      <h2 className="text-base font-medium mb-3 text-foreground">Neste aktiviteter</h2>
       <Card className="p-3 sm:p-4">
         {sorted.length === 0 ? (
         <div className="py-3">
-          <p className="type-label text-foreground">Ingen kommende kurs</p>
-          <p className="type-body-sm mt-1 text-muted-foreground">Opprett kurs for å fylle timeplanen.</p>
+          <p className="text-sm font-medium text-foreground">Ingen kommende kurs</p>
+          <p className="text-sm mt-1 text-muted-foreground">Opprett kurs for å fylle timeplanen.</p>
         </div>
       ) : (
         <div className="space-y-1">

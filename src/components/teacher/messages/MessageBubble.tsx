@@ -19,7 +19,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
       }`}
     >
       {isOutgoing ? (
-        <div className="type-meta mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+        <div className="text-xs font-medium tracking-wide mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
           Du
         </div>
       ) : (
@@ -41,7 +41,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
           }`}
         >
           <p
-            className={`type-body leading-relaxed ${
+            className={`text-sm leading-relaxed ${
               isOutgoing ? '' : 'text-foreground'
             }`}
           >
@@ -49,7 +49,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
           </p>
         </div>
         <span
-          className={`type-meta flex items-center gap-1 text-muted-foreground ${
+          className={`text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground ${
             isOutgoing ? 'pr-1' : 'pl-1'
           }`}
         >

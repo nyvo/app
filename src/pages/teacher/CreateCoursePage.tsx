@@ -415,10 +415,10 @@ const CreateCoursePage = () => {
       >
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
           <header className="space-y-1">
-            <h1 className="type-heading-1 text-foreground">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Opprett kurs
             </h1>
-            <p className="type-body text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Sett opp et nytt kurs eller arrangement.
             </p>
           </header>
@@ -446,13 +446,13 @@ const CreateCoursePage = () => {
               {/* ── Step 1: Kurstype + Detaljer ── */}
               <section>
                 <div className="mb-6">
-                  <h2 id="course-type-label" className="type-title text-foreground">Kurstype</h2>
-                  <p className="type-body mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
+                  <h2 id="course-text-sm font-medium" className="text-base font-medium text-foreground">Kurstype</h2>
+                  <p className="text-sm mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
                   value={courseType}
                   onValueChange={(v) => setCourseType(v as CourseType)}
-                  aria-labelledby="course-type-label"
+                  aria-labelledby="course-text-sm font-medium"
                   className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 >
                   <RadioGroupCardItem
@@ -473,12 +473,12 @@ const CreateCoursePage = () => {
               {/* ── Section 2: Basic Details ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="type-title text-foreground">Detaljer</h2>
+                  <h2 className="text-base font-medium text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
                   {/* Title */}
                   <div>
-                    <label htmlFor="create-title" className="type-label-sm mb-1.5 block text-foreground">
+                    <label htmlFor="create-title" className="text-xs font-medium mb-1.5 block text-foreground">
                       Tittel
                     </label>
                     <Input
@@ -498,7 +498,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('title') && (
-                      <p id="create-title-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-title-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.title}
                       </p>
@@ -507,9 +507,9 @@ const CreateCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="create-description" className="type-label-sm mb-1.5 block text-foreground">
+                    <label htmlFor="create-description" className="text-xs font-medium mb-1.5 block text-foreground">
                       Beskrivelse
-                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <Textarea
                       id="create-description"
@@ -521,7 +521,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`type-meta ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
+                      <p className={`text-xs font-medium tracking-wide ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -529,9 +529,9 @@ const CreateCoursePage = () => {
 
                   {/* Cover Image */}
                   <div>
-                    <label className="type-label-sm mb-1.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Kursbilde
-                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <div className="h-40">
                       <ImageUpload
@@ -562,7 +562,7 @@ const CreateCoursePage = () => {
                   {/* Date + Weeks row */}
                   <div className={cn("grid grid-cols-1 gap-6", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
-                      <label htmlFor="create-start-date" className="type-label-sm mb-1.5 block text-foreground">
+                      <label htmlFor="create-start-date" className="text-xs font-medium mb-1.5 block text-foreground">
                         {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
@@ -581,7 +581,7 @@ const CreateCoursePage = () => {
                         aria-invalid={showError('startDate') ? 'true' : undefined}
                       />
                       {showError('startDate') && (
-                        <p id="startDate-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <p id="startDate-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                           <AlertCircle className="h-3 w-3" aria-hidden="true" />
                           {errors.startDate}
                         </p>
@@ -590,7 +590,7 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label id="create-weeks-label" className="type-label-sm mb-1.5 block text-foreground">
+                        <label id="create-weeks-label" className="text-xs font-medium mb-1.5 block text-foreground">
                           Uker
                         </label>
                         <Input
@@ -614,7 +614,7 @@ const CreateCoursePage = () => {
                           )}
                         />
                         {showError('weeks') && (
-                          <p id="weeks-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                          <p id="weeks-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                             <AlertCircle className="h-3 w-3" aria-hidden="true" />
                             {errors.weeks}
                           </p>
@@ -625,7 +625,7 @@ const CreateCoursePage = () => {
 
                   {/* Time range row */}
                   <div>
-                    <label className="type-label-sm mb-1.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Tidspunkt
                     </label>
                     <div className="flex items-center gap-2">
@@ -660,7 +660,7 @@ const CreateCoursePage = () => {
                         </SelectContent>
                       </Select>
 
-                      <span className="type-label shrink-0 text-muted-foreground">–</span>
+                      <span className="text-sm font-medium shrink-0 text-muted-foreground">–</span>
 
                       <Select
                         value={endTime}
@@ -690,7 +690,7 @@ const CreateCoursePage = () => {
                       </Select>
                     </div>
                     {(showError('startTime') || showError('endTime')) && (
-                      <p className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.startTime || errors.endTime}
                       </p>
@@ -711,7 +711,7 @@ const CreateCoursePage = () => {
 
                   {/* Location */}
                   <div>
-                    <label htmlFor="create-location" className="type-label-sm mb-1.5 block text-foreground">
+                    <label htmlFor="create-location" className="text-xs font-medium mb-1.5 block text-foreground">
                       Sted
                     </label>
                     <LocationCombobox
@@ -729,7 +729,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('location') && (
-                      <p id="create-location-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-location-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.location}
                       </p>
@@ -752,14 +752,14 @@ const CreateCoursePage = () => {
               {/* ── Step 3: Påmelding ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="type-title text-foreground">Påmelding</h2>
+                  <h2 className="text-base font-medium text-foreground">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Price */}
                   <div>
-                    <label htmlFor="create-price" className="type-label-sm mb-1.5 block text-foreground">
+                    <label htmlFor="create-price" className="text-xs font-medium mb-1.5 block text-foreground">
                       Pris
-                      <span className="type-meta ml-2 text-muted-foreground">per person</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">per person</span>
                     </label>
                     <div className="relative">
                       <Input
@@ -780,11 +780,11 @@ const CreateCoursePage = () => {
                         )}
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className={`type-meta ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
+                        <span className={`text-xs font-medium tracking-wide ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
                       </div>
                     </div>
                     {showError('price') && (
-                      <p id="create-price-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-price-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.price}
                       </p>
@@ -793,7 +793,7 @@ const CreateCoursePage = () => {
 
                   {/* Capacity */}
                   <div>
-                    <label htmlFor="create-capacity" className="type-label-sm mb-1.5 block text-foreground">
+                    <label htmlFor="create-capacity" className="text-xs font-medium mb-1.5 block text-foreground">
                       Maks antall deltakere
                     </label>
                     <Input
@@ -814,7 +814,7 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('capacity') && (
-                      <p id="create-capacity-error" className="type-meta mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-capacity-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
                         <AlertCircle className="h-3 w-3" aria-hidden="true" />
                         {errors.capacity}
                       </p>
@@ -826,15 +826,15 @@ const CreateCoursePage = () => {
               {/* ── Section 5: Praktisk info (optional) ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="type-title text-foreground">Praktisk info</h2>
-                  <p className="type-body mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
+                  <h2 className="text-base font-medium text-foreground">Praktisk info</h2>
+                  <p className="text-sm mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
-                    <label className="type-label-sm mb-2.5 block text-foreground">
+                    <label className="text-xs font-medium mb-2.5 block text-foreground">
                       Nivå
-                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <ToggleGroup
                       type="single"
@@ -850,16 +850,16 @@ const CreateCoursePage = () => {
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
-                    <p className="type-meta mt-2 text-muted-foreground">
+                    <p className="text-xs font-medium tracking-wide mt-2 text-muted-foreground">
                       Velg hvem kurset passer for.
                     </p>
                   </div>
 
                   {/* Equipment - Radio buttons (single factual statement) */}
                   <div>
-                    <label className="type-label-sm mb-2.5 block text-foreground">
+                    <label className="text-xs font-medium mb-2.5 block text-foreground">
                       Utstyr
-                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <RadioGroup
                       value={equipment}
@@ -868,7 +868,7 @@ const CreateCoursePage = () => {
                       {EQUIPMENT_OPTIONS.map((opt) => (
                         <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer py-1">
                           <RadioGroupItem value={opt.value} />
-                          <span className="type-body text-foreground">{opt.label}</span>
+                          <span className="text-sm text-foreground">{opt.label}</span>
                         </label>
                       ))}
                     </RadioGroup>
@@ -876,9 +876,9 @@ const CreateCoursePage = () => {
 
                   {/* Arrival time - Dropdown select */}
                   <div>
-                    <label className="type-label-sm mb-1.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Oppmøte før start
-                      <span className="type-meta ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <Select
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
@@ -901,9 +901,9 @@ const CreateCoursePage = () => {
 
                   {/* Custom bullets */}
                   <div>
-                    <label className="type-label-sm mb-1.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Egne punkter
-                      <span className="type-meta ml-2 text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
                     </label>
                     <div className="space-y-2">
                       {customBullets.map((bullet, i) => (
@@ -938,7 +938,7 @@ const CreateCoursePage = () => {
                           size="sm"
                           type="button"
                           onClick={() => setCustomBullets([...customBullets, ''])}
-                          className="type-body text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+                          className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til punkt
@@ -960,7 +960,7 @@ const CreateCoursePage = () => {
         <div className="mx-auto flex max-w-3xl flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
-                <p className="type-body text-center text-destructive">
+                <p className="text-sm text-center text-destructive">
                   Fyll ut de markerte feltene.
                 </p>
               </Alert>
@@ -969,7 +969,7 @@ const CreateCoursePage = () => {
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="type-body text-destructive">
+                    <p className="text-sm text-destructive">
                       {submitError === 'conflict' ? 'Tidspunktet er opptatt. Velg et annet.' : submitError}
                     </p>
                     {submitError === 'conflict' && currentStep !== 1 && (
@@ -980,7 +980,7 @@ const CreateCoursePage = () => {
                           contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                           setTimeout(() => startTimeRef.current?.focus(), 400);
                         }}
-                        className="type-meta whitespace-nowrap text-destructive underline underline-offset-2 transition-[color] hover:text-destructive/80"
+                        className="text-xs font-medium tracking-wide whitespace-nowrap text-destructive underline underline-offset-2 transition-[color] hover:text-destructive/80"
                       >
                         Endre tidspunkt
                       </button>

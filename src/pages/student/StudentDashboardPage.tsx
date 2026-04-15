@@ -79,13 +79,13 @@ const StudentDashboardPage = () => {
     return (
       <div className="space-y-8">
         <div className="space-y-1">
-          <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
-          <p className="type-body text-muted-foreground">Her finner du kursene dine.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
+          <p className="text-sm text-muted-foreground">Her finner du kursene dine.</p>
         </div>
         <Card className="border-border bg-surface">
           <div className="flex min-h-[320px] flex-col items-center justify-center" role="status" aria-live="polite">
             <Spinner size="xl" className="mb-4" aria-hidden="true" />
-            <p className="type-body text-muted-foreground">Henter kurs</p>
+            <p className="text-sm text-muted-foreground">Henter kurs</p>
           </div>
         </Card>
       </div>
@@ -96,8 +96,8 @@ const StudentDashboardPage = () => {
     return (
       <div className="space-y-8">
         <div className="space-y-1">
-          <h1 className="type-heading-1 text-foreground">Mine kurs</h1>
-          <p className="type-body text-muted-foreground">Her finner du kursene dine.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
+          <p className="text-sm text-muted-foreground">Her finner du kursene dine.</p>
         </div>
         <Card className="border-border bg-surface">
           <EmptyState
@@ -114,10 +114,10 @@ const StudentDashboardPage = () => {
   return (
     <div className="space-y-8">
       <div className="space-y-1">
-        <h1 className="type-heading-1 text-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Mine kurs
         </h1>
-        <p className="type-body text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Her finner du kursene dine.
         </p>
       </div>
@@ -126,13 +126,13 @@ const StudentDashboardPage = () => {
         <TabsList className="mb-6">
           <TabsTrigger 
             value="upcoming"
-            className="type-label"
+            className="text-sm font-medium"
           >
             Kommende ({upcoming.length})
           </TabsTrigger>
           <TabsTrigger
             value="past"
-            className="type-label"
+            className="text-sm font-medium"
           >
             Tidligere
           </TabsTrigger>

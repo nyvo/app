@@ -40,14 +40,14 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-baseline mb-0.5">
-              <p className="type-label truncate text-foreground">
+              <p className="text-sm font-medium truncate text-foreground">
                 {message.sender.name}
               </p>
-              <span className="type-meta ml-1.5 shrink-0 text-muted-foreground">
+              <span className="text-xs font-medium tracking-wide ml-1.5 shrink-0 text-muted-foreground">
                 {message.timestamp}
               </span>
             </div>
-            <p className="type-body text-muted-foreground truncate transition-[color] group-hover:text-foreground">
+            <p className="text-sm text-muted-foreground truncate transition-[color] group-hover:text-foreground">
               {message.content}
             </p>
           </div>
@@ -61,8 +61,8 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
     <div className="flex flex-col">
       {!hideHeader && (
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="type-title text-foreground">Meldinger</h3>
-          <Link to="/teacher/messages" className="type-meta text-muted-foreground transition-[color] hover:text-foreground">Se alle</Link>
+          <h3 className="text-base font-medium text-foreground">Meldinger</h3>
+          <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground transition-[color] hover:text-foreground">Se alle</Link>
         </div>
       )}
       {hideCard ? content : <Card className="flex flex-1 min-h-[280px] flex-col overflow-hidden">{content}</Card>}

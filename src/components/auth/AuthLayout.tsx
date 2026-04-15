@@ -46,7 +46,7 @@ export function AuthLayout({
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
             <Infinity className="w-3.5 h-3.5" />
           </div>
-          <span className="type-title text-foreground">
+          <span className="text-base font-medium text-foreground">
             Ease
           </span>
         </Link>
@@ -69,11 +69,11 @@ export function AuthLayout({
             ) : (
               <div className="flex flex-col items-center">
                 <div className="mb-8 w-full space-y-2 text-center">
-                  <h1 className="type-heading-1 text-foreground">
+                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                     {title}
                   </h1>
                   {subtitle && (
-                    <p className="type-body text-muted-foreground">{subtitle}</p>
+                    <p className="text-sm text-muted-foreground">{subtitle}</p>
                   )}
                 </div>
 

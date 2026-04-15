@@ -40,7 +40,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
-          <h3 className="type-title text-foreground">Ny melding</h3>
+          <h3 className="text-base font-medium text-foreground">Ny melding</h3>
         </div>
         <Button
           variant="ghost"
@@ -55,7 +55,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
 
       <div className="p-6 space-y-6">
         <div className="space-y-2">
-          <label htmlFor="compose-recipient" className="type-label-sm ml-1 text-foreground">Til</label>
+          <label htmlFor="compose-recipient" className="text-xs font-medium ml-1 text-foreground">Til</label>
           <div className="relative group">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-[color] pointer-events-none" />
             <Input
@@ -71,7 +71,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="compose-message-body" className="type-label-sm ml-1 text-foreground">Melding</label>
+          <label htmlFor="compose-message-body" className="text-xs font-medium ml-1 text-foreground">Melding</label>
           <div className="rounded-lg border border-border bg-surface-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
             <Textarea
               id="compose-message-body"

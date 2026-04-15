@@ -51,8 +51,8 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
       <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-background">
         <UserPlus className="size-4 text-muted-foreground" />
       </div>
-      <p className="type-title text-foreground">Ingen nye påmeldinger</p>
-      <p className="type-body-sm mt-1 text-muted-foreground">Nye påmeldinger vises her.</p>
+      <p className="text-base font-medium text-foreground">Ingen nye påmeldinger</p>
+      <p className="text-sm mt-1 text-muted-foreground">Nye påmeldinger vises her.</p>
     </div>
   ) : (
     <div className={cn("divide-y divide-border", hideCard ? "" : "px-3 py-3")}>
@@ -70,10 +70,10 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
             )}
           >
             <div className="flex-1 min-w-0">
-              <p className="type-label truncate text-foreground">
+              <p className="text-sm font-medium truncate text-foreground">
                 {registration.participant.name}
               </p>
-              <p className="type-meta mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+              <p className="text-xs font-medium tracking-wide mt-0.5 flex items-center gap-1.5 text-muted-foreground">
                 <span className="truncate">{registration.course}</span>
                 <span className="text-muted-foreground mx-1.5">·</span>
                 <span className="truncate">
@@ -82,7 +82,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
               </p>
             </div>
             <div className="text-right shrink-0">
-              <span className="type-meta text-muted-foreground">
+              <span className="text-xs font-medium tracking-wide text-muted-foreground">
                 {registration.registeredAt}
               </span>
             </div>
@@ -96,10 +96,10 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
     <div className="flex flex-col">
       {!hideHeader && (
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="type-title text-foreground">Siste påmeldinger</h2>
+          <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
           <Link
             to="/teacher/signups"
-            className="type-meta text-muted-foreground smooth-transition hover:text-foreground"
+            className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground"
           >
             Se alle
           </Link>

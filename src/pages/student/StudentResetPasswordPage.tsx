@@ -102,10 +102,10 @@ const StudentResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="type-heading-1 text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Ugyldig lenke
           </h1>
-          <p className="type-body text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Lenken er utløpt eller fungerer ikke.
           </p>
         </div>
@@ -131,10 +131,10 @@ const StudentResetPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="type-heading-1 text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Passordet er oppdatert
           </h1>
-          <p className="type-body text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Du kan nå logge inn med det nye passordet.
           </p>
         </div>
@@ -155,7 +155,7 @@ const StudentResetPasswordPage = () => {
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={
-        <p className="type-meta text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Trenger du hjelp?
         </p>
       }
@@ -186,15 +186,15 @@ const StudentResetPasswordPage = () => {
         />
 
         <div className="rounded-lg bg-surface-muted p-3">
-          <p className="type-meta mb-1 text-muted-foreground">Krav</p>
-          <ul className="type-meta ml-3 space-y-0.5 text-muted-foreground">
+          <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
+          <ul className="text-xs font-medium tracking-wide ml-3 space-y-0.5 text-muted-foreground">
             <li className="list-disc">Minst 8 tegn</li>
           </ul>
         </div>
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="type-meta text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
           </Alert>
         )}
 

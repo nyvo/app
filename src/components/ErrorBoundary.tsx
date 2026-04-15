@@ -43,17 +43,17 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4">
           <Card className="w-full max-w-md p-8 text-center">
-            <h1 className="type-title mb-2 text-foreground">
+            <h1 className="text-base font-medium mb-2 text-foreground">
               Noe gikk galt
             </h1>
-            <p className="type-body mb-6 text-muted-foreground">
+            <p className="text-sm mb-6 text-muted-foreground">
               En uventet feil oppstod. Prøv å laste siden på nytt.
             </p>
             <Button onClick={this.handleReload}>
               Last siden på nytt
             </Button>
             {import.meta.env.DEV && this.state.error && (
-              <pre className="type-meta mt-6 max-h-40 overflow-auto rounded-lg bg-background p-3 text-left text-status-error-text">
+              <pre className="text-xs font-medium tracking-wide mt-6 max-h-40 overflow-auto rounded-lg bg-background p-3 text-left text-status-error-text">
                 {this.state.error.message}
               </pre>
             )}

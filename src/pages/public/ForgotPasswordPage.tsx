@@ -72,8 +72,8 @@ const ForgotPasswordPage = () => {
         title=""
         customContent
         footer={
-          <p className="type-meta text-muted-foreground">
-            <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">
+            <Link to={ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
               Til innlogging
             </Link>
           </p>
@@ -84,18 +84,18 @@ const ForgotPasswordPage = () => {
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="type-heading-1 text-foreground">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Sjekk e-posten din
           </h1>
-          <p className="type-body text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Vi har sendt en lenke til{' '}
-            <span className="type-label text-foreground">{formData.email}</span>
+            <span className="text-sm font-medium text-foreground">{formData.email}</span>
           </p>
         </div>
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="type-meta text-muted-foreground leading-relaxed">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground leading-relaxed">
               {AUTH_HINTS.checkSpam}
             </p>
           </Alert>
@@ -122,9 +122,9 @@ const ForgotPasswordPage = () => {
       title="Glemt passord?"
       subtitle="Skriv inn e-posten din, så sender vi en lenke."
       footer={
-        <p className="type-meta text-muted-foreground">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Husker du passordet ditt?{' '}
-          <Link to={ROUTES.login} className="type-label text-foreground hover:underline">
+          <Link to={ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
           </Link>
         </p>
@@ -145,7 +145,7 @@ const ForgotPasswordPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="type-meta text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
           </Alert>
         )}
 

@@ -47,15 +47,15 @@ const StudentConfirmEmailPage = () => {
         <Mail className="size-5 text-muted-foreground" />
       </div>
 
-      <h1 className="type-heading-1 mb-2 text-foreground">
+      <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
         Sjekk e-posten din
       </h1>
 
-      <p className="type-body mb-8 text-center text-muted-foreground leading-relaxed">
+      <p className="text-sm mb-8 text-center text-muted-foreground leading-relaxed">
         {email ? (
           <>
             Vi har sendt en bekreftelseslenke til{' '}
-            <span className="type-label text-foreground">{email}</span>.
+            <span className="text-sm font-medium text-foreground">{email}</span>.
             Du må bekrefte e-posten før du kan logge inn.
           </>
         ) : (
@@ -81,7 +81,7 @@ const StudentConfirmEmailPage = () => {
         </Button>
       </div>
 
-      <p className="type-meta mt-6 text-center text-muted-foreground">
+      <p className="text-xs font-medium tracking-wide mt-6 text-center text-muted-foreground">
         {AUTH_HINTS.checkSpamAlt}
       </p>
     </AuthLayout>

@@ -95,7 +95,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
       <CourseImage src={course.imageUrl} alt={course.courseTitle} />
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-          <h3 className="type-title truncate text-foreground">
+          <h3 className="text-base font-medium truncate text-foreground">
             {course.courseTitle}
           </h3>
           {showStatusBadge && (
@@ -117,13 +117,13 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
             />
           )}
         </div>
-        <div className="mt-0.5 flex items-center gap-1 type-meta text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground">
           {scheduleLabel && (
             <span className="truncate">{scheduleLabel}</span>
           )}
         </div>
       </div>
-      <span className="type-label whitespace-nowrap flex-shrink-0 text-foreground text-right">
+      <span className="text-sm font-medium whitespace-nowrap flex-shrink-0 text-foreground text-right">
         {enrollmentLabel}
       </span>
     </Link>

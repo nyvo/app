@@ -210,7 +210,7 @@ export function AddParticipantDialog({
             {/* Info banner if full */}
             {isFull && (
               <Alert variant="info" size="sm">
-                <p className="type-body text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
                 </p>
               </Alert>
@@ -219,7 +219,7 @@ export function AddParticipantDialog({
             {/* Error banner */}
             {submitError && (
               <Alert variant="error" icon={false}>
-                <p className="type-body text-status-error-text">{submitError}</p>
+                <p className="text-sm text-status-error-text">{submitError}</p>
               </Alert>
             )}
 
@@ -229,7 +229,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="firstName"
-                  className="type-label-sm mb-1.5 block text-foreground"
+                  className="text-xs font-medium mb-1.5 block text-foreground"
                 >
                   Fornavn <span className="text-destructive">*</span>
                 </label>
@@ -257,7 +257,7 @@ export function AddParticipantDialog({
                   <p
                     id="firstName-error"
                     role="alert"
-                    className="type-meta mt-1.5 text-status-error-text"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
                   >
                     {errors.firstName}
                   </p>
@@ -268,7 +268,7 @@ export function AddParticipantDialog({
               <div>
                 <label
                   htmlFor="lastName"
-                  className="type-label-sm mb-1.5 block text-foreground"
+                  className="text-xs font-medium mb-1.5 block text-foreground"
                 >
                   Etternavn <span className="text-destructive">*</span>
                 </label>
@@ -296,7 +296,7 @@ export function AddParticipantDialog({
                   <p
                     id="lastName-error"
                     role="alert"
-                    className="type-meta mt-1.5 text-status-error-text"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
                   >
                     {errors.lastName}
                   </p>
@@ -306,7 +306,7 @@ export function AddParticipantDialog({
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="type-label-sm mb-1.5 block text-foreground">
+              <label htmlFor="email" className="text-xs font-medium mb-1.5 block text-foreground">
                 E-post <span className="text-destructive">*</span>
               </label>
               <Input
@@ -331,12 +331,12 @@ export function AddParticipantDialog({
                 <p
                   id="email-error"
                   role="alert"
-                  className="type-meta mt-1.5 text-status-error-text"
+                  className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
                 >
                   {errors.email}
                 </p>
               ) : (
-                <p id="email-hint" className="type-meta mt-1.5 text-muted-foreground">
+                <p id="email-hint" className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
                   Bekreftelse sendes hit
                 </p>
               )}
@@ -344,8 +344,8 @@ export function AddParticipantDialog({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="type-label-sm mb-1.5 block text-foreground">
-                Telefonnummer <span className="type-body-sm text-muted-foreground">(valgfritt)</span>
+              <label htmlFor="phone" className="text-xs font-medium mb-1.5 block text-foreground">
+                Telefonnummer <span className="text-sm text-muted-foreground">(valgfritt)</span>
               </label>
               <Input
                 id="phone"
@@ -357,15 +357,15 @@ export function AddParticipantDialog({
                 aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
-              <p id="phone-hint" className="type-meta mt-1.5 text-muted-foreground">
+              <p id="phone-hint" className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
                 For kontakt ved endringer
               </p>
             </div>
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="type-label-sm mb-1.5 block text-foreground">
-                Notat <span className="type-body-sm text-muted-foreground">(valgfritt)</span>
+              <label htmlFor="note" className="text-xs font-medium mb-1.5 block text-foreground">
+                Notat <span className="text-sm text-muted-foreground">(valgfritt)</span>
               </label>
               <Textarea
                 id="note"
@@ -376,12 +376,12 @@ export function AddParticipantDialog({
                 rows={3}
                 disabled={isSubmitting}
               />
-              <p className="type-meta mt-1.5 text-muted-foreground">Synlig kun for instruktør</p>
+              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Synlig kun for instruktør</p>
             </div>
 
             {/* Payment Toggle */}
             <div>
-              <p id="payment-label" className="type-label-sm mb-2 text-foreground">
+              <p id="payment-label" className="text-xs font-medium mb-2 text-foreground">
                 Betalingsstatus
               </p>
               <div
@@ -400,7 +400,7 @@ export function AddParticipantDialog({
                     aria-checked={paymentMarked === option.value}
                     onClick={() => setPaymentMarked(option.value)}
                     disabled={isSubmitting}
-                    className={`type-meta cursor-pointer flex-1 py-1.5 px-3 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
+                    className={`text-xs font-medium tracking-wide cursor-pointer flex-1 py-1.5 px-3 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
                       paymentMarked === option.value
                             ? 'border-primary text-foreground'
                         : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -410,7 +410,7 @@ export function AddParticipantDialog({
                   </button>
                 ))}
               </div>
-              <p className="type-meta mt-1.5 text-muted-foreground">Betalingen registreres ikke i Stripe</p>
+              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Betalingen registreres ikke i Stripe</p>
             </div>
 
             <DialogFooter>

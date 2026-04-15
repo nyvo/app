@@ -189,8 +189,8 @@ export const TeacherSidebar = () => {
                     size="sm"
                   />
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="type-label-sm truncate text-foreground">{profile?.name || currentOrganization?.name || 'Konto'}</span>
-                    <span className="type-meta truncate text-muted-foreground">
+                    <span className="text-xs font-medium truncate text-foreground">{profile?.name || currentOrganization?.name || 'Konto'}</span>
+                    <span className="text-xs font-medium tracking-wide truncate text-muted-foreground">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
                   </div>
@@ -211,8 +211,8 @@ export const TeacherSidebar = () => {
                       size="sm"
                     />
                     <div className="grid flex-1 text-left leading-tight">
-                      <span className="type-label-sm truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
-                      <span className="type-meta truncate text-muted-foreground">{profile?.email}</span>
+                      <span className="text-xs font-medium truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
+                      <span className="text-xs font-medium tracking-wide truncate text-muted-foreground">{profile?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

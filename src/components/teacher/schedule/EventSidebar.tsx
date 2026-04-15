@@ -43,8 +43,8 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-6">
           <div className="min-w-0">
-            <h2 className="type-title text-foreground truncate">{event.title}</h2>
-            <p className="type-meta text-muted-foreground mt-0.5">
+            <h2 className="text-base font-medium text-foreground truncate">{event.title}</h2>
+            <p className="text-xs font-medium tracking-wide text-muted-foreground mt-0.5">
               {formatFullDate(sessionDate)}
             </p>
           </div>
@@ -73,8 +73,8 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
           <div className="flex items-center gap-2.5">
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="type-label-sm text-foreground">Tidspunkt</p>
-              <p className="type-meta text-muted-foreground">
+              <p className="text-xs font-medium text-foreground">Tidspunkt</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">
                 {formatTime(event.startTime)} – {formatTime(event.endTime)}
               </p>
             </div>
@@ -83,16 +83,16 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
           <div className="flex items-center gap-2.5">
             <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="type-label-sm text-foreground">Sted</p>
-              <p className="type-meta text-muted-foreground">{event.location}</p>
+              <p className="text-xs font-medium text-foreground">Sted</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">{event.location}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
             <Users className="h-4 w-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="type-label-sm text-foreground">Deltakere</p>
-              <p className="type-meta text-muted-foreground">{enrollmentLabel}</p>
+              <p className="text-xs font-medium text-foreground">Deltakere</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">{enrollmentLabel}</p>
             </div>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
         <div className="mt-6 pt-6 border-t border-border">
           <Link
             to={`/teacher/courses/${event.courseId}`}
-            className="inline-flex items-center gap-1 type-label-sm text-muted-foreground hover:text-foreground smooth-transition"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
           >
             Se kursdetaljer
             <ArrowUpRight className="h-3.5 w-3.5" />

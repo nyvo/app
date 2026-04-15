@@ -327,11 +327,11 @@ export const SchedulePage = () => {
                         key={day.name}
                         className="flex items-center justify-center gap-1.5 py-3"
                       >
-                        <span className={`type-meta ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        <span className={`text-xs font-medium tracking-wide ${day.isToday ? 'text-foreground' : 'text-muted-foreground'}`}>
                           {day.name}
                         </span>
                         <span
-                          className={`type-label-sm flex size-7 items-center justify-center rounded-full ${
+                          className={`text-xs font-medium flex size-7 items-center justify-center rounded-full ${
                             day.isToday
                               ? 'bg-primary text-primary-foreground'
                               : 'text-muted-foreground'
@@ -361,7 +361,7 @@ export const SchedulePage = () => {
                     <div className="flex flex-col bg-background">
                       {TIME_SLOTS.map((time) => (
                         <div key={time} className="h-[100px] border-b border-border/60 px-2 py-1">
-                          <span className="type-meta text-muted-foreground/60">{time.replace(':00', '')}</span>
+                          <span className="text-xs font-medium tracking-wide text-muted-foreground/60">{time.replace(':00', '')}</span>
                         </div>
                       ))}
                     </div>
@@ -411,8 +411,8 @@ export const SchedulePage = () => {
                                 : 'hover:bg-surface-muted/40'
                             }`}
                           >
-                            <p className="type-label text-foreground">{event.title}</p>
-                            <p className="type-meta text-muted-foreground mt-0.5">
+                            <p className="text-sm font-medium text-foreground">{event.title}</p>
+                            <p className="text-xs font-medium tracking-wide text-muted-foreground mt-0.5">
                               {formatTime(event.startTime)} – {formatTime(event.endTime)}
                               {event.location !== 'Ikke angitt' && ` · ${event.location}`}
                             </p>

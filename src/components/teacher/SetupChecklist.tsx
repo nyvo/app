@@ -17,15 +17,15 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
   return (
     <div className="flex flex-col">
-      <h2 className="type-title mb-3 text-foreground">Kom i gang</h2>
+      <h2 className="text-base font-medium mb-3 text-foreground">Kom i gang</h2>
       <Card className="p-6 flex-1">
         {/* Progress header */}
         <div className="mb-6">
           <div className="flex items-baseline justify-between mb-1.5">
-            <p className="type-label text-foreground">
+            <p className="text-sm font-medium text-foreground">
               {motivationalSubtitle}
             </p>
-            <p className="type-meta text-muted-foreground">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground">
               {completedCount} av {totalCount}
             </p>
           </div>
@@ -59,7 +59,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 }`}
               >
                 {/* Step number */}
-                <span className={`type-meta mt-0.5 shrink-0 tabular-nums ${
+                <span className={`text-xs font-medium tracking-wide mt-0.5 shrink-0 tabular-nums ${
                   step.isComplete
                     ? 'text-muted-foreground'
                     : isNext
@@ -73,15 +73,15 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 <div className="flex-1 min-w-0">
                   <p className={`${
                     step.isComplete
-                      ? 'type-body text-muted-foreground'
+                      ? 'text-sm text-muted-foreground'
                       : isNext
-                        ? 'type-label text-foreground'
-                        : 'type-body text-muted-foreground'
+                        ? 'text-sm font-medium text-foreground'
+                        : 'text-sm text-muted-foreground'
                   }`}>
                     {step.title}
                   </p>
                   {isNext && (
-                    <p className="type-meta mt-0.5 text-muted-foreground">
+                    <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">
                       {step.description}
                     </p>
                   )}

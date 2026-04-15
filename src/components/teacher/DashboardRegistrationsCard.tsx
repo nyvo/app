@@ -22,8 +22,8 @@ function SignupRow({ registration }: { registration: Registration }) {
         size="sm"
       />
       <div className="min-w-0 flex-1">
-        <p className="type-label truncate text-foreground">{registration.participant.name}</p>
-        <p className="type-body-sm mt-0.5 truncate text-muted-foreground">{registration.course}</p>
+        <p className="text-sm font-medium truncate text-foreground">{registration.participant.name}</p>
+        <p className="text-sm mt-0.5 truncate text-muted-foreground">{registration.course}</p>
       </div>
       {registration.paymentStatus && (
         <PaymentBadge status={registration.paymentStatus as PaymentStatus} size="sm" />
@@ -37,14 +37,14 @@ export function DashboardRegistrationsCard({ registrations }: DashboardRegistrat
 
   return (
     <section>
-      <h2 className="type-title mb-3 text-foreground">Påmeldinger</h2>
+      <h2 className="text-base font-medium mb-3 text-foreground">Påmeldinger</h2>
       <Card className="p-3 sm:p-4">
         {recentRegistrations.length === 0 ? (
         <div className="flex items-center gap-2 sm:gap-3 py-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground">
             <UserPlus className="h-4 w-4" />
           </div>
-          <p className="type-label text-foreground">Ingen nye påmeldinger</p>
+          <p className="text-sm font-medium text-foreground">Ingen nye påmeldinger</p>
         </div>
       ) : (
         <div className="divide-y divide-border/50">

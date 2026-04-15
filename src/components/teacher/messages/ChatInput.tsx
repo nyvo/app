@@ -99,8 +99,8 @@ export function ChatInput({
           </Button>
         </div>
       </div>
-      <p className="type-meta mt-3 text-center text-muted-foreground">
-        Trykk <span className="type-label-sm text-muted-foreground">Enter</span> for å sende
+      <p className="text-xs font-medium tracking-wide mt-3 text-center text-muted-foreground">
+        Trykk <span className="text-xs font-medium text-muted-foreground">Enter</span> for å sende
       </p>
     </div>
   );

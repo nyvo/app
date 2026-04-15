@@ -35,7 +35,7 @@ export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps)
 
   return (
     <section>
-      <h2 className="type-title mb-3 text-foreground">Status</h2>
+      <h2 className="text-base font-medium mb-3 text-foreground">Status</h2>
       <Card className="p-4">
         {hasIssues ? (
           <div className="space-y-1">
@@ -52,9 +52,9 @@ export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps)
                     <Icon className="h-4.5 w-4.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="type-label text-foreground">{item.title}</p>
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
                     {item.description && (
-                      <p className="type-body-sm mt-0.5 text-muted-foreground">{item.description}</p>
+                      <p className="text-sm mt-0.5 text-muted-foreground">{item.description}</p>
                     )}
                   </div>
                 </Link>
@@ -67,8 +67,8 @@ export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps)
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div className="min-w-0">
-              <p className="type-label text-foreground">Alt ser bra ut</p>
-              <p className="type-body-sm mt-0.5 text-muted-foreground">
+              <p className="text-sm font-medium text-foreground">Alt ser bra ut</p>
+              <p className="text-sm mt-0.5 text-muted-foreground">
                 Ingen betalinger, meldinger eller kurs trenger oppfølging nå.
               </p>
             </div>

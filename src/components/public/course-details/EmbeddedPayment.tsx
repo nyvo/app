@@ -91,7 +91,7 @@ function PaymentForm({
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="type-meta text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+        className="text-xs font-medium tracking-wide text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
         Tilbake
@@ -100,19 +100,19 @@ function PaymentForm({
       {/* Order summary */}
       <div className="space-y-3 rounded-lg bg-surface-muted p-4">
         <div className="flex justify-between items-center">
-          <span className="type-body text-foreground">{courseName}</span>
-          <span className="type-body text-foreground">{formatKroner(price)}</span>
+          <span className="text-sm text-foreground">{courseName}</span>
+          <span className="text-sm text-foreground">{formatKroner(price)}</span>
         </div>
         {calculateServiceFee(price) > 0 && (
           <div className="flex justify-between items-center">
-            <span className="type-body text-muted-foreground">Servicegebyr</span>
-            <span className="type-body text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
+            <span className="text-sm text-muted-foreground">Servicegebyr</span>
+            <span className="text-sm text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
           </div>
         )}
         <Separator />
         <div className="flex justify-between items-center">
-          <span className="type-label text-foreground">Totalt</span>
-          <span className="type-label text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
+          <span className="text-sm font-medium text-foreground">Totalt</span>
+          <span className="text-sm font-medium text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ function PaymentForm({
         Betal {formatKroner(calculateTotalPrice(price))}
       </Button>
 
-      <p className="type-meta flex items-center justify-center gap-1 text-center text-muted-foreground">
+      <p className="text-xs font-medium tracking-wide flex items-center justify-center gap-1 text-center text-muted-foreground">
         <CreditCard className="h-3 w-3" />
         Sikker betaling via Stripe
       </p>

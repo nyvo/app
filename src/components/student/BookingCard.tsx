@@ -90,15 +90,15 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       <div className="hidden md:flex flex-col items-center justify-center size-24 rounded-lg bg-background border border-border shrink-0">
         {startDate && isValid(startDate) ? (
           <>
-            <span className="type-label text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground">
               {format(startDate, 'MMM', { locale: nb }).replace('.', '')}
             </span>
-            <span className="type-heading-1 text-foreground">
+            <span className="text-3xl font-semibold tracking-tight text-foreground">
               {format(startDate, 'd')}
             </span>
           </>
         ) : (
-          <span className="type-meta text-muted-foreground">—</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">—</span>
         )}
       </div>
 
@@ -106,18 +106,18 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
       <div className="flex-1 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-             <div className="type-body mb-1 flex items-center gap-2 text-muted-foreground md:hidden">
+             <div className="text-sm mb-1 flex items-center gap-2 text-muted-foreground md:hidden">
                 <Calendar className="h-4 w-4" />
                 <span>{dateStr}</span>
              </div>
-             <h3 className="type-title leading-tight text-foreground">
+             <h3 className="text-base font-medium leading-tight text-foreground">
                {course.title}
              </h3>
           </div>
           {getPaymentBadge(signup.payment_status || 'pending')}
         </div>
 
-        <div className="type-body flex flex-wrap items-center gap-4 text-muted-foreground">
+        <div className="text-sm flex flex-wrap items-center gap-4 text-muted-foreground">
            <div className="flex items-center gap-1.5">
              <Clock className="h-4 w-4 text-muted-foreground" />
              <span>{timeStr || 'Tid mangler'}</span>
@@ -135,8 +135,8 @@ export const BookingCard = ({ signup, onStatusChange }: BookingCardProps) => {
               src={course.instructor.avatar_url}
               size="xs"
             />
-            <span className="type-body text-muted-foreground">
-              Med <span className="type-label text-foreground">{course.instructor.name}</span>
+            <span className="text-sm text-muted-foreground">
+              Med <span className="text-sm font-medium text-foreground">{course.instructor.name}</span>
             </span>
           </div>
         )}

@@ -44,14 +44,14 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           to={studioUrl}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity"
         >
-          <span className="type-eyebrow text-foreground">
+          <span className="text-xs font-semibold tracking-widest uppercase text-foreground">
             {initials}
           </span>
         </Link>
 
         {/* Right side */}
         <div className="flex items-center gap-6">
-          <span className="type-meta hidden text-muted-foreground sm:block">
+          <span className="text-xs font-medium tracking-wide hidden text-muted-foreground sm:block">
             Påmelding
           </span>
 
@@ -95,7 +95,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           ) : (
             <Link
               to="/student/login"
-              className="type-meta text-muted-foreground transition-colors hover:text-foreground"
+              className="text-xs font-medium tracking-wide text-muted-foreground transition-colors hover:text-foreground"
             >
               Logg inn
             </Link>

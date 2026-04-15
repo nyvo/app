@@ -50,18 +50,18 @@ const StudentProfilePage = () => {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="space-y-1">
-        <h1 className="type-heading-1 text-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Min profil
         </h1>
-        <p className="type-body text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Oppdater kontaktinformasjonen din og se kontodetaljer.
         </p>
       </div>
 
       <section className="space-y-4">
         <div className="space-y-1">
-          <h2 className="type-title text-foreground">Kontoinformasjon</h2>
-          <p className="type-body-sm text-muted-foreground">
+          <h2 className="text-base font-medium text-foreground">Kontoinformasjon</h2>
+          <p className="text-sm text-muted-foreground">
             Endringer her brukes når du melder deg på kurs og kommuniserer med instruktører.
           </p>
         </div>
@@ -73,7 +73,7 @@ const StudentProfilePage = () => {
                 <User className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-name" className="type-label-sm mb-1.5 block text-foreground">
+                <label htmlFor="student-name" className="text-xs font-medium mb-1.5 block text-foreground">
                   Navn
                 </label>
                 <Input
@@ -90,10 +90,10 @@ const StudentProfilePage = () => {
                 <Mail className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="type-meta mb-1 block text-muted-foreground">
+                <label className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">
                   E-post
                 </label>
-                <p className="type-body py-2 text-foreground">
+                <p className="text-sm py-2 text-foreground">
                   {user?.email}
                 </p>
               </div>
@@ -104,7 +104,7 @@ const StudentProfilePage = () => {
                 <Phone className="size-4" />
               </div>
               <div className="flex-1">
-                <label htmlFor="student-phone" className="type-label-sm mb-1.5 block text-foreground">
+                <label htmlFor="student-phone" className="text-xs font-medium mb-1.5 block text-foreground">
                   Telefon
                 </label>
                 <Input
@@ -122,10 +122,10 @@ const StudentProfilePage = () => {
                 <Calendar className="size-4" />
               </div>
               <div className="flex-1">
-                <label className="type-meta mb-1 block text-muted-foreground">
+                <label className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">
                   Medlem siden
                 </label>
-                <p className="type-body py-2 text-foreground">
+                <p className="text-sm py-2 text-foreground">
                   {profile?.created_at
                     ? format(new Date(profile.created_at), 'd. MMMM yyyy', { locale: nb })
                     : 'Ukjent'}

@@ -76,8 +76,8 @@ export const SessionList: React.FC<SessionListProps> = ({
     <div>
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="space-y-0.5">
-          <h2 className="type-title text-foreground">Kursplan</h2>
-          <p className="type-body-sm text-muted-foreground">
+          <h2 className="text-base font-medium text-foreground">Kursplan</h2>
+          <p className="text-sm text-muted-foreground">
             Dette kurset varer i {sessions.length} {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
           </p>
         </div>
@@ -87,7 +87,7 @@ export const SessionList: React.FC<SessionListProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setShowAll((current) => !current)}
-            className="type-meta h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            className="text-xs font-medium tracking-wide h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
           >
             {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
             <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
@@ -116,14 +116,14 @@ export const SessionList: React.FC<SessionListProps> = ({
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className={`type-label ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
+                        <p className={`text-sm font-medium ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
                         {!isPast && session.isNext ? (
                           <Badge variant="secondary" className="border border-border bg-surface-muted text-foreground">
                             Neste
                           </Badge>
                         ) : null}
                       </div>
-                      <p className="type-meta mt-0.5 text-muted-foreground">{session.date} {session.time}</p>
+                      <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">{session.date} {session.time}</p>
                     </div>
                   </div>
                   {!isPast && (
@@ -131,7 +131,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditClick(session.id)}
-                      className="type-meta h-auto px-2 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-transparent hover:text-foreground"
+                      className="text-xs font-medium tracking-wide h-auto px-2 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-transparent hover:text-foreground"
                       aria-label={`Rediger ${session.title}`}
                     >
                       Rediger
@@ -145,7 +145,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                     <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="type-label-sm mb-1.5 block text-foreground">Dato</label>
+                          <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
                           <DatePicker
                             value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
                             onChange={(date) => {
@@ -155,7 +155,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="type-label-sm mb-1.5 block text-foreground">Tidspunkt</label>
+                          <label className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
                           <TimePicker
                             value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
                             onChange={(time) => onSessionEditChange(session.id, 'time', time)}
@@ -164,7 +164,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="type-meta text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="text-xs font-medium tracking-wide text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
                       <div className="flex gap-2">

@@ -92,7 +92,7 @@ export function TeacherTopBar() {
   return (
     <div className="hidden h-14 shrink-0 items-center justify-between gap-4 border-b border-border-strong px-6 md:flex lg:px-8">
       <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="type-label-sm gap-2 text-muted-foreground">
+        <BreadcrumbList className="text-xs font-medium gap-2 text-muted-foreground">
           {crumbs.map((crumb, index) => {
             const isLast = index === crumbs.length - 1;
 

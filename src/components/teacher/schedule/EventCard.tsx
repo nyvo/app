@@ -37,10 +37,10 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
         {isCompact ? (
           <div className="flex items-center gap-1.5">
             <TypeIcon className="size-3 shrink-0 text-muted-foreground" />
-            <p className="type-meta truncate text-foreground">
+            <p className="text-xs font-medium tracking-wide truncate text-foreground">
               {event.title}
             </p>
-            <span className="type-meta shrink-0 text-muted-foreground">
+            <span className="text-xs font-medium tracking-wide shrink-0 text-muted-foreground">
               {formatTime(event.startTime)}
             </span>
           </div>
@@ -49,7 +49,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
             <div className="flex items-start justify-between gap-1.5">
               <div className="flex items-center gap-1.5 min-w-0">
                 <TypeIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                <p className={`type-label-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+                <p className={`text-xs font-medium truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
                   {event.title}
                 </p>
               </div>
@@ -60,8 +60,8 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
               )}
             </div>
             <div className="mt-auto pt-1.5">
-              <p className="type-meta text-muted-foreground/60">Tidspunkt</p>
-              <p className="type-meta text-muted-foreground">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground/60">Tidspunkt</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">
                 {formatTime(event.startTime)} – {formatTime(event.endTime)}
               </p>
             </div>

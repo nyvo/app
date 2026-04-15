@@ -126,8 +126,8 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
     <Card className="p-0">
       {locations.length === 0 && !isAdding ? (
         <div className="px-6 py-5">
-          <p className="type-label text-foreground">Ingen steder lagt til</p>
-          <p className="type-body-sm mt-1 text-muted-foreground">
+          <p className="text-sm font-medium text-foreground">Ingen steder lagt til</p>
+          <p className="text-sm mt-1 text-muted-foreground">
             Legg til steder du bruker ofte for raskere kursoppretting.
           </p>
         </div>
@@ -149,13 +149,13 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
                     <div className="min-w-0">
-                      <span className="type-label block truncate text-foreground">{loc.name}</span>
+                      <span className="text-sm font-medium block truncate text-foreground">{loc.name}</span>
                       {loc.address && (
-                        <span className="type-meta block truncate text-muted-foreground">{loc.address}</span>
+                        <span className="text-xs font-medium tracking-wide block truncate text-muted-foreground">{loc.address}</span>
                       )}
                     </div>
                     {loc.rooms.length > 0 && (
-                      <span className="type-meta shrink-0 text-muted-foreground">
+                      <span className="text-xs font-medium tracking-wide shrink-0 text-muted-foreground">
                         {loc.rooms.length} rom
                       </span>
                     )}
@@ -176,7 +176,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                   <div className="border-t border-border/30 bg-surface-muted/30 px-6 py-4 space-y-4">
                     {/* Address */}
                     <div>
-                      <p className="type-meta mb-1.5 text-muted-foreground">Adresse</p>
+                      <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Adresse</p>
                       {editingAddressFor === loc.id ? (
                         <div className="flex items-center gap-2">
                           <Input
@@ -225,7 +225,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                             setEditingAddressFor(loc.id);
                             setEditAddress(loc.address || '');
                           }}
-                          className="type-body-sm text-foreground hover:text-primary smooth-transition"
+                          className="text-sm text-foreground hover:text-primary smooth-transition"
                         >
                           {loc.address}
                         </button>
@@ -236,7 +236,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                             setEditingAddressFor(loc.id);
                             setEditAddress('');
                           }}
-                          className="type-label-sm flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
+                          className="text-xs font-medium flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til adresse
@@ -246,13 +246,13 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
 
                     {/* Rooms */}
                     <div>
-                      <p className="type-meta mb-1.5 text-muted-foreground">Rom</p>
+                      <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Rom</p>
                       {loc.rooms.length > 0 && (
                         <div className="mb-3 flex flex-wrap gap-2">
                           {loc.rooms.map((room, i) => (
                             <span
                               key={room}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 type-label-sm text-foreground"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
                             >
                               {room}
                               <button
@@ -316,7 +316,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                             setEditingRoomFor(loc.id);
                             setNewRoom('');
                           }}
-                          className="type-label-sm flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
+                          className="text-xs font-medium flex items-center gap-1 text-muted-foreground smooth-transition hover:text-foreground"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Legg til rom
@@ -335,7 +335,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
         {isAdding ? (
           <div className="space-y-3">
             <div>
-              <label className="type-meta mb-1 block text-muted-foreground">Navn</label>
+              <label className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">Navn</label>
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
@@ -349,7 +349,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
               />
             </div>
             <div>
-              <label className="type-meta mb-1 block text-muted-foreground">Adresse</label>
+              <label className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">Adresse</label>
               <Input
                 value={newAddress}
                 onChange={(e) => setNewAddress(e.target.value)}
@@ -385,7 +385,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
           <button
             type="button"
             onClick={() => setIsAdding(true)}
-            className="type-label-sm flex items-center gap-1.5 text-muted-foreground smooth-transition hover:text-foreground"
+            className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground smooth-transition hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5" />
             Legg til sted
