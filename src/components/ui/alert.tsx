@@ -1,12 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  InformationCircleIcon,
-  CheckmarkCircle02Icon,
-  Alert02Icon,
-  AlertCircleIcon,
-} from "@hugeicons/core-free-icons"
+import { Info, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -46,15 +40,15 @@ const variantTextColor: Record<string, string> = {
   neutral: "text-foreground",
 }
 
-// Icons indexed as any to accommodate both HugeIcons and legacy lucide consumers.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const defaultIcons: Record<string, any> = {
-  info: InformationCircleIcon,
-  success: CheckmarkCircle02Icon,
-  warning: Alert02Icon,
-  error: AlertCircleIcon,
-  destructive: AlertCircleIcon,
-  neutral: InformationCircleIcon,
+type IconComponent = React.ComponentType<{ className?: string }>
+
+const defaultIcons: Record<string, IconComponent> = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: AlertCircle,
+  destructive: AlertCircle,
+  neutral: Info,
 }
 
 type AlertVariant = "default" | "destructive" | "info" | "success" | "warning" | "error" | "neutral"
@@ -62,8 +56,7 @@ type AlertVariant = "default" | "destructive" | "info" | "success" | "warning" |
 interface AlertProps
   extends Omit<React.ComponentProps<"div">, "size">,
     VariantProps<typeof alertVariants> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon?: React.ComponentType<{ className?: string }> | false | any
+  icon?: IconComponent | false
 }
 
 function Alert({
@@ -79,14 +72,9 @@ function Alert({
 
   let iconNode: React.ReactNode = null
   if (icon !== false) {
-    const resolved = icon ?? defaultIcons[variant || "default"]
-    if (resolved) {
-      if (typeof resolved === "function") {
-        const IconComp = resolved as React.ComponentType<{ className?: string }>
-        iconNode = <IconComp aria-hidden="true" />
-      } else {
-        iconNode = <HugeiconsIcon icon={resolved} aria-hidden={true} />
-      }
+    const IconComp = icon ?? defaultIcons[variant || "default"]
+    if (IconComp) {
+      iconNode = <IconComp aria-hidden={true} />
     }
   }
 

@@ -11,8 +11,8 @@ You are a design system enforcement specialist for this React + Tailwind CSS app
 
 Before auditing, read these files completely:
 - `src/index.css` — shadcn preset tokens (colors, radius, font) + app utilities
-- `components.json` — preset style (`radix-vega`) and icon library (`hugeicons`)
-- `src/lib/icons.tsx` — lucide-named icon wrappers backed by hugeicons
+- `components.json` — preset style (`radix-vega`) and icon library (`lucide`)
+- `src/lib/icons.tsx` — icon barrel; re-exports from `lucide-react` plus inline brand marks
 - `CLAUDE.md` + `AGENTS.md` — project-level design rules
 
 ## Output Format

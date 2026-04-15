@@ -53,9 +53,22 @@ Complete migration from Ease Design System v4 to shadcn preset `b1Z5aAzb6`.
 
 ---
 
+## Update 2026-04-15: reverted hugeicons → lucide
+
+Hugeicons' free kit is curve-heavy, multi-path, and designed more for
+marketing illustrations than dense product UI. Every chevron came out
+as a soft curve rather than a sharp V. Reverted to lucide-react as the
+icon kit. `@/lib/icons` barrel stays — now re-exports lucide icons
+directly (plus three inline brand SVGs: Facebook / Linkedin / Twitter,
+which lucide removed from its free kit). `components.json` iconLibrary
+flipped back to `lucide`. Shadcn base components (breadcrumb, checkbox,
+calendar, dialog, sheet, dropdown-menu, select, sidebar, alert,
+spinner, sonner) all rewritten to use lucide directly. hugeicons deps
+uninstalled.
+
 ## Review
 
-All 6 commits landed. `npm run build` passes on each.
+All 6 migration commits + sweep + icon-kit revert landed. `npm run build` passes on each.
 
 **Commit 1 (Foundation):** preset tokens in, compat aliases mapped old→new.
 **Commit 2 (Reinstall):** 27 shadcn base files overwritten; custom variants

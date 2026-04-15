@@ -81,7 +81,7 @@ The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the source of t
 - **Surfaces**: page background is `bg-background`, content cards are `bg-card border border-border rounded-lg`.
 - **Typography**: body text is `text-sm text-muted-foreground`. Page headings use Tailwind scale utilities (`text-3xl font-semibold tracking-tight`, `text-xl font-semibold tracking-tight`, etc.). No `type-*` classes.
 - **Colors**: use semantic tokens (`text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`) over hardcoded Tailwind palette colors.
-- **Icons**: import from `@/lib/icons` (lucide-named wrappers around hugeicons). Never add `lucide-react` back.
+- **Icons**: always import from `@/lib/icons` (never `lucide-react` directly). The barrel is the allowlist and includes inline brand marks (`Facebook`, `Linkedin`, `Twitter`) since lucide removed them.
 - **shadcn primitives** in `src/components/ui/` over custom UI.
 - **Status colors**: raw Tailwind (`bg-green-100`, `text-amber-900`, etc.) for payment/signup states — no custom token layer.
 

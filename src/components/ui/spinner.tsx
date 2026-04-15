@@ -1,6 +1,5 @@
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Loading03Icon } from "@hugeicons/core-free-icons"
 
 type SpinnerSize = "xs" | "sm" | "md" | "lg" | "xl"
 
@@ -19,9 +18,7 @@ interface SpinnerProps {
 
 function Spinner({ className, size = "sm" }: SpinnerProps) {
   return (
-    <HugeiconsIcon
-      icon={Loading03Icon}
-      strokeWidth={2}
+    <Loader2
       role="status"
       aria-label="Loading"
       className={cn(spinnerSizeClasses[size], "animate-spin", className)}

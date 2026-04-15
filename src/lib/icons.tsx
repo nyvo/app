@@ -1,182 +1,130 @@
+/**
+ * Central icon barrel. Every icon used in the app is re-exported from here
+ * so consumers always import from a single path (`@/lib/icons`). This makes
+ * it easy to:
+ *   1. Audit which icons the app actually uses.
+ *   2. Swap the icon kit in one place without touching call sites.
+ *
+ * Today the barrel is backed by lucide-react. Do not introduce a second
+ * kit — if lucide is missing an icon, add a wrapped custom SVG here
+ * (see `Facebook`, `Linkedin`, `Twitter` below — lucide removed brand
+ * marks in recent versions so we inline them).
+ */
 import * as React from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import {
-  AlertCircleIcon,
-  Alert02Icon,
-  Archive01Icon,
-  ArrowDown01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  ArrowDataTransferHorizontalIcon,
-  ArrowUpRight01Icon,
-  Money01Icon,
-  Notification01Icon,
-  BookOpen01Icon,
-  Building01Icon,
-  Calendar01Icon,
-  Calendar02Icon,
-  Calendar03Icon,
-  CalendarAdd01Icon,
-  CalendarRemove01Icon,
-  Tick01Icon,
-  TickDouble01Icon,
-  CheckmarkCircle01Icon,
-  CheckmarkCircle02Icon,
-  Clock01Icon,
-  Clock03Icon,
-  CreditCardIcon,
-  DoorOpenIcon,
-  LinkSquare01Icon,
-  ViewIcon,
-  ViewOffIcon,
-  Facebook01Icon,
-  File01Icon,
-  FilterIcon,
-  HelpCircleIcon,
-  Home01Icon,
-  Image01Icon,
-  ImageNotFound01Icon,
-  ImageAdd01Icon,
-  InboxIcon,
-  Infinity01Icon,
-  InformationCircleIcon,
-  LayerIcon,
-  Leaf01Icon,
-  Link01Icon,
-  Linkedin01Icon,
-  Loading03Icon,
-  LockIcon,
-  Logout01Icon,
-  Mail01Icon,
-  MapPinIcon,
-  Message01Icon,
-  Message02Icon,
-  MoreHorizontalIcon,
-  PanelLeftIcon,
-  AttachmentIcon,
-  Call02Icon,
-  PlusSignIcon,
-  ReloadIcon,
-  RepeatIcon,
-  Search01Icon,
-  Sent02Icon,
-  Setting07Icon,
-  Share01Icon,
-  Shield01Icon,
-  SmartPhone01Icon,
-  Happy01Icon,
-  StickyNote01Icon,
-  Delete02Icon,
-  TwitterIcon,
-  UndoIcon,
-  User02Icon,
-  UserCheck01Icon,
-  UserAdd01Icon,
-  UserGroupIcon,
-  Cancel01Icon,
-  CancelCircleIcon,
-} from "@hugeicons/core-free-icons"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type IconData = any
+type BrandIconProps = React.SVGAttributes<SVGElement>
 
-type IconProps = Omit<React.SVGAttributes<SVGElement>, "size"> & {
-  size?: number
-  strokeWidth?: number
-  absoluteStrokeWidth?: boolean
-}
-
-export type LucideIcon = React.FC<IconProps>
-
-function makeIcon(icon: IconData): LucideIcon {
-  const Component: LucideIcon = ({ className, strokeWidth = 2, ...rest }) => (
-    <HugeiconsIcon icon={icon} strokeWidth={strokeWidth} className={className} {...rest} />
+export function Facebook({ className, ...rest }: BrandIconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+         className={className} {...rest}>
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
   )
-  return Component
 }
 
-export const AlertCircle = makeIcon(AlertCircleIcon)
-export const AlertTriangle = makeIcon(Alert02Icon)
-export const Archive = makeIcon(Archive01Icon)
-export const ArrowLeft = makeIcon(ArrowLeft01Icon)
-export const ArrowRight = makeIcon(ArrowRight01Icon)
-export const ArrowRightLeft = makeIcon(ArrowDataTransferHorizontalIcon)
-export const ArrowUpRight = makeIcon(ArrowUpRight01Icon)
-export const Banknote = makeIcon(Money01Icon)
-export const Bell = makeIcon(Notification01Icon)
-export const BookOpen = makeIcon(BookOpen01Icon)
-export const Building = makeIcon(Building01Icon)
-export const Calendar = makeIcon(Calendar01Icon)
-export const CalendarClock = makeIcon(Calendar02Icon)
-export const CalendarDays = makeIcon(Calendar03Icon)
-export const CalendarPlus = makeIcon(CalendarAdd01Icon)
-export const CalendarX = makeIcon(CalendarRemove01Icon)
-export const Check = makeIcon(Tick01Icon)
-export const CheckCheck = makeIcon(TickDouble01Icon)
-export const CheckCircle = makeIcon(CheckmarkCircle01Icon)
-export const CheckCircle2 = makeIcon(CheckmarkCircle02Icon)
-// All "Chevron*" disclosure indicators share the same pure V-shape variant
-// (ArrowDown/Left/Right 01 = arrowhead only, no stem) so selects, dropdowns,
-// accordions, breadcrumbs, and the sidebar user card all look identical.
-export const ChevronDown = makeIcon(ArrowDown01Icon)
-export const ChevronLeft = makeIcon(ArrowLeft01Icon)
-export const ChevronRight = makeIcon(ArrowRight01Icon)
-// Single chevron-down reads as "expand" and keeps the icon family consistent.
-export const ChevronsUpDown = makeIcon(ArrowDown01Icon)
-export const CircleAlert = makeIcon(AlertCircleIcon)
-export const CircleCheck = makeIcon(CheckmarkCircle01Icon)
-export const Clock = makeIcon(Clock01Icon)
-export const Clock3 = makeIcon(Clock03Icon)
-export const CreditCard = makeIcon(CreditCardIcon)
-export const DoorOpen = makeIcon(DoorOpenIcon)
-export const ExternalLink = makeIcon(LinkSquare01Icon)
-export const Eye = makeIcon(ViewIcon)
-export const EyeOff = makeIcon(ViewOffIcon)
-export const Facebook = makeIcon(Facebook01Icon)
-export const FileText = makeIcon(File01Icon)
-export const Filter = makeIcon(FilterIcon)
-export const HelpCircle = makeIcon(HelpCircleIcon)
-export const Home = makeIcon(Home01Icon)
-export const Image = makeIcon(Image01Icon)
-export const ImageIcon = makeIcon(Image01Icon)
-export const ImageOff = makeIcon(ImageNotFound01Icon)
-export const ImagePlus = makeIcon(ImageAdd01Icon)
-export const Inbox = makeIcon(InboxIcon)
-export const Infinity = makeIcon(Infinity01Icon)
-export const Info = makeIcon(InformationCircleIcon)
-export const Layers = makeIcon(LayerIcon)
-export const Leaf = makeIcon(Leaf01Icon)
-export const Link = makeIcon(Link01Icon)
-export const Linkedin = makeIcon(Linkedin01Icon)
-export const Loader2 = makeIcon(Loading03Icon)
-export const Lock = makeIcon(LockIcon)
-export const LogOut = makeIcon(Logout01Icon)
-export const Mail = makeIcon(Mail01Icon)
-export const MapPin = makeIcon(MapPinIcon)
-export const MessageCircle = makeIcon(Message01Icon)
-export const MessageSquare = makeIcon(Message02Icon)
-export const MoreHorizontal = makeIcon(MoreHorizontalIcon)
-export const PanelLeft = makeIcon(PanelLeftIcon)
-export const Paperclip = makeIcon(AttachmentIcon)
-export const Phone = makeIcon(Call02Icon)
-export const Plus = makeIcon(PlusSignIcon)
-export const RefreshCw = makeIcon(ReloadIcon)
-export const Repeat = makeIcon(RepeatIcon)
-export const Search = makeIcon(Search01Icon)
-export const Send = makeIcon(Sent02Icon)
-export const Settings = makeIcon(Setting07Icon)
-export const Share2 = makeIcon(Share01Icon)
-export const Shield = makeIcon(Shield01Icon)
-export const Smartphone = makeIcon(SmartPhone01Icon)
-export const Smile = makeIcon(Happy01Icon)
-export const StickyNote = makeIcon(StickyNote01Icon)
-export const Trash2 = makeIcon(Delete02Icon)
-export const TriangleAlert = makeIcon(Alert02Icon)
-export const Twitter = makeIcon(TwitterIcon)
-export const Undo2 = makeIcon(UndoIcon)
-export const User = makeIcon(User02Icon)
-export const UserCheck = makeIcon(UserCheck01Icon)
-export const UserPlus = makeIcon(UserAdd01Icon)
-export const Users = makeIcon(UserGroupIcon)
-export const X = makeIcon(Cancel01Icon)
-export const XCircle = makeIcon(CancelCircleIcon)
+export function Linkedin({ className, ...rest }: BrandIconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+         className={className} {...rest}>
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect x="2" y="9" width="4" height="12" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  )
+}
+
+export function Twitter({ className, ...rest }: BrandIconProps) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+         className={className} {...rest}>
+      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+    </svg>
+  )
+}
+
+export {
+  AlertCircle,
+  AlertTriangle,
+  Archive,
+  ArrowLeft,
+  ArrowRight,
+  ArrowRightLeft,
+  ArrowUpRight,
+  Banknote,
+  Bell,
+  BookOpen,
+  Building,
+  Calendar,
+  CalendarClock,
+  CalendarDays,
+  CalendarPlus,
+  CalendarX,
+  Check,
+  CheckCheck,
+  CheckCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  CircleAlert,
+  CircleCheck,
+  Clock,
+  Clock3,
+  CreditCard,
+  DoorOpen,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  FileText,
+  Filter,
+  HelpCircle,
+  Home,
+  Image,
+  ImageIcon,
+  ImageOff,
+  ImagePlus,
+  Inbox,
+  Infinity,
+  Info,
+  Layers,
+  Leaf,
+  Link,
+  Loader2,
+  Lock,
+  LogOut,
+  Mail,
+  MapPin,
+  MessageCircle,
+  MessageSquare,
+  MoreHorizontal,
+  PanelLeft,
+  Paperclip,
+  Phone,
+  Plus,
+  RefreshCw,
+  Repeat,
+  Search,
+  Send,
+  Settings,
+  Share2,
+  Shield,
+  Smartphone,
+  Smile,
+  StickyNote,
+  Trash2,
+  TriangleAlert,
+  Undo2,
+  User,
+  UserCheck,
+  UserPlus,
+  Users,
+  X,
+  XCircle,
+} from "lucide-react"
+
+export type { LucideIcon } from "lucide-react"

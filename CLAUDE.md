@@ -72,9 +72,9 @@
 
 ## Design System
 
-- The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the single source of truth for colors, radius, and font. `components.json` pins style to `radix-vega` and `iconLibrary` to `hugeicons`.
+- The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the single source of truth for colors, radius, and font. `components.json` pins style to `radix-vega` and `iconLibrary` to `lucide`.
 - Use shadcn primitives from `@/components/ui/` over custom UI.
-- Icons: import from `@/lib/icons` (lucide-named wrappers around hugeicons). Do not install `lucide-react`.
+- Icons: **always import from `@/lib/icons`** (never from `lucide-react` directly). The barrel re-exports the set of lucide icons the app uses and inlines a few brand marks (`Facebook`, `Linkedin`, `Twitter`) that lucide dropped. If you need an icon that isn't exported, add it to `src/lib/icons.tsx` rather than importing `lucide-react` elsewhere.
 - Typography: use raw Tailwind utilities (`text-sm font-medium`, `text-3xl font-semibold tracking-tight`, etc.) — no `type-*` classes.
 - The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance.
 - If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing.
