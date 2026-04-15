@@ -1,6 +1,6 @@
-import { Loader2Icon } from "lucide-react"
-
 import { cn } from "@/lib/utils"
+import { HugeiconsIcon } from "@hugeicons/react"
+import { Loading03Icon } from "@hugeicons/core-free-icons"
 
 type SpinnerSize = "xs" | "sm" | "md" | "lg" | "xl"
 
@@ -12,17 +12,19 @@ const spinnerSizeClasses: Record<SpinnerSize, string> = {
   xl: "size-8",
 }
 
-interface SpinnerProps extends Omit<React.ComponentProps<typeof Loader2Icon>, "size"> {
+interface SpinnerProps {
+  className?: string
   size?: SpinnerSize
 }
 
-function Spinner({ className, size = "sm", ...props }: SpinnerProps) {
+function Spinner({ className, size = "sm" }: SpinnerProps) {
   return (
-    <Loader2Icon
+    <HugeiconsIcon
+      icon={Loading03Icon}
+      strokeWidth={2}
       role="status"
       aria-label="Loading"
       className={cn(spinnerSizeClasses[size], "animate-spin", className)}
-      {...props}
     />
   )
 }

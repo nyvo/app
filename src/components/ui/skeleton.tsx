@@ -1,19 +1,16 @@
-import * as React from "react"
 import { cn } from "@/lib/utils"
 
-function Skeleton({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="skeleton"
       className={cn("animate-pulse rounded-md bg-muted", className)}
       {...props}
     />
   )
 }
 
-function SkeletonCard({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function SkeletonCard({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn("rounded-lg border animate-pulse bg-muted border-border", className)}
@@ -23,7 +20,7 @@ function SkeletonCard({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   )
 }
 
-interface SkeletonTableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+interface SkeletonTableRowProps extends React.ComponentProps<"tr"> {
   columns?: number
   hasAvatar?: boolean
 }
@@ -35,11 +32,7 @@ function SkeletonTableRow({
   ...props
 }: SkeletonTableRowProps) {
   return (
-    <tr
-      className={cn("border-b border-border", className)}
-      aria-hidden="true"
-      {...props}
-    >
+    <tr className={cn("border-b border-border", className)} aria-hidden="true" {...props}>
       <td className="py-4 px-6">
         <div className="flex items-center gap-3">
           {hasAvatar && <Skeleton className="size-10 rounded-full" />}

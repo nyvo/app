@@ -115,7 +115,8 @@
       "mcp__supabase__list_tables",
       "mcp__supabase__execute_sql",
       "mcp__shadcn__search_items_in_registries",
-      "mcp__shadcn__get_add_command_for_items"
+      "mcp__shadcn__get_add_command_for_items",
+      "Bash(npx shadcn@latest init --preset b1Z5aAzb6 --force --reinstall --yes)"
     ],
     "deny": [],
     "ask": []
