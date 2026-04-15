@@ -21,8 +21,9 @@ import {
   TickDouble01Icon,
   CheckmarkCircle01Icon,
   CheckmarkCircle02Icon,
-  ArrowDown01Icon,
-  ArrowDataTransferVerticalIcon,
+  ArrowDown02Icon,
+  ArrowLeft02Icon,
+  ArrowRight02Icon,
   Clock01Icon,
   Clock03Icon,
   CreditCardIcon,
@@ -116,10 +117,14 @@ export const Check = makeIcon(Tick01Icon)
 export const CheckCheck = makeIcon(TickDouble01Icon)
 export const CheckCircle = makeIcon(CheckmarkCircle01Icon)
 export const CheckCircle2 = makeIcon(CheckmarkCircle02Icon)
-export const ChevronDown = makeIcon(ArrowDown01Icon)
-export const ChevronLeft = makeIcon(ArrowLeft01Icon)
-export const ChevronRight = makeIcon(ArrowRight01Icon)
-export const ChevronsUpDown = makeIcon(ArrowDataTransferVerticalIcon)
+// All "Chevron*" disclosure indicators use the same plain-bracket variant for
+// visual consistency across selects, dropdowns, accordions, and sidebar cards.
+export const ChevronDown = makeIcon(ArrowDown02Icon)
+export const ChevronLeft = makeIcon(ArrowLeft02Icon)
+export const ChevronRight = makeIcon(ArrowRight02Icon)
+// Single chevron-down reads as "expand" and keeps the icon family consistent.
+// Swap to `ArrowUpDownIcon` if a dual-direction indicator is preferred.
+export const ChevronsUpDown = makeIcon(ArrowDown02Icon)
 export const CircleAlert = makeIcon(AlertCircleIcon)
 export const CircleCheck = makeIcon(CheckmarkCircle01Icon)
 export const Clock = makeIcon(Clock01Icon)
