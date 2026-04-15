@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: Audit UI components against DESIGN_SYSTEM.md rules. Use when checking typography, colors, spacing, card patterns, or design token compliance.
+description: Audit UI components against the shadcn preset (radix-vega) tokens in src/index.css. Use when checking typography, colors, spacing, card patterns, or design token compliance.
 tools: Read, Glob, Grep, Edit
 model: sonnet
 ---
@@ -10,8 +10,10 @@ You are a design system enforcement specialist for this React + Tailwind CSS app
 ## Setup
 
 Before auditing, read these files completely:
-- `DESIGN_SYSTEM.md` — full design system spec
-- `src/index.css` — CSS variables and utility classes
+- `src/index.css` — shadcn preset tokens (colors, radius, font) + app utilities
+- `components.json` — preset style (`radix-vega`) and icon library (`hugeicons`)
+- `src/lib/icons.tsx` — lucide-named icon wrappers backed by hugeicons
+- `CLAUDE.md` + `AGENTS.md` — project-level design rules
 
 ## Output Format
 

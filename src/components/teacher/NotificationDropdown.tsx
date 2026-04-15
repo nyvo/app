@@ -16,25 +16,25 @@ const SEVERITY_STYLES: Record<NotificationSeverity, {
   danger: {
     card: 'bg-red-100 border-red-300',
     icon: 'text-red-700',
-    dot: 'bg-status-error-text',
+    dot: 'bg-red-700',
     Icon: CircleAlert,
   },
   warning: {
     card: 'bg-amber-100 border-amber-300',
     icon: 'text-amber-900',
-    dot: 'bg-status-warning-text',
+    dot: 'bg-amber-900',
     Icon: TriangleAlert,
   },
   success: {
     card: 'bg-green-100 border-green-300',
     icon: 'text-green-800',
-    dot: 'bg-status-confirmed-text',
+    dot: 'bg-green-800',
     Icon: CircleCheck,
   },
   neutral: {
     card: 'bg-blue-100 border-blue-300',
     icon: 'text-blue-900',
-    dot: 'bg-status-info-text',
+    dot: 'bg-blue-900',
     Icon: Bell,
   },
 };

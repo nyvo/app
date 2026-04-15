@@ -249,7 +249,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.firstName && touched.firstName
-                      ? 'border-status-error-text bg-red-100 animate-shake'
+                      ? 'border-red-700 bg-red-100 animate-shake'
                       : ''
                   }
                 />
@@ -288,7 +288,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.lastName && touched.lastName
-                      ? 'border-status-error-text bg-red-100 animate-shake'
+                      ? 'border-red-700 bg-red-100 animate-shake'
                       : ''
                   }
                 />
@@ -323,7 +323,7 @@ export function AddParticipantDialog({
                 disabled={isSubmitting}
                 className={
                   errors.email && touched.email
-                    ? 'border-status-error-text bg-red-100 animate-shake'
+                    ? 'border-red-700 bg-red-100 animate-shake'
                     : ''
                 }
               />

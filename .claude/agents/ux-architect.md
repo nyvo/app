@@ -22,7 +22,7 @@ This app is a Norwegian SaaS platform for yoga/course teachers to manage classes
 ## Setup
 
 Before analyzing, read these files for context:
-- `DESIGN_SYSTEM.md` — design tokens and component patterns
+- `src/index.css` — shadcn preset tokens (colors, radius, font)
 - `DESIGN_LANGUAGE.md` — design philosophy
 - `COPY_STYLE_GUIDE.md` — Norwegian copy rules
 

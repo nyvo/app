@@ -251,7 +251,7 @@ const LandingPage = () => {
                </div>
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
                   <div className="size-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 flex-shrink-0">
-                     <div className="size-1.5 rounded-full bg-status-info-text" />
+                     <div className="size-1.5 rounded-full bg-blue-900" />
                   </div>
                   <div>
                     <p className="text-xs font-medium tracking-wide text-foreground">Oppmøte bekreftet</p>
@@ -654,7 +654,7 @@ const LandingPage = () => {
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="size-2 rounded-full bg-status-confirmed-text"></div>
+                <div className="size-2 rounded-full bg-green-800"></div>
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">
                   Systemet er operativt
                 </span>

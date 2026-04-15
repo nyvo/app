@@ -26,8 +26,8 @@ interface AuthFormFieldProps {
  * Standardised auth form field. Handles label, input, error display,
  * aria-invalid propagation, and show/hide toggle for password fields.
  *
- * Follows DESIGN_SYSTEM.md: semantic label/meta styles,
- * Input with border-input, aria-invalid for error styling.
+ * Uses shadcn preset tokens: semantic label styles, Input with
+ * border-input, aria-invalid for error styling.
  */
 export function AuthFormField({
   id,

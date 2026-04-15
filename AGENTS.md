@@ -76,14 +76,14 @@ Functions live in `supabase/functions/`. Shared utilities are in `supabase/funct
 
 ## Design system
 
-Before writing any UI, read `DESIGN_SYSTEM.md`. Key rules:
+The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the source of truth. Key rules:
 
-- **Surfaces**: page background is `bg-background` (zinc-100), content cards are `bg-white border border-border rounded-lg`.
-- **Typography**: body text is `text-sm text-muted-foreground`. Section titles are `text-sm font-medium text-foreground mb-3` and placed **above** their card, not inside. Page `<h1>` uses `font-geist text-2xl font-medium tracking-tight`. `font-semibold` is banned — use `font-medium`.
-- **No shadows**: hierarchy is expressed via borders and background contrast only.
-- **Colors**: use semantic tokens (`text-foreground/text-muted-foreground`), not hardcoded `text-zinc-*`.
-- **Reference implementation**: `src/components/teacher/CourseOverviewTab.tsx` is the gold standard for section/card layout.
+- **Surfaces**: page background is `bg-background`, content cards are `bg-card border border-border rounded-lg`.
+- **Typography**: body text is `text-sm text-muted-foreground`. Page headings use Tailwind scale utilities (`text-3xl font-semibold tracking-tight`, `text-xl font-semibold tracking-tight`, etc.). No `type-*` classes.
+- **Colors**: use semantic tokens (`text-foreground`, `text-muted-foreground`, `bg-card`, `bg-muted`) over hardcoded Tailwind palette colors.
+- **Icons**: import from `@/lib/icons` (lucide-named wrappers around hugeicons). Never add `lucide-react` back.
 - **shadcn primitives** in `src/components/ui/` over custom UI.
+- **Status colors**: raw Tailwind (`bg-green-100`, `text-amber-900`, etc.) for payment/signup states — no custom token layer.
 
 ## Copy and formatting
 

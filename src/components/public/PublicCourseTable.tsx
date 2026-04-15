@@ -59,8 +59,8 @@ function getTimeRange(course: PublicCourseWithDetails): string {
  * Dot color class based on availability variant.
  */
 const DOT_COLORS: Record<string, string> = {
-  success: 'bg-status-confirmed-text',
-  warning: 'bg-status-warning-text',
+  success: 'bg-green-800',
+  warning: 'bg-amber-900',
   neutral: 'bg-muted-foreground',
 };
 

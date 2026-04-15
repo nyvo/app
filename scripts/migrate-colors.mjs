@@ -43,6 +43,18 @@ const rules = [
   ['text-primary-muted', 'text-secondary'],
   ['border-primary-muted', 'border-secondary'],
 
+  // ── status: -text used as bg/border (for dots & error frames) ──
+  ['bg-status-confirmed-text', 'bg-green-800'],
+  ['bg-status-warning-text', 'bg-amber-900'],
+  ['bg-status-cancelled-text', 'bg-zinc-700'],
+  ['bg-status-error-text', 'bg-red-700'],
+  ['bg-status-info-text', 'bg-blue-900'],
+  ['border-status-error-text', 'border-red-700'],
+  ['border-status-warning-text', 'border-amber-900'],
+  ['border-status-confirmed-text', 'border-green-800'],
+  ['border-status-info-text', 'border-blue-900'],
+  ['border-status-cancelled-text', 'border-zinc-700'],
+
   // ── status: confirmed ──
   ['bg-status-confirmed-bg', 'bg-green-100'],
   ['border-status-confirmed-border', 'border-green-300'],

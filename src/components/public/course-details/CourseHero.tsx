@@ -15,8 +15,8 @@ export const CourseHero: React.FC<CourseHeroProps> = ({ title, spotsAvailable })
   const getAvailabilityLabel = () => {
     if (spotsAvailable === undefined) return null;
     if (spotsAvailable === 0) return { text: 'Fullt', dotClass: 'bg-muted-foreground' };
-    if (spotsAvailable <= 3) return { text: `${spotsAvailable} ${spotsAvailable === 1 ? 'plass' : 'plasser'} igjen`, dotClass: 'bg-status-warning-text' };
-    return { text: 'Ledige plasser', dotClass: 'bg-status-confirmed-text' };
+    if (spotsAvailable <= 3) return { text: `${spotsAvailable} ${spotsAvailable === 1 ? 'plass' : 'plasser'} igjen`, dotClass: 'bg-amber-900' };
+    return { text: 'Ledige plasser', dotClass: 'bg-green-800' };
   };
 
   const availability = getAvailabilityLabel();

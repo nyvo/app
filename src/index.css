@@ -7,7 +7,7 @@
 
 /* ============================================================
    shadcn preset `b1Z5aAzb6` (radix-vega) — foundation tokens.
-   Single source of truth. Compat aliases below reference these.
+   Single source of truth for colors, radius, and font.
    ============================================================ */
 
 @theme inline {
@@ -189,9 +189,9 @@
 }
 
 @layer components {
-  /* ── Compat utilities (removed in later commits) ── */
+  /* ── App utilities — not part of the preset, reused across the app ── */
 
-  /* Focus Ring — removed after components migrated to shadcn defaults */
+  /* Focus Ring — opt-in helper for custom clickable surfaces */
   .focus-ring {
     outline: none;
   }

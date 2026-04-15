@@ -96,7 +96,7 @@ When making design recommendations, draw from these systems:
 ### When given a page or component to review:
 
 1. **Read the file completely** — understand the full component tree
-2. **Read `DESIGN_SYSTEM.md`** — understand the rules
+2. **Read `src/index.css` + `CLAUDE.md`** — understand the shadcn preset tokens and project rules
 3. **Identify the page type** — dashboard, list, detail, form, settings
 4. **Apply the right density** — dense for data, default for content, comfortable for onboarding
 5. **Check hierarchy** — is the most important thing obvious?

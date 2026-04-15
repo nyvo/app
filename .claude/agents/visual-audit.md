@@ -29,7 +29,7 @@ Screenshots are saved to `/tmp/visual-audit/` with filenames like:
 
 ## Step 2: Read the Design System
 
-Read `DESIGN_SYSTEM.md` completely before analyzing screenshots.
+Read `src/index.css` (shadcn preset tokens) and `CLAUDE.md` completely before analyzing screenshots.
 
 ## Step 3: Analyze Each Screenshot
 

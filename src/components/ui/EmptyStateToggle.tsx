@@ -9,7 +9,7 @@ const EmptyStateToggle = () => {
       className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium smooth-transition hover:bg-muted"
       title="Toggle empty state for testing"
     >
-      <span className={`h-2 w-2 rounded-full ${showEmptyState ? 'bg-status-warning-text' : 'bg-status-confirmed-text'}`} />
+      <span className={`h-2 w-2 rounded-full ${showEmptyState ? 'bg-amber-900' : 'bg-green-800'}`} />
       {showEmptyState ? 'Tom' : 'Data'}
     </button>
   );

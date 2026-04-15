@@ -3,8 +3,8 @@
 Referanse for all norsk tekst i Ease. Målet er konsekvent, naturlig bokmål som følger
 designspråket: rolig, direkte, uten markedsspråk.
 
-> Denne filen utfyller [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) (tone, filosofi) og
-> [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (tokens, komponenter).
+> Denne filen utfyller [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) (tone, filosofi).
+> Tokens og komponenter kommer fra shadcn-preset `b1Z5aAzb6` i `src/index.css`.
 > Sentraliserte kopier finnes i `src/lib/auth-messages.ts`.
 
 ---

@@ -12,7 +12,7 @@ You are a responsive design specialist for this React + Tailwind CSS app. Your j
 - **Framework**: React with Tailwind CSS v4 (utility-first, mobile-first breakpoints)
 - **Breakpoints**: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px)
 - **Layout**: Teacher dashboard uses `SidebarProvider` + `TeacherSidebar` (collapsible) with `MobileTeacherHeader` for mobile
-- **Design system**: See `DESIGN_SYSTEM.md` for tokens, spacing, and typography rules
+- **Design system**: see `src/index.css` (shadcn preset `b1Z5aAzb6` / radix-vega) for tokens; typography is raw Tailwind utilities
 
 ## Output Format
 

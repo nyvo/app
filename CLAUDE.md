@@ -72,7 +72,9 @@
 
 ## Design System
 
-- Read `DESIGN_SYSTEM.md` before writing UI code
-- Use shadcn primitives over custom UI
-- The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance
-- If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing
+- The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the single source of truth for colors, radius, and font. `components.json` pins style to `radix-vega` and `iconLibrary` to `hugeicons`.
+- Use shadcn primitives from `@/components/ui/` over custom UI.
+- Icons: import from `@/lib/icons` (lucide-named wrappers around hugeicons). Do not install `lucide-react`.
+- Typography: use raw Tailwind utilities (`text-sm font-medium`, `text-3xl font-semibold tracking-tight`, etc.) — no `type-*` classes.
+- The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance.
+- If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing.
