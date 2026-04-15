@@ -66,7 +66,7 @@ function SectionDivider({
   first?: boolean;
 }) {
   return (
-    <div className={`flex items-center justify-between -mx-6 bg-surface-muted px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'}`}>
+    <div className={`flex items-center justify-between -mx-6 bg-muted px-6 py-2 ${first ? 'border-b border-border' : 'border-y border-border'}`}>
       <span className="text-xs font-medium tracking-wide text-muted-foreground">{label}</span>
       {onEdit && (
         <Button

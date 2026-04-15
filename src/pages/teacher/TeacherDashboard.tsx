@@ -496,8 +496,8 @@ const TeacherDashboard = () => {
                 <DashboardSkeleton />
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <div className="mb-4 rounded-full bg-surface-muted p-4">
-                    <AlertCircle className="h-8 w-8 text-status-error-text stroke-[1.5]" />
+                  <div className="mb-4 rounded-full bg-muted p-4">
+                    <AlertCircle className="h-8 w-8 text-red-700 stroke-[1.5]" />
                   </div>
                   <h3 className="text-base font-medium mb-1 text-foreground">Kunne ikke laste oversikten</h3>
                   <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
@@ -652,7 +652,7 @@ const TeacherDashboard = () => {
 
               <div className="flex flex-col gap-3 py-2">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg border border-border bg-surface-muted p-2">
+                  <div className="mt-0.5 rounded-lg border border-border bg-muted p-2">
                     <Shield className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>

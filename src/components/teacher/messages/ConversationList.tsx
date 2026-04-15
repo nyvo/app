@@ -66,10 +66,10 @@ export function ConversationList({
               onClick={() => onSelect(conversation)}
               className={`group relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left ios-ease ${
                 activeConversationId === conversation.id && !isComposing
-                  ? 'border-border bg-surface-muted'
+                  ? 'border-border bg-muted'
                   : conversation.is_read
-                  ? 'border-transparent hover:bg-surface-muted opacity-70 hover:opacity-100'
-                  : 'border-transparent hover:bg-surface-muted'
+                  ? 'border-transparent hover:bg-muted opacity-70 hover:opacity-100'
+                  : 'border-transparent hover:bg-muted'
               }`}
             >
               <div className="relative shrink-0">
@@ -81,7 +81,7 @@ export function ConversationList({
                   className={activeConversationId !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
                 />
                 {conversation.unread_count > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-surface">
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-card">
                     {conversation.unread_count}
                   </span>
                 )}

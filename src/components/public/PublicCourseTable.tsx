@@ -160,8 +160,8 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               <div
                 className={cn(
                   "group flex items-center gap-4 px-6 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-surface-muted/30",
-                  isExpanded && "bg-surface-muted/30"
+                  isFull ? "opacity-40" : "hover:bg-muted/30",
+                  isExpanded && "bg-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
                 role="row"
@@ -256,8 +256,8 @@ export function PublicCourseTable({ courses, studioSlug }: PublicCourseTableProp
               <div
                 className={cn(
                   "group flex items-center gap-3 px-4 py-6 smooth-transition cursor-pointer",
-                  isFull ? "opacity-40" : "hover:bg-surface-muted/30",
-                  isExpanded && "bg-surface-muted/30"
+                  isFull ? "opacity-40" : "hover:bg-muted/30",
+                  isExpanded && "bg-muted/30"
                 )}
                 onClick={(e) => toggleExpand(course.id, e)}
               >

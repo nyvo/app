@@ -407,7 +407,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Lookup result card */}
                     {lookupDone && lookupResult && (
-                      <Card className="bg-surface-muted/50 p-4">
+                      <Card className="bg-muted/50 p-4">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
                             <Building className="h-4 w-4 text-muted-foreground" />
@@ -417,7 +417,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                               <p className="text-sm font-medium truncate text-foreground">
                                 {lookupResult.name}
                               </p>
-                              <Check className="h-3.5 w-3.5 text-status-confirmed-text shrink-0" />
+                              <Check className="h-3.5 w-3.5 text-green-800 shrink-0" />
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                               {lookupResult.orgForm && (

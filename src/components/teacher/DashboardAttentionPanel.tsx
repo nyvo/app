@@ -25,9 +25,9 @@ const iconMap = {
 } as const;
 
 const variantStyles: Record<AttentionVariant, { bg: string; text: string }> = {
-  warning: { bg: 'bg-surface-muted', text: 'text-foreground' },
-  neutral: { bg: 'bg-surface-muted', text: 'text-muted-foreground' },
-  success: { bg: 'bg-surface-muted', text: 'text-muted-foreground' },
+  warning: { bg: 'bg-muted', text: 'text-foreground' },
+  neutral: { bg: 'bg-muted', text: 'text-muted-foreground' },
+  success: { bg: 'bg-muted', text: 'text-muted-foreground' },
 };
 
 export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps) {
@@ -46,7 +46,7 @@ export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps)
                 <Link
                   key={item.id}
                   to={item.to}
-                  className="group flex items-center gap-4 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:bg-surface-muted/50"
+                  className="group flex items-center gap-4 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
                 >
                   <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${styles.bg} ${styles.text}`}>
                     <Icon className="h-4.5 w-4.5" />
@@ -63,7 +63,7 @@ export function DashboardAttentionPanel({ items }: DashboardAttentionPanelProps)
           </div>
         ) : (
           <div className="flex items-center gap-3 px-2 py-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div className="min-w-0">

@@ -408,7 +408,7 @@ export const SchedulePage = () => {
                             className={`w-full text-left rounded-lg border border-border p-4 smooth-transition outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                               selectedEvent?.id === event.id
                                 ? 'bg-primary/5 ring-1 ring-primary/20'
-                                : 'hover:bg-surface-muted/40'
+                                : 'hover:bg-muted/40'
                             }`}
                           >
                             <p className="text-sm font-medium text-foreground">{event.title}</p>

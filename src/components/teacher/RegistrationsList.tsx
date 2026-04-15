@@ -65,8 +65,8 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
             key={registration.id}
             to="/teacher/signups"
             className={cn(
-              "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50",
-              registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
+              "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50",
+              registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-amber-500"
             )}
           >
             <div className="flex-1 min-w-0">

@@ -99,7 +99,7 @@ export function ChatView({
           <>
             {/* Time Separator */}
             <div className="flex justify-center">
-              <span className="text-xs font-semibold tracking-widest uppercase rounded-full bg-surface-muted px-3 py-1 text-muted-foreground">
+              <span className="text-xs font-semibold tracking-widest uppercase rounded-full bg-muted px-3 py-1 text-muted-foreground">
                 I dag
               </span>
             </div>

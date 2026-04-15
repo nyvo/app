@@ -18,10 +18,10 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
       className={`block rounded-lg border border-border p-4 smooth-transition cursor-pointer ${
         isCompleted
-          ? 'bg-surface-muted'
+          ? 'bg-muted'
           : isActive
           ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
-          : 'bg-background hover:bg-surface-muted/50'
+          : 'bg-background hover:bg-muted/50'
       }`}
     >
       {/* Title row — most scannable */}
@@ -30,7 +30,7 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
           {event.title}
         </p>
         {isActive && (
-          <Badge variant="secondary" className="shrink-0 border-0 bg-status-confirmed-bg text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
+          <Badge variant="secondary" className="shrink-0 border-0 bg-green-100 text-green-800 ring-1 ring-inset ring-green-300">
             Pågår
           </Badge>
         )}

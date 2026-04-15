@@ -148,14 +148,14 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
               onClick={handleCopy}
               className={`cursor-pointer flex items-center gap-1.5 border px-3 py-1.5 rounded-lg text-xs font-medium smooth-transition shrink-0 ${
                 copied
-                  ? 'bg-status-confirmed-bg border-status-confirmed-border text-status-confirmed-text'
+                  ? 'bg-green-100 border-green-300 text-green-800'
                   : 'bg-background border-border hover:bg-muted text-muted-foreground'
               }`}
             >
               {copied ? (
                 <>
-                  <Check className="h-3 w-3 text-status-confirmed-text" />
-                  <span className="text-status-confirmed-text">Kopiert</span>
+                  <Check className="h-3 w-3 text-green-800" />
+                  <span className="text-green-800">Kopiert</span>
                 </>
               ) : (
                 <span>Kopier</span>

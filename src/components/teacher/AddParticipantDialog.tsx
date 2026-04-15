@@ -219,7 +219,7 @@ export function AddParticipantDialog({
             {/* Error banner */}
             {submitError && (
               <Alert variant="error" icon={false}>
-                <p className="text-sm text-status-error-text">{submitError}</p>
+                <p className="text-sm text-red-700">{submitError}</p>
               </Alert>
             )}
 
@@ -249,7 +249,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.firstName && touched.firstName
-                      ? 'border-status-error-text bg-status-error-bg animate-shake'
+                      ? 'border-status-error-text bg-red-100 animate-shake'
                       : ''
                   }
                 />
@@ -257,7 +257,7 @@ export function AddParticipantDialog({
                   <p
                     id="firstName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
                   >
                     {errors.firstName}
                   </p>
@@ -288,7 +288,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.lastName && touched.lastName
-                      ? 'border-status-error-text bg-status-error-bg animate-shake'
+                      ? 'border-status-error-text bg-red-100 animate-shake'
                       : ''
                   }
                 />
@@ -296,7 +296,7 @@ export function AddParticipantDialog({
                   <p
                     id="lastName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
                   >
                     {errors.lastName}
                   </p>
@@ -323,7 +323,7 @@ export function AddParticipantDialog({
                 disabled={isSubmitting}
                 className={
                   errors.email && touched.email
-                    ? 'border-status-error-text bg-status-error-bg animate-shake'
+                    ? 'border-status-error-text bg-red-100 animate-shake'
                     : ''
                 }
               />
@@ -331,7 +331,7 @@ export function AddParticipantDialog({
                 <p
                   id="email-error"
                   role="alert"
-                  className="text-xs font-medium tracking-wide mt-1.5 text-status-error-text"
+                  className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
                 >
                   {errors.email}
                 </p>

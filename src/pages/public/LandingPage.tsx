@@ -129,7 +129,7 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full md:max-w-[50%]">
               <div className="flex items-center gap-3 mb-4">
-                <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+                <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-muted text-foreground">
                   1
                 </div>
                 <h3 className="text-base font-medium text-foreground">
@@ -142,7 +142,7 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Mini weekly calendar mockup */}
-            <div className="absolute bottom-0 right-0 hidden h-3/4 w-1/2 translate-x-4 translate-y-4 rounded-tl-2xl border-l border-t border-border bg-surface-muted p-5 md:block">
+            <div className="absolute bottom-0 right-0 hidden h-3/4 w-1/2 translate-x-4 translate-y-4 rounded-tl-2xl border-l border-t border-border bg-muted p-5 md:block">
               <div className="grid grid-cols-5 gap-2 text-center mb-3">
                 {['Man', 'Tir', 'Ons', 'Tor', 'Fre'].map((day) => (
                   <span key={day} className="text-xs font-medium tracking-wide text-muted-foreground">{day}</span>
@@ -153,11 +153,11 @@ const LandingPage = () => {
                   <p className="text-xs font-medium tracking-wide">Vinyasa</p>
                   <p className="text-xs font-medium tracking-wide opacity-70">09:00</p>
                 </div>
-                <div className="col-start-3 rounded-lg border border-border bg-surface p-2">
+                <div className="col-start-3 rounded-lg border border-border bg-card p-2">
                   <p className="text-xs font-medium tracking-wide text-foreground">Yin Yoga</p>
                   <p className="text-xs font-medium tracking-wide text-muted-foreground">18:00</p>
                 </div>
-                <div className="col-start-5 rounded-lg border border-border bg-surface p-2">
+                <div className="col-start-5 rounded-lg border border-border bg-card p-2">
                   <p className="text-xs font-medium tracking-wide text-foreground">Flow</p>
                   <p className="text-xs font-medium tracking-wide text-muted-foreground">10:00</p>
                 </div>
@@ -165,7 +165,7 @@ const LandingPage = () => {
                   <p className="text-xs font-medium tracking-wide">Morgen</p>
                   <p className="text-xs font-medium tracking-wide opacity-70">07:30</p>
                 </div>
-                <div className="col-start-4 rounded-lg border border-border bg-surface p-2 opacity-50">
+                <div className="col-start-4 rounded-lg border border-border bg-card p-2 opacity-50">
                   <p className="text-xs font-medium tracking-wide text-foreground">Restorative</p>
                   <p className="text-xs font-medium tracking-wide text-muted-foreground">19:00</p>
                 </div>
@@ -180,7 +180,7 @@ const LandingPage = () => {
             className="relative overflow-hidden rounded-lg bg-background border border-border p-8 ios-ease group flex flex-col"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-muted text-foreground">
                 2
               </div>
               <h3 className="text-base font-medium text-foreground">
@@ -192,7 +192,7 @@ const LandingPage = () => {
               meldinger frem og tilbake.
             </p>
             {/* Mini course page mockup */}
-            <div className="relative mt-auto flex w-full items-center justify-center overflow-hidden rounded-lg bg-surface-muted p-6">
+            <div className="relative mt-auto flex w-full items-center justify-center overflow-hidden rounded-lg bg-muted p-6">
               <div className="w-full max-w-[280px] rounded-lg border border-border bg-background p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -226,7 +226,7 @@ const LandingPage = () => {
           >
             <div className="relative z-10 w-full mb-8">
               <div className="flex items-center gap-3 mb-4">
-              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-surface-muted text-foreground">
+              <div className="text-sm font-medium flex size-8 items-center justify-center rounded-full border border-border bg-muted text-foreground">
                 3
               </div>
               <h3 className="text-base font-medium text-foreground">
@@ -239,9 +239,9 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Notification stack mockup */}
-            <div className="relative mt-auto flex w-full flex-col gap-3 rounded-lg border border-border bg-surface-muted p-6">
+            <div className="relative mt-auto flex w-full flex-col gap-3 rounded-lg border border-border bg-muted p-6">
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-                  <div className="size-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text flex-shrink-0">
+                  <div className="size-8 rounded-full bg-green-100 flex items-center justify-center text-green-800 flex-shrink-0">
                     <Check className="size-4" />
                   </div>
                   <div>
@@ -250,7 +250,7 @@ const LandingPage = () => {
                   </div>
                </div>
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-                  <div className="size-8 rounded-full bg-status-info-bg flex items-center justify-center text-status-info-text flex-shrink-0">
+                  <div className="size-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 flex-shrink-0">
                      <div className="size-1.5 rounded-full bg-status-info-text" />
                   </div>
                   <div>
@@ -259,7 +259,7 @@ const LandingPage = () => {
                   </div>
                </div>
                <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-                  <div className="size-8 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text flex-shrink-0">
+                  <div className="size-8 rounded-full bg-green-100 flex items-center justify-center text-green-800 flex-shrink-0">
                     <Mail className="size-4" />
                   </div>
                   <div>
@@ -330,7 +330,7 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="relative">
-                <div className="rounded-lg border border-border bg-surface-muted/50 p-8">
+                <div className="rounded-lg border border-border bg-muted/50 p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
@@ -340,7 +340,7 @@ const LandingPage = () => {
                         {formatKroner(42500)}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="bg-status-confirmed-bg text-status-confirmed-text border-0">
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-0">
                       +12 %
                     </Badge>
                   </div>
@@ -375,7 +375,7 @@ const LandingPage = () => {
                 Integrert med Fiken. Hvert salg bokføres automatisk.
               </p>
             </div>
-            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-partner-fiken flex items-center justify-center overflow-hidden">
+            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-[#5239ba] flex items-center justify-center overflow-hidden">
               <img
                 src="/badges/fiken-hovedlogo.svg"
                 alt="Fiken"
@@ -401,9 +401,9 @@ const LandingPage = () => {
                 Automatiske e-poster til deltakere. Påminnelser, kvitteringer og meldinger.
               </p>
             </div>
-            <div className="relative mt-auto -mx-8 -mb-8 flex flex-col gap-3 border-t border-border bg-surface-muted p-6">
+            <div className="relative mt-auto -mx-8 -mb-8 flex flex-col gap-3 border-t border-border bg-muted p-6">
               <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-                <div className="size-7 rounded-full bg-status-info-bg flex items-center justify-center text-status-info-text flex-shrink-0">
+                <div className="size-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-900 flex-shrink-0">
                   <Clock className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
@@ -412,7 +412,7 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-                <div className="size-7 rounded-full bg-status-confirmed-bg flex items-center justify-center text-status-confirmed-text flex-shrink-0">
+                <div className="size-7 rounded-full bg-green-100 flex items-center justify-center text-green-800 flex-shrink-0">
                   <Check className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
@@ -469,7 +469,7 @@ const LandingPage = () => {
           <Button
             asChild
             size="lg"
-            className="border-input bg-background px-6 text-foreground hover:bg-surface-muted"
+            className="border-input bg-background px-6 text-foreground hover:bg-muted"
           >
             <Link to="/signup">Kom i gang</Link>
           </Button>
@@ -531,31 +531,31 @@ const LandingPage = () => {
             </div>
             <ul className="space-y-4 mb-8 flex-1">
               <li className="text-sm flex items-start gap-3 text-muted-foreground">
-                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
+                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Ubegrenset antall kurs og elever</span>
               </li>
               <li className="text-sm flex items-start gap-3 text-muted-foreground">
-                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
+                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Nettbetaling med Vipps og kort</span>
               </li>
               <li className="text-sm flex items-start gap-3 text-muted-foreground">
-                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
+                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Automatiske påminnelser til elever</span>
               </li>
               <li className="text-sm flex items-start gap-3 text-muted-foreground">
-                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
+                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Fiken-integrasjon for regnskap</span>
               </li>
               <li className="text-sm flex items-start gap-3 text-muted-foreground">
-                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-surface-muted">
+                <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3 text-foreground" />
                 </div>
                 <span>Egen påmeldingsside med ditt design</span>

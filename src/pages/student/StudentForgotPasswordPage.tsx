@@ -79,8 +79,8 @@ const StudentForgotPasswordPage = () => {
           </p>
         }
       >
-        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
-          <CheckCircle2 className="size-8 text-status-confirmed-text" />
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
+          <CheckCircle2 className="size-8 text-green-800" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">

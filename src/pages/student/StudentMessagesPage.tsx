@@ -119,7 +119,7 @@ const StudentMessagesPage = () => {
         <p className="text-sm text-muted-foreground">Kommuniser med instruktørene dine</p>
       </div>
 
-      <Card className="flex min-h-[480px] overflow-hidden border-border bg-surface">
+      <Card className="flex min-h-[480px] overflow-hidden border-border bg-card">
         {/* Conversation List */}
         <div className={cn(
           'w-full md:w-80 lg:w-96 flex-col border-r border-border',
@@ -152,8 +152,8 @@ const StudentMessagesPage = () => {
                     className={cn(
                       'w-full flex items-start gap-3 p-3 rounded-lg text-left transition-colors',
                       activeConversation?.id === conversation.id
-                        ? 'bg-surface-muted'
-                        : 'hover:bg-surface-muted'
+                        ? 'bg-muted'
+                        : 'hover:bg-muted'
                     )}
                   >
                     <UserAvatar
@@ -253,7 +253,7 @@ const StudentMessagesPage = () => {
                             'px-4 py-3 rounded-lg',
                             isFromStudent
                               ? 'bg-primary text-primary-foreground rounded-br-sm'
-                              : 'bg-surface-muted rounded-bl-sm'
+                              : 'bg-muted rounded-bl-sm'
                           )}>
                             <p className={cn(
                               'text-sm leading-relaxed',
@@ -265,7 +265,7 @@ const StudentMessagesPage = () => {
                           <span className="text-xs font-medium tracking-wide flex items-center gap-1 px-1 text-muted-foreground">
                             {formatMessageTimestamp(message.created_at)}
                             {isFromStudent && message.is_read && (
-                              <CheckCheck className="h-3 w-3 text-status-confirmed-text" />
+                              <CheckCheck className="h-3 w-3 text-green-800" />
                             )}
                           </span>
                         </div>

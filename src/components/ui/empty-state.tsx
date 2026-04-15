@@ -37,7 +37,7 @@ export const EmptyState = React.memo(function EmptyState({
         <div className={cn(
           'mb-4 flex items-center justify-center rounded-lg border border-border',
           isCompact ? 'size-10' : 'size-12',
-          isPublic ? 'bg-surface-muted' : 'bg-background'
+          isPublic ? 'bg-muted' : 'bg-background'
         )}>
           <Icon className={cn(isCompact ? 'size-4' : 'size-5', 'text-muted-foreground')} />
         </div>

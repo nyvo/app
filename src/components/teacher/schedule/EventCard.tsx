@@ -33,7 +33,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       }`}
       style={positionStyle}
     >
-      <div className="bg-surface-muted rounded-md h-full p-2 flex flex-col">
+      <div className="bg-muted rounded-md h-full p-2 flex flex-col">
         {isCompact ? (
           <div className="flex items-center gap-1.5">
             <TypeIcon className="size-3 shrink-0 text-muted-foreground" />
@@ -54,7 +54,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
                 </p>
               </div>
               {isActive && (
-                <Badge variant="secondary" className="shrink-0 border-0 bg-status-confirmed-bg px-1.5 py-0.5 text-xxs text-status-confirmed-text ring-1 ring-inset ring-status-confirmed-border">
+                <Badge variant="secondary" className="shrink-0 border-0 bg-green-100 px-1.5 py-0.5 text-xxs text-green-800 ring-1 ring-inset ring-green-300">
                   Pågår
                 </Badge>
               )}

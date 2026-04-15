@@ -82,7 +82,7 @@ const StudentDashboardPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
           <p className="text-sm text-muted-foreground">Her finner du kursene dine.</p>
         </div>
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-card">
           <div className="flex min-h-[320px] flex-col items-center justify-center" role="status" aria-live="polite">
             <Spinner size="xl" className="mb-4" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">Henter kurs</p>
@@ -99,7 +99,7 @@ const StudentDashboardPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
           <p className="text-sm text-muted-foreground">Her finner du kursene dine.</p>
         </div>
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-card">
           <EmptyState
             icon={AlertCircle}
             title="Noe gikk galt"
@@ -156,7 +156,7 @@ const StudentDashboardPage = () => {
               : false;
 
             return (
-              <div className="rounded-lg border border-border bg-surface">
+              <div className="rounded-lg border border-border bg-card">
                 <EmptyState
                   icon={isNewUser ? Search : CalendarX}
                   title={isNewUser ? 'Velkommen til Ease' : 'Ingen kommende kurs'}
@@ -188,7 +188,7 @@ const StudentDashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-border bg-surface">
+            <div className="rounded-lg border border-border bg-card">
               <EmptyState
                 icon={Clock}
                 title="Ingen tidligere kurs"

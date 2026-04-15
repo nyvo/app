@@ -72,7 +72,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
 
         <div className="space-y-3">
           <label htmlFor="compose-message-body" className="text-xs font-medium ml-1 text-foreground">Melding</label>
-          <div className="rounded-lg border border-border bg-surface-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+          <div className="rounded-lg border border-border bg-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
             <Textarea
               id="compose-message-body"
               rows={8}
@@ -99,7 +99,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
                           key={emoji}
                           onClick={() => setBody(prev => prev + emoji)}
                           aria-label={emoji}
-                          className="rounded p-2 text-xl transition-[background-color] hover:bg-surface-muted"
+                          className="rounded p-2 text-xl transition-[background-color] hover:bg-muted"
                         >
                           <span aria-hidden="true">{emoji}</span>
                         </button>

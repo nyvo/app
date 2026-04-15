@@ -330,7 +330,7 @@ const PublicCourseDetailPage = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background" role="status" aria-live="polite">
-        <Card className="w-full max-w-lg border-border bg-surface">
+        <Card className="w-full max-w-lg border-border bg-card">
           <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 text-center">
             <Spinner size="xl" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">Laster kurs</p>
@@ -354,7 +354,7 @@ const PublicCourseDetailPage = () => {
           </div>
         </header>
         <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
-          <Card className="border-border bg-surface">
+          <Card className="border-border bg-card">
             <EmptyState
               title={fetchError || 'Kurset ble ikke funnet'}
               description="Siden kan være flyttet, utilgjengelig eller ikke lenger aktiv."

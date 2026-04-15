@@ -644,7 +644,7 @@ const CourseDetailPage = () => {
                     <StatusBadge status="draft" size="sm" />
                   )}
                   {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="text-xs font-medium tracking-wide inline-flex items-center gap-1.5 rounded-md bg-surface-muted px-2 py-0.5 text-foreground">
+                    <span className="text-xs font-medium tracking-wide inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-foreground">
                       <span className="inline-flex size-1.5 rounded-full bg-foreground/70" />
                       <span>
                         {courseData?.status === 'upcoming' ? 'Kommende' : 'Aktiv'}
@@ -723,15 +723,15 @@ const CourseDetailPage = () => {
         {/* Page Content */}
         <div className="flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
           <div className="mx-auto w-full max-w-6xl">
-            <Card className="overflow-hidden border-border bg-surface">
-              <div className="border-b border-border bg-surface-muted/40 px-6 py-3 sm:px-8">
+            <Card className="overflow-hidden border-border bg-card">
+              <div className="border-b border-border bg-muted/40 px-6 py-3 sm:px-8">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
                   <TabsList className="bg-transparent p-0">
                     <TabsTrigger value="overview" className="text-sm font-medium">Oversikt</TabsTrigger>
                     <TabsTrigger value="participants" className="text-sm font-medium">
                       <span className="inline-flex items-center gap-2.5">
                         Deltakere
-                        <span className="text-xs font-medium tracking-wide rounded-lg bg-surface-muted px-2 py-0.5 text-muted-foreground">
+                        <span className="text-xs font-medium tracking-wide rounded-lg bg-muted px-2 py-0.5 text-muted-foreground">
                           {course.enrolled}
                         </span>
                       </span>
@@ -964,7 +964,7 @@ const CourseDetailPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg bg-surface-muted px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">Totalt refusjon</span>
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>

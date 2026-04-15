@@ -179,7 +179,7 @@ export const CourseParticipantsTab = ({
                 </tr>
               ) : (
                 filteredParticipants.map((participant) => (
-                  <tr key={participant.id} className="group smooth-transition hover:bg-surface-muted">
+                  <tr key={participant.id} className="group smooth-transition hover:bg-muted">
                     {/* Navn */}
                     <td className="px-4 py-4 sm:px-6">
                       <div className="flex min-w-0 items-center gap-3">
@@ -205,7 +205,7 @@ export const CourseParticipantsTab = ({
                           href={participant.receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-surface-muted hover:text-foreground"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
                           aria-label="Åpne kvittering"
                           title="Åpne kvittering"
                         >

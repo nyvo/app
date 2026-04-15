@@ -36,8 +36,8 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
         <div
           className={`rounded-lg px-4 py-3 ${
             isOutgoing
-              ? 'bg-surface-subtle text-foreground rounded-br-sm'
-              : 'bg-surface-muted rounded-bl-sm'
+              ? 'bg-muted text-foreground rounded-br-sm'
+              : 'bg-muted rounded-bl-sm'
           }`}
         >
           <p
@@ -55,7 +55,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
         >
           {formatMessageTimestamp(message.created_at)}
           {isOutgoing && message.is_read && (
-            <CheckCheck className="h-3 w-3 text-status-confirmed-text" />
+            <CheckCheck className="h-3 w-3 text-green-800" />
           )}
         </span>
       </div>

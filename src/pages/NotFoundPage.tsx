@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 const NotFoundPage = () => {
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">

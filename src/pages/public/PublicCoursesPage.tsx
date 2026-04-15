@@ -256,7 +256,7 @@ const PublicCoursesPage = () => {
               </div>
 
               {courses.length > 2 && (
-                <Card className="border-border bg-surface-muted p-5">
+                <Card className="border-border bg-muted p-5">
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <p className="text-base font-medium text-foreground">Finn riktig kurs</p>
@@ -277,7 +277,7 @@ const PublicCoursesPage = () => {
 
             {/* Empty State */}
             {isEmpty && (
-              <Card className="border-border bg-surface">
+              <Card className="border-border bg-card">
                 <EmptyState
                   icon={hasCoursesButNoResults ? Search : BookOpen}
                   title={hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}

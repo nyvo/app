@@ -38,9 +38,9 @@ const FilterTabs = React.forwardRef<HTMLDivElement, FilterTabsProps>(
           ref={ref}
           className={cn(
             "flex items-center relative overflow-x-auto no-scrollbar",
-            variant === "contained" ? "h-9 w-fit max-w-full gap-0 rounded-lg bg-surface-muted border border-input"
+            variant === "contained" ? "h-9 w-fit max-w-full gap-0 rounded-lg bg-muted border border-input"
               : variant === "pill" ? "gap-1.5"
-              : "h-9 gap-1 rounded-lg bg-surface-muted p-1",
+              : "h-9 gap-1 rounded-lg bg-muted p-1",
             className
           )}
           role="tablist"
@@ -90,15 +90,15 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         case "pill":
           return isActive
             ? "bg-primary text-primary-foreground rounded-lg"
-            : "text-muted-foreground hover:text-foreground hover:bg-surface rounded-lg border border-transparent"
+            : "text-muted-foreground hover:text-foreground hover:bg-card rounded-lg border border-transparent"
         case "contained":
           return isActive
-            ? "bg-surface text-foreground border border-border"
+            ? "bg-card text-foreground border border-border"
             : "bg-transparent text-muted-foreground hover:text-foreground"
         default:
           return isActive
-            ? "bg-surface text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground hover:bg-surface/70"
+            ? "bg-card text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground hover:bg-card/70"
       }
     }
 
@@ -124,7 +124,7 @@ const FilterTab = React.forwardRef<HTMLButtonElement, FilterTabProps>(
         {variant === "contained" && isActive && (
           <motion.div
             layoutId={context.layoutId}
-            className="absolute inset-0 rounded-md bg-surface border border-border"
+            className="absolute inset-0 rounded-md bg-card border border-border"
             transition={{ type: "spring", stiffness: 500, damping: 35 }}
           />
         )}

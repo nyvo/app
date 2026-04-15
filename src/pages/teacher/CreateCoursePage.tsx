@@ -431,7 +431,7 @@ const CreateCoursePage = () => {
             />
           </div>
 
-          <div className="rounded-xl border border-border bg-surface p-6 sm:p-8">
+          <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
             <div className="pb-2">
                 {currentStep === 0 && (
               <motion.div
@@ -521,7 +521,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs font-medium tracking-wide ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
+                      <p className={`text-xs font-medium tracking-wide ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-amber-500') : 'text-muted-foreground'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>

@@ -150,7 +150,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                     "text-sm font-medium rounded-md border px-0 py-2 text-center transition-[background-color,border-color,color]",
                     selectedHour === hour
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"
+                      : "border-border bg-card text-foreground hover:border-input hover:bg-accent"
                   )}
                 >
                   {padTimePart(hour)}
@@ -172,7 +172,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                     "text-sm font-medium min-w-14 rounded-md border px-3 py-2 text-center transition-[background-color,border-color,color]",
                     selectedMinute === minute
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"
+                      : "border-border bg-card text-foreground hover:border-input hover:bg-accent"
                   )}
                 >
                   {padTimePart(minute)}

@@ -16,7 +16,7 @@ function BentoCard({ count, label, to, icon: Icon }: BentoCardProps) {
     <motion.div variants={listItemVariants}>
       <Link
         to={to}
-        className="group flex flex-col justify-between rounded-lg border border-border-strong bg-surface p-4 sm:p-5 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50 h-full min-h-[100px] sm:min-h-[112px]"
+        className="group flex flex-col justify-between rounded-lg border border-border bg-card p-4 sm:p-5 outline-none smooth-transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 h-full min-h-[100px] sm:min-h-[112px]"
       >
         <div className="flex items-center justify-between">
           <span className="text-4xl font-semibold tracking-tight tabular-nums leading-none text-foreground">

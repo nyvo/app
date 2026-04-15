@@ -23,31 +23,31 @@ const variantConfig: Record<IndicatorVariant, {
   defaultIcon?: React.ComponentType<{ className?: string }>;
 }> = {
   success: {
-    bg: 'bg-status-confirmed-bg',
-    text: 'text-status-confirmed-text',
+    bg: 'bg-green-100',
+    text: 'text-green-800',
   },
   warning: {
-    bg: 'bg-status-warning-bg',
-    text: 'text-status-warning-text',
+    bg: 'bg-amber-100',
+    text: 'text-amber-900',
     defaultIcon: Clock,
   },
   error: {
-    bg: 'bg-status-error-bg',
-    text: 'text-status-error-text',
+    bg: 'bg-red-100',
+    text: 'text-red-700',
     defaultIcon: XCircle,
   },
   neutral: {
-    bg: 'bg-status-cancelled-bg',
-    text: 'text-status-cancelled-text',
+    bg: 'bg-zinc-100',
+    text: 'text-zinc-700',
   },
   critical: {
-    bg: 'bg-status-error-bg',
-    text: 'text-status-error-text',
+    bg: 'bg-red-100',
+    text: 'text-red-700',
     defaultIcon: AlertTriangle,
   },
   info: {
-    bg: 'bg-status-info-bg',
-    text: 'text-status-info-text',
+    bg: 'bg-blue-100',
+    text: 'text-blue-900',
   },
 };
 

@@ -18,7 +18,7 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
         <Card className="p-6">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-md">
-              <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-surface-muted">
+              <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-muted">
                 <Calendar className="size-5 text-muted-foreground stroke-[1.5]" />
               </div>
               <h3 className="text-xl font-semibold tracking-tight mb-2 text-foreground">
@@ -48,7 +48,7 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
           <div className="min-w-0 flex-1">
             <div className="mb-4 flex items-center gap-3">
               <Badge variant="outline" className="gap-2 border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-primary-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-success"></span>
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                 {classData.startsIn}
               </Badge>
             </div>
@@ -81,7 +81,7 @@ export const UpcomingClassCard = ({ classData, hideHeader = false }: UpcomingCla
               </p>
             </div>
 
-            <Button asChild variant="outline-soft" size="compact" className="border-primary-foreground/15 bg-background text-foreground hover:bg-surface-muted">
+            <Button asChild variant="outline-soft" size="compact" className="border-primary-foreground/15 bg-background text-foreground hover:bg-muted">
               <span>
                 Gå til kurs
                 <ArrowRight className="h-3.5 w-3.5" />

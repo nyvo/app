@@ -59,7 +59,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button aria-label="Brukermeny" className="flex size-8 items-center justify-center rounded-full bg-surface-muted smooth-transition hover:bg-surface">
+                <button aria-label="Brukermeny" className="flex size-8 items-center justify-center rounded-full bg-muted smooth-transition hover:bg-card">
                   <User className="size-4 text-foreground" />
                 </button>
               </DropdownMenuTrigger>

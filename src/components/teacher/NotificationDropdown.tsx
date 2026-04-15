@@ -14,26 +14,26 @@ const SEVERITY_STYLES: Record<NotificationSeverity, {
   Icon: typeof CircleAlert;
 }> = {
   danger: {
-    card: 'bg-status-error-bg border-status-error-border',
-    icon: 'text-status-error-text',
+    card: 'bg-red-100 border-red-300',
+    icon: 'text-red-700',
     dot: 'bg-status-error-text',
     Icon: CircleAlert,
   },
   warning: {
-    card: 'bg-status-warning-bg border-status-warning-border',
-    icon: 'text-status-warning-text',
+    card: 'bg-amber-100 border-amber-300',
+    icon: 'text-amber-900',
     dot: 'bg-status-warning-text',
     Icon: TriangleAlert,
   },
   success: {
-    card: 'bg-status-confirmed-bg border-status-confirmed-border',
-    icon: 'text-status-confirmed-text',
+    card: 'bg-green-100 border-green-300',
+    icon: 'text-green-800',
     dot: 'bg-status-confirmed-text',
     Icon: CircleCheck,
   },
   neutral: {
-    card: 'bg-status-info-bg border-status-info-border',
-    icon: 'text-status-info-text',
+    card: 'bg-blue-100 border-blue-300',
+    icon: 'text-blue-900',
     dot: 'bg-status-info-text',
     Icon: Bell,
   },

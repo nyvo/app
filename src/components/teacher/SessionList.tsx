@@ -95,7 +95,7 @@ export const SessionList: React.FC<SessionListProps> = ({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="divide-y divide-border">
           {visibleSessions.map((session) => {
             const isPast = isSessionPast(session.originalDate);
@@ -106,19 +106,19 @@ export const SessionList: React.FC<SessionListProps> = ({
                 {/* Session row */}
                 <div
                   className={`group flex items-center justify-between gap-4 px-6 py-4 smooth-transition ${
-                    isPast ? 'bg-surface-muted/30 text-muted-foreground' : 'hover:bg-surface-muted/60'
+                    isPast ? 'bg-muted/30 text-muted-foreground' : 'hover:bg-muted/60'
                   }`}
                 >
                   <div className={`flex min-w-0 items-center gap-4 ${isPast ? 'opacity-60' : ''}`}>
                     <DateBadge
                       dateStr={session.originalDate?.split('T')[0]}
-                      className={isPast ? 'border-border/70 bg-surface-muted text-muted-foreground' : undefined}
+                      className={isPast ? 'border-border/70 bg-muted text-muted-foreground' : undefined}
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className={`text-sm font-medium ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
                         {!isPast && session.isNext ? (
-                          <Badge variant="secondary" className="border border-border bg-surface-muted text-foreground">
+                          <Badge variant="secondary" className="border border-border bg-muted text-foreground">
                             Neste
                           </Badge>
                         ) : null}
@@ -141,8 +141,8 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                 {/* Inline edit panel */}
                 {isEditing && (
-                  <div className="border-t border-border bg-surface-muted/40 px-6 py-4">
-                    <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
+                  <div className="border-t border-border bg-muted/40 px-6 py-4">
+                    <div className="space-y-4 rounded-lg border border-border bg-card p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>

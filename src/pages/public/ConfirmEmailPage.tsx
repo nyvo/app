@@ -43,7 +43,7 @@ const ConfirmEmailPage = () => {
 
   return (
     <AuthLayout context="teacher" title="" customContent>
-      <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
+      <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
         <Mail className="size-5 text-muted-foreground" />
       </div>
 

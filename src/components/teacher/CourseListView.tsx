@@ -68,13 +68,13 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
         src={src}
         alt={alt}
         onError={handleError}
-        className="size-14 rounded-lg object-cover shrink-0 bg-surface-muted"
+        className="size-14 rounded-lg object-cover shrink-0 bg-muted"
       />
     );
   }
 
   return (
-    <div className="size-14 rounded-lg bg-surface-muted flex items-center justify-center shrink-0">
+    <div className="size-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
       <ImageIcon className="size-5 text-muted-foreground/40" />
     </div>
   );
@@ -90,7 +90,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
   return (
     <Link
       to={`/teacher/courses/${course.courseId}`}
-      className="flex items-center gap-3 rounded-lg border border-border p-3 smooth-transition hover:bg-surface-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="flex items-center gap-3 rounded-lg border border-border p-3 smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
     >
       <CourseImage src={course.imageUrl} alt={course.courseTitle} />
       <div className="flex-1 min-w-0">

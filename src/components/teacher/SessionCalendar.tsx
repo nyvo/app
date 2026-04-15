@@ -158,7 +158,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">Valgt</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-[3px] border border-border bg-surface-muted" />
+                <span className="h-2.5 w-2.5 rounded-[3px] border border-border bg-muted" />
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">I dag</span>
               </div>
             </div>

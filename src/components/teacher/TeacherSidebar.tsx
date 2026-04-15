@@ -119,7 +119,7 @@ export const TeacherSidebar = () => {
               <div className="flex items-center gap-1">
                 <SidebarMenuButton asChild size="lg" className="flex-1">
                   <Link to="/teacher">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-emphasis text-surface-emphasis-foreground">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                       <Leaf className="h-4 w-4" />
                     </div>
                     <span className="font-medium">Ease</span>

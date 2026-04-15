@@ -66,10 +66,10 @@ const StudentProfilePage = () => {
           </p>
         </div>
 
-        <Card className="overflow-hidden border-border bg-surface">
+        <Card className="overflow-hidden border-border bg-card">
           <div className="space-y-8 p-6 sm:p-8">
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <User className="size-4" />
               </div>
               <div className="flex-1">
@@ -86,7 +86,7 @@ const StudentProfilePage = () => {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Mail className="size-4" />
               </div>
               <div className="flex-1">
@@ -100,7 +100,7 @@ const StudentProfilePage = () => {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Phone className="size-4" />
               </div>
               <div className="flex-1">
@@ -118,7 +118,7 @@ const StudentProfilePage = () => {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-muted text-muted-foreground">
+              <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Calendar className="size-4" />
               </div>
               <div className="flex-1">
@@ -135,7 +135,7 @@ const StudentProfilePage = () => {
           </div>
 
           {isDirty && (
-            <div className="flex justify-end border-t border-border bg-surface-muted/50 px-6 py-4 sm:px-8">
+            <div className="flex justify-end border-t border-border bg-muted/50 px-6 py-4 sm:px-8">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}

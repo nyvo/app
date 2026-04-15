@@ -156,7 +156,7 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center">
         <div className="text-center max-w-xs px-4" role="status" aria-live="polite" aria-atomic="true">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <Spinner size="xl" className="text-foreground" />
           </div>
           <p className="text-sm font-medium mb-2 text-foreground">{getLoadingMessage()}</p>
@@ -189,8 +189,8 @@ const CheckoutSuccessPage = () => {
         <main className="pt-24 px-4 sm:px-6 pb-24">
           <div className="mx-auto max-w-lg text-center">
             <Card className="p-8 md:p-12">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
-                <AlertCircle className="h-8 w-8 text-status-error-text" />
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <AlertCircle className="h-8 w-8 text-red-700" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
                 Noe gikk galt
@@ -258,8 +258,8 @@ const CheckoutSuccessPage = () => {
 
             {/* Left Column: Success Message */}
             <div className="flex flex-col justify-center text-center md:text-left pt-4 md:pt-8">
-              <div className="mx-auto md:mx-0 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
-                <CheckCircle2 className="h-8 w-8 text-status-confirmed-text" />
+              <div className="mx-auto md:mx-0 mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                <CheckCircle2 className="h-8 w-8 text-green-800" />
               </div>
 
               <h1 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">

@@ -55,7 +55,7 @@ function CourseRow({
   return (
     <Link
       to={`/teacher/courses/${id}`}
-      className="group flex items-center gap-2 sm:gap-3 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:bg-surface-muted/50"
+      className="group flex items-center gap-2 sm:gap-3 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
     >
       <DateBadge dateStr={dateStr} />
       <div className="min-w-0 flex-1">

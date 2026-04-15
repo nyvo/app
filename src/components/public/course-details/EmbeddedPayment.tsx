@@ -98,7 +98,7 @@ function PaymentForm({
       </Button>
 
       {/* Order summary */}
-      <div className="space-y-3 rounded-lg bg-surface-muted p-4">
+      <div className="space-y-3 rounded-lg bg-muted p-4">
         <div className="flex justify-between items-center">
           <span className="text-sm text-foreground">{courseName}</span>
           <span className="text-sm text-foreground">{formatKroner(price)}</span>

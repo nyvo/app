@@ -586,7 +586,7 @@ const TeacherProfilePage = () => {
 
                               {/* Expanded password form */}
                               {passwordExpanded && (
-                                  <div className="mt-4 space-y-4 rounded-lg bg-surface-muted p-6 animate-in fade-in slide-in-from-top-1 duration-200 ease-out">
+                                  <div className="mt-4 space-y-4 rounded-lg bg-muted p-6 animate-in fade-in slide-in-from-top-1 duration-200 ease-out">
                                       <div>
                                           <label htmlFor="current-password" className="text-xs font-medium mb-1.5 block text-foreground">Nåværende passord</label>
                                           <div className="relative">

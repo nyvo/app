@@ -58,8 +58,8 @@ export function MobileDayView({
                 selectedDayIndex === index
                   ? 'bg-primary text-primary-foreground'
                   : day.isToday
-                  ? 'bg-surface-muted text-foreground border border-border'
-                  : 'bg-background hover:bg-surface-muted text-muted-foreground'
+                  ? 'bg-muted text-foreground border border-border'
+                  : 'bg-background hover:bg-muted text-muted-foreground'
               }`}
             >
               <span className="text-xs font-medium tracking-wide">{day.name.slice(0, 3)}</span>
@@ -76,8 +76,8 @@ export function MobileDayView({
         ) : error ? (
           <div className="flex items-center justify-center h-64 p-6">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-status-error-bg border border-status-error-border">
-                <CalendarDays className="h-7 w-7 text-status-error-text" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-red-100 border border-red-300">
+                <CalendarDays className="h-7 w-7 text-red-700" />
               </div>
               <h3 className="text-base font-medium mb-1 text-foreground">Noe gikk galt</h3>
               <p className="text-sm mb-4 text-muted-foreground">{error}</p>

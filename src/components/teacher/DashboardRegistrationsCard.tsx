@@ -14,7 +14,7 @@ function SignupRow({ registration }: { registration: Registration }) {
   return (
     <Link
       to="/teacher/signups"
-      className="group flex items-center gap-2 sm:gap-3 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-surface-muted/50 focus-visible:bg-surface-muted/50"
+      className="group flex items-center gap-2 sm:gap-3 rounded-lg px-2 py-3 outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
     >
       <UserAvatar
         name={registration.participant.name}
@@ -41,7 +41,7 @@ export function DashboardRegistrationsCard({ registrations }: DashboardRegistrat
       <Card className="p-3 sm:p-4">
         {recentRegistrations.length === 0 ? (
         <div className="flex items-center gap-2 sm:gap-3 py-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
             <UserPlus className="h-4 w-4" />
           </div>
           <p className="text-sm font-medium text-foreground">Ingen nye påmeldinger</p>

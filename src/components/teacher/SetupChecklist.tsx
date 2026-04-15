@@ -31,7 +31,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
           </div>
           {/* Progress bar */}
           <div
-            className="h-1 overflow-hidden rounded-full bg-surface-muted"
+            className="h-1 overflow-hidden rounded-full bg-muted"
             role="progressbar"
             aria-valuenow={completedCount}
             aria-valuemin={0}
@@ -55,7 +55,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
               <div
                 key={step.id}
                 className={`flex items-start gap-3 rounded-lg px-3 py-3 transition-[background-color] duration-150 ${
-                  isNext ? 'bg-surface-muted' : ''
+                  isNext ? 'bg-muted' : ''
                 }`}
               >
                 {/* Step number */}
@@ -89,8 +89,8 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
                 {/* Completed check (right side) */}
                 {step.isComplete && (
-                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-status-confirmed-bg border border-status-confirmed-border">
-                    <Check className="h-3 w-3 text-status-confirmed-text" />
+                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-green-100 border border-green-300">
+                    <Check className="h-3 w-3 text-green-800" />
                   </div>
                 )}
 

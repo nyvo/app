@@ -21,7 +21,7 @@ export const TicketSelector: React.FC<TicketSelectorProps> = ({ price }) => {
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="space-y-3 rounded-lg bg-surface-muted p-4">
+    <div className="space-y-3 rounded-lg bg-muted p-4">
       {/* Course fee */}
       <div className="flex justify-between items-center">
         <span className="text-sm text-foreground">Kursavgift</span>

@@ -99,8 +99,8 @@ const ResetPasswordPage = () => {
   if (isValidSession === false) {
     return (
       <AuthLayout context="teacher" title="" customContent>
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
-          <AlertCircle className="size-8 text-status-error-text" />
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+          <AlertCircle className="size-8 text-red-700" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -128,8 +128,8 @@ const ResetPasswordPage = () => {
   if (resetSuccess) {
     return (
       <AuthLayout context="teacher" title="" customContent>
-        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-surface-subtle">
-          <CheckCircle2 className="size-8 text-status-confirmed-text" />
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
+          <CheckCircle2 className="size-8 text-green-800" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -187,7 +187,7 @@ const ResetPasswordPage = () => {
           onBlur={() => handleBlur('confirmPassword')}
         />
 
-        <div className="rounded-lg bg-surface-muted p-3">
+        <div className="rounded-lg bg-muted p-3">
           <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
           <ul className="text-xs font-medium tracking-wide ml-3 space-y-0.5 text-muted-foreground">
             <li className="list-disc">Minst 8 tegn</li>

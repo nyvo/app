@@ -39,13 +39,13 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
             <nav className="hidden md:flex items-center gap-1" aria-label="Studentnavigasjon">
               <Link
                 to="/student/dashboard"
-                className="text-sm font-medium rounded-lg bg-surface-muted px-3 py-2 text-foreground transition-colors"
+                className="text-sm font-medium rounded-lg bg-muted px-3 py-2 text-foreground transition-colors"
               >
                 Mine kurs
               </Link>
               <Link
                 to="/student/messages"
-                className="text-sm font-medium flex items-center gap-1.5 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                className="text-sm font-medium flex items-center gap-1.5 rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <MessageCircle className="h-4 w-4" />
                 Meldinger

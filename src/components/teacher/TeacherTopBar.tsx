@@ -90,7 +90,7 @@ export function TeacherTopBar() {
   const crumbs = breadcrumbs ?? getBreadcrumbs(location.pathname);
 
   return (
-    <div className="hidden h-14 shrink-0 items-center justify-between gap-4 border-b border-border-strong px-6 md:flex lg:px-8">
+    <div className="hidden h-14 shrink-0 items-center justify-between gap-4 border-b border-border px-6 md:flex lg:px-8">
       <Breadcrumb className="min-w-0 flex-1">
         <BreadcrumbList className="text-xs font-medium gap-2 text-muted-foreground">
           {crumbs.map((crumb, index) => {

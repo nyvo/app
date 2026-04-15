@@ -28,7 +28,7 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
         <Link
           key={message.id}
           to={`/teacher/messages/${message.id}`}
-          className="group flex cursor-pointer items-center gap-3.5 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="group flex cursor-pointer items-center gap-3.5 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <div className="relative flex-shrink-0">
             <UserAvatar

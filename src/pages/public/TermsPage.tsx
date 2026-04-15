@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 
 const TermsPage = () => {
   return (
-    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
@@ -41,7 +41,7 @@ const TermsPage = () => {
             </p>
           </div>
 
-          <Card className="border-border bg-surface p-6 sm:p-8">
+          <Card className="border-border bg-card p-6 sm:p-8">
             <div className="space-y-10">
               <section className="space-y-4">
                 <h2 className="text-base font-medium text-foreground">1. Påmelding og betaling</h2>

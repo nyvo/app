@@ -85,7 +85,7 @@ const StripeCallbackPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
       {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none">
@@ -103,7 +103,7 @@ const StripeCallbackPage = () => {
         <div className="w-full flex flex-col items-center text-center">
           {state === 'loading' && (
             <>
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <Spinner size="md" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
@@ -117,8 +117,8 @@ const StripeCallbackPage = () => {
 
           {state === 'incomplete' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
-                <AlertCircle className="size-5 text-status-warning-text" />
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
+                <AlertCircle className="size-5 text-amber-900" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
                 Betalingsoppsettet er ikke fullført
@@ -144,8 +144,8 @@ const StripeCallbackPage = () => {
 
           {state === 'error' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
-                <AlertCircle className="size-5 text-status-error-text" />
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
+                <AlertCircle className="size-5 text-red-700" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
                 Noe gikk galt
@@ -171,8 +171,8 @@ const StripeCallbackPage = () => {
 
           {state === 'success' && (
             <>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-surface-muted">
-                <CheckCircle2 className="size-5 text-status-confirmed-text" />
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
+                <CheckCircle2 className="size-5 text-green-800" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
                 Betalinger er klare

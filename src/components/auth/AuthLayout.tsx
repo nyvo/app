@@ -37,7 +37,7 @@ export function AuthLayout({
 
   return (
     <div className={cn(
-      "min-h-screen w-full text-foreground antialiased flex flex-col selection:bg-surface-muted selection:text-foreground",
+      "min-h-screen w-full text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground",
       isStudent ? "bg-background" : "bg-background"
     )}>
       {/* Header */}
@@ -61,7 +61,7 @@ export function AuthLayout({
           transition={authPageTransition}
           className="w-full max-w-md"
         >
-          <Card className="border-border bg-surface p-6 sm:p-8">
+          <Card className="border-border bg-card p-6 sm:p-8">
             {customContent ? (
               <div className="flex flex-col items-center">
                 {children}

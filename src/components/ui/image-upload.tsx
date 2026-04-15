@@ -184,14 +184,14 @@ export function ImageUpload({
             smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
             ${
               dragActive
-                ? 'border-ring bg-surface'
-                : 'border-input bg-surface hover:border-ring'
+                ? 'border-ring bg-card'
+                : 'border-input bg-card hover:border-ring'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-destructive' : ''}
           `}
         >
-          <div className="h-10 w-10 rounded-lg bg-surface border border-input flex items-center justify-center">
+          <div className="h-10 w-10 rounded-lg bg-card border border-input flex items-center justify-center">
             <ImagePlus className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="text-center">

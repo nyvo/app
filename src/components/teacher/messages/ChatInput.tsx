@@ -31,7 +31,7 @@ export function ChatInput({
 }: ChatInputProps) {
   return (
     <div className="bg-background p-6 pt-2">
-      <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-surface-muted p-2 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+      <div className="relative flex flex-col gap-2 rounded-lg border border-border bg-muted p-2 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
         <Textarea
           rows={rows}
           placeholder={placeholder}
@@ -71,7 +71,7 @@ export function ChatInput({
                       key={emoji}
                       onClick={() => onChange(value + emoji)}
                       aria-label={emoji}
-                      className="rounded p-2 text-xl transition-[background-color] hover:bg-surface-muted"
+                      className="rounded p-2 text-xl transition-[background-color] hover:bg-muted"
                     >
                       <span aria-hidden="true">{emoji}</span>
                     </button>

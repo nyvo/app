@@ -176,11 +176,11 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               </p>
               {course.capacity > 0 && (
                 course.enrolled >= course.capacity ? (
-                  <Badge variant="secondary" className="mb-2 border border-border bg-surface-muted text-foreground">
+                  <Badge variant="secondary" className="mb-2 border border-border bg-muted text-foreground">
                     Fullt
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="mb-2 border border-border bg-surface-muted text-foreground">
+                  <Badge variant="secondary" className="mb-2 border border-border bg-muted text-foreground">
                     {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
                   </Badge>
                 )
@@ -222,7 +222,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 />
               </div>
             ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center bg-surface-muted lg:aspect-square">
+              <div className="flex aspect-video w-full flex-col items-center justify-center bg-muted lg:aspect-square">
                 <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
               </div>
             )}
@@ -280,7 +280,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <Card className="overflow-hidden divide-y divide-border">
             {recentParticipants.map((p) => (
               <div key={p.id} className="flex items-center gap-3 px-6 py-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted">
                   <span className="text-xs font-medium tracking-wide text-muted-foreground">
                     {p.name.charAt(0).toUpperCase()}
                   </span>

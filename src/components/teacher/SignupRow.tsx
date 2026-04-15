@@ -24,7 +24,7 @@ export function SignupRow({ signup, actionHandlers }: SignupRowProps) {
   return (
     <div className={cn(
       "flex items-start gap-3 px-3 py-3",
-      !isCancelled && "hover:bg-surface-muted/40",
+      !isCancelled && "hover:bg-muted/40",
       isCancelled && "opacity-60"
     )}>
       <UserAvatar

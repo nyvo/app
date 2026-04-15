@@ -173,7 +173,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                 </div>
 
                 {isExpanded && (
-                  <div className="border-t border-border/30 bg-surface-muted/30 px-6 py-4 space-y-4">
+                  <div className="border-t border-border/30 bg-muted/30 px-6 py-4 space-y-4">
                     {/* Address */}
                     <div>
                       <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Adresse</p>
@@ -252,7 +252,7 @@ export function LocationsManager({ organizationId, locations, onChanged }: Locat
                           {loc.rooms.map((room, i) => (
                             <span
                               key={room}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground"
                             >
                               {room}
                               <button

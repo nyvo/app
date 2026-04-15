@@ -206,7 +206,7 @@ export const CourseSettingsTab = ({
               <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
               <p className="text-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
             </div>
-            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-surface">
+            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-card">
               <ImageUpload
                 value={settingsImageUrl}
                 onChange={(file) => {
@@ -319,7 +319,7 @@ export const CourseSettingsTab = ({
         </div>
         {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
           <Alert variant="warning" size="sm" icon={false}>
-            <p className="text-xs font-medium tracking-wide text-status-warning-text">
+            <p className="text-xs font-medium tracking-wide text-amber-900">
               Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
             </p>
           </Alert>
@@ -440,7 +440,7 @@ export const CourseSettingsTab = ({
           <h3 className="text-base font-medium text-foreground">Avlys kurs</h3>
           <p className="text-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
         </div>
-        <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-muted px-4 py-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-4 rounded-lg bg-muted px-4 py-4 sm:flex-row sm:items-center">
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
             <p className="text-sm text-muted-foreground">
@@ -463,7 +463,7 @@ export const CourseSettingsTab = ({
       <div className="flex justify-end gap-3 pt-2">
         {saveError && (
           <Alert variant="error" size="sm" icon={Info} className="mr-auto">
-            <span className="text-sm text-status-error-text">{saveError}</span>
+            <span className="text-sm text-red-700">{saveError}</span>
           </Alert>
         )}
 
