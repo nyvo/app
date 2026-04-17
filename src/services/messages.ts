@@ -14,11 +14,6 @@ export interface ConversationWithDetails extends Conversation {
   unread_count: number
 }
 
-// Message with sender info
-export interface MessageWithSender extends Message {
-  sender_name?: string
-}
-
 // Raw conversation from Supabase with messages join
 interface ConversationWithMessages extends Conversation {
   messages: Message[]

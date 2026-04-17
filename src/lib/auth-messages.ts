@@ -22,9 +22,7 @@ export const AUTH_ERRORS = {
   emailAlreadyRegistered: 'E-posten er allerede registrert',
   generic: 'Noe gikk galt. Prøv igjen.',
   passwordNotUpdated: 'Passordet ble ikke oppdatert. Prøv igjen.',
-  accountCreatedOrgFailed: 'Kontoen ble opprettet, men studioet kunne ikke opprettes. Prøv å logge inn.',
   accountNotCreated: 'Kontoen ble ikke opprettet. Prøv igjen.',
-  orgNotCreated: 'Kunne ikke opprette studioet. Prøv igjen.',
   resendFailed: 'Kunne ikke sende e-post. Prøv igjen.',
   rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
 } as const

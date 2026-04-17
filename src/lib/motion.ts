@@ -106,15 +106,3 @@ export const slideTransitionFast: Transition = {
   ease,
 };
 
-// List stagger animation
-export const listContainerVariants: Variants = {
-  hidden: { opacity: 1 },
-  visible: { opacity: 1, transition: { staggerChildren: dur(40) } },
-};
-
-export const listItemVariants: Variants = {
-  hidden: { opacity: 0, y: 6 },
-  visible: { opacity: 1, y: 0, transition: { duration: dur(180), ease } },
-};
-
-
