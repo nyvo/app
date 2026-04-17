@@ -677,10 +677,6 @@ export interface Database {
         Args: { p_course_id: string }
         Returns: undefined
       }
-      link_guest_bookings: {
-        Args: Record<string, never>
-        Returns: number
-      }
       cleanup_old_webhook_events: {
         Args: Record<string, never>
         Returns: number
