@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Inbox, UserPlus, MessageSquare, type LucideIcon } from '@/lib/icons'
+import { UserPlus, MessageSquare, type LucideIcon } from '@/lib/icons'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -8,7 +8,6 @@ import {
   CardAction,
   CardContent,
 } from '@/components/ui/card'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatRelativeTimePast } from '@/utils/dateFormatting'
 import type { SignupWithDetails } from '@/services/signups'

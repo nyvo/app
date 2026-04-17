@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseLocalDate } from '@/utils/dateUtils'
 import type { Course } from '@/types/dashboard'

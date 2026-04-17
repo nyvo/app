@@ -6,8 +6,6 @@ import { MONTH_ABBR } from './types';
 interface ScheduleHeaderProps {
   displayedMonday: Date;
   weekOffset: number;
-  viewMode: 'day' | 'week';
-  onViewModeChange: (mode: 'day' | 'week') => void;
   onPreviousWeek: () => void;
   onNextWeek: () => void;
   hasCourses: boolean;
@@ -16,8 +14,6 @@ interface ScheduleHeaderProps {
 export function ScheduleHeader({
   displayedMonday,
   weekOffset,
-  viewMode,
-  onViewModeChange,
   onPreviousWeek,
   onNextWeek,
   hasCourses,

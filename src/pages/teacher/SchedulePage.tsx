@@ -48,7 +48,6 @@ export const SchedulePage = () => {
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(getOsloTime);
   const [weekOffset, setWeekOffset] = useState(0);
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('week');
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [selectedEventDate, setSelectedEventDate] = useState<string | undefined>();
 
@@ -225,10 +224,9 @@ export const SchedulePage = () => {
     return () => setAction(null);
   }, [setAction]);
 
-  // Clear selection on view/week change
   useEffect(() => {
     setSelectedEvent(null);
-  }, [viewMode, weekOffset]);
+  }, [weekOffset]);
 
   const showSidebar = !!selectedEvent && !isMobile;
 
@@ -270,11 +268,8 @@ export const SchedulePage = () => {
           <ScheduleHeader
             displayedMonday={displayedMonday}
             weekOffset={weekOffset}
-            viewMode="day"
-            onViewModeChange={() => {}}
             onPreviousWeek={goToPreviousWeek}
             onNextWeek={goToNextWeek}
-
             hasCourses={!isFullyEmpty}
           />
           <MobileDayView
@@ -297,11 +292,8 @@ export const SchedulePage = () => {
             <ScheduleHeader
               displayedMonday={displayedMonday}
               weekOffset={weekOffset}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
               onPreviousWeek={goToPreviousWeek}
               onNextWeek={goToNextWeek}
-  
               hasCourses={!isFullyEmpty}
             />
 
@@ -316,7 +308,7 @@ export const SchedulePage = () => {
                   onRetry={loadScheduleData}
                   className="flex-1 pt-[20vh] h-auto"
                 />
-              ) : !isLoading && viewMode === 'week' && (
+              ) : !isLoading && (
                 <>
                   {/* Sticky day headers */}
                   <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
@@ -378,50 +370,6 @@ export const SchedulePage = () => {
                 </>
               )}
 
-              {!isLoading && viewMode === 'day' && (
-                <div className="p-6">
-                  {(() => {
-                    const todayIndex = weekDays.findIndex(d => d.isToday);
-                    const dayIndex = todayIndex !== -1 ? todayIndex : 0;
-                    const dayEvents = (currentEvents[dayIndex] || []).sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-                    if (dayEvents.length === 0) {
-                      return (
-                        <EmptyState
-                          icon={CalendarDays}
-                          title="Ingen timer i dag"
-                          description="Ingen planlagte timer i dag."
-                          variant="compact"
-                          className="py-16"
-                        />
-                      );
-                    }
-
-                    return (
-                      <div className="max-w-xl space-y-2">
-                        {dayEvents.map(event => (
-                          <button
-                            key={event.id}
-                            type="button"
-                            onClick={() => handleSelectEvent(event)}
-                            className={`w-full text-left rounded-lg border border-border p-4 smooth-transition outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
-                              selectedEvent?.id === event.id
-                                ? 'bg-primary/5 ring-1 ring-primary/20'
-                                : 'hover:bg-muted/40'
-                            }`}
-                          >
-                            <p className="text-sm font-medium text-foreground">{event.title}</p>
-                            <p className="text-xs font-medium tracking-wide text-muted-foreground mt-0.5">
-                              {formatTime(event.startTime)} – {formatTime(event.endTime)}
-                              {event.location !== 'Ikke angitt' && ` · ${event.location}`}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
             </div>
           </div>
 
