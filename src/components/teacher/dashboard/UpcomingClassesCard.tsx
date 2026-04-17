@@ -4,10 +4,8 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardAction,
   CardContent,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseLocalDate } from '@/utils/dateUtils'
@@ -18,16 +16,9 @@ interface UpcomingClassesCardProps {
 }
 
 const DAY_NAMES = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const
+const MONTH_ABBR = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const
 
-function getWeekBounds(): { monday: Date; sunday: Date } {
-  const now = new Date()
-  const day = now.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  return { monday, sunday }
-}
+const UPCOMING_LIMIT = 3
 
 function toDate(dateStr?: string): Date | null {
   if (!dateStr) return null
@@ -36,33 +27,37 @@ function toDate(dateStr?: string): Date | null {
   return new Date(parsed.year, parsed.month - 1, parsed.day)
 }
 
-function formatDayLabel(dateStr: string): string {
-  const date = toDate(dateStr)
-  if (!date) return ''
-  const today = new Date()
-  const isToday = date.getFullYear() === today.getFullYear() &&
-    date.getMonth() === today.getMonth() &&
-    date.getDate() === today.getDate()
-  if (isToday) return 'I dag'
-  const tomorrow = new Date(today)
-  tomorrow.setDate(today.getDate() + 1)
-  const isTomorrow = date.getFullYear() === tomorrow.getFullYear() &&
-    date.getMonth() === tomorrow.getMonth() &&
-    date.getDate() === tomorrow.getDate()
-  if (isTomorrow) return 'I morgen'
-  const name = DAY_NAMES[date.getDay()]
-  return name.charAt(0).toUpperCase() + name.slice(1)
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
+function getCurrentWeekSunday(today: Date): Date {
+  const day = today.getDay()
+  const daysToSunday = day === 0 ? 0 : 7 - day
+  const sunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + daysToSunday)
+  return sunday
+}
+
+function formatDayLabel(dateStr: string, today: Date, weekSunday: Date): string {
+  const date = toDate(dateStr)
+  if (!date) return ''
+  const target = startOfDay(date)
+  if (target.getTime() === today.getTime()) return 'I dag'
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+  if (target.getTime() === tomorrow.getTime()) return 'I morgen'
+  if (target <= weekSunday) {
+    const name = DAY_NAMES[target.getDay()]
+    return name.charAt(0).toUpperCase() + name.slice(1)
+  }
+  return `${target.getDate()}. ${MONTH_ABBR[target.getMonth()]}`
+}
 
 export function UpcomingClassesCard({ courses }: UpcomingClassesCardProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Neste kurs</CardTitle>
-        <CardAction>
-          <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne uken</Badge>
-        </CardAction>
       </CardHeader>
       <CardContent className="px-0">
         {courses === null ? <UpcomingSkeleton /> : <UpcomingBody courses={courses} />}
@@ -72,37 +67,26 @@ export function UpcomingClassesCard({ courses }: UpcomingClassesCardProps) {
 }
 
 function UpcomingBody({ courses }: { courses: Course[] }) {
-  const { monday, sunday } = getWeekBounds()
+  const today = startOfDay(new Date())
+  const weekSunday = getCurrentWeekSunday(today)
 
-  const thisWeek = courses.filter((course) => {
-    const date = toDate(course.date)
-    if (!date) return false
-    return date >= monday && date <= sunday
-  })
+  const upcoming = courses
+    .filter((course) => {
+      const date = toDate(course.date)
+      return date !== null && date >= today
+    })
+    .sort((a, b) => {
+      const byDate = (a.date || '').localeCompare(b.date || '')
+      if (byDate !== 0) return byDate
+      return (a.time || '').localeCompare(b.time || '')
+    })
+    .slice(0, UPCOMING_LIMIT)
 
-  // Group by date
-  const grouped = new Map<string, Course[]>()
-  for (const course of thisWeek) {
-    if (!course.date) continue
-    const existing = grouped.get(course.date)
-    if (existing) {
-      existing.push(course)
-    } else {
-      grouped.set(course.date, [course])
-    }
-  }
-
-  // Sort groups by date, sort courses within each group by time
-  const sortedDays = [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b))
-  for (const [, dayCourses] of sortedDays) {
-    dayCourses.sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-  }
-
-  if (sortedDays.length === 0) {
+  if (upcoming.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-8">
         <div className="text-center">
-          <p className="text-sm font-medium text-foreground">Ingen kurs denne uken</p>
+          <p className="text-sm font-medium text-foreground">Ingen kommende kurs</p>
           <p className="text-xs text-muted-foreground mt-1">Opprett kurs for å fylle timeplanen</p>
         </div>
         <Button asChild size="sm" className="gap-1.5">
@@ -115,16 +99,14 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
     )
   }
 
-  const allCourses = sortedDays.flatMap(([, dayCourses]) => dayCourses)
-
   return (
     <div className="space-y-3">
-      {allCourses.map((course) => {
+      {upcoming.map((course) => {
         const hasAttendance = course.signups != null && course.capacity != null && course.capacity > 0
         return (
           <div key={`${course.id}-${course.date}-${course.time}`} className="grid grid-cols-[theme(spacing.16)_1fr] pl-6 pr-6">
             <span className="text-xs font-medium text-muted-foreground">
-              {formatDayLabel(course.date!)}
+              {formatDayLabel(course.date!, today, weekSunday)}
             </span>
             <Link
               to={`/teacher/courses/${course.id}`}
