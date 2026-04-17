@@ -2,16 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { formatKroner } from './utils'
 
 describe('formatKroner', () => {
-  it('returns "Gratis" for 0', () => {
-    expect(formatKroner(0)).toBe('Gratis')
+  it('returns "0 kr" for 0', () => {
+    expect(formatKroner(0)).toBe('0 kr')
   })
 
-  it('returns "Gratis" for null', () => {
-    expect(formatKroner(null)).toBe('Gratis')
+  it('returns "0 kr" for null', () => {
+    expect(formatKroner(null)).toBe('0 kr')
   })
 
-  it('returns "Gratis" for undefined', () => {
-    expect(formatKroner(undefined)).toBe('Gratis')
+  it('returns "0 kr" for undefined', () => {
+    expect(formatKroner(undefined)).toBe('0 kr')
   })
 
   it('formats small amounts without separator', () => {

@@ -33,8 +33,7 @@ export function toggleEmptyState(): void {
 }
 
 export function formatKroner(amount: number | null | undefined): string {
-  if (amount == null || amount === 0) return 'Gratis';
-  return `${amount.toLocaleString('nb-NO')} kr`;
+  return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -49,7 +49,7 @@
 ## Formatting & Copy Rules
 
 - **Currency**: Always use `formatKroner()` from `@/lib/utils` to display NOK amounts. Never write `${amount} kr` inline — it skips the Norwegian thousands separator (e.g. `2200 kr` vs correct `2 200 kr`).
-  - Returns `"Gratis"` for 0/null, otherwise `"1 200 kr"` with proper `nb-NO` locale formatting.
+  - Returns `"0 kr"` for 0/null/undefined, otherwise `"1 200 kr"` with proper `nb-NO` locale formatting.
   - In Supabase Edge Functions: use the local `formatKr()` helper in `send-email/index.ts` (same logic, can't import from `@/lib`).
 - **Copy/text**: Follow `COPY_STYLE_GUIDE.md` for all Norwegian text.
 - **Dates**: `nb-NO` locale. Format: `22. mars 2026`, `kl. 18:00`

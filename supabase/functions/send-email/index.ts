@@ -10,8 +10,7 @@ if (!resendKey) {
 
 /** Format a kroner amount with Norwegian thousands separator, e.g. "2 200 kr". */
 function formatKr(amount: number | null | undefined): string {
-  if (!amount) return 'Gratis';
-  return `${amount.toLocaleString('nb-NO')} kr`;
+  return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
 }
 
 const resend = new Resend(resendKey || '')
