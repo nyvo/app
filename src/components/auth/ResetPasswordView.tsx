@@ -1,0 +1,212 @@
+import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { CheckCircle2, AlertCircle } from '@/lib/icons'
+import { Button } from '@/components/ui/button'
+import { Alert } from '@/components/ui/alert'
+import { Spinner } from '@/components/ui/spinner'
+import { supabase } from '@/lib/supabase'
+import { useFormValidation } from '@/hooks/use-form-validation'
+import { AuthLayout } from '@/components/auth/AuthLayout'
+import { AuthFormField } from '@/components/auth/AuthFormField'
+import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
+
+interface ResetPasswordViewProps {
+  context: 'teacher' | 'student'
+}
+
+export const ResetPasswordView = ({ context }: ResetPasswordViewProps) => {
+  const routes = AUTH_ROUTES[context]
+
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateField, validateForm } =
+    useFormValidation({
+      initialValues: { password: '', confirmPassword: '' },
+      rules: {
+        password: {
+          validate: (value) => {
+            if (!value.trim()) return AUTH_VALIDATION.passwordNewRequired
+            if (value.length < 8) return AUTH_VALIDATION.passwordMinLength
+            return undefined
+          },
+        },
+        confirmPassword: {
+          validate: (value, fd) => {
+            if (!value.trim()) return AUTH_VALIDATION.passwordConfirmRequired
+            if (fd.password !== value) return AUTH_VALIDATION.passwordMismatch
+            return undefined
+          },
+        },
+      },
+    })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState(false)
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error || !session) {
+        setIsValidSession(false)
+        return
+      }
+      setIsValidSession(true)
+    }
+    checkSession()
+  }, [])
+
+  const handlePasswordChange = (value: string) => {
+    handleChange('password', value)
+    if (touched.confirmPassword) {
+      setTimeout(() => validateField('confirmPassword'), 0)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    setIsSubmitting(true)
+    setErrors({})
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: formData.password,
+      })
+
+      if (error) {
+        setErrors({ general: AUTH_ERRORS.passwordNotUpdated })
+        setIsSubmitting(false)
+        return
+      }
+
+      setResetSuccess(true)
+      setIsSubmitting(false)
+    } catch {
+      setErrors({ general: AUTH_ERRORS.generic })
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isValidSession === null) {
+    return (
+      <div className="min-h-screen w-full bg-background text-foreground antialiased flex items-center justify-center">
+        <Spinner size="xl" />
+      </div>
+    )
+  }
+
+  if (isValidSession === false) {
+    return (
+      <AuthLayout context={context} title="" customContent>
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+          <AlertCircle className="size-8 text-red-700" />
+        </div>
+
+        <div className="text-center mb-8 space-y-2 w-full">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Ugyldig lenke
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Lenken er utløpt eller fungerer ikke.
+          </p>
+        </div>
+
+        <div className="w-full space-y-3">
+          <Button asChild className="w-full h-11">
+            <Link to={routes.forgotPassword}>Be om ny lenke</Link>
+          </Button>
+          <Button asChild variant="outline-soft" className="w-full h-11">
+            <Link to={routes.login}>Til innlogging</Link>
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  if (resetSuccess) {
+    return (
+      <AuthLayout context={context} title="" customContent>
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
+          <CheckCircle2 className="size-8 text-green-800" />
+        </div>
+
+        <div className="text-center mb-8 space-y-2 w-full">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Passordet er oppdatert
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Du kan nå logge inn med det nye passordet.
+          </p>
+        </div>
+
+        <div className="w-full">
+          <Button asChild className="w-full h-11">
+            <Link to={routes.login}>Gå til innlogging</Link>
+          </Button>
+        </div>
+      </AuthLayout>
+    )
+  }
+
+  return (
+    <AuthLayout
+      context={context}
+      title="Tilbakestill passord"
+      subtitle="Velg et nytt passord."
+      footer={
+        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+          Trenger du hjelp?
+        </p>
+      }
+    >
+      <form className="w-full space-y-5" onSubmit={handleSubmit}>
+        <AuthFormField
+          id="password"
+          label="Nytt passord"
+          type="password"
+          value={formData.password}
+          error={errors.password}
+          touched={touched.password}
+          placeholder={AUTH_PLACEHOLDERS.passwordMin}
+          onChange={handlePasswordChange}
+          onBlur={() => handleBlur('password')}
+        />
+
+        <AuthFormField
+          id="confirmPassword"
+          label="Gjenta passord"
+          type="password"
+          value={formData.confirmPassword}
+          error={errors.confirmPassword}
+          touched={touched.confirmPassword}
+          placeholder={AUTH_PLACEHOLDERS.confirmPassword}
+          onChange={(v) => handleChange('confirmPassword', v)}
+          onBlur={() => handleBlur('confirmPassword')}
+        />
+
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
+          <ul className="text-xs font-medium tracking-wide ml-3 space-y-0.5 text-muted-foreground">
+            <li className="list-disc">Minst 8 tegn</li>
+          </ul>
+        </div>
+
+        {errors.general && (
+          <Alert variant="destructive" size="sm">
+            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
+          </Alert>
+        )}
+
+        <Button
+          type="submit"
+          loading={isSubmitting}
+          loadingText="Oppdaterer"
+          className="w-full h-11 mt-2"
+        >
+          Oppdater passord
+        </Button>
+      </form>
+    </AuthLayout>
+  )
+}
