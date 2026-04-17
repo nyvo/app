@@ -56,19 +56,9 @@ const StudentRegisterPage = () => {
     }
   }, [user, userType, navigate])
 
-  // Link guest bookings after user is created
   useEffect(() => {
-    async function linkBookings() {
-      if (!user?.id) return
-
-      try {
-        await linkGuestBookings()
-      } catch {
-        // Silent fail — guest booking linking is not critical
-      }
-    }
-
-    linkBookings()
+    if (!user?.id) return
+    linkGuestBookings()
   }, [user?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {

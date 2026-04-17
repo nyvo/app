@@ -5,7 +5,6 @@ import { Alert } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
 import { linkGuestBookings } from '@/services/studentSignups'
-import { logger } from '@/lib/logger'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
@@ -51,19 +50,9 @@ const StudentLoginPage = () => {
     }
   }, [user, userType, navigate])
 
-  // Link guest bookings after user logs in
   useEffect(() => {
-    async function linkBookings() {
-      if (!user?.id) return
-
-      try {
-        await linkGuestBookings()
-      } catch (err) {
-        logger.warn('Failed to link guest bookings:', err)
-      }
-    }
-
-    linkBookings()
+    if (!user?.id) return
+    linkGuestBookings()
   }, [user?.id])
 
   const handleSubmit = async (e: React.FormEvent) => {

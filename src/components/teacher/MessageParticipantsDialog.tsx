@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { sendEmail } from '@/services/emails';
-import { logger } from '@/lib/logger';
 
 interface Participant {
   name: string;
@@ -43,15 +42,14 @@ export function MessageParticipantsDialog({
 
     setIsSending(true);
 
-    try {
-      const subject = `Melding fra ${organizationName}: ${courseName}`;
-      const escapedMessage = trimmed
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\n/g, '<br>');
+    const subject = `Melding fra ${organizationName}: ${courseName}`;
+    const escapedMessage = trimmed
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
 
-      const html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -83,33 +81,29 @@ export function MessageParticipantsDialog({
 </body>
 </html>`;
 
-      const text = `Hei,\n\nDu har mottatt en melding om ${courseName}:\n\n${trimmed}\n\nHilsen,\n${organizationName}`;
+    const text = `Hei,\n\nDu har mottatt en melding om ${courseName}:\n\n${trimmed}\n\nHilsen,\n${organizationName}`;
 
-      const results = await Promise.allSettled(
-        participants.map((p) => sendEmail(p.email, subject, html, { text }))
-      );
+    const results = await Promise.allSettled(
+      participants.map((p) => sendEmail(p.email, subject, html, { text }))
+    );
 
-      const failed = results.filter(
-        (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
-      );
+    const failed = results.filter(
+      (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
+    );
 
-      if (failed.length === 0) {
-        toast.success(`Melding sendt til ${participants.length} deltaker${participants.length !== 1 ? 'e' : ''}`);
-        setMessage('');
-        onOpenChange(false);
-      } else if (failed.length < participants.length) {
-        toast.warning(`Sendt til ${participants.length - failed.length} av ${participants.length} deltakere`);
-        setMessage('');
-        onOpenChange(false);
-      } else {
-        toast.error('Kunne ikke sende melding. Prøv igjen.');
-      }
-    } catch (err) {
-      logger.error('Message participants error:', err);
-      toast.error('Noe gikk galt. Prøv igjen.');
-    } finally {
-      setIsSending(false);
+    if (failed.length === 0) {
+      toast.success(`Melding sendt til ${participants.length} deltaker${participants.length !== 1 ? 'e' : ''}`);
+      setMessage('');
+      onOpenChange(false);
+    } else if (failed.length < participants.length) {
+      toast.warning(`Sendt til ${participants.length - failed.length} av ${participants.length} deltakere`);
+      setMessage('');
+      onOpenChange(false);
+    } else {
+      toast.error('Kunne ikke sende melding. Prøv igjen.');
     }
+
+    setIsSending(false);
   };
 
   return (
