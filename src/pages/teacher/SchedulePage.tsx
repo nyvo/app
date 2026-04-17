@@ -37,14 +37,12 @@ export const SchedulePage = () => {
   const { setAction } = useTeacherShell();
   const isMobile = useIsMobile();
 
-  // Data state
   const [courses, setCourses] = useState<Course[]>([]);
   const [sessions, setSessions] = useState<SessionWithCourse[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // UI state
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(getOsloTime);
   const [weekOffset, setWeekOffset] = useState(0);

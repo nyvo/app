@@ -14,7 +14,6 @@ interface OrgMembership {
 export type UserType = 'student' | 'teacher' | null
 
 interface AuthContextType {
-  // Auth state
   user: User | null
   profile: Profile | null
   session: Session | null

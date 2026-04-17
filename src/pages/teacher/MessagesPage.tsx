@@ -28,13 +28,11 @@ const MessagesPage = () => {
   const senderName = profile?.name || 'Instruktør';
   const isMobile = useIsMobile();
 
-  // Data state
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  // UI state
   const [activeConversation, setActiveConversation] = useState<ConversationWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');

@@ -73,7 +73,6 @@ const TeacherProfilePage = () => {
     );
   }, [profile, currentOrganization, firstName, lastName, email, studioDescription, city]);
 
-  // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);

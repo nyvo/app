@@ -3,7 +3,6 @@
  * Centralised to prevent wording drift between teacher and student pages.
  */
 
-// --- Validation ---
 export const AUTH_VALIDATION = {
   emailRequired: 'Skriv inn e-posten din',
   emailInvalid: 'Sjekk at e-posten er riktig',
@@ -16,7 +15,6 @@ export const AUTH_VALIDATION = {
   studioNameRequired: 'Skriv inn navnet på studioet',
 } as const
 
-// --- Error responses ---
 export const AUTH_ERRORS = {
   invalidCredentials: 'E-post eller passord stemmer ikke',
   emailAlreadyRegistered: 'E-posten er allerede registrert',
@@ -27,7 +25,6 @@ export const AUTH_ERRORS = {
   rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
 } as const
 
-// --- Placeholders ---
 export const AUTH_PLACEHOLDERS = {
   email: 'navn@eksempel.no',
   password: 'Skriv inn passord',
@@ -37,7 +34,6 @@ export const AUTH_PLACEHOLDERS = {
   fullName: 'Ola Nordmann',
 } as const
 
-// --- Hints ---
 export const AUTH_HINTS = {
   passwordMinLength: 'Minst 8 tegn',
   studioNameHelper: 'Vises på din offentlige side. Du kan endre det senere.',

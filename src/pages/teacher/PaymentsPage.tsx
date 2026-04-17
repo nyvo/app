@@ -31,13 +31,11 @@ const PaymentsPage = () => {
   const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
   const hasStripeAccount = !!currentOrganization?.stripe_account_id;
 
-  // Data state
   const [balanceData, setBalanceData] = useState<StripeBalanceResult | null>(null);
   const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Action state
   const [stripeLoading, setStripeLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
 

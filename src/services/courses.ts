@@ -403,7 +403,6 @@ export async function createCourse(
   // Generate the session dates once — reused for both conflict check and insert
   const sessionEntries = generateSessionDates(courseData, startTime, options)
 
-  // --- Conflict check ---
   if (!options?.skipConflictCheck && courseData.start_date && courseData.organization_id && sessionEntries.length > 0) {
     const plannedSessions = sessionEntries.map(e => ({
       date: e.date,
@@ -429,7 +428,6 @@ export async function createCourse(
     }
   }
 
-  // --- Insert the course row ---
   const { data, error } = await typedFrom('courses')
     .insert(courseData)
     .select()
@@ -459,7 +457,6 @@ export async function createCourse(
 
   const course = data as Course
 
-  // --- Insert sessions (with rollback on failure) ---
   const { error: sessionsError } = await insertCourseSessionsOrRollback(
     course.id,
     sessionEntries
@@ -533,11 +530,6 @@ export async function cancelCourse(
   }
 }
 
-// ============================================
-// COURSE SESSIONS
-// ============================================
-
-// Fetch all sessions for a course
 export async function fetchCourseSessions(courseId: string): Promise<{ data: CourseSession[] | null; error: Error | null }> {
   const { data, error } = await typedFrom('course_sessions')
     .select('*')

@@ -58,7 +58,6 @@ export function AddParticipantDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Derived state
   const isFull = availableSpots !== null && availableSpots <= 0;
 
   // Check capacity when dialog opens

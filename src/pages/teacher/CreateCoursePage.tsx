@@ -95,10 +95,8 @@ const CreateCoursePage = () => {
   const { setBreadcrumbs } = useTeacherShell();
   const { locations: savedLocations } = useLocations(currentOrganization?.id);
 
-  // Stepper state (0, 1, 2)
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Form state
   const [courseType, setCourseType] = useState<CourseType>('series');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -111,7 +109,6 @@ const CreateCoursePage = () => {
   const [capacity, setCapacity] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
 
-  // Practical info state
   const [audienceLevel, setAudienceLevel] = useState<AudienceLevel | ''>('ALL_LEVELS');
   const [equipment, setEquipment] = useState<EquipmentInfo | ''>('');
   const [arrivalMinutes, setArrivalMinutes] = useState(ARRIVAL_DEFAULT_MINUTES);
@@ -131,11 +128,9 @@ const CreateCoursePage = () => {
     return ALL_TIME_SLOTS.filter((t) => timeToMin(t) >= startMin);
   }, [startTime]);
 
-  // Validation state
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 

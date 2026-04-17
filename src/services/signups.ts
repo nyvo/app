@@ -37,11 +37,6 @@ export async function fetchRecentSignups(
   return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
-// ============================================
-// CRUD OPERATIONS FOR BOOKING FLOW
-// ============================================
-
-// Create a new signup (for public booking)
 export async function createSignup(
   signupData: SignupInsert
 ): Promise<{ data: Signup | null; error: Error | null }> {
@@ -147,10 +142,6 @@ export async function checkCourseAvailability(
 
   return { available, total, error: null }
 }
-
-// ============================================
-// TEACHER ACTION FUNCTIONS
-// ============================================
 
 // Teacher-initiated cancellation with optional Stripe refund
 export async function teacherCancelSignup(

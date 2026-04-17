@@ -101,11 +101,8 @@ const CourseDetailPage = () => {
   const [settingsArrivalMinutes, setSettingsArrivalMinutes] = useState('');
   const [settingsCustomBullets, setSettingsCustomBullets] = useState<string[]>([]);
 
-  // Delete state
   const [isDeleting, setIsDeleting] = useState(false);
 
-
-  // Session editing state (kept in page since it's UI-only)
   const [sessionEdits, setSessionEdits] = useState<Record<string, { date?: Date; time?: string }>>({});
   const [savingSessionId, setSavingSessionId] = useState<string | null>(null);
 
@@ -472,7 +469,6 @@ const CourseDetailPage = () => {
   })), [participants]);
 
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">

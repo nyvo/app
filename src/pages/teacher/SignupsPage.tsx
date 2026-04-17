@@ -222,10 +222,6 @@ export const SignupsPage = () => {
 
   const hasFilters = activeFilter !== 'all' || searchQuery.trim() !== '';
 
-  // ============================================
-  // ACTION HANDLERS
-  // ============================================
-
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
     onSendPaymentLink: async (signupId: string) => {
       const { error } = await sendPaymentLink(signupId);

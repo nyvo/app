@@ -116,7 +116,6 @@ const ForgotPasswordPage = () => {
     )
   }
 
-  // Form state
   return (
     <AuthLayout
       context="teacher"
