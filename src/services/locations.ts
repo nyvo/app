@@ -11,7 +11,8 @@ export async function fetchLocations(
   const { data, error } = await typedFrom('teacher_locations')
     .select('*')
     .eq('organization_id', organizationId)
-    .order('name', { ascending: true })
+    .order('is_favorite', { ascending: false })
+    .order('created_at', { ascending: true })
 
   if (error) return { data: [], error: error as Error }
   return { data: (data ?? []) as TeacherLocation[], error: null }
@@ -51,5 +52,34 @@ export async function deleteLocation(
     .eq('id', id)
 
   if (error) return { error: error as Error }
+  return { error: null }
+}
+
+/**
+ * Set a location as the favorite for an organization.
+ * Clears any existing favorite first, then sets the new one.
+ * Pass null to clear the favorite without setting a new one.
+ */
+export async function setFavoriteLocation(
+  organizationId: string,
+  locationId: string | null
+): Promise<{ error: Error | null }> {
+  // Clear existing favorite
+  const { error: clearError } = await typedFrom('teacher_locations')
+    .update({ is_favorite: false })
+    .eq('organization_id', organizationId)
+    .eq('is_favorite', true)
+
+  if (clearError) return { error: clearError as Error }
+
+  // Set the new favorite
+  if (locationId) {
+    const { error: setError } = await typedFrom('teacher_locations')
+      .update({ is_favorite: true })
+      .eq('id', locationId)
+
+    if (setError) return { error: setError as Error }
+  }
+
   return { error: null }
 }

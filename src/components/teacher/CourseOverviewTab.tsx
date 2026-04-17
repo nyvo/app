@@ -4,10 +4,9 @@ import {
   Send,
 } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { SessionList } from '@/components/teacher/SessionList';
 import { formatKroner } from '@/lib/utils';
 import type { SignupStatus } from '@/types/database';
@@ -117,13 +116,14 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   kursplanRef,
 }) => {
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-base font-medium text-foreground">Oversikt</h2>
-          <p className="text-sm text-muted-foreground">De viktigste detaljene om kurset samlet på ett sted.</p>
-        </div>
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-10">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Oversikt</CardTitle>
+          <CardDescription>De viktigste detaljene om kurset samlet på ett sted.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-10">
             <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Dato</p>
@@ -167,9 +167,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 )
               )}
             </div>
-        </div>
+          </div>
 
-        <div className="flex flex-col gap-2 pt-2 sm:flex-row">
+          <div className="flex flex-col gap-2 pt-6 sm:flex-row">
             <Button
               variant="outline-soft"
               size="compact"
@@ -180,66 +180,65 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               <Send className="h-3.5 w-3.5" />
               Send melding til påmeldte
             </Button>
-        </div>
-      </section>
-
-      <Separator />
-
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-medium text-foreground">Om kurset</h2>
-            <p className="text-sm text-muted-foreground">Dette er innholdet deltakerne ser når de vurderer å melde seg på.</p>
           </div>
-        </div>
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <Card className="overflow-hidden lg:w-56 lg:shrink-0">
-            {course.imageUrl ? (
-              <div className="aspect-video w-full overflow-hidden lg:aspect-square">
-                <img
-                  src={course.imageUrl}
-                  alt={course.title}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center bg-muted lg:aspect-square">
-                <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
-              </div>
-            )}
-          </Card>
+        </CardContent>
+      </Card>
 
-          <div className="min-w-0 flex-1 space-y-6">
-            <div>
-              <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kort beskrivelse</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {course.description || 'Ingen beskrivelse lagt til'}
-              </p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Om kurset</CardTitle>
+          <CardDescription>Dette er innholdet deltakerne ser når de vurderer å melde seg på.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="overflow-hidden rounded-lg lg:w-56 lg:shrink-0">
+              {course.imageUrl ? (
+                <div className="aspect-video w-full overflow-hidden lg:aspect-square">
+                  <img
+                    src={course.imageUrl}
+                    alt={course.title}
+                    className="h-full w-full object-cover rounded-lg"
+                  />
+                </div>
+              ) : (
+                <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg bg-muted lg:aspect-square">
+                  <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
+                </div>
+              )}
             </div>
 
-            {course.description2 && (
+            <div className="min-w-0 flex-1 space-y-6">
               <div>
-                <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Utfyllende tekst</p>
+                <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kort beskrivelse</p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {course.description2}
+                  {course.description || 'Ingen beskrivelse lagt til'}
                 </p>
               </div>
-            )}
 
-            {course.level && (
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Målgruppe og nivå</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">{course.level}</Badge>
-                  {course.courseType === 'kursrekke' && (
-                    <Badge variant="secondary">Voksne</Badge>
-                  )}
+              {course.description2 && (
+                <div>
+                  <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Utfyllende tekst</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {course.description2}
+                  </p>
                 </div>
-              </div>
-            )}
+              )}
+
+              {course.level && (
+                <div>
+                  <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Målgruppe og nivå</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{course.level}</Badge>
+                    {course.courseType === 'kursrekke' && (
+                      <Badge variant="secondary">Voksne</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
 
       {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
         <section ref={kursplanRef}>
@@ -254,27 +253,29 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
       )}
 
       {recentParticipants.length > 0 && (
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-base font-medium text-foreground">Nylige påmeldinger</h2>
-          </div>
-          <Card className="overflow-hidden divide-y divide-border">
-            {recentParticipants.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 px-6 py-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted">
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground">
-                    {p.name.charAt(0).toUpperCase()}
-                  </span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Nylige påmeldinger</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-border">
+              {recentParticipants.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted">
+                    <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                      {p.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
+                    <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{p.email}</p>
+                  </div>
+                  <StatusBadge status={p.status} size="sm" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                  <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{p.email}</p>
-                </div>
-                <StatusBadge status={p.status} size="sm" />
-              </div>
-            ))}
-          </Card>
-        </section>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -145,7 +145,7 @@ export const CourseParticipantsTab = ({
       </div>
 
       {/* Table Container */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden gap-0 py-0">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

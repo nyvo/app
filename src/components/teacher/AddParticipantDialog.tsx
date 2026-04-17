@@ -197,7 +197,7 @@ export function AddParticipantDialog({
         <DialogHeader>
           <DialogTitle>Legg til deltaker</DialogTitle>
           <DialogDescription>
-            Fyll inn deltakerinformasjon for å legge til manuelt.
+            Legg til deltaker manuelt.
           </DialogDescription>
         </DialogHeader>
 
@@ -219,7 +219,7 @@ export function AddParticipantDialog({
             {/* Error banner */}
             {submitError && (
               <Alert variant="error" icon={false}>
-                <p className="text-sm text-red-700">{submitError}</p>
+                <p className="text-sm text-destructive">{submitError}</p>
               </Alert>
             )}
 
@@ -249,7 +249,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.firstName && touched.firstName
-                      ? 'border-red-700 bg-red-100 animate-shake'
+                      ? 'border-destructive bg-destructive/5 animate-shake'
                       : ''
                   }
                 />
@@ -257,7 +257,7 @@ export function AddParticipantDialog({
                   <p
                     id="firstName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
                   >
                     {errors.firstName}
                   </p>
@@ -288,7 +288,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.lastName && touched.lastName
-                      ? 'border-red-700 bg-red-100 animate-shake'
+                      ? 'border-destructive bg-destructive/5 animate-shake'
                       : ''
                   }
                 />
@@ -296,7 +296,7 @@ export function AddParticipantDialog({
                   <p
                     id="lastName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
+                    className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
                   >
                     {errors.lastName}
                   </p>
@@ -323,7 +323,7 @@ export function AddParticipantDialog({
                 disabled={isSubmitting}
                 className={
                   errors.email && touched.email
-                    ? 'border-red-700 bg-red-100 animate-shake'
+                    ? 'border-destructive bg-destructive/5 animate-shake'
                     : ''
                 }
               />
@@ -331,7 +331,7 @@ export function AddParticipantDialog({
                 <p
                   id="email-error"
                   role="alert"
-                  className="text-xs font-medium tracking-wide mt-1.5 text-red-700"
+                  className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
                 >
                   {errors.email}
                 </p>

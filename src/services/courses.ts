@@ -422,7 +422,7 @@ export async function createCourse(
     if (conflicts.length > 0) {
       return {
         data: null,
-        error: new Error('Det finnes allerede et kurs på dette tidspunktet'),
+        error: new Error('Det finnes allerede et kurs på dette tidspunktet.'),
         conflicts
       }
     }

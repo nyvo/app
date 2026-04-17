@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CircleAlert, TriangleAlert, CircleCheck, X } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import type { NotificationSeverity } from '@/hooks/use-notifications';
+import type { Notification, NotificationSeverity } from '@/hooks/use-notifications';
 
 const SEVERITY_STYLES: Record<NotificationSeverity, {
   card: string;
@@ -39,36 +40,71 @@ const SEVERITY_STYLES: Record<NotificationSeverity, {
   },
 };
 
+interface GroupedNotification {
+  key: string;
+  representative: Notification;
+  ids: string[];
+  count: number;
+}
+
+function groupNotifications(notifications: Notification[]): GroupedNotification[] {
+  const groups = new Map<string, GroupedNotification>();
+
+  for (const n of notifications) {
+    const key = n.groupKey || (n.type === 'unread_message' ? 'unread_messages' : n.id);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.ids.push(n.id);
+      existing.count++;
+    } else {
+      groups.set(key, {
+        key,
+        representative: n,
+        ids: [n.id],
+        count: 1,
+      });
+    }
+  }
+
+  return [...groups.values()];
+}
+
 export function NotificationDropdown() {
   const { notifications, dismiss, dismissAll } = useTeacherShell();
   const [open, setOpen] = useState(false);
   const [dismissingAll, setDismissingAll] = useState(false);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
   const hasNotifications = notifications.length > 0;
+
+  const grouped = useMemo(() => groupNotifications(notifications), [notifications]);
 
   const topSeverity = notifications[0]?.severity ?? 'neutral';
   const bellDotColor = SEVERITY_STYLES[topSeverity].dot;
 
-  const visibleNotifications = notifications.filter((n) => !hiddenIds.has(n.id));
+  const visibleGroups = grouped.filter((g) => !hiddenKeys.has(g.key));
 
   const handleDismissAll = () => {
     if (dismissingAll) return;
     setDismissingAll(true);
 
-    // Stagger hide from bottom to top
-    const reversed = [...notifications].reverse();
-    reversed.forEach((item, i) => {
+    const reversed = [...visibleGroups].reverse();
+    reversed.forEach((group, i) => {
       setTimeout(() => {
-        setHiddenIds((prev) => new Set(prev).add(item.id));
+        setHiddenKeys((prev) => new Set(prev).add(group.key));
       }, i * 150);
     });
 
-    // After all are hidden, actually dismiss in DB and clean up
     setTimeout(() => {
       dismissAll();
-      setHiddenIds(new Set());
+      setHiddenKeys(new Set());
       setDismissingAll(false);
     }, reversed.length * 150 + 300);
+  };
+
+  const handleDismissGroup = (group: GroupedNotification) => {
+    for (const id of group.ids) {
+      dismiss(id);
+    }
   };
 
   return (
@@ -97,13 +133,13 @@ export function NotificationDropdown() {
         {hasNotifications ? (
           <div className="max-h-80 space-y-2 overflow-y-auto p-3">
             <AnimatePresence mode="popLayout">
-              {visibleNotifications.map((item, index) => {
-                const styles = SEVERITY_STYLES[item.severity];
+              {visibleGroups.map((group, index) => {
+                const styles = SEVERITY_STYLES[group.representative.severity];
                 const SeverityIcon = styles.Icon;
 
                 return (
                   <motion.div
-                    key={item.id}
+                    key={group.key}
                     layout
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -116,22 +152,29 @@ export function NotificationDropdown() {
                     className="relative flex items-center gap-2"
                   >
                     <Link
-                      to={item.link}
+                      to={group.representative.link}
                       onClick={() => setOpen(false)}
                       className={`flex min-w-0 flex-1 items-start gap-3 rounded-lg border px-3 py-2.5 outline-none smooth-transition hover:opacity-80 ${styles.card}`}
                     >
                       <SeverityIcon className={`mt-0.5 h-4 w-4 shrink-0 ${styles.icon}`} />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground">{item.title}</p>
-                        {item.body && (
-                          <p className="text-xs font-medium tracking-wide text-muted-foreground">{item.body}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-medium text-foreground truncate">{group.representative.title}</p>
+                          {group.count > 1 && (
+                            <Badge variant="secondary" className="shrink-0 rounded-full px-1.5 py-0 text-xxs">
+                              {group.count}
+                            </Badge>
+                          )}
+                        </div>
+                        {group.representative.body && (
+                          <p className="text-xs font-medium tracking-wide text-muted-foreground">{group.representative.body}</p>
                         )}
                       </div>
                     </Link>
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        dismiss(item.id);
+                        handleDismissGroup(group);
                       }}
                       className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[transform,color] duration-150 ease-out hover:text-foreground active:scale-[0.9]"
                       aria-label="Fjern varsel"

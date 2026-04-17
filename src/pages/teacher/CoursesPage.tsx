@@ -15,7 +15,7 @@ import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseL
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -272,23 +272,25 @@ const CoursesPage = () => {
                 aria-label="Søk etter kurs"
                 className="w-full md:flex-1 max-w-xs"
               />
-              <FilterTabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)} variant="contained">
-                {([
-                  { value: 'all' as const, label: 'Alle' },
-                  { value: 'active' as const, label: 'Aktive' },
-                  { value: 'upcoming' as const, label: 'Kommende' },
-                  { value: 'past' as const, label: 'Arkiv' },
-                  { value: 'draft' as const, label: 'Utkast' },
-                ]).map(({ value, label }) => {
-                  const count = filterCounts[value];
-                  if (value !== 'all' && count === 0) return null;
-                  return (
-                    <FilterTab key={value} value={value}>
-                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                    </FilterTab>
-                  );
-                })}
-              </FilterTabs>
+              <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                <TabsList variant="contained">
+                  {([
+                    { value: 'all' as const, label: 'Alle' },
+                    { value: 'active' as const, label: 'Aktive' },
+                    { value: 'upcoming' as const, label: 'Kommende' },
+                    { value: 'past' as const, label: 'Arkiv' },
+                    { value: 'draft' as const, label: 'Utkast' },
+                  ]).map(({ value, label }) => {
+                    const count = filterCounts[value];
+                    if (value !== 'all' && count === 0) return null;
+                    return (
+                      <TabsTrigger key={value} value={value}>
+                        {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              </Tabs>
             </div>
           )}
         </motion.header>

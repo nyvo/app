@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { PAYMENT_FILTER_OPTIONS, type PaymentFilter } from '@/components/teacher/SignupFilterDropdown';
-import { FilterTabs, FilterTab } from '@/components/ui/filter-tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -281,17 +281,19 @@ export const SignupsPage = () => {
               aria-label="Søk etter deltakere"
               className="w-full md:flex-1 max-w-xs"
             />
-            <FilterTabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)} variant="contained">
-              {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
-                const count = filterCounts[value];
-                if (value !== 'all' && count === 0) return null;
-                return (
-                  <FilterTab key={value} value={value}>
-                    {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                  </FilterTab>
-                );
-              })}
-            </FilterTabs>
+            <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)}>
+              <TabsList variant="contained">
+                {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
+                  const count = filterCounts[value];
+                  if (value !== 'all' && count === 0) return null;
+                  return (
+                    <TabsTrigger key={value} value={value}>
+                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
           </div>
         </motion.header>
 

@@ -100,15 +100,10 @@ function ActivityBody({
 
   if (items.length === 0) {
     return (
-      <Empty className="border-0 p-4">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Inbox />
-          </EmptyMedia>
-          <EmptyTitle>Ingen aktivitet ennå</EmptyTitle>
-          <EmptyDescription>Nye påmeldinger og meldinger vises her.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <div className="flex flex-col items-center gap-1 py-8">
+        <p className="text-sm font-medium text-foreground">Ingen aktivitet ennå</p>
+        <p className="text-xs text-muted-foreground">Nye påmeldinger og meldinger vises her</p>
+      </div>
     )
   }
 

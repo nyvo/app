@@ -1,5 +1,7 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNotifications, type Notification } from '@/hooks/use-notifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUnreadCount } from '@/services/messages';
 
 export type TeacherShellCrumb = {
   label: string;
@@ -20,6 +22,8 @@ type TeacherShellContextValue = {
   unreadCount: number;
   dismiss: (id: string) => Promise<void>;
   dismissAll: () => Promise<void>;
+  unreadMessages: number;
+  refreshUnreadMessages: () => void;
 };
 
 const TeacherShellContext = createContext<TeacherShellContextValue | null>(null);
@@ -28,6 +32,24 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
   const [breadcrumbs, setBreadcrumbs] = useState<TeacherShellCrumb[] | null>(null);
   const [action, setAction] = useState<TeacherShellAction | null>(null);
   const { notifications, unreadCount, dismiss, dismissAll } = useNotifications();
+  const { currentOrganization } = useAuth();
+
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const refreshUnreadMessages = useCallback(async () => {
+    if (!currentOrganization?.id) return;
+    const { data } = await getUnreadCount(currentOrganization.id);
+    setUnreadMessages(data);
+  }, [currentOrganization?.id]);
+
+  useEffect(() => {
+    refreshUnreadMessages();
+    intervalRef.current = setInterval(refreshUnreadMessages, 30_000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [refreshUnreadMessages]);
 
   const value = useMemo(
     () => ({
@@ -39,8 +61,10 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
       unreadCount,
       dismiss,
       dismissAll,
+      unreadMessages,
+      refreshUnreadMessages,
     }),
-    [action, breadcrumbs, notifications, unreadCount, dismiss, dismissAll]
+    [action, breadcrumbs, notifications, unreadCount, dismiss, dismissAll, unreadMessages, refreshUnreadMessages]
   );
 
   return (

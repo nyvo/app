@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import type { CourseWeek, SessionEditHandlers } from './session-types';
 
 interface SessionListProps {
@@ -76,7 +77,7 @@ export const SessionList: React.FC<SessionListProps> = ({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <Card className="overflow-hidden">
         <div className="divide-y divide-border">
           {visibleSessions.map((session) => {
             const isPast = isSessionPast(session.originalDate);
@@ -181,7 +182,7 @@ export const SessionList: React.FC<SessionListProps> = ({
             );
           })}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

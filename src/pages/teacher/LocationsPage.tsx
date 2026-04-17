@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Heart, Home, MapPin, MapPinPlus, DoorOpen, Pencil, Plus, Trash2, X } from '@/lib/icons';
+import { Check, Heart, Home, MapPin, MapPinPlus, DoorOpen, Plus, Trash2, X } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Button } from '@/components/ui/button';
@@ -21,17 +21,29 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { createLocation, updateLocation, deleteLocation } from '@/services/locations';
+import { createLocation, updateLocation, deleteLocation, setFavoriteLocation } from '@/services/locations';
 import { cn } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';
 
 const DEFAULT_NEW_NAME = 'Nytt sted';
+
+/* Shared easing — strong ease-out for UI interactions (Emil Kowalski) */
+const ease = [0.23, 1, 0.32, 1] as const;
+
+/* Crossfade for inline edit swap — prevents jarring snap */
+const editSwap = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.12, ease },
+};
 
 const LocationsPage = () => {
   const { currentOrganization } = useAuth();
   const { locations, refetch } = useLocations(currentOrganization?.id);
   const { setBreadcrumbs } = useTeacherShell();
   const [focusLocationId, setFocusLocationId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     setBreadcrumbs([
@@ -42,13 +54,15 @@ const LocationsPage = () => {
   }, [setBreadcrumbs]);
 
   const handleCreate = async () => {
-    if (!currentOrganization?.id) return;
+    if (!currentOrganization?.id || creating) return;
+    setCreating(true);
     const { data, error } = await createLocation({
       organization_id: currentOrganization.id,
       name: DEFAULT_NEW_NAME,
       address: null,
       rooms: [],
     });
+    setCreating(false);
     if (error || !data) {
       toast.error('Kunne ikke opprette stedet');
       return;
@@ -81,10 +95,12 @@ const LocationsPage = () => {
               key={loc.id}
               location={loc}
               autoFocus={focusLocationId === loc.id}
-              onDeleted={refetch}
+              hasFavorite={locations.some((l) => l.is_favorite)}
+              organizationId={currentOrganization?.id}
+              onChanged={refetch}
             />
           ))}
-          <NewLocationCard onClick={handleCreate} />
+          <NewLocationCard onClick={handleCreate} loading={creating} />
         </div>
       </motion.div>
     </main>
@@ -98,11 +114,15 @@ type EditField = 'name' | 'address' | null;
 function LocationCard({
   location,
   autoFocus,
-  onDeleted,
+  hasFavorite,
+  organizationId,
+  onChanged,
 }: {
   location: TeacherLocation;
   autoFocus: boolean;
-  onDeleted: () => void;
+  hasFavorite: boolean;
+  organizationId: string | undefined;
+  onChanged: () => void;
 }) {
   const [editingField, setEditingField] = useState<EditField>(autoFocus ? 'name' : null);
   const [name, setName] = useState(location.name);
@@ -111,7 +131,7 @@ function LocationCard({
   const [newRoom, setNewRoom] = useState('');
   const [addingRoom, setAddingRoom] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const isFavorite = location.is_favorite;
   const nameRef = useRef<HTMLInputElement | null>(null);
   const addressRef = useRef<HTMLInputElement | null>(null);
   const newRoomRef = useRef<HTMLInputElement | null>(null);
@@ -132,7 +152,11 @@ function LocationCard({
 
   const saveField = async (updates: Partial<Pick<TeacherLocation, 'name' | 'address' | 'rooms'>>) => {
     const { error } = await updateLocation(location.id, updates);
-    if (error) toast.error('Kunne ikke lagre endringen');
+    if (error) {
+      toast.error('Kunne ikke lagre endringen');
+      return;
+    }
+    onChanged();
   };
 
   const commitName = () => {
@@ -190,55 +214,86 @@ function LocationCard({
       return;
     }
     toast.success('Stedet er slettet');
-    onDeleted();
+    onChanged();
   };
 
   return (
-    <Card className="gap-0 py-0">
-      <CardContent className="flex h-full flex-col gap-5 p-6">
+    <Card className="gap-0 py-0 flex flex-col">
+      <CardContent className="flex flex-1 flex-col gap-5 p-6">
         {/* Header: icon + name + favorite */}
         <div className="flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2">
             <Home className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            {editingField === 'name' ? (
-              <Input
-                ref={nameRef}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={commitName}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); commitName(); }
-                  else if (e.key === 'Escape') cancelName();
-                }}
-                placeholder="Navn på stedet"
-                className="-mx-2 h-7 px-2 text-base font-medium leading-tight shadow-none"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditingField('name')}
-                aria-label="Rediger navn"
-                className="group/name -mx-2 flex w-[calc(100%+1rem)] items-start gap-1.5 rounded px-2 text-left transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
-              >
-                <h2 className="truncate text-base font-medium leading-tight text-foreground">{location.name}</h2>
-                <Pencil className="mt-0.5 size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/name:opacity-100" />
-              </button>
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              {editingField === 'name' ? (
+                <motion.div key="name-edit" {...editSwap} className="flex items-center gap-1.5">
+                  <Input
+                    ref={nameRef}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); commitName(); }
+                      else if (e.key === 'Escape') cancelName();
+                    }}
+                    placeholder="Navn på stedet"
+                    className="h-7 max-w-56 px-2 text-sm font-medium leading-tight shadow-none"
+                  />
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitName} aria-label="Lagre" className="active:scale-[0.95]">
+                    <Check className="size-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelName} aria-label="Avbryt" className="active:scale-[0.95]">
+                    <X className="size-3.5" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="name-display"
+                  {...editSwap}
+                  type="button"
+                  onClick={() => setEditingField('name')}
+                  aria-label="Rediger navn"
+                  className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
+                >
+                  <h2 className="truncate text-base font-medium leading-tight text-foreground">{name}</h2>
+                  <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
           <Button
             type="button"
             variant="outline-soft"
             size="compact"
-            onClick={() => setIsFavorite((v) => !v)}
+            disabled={!isFavorite && hasFavorite}
+            onClick={async () => {
+              if (!organizationId) return;
+              const { error } = await setFavoriteLocation(
+                organizationId,
+                isFavorite ? null : location.id
+              );
+              if (error) {
+                toast.error('Kunne ikke oppdatere favoritt');
+                return;
+              }
+              onChanged();
+            }}
             aria-pressed={isFavorite}
             className={cn(
-              'h-6 shrink-0 gap-1.5 px-2 text-xs',
+              'h-6 shrink-0 gap-1.5 px-2 text-xs active:scale-[0.95] transition-[background-color,border-color,color] duration-200 ease-out',
               isFavorite && 'border-chart-2/30 bg-chart-2/10 text-chart-2 hover:bg-chart-2/15 hover:text-chart-2'
             )}
           >
-            <Heart className={cn('size-3', isFavorite && 'fill-current')} />
+            <motion.span
+              key={isFavorite ? 'fav' : 'unfav'}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
+              className="flex items-center"
+            >
+              <Heart className={cn('size-3', isFavorite && 'fill-current')} />
+            </motion.span>
             {isFavorite ? 'Favoritt' : 'Lagre som favoritt'}
           </Button>
         </div>
@@ -251,32 +306,47 @@ function LocationCard({
               <MapPin className="size-3.5" />
               Adresse
             </span>
-            {editingField === 'address' ? (
-              <Input
-                ref={addressRef}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                onBlur={commitAddress}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); commitAddress(); }
-                  else if (e.key === 'Escape') cancelAddress();
-                }}
-                placeholder="Ingen adresse"
-                className="h-7 px-2 text-sm leading-tight shadow-none"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditingField('address')}
-                aria-label="Rediger adresse"
-                className="group/addr -mx-2 flex w-[calc(100%+1rem)] items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm text-foreground transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
-              >
-                <span className={cn('truncate', !location.address && 'text-muted-foreground')}>
-                  {location.address || 'Ingen adresse'}
-                </span>
-                <Pencil className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/addr:opacity-100" />
-              </button>
-            )}
+            <AnimatePresence mode="wait" initial={false}>
+              {editingField === 'address' ? (
+                <motion.div key="addr-edit" {...editSwap} className="flex items-center gap-1.5">
+                  <Input
+                    ref={addressRef}
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); commitAddress(); }
+                      else if (e.key === 'Escape') cancelAddress();
+                    }}
+                    placeholder="Skriv inn adresse"
+                    className="h-7 max-w-64 px-2 text-sm leading-tight shadow-none"
+                  />
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitAddress} aria-label="Lagre" className="active:scale-[0.95]">
+                    <Check className="size-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelAddress} aria-label="Avbryt" className="active:scale-[0.95]">
+                    <X className="size-3.5" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="addr-display"
+                  {...editSwap}
+                  type="button"
+                  onClick={() => setEditingField('address')}
+                  aria-label="Rediger adresse"
+                  className={cn(
+                    "-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]",
+                    address ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {!address && <Plus className="size-3 shrink-0" />}
+                  <span className="truncate">
+                    {address || 'Legg til adresse'}
+                  </span>
+                  {address && <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>}
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Rooms */}
@@ -285,75 +355,96 @@ function LocationCard({
               <DoorOpen className="size-3.5" />
               Rom
             </span>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {rooms.map((room) => (
-              <span
-                key={room}
-                className="group/room inline-flex h-7 items-center gap-1 rounded-md bg-muted pl-2 pr-1 text-xs font-medium text-foreground"
-              >
-                {room}
-                <button
+            {rooms.length > 0 && (
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                <AnimatePresence initial={false}>
+                  {rooms.map((room) => (
+                    <motion.span
+                      key={room}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.15, ease }}
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-muted pl-2 pr-1 text-xs font-medium text-foreground"
+                    >
+                      {room}
+                      <button
+                        type="button"
+                        onClick={() => removeRoom(room)}
+                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground active:scale-[0.9]"
+                        aria-label={`Fjern ${room}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+            <AnimatePresence mode="wait" initial={false}>
+              {addingRoom ? (
+                <motion.div key="room-edit" {...editSwap} className="flex items-center gap-1.5">
+                  <Input
+                    ref={newRoomRef}
+                    value={newRoom}
+                    onChange={(e) => setNewRoom(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); commitNewRoom(); }
+                      else if (e.key === 'Escape') { setNewRoom(''); setAddingRoom(false); }
+                    }}
+                    placeholder="Navn på rom"
+                    className="h-7 w-32 px-2 text-xs"
+                  />
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitNewRoom} aria-label="Lagre" className="active:scale-[0.95]">
+                    <Check className="size-3.5" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => { setNewRoom(''); setAddingRoom(false); }} aria-label="Avbryt" className="active:scale-[0.95]">
+                    <X className="size-3.5" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="room-add"
+                  {...editSwap}
                   type="button"
-                  onClick={() => removeRoom(room)}
-                  className="flex size-5 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-foreground group-hover/room:opacity-100 focus-visible:opacity-100"
-                  aria-label={`Fjern ${room}`}
+                  onClick={startAddRoom}
+                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-muted-foreground transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
                 >
-                  <X className="size-3" />
-                </button>
-              </span>
-            ))}
-            {addingRoom ? (
-              <Input
-                ref={newRoomRef}
-                value={newRoom}
-                onChange={(e) => setNewRoom(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); commitNewRoom(); }
-                  else if (e.key === 'Escape') { setNewRoom(''); setAddingRoom(false); }
-                }}
-                onBlur={commitNewRoom}
-                placeholder="Navn på rom"
-                className="h-7 w-32 px-2 text-xs"
-              />
-            ) : (
+                  <Plus className="size-3" />
+                  Legg til rom
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Delete */}
+        <div className="mt-auto border-t border-border pt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
               <Button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={startAddRoom}
-                className="h-7 gap-1 px-2 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
+                variant="destructive-outline"
+                size="compact"
+                className="active:scale-[0.97]"
               >
-                <Plus className="size-3.5" />
-                Legg til rom
+                <Trash2 className="size-3.5" />
+                Slett sted
               </Button>
-            )}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto h-7 gap-1 px-2 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" />
-                  Slett sted
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Slette {location.name}?</AlertDialogTitle>
-                  <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-                    {deleting ? 'Sletter' : 'Slett'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            </div>
-          </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Slette {location.name}?</AlertDialogTitle>
+                <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} disabled={deleting}>
+                  {deleting ? 'Sletter' : 'Slett'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
       </CardContent>
@@ -361,18 +452,17 @@ function LocationCard({
   );
 }
 
-function NewLocationCard({ onClick }: { onClick: () => void }) {
+function NewLocationCard({ onClick, loading }: { onClick: () => void; loading: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-h-40 items-center justify-center rounded-xl border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-colors hover:border-foreground/30 hover:bg-muted/30 focus-visible:border-foreground/30 focus-visible:bg-muted/30"
+      disabled={loading}
+      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground/30 hover:bg-muted/30 focus-visible:border-foreground/30 focus-visible:bg-muted/30 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
     >
-      <div className="flex flex-col items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-md bg-chart-2/10 text-chart-2">
-          <MapPinPlus className="size-5" />
-        </div>
-        <span className="text-sm font-medium text-foreground">Nytt sted</span>
+      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-[color] duration-150 ease-out group-hover:text-foreground">
+        <MapPinPlus className={cn('size-3.5', loading && 'animate-pulse')} />
+        {loading ? 'Oppretter …' : 'Legg til sted'}
       </div>
     </button>
   );

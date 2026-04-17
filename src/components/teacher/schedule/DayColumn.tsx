@@ -11,7 +11,7 @@ interface DayColumnProps {
 
 export function DayColumn({ isToday: _isToday, events, selectedEventId, onSelectEvent }: DayColumnProps) {
   return (
-    <div className="relative bg-background">
+    <div className="relative bg-white dark:bg-background">
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {TIME_SLOTS.map((time) => (

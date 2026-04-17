@@ -175,22 +175,22 @@ const CreateCoursePage = () => {
   // Validation (price allows 0 for free courses; capacity >= 1; duration > 0)
   const errors = useMemo<FormErrors>(() => {
     const errs: FormErrors = {};
-    if (!title.trim()) errs.title = 'Gi kurset en tittel';
+    if (!title.trim()) errs.title = 'Skriv inn tittel';
     if (!startDate) errs.startDate = 'Velg startdato';
     if (!startTime) errs.startTime = 'Velg starttid';
     if (!endTime) errs.endTime = 'Velg sluttid';
     else if (startTime && timeToMin(endTime) <= timeToMin(startTime)) errs.endTime = 'Sluttid må være etter starttid';
     const weeksNum = parseInt(weeks, 10);
     if (courseType === 'series' && !weeks) {
-      errs.weeks = 'Angi antall uker';
+      errs.weeks = 'Skriv inn antall uker';
     } else if (courseType === 'series' && (!isNaN(weeksNum) && (weeksNum < 1 || weeksNum > 50))) {
-      errs.weeks = 'Antall uker er utenfor gyldig område';
+      errs.weeks = 'Velg mellom 1 og 50 uker';
     }
-    if (!location.trim()) errs.location = 'Fyll inn sted';
+    if (!location.trim()) errs.location = 'Velg sted';
     const priceNum = parseInt(price, 10);
-    if (price === '' || isNaN(priceNum) || priceNum < 0) errs.price = 'Angi pris';
+    if (price === '' || isNaN(priceNum) || priceNum < 0) errs.price = 'Skriv inn pris';
     const capacityNum = parseInt(capacity, 10);
-    if (!capacity || isNaN(capacityNum) || capacityNum < 1) errs.capacity = 'Angi maks antall';
+    if (!capacity || isNaN(capacityNum) || capacityNum < 1) errs.capacity = 'Skriv inn maks antall';
     return errs;
   }, [title, startDate, startTime, endTime, weeks, courseType, location, price, capacity]);
 
@@ -411,15 +411,20 @@ const CreateCoursePage = () => {
         ref={contentScrollRef}
         className="custom-scrollbar flex-1 overflow-y-auto"
       >
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-          <header className="space-y-1">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 pt-6 pb-6 lg:px-8 lg:pt-8 lg:pb-8">
+          <motion.header
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-1"
+          >
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Opprett kurs
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sett opp et nytt kurs eller arrangement.
+              Opprett et nytt kurs eller arrangement
             </p>
-          </header>
+          </motion.header>
 
           <div className="rounded-xl p-4 sm:p-6">
             <Stepper
@@ -444,26 +449,26 @@ const CreateCoursePage = () => {
               {/* ── Step 1: Kurstype + Detaljer ── */}
               <section>
                 <div className="mb-6">
-                  <h2 id="course-text-sm font-medium" className="text-base font-medium text-foreground">Kurstype</h2>
+                  <h2 id="course-type-heading" className="text-base font-medium text-foreground">Kurstype</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
                   value={courseType}
                   onValueChange={(v) => setCourseType(v as CourseType)}
-                  aria-labelledby="course-text-sm font-medium"
+                  aria-labelledby="course-type-heading"
                   className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 >
                   <RadioGroupCardItem
                     value="series"
                     icon={Layers}
                     title="Kursrekke"
-                    description="For kurs over flere uker."
+                    description="For kurs over flere uker"
                   />
                   <RadioGroupCardItem
                     value="single"
                     icon={CalendarDays}
                     title="Arrangement"
-                    description="For enkeltkurs og arrangementer."
+                    description="For enkeltkurs og arrangementer"
                   />
                 </RadioGroup>
               </section>
@@ -483,7 +488,7 @@ const CreateCoursePage = () => {
                       ref={titleRef}
                       id="create-title"
                       type="text"
-                      placeholder="F.eks. Morgenyoga"
+                      placeholder="Morgenyoga for alle"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       onBlur={() => handleBlur('title')}
@@ -556,6 +561,10 @@ const CreateCoursePage = () => {
               >
               {/* ── Step 2: Tid og sted ── */}
               <section>
+                <div className="mb-6">
+                  <h2 className="text-base font-medium text-foreground">Tid og sted</h2>
+                  <p className="text-sm mt-1 text-muted-foreground">Når og hvor skal kurset holdes?</p>
+                </div>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
                   <div className={cn("grid grid-cols-1 gap-6", courseType === 'series' && "sm:grid-cols-2")}>
@@ -719,7 +728,7 @@ const CreateCoursePage = () => {
                         setTouched(prev => ({ ...prev, location: true }));
                       }}
                       locations={savedLocations}
-                      placeholder="F.eks. Studioet, Grünerløkka"
+                      placeholder="Studioet, Grünerløkka"
                       aria-invalid={showError('location') ? 'true' : undefined}
                       className={cn(
                         "w-full",
@@ -798,7 +807,7 @@ const CreateCoursePage = () => {
                       ref={capacityRef}
                       id="create-capacity"
                       type="number"
-                      placeholder="F.eks. 20"
+                      placeholder="20"
                       min="1"
                       value={capacity}
                       onChange={(e) => setCapacity(e.target.value)}
@@ -824,23 +833,27 @@ const CreateCoursePage = () => {
               {/* ── Section 5: Praktisk info (optional) ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-base font-medium text-foreground">Praktisk info</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-medium text-foreground">Praktisk info</h2>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Valgfritt</span>
+                  </div>
                   <p className="text-sm mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
-                    <label className="text-xs font-medium mb-2.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Nivå
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <ToggleGroup
                       type="single"
                       value={audienceLevel}
                       onValueChange={(value) => {
-                        setAudienceLevel((value || '') as AudienceLevel | '');
+                        setAudienceLevel(value as AudienceLevel | '');
                       }}
-                      aria-label="Velg nivå"
+                      variant="pill"
+                      spacing={1}
+                      className="gap-1.5"
                     >
                       {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
                         <ToggleGroupItem key={opt.value} value={opt.value}>
@@ -848,16 +861,12 @@ const CreateCoursePage = () => {
                         </ToggleGroupItem>
                       ))}
                     </ToggleGroup>
-                    <p className="text-xs font-medium tracking-wide mt-2 text-muted-foreground">
-                      Velg hvem kurset passer for.
-                    </p>
                   </div>
 
                   {/* Equipment - Radio buttons (single factual statement) */}
                   <div>
-                    <label className="text-xs font-medium mb-2.5 block text-foreground">
+                    <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Utstyr
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <RadioGroup
                       value={equipment}
@@ -876,7 +885,6 @@ const CreateCoursePage = () => {
                   <div>
                     <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Oppmøte før start
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
                     <Select
                       value={arrivalMinutes || ARRIVAL_NONE_VALUE}
@@ -901,7 +909,6 @@ const CreateCoursePage = () => {
                   <div>
                     <label className="text-xs font-medium mb-1.5 block text-foreground">
                       Egne punkter
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Maks {CUSTOM_BULLETS_MAX_COUNT}</span>
                     </label>
                     <div className="space-y-2">
                       {customBullets.map((bullet, i) => (
@@ -954,8 +961,8 @@ const CreateCoursePage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="shrink-0 border-t border-border bg-background/80 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg sm:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-3">
+      <footer className="shrink-0 border-t border-border bg-background/80 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg lg:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <p className="text-sm text-center text-destructive">

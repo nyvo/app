@@ -1,4 +1,5 @@
 import { ChevronLeft, MoreHorizontal, Trash2, Send } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -37,7 +38,7 @@ export function ChatView({
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <header className="shrink-0 flex items-center justify-between border-b border-border bg-background px-6 py-4">
+      <header className="shrink-0 flex items-center justify-between border-b border-border bg-background px-6 py-4 lg:px-8">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -75,7 +76,7 @@ export function ChatView({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
-                className="text-primary focus:text-primary [&_svg]:text-primary"
+                className="text-destructive focus:text-destructive [&_svg]:text-destructive"
                 onClick={onDelete}
               >
                 <Trash2 />
@@ -87,7 +88,7 @@ export function ChatView({
       </header>
 
       {/* Messages Area */}
-      <div className="custom-scrollbar flex flex-1 flex-col space-y-6 overflow-y-auto p-6">
+      <div className="custom-scrollbar flex flex-1 flex-col space-y-6 overflow-y-auto px-6 py-6 lg:px-8">
         {messages.length === 0 ? (
           <EmptyState
             icon={Send}
@@ -99,9 +100,9 @@ export function ChatView({
           <>
             {/* Time Separator */}
             <div className="flex justify-center">
-              <span className="text-xs font-semibold tracking-widest uppercase rounded-full bg-muted px-3 py-1 text-muted-foreground">
+              <Badge variant="secondary" className="rounded-full px-3 py-1 text-xxs font-semibold tracking-widest uppercase">
                 I dag
-              </span>
+              </Badge>
             </div>
 
             {messages.map((message) => (

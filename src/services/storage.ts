@@ -31,7 +31,7 @@ export async function uploadCourseImage(
   if (file.size > MAX_IMAGE_SIZE) {
     return {
       url: null,
-      error: new Error('Bildet er for stort. Maks 5MB.')
+      error: new Error('Bildet er for stort. Maks 5 MB')
     }
   }
 

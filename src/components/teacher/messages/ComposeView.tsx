@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ChevronLeft, X, Search, Paperclip, Smile, Send } from '@/lib/icons';
+import { ChevronLeft, X, Search, Smile, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -29,7 +30,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
 
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden">
-      <header className="shrink-0 flex items-center justify-between border-b border-border bg-background px-6 py-4">
+      <header className="shrink-0 flex items-center justify-between border-b border-border bg-background px-6 py-4 lg:px-8">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -53,7 +54,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
         </Button>
       </header>
 
-      <div className="p-6 space-y-6">
+      <div className="px-6 py-6 space-y-6 lg:px-8">
         <div className="space-y-2">
           <label htmlFor="compose-recipient" className="text-xs font-medium ml-1 text-foreground">Til</label>
           <div className="relative group">
@@ -81,11 +82,9 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
               placeholder="Skriv meldingen din her"
               className="border-0 bg-transparent px-1 py-1 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 hover:border-transparent min-h-0 custom-scrollbar"
             />
-            <div className="flex items-center justify-between pt-3 mt-2 border-t border-border">
+            <Separator className="mt-2" />
+            <div className="flex items-center justify-between pt-3">
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Legg til vedlegg">
-                  <Paperclip />
-                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Velg emoji">

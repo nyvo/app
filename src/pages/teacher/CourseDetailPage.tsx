@@ -2,15 +2,14 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { tabVariants, tabTransition } from '@/lib/motion';
+import { pageVariants, pageTransition, tabVariants, tabTransition } from '@/lib/motion';
 import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from '@/lib/icons';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
@@ -485,13 +484,11 @@ const CourseDetailPage = () => {
                 <Skeleton className="h-4 w-32" />
               </div>
               <div className="mb-8">
-                <Tabs value="overview">
-                  <TabsList>
-                    <TabsTrigger value="overview" className="text-sm font-medium">Oversikt</TabsTrigger>
-                    <TabsTrigger value="participants" className="text-sm font-medium">Deltakere</TabsTrigger>
-                    <TabsTrigger value="settings" className="text-sm font-medium">Innstillinger</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <ToggleGroup type="single" value="overview" onValueChange={() => {}} variant="pill" spacing={1} className="gap-1.5">
+                  <ToggleGroupItem value="overview">Oversikt</ToggleGroupItem>
+                  <ToggleGroupItem value="participants">Deltakere</ToggleGroupItem>
+                  <ToggleGroupItem value="settings">Innstillinger</ToggleGroupItem>
+                </ToggleGroup>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
@@ -575,10 +572,10 @@ const CourseDetailPage = () => {
         <MobileTeacherHeader title="Kurs" />
 
         <motion.header
-          variants={tabVariants}
+          variants={pageVariants}
           initial="initial"
           animate="animate"
-          transition={tabTransition}
+          transition={pageTransition}
         >
           <div className="px-6 pb-0 pt-6 lg:px-8 lg:pt-8">
             <div className="mx-auto w-full max-w-6xl">
@@ -632,17 +629,15 @@ const CourseDetailPage = () => {
                 <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                   {course.title}
                 </h1>
-                <div className="text-sm mt-3 flex items-center gap-3 text-muted-foreground">
+                <div className="text-sm mt-1 flex items-center gap-3 text-muted-foreground">
                   {courseData?.status === 'draft' && (
                     <StatusBadge status="draft" size="sm" />
                   )}
-                  {(courseData?.status === 'upcoming' || courseData?.status === 'active') && (
-                    <span className="text-xs font-medium tracking-wide inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-0.5 text-foreground">
-                      <span className="inline-flex size-1.5 rounded-full bg-foreground/70" />
-                      <span>
-                        {courseData?.status === 'upcoming' ? 'Kommende' : 'Aktiv'}
-                      </span>
-                    </span>
+                  {courseData?.status === 'upcoming' && (
+                    <StatusBadge status="upcoming" size="sm" />
+                  )}
+                  {courseData?.status === 'active' && (
+                    <StatusBadge status="active" size="sm" />
                   )}
                   {courseData?.status === 'completed' && (
                     <StatusBadge status="completed" size="sm" />
@@ -709,6 +704,13 @@ const CourseDetailPage = () => {
                 )}
               </div>
             </div>
+            <div className="pb-4">
+              <ToggleGroup type="single" value={activeTab} onValueChange={(v) => { if (v) setActiveTab(v as Tab); }} variant="pill" spacing={1} className="gap-1.5">
+                <ToggleGroupItem value="overview">Oversikt</ToggleGroupItem>
+                <ToggleGroupItem value="participants">Deltakere ({course.enrolled})</ToggleGroupItem>
+                <ToggleGroupItem value="settings">Innstillinger</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
             </div>
           </div>
         </motion.header>
@@ -716,27 +718,8 @@ const CourseDetailPage = () => {
         {/* Page Content */}
         <div className="flex-1 px-6 pb-6 lg:px-8 lg:pb-8">
           <div className="mx-auto w-full max-w-6xl">
-            <Card className="overflow-hidden border-border bg-card">
-              <div className="border-b border-border bg-muted/40 px-6 py-3 sm:px-8">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
-                  <TabsList className="bg-transparent p-0">
-                    <TabsTrigger value="overview" className="text-sm font-medium">Oversikt</TabsTrigger>
-                    <TabsTrigger value="participants" className="text-sm font-medium">
-                      <span className="inline-flex items-center gap-2.5">
-                        Deltakere
-                        <span className="text-xs font-medium tracking-wide rounded-lg bg-muted px-2 py-0.5 text-muted-foreground">
-                          {course.enrolled}
-                        </span>
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="settings" className="text-sm font-medium">Innstillinger</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-
-              <div className="px-6 py-8 sm:px-8">
-                <div role="tabpanel">
-                <AnimatePresence mode="wait">
+            <div role="tabpanel">
+              <AnimatePresence mode="wait">
 
             {/* TAB 1: OVERSIKT (Overview) */}
             {activeTab === 'overview' && (
@@ -815,7 +798,6 @@ const CourseDetailPage = () => {
                 animate="animate"
                 exit="exit"
                 transition={tabTransition}
-                className="max-w-6xl mx-auto"
               >
                 <CourseSettingsTab
                   settingsTitle={settingsTitle}
@@ -864,10 +846,8 @@ const CourseDetailPage = () => {
               </motion.div>
             )}
 
-                </AnimatePresence>
-                </div>
-              </div>
-            </Card>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </main>
@@ -958,7 +938,7 @@ const CourseDetailPage = () => {
               </div>
 
               <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground">Totalt refusjon</span>
+                <span className="text-xs font-medium tracking-wide text-muted-foreground">Total refusjon</span>
                 <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>
             </div>

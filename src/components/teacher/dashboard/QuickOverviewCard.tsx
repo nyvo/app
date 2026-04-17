@@ -39,12 +39,14 @@ function formatRevenueTooltip(value: number): string {
 }
 
 export function QuickOverviewCard({ stats }: QuickOverviewCardProps) {
+  const hasActivity = stats ? (stats.revenue > 0 || stats.newCustomers > 0 || stats.totalSignups > 0) : true
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Oversikt</CardTitle>
         <CardAction>
-          <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne måneden</Badge>
+          {hasActivity && <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne måneden</Badge>}
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -54,31 +56,84 @@ export function QuickOverviewCard({ stats }: QuickOverviewCardProps) {
   )
 }
 
+const PLACEHOLDER_SERIES = [
+  { date: '1', revenue: 120 },
+  { date: '2', revenue: 180 },
+  { date: '3', revenue: 150 },
+  { date: '4', revenue: 280 },
+  { date: '5', revenue: 220 },
+  { date: '6', revenue: 350 },
+  { date: '7', revenue: 310 },
+  { date: '8', revenue: 420 },
+  { date: '9', revenue: 380 },
+  { date: '10', revenue: 500 },
+  { date: '11', revenue: 460 },
+  { date: '12', revenue: 580 },
+]
+
 function QuickOverviewBody({ stats }: { stats: MonthStats }) {
+  const hasActivity = stats.revenue > 0 || stats.newCustomers > 0 || stats.totalSignups > 0
+
+  if (!hasActivity) {
+    return (
+      <div className="relative">
+        <div className="blur-[3px] opacity-30 pointer-events-none select-none">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:gap-5">
+            <div className="sm:order-1">
+              <div className="mb-1">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold tracking-tight text-foreground">12 400 kr</p>
+                </div>
+              </div>
+              <ChartContainer config={chartConfig} className="aspect-auto h-40 w-full">
+                <AreaChart data={PLACEHOLDER_SERIES} margin={{ top: 8, right: 4, left: 4, bottom: 2 }}>
+                  <defs>
+                    <linearGradient id="quick-overview-placeholder-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-chart-2)" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="var(--color-chart-2)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area dataKey="revenue" type="monotone" stroke="var(--color-chart-2)" strokeWidth={2} fill="url(#quick-overview-placeholder-fill)" isAnimationActive={false} />
+                </AreaChart>
+              </ChartContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:order-2 sm:grid-cols-1 sm:gap-4 sm:min-w-36">
+              <Kpi label="Nye elever" value="8" delta={null} />
+              <Kpi label="Påmeldinger" value="14" delta={null} />
+              <Kpi label="Førstegangsbesøk" value="3" delta={null} />
+            </div>
+          </div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-sm font-medium text-foreground text-center max-w-48">
+            Oversikten fylles når du mottar påmeldinger
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:gap-5">
-      <div className="rounded-lg border border-border bg-muted/30 p-4 sm:order-1">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground">
-          Inntekter per dag
-        </span>
+      <div className="sm:order-1">
+        <div className="mb-1">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <p className="text-2xl font-semibold tracking-tight text-foreground">{formatKroner(stats.revenue)}</p>
+            <DeltaChip delta={stats.deltas.revenue} />
+          </div>
+        </div>
 
-        <ChartContainer config={chartConfig} className="mt-3 aspect-auto h-40 w-full">
-          <AreaChart
-            data={stats.series}
-            margin={{ top: 8, right: 4, left: 4, bottom: 0 }}
-          >
+        <ChartContainer config={chartConfig} className="aspect-auto h-40 w-full">
+          <AreaChart data={stats.series} margin={{ top: 8, right: 4, left: 4, bottom: 2 }}>
             <defs>
               <linearGradient id="quick-overview-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-chart-2)" stopOpacity={0.35} />
                 <stop offset="95%" stopColor="var(--color-chart-2)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid
-              vertical={false}
-              stroke="var(--border)"
-              strokeDasharray="3 3"
-              strokeOpacity={0.5}
-            />
+            <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" strokeOpacity={0.5} />
             <XAxis dataKey="date" hide />
             <YAxis hide domain={[0, 'dataMax + 1']} />
             <ChartTooltip
@@ -97,12 +152,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
               stroke="var(--color-chart-2)"
               strokeWidth={2}
               fill="url(#quick-overview-fill)"
-              activeDot={{
-                r: 4,
-                strokeWidth: 2,
-                stroke: 'var(--background)',
-                fill: 'var(--color-chart-2)',
-              }}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--background)', fill: 'var(--color-chart-2)' }}
               isAnimationActive={false}
             />
           </AreaChart>
@@ -110,21 +160,8 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
       </div>
 
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:order-2 sm:grid-cols-1 sm:gap-4 sm:min-w-36">
-        <Kpi
-          label="Inntekter"
-          value={formatKroner(stats.revenue)}
-          delta={<DeltaChip delta={stats.deltas.revenue} />}
-        />
-        <Kpi
-          label="Nye elever"
-          value={stats.newCustomers.toString()}
-          delta={<DeltaChip delta={stats.deltas.newCustomers} />}
-        />
-        <Kpi
-          label="Påmeldinger"
-          value={stats.totalSignups.toString()}
-          delta={<DeltaChip delta={stats.deltas.totalSignups} />}
-        />
+        <Kpi label="Nye elever" value={stats.newCustomers.toString()} delta={<DeltaChip delta={stats.deltas.newCustomers} />} />
+        <Kpi label="Påmeldinger" value={stats.totalSignups.toString()} delta={<DeltaChip delta={stats.deltas.totalSignups} />} />
         <Kpi label="Førstegangsbesøk" value="—" delta={null} />
       </div>
     </div>
@@ -134,8 +171,9 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
 function QuickOverviewSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:gap-5">
-      <div className="rounded-lg border border-border bg-muted/30 p-4">
-        <Skeleton className="h-3 w-28" />
+      <div>
+        <Skeleton className="h-7 w-28" />
+        <Skeleton className="mt-1 h-3 w-16" />
         <Skeleton className="mt-3 h-40 w-full" />
       </div>
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:grid-cols-1 sm:gap-4 sm:min-w-36">

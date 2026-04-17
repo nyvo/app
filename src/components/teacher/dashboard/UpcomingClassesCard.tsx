@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { CalendarPlus } from '@/lib/icons'
-import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardHeader,
@@ -8,8 +7,9 @@ import {
   CardAction,
   CardContent,
 } from '@/components/ui/card'
-import { DateBadge } from '@/components/ui/date-badge'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseLocalDate } from '@/utils/dateUtils'
 import type { Course } from '@/types/dashboard'
@@ -18,41 +18,54 @@ interface UpcomingClassesCardProps {
   courses: Course[] | null
 }
 
-function getSortKey(course: Course): number {
-  if (!course.date) return Infinity
-  const parsed = parseLocalDate(course.date)
-  if (!parsed) return Infinity
-  const [h, m] = (course.time || '00:00').split(':').map(Number)
-  return new Date(parsed.year, parsed.month - 1, parsed.day, h || 0, m || 0).getTime()
+const DAY_NAMES = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const
+
+function getWeekBounds(): { monday: Date; sunday: Date } {
+  const now = new Date()
+  const day = now.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  return { monday, sunday }
 }
 
-function formatFullDay(dateStr?: string): string {
-  if (!dateStr) return ''
+function toDate(dateStr?: string): Date | null {
+  if (!dateStr) return null
   const parsed = parseLocalDate(dateStr)
-  if (!parsed) return ''
-  const date = new Date(parsed.year, parsed.month - 1, parsed.day)
-  const day = date.toLocaleDateString('nb-NO', { weekday: 'long' })
-  return day.charAt(0).toUpperCase() + day.slice(1)
+  if (!parsed) return null
+  return new Date(parsed.year, parsed.month - 1, parsed.day)
 }
 
-function formatToday(): string {
+function formatDayLabel(dateStr: string): string {
+  const date = toDate(dateStr)
+  if (!date) return ''
   const today = new Date()
-  const day = today.toLocaleDateString('nb-NO', { weekday: 'long' })
-  const dayCap = day.charAt(0).toUpperCase() + day.slice(1)
-  const dateShort = today.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }).replace('.', '')
-  return `${dayCap} ${dateShort}`
+  const isToday = date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  if (isToday) return 'I dag'
+  const tomorrow = new Date(today)
+  tomorrow.setDate(today.getDate() + 1)
+  const isTomorrow = date.getFullYear() === tomorrow.getFullYear() &&
+    date.getMonth() === tomorrow.getMonth() &&
+    date.getDate() === tomorrow.getDate()
+  if (isTomorrow) return 'I morgen'
+  const name = DAY_NAMES[date.getDay()]
+  return name.charAt(0).toUpperCase() + name.slice(1)
 }
+
 
 export function UpcomingClassesCard({ courses }: UpcomingClassesCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Kommende kurs</CardTitle>
+        <CardTitle>Neste kurs</CardTitle>
         <CardAction>
-          <Badge variant="secondary" className="text-muted-foreground tracking-wide">{formatToday()}</Badge>
+          <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne uken</Badge>
         </CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         {courses === null ? <UpcomingSkeleton /> : <UpcomingBody courses={courses} />}
       </CardContent>
     </Card>
@@ -60,51 +73,75 @@ export function UpcomingClassesCard({ courses }: UpcomingClassesCardProps) {
 }
 
 function UpcomingBody({ courses }: { courses: Course[] }) {
-  const sorted = [...courses]
-    .filter((course) => course.date)
-    .sort((a, b) => getSortKey(a) - getSortKey(b))
-    .slice(0, 5)
+  const { monday, sunday } = getWeekBounds()
 
-  if (sorted.length === 0) {
+  const thisWeek = courses.filter((course) => {
+    const date = toDate(course.date)
+    if (!date) return false
+    return date >= monday && date <= sunday
+  })
+
+  // Group by date
+  const grouped = new Map<string, Course[]>()
+  for (const course of thisWeek) {
+    if (!course.date) continue
+    const existing = grouped.get(course.date)
+    if (existing) {
+      existing.push(course)
+    } else {
+      grouped.set(course.date, [course])
+    }
+  }
+
+  // Sort groups by date, sort courses within each group by time
+  const sortedDays = [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b))
+  for (const [, dayCourses] of sortedDays) {
+    dayCourses.sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+  }
+
+  if (sortedDays.length === 0) {
     return (
-      <Empty className="border-0 p-4">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <CalendarPlus />
-          </EmptyMedia>
-          <EmptyTitle>Ingen kommende kurs</EmptyTitle>
-          <EmptyDescription>Opprett kurs for å fylle timeplanen.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <div className="flex flex-col items-center gap-3 py-8">
+        <div className="text-center">
+          <p className="text-sm font-medium text-foreground">Ingen kurs denne uken</p>
+          <p className="text-xs text-muted-foreground mt-1">Opprett kurs for å fylle timeplanen</p>
+        </div>
+        <Button asChild size="sm" className="gap-1.5">
+          <Link to="/teacher/new-course">
+            <CalendarPlus className="h-3.5 w-3.5" />
+            Opprett kurs
+          </Link>
+        </Button>
+      </div>
     )
   }
 
+  const allCourses = sortedDays.flatMap(([, dayCourses]) => dayCourses)
+
   return (
-    <div className="space-y-1">
-      {sorted.map((course) => {
-        const dayName = formatFullDay(course.date)
+    <div className="space-y-3">
+      {allCourses.map((course) => {
         const hasAttendance = course.signups != null && course.capacity != null && course.capacity > 0
         return (
-          <Link
-            key={`${course.id}-${course.date}-${course.time}`}
-            to={`/teacher/courses/${course.id}`}
-            className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
-          >
-            <DateBadge dateStr={course.date} />
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-medium text-foreground">{course.title}</h3>
-              <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                {dayName}
-                {course.time ? ` · kl. ${course.time}` : ''}
-                {course.subtitle ? ` · ${course.subtitle}` : ''}
-              </p>
-            </div>
-            {hasAttendance && (
-              <span className="shrink-0 text-sm text-muted-foreground">
-                {course.signups}/{course.capacity}
-              </span>
-            )}
-          </Link>
+          <div key={`${course.id}-${course.date}-${course.time}`} className="grid grid-cols-[theme(spacing.16)_1fr] pl-6 pr-6">
+            <span className="text-xs font-medium text-muted-foreground">
+              {formatDayLabel(course.date!)}
+            </span>
+            <Link
+              to={`/teacher/courses/${course.id}`}
+              className="group rounded-lg bg-chart-2/10 outline-none smooth-transition hover:bg-chart-2/15 focus-visible:bg-chart-2/15"
+            >
+              <div className="p-3 space-y-0.5">
+                <h3 className="truncate text-sm font-medium text-foreground">{course.title}</h3>
+                <p className="truncate text-xs text-muted-foreground">
+                  {course.time ? `kl. ${course.time}` : 'Tid ikke satt'}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {hasAttendance ? `${course.signups}/${course.capacity} påmeldte` : course.subtitle || 'Ingen påmeldte'}
+                </p>
+              </div>
+            </Link>
+          </div>
         )
       })}
     </div>
@@ -114,13 +151,10 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
 function UpcomingSkeleton() {
   return (
     <div className="space-y-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3">
-          <Skeleton className="size-10 shrink-0 rounded-md" />
-          <div className="min-w-0 flex-1">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="mt-1.5 h-3 w-28" />
-          </div>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i}>
+          <Skeleton className="h-3 w-16 mb-1.5" />
+          <Skeleton className="h-[60px] w-full rounded-lg" />
         </div>
       ))}
     </div>

@@ -8,9 +8,6 @@ import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { SetupChecklist } from '@/components/teacher/SetupChecklist';
-import { MessagesList } from '@/components/teacher/MessagesList';
-import { CoursesList } from '@/components/teacher/CoursesList';
-import { RegistrationsList } from '@/components/teacher/RegistrationsList';
 import { QuickOverviewCard } from '@/components/teacher/dashboard/QuickOverviewCard';
 import { BusinessGlanceCard } from '@/components/teacher/dashboard/BusinessGlanceCard';
 import { UpcomingClassesCard } from '@/components/teacher/dashboard/UpcomingClassesCard';
@@ -18,7 +15,7 @@ import { RecentActivityCard } from '@/components/teacher/dashboard/RecentActivit
 import { fetchMonthStats, fetchWeekStats, type MonthStats, type WeekStats } from '@/services/dashboardStats';
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
@@ -39,16 +36,11 @@ import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
 import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
-import { getInitials } from '@/utils/stringUtils';
-import { formatRelativeTimePast } from '@/utils/dateFormatting';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import type {
   Course as DashboardCourse,
   CourseStyleType as DashboardCourseType,
-  Registration,
-  SignupStatus,
-  Message as DashboardMessage,
 } from '@/types/dashboard';
 
 // Map session + course to dashboard Course format (has actual session date)
@@ -69,76 +61,6 @@ function mapSessionForDashboard(session: CourseSession, course: CourseDB, signup
   };
 }
 
-// Map conversation to Dashboard Message format
-function mapConversationToMessage(conversation: ConversationWithDetails): DashboardMessage {
-  const participantName = conversation.participant?.name || 'Ukjent';
-  const lastMessage = conversation.last_message;
-  const timestamp = formatRelativeTimePast(conversation.updated_at);
-
-  return {
-    id: conversation.id,
-    sender: {
-      name: participantName,
-      avatar: conversation.participant?.avatar_url || '',
-    },
-    content: lastMessage?.content || 'Ingen meldinger',
-    timestamp,
-    isOnline: false, // We don't track online status yet
-    unreadCount: conversation.unread_count,
-  };
-}
-
-// Detect if a signup requires teacher attention
-function detectSignupException(signup: SignupWithDetails): boolean {
-  if (signup.status !== 'confirmed') {
-    return false;
-  }
-
-  // Payment failed - needs follow-up or cancellation
-  if (signup.payment_status === 'failed') {
-    return true;
-  }
-
-  // Confirmed but payment still pending - might need chase
-  if (signup.payment_status === 'pending') {
-    return true;
-  }
-
-  return false;
-}
-
-// Map signup to Registration format
-function mapSignupToRegistration(signup: SignupWithDetails): Registration {
-  const participantName = signup.participant_name || signup.profile?.name || 'Ukjent';
-  const participantEmail = signup.participant_email || signup.profile?.email || '';
-  const initials = getInitials(participantName);
-
-  // Format course time from time_schedule
-  const courseTime = signup.course?.time_schedule || '';
-
-  // Detect if this signup needs attention
-  const hasException = detectSignupException(signup);
-
-  return {
-    id: signup.id,
-    participant: {
-      name: participantName,
-      email: participantEmail,
-      avatar: signup.profile?.avatar_url || undefined,
-      initials,
-    },
-    course: signup.course?.title || 'Ukjent kurs',
-    courseTime,
-    courseType: (signup.course?.course_type || 'vinyasa') as DashboardCourseType,
-    registeredAt: formatRelativeTimePast(signup.created_at || ''),
-    createdAt: signup.created_at || '',
-    status: signup.status as SignupStatus,
-    isVerified: !!signup.profile,
-    hasException,
-    paymentStatus: signup.payment_status || undefined,
-  };
-}
-
 
 const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -153,8 +75,6 @@ const TeacherDashboard = () => {
   const { currentOrganization, profile, refreshOrganizations } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [messages, setMessages] = useState<DashboardMessage[]>([]);
   const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
   const [recentConversationsRaw, setRecentConversationsRaw] = useState<ConversationWithDetails[] | null>(null);
   const [monthStats, setMonthStats] = useState<MonthStats | null>(null);
@@ -260,18 +180,16 @@ const TeacherDashboard = () => {
     }
 
     if (signupsResult.data) {
-      setRegistrations(signupsResult.data.map(mapSignupToRegistration));
+
       setRecentSignupsRaw(signupsResult.data);
     } else {
-      setRegistrations([]);
       setRecentSignupsRaw([]);
     }
 
     if (messagesResult.data) {
-      setMessages(messagesResult.data.map(mapConversationToMessage));
+
       setRecentConversationsRaw(messagesResult.data);
     } else {
-      setMessages([]);
       setRecentConversationsRaw([]);
     }
   }
@@ -470,108 +388,54 @@ const TeacherDashboard = () => {
                   </Button>
                 </div>
               ) : !isSetupComplete ? (
-                <>
-                  <div className="mb-8">
-                    <SetupChecklist
-                      steps={steps}
-                      completedCount={completedCount}
-                      totalCount={totalCount}
-                      motivationalSubtitle={motivationalSubtitle}
-                      loadingStepId={connectingStripe ? 'stripe' : undefined}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
-                    <div className="space-y-6">
-                      <section className="space-y-3">
-                        <h2 className="text-base font-medium text-foreground">Dagens kurs</h2>
-                        <CoursesList courses={dashboardCourses ?? []} hideHeader />
-                      </section>
-                    </div>
-                    <div className="space-y-6">
-                      <Card className="overflow-hidden">
-                        <div className="border-b border-border px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
-                            <Link to="/teacher/signups" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <RegistrationsList registrations={registrations} hideHeader hideCard />
-                        </div>
-                        <div className="px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-base font-medium text-foreground">Meldinger</h2>
-                            <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <MessagesList messages={messages} hideHeader hideCard />
-                        </div>
-                      </Card>
-                    </div>
-                  </div>
-                </>
+                <motion.div
+                  className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={sectionTransition}
+                >
+                  <SetupChecklist
+                    steps={steps}
+                    completedCount={completedCount}
+                    totalCount={totalCount}
+                    motivationalSubtitle={motivationalSubtitle}
+                    loadingStepId={connectingStripe ? 'stripe' : undefined}
+                  />
+                  <QuickOverviewCard stats={monthStats} />
+                  <UpcomingClassesCard courses={dashboardCourses} />
+                  <BusinessGlanceCard stats={weekStats} />
+                </motion.div>
               ) : (showEmptyState || !hasCourses) ? (
-                <>
-                  <div className="mb-8">
-                    <h3 className="text-base font-medium mb-3 text-foreground">Kom i gang</h3>
-                    <Card className="group relative overflow-hidden">
-                      <div className="relative z-10 flex flex-col justify-center p-6 sm:p-8">
-                        <div className="max-w-xl">
-                          <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
-                            <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
-                          </div>
-                          <h2 className="text-xl font-semibold tracking-tight leading-tight text-foreground">
-                            Opprett ditt første kurs
-                          </h2>
-                          <p className="text-sm mb-8 max-w-lg text-muted-foreground">
-                            Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din i ditt eget tempo.
-                          </p>
-                          <Button
-                            asChild
-                            size="default"
-                            className="gap-2"
-                          >
-                            <Link to="/teacher/new-course">
-                              <CalendarPlus className="h-4 w-4" />
-                              Opprett kurs
-                            </Link>
-                          </Button>
-                        </div>
+                <motion.div
+                  className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={sectionTransition}
+                >
+                  <Card className="lg:col-span-2">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
+                        <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
                       </div>
-                    </Card>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 xl:grid-cols-[2fr_1fr]">
-                    <div className="space-y-6">
-                      <section className="space-y-3">
-                        <h2 className="text-base font-medium text-foreground">Dagens kurs</h2>
-                        <CoursesList courses={[]} hideHeader />
-                      </section>
-                    </div>
-                    <div className="space-y-6">
-                      <Card className="overflow-hidden">
-                        <div className="border-b border-border px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
-                            <Link to="/teacher/signups" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <RegistrationsList registrations={[]} hideHeader hideCard />
-                        </div>
-                        <div className="px-6 py-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-base font-medium text-foreground">Meldinger</h2>
-                            <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground">
-                              Se alle
-                            </Link>
-                          </div>
-                          <MessagesList messages={messages} hideHeader hideCard />
-                        </div>
-                      </Card>
-                    </div>
-                  </div>
-                </>
+                      <h2 className="text-xl font-semibold tracking-tight leading-tight text-foreground text-center">
+                        Opprett ditt første kurs
+                      </h2>
+                      <p className="text-sm mt-2 mb-6 max-w-md text-center text-muted-foreground">
+                        Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din.
+                      </p>
+                      <Button asChild size="default" className="gap-2">
+                        <Link to="/teacher/new-course">
+                          <CalendarPlus className="h-4 w-4" />
+                          Opprett kurs
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  <RecentActivityCard signups={recentSignupsRaw} conversations={recentConversationsRaw} />
+                  <QuickOverviewCard stats={monthStats} />
+                  <UpcomingClassesCard courses={dashboardCourses} />
+                  <BusinessGlanceCard stats={weekStats} />
+                </motion.div>
               ) : (
                 <motion.div
                   className="grid grid-cols-1 gap-6 lg:grid-cols-2"
@@ -607,7 +471,7 @@ const TeacherDashboard = () => {
                   <div>
                     <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
                     <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">
-                      Pengene fra bookinger overføres direkte til din konto. Ease tar ingen del av betalingen.
+                      Pengene fra påmeldinger overføres direkte til din konto. Ease tar ingen del av betalingen.
                     </p>
                   </div>
                 </div>

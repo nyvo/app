@@ -41,9 +41,9 @@ export const ARRIVAL_DEFAULT_MINUTES = ''
 
 /** Example placeholders for custom bullet inputs */
 export const CUSTOM_BULLET_PLACEHOLDERS = [
-  'F.eks. Gi beskjed om eventuelle skader',
-  'F.eks. Ta med varme klær til avspenning',
-  'F.eks. Timen foregår hovedsakelig i stillhet',
+  'Gi beskjed om eventuelle skader',
+  'Ta med varme klær til avspenning',
+  'Timen foregår hovedsakelig i stillhet',
 ]
 
 /**

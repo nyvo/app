@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Check, Loader2 } from '@/lib/icons'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardAction,
+  CardContent,
+} from '@/components/ui/card'
 import type { SetupStep } from '@/hooks/use-setup-progress'
 
 interface SetupChecklistProps {
@@ -16,20 +23,19 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
-    <div className="flex flex-col">
-      <h2 className="text-base font-medium mb-3 text-foreground">Kom i gang</h2>
-      <Card className="p-6 flex-1">
-        {/* Progress header */}
-        <div className="mb-6">
-          <div className="flex items-baseline justify-between mb-1.5">
-            <p className="text-sm font-medium text-foreground">
-              {motivationalSubtitle}
-            </p>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground">
-              {completedCount} av {totalCount}
-            </p>
-          </div>
-          {/* Progress bar */}
+    <Card>
+      <CardHeader>
+        <CardTitle>Kom i gang</CardTitle>
+        <CardAction>
+          <Badge variant="secondary" className="text-muted-foreground tracking-wide">{completedCount} av {totalCount}</Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {/* Progress bar */}
+        <div className="mb-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground mb-1.5">
+            {motivationalSubtitle}
+          </p>
           <div
             className="h-1 overflow-hidden rounded-full bg-muted"
             role="progressbar"
@@ -122,7 +128,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
             )
           })}
         </div>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

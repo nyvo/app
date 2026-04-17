@@ -1,4 +1,5 @@
 import { Search, Plus } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { SectionLoader } from '@/components/ui/section-loader';
@@ -31,7 +32,7 @@ export function ConversationList({
   return (
     <div className="flex h-full flex-col">
       {/* List Header */}
-      <div className="border-b border-border px-4 py-4">
+      <div className="border-b border-border px-6 py-4 lg:px-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-medium text-foreground">Samtaler</h2>
           <Button onClick={onNewMessage} size="compact" className="gap-2">
@@ -48,7 +49,7 @@ export function ConversationList({
       </div>
 
       {/* Conversations Scroll Area */}
-      <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-3">
+      <div className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-4 py-3 lg:px-6">
         {loading ? (
           <SectionLoader size="md" />
         ) : conversations.length === 0 ? (
@@ -81,9 +82,9 @@ export function ConversationList({
                   className={activeConversationId !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
                 />
                 {conversation.unread_count > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground border-2 border-card">
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
                     {conversation.unread_count}
-                  </span>
+                  </Badge>
                 )}
               </div>
               <div className="flex-1 min-w-0">

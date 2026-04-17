@@ -18,9 +18,11 @@ import {
 import { sendNewMessageNotification } from '@/services/emails';
 import type { Message } from '@/types/database';
 import { ConversationList, ChatView, ComposeView } from '@/components/teacher/messages';
+import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 
 const MessagesPage = () => {
   const { currentOrganization, profile } = useAuth();
+  const { refreshUnreadMessages } = useTeacherShell();
   const organizationId = currentOrganization?.id;
   const organizationName = currentOrganization?.name || 'Ease';
   const senderName = profile?.name || 'Instruktør';
@@ -72,6 +74,7 @@ const MessagesPage = () => {
           ? { ...c, is_read: true, unread_count: 0 }
           : c
       ));
+      refreshUnreadMessages();
     }
   }, [activeConversation]);
 
@@ -264,9 +267,9 @@ const MessagesPage = () => {
     <main className="flex-1 flex min-h-full flex-col overflow-hidden bg-background">
       <MobileTeacherHeader title="Meldinger" />
 
-      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden px-6 py-6 lg:px-8 lg:py-8">
+      <div className="flex min-h-0 flex-1 overflow-hidden bg-background">
         {/* Left panel — conversation list */}
-        <div className="w-80 lg:w-96 shrink-0 overflow-hidden rounded-xl border border-border">
+        <div className="w-80 lg:w-96 shrink-0 overflow-hidden border-r border-border">
           <ConversationList
             conversations={filteredConversations}
             activeConversationId={activeConversation?.id ?? null}
@@ -288,7 +291,7 @@ const MessagesPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border"
+              className="flex-1 min-h-0 overflow-hidden"
             >
               <ComposeView
                 onCancel={handleCancelComposition}
@@ -303,7 +306,7 @@ const MessagesPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border"
+              className="flex-1 min-h-0 overflow-hidden"
             >
               <ChatView
                 conversation={activeConversation}
@@ -323,7 +326,7 @@ const MessagesPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border flex items-center justify-center"
+              className="flex-1 min-h-0 overflow-hidden flex items-center justify-center"
             >
               <EmptyState
                 icon={Send}

@@ -51,9 +51,9 @@ async function mapConversationsToDetails(
   return conversations.map(conv => {
     const messages = conv.messages || []
     const sortedMessages = [...messages].sort(
-      (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+      (a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
     )
-    const lastMessage = sortedMessages[0] || null
+    const lastMessage = sortedMessages[sortedMessages.length - 1] || null
     const unreadCount = messages.filter(m => !m.is_read && !m.is_outgoing).length
 
     let participant = null
@@ -152,9 +152,9 @@ export async function fetchStudentConversations(
   const result: ConversationWithDetails[] = typedConversations.map((conv) => {
     const messages = conv.messages || []
     const sortedMessages = [...messages].sort(
-      (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+      (a, b) => new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime()
     )
-    const lastMessage = sortedMessages[0] || null
+    const lastMessage = sortedMessages[sortedMessages.length - 1] || null
     // For students, unread messages are the outgoing ones (from teacher's perspective)
     const unreadCount = messages.filter((m) => !m.is_read && m.is_outgoing).length
 

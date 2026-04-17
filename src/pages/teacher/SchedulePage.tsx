@@ -235,15 +235,14 @@ export const SchedulePage = () => {
   useEffect(() => {
     if (!showSidebar || !sidebarRef.current) return;
 
-    const rect = sidebarRef.current.getBoundingClientRect();
-    const isAboveViewport = rect.top < 96;
-    const isBelowViewport = rect.top > window.innerHeight - 120;
+    const firstChild = sidebarRef.current.querySelector(':first-child');
+    if (!firstChild) return;
 
-    if (isAboveViewport || isBelowViewport) {
-      sidebarRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    const rect = firstChild.getBoundingClientRect();
+    const isInView = rect.top >= 0 && rect.top <= window.innerHeight;
+
+    if (!isInView) {
+      firstChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [showSidebar, selectedEvent]);
 
@@ -292,9 +291,9 @@ export const SchedulePage = () => {
         </div>
       ) : (
         /* Desktop */
-        <div className="flex min-h-0 flex-1 gap-3 overflow-hidden px-6 py-6 lg:px-8 lg:py-8">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Calendar section */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <ScheduleHeader
               displayedMonday={displayedMonday}
               weekOffset={weekOffset}
@@ -306,7 +305,7 @@ export const SchedulePage = () => {
               hasCourses={!isFullyEmpty}
             />
 
-            <div ref={calendarScrollRef} className="relative flex min-h-0 flex-1 flex-col overflow-auto bg-background rounded-b-xl">
+            <div ref={calendarScrollRef} className="relative flex min-h-0 flex-1 flex-col overflow-auto">
               {isLoading && (
                 <PageLoader variant="overlay" message="Laster timeplan" />
               )}
@@ -320,7 +319,7 @@ export const SchedulePage = () => {
               ) : !isLoading && viewMode === 'week' && (
                 <>
                   {/* Sticky day headers */}
-                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background rounded-t-xl">
+                  <div className="sticky top-0 z-20 grid min-w-[1040px] grid-cols-[60px_repeat(7,minmax(140px,1fr))] border-b border-border bg-background">
                     <div />
                     {weekDays.map((day) => (
                       <div
@@ -358,10 +357,10 @@ export const SchedulePage = () => {
                     )}
 
 
-                    <div className="flex flex-col bg-background">
+                    <div className="flex flex-col bg-white dark:bg-background">
                       {TIME_SLOTS.map((time) => (
                         <div key={time} className="h-[100px] border-b border-border/60 px-2 py-1">
-                          <span className="text-xs font-medium tracking-wide text-muted-foreground/60">{time.replace(':00', '')}</span>
+                          <span className="text-xs font-medium tracking-wide text-muted-foreground">{time.replace(':00', '')}</span>
                         </div>
                       ))}
                     </div>
@@ -437,7 +436,7 @@ export const SchedulePage = () => {
                 transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                 className="shrink-0 overflow-hidden"
               >
-                <div className="w-80 min-w-80 rounded-xl border border-border bg-background">
+                <div className="w-80 min-w-80 border-l border-border">
                   <EventSidebar
                     event={selectedEvent}
                     sessionDate={selectedEventDate}

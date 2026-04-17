@@ -1,4 +1,5 @@
 import { CheckCheck } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { formatMessageTimestamp } from '@/utils/dateFormatting';
 import type { Message } from '@/types/database';
@@ -19,9 +20,9 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
       }`}
     >
       {isOutgoing ? (
-        <div className="text-xs font-medium tracking-wide mb-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+        <Badge className="mb-1 flex h-8 w-8 items-center justify-center rounded-full px-0 text-xs shrink-0">
           Du
-        </div>
+        </Badge>
       ) : (
         <UserAvatar
           name={participant?.name}
@@ -55,7 +56,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
         >
           {formatMessageTimestamp(message.created_at)}
           {isOutgoing && message.is_read && (
-            <CheckCheck className="h-3 w-3 text-green-800" />
+            <CheckCheck className="h-3 w-3 text-success" />
           )}
         </span>
       </div>

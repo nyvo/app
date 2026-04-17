@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { AudienceLevel, EquipmentInfo } from '@/types/practicalInfo';
 import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
@@ -172,70 +172,71 @@ export const CourseSettingsTab = ({
   };
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-medium text-foreground">Generelt</h3>
-          <p className="text-sm text-muted-foreground">Oppdater navn, beskrivelse og forsidebilde for kurset.</p>
-        </div>
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="settings-title" className="text-xs font-medium mb-1.5 block text-foreground">Navn på kurs</label>
-              <Input
-                id="settings-title"
-                type="text"
-                value={settingsTitle}
-                onChange={(e) => onTitleChange(e.target.value)}
-              />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Generelt</CardTitle>
+          <CardDescription>Oppdater navn, beskrivelse og forsidebilde for kurset.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="settings-title" className="text-xs font-medium mb-1.5 block text-foreground">Navn på kurs</label>
+                <Input
+                  id="settings-title"
+                  type="text"
+                  value={settingsTitle}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="settings-description" className="text-xs font-medium mb-1.5 block text-foreground">Beskrivelse</label>
+                <Textarea
+                  id="settings-description"
+                  rows={6}
+                  value={settingsDescription}
+                  onChange={(e) => onDescriptionChange(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="settings-description" className="text-xs font-medium mb-1.5 block text-foreground">Beskrivelse</label>
-              <Textarea
-                id="settings-description"
-                rows={6}
-                value={settingsDescription}
-                onChange={(e) => onDescriptionChange(e.target.value)}
-              />
+            <div className="space-y-2">
+              <div>
+                <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
+                <p className="text-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
+              </div>
+              <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted">
+                <ImageUpload
+                  value={settingsImageUrl}
+                  onChange={(file) => {
+                    onImageFileChange(file);
+                    if (!file && settingsImageUrl) {
+                      onImageRemove();
+                    }
+                  }}
+                  onRemove={() => {
+                    if (settingsImageUrl) {
+                      onImageRemove();
+                    }
+                  }}
+                  disabled={isSaving}
+                  className="absolute inset-0 h-full w-full"
+                />
+              </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="space-y-2">
-            <div>
-              <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
-              <p className="text-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
-            </div>
-            <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-card">
-              <ImageUpload
-                value={settingsImageUrl}
-                onChange={(file) => {
-                  onImageFileChange(file);
-                  if (!file && settingsImageUrl) {
-                    onImageRemove();
-                  }
-                }}
-                onRemove={() => {
-                  if (settingsImageUrl) {
-                    onImageRemove();
-                  }
-                }}
-                disabled={isSaving}
-                className="absolute inset-0 h-full w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-medium text-foreground">Tid og kapasitet</h3>
-          <p className="text-sm text-muted-foreground">Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-3">
+      <Card>
+        <CardHeader>
+          <CardTitle>Tid og kapasitet</CardTitle>
+          <CardDescription>Juster tidspunkt, varighet og hvor mange deltakere kurset har plass til.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
             <DatePicker
@@ -317,29 +318,32 @@ export const CourseSettingsTab = ({
             )}
           </div>
         </div>
-        {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
-          <Alert variant="warning" size="sm" icon={false}>
-            <p className="text-xs font-medium tracking-wide text-amber-900">
-              Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
-            </p>
-          </Alert>
-        )}
-      </section>
+          {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
+            <Alert variant="warning" size="sm" icon={false}>
+              <p className="text-xs font-medium tracking-wide text-destructive">
+                Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
+              </p>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
 
-      <Separator />
-
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-medium text-foreground">Praktisk info</h3>
-          <p className="text-sm text-muted-foreground">Hjelp deltakerne å møte forberedt med tydelig informasjon.</p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Praktisk info</CardTitle>
+          <CardDescription>Hjelp deltakerne å møte forberedt med tydelig informasjon.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-6 sm:grid-cols-2">
           <div>
             <label className="text-xs font-medium mb-2.5 block text-foreground">Nivå</label>
             <ToggleGroup
               type="single"
               value={settingsAudienceLevel}
               onValueChange={(value) => onAudienceLevelChange((value || '') as AudienceLevel | '')}
+              variant="pill"
+              spacing={1}
+              className="gap-1.5"
               aria-label="Velg nivå"
             >
               {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
@@ -430,40 +434,41 @@ export const CourseSettingsTab = ({
               )}
             </div>
           </div>
-        </div>
-      </section>
-
-      <Separator className="mt-2" />
-
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-medium text-foreground">Avlys kurs</h3>
-          <p className="text-sm text-muted-foreground">Bruk dette bare hvis kurset ikke skal gjennomføres.</p>
-        </div>
-        <div className="flex flex-col justify-between gap-4 rounded-lg bg-muted px-4 py-4 sm:flex-row sm:items-center">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
-            <p className="text-sm text-muted-foreground">
-              {refundPreview.count > 0
-                ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
-                : 'Kurset vil bli avlyst.'}
-            </p>
           </div>
-          <Button
-            variant="destructive-outline"
-            size="compact"
-            className="shrink-0 whitespace-nowrap"
-            onClick={onCancelCourse}
-          >
-            Avlys kurs
-          </Button>
-        </div>
-      </section>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Avlys kurs</CardTitle>
+          <CardDescription>Bruk dette bare hvis kurset ikke skal gjennomføres.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col justify-between gap-4 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-4 sm:flex-row sm:items-center">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
+              <p className="text-sm text-muted-foreground">
+                {refundPreview.count > 0
+                  ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
+                  : 'Kurset vil bli avlyst.'}
+              </p>
+            </div>
+            <Button
+              variant="destructive-outline"
+              size="compact"
+              className="shrink-0 whitespace-nowrap"
+              onClick={onCancelCourse}
+            >
+              Avlys kurs
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex justify-end gap-3 pt-2">
         {saveError && (
           <Alert variant="error" size="sm" icon={Info} className="mr-auto">
-            <span className="text-sm text-red-700">{saveError}</span>
+            <span className="text-sm text-destructive">{saveError}</span>
           </Alert>
         )}
 

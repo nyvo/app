@@ -333,7 +333,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         id="welcome-city"
                         value={city}
                         onChange={(e) => { setCity(e.target.value); if (cityError) setCityError('') }}
-                        placeholder="F.eks. Oslo"
+                        placeholder="Oslo"
                         required
                         aria-invalid={!!cityError || undefined}
                         aria-describedby={cityError ? 'welcome-city-error' : 'welcome-city-hint'}
