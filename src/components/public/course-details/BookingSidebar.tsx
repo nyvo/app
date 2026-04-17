@@ -15,7 +15,6 @@ export interface BookingSidebarProps {
   errors: Record<string, boolean>;
   touched: Record<string, boolean>;
   submitting: boolean;
-  isAuthStudent: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onBlur: (field: string) => void;
@@ -35,7 +34,6 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   errors,
   touched,
   submitting,
-  isAuthStudent,
   onSubmit,
   onInputChange,
   onBlur,
@@ -79,13 +77,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               <TicketSelector price={course.price} />
             )}
 
-            {/* Student details */}
             <StudentDetailsForm
               formData={formData}
               errors={errors}
               touched={touched}
               submitting={submitting}
-              isAuthStudent={isAuthStudent}
               onChange={onInputChange}
               onBlur={onBlur}
             />

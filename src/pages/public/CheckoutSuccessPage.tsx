@@ -2,14 +2,13 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, Leaf, AlertCircle, Home, BookOpen, Calendar, Clock, MapPin, CreditCard, Mail } from '@/lib/icons';
+import { CheckCircle2, Leaf, AlertCircle, Home, Calendar, Clock, MapPin, CreditCard, Mail } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 import { formatKroner } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 
 interface SignupDetails {
@@ -36,7 +35,6 @@ const CheckoutSuccessPage = () => {
   const paymentIntentId = searchParams.get('payment_intent_id');
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
-  const { user, userType } = useAuth();
   const lookupId = sessionId || paymentIntentId;
 
   const [loading, setLoading] = useState(true);
@@ -288,31 +286,9 @@ const CheckoutSuccessPage = () => {
               </Alert>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                {user && userType === 'student' ? (
-                  <>
-                    <Button asChild variant="default" size="default" className="w-full sm:w-auto">
-                      <Link to="/student/dashboard">
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Mine kurs
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline-soft" size="default" className="w-full sm:w-auto">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button asChild variant="default" size="default" className="w-full sm:w-auto">
-                      <Link to={studioUrl}>Se flere kurs</Link>
-                    </Button>
-                    <div className="text-xs font-medium tracking-wide flex items-center justify-center pt-2 text-muted-foreground sm:justify-start sm:pl-4 sm:pt-0">
-                      <span>
-                        <Link to="/student/login" className="underline underline-offset-2 hover:text-foreground">Logg inn</Link>
-                        {' '}for å se kursene dine
-                      </span>
-                    </div>
-                  </>
-                )}
+                <Button asChild variant="default" size="default" className="w-full sm:w-auto">
+                  <Link to={studioUrl}>Se flere kurs</Link>
+                </Button>
               </div>
             </div>
 

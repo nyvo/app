@@ -3,8 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import {
   MapPin,
   Leaf,
-  User,
-  LogOut,
   BookOpen,
   Search,
 } from '@/lib/icons';
@@ -16,16 +14,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PublicCourseTable } from '@/components/public/PublicCourseTable';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
-import { useAuth } from '@/contexts/AuthContext';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { getDayOfWeekFromSchedule } from '@/components/public/courseCardUtils';
 import type { Organization } from '@/types/database';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 // Split courses into Kursrekker and Arrangementer
 function splitCoursesByType(courses: PublicCourseWithDetails[]): {
@@ -82,7 +73,6 @@ function sortArrangementer(courses: PublicCourseWithDetails[]): PublicCourseWith
 
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { user, userType, profile, signOut } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +137,7 @@ const PublicCoursesPage = () => {
     }
 
     loadData();
-  }, [slug, user, profile?.email]);
+  }, [slug]);
 
   const isEmpty = !loading && filteredCourses.length === 0 && organization;
   const hasCoursesButNoResults = !loading && courses.length > 0 && filteredCourses.length === 0;
@@ -164,32 +154,6 @@ const PublicCoursesPage = () => {
             <span className="text-base font-medium text-foreground">Ease</span>
           </Link>
 
-          {user && userType === 'student' ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="compact" className="gap-2 text-muted-foreground hover:text-foreground">
-                  <User className="h-3.5 w-3.5" />
-                  {profile?.name?.split(' ')[0] || 'Profil'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link to="/student/dashboard" className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    Mine påmeldinger
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={signOut} className="flex items-center gap-2 text-primary">
-                  <LogOut className="h-4 w-4" />
-                  Logg ut
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild variant="outline" size="compact">
-              <Link to="/student/login">Logg inn</Link>
-            </Button>
-          )}
         </div>
       </nav>
 

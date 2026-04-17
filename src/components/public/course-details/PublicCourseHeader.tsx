@@ -13,7 +13,6 @@ export interface PublicCourseHeaderProps {
   organizationSlug: string;
   organizationName: string;
   user: SupabaseUser | null;
-  userType: string | null;
   onSignOut: () => void;
 }
 
@@ -25,7 +24,6 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
   organizationSlug,
   organizationName,
   user,
-  userType,
   onSignOut,
 }) => {
   const studioUrl = `/studio/${organizationSlug}`;
@@ -56,8 +54,7 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
             Påmelding
           </span>
 
-          {/* Profile dropdown */}
-          {user ? (
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button aria-label="Brukermeny" className="flex size-8 items-center justify-center rounded-full bg-muted smooth-transition hover:bg-card">
@@ -65,25 +62,12 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {userType === 'student' && (
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/student/dashboard"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <BookOpen className="size-4" />
-                      <span>Mine påmeldinger</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {userType === 'teacher' && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                      <BookOpen className="size-4" />
-                      <span>Oversikt</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem asChild>
+                  <Link to="/teacher" className="flex items-center gap-2 cursor-pointer">
+                    <BookOpen className="size-4" />
+                    <span>Oversikt</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={onSignOut}
                   className="flex items-center gap-2 cursor-pointer"
@@ -93,13 +77,6 @@ export const PublicCourseHeader: React.FC<PublicCourseHeaderProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <Link
-              to="/student/login"
-              className="text-xs font-medium tracking-wide text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Logg inn
-            </Link>
           )}
         </div>
       </div>

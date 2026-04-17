@@ -68,7 +68,7 @@ function extractTime(timeSchedule: string | null): string {
 
 const PublicCourseDetailPage = () => {
   const { slug, courseId } = useParams<{ slug: string; courseId: string }>();
-  const { user, userType, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   // Data fetching state
   const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
@@ -91,22 +91,6 @@ const PublicCourseDetailPage = () => {
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  // Pre-fill form data for authenticated students
-  useEffect(() => {
-    if (user && userType === 'student' && profile) {
-      const nameParts = profile.name?.split(' ') || [];
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      setFormData(prev => ({
-        ...prev,
-        firstName,
-        lastName,
-        email: profile.email || ''
-      }));
-    }
-  }, [user, userType, profile]);
 
   // Fetch course data and sessions
   useEffect(() => {
@@ -140,7 +124,7 @@ const PublicCourseDetailPage = () => {
     }
 
     loadCourseAndSessions();
-  }, [courseId, user, userType, profile?.email]);
+  }, [courseId]);
 
 
   const handleBlur = (field: string) => {
@@ -177,24 +161,20 @@ const PublicCourseDetailPage = () => {
     const newErrors: Record<string, boolean> = {};
     let isValid = true;
 
-    const isAuthStudent = user && userType === 'student';
-
-    if (!isAuthStudent) {
-      if (!formData.firstName.trim()) {
-        newErrors.firstName = true;
-        isValid = false;
-      }
-      if (!formData.lastName.trim()) {
-        newErrors.lastName = true;
-        isValid = false;
-      }
-      if (!formData.email.trim()) {
-        newErrors.email = true;
-        isValid = false;
-      } else if (!isValidEmail(formData.email)) {
-        newErrors.email = true;
-        isValid = false;
-      }
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = true;
+      isValid = false;
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = true;
+      isValid = false;
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = true;
+      isValid = false;
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = true;
+      isValid = false;
     }
 
     if (!formData.termsAccepted) {
@@ -374,7 +354,6 @@ const PublicCourseDetailPage = () => {
   const dateInfo = formatCourseDate(course.start_date);
   const time = extractTime(course.time_schedule);
   const isFull = course.spots_available === 0;
-  const isAuthStudent = Boolean(user && userType === 'student');
 
   return (
     <div className="min-h-screen w-full bg-background">
@@ -382,7 +361,6 @@ const PublicCourseDetailPage = () => {
         organizationSlug={slug || ''}
         organizationName={course.organization?.name || 'Ease'}
         user={user}
-        userType={userType}
         onSignOut={signOut}
       />
 
@@ -436,7 +414,6 @@ const PublicCourseDetailPage = () => {
               errors={errors}
               touched={touched}
               submitting={submitting}
-              isAuthStudent={isAuthStudent}
               onSubmit={handleSubmit}
               onInputChange={handleInputChange}
               onBlur={handleBlur}

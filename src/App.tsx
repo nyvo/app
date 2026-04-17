@@ -8,7 +8,6 @@ import { PageLoader } from './components/ui/page-loader';
 
 // Persistent layouts (no lazy — always mounted)
 import TeacherLayout from './layouts/TeacherLayout';
-import StudentLayout from './layouts/StudentLayout';
 
 // Lazy load all route components for code splitting
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
@@ -32,15 +31,6 @@ const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
 const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
-
-const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
-const StudentRegisterPage = lazy(() => import('./pages/student/StudentRegisterPage'));
-const StudentForgotPasswordPage = lazy(() => import('./pages/student/StudentForgotPasswordPage'));
-const StudentResetPasswordPage = lazy(() => import('./pages/student/StudentResetPasswordPage'));
-const StudentConfirmEmailPage = lazy(() => import('./pages/student/StudentConfirmEmailPage'));
-const StudentDashboardPage = lazy(() => import('./pages/student/StudentDashboardPage'));
-const StudentProfilePage = lazy(() => import('./pages/student/StudentProfilePage'));
-const StudentMessagesPage = lazy(() => import('./pages/student/StudentMessagesPage'));
 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -82,20 +72,6 @@ const App = () => {
               <Route path="payments" element={<PaymentsPage />} />
             </Route>
             <Route path="/teacher/stripe-callback" element={<ProtectedRoute><StripeCallbackPage /></ProtectedRoute>} />
-
-            {/* Student Auth Routes (public) */}
-            <Route path="/student/login" element={<StudentLoginPage />} />
-            <Route path="/student/register" element={<StudentRegisterPage />} />
-            <Route path="/student/forgot-password" element={<StudentForgotPasswordPage />} />
-            <Route path="/student/reset-password" element={<StudentResetPasswordPage />} />
-            <Route path="/student/confirm-email" element={<StudentConfirmEmailPage />} />
-
-            {/* Student Routes (Protected, persistent header layout) */}
-            <Route path="/student" element={<StudentLayout />}>
-              <Route path="dashboard" element={<StudentDashboardPage />} />
-              <Route path="profile" element={<StudentProfilePage />} />
-              <Route path="messages" element={<StudentMessagesPage />} />
-            </Route>
 
             {/* 404 Catch-all */}
             <Route path="*" element={<NotFoundPage />} />

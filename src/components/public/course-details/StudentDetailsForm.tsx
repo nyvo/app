@@ -18,7 +18,6 @@ export interface StudentDetailsFormProps {
   errors: Record<string, boolean>;
   touched: Record<string, boolean>;
   submitting: boolean;
-  isAuthStudent: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onBlur: (field: string) => void;
 }
