@@ -9,6 +9,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS, AUTH_HINTS } from '@/lib/auth-messages'
+import { isValidEmail } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const ROUTES = AUTH_ROUTES.student
@@ -23,7 +24,7 @@ const StudentForgotPasswordPage = () => {
         email: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.emailRequired
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return AUTH_VALIDATION.emailInvalid
+            if (!isValidEmail(value)) return AUTH_VALIDATION.emailInvalid
             return undefined
           },
         },

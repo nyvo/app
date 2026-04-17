@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { friendlyError } from '@/lib/error-messages';
 import { practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
+import { isValidEmail } from '@/lib/utils';
 
 // Import new components
 import { PublicCourseHeader } from '@/components/public/course-details/PublicCourseHeader';
@@ -142,10 +143,6 @@ const PublicCourseDetailPage = () => {
   }, [courseId, user, userType, profile?.email]);
 
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
   const handleBlur = (field: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
 
@@ -166,7 +163,7 @@ const PublicCourseDetailPage = () => {
     if (field === 'email') {
       if (!formData.email.trim()) {
         newErrors.email = true;
-      } else if (!validateEmail(formData.email)) {
+      } else if (!isValidEmail(formData.email)) {
         newErrors.email = true;
       } else {
         delete newErrors.email;
@@ -194,7 +191,7 @@ const PublicCourseDetailPage = () => {
       if (!formData.email.trim()) {
         newErrors.email = true;
         isValid = false;
-      } else if (!validateEmail(formData.email)) {
+      } else if (!isValidEmail(formData.email)) {
         newErrors.email = true;
         isValid = false;
       }

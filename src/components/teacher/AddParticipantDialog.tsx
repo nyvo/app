@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
+import { isValidEmail } from '@/lib/utils';
 
 import type { SignupInsert } from '@/types/database';
 
@@ -118,10 +119,9 @@ export function AddParticipantDialog({
       newErrors.lastName = 'Skriv inn etternavn';
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       newErrors.email = 'Skriv inn e-post';
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       newErrors.email = 'Skriv inn en gyldig e-postadresse';
     }
 

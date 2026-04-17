@@ -4,7 +4,7 @@ import { MapPin, ChevronDown } from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { formatSessionDate, formatTimeRange } from '@/utils/dateFormatting';
+import { formatSessionDate, formatTimeRange, extractDayName } from '@/utils/dateFormatting';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseLevel } from '@/types/database';
@@ -12,7 +12,6 @@ import {
   getAvailabilityText,
   getAvailabilityVariant,
   getEventDisplayDate,
-  extractFullDayFromSchedule,
 } from './courseCardUtils';
 
 interface PublicCourseTableProps {
@@ -31,7 +30,7 @@ function getDisplayDate(course: PublicCourseWithDetails): string {
   if (date) return formatSessionDate(date);
 
   // Fallback for series without a session date — show day name
-  const dayName = extractFullDayFromSchedule(course.time_schedule);
+  const dayName = extractDayName(course.time_schedule);
   if (dayName) return dayName;
 
   return '—';

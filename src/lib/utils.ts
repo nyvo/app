@@ -35,3 +35,9 @@ export function toggleEmptyState(): void {
 export function formatKroner(amount: number | null | undefined): string {
   return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
 }
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email);
+}

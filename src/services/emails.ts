@@ -1,16 +1,11 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { isValidEmail } from '@/lib/utils'
 
 interface SendEmailResult {
   success: boolean
   messageId?: string
   error?: string
-}
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function isValidEmail(email: string): boolean {
-  return EMAIL_REGEX.test(email)
 }
 
 // Send a raw email (for custom content)

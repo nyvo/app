@@ -51,22 +51,3 @@ export function getDayOfWeekFromSchedule(schedule: string | null): number {
   return 7;
 }
 
-// Extract full day name from schedule (e.g. "Mandager, 18:00" → "Mandag")
-export function extractFullDayFromSchedule(schedule: string | null): string | null {
-  if (!schedule) return null;
-  const lower = schedule.toLowerCase();
-  const days: [string, string][] = [
-    ['mandag', 'Mandag'],
-    ['tirsdag', 'Tirsdag'],
-    ['onsdag', 'Onsdag'],
-    ['torsdag', 'Torsdag'],
-    ['fredag', 'Fredag'],
-    ['lørdag', 'Lørdag'],
-    ['søndag', 'Søndag'],
-  ];
-  for (const [day, full] of days) {
-    if (lower.includes(day)) return full;
-  }
-  return null;
-}
-

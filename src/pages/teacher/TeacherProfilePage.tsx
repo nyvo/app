@@ -26,6 +26,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
 import type { Json } from '@/types/database';
 import { supabase, typedFrom } from '@/lib/supabase';
+import { isValidEmail } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { NotificationSettings, OrganizationSettings } from '@/types/database';
 
@@ -77,10 +78,6 @@ const TeacherProfilePage = () => {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
@@ -98,7 +95,7 @@ const TeacherProfilePage = () => {
     if (!email.trim()) {
       newErrors.email = 'Skriv inn e-postadresse';
       isValid = false;
-    } else if (!validateEmail(email)) {
+    } else if (!isValidEmail(email)) {
       newErrors.email = 'Ugyldig e-postadresse';
       isValid = false;
     }
@@ -132,7 +129,7 @@ const TeacherProfilePage = () => {
     if (field === 'email') {
       if (!email.trim()) {
         newErrors.email = 'Skriv inn e-postadresse';
-      } else if (!validateEmail(email)) {
+      } else if (!isValidEmail(email)) {
         newErrors.email = 'Ugyldig e-postadresse';
       } else {
         delete newErrors.email;
