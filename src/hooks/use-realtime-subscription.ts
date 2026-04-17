@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import type { RealtimePostgresChangesFilter } from '@supabase/realtime-js'
 
 type PostgresChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*'
 
@@ -69,9 +70,8 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
 
       const channelName = `${table}-${filter || 'all'}-${Date.now()}`
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const subscriptionConfig: any = {
-        event,
+      const subscriptionConfig: RealtimePostgresChangesFilter<'*'> = {
+        event: event as '*',
         schema,
         table,
       }
@@ -177,8 +177,11 @@ export function useMultiTableSubscription(
       const { table, schema = 'public', event = '*', filter } = config
       const channelName = `multi-${table}-${index}-${Date.now()}`
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const subscriptionConfig: any = { event, schema, table }
+      const subscriptionConfig: RealtimePostgresChangesFilter<'*'> = {
+        event: event as '*',
+        schema,
+        table,
+      }
       if (filter) subscriptionConfig.filter = filter
 
       return supabase
