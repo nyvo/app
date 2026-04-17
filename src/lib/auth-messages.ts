@@ -7,7 +7,7 @@ export const AUTH_VALIDATION = {
   emailRequired: 'Skriv inn e-posten din',
   emailInvalid: 'Sjekk at e-posten er riktig',
   passwordRequired: 'Skriv inn passordet ditt',
-  passwordMinLength: 'Passord må være minst 8 tegn',
+  passwordMinLength: 'Passord må være minst 10 tegn',
   passwordNewRequired: 'Skriv inn et passord',
   passwordConfirmRequired: 'Gjenta passordet',
   passwordMismatch: 'Passordene er ikke like',
@@ -28,14 +28,14 @@ export const AUTH_ERRORS = {
 export const AUTH_PLACEHOLDERS = {
   email: 'navn@eksempel.no',
   password: 'Skriv inn passord',
-  passwordMin: 'Minst 8 tegn',
+  passwordMin: 'Minst 10 tegn',
   confirmPassword: 'Gjenta passordet',
   studioName: 'F.eks. Yoga med Ola',
   fullName: 'Ola Nordmann',
 } as const
 
 export const AUTH_HINTS = {
-  passwordMinLength: 'Minst 8 tegn',
+  passwordMinLength: 'Minst 10 tegn',
   studioNameHelper: 'Vises på din offentlige side. Du kan endre det senere.',
   checkSpam: 'Sjekk spam-mappen hvis du ikke finner den.',
   checkSpamAlt: 'Hvis du ikke ser e-posten, sjekk søppelpost.',

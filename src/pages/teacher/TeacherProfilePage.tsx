@@ -257,7 +257,7 @@ const TeacherProfilePage = () => {
     const errs: Record<string, string> = {};
     if (!currentPassword) errs.currentPassword = 'Skriv inn nåværende passord';
     if (!newPassword) errs.newPassword = 'Skriv inn nytt passord';
-    else if (newPassword.length < 8) errs.newPassword = 'Må være minst 8 tegn';
+    else if (newPassword.length < 10) errs.newPassword = 'Må være minst 10 tegn';
     if (!confirmPassword) errs.confirmPassword = 'Bekreft nytt passord';
     else if (newPassword !== confirmPassword) errs.confirmPassword = 'Passordene er ikke like';
 
@@ -530,7 +530,7 @@ const TeacherProfilePage = () => {
                                           {passwordErrors.newPassword ? (
                                               <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Må være minst 8 tegn</p>
+                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
                                           )}
                                       </div>
 

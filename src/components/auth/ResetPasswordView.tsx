@@ -21,7 +21,7 @@ export const ResetPasswordView = () => {
         password: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.passwordNewRequired
-            if (value.length < 8) return AUTH_VALIDATION.passwordMinLength
+            if (value.length < 10) return AUTH_VALIDATION.passwordMinLength
             return undefined
           },
         },
@@ -183,7 +183,7 @@ export const ResetPasswordView = () => {
         <div className="rounded-lg bg-muted p-3">
           <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
           <ul className="text-xs font-medium tracking-wide ml-3 space-y-0.5 text-muted-foreground">
-            <li className="list-disc">Minst 8 tegn</li>
+            <li className="list-disc">Minst 10 tegn</li>
           </ul>
         </div>
 

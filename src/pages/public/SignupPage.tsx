@@ -34,7 +34,7 @@ const SignupPage = () => {
         password: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.passwordNewRequired
-            if (value.length < 8) return AUTH_VALIDATION.passwordMinLength
+            if (value.length < 10) return AUTH_VALIDATION.passwordMinLength
             return undefined
           },
         },
@@ -131,7 +131,7 @@ const SignupPage = () => {
           touched={touched.password}
           placeholder={AUTH_PLACEHOLDERS.password}
           hint={AUTH_HINTS.passwordMinLength}
-          hintMet={formData.password.length >= 8}
+          hintMet={formData.password.length >= 10}
           onChange={(v) => handleChange('password', v)}
           onBlur={() => handleBlur('password')}
         />
