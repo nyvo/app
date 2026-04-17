@@ -38,7 +38,6 @@ const MessagesPage = () => {
   const [messageText, setMessageText] = useState('');
   const [isComposing, setIsComposing] = useState(false);
 
-  // Load conversations
   const loadConversations = useCallback(async () => {
     if (!organizationId) return;
 
@@ -56,7 +55,6 @@ const MessagesPage = () => {
     loadConversations();
   }, [loadConversations]);
 
-  // Load messages when conversation changes
   useEffect(() => {
     if (!activeConversation) {
       setCurrentMessages([]);

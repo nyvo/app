@@ -37,7 +37,6 @@ export function ChatView({
 }: ChatViewProps) {
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden">
-      {/* Header */}
       <header className="shrink-0 flex items-center justify-between border-b border-border bg-background px-6 py-4 lg:px-8">
         <div className="flex items-center gap-3">
           <Button

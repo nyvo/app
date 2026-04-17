@@ -52,7 +52,6 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
         className="w-[calc(100vw-2rem)] sm:w-[360px] p-0 bg-background rounded-lg border border-border overflow-hidden"
         align="start"
       >
-        {/* Header */}
         <div className="px-6 pt-5 pb-3">
           <div className="flex items-start justify-between">
             <div>

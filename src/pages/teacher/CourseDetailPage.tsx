@@ -173,15 +173,12 @@ const CourseDetailPage = () => {
       setSettingsTime(timeMatch[1]);
     }
 
-    // Initialize duration
     setSettingsDuration(courseData.durationMinutes);
 
-    // Initialize start date
     if (courseData.startDate) {
       setSettingsDate(new Date(courseData.startDate));
     }
 
-    // Initialize practical info
     const pi = courseData.practicalInfo;
     setSettingsAudienceLevel(pi?.audience_level || '');
     setSettingsEquipment(pi?.equipment || '');
@@ -253,14 +250,12 @@ const CourseDetailPage = () => {
         setSettingsImageFile(null);
       }
 
-      // Build time_schedule from settingsDate and settingsTime
       let timeSchedule: string | undefined;
       if (settingsDate && settingsTime) {
         const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(settingsDate);
         timeSchedule = `${dayName.charAt(0).toUpperCase() + dayName.slice(1)}er, ${settingsTime}`;
       }
 
-      // Build practical_info from settings state
       const practicalInfo: PracticalInfo = {};
       if (settingsAudienceLevel) practicalInfo.audience_level = settingsAudienceLevel;
       if (settingsEquipment) practicalInfo.equipment = settingsEquipment;
@@ -295,13 +290,11 @@ const CourseDetailPage = () => {
       if (settingsTime && sessions.length > 0) {
         const oldTime = sessions[0]?.start_time;
         if (oldTime && oldTime !== settingsTime) {
-          // Update all sessions with the new time
           const updatePromises = sessions.map(session =>
             updateCourseSession(session.id, { start_time: settingsTime })
           );
           await Promise.all(updatePromises);
 
-          // Refresh sessions to show updated times
           const updatedSessions = await fetchCourseSessions(id);
           if (updatedSessions.data) {
             setSessions(updatedSessions.data);
@@ -309,7 +302,6 @@ const CourseDetailPage = () => {
         }
       }
 
-      // Update local state to reflect changes
       setCourseData(prev => prev ? {
         ...prev,
         title: settingsTitle.trim(),

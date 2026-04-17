@@ -237,7 +237,6 @@ const CoursesPage = () => {
 
         <MobileTeacherHeader title="Mine kurs" />
 
-        {/* Header */}
         <motion.header
           variants={pageVariants}
           initial="initial"
@@ -295,7 +294,6 @@ const CoursesPage = () => {
           )}
         </motion.header>
 
-        {/* Content */}
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
           {isLoading ? (
             <div role="status" aria-live="polite" aria-label="Laster kurs">

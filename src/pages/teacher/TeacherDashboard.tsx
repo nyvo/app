@@ -212,7 +212,6 @@ const TeacherDashboard = () => {
     setWeekStats(week);
   }, [currentOrganization?.id]);
 
-  // Subscribe to real-time updates for dashboard data
   useMultiTableSubscription(
     [
       { table: 'signups', filter: `organization_id=eq.${currentOrganization?.id}` },

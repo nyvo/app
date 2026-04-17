@@ -46,7 +46,6 @@ const StudentMessagesPage = () => {
     loadConversations();
   }, [loadConversations]);
 
-  // Load messages when conversation changes
   useEffect(() => {
     if (!activeConversation) {
       setCurrentMessages([]);

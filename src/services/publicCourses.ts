@@ -77,7 +77,6 @@ export interface PublicCoursesFilters {
   includePast?: boolean // If true, returns only past courses (archive)
 }
 
-// Fetch all published courses for public viewing
 export async function fetchPublicCourses(
   filters?: PublicCoursesFilters
 ): Promise<{
@@ -244,7 +243,6 @@ export async function fetchPublicCourses(
   return { data: publicCourses, error: null, count: publicCourses.length }
 }
 
-// Fetch a single course by ID for public detail page
 export async function fetchPublicCourseById(
   courseId: string
 ): Promise<{ data: PublicCourseWithDetails | null; error: Error | null }> {

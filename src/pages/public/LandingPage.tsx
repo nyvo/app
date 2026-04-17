@@ -24,7 +24,6 @@ import {
 const LandingPage = () => {
   return (
     <div className="overflow-x-hidden bg-background text-foreground antialiased">
-      {/* Navigation */}
       <nav className="absolute top-0 w-full z-50 bg-transparent border-none" aria-label="Hovednavigasjon">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2" aria-label="Ease – til forsiden">
@@ -572,7 +571,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <motion.footer
         initial="hidden"
         whileInView="visible"

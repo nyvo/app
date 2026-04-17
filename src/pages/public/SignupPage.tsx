@@ -41,7 +41,6 @@ const SignupPage = () => {
       },
     })
 
-  // Redirect if already logged in with org
   useEffect(() => {
     if (user && !authLoading && currentOrganization) {
       navigate(ROUTES.dashboard, { replace: true })

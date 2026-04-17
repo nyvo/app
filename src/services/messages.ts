@@ -77,7 +77,6 @@ async function mapConversationsToDetails(
   })
 }
 
-// Fetch all conversations for an organization
 export async function fetchConversations(
   organizationId: string
 ): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
@@ -102,7 +101,6 @@ export async function fetchConversations(
   return { data: result, error: null }
 }
 
-// Fetch all conversations for a student (by user_id)
 export async function fetchStudentConversations(
   userId: string
 ): Promise<{ data: ConversationWithDetails[] | null; error: Error | null }> {
@@ -302,7 +300,6 @@ export async function archiveConversation(
   return { error: error as Error | null }
 }
 
-// Delete a conversation and all its messages
 export async function deleteConversation(
   conversationId: string
 ): Promise<{ error: Error | null }> {
@@ -323,7 +320,6 @@ export async function deleteConversation(
   return { error: convError as Error | null }
 }
 
-// Get unread message count for dashboard
 export async function getUnreadCount(
   organizationId: string
 ): Promise<{ data: number; error: Error | null }> {
@@ -342,7 +338,6 @@ export async function getUnreadCount(
   return { data: count || 0, error: null }
 }
 
-// Fetch recent conversations for dashboard widget
 // Only returns conversations updated within the last 7 days
 export async function fetchRecentConversations(
   organizationId: string,

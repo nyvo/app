@@ -40,7 +40,6 @@ const TeacherProfilePage = () => {
   const [studioDescription, setStudioDescription] = useState('');
   const [city, setCity] = useState('');
 
-  // Load data from auth context on mount
   useEffect(() => {
     if (profile) {
       const nameParts = profile.name?.split(' ') || [];
@@ -213,7 +212,6 @@ const TeacherProfilePage = () => {
       return;
     }
 
-    // Refresh organization data in context
     await refreshOrganizations();
 
     toast.success('Endringer lagret');
@@ -245,7 +243,6 @@ const TeacherProfilePage = () => {
   };
   const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
 
-  // Load notification prefs from org settings
   useEffect(() => {
     if (currentOrganization?.settings) {
       const settings = currentOrganization.settings as unknown as OrganizationSettings;
@@ -283,7 +280,6 @@ const TeacherProfilePage = () => {
       return;
     }
 
-    // Update password
     const { error: updateError } = await updatePassword(newPassword);
     if (updateError) {
       toast.error('Kunne ikke oppdatere passordet. Prøv igjen.');

@@ -26,7 +26,6 @@ export const StudentDashboardLayout = ({ children }: StudentDashboardLayoutProps
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="bg-background border-b border-border sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo / Home */}

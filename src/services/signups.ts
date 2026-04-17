@@ -14,7 +14,6 @@ export interface SignupWithProfile extends Signup {
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
 }
 
-// Fetch recent signups for the dashboard
 export async function fetchRecentSignups(
   organizationId: string,
   limit: number = 4
@@ -85,7 +84,6 @@ export async function fetchSignupsByCourseWithProfiles(
   return { data: data as unknown as SignupWithProfile[], error: null }
 }
 
-// Fetch all signups for an organization (for SignupsPage)
 export async function fetchAllSignups(
   organizationId: string
 ): Promise<{ data: SignupWithDetails[] | null; error: Error | null }> {

@@ -1,7 +1,6 @@
 import { supabase, typedFrom } from '@/lib/supabase'
 import type { Organization, OrganizationUpdate } from '@/types/database'
 
-// Fetch organization by slug for public pages
 export async function fetchOrganizationBySlug(
   slug: string
 ): Promise<{ data: Organization | null; error: Error | null }> {
@@ -18,7 +17,6 @@ export async function fetchOrganizationBySlug(
   return { data, error: null }
 }
 
-// Update organization
 export async function updateOrganization(
   id: string,
   updates: OrganizationUpdate

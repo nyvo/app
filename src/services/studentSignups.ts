@@ -35,7 +35,6 @@ export interface StudentSignupWithCourse extends Signup {
   }) | null
 }
 
-// Fetch upcoming signups for a student
 export async function fetchUpcomingSignups(
   userId: string,
   email: string
@@ -64,7 +63,6 @@ export async function fetchUpcomingSignups(
   return { data: sortedData as unknown as StudentSignupWithCourse[], error: null }
 }
 
-// Fetch past signups for a student
 export async function fetchPastSignups(
   userId: string,
   email: string

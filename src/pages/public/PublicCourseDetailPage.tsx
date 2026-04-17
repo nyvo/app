@@ -378,7 +378,6 @@ const PublicCourseDetailPage = () => {
 
   return (
     <div className="min-h-screen w-full bg-background">
-      {/* Header */}
       <PublicCourseHeader
         organizationSlug={slug || ''}
         organizationName={course.organization?.name || 'Ease'}

@@ -42,7 +42,6 @@ const LoginPage = () => {
     })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
       navigate(ROUTES.dashboard)

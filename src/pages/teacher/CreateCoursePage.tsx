@@ -265,7 +265,6 @@ const CreateCoursePage = () => {
     );
   }, [startTime, duration, existingSessions]);
 
-  // Build practical info for submission and preview
   const currentPracticalInfo = useMemo<PracticalInfo | null>(() => {
     const info: PracticalInfo = {};
     if (audienceLevel) info.audience_level = audienceLevel;
@@ -474,7 +473,6 @@ const CreateCoursePage = () => {
                   <h2 className="text-base font-medium text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
-                  {/* Title */}
                   <div>
                     <label htmlFor="create-title" className="text-xs font-medium mb-1.5 block text-foreground">
                       Tittel
@@ -955,7 +953,6 @@ const CreateCoursePage = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="shrink-0 border-t border-border bg-background/80 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg lg:px-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-3">
             {submitAttempted && !validateStep(currentStep) && (

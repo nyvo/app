@@ -42,7 +42,6 @@ const StudentLoginPage = () => {
       },
     })
 
-  // Redirect already-authenticated users to their dashboard
   useEffect(() => {
     if (user && userType === 'student') {
       navigate(ROUTES.dashboard, { replace: true })

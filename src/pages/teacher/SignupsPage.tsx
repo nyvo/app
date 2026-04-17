@@ -255,7 +255,6 @@ export const SignupsPage = () => {
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Påmeldinger" />
 
-        {/* Header */}
         <motion.header
           variants={pageVariants}
           initial="initial"

@@ -30,7 +30,6 @@ const StudentDashboardPage = () => {
     if (!pastRes.error) setPast(pastRes.data || []);
   }, [user?.id, user?.email]);
 
-  // Subscribe to real-time updates for this student's signups
   useRealtimeSubscription(
     { table: 'signups', filter: `user_id=eq.${user?.id}` },
     refetchData,

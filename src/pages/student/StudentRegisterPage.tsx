@@ -46,7 +46,6 @@ const StudentRegisterPage = () => {
       },
     })
 
-  // Redirect already-authenticated users
   useEffect(() => {
     if (user && userType) {
       if (userType === 'student') {

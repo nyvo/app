@@ -86,7 +86,6 @@ const StripeCallbackPage = () => {
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
-      {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none">
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">

@@ -69,7 +69,6 @@ const CheckoutSuccessPage = () => {
       const delays = [1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000, 8000];
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
-        // Update attempt counter for UI feedback
         setAttemptCount(attempt + 1);
 
         // Wait before each attempt (exponential backoff)

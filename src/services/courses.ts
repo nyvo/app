@@ -47,7 +47,6 @@ export interface PaginationOptions {
   offset?: number
 }
 
-// Fetch all courses for an organization
 export async function fetchCourses(
   organizationId: string,
   options?: PaginationOptions
@@ -468,7 +467,6 @@ export async function createCourse(
   return { data: course, error: null }
 }
 
-// Update a course
 export async function updateCourse(courseId: string, courseData: CourseUpdate): Promise<{ data: Course | null; error: Error | null }> {
   const { data, error } = await typedFrom('courses')
     .update(courseData)
@@ -543,7 +541,6 @@ export async function fetchCourseSessions(courseId: string): Promise<{ data: Cou
   return { data: data as CourseSession[], error: null }
 }
 
-// Update a single session
 export async function updateCourseSession(
   sessionId: string,
   sessionData: CourseSessionUpdate

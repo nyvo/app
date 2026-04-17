@@ -40,7 +40,6 @@ export function AuthLayout({
       "min-h-screen w-full text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground",
       isStudent ? "bg-background" : "bg-background"
     )}>
-      {/* Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none mx-auto">
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
@@ -52,7 +51,6 @@ export function AuthLayout({
         </Link>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">
         <motion.div
           variants={authPageVariants}
@@ -84,7 +82,6 @@ export function AuthLayout({
         </motion.div>
       </main>
 
-      {/* Footer */}
       {footer && (
         <footer className="py-6 text-center border-t border-border bg-background">
           {footer}

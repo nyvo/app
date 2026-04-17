@@ -40,7 +40,6 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
   return (
     <aside className="h-full overflow-y-auto">
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-6">
           <div className="min-w-0">
             <h2 className="text-base font-medium text-foreground truncate">{event.title}</h2>
