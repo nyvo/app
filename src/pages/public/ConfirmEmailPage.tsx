@@ -1,5 +1,5 @@
 import { ConfirmEmailView } from '@/components/auth/ConfirmEmailView'
 
-const ConfirmEmailPage = () => <ConfirmEmailView context="teacher" resendLabel="Send på nytt" />
+const ConfirmEmailPage = () => <ConfirmEmailView />
 
 export default ConfirmEmailPage

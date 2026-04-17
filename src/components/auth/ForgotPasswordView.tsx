@@ -12,23 +12,8 @@ import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS, AUTH_HINTS } from '@/l
 import { isValidEmail } from '@/lib/utils'
 import { toast } from 'sonner'
 
-interface ForgotPasswordViewProps {
-  context: 'teacher' | 'student'
-  linkLabel: string
-  sentDescription: string
-  sentHeadline: string
-  subtitle: string
-}
-
-export const ForgotPasswordView = ({
-  context,
-  linkLabel,
-  sentDescription,
-  sentHeadline,
-  subtitle,
-}: ForgotPasswordViewProps) => {
-  const routes = AUTH_ROUTES[context]
-  const redirectOrigin = `${window.location.origin}/${context}`
+export const ForgotPasswordView = () => {
+  const redirectOrigin = `${window.location.origin}/teacher`
   const { sendMagicLink } = useAuth()
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm, resetForm } =
@@ -69,7 +54,7 @@ export const ForgotPasswordView = ({
       }
 
       toast.success('E-post sendt', {
-        description: sentDescription,
+        description: 'Sjekk innboksen din for lenken.',
       })
       setEmailSent(true)
       setIsSubmitting(false)
@@ -82,12 +67,11 @@ export const ForgotPasswordView = ({
   if (emailSent) {
     return (
       <AuthLayout
-        context={context}
         title=""
         customContent
         footer={
           <p className="text-xs font-medium tracking-wide text-muted-foreground">
-            <Link to={routes.login} className="text-sm font-medium text-foreground hover:underline">
+            <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
               Til innlogging
             </Link>
           </p>
@@ -102,7 +86,7 @@ export const ForgotPasswordView = ({
             Sjekk e-posten din
           </h1>
           <p className="text-sm text-muted-foreground">
-            {sentHeadline}{' '}
+            Vi har sendt en lenke til{' '}
             <span className="text-sm font-medium text-foreground">{formData.email}</span>
           </p>
         </div>
@@ -131,13 +115,12 @@ export const ForgotPasswordView = ({
 
   return (
     <AuthLayout
-      context={context}
       title="Glemt passord?"
-      subtitle={subtitle}
+      subtitle="Skriv inn e-posten din, så sender vi en lenke."
       footer={
         <p className="text-xs font-medium tracking-wide text-muted-foreground">
           Husker du passordet ditt?{' '}
-          <Link to={routes.login} className="text-sm font-medium text-foreground hover:underline">
+          <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
           </Link>
         </p>
@@ -168,7 +151,7 @@ export const ForgotPasswordView = ({
           loadingText="Sender"
           className="w-full h-11 mt-2"
         >
-          {linkLabel}
+          Send lenke
         </Button>
       </form>
     </AuthLayout>

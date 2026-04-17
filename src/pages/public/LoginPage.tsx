@@ -12,7 +12,7 @@ import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Separator } from '@/components/ui/separator'
 import { isValidEmail } from '@/lib/utils'
 
-const ROUTES = AUTH_ROUTES.teacher
+const ROUTES = AUTH_ROUTES
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -85,7 +85,6 @@ const LoginPage = () => {
 
   return (
     <AuthLayout
-      context="teacher"
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
       footer={

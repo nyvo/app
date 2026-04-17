@@ -2,13 +2,9 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Infinity } from '@/lib/icons'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
-import { cn } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
-import type { AuthContext } from '@/lib/auth-routes'
 
 interface AuthLayoutProps {
-  /** Hard context boundary — never optional */
-  context: AuthContext
   title: string
   subtitle?: string
   /** Footer content slot */
@@ -18,28 +14,15 @@ interface AuthLayoutProps {
   children: React.ReactNode
 }
 
-/**
- * Shared auth page shell. Provides consistent layout, branding, and motion
- * across teacher and student auth flows.
- *
- * Does NOT: make routing decisions, check auth state, redirect,
- * or render context-dependent UI.
- */
 export function AuthLayout({
-  context,
   title,
   subtitle,
   footer,
   customContent,
   children,
 }: AuthLayoutProps) {
-  const isStudent = context === 'student'
-
   return (
-    <div className={cn(
-      "min-h-screen w-full text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground",
-      isStudent ? "bg-background" : "bg-background"
-    )}>
+    <div className="min-h-screen w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none mx-auto">
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">

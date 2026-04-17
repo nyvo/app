@@ -8,16 +8,10 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_ERRORS, AUTH_HINTS } from '@/lib/auth-messages'
 
-interface ConfirmEmailViewProps {
-  context: 'teacher' | 'student'
-  resendLabel: string
-}
-
-export const ConfirmEmailView = ({ context, resendLabel }: ConfirmEmailViewProps) => {
+export const ConfirmEmailView = () => {
   const location = useLocation()
   const email = (location.state as { email?: string })?.email ?? null
   const [isResending, setIsResending] = useState(false)
-  const loginRoute = AUTH_ROUTES[context].login
 
   const handleResend = async () => {
     if (!email) return
@@ -46,7 +40,7 @@ export const ConfirmEmailView = ({ context, resendLabel }: ConfirmEmailViewProps
   }
 
   return (
-    <AuthLayout context={context} title="" customContent>
+    <AuthLayout title="" customContent>
       <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
         <Mail className="size-5 text-muted-foreground" />
       </div>
@@ -76,12 +70,12 @@ export const ConfirmEmailView = ({ context, resendLabel }: ConfirmEmailViewProps
             variant="outline-soft"
             className="w-full h-11"
           >
-            {resendLabel}
+            Send på nytt
           </Button>
         )}
 
         <Button asChild className="w-full h-11">
-          <Link to={loginRoute}>Logg inn</Link>
+          <Link to={AUTH_ROUTES.login}>Logg inn</Link>
         </Button>
       </div>
 

@@ -1,5 +1,5 @@
 import { ResetPasswordView } from '@/components/auth/ResetPasswordView'
 
-const ResetPasswordPage = () => <ResetPasswordView context="teacher" />
+const ResetPasswordPage = () => <ResetPasswordView />
 
 export default ResetPasswordPage

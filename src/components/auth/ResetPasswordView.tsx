@@ -11,12 +11,8 @@ import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
 
-interface ResetPasswordViewProps {
-  context: 'teacher' | 'student'
-}
-
-export const ResetPasswordView = ({ context }: ResetPasswordViewProps) => {
-  const routes = AUTH_ROUTES[context]
+export const ResetPasswordView = () => {
+  const routes = AUTH_ROUTES
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateField, validateForm } =
     useFormValidation({
@@ -98,7 +94,7 @@ export const ResetPasswordView = ({ context }: ResetPasswordViewProps) => {
 
   if (isValidSession === false) {
     return (
-      <AuthLayout context={context} title="" customContent>
+      <AuthLayout title="" customContent>
         <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
           <AlertCircle className="size-8 text-red-700" />
         </div>
@@ -126,7 +122,7 @@ export const ResetPasswordView = ({ context }: ResetPasswordViewProps) => {
 
   if (resetSuccess) {
     return (
-      <AuthLayout context={context} title="" customContent>
+      <AuthLayout title="" customContent>
         <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
           <CheckCircle2 className="size-8 text-green-800" />
         </div>
@@ -151,7 +147,6 @@ export const ResetPasswordView = ({ context }: ResetPasswordViewProps) => {
 
   return (
     <AuthLayout
-      context={context}
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={

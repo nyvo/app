@@ -12,7 +12,7 @@ import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Separator } from '@/components/ui/separator'
 import { isValidEmail } from '@/lib/utils'
 
-const ROUTES = AUTH_ROUTES.teacher
+const ROUTES = AUTH_ROUTES
 
 const SignupPage = () => {
   const navigate = useNavigate()
@@ -88,7 +88,6 @@ const SignupPage = () => {
 
   return (
     <AuthLayout
-      context="teacher"
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
       footer={

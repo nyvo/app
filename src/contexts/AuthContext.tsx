@@ -10,9 +10,6 @@ interface OrgMembership {
   organization: Organization
 }
 
-// User type: 'student' has no org memberships, 'teacher' has org memberships
-export type UserType = 'student' | 'teacher' | null
-
 interface AuthContextType {
   user: User | null
   profile: Profile | null
@@ -20,10 +17,6 @@ interface AuthContextType {
   isLoading: boolean
   isInitialized: boolean // true once initial auth check is complete
 
-  // User type
-  userType: UserType
-
-  // Organization state (only for teachers)
   currentOrganization: Organization | null
   organizations: Organization[]
   userRole: OrgMemberRole | null
@@ -88,7 +81,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  const [userType, setUserType] = useState<UserType>(null)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [userRole, setUserRole] = useState<OrgMemberRole | null>(null)
@@ -126,24 +118,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { organizations: orgs, memberships } = await fetchOrganizationsData(userId)
     setOrganizations(orgs)
 
-    // Determine user type: teacher if has org memberships, student if not
-    if (orgs.length > 0) {
-      setUserType('teacher')
+    if (orgs.length > 0 && !currentOrgRef.current) {
+      const savedOrgId = localStorage.getItem('currentOrganizationId')
+      const savedOrg = orgs.find((o) => o.id === savedOrgId)
+      const orgToSet = savedOrg || orgs[0]
 
-      // Set current organization if not already set
-      if (!currentOrgRef.current) {
-        const savedOrgId = localStorage.getItem('currentOrganizationId')
-        const savedOrg = orgs.find((o) => o.id === savedOrgId)
-        const orgToSet = savedOrg || orgs[0]
+      setCurrentOrganization(orgToSet)
+      localStorage.setItem('currentOrganizationId', orgToSet.id)
 
-        setCurrentOrganization(orgToSet)
-        localStorage.setItem('currentOrganizationId', orgToSet.id)
-
-        const membership = memberships.find((m) => m.organization?.id === orgToSet.id)
-        setUserRole(membership?.role || null)
-      }
-    } else {
-      setUserType('student')
+      const membership = memberships.find((m) => m.organization?.id === orgToSet.id)
+      setUserRole(membership?.role || null)
     }
 
     return true
@@ -200,7 +184,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null)
           setUser(null)
           setProfile(null)
-          setUserType(null)
           setOrganizations([])
           setCurrentOrganization(null)
           setUserRole(null)
@@ -327,7 +310,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setProfile(null)
     setSession(null)
-    setUserType(null)
     setOrganizations([])
     setCurrentOrganization(null)
     setUserRole(null)
@@ -396,7 +378,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     setCurrentOrganization(org)
     setUserRole(row.member_role)
-    setUserType('teacher')
     localStorage.setItem('currentOrganizationId', org.id)
 
     return { organization: org, error: null }
@@ -439,7 +420,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isLoading,
     isInitialized,
-    userType,
     currentOrganization,
     organizations,
     userRole,
@@ -459,7 +439,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session?.access_token,
     isLoading,
     isInitialized,
-    userType,
     currentOrganization,
     organizationsKey,
     userRole,
