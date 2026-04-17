@@ -56,11 +56,6 @@ const CheckoutSuccessPage = () => {
         return;
       }
 
-      // Determine which column to query by
-      const lookupColumn = paymentIntentId
-        ? 'stripe_payment_intent_id'
-        : 'stripe_checkout_session_id';
-
       // Retry fetching signup details with exponential backoff
       // Webhook may take a moment to process; total wait ~55s
       const maxRetries = 12;
@@ -72,25 +67,16 @@ const CheckoutSuccessPage = () => {
         // Wait before each attempt (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, delays[attempt] || 8000));
 
-        // Query by the appropriate Stripe identifier
-        const { data, error: fetchError } = await supabase
-          .from('signups')
-          .select(`
-            id,
-            participant_name,
-            participant_email,
-            amount_paid,
-            course:courses(
-              id,
-              title,
-              start_date,
-              time_schedule,
-              location,
-              organization:organizations(slug, name)
-            )
-          `)
-          .eq(lookupColumn, lookupId)
-          .single();
+        // Server-side lookup via SECURITY DEFINER RPC — avoids exposing
+        // all paid signups through a broad SELECT RLS policy.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error: fetchError } = await (supabase.rpc as any)(
+          'get_signup_by_stripe_id',
+          {
+            p_session_id: paymentIntentId ? null : lookupId,
+            p_payment_intent_id: paymentIntentId,
+          }
+        );
 
         if (data && !fetchError) {
           setSignup(data as unknown as SignupDetails);
@@ -106,7 +92,6 @@ const CheckoutSuccessPage = () => {
         if (attempt === maxRetries - 1) {
           logger.warn('Signup not found after max retries:', {
             lookupId,
-            lookupColumn,
             attempts: maxRetries,
             lastError: fetchError?.message || 'No data returned',
           });

@@ -580,6 +580,13 @@ export interface Database {
       }
     }
     Functions: {
+      get_signup_by_stripe_id: {
+        Args: {
+          p_session_id?: string | null
+          p_payment_intent_id?: string | null
+        }
+        Returns: Json
+      }
       ensure_organization_for_user: {
         Args: { p_org_name: string; p_org_slug: string }
         Returns: {
