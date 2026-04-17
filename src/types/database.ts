@@ -463,6 +463,7 @@ export interface Database {
           name: string
           rooms: string[]
           address: string | null
+          is_favorite: boolean
           latitude: number | null
           longitude: number | null
           created_at: string
@@ -474,6 +475,7 @@ export interface Database {
           name: string
           rooms?: string[]
           address?: string | null
+          is_favorite?: boolean
           latitude?: number | null
           longitude?: number | null
           created_at?: string
@@ -485,6 +487,7 @@ export interface Database {
           name?: string
           rooms?: string[]
           address?: string | null
+          is_favorite?: boolean
           latitude?: number | null
           longitude?: number | null
           created_at?: string

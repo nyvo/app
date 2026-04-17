@@ -33,6 +33,5 @@ export function toggleEmptyState(): void {
 }
 
 export function formatKroner(amount: number | null | undefined): string {
-  if (!amount) return 'Gratis';
-  return `${amount.toLocaleString('nb-NO')} kr`;
+  return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
 }

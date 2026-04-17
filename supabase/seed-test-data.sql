@@ -99,15 +99,15 @@ BEGIN
     v_user_id,
     '{"audience_level": "INTERMEDIATE", "equipment": "LIMITED_EQUIPMENT", "arrival_minutes_before": 15, "custom_bullets": ["Ta med eget håndkle", "Unngå tung mat 2 timer før"]}');
 
-  -- SCENARIO 4: Upcoming course (not started yet) - FRIDAYS 17:00
+  -- SCENARIO 4: Active course - FRIDAYS 17:00 (started 2 weeks ago, sessions this week onward are upcoming)
   INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, total_weeks, start_date, end_date, instructor_id, practical_info)
-  VALUES (c_upcoming, v_org_id, 'Yin Yoga - Nybegynnerkurs',
-    'Et rolig og meditativt nybegynnerkurs i yin yoga. Over seks uker lærer du å holde stillinger i lengre tid, slappe av i dype strekk, og bruke pust som verktøy for å roe ned nervesystemet.'
+  VALUES (c_upcoming, v_org_id, 'Yin Yoga - Fredager',
+    'Et rolig og meditativt kurs i yin yoga. Over seks uker lærer du å holde stillinger i lengre tid, slappe av i dype strekk, og bruke pust som verktøy for å roe ned nervesystemet.'
     || E'\n\n'
     || 'Yin yoga komplementerer mer aktive yogaformer ved å jobbe med bindevev, ledd og meridianene i kroppen. Kurset passer for absolutt alle — ingen forkunnskaper er nødvendig.',
-    'course-series', 'upcoming', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days')::DATE,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '39 days')::DATE,
+    'course-series', 'active', 'nybegynner', 'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6,
+    (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '4 days')::DATE,
+    (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '39 days')::DATE,
     v_user_id,
     '{"audience_level": "BEGINNER", "equipment": "EQUIPMENT_INCLUDED", "arrival_minutes_before": 5, "custom_bullets": ["Ta med varme klær til avspenning"]}');
 
@@ -135,7 +135,7 @@ BEGIN
     'course-series', 'cancelled', 'alle', 'Studio 3, Parkveien 5, Oslo', 'Søndager 14:00-15:30', 90, 8, 2800.00, 6,
     CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '32 days', v_user_id);
 
-  -- SCENARIO 8: Single event (workshop) - SATURDAY 19:00
+  -- SCENARIO 8: Single event (workshop) - THIS SATURDAY 19:00
   -- Long, atmospheric description
   INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id, practical_info)
   VALUES (c_event, v_org_id, 'Full Moon Yoga Workshop',
@@ -145,19 +145,19 @@ BEGIN
     || E'\n\n'
     || 'Vi avslutter med yoga nidra — en guidet dyp avspenning der du ligger i savasana i 20 minutter. Ta med matte, teppe og gjerne en pute. Varm te serveres etterpå.',
     'event', 'upcoming', 'alle', 'Friluftshuset, Frognerparken, Oslo', 'Lørdag 19:00-21:00', 120, 25, 450.00,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE,
+    (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
+    (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
     v_user_id,
     '{"equipment": "BRING_OWN_MAT", "custom_bullets": ["Ta med teppe til avspenning", "Workshopen foregår utendørs — kle deg varmt", "Varm te serveres etter praksis"]}');
 
-  -- SCENARIO 9: Free course (no price) - SUNDAY 10:00
+  -- SCENARIO 9: Free course (no price) - THIS SUNDAY 10:00
   -- Minimal description (tests short text, no expandable needed)
   INSERT INTO courses (id, organization_id, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, start_date, end_date, instructor_id, practical_info)
   VALUES (c_free, v_org_id, 'Gratis Prøvetime - Hatha',
     'Gratis introduksjonstime for nye elever. Kom og prøv yoga hos oss!',
     'event', 'upcoming', 'alle', 'Studio 1, Parkveien 5, Oslo', 'Søndag 10:00-11:00', 60, 20, NULL,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE,
-    (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE,
+    (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,
+    (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,
     v_user_id,
     '{"audience_level": "ALL_LEVELS", "equipment": "EQUIPMENT_INCLUDED"}');
 
@@ -277,14 +277,14 @@ BEGIN
     );
   END LOOP;
 
-  -- Sessions for upcoming course - FRIDAYS 17:00
+  -- Sessions for Yin Yoga course - FRIDAYS 17:00 (started 2 weeks ago)
   FOR i IN 1..6 LOOP
     INSERT INTO course_sessions (course_id, session_number, session_date, start_time, end_time, status)
     VALUES (
       c_upcoming, i,
-      (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days' + (i-1) * INTERVAL '7 days')::DATE,
+      (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '4 days' + (i-1) * INTERVAL '7 days')::DATE,
       '17:00', '18:15',
-      'upcoming'
+      CASE WHEN i <= 2 THEN 'completed' ELSE 'upcoming' END
     );
   END LOOP;
 
@@ -310,13 +310,13 @@ BEGIN
     );
   END LOOP;
 
-  -- Single session for event - SATURDAY
+  -- Single session for event - THIS SATURDAY
   INSERT INTO course_sessions (course_id, session_number, session_date, start_time, end_time, status)
-  VALUES (c_event, 1, (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '5 days')::DATE, '19:00', '21:00', 'upcoming');
+  VALUES (c_event, 1, (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE, '19:00', '21:00', 'upcoming');
 
-  -- Single session for free class - SUNDAY
+  -- Single session for free class - THIS SUNDAY
   INSERT INTO course_sessions (course_id, session_number, session_date, start_time, end_time, status)
-  VALUES (c_free, 1, (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE, '10:00', '11:00', 'upcoming');
+  VALUES (c_free, 1, (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE, '10:00', '11:00', 'upcoming');
 
   -- Sessions for almost full course - TUESDAYS 17:30
   FOR i IN 1..6 LOOP
@@ -337,6 +337,17 @@ BEGIN
       (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days' + (i-1) * INTERVAL '7 days')::DATE,
       '09:00', '16:00',
       'upcoming'
+    );
+  END LOOP;
+
+  -- Sessions for drop-in course - MONDAYS 12:00
+  FOR i IN 1..8 LOOP
+    INSERT INTO course_sessions (course_id, session_number, session_date, start_time, end_time, status)
+    VALUES (
+      c_dropin, i,
+      (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + (i-1) * INTERVAL '7 days')::DATE,
+      '12:00', '13:00',
+      CASE WHEN i <= 2 THEN 'completed' ELSE 'upcoming' END
     );
   END LOOP;
 
