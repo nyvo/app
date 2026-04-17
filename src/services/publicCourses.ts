@@ -3,6 +3,18 @@ import { logger } from '@/lib/logger'
 import type { CourseType, CourseStatus, CourseLevel, Json } from '@/types/database'
 import type { PracticalInfo } from '@/types/practicalInfo'
 
+interface PublicCourseInstructor {
+  id: string
+  name: string | null
+  avatar_url: string | null
+}
+
+interface PublicCourseOrganization {
+  name: string
+  slug: string
+  stripe_onboarding_complete: boolean
+}
+
 // Internal type for the joined course query result
 interface CourseQueryResult {
   id: string
@@ -21,8 +33,8 @@ interface CourseQueryResult {
   image_url: string | null
   organization_id: string
   practical_info: Json | null
-  organization: { name: string; slug: string; stripe_onboarding_complete: boolean } | null
-  instructor: { id: string; name: string | null; avatar_url: string | null } | null
+  organization: PublicCourseOrganization | null
+  instructor: PublicCourseInstructor | null
 }
 
 // Next session info for ongoing courses
@@ -51,16 +63,8 @@ export interface PublicCourseWithDetails {
   organization_id: string
   practical_info: PracticalInfo | null
   spots_available: number
-  organization: {
-    name: string
-    slug: string
-    stripe_onboarding_complete: boolean
-  } | null
-  instructor: {
-    id: string
-    name: string | null
-    avatar_url: string | null
-  } | null
+  organization: PublicCourseOrganization | null
+  instructor: PublicCourseInstructor | null
   next_session: NextSessionInfo | null
 }
 
@@ -229,8 +233,8 @@ export async function fetchPublicCourses(
       image_url: course.image_url,
       organization_id: course.organization_id,
       practical_info: (course.practical_info as unknown as PracticalInfo) || null,
-      organization: course.organization as unknown as { name: string; slug: string; stripe_onboarding_complete: boolean } | null,
-      instructor: course.instructor as unknown as { id: string; name: string | null; avatar_url: string | null } | null,
+      organization: course.organization as unknown as PublicCourseOrganization | null,
+      instructor: course.instructor as unknown as PublicCourseInstructor | null,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
     }

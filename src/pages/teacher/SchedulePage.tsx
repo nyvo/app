@@ -17,7 +17,7 @@ import {
 } from '@/utils/dateUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchCourses, fetchCourseSessions } from '@/services/courses';
-import type { Course } from '@/types/database';
+import type { Course, CourseType } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -173,7 +173,7 @@ export const SchedulePage = () => {
         status,
         signups: signupsCounts[session.course.id] || 0,
         maxCapacity: session.course.max_participants,
-        courseType: session.course.course_type as 'course-series' | 'event' | 'online',
+        courseType: session.course.course_type as CourseType,
       };
 
       dates[session.id] = sessionDate;

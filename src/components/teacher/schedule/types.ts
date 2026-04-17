@@ -1,4 +1,4 @@
-import type { Course, CourseSession } from '@/types/database';
+import type { Course, CourseSession, CourseType } from '@/types/database';
 
 export interface ScheduleEvent {
   id: string;
@@ -10,7 +10,7 @@ export interface ScheduleEvent {
   status?: 'completed' | 'upcoming' | 'active';
   signups: number;
   maxCapacity: number | null;
-  courseType?: 'course-series' | 'event' | 'online';
+  courseType?: CourseType;
 }
 
 export interface SessionWithCourse extends CourseSession {

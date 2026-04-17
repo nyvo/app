@@ -8,6 +8,7 @@ import type {
   CourseSession,
   CourseSessionInsert,
   CourseSessionUpdate,
+  CourseType,
   SessionStatus,
 } from '@/types/database'
 
@@ -662,7 +663,7 @@ export interface SessionScheduleRow {
   sessionId: string
   courseId: string
   courseTitle: string
-  courseType: 'course-series' | 'event' | 'online'
+  courseType: CourseType
   sessionDate: string        // YYYY-MM-DD
   startTime: string          // HH:MM
   endTime: string            // HH:MM (calculated from duration if null)

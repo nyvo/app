@@ -21,7 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
-import type { Course } from '@/types/database';
+import type { Course, CourseType } from '@/types/database';
 import { typedFrom } from '@/lib/supabase';
 
 /**
@@ -46,7 +46,7 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
     sessionId: course.id,
     courseId: course.id,
     courseTitle: course.title,
-    courseType: course.course_type as 'course-series' | 'event' | 'online',
+    courseType: course.course_type as CourseType,
     sessionDate: nextSessionDate || course.start_date || (course.created_at || '').slice(0, 10),
     startTime,
     endTime,
