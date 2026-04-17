@@ -4,6 +4,35 @@ interface ConnectLinkResult {
   url: string
 }
 
+interface StripeBalanceAmount {
+  amount: number
+  currency: string
+}
+
+export interface StripePayout {
+  id: string
+  amount: number
+  currency: string
+  status: string
+  arrival_date: number
+  destination_last4: string | null
+}
+
+interface StripeAccountStatus {
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  requirements_due: string[]
+}
+
+export interface StripeBalanceResult {
+  balance: {
+    available: StripeBalanceAmount[]
+    pending: StripeBalanceAmount[]
+  }
+  payouts: StripePayout[]
+  account: StripeAccountStatus
+}
+
 interface StripeStatusDetails {
   charges_enabled: boolean
   payouts_enabled: boolean
@@ -88,6 +117,31 @@ export async function checkStripeStatus(
     }
 
     return { data: data as StripeStatusResult, error: null }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+  }
+}
+
+/**
+ * Fetch Stripe balance, recent payouts, and account status via Edge Function.
+ */
+export async function getStripeBalance(
+  organizationId: string
+): Promise<{ data: StripeBalanceResult | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('get-stripe-balance', {
+      body: { organizationId },
+    })
+
+    if (error) {
+      return { data: null, error: new Error(error.message || 'Kunne ikke hente betalingsdata') }
+    }
+
+    if (data?.error) {
+      return { data: null, error: new Error(data.error) }
+    }
+
+    return { data: data as StripeBalanceResult, error: null }
   } catch (err) {
     return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
   }

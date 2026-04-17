@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Eye,
@@ -25,7 +25,6 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateOrganization } from '@/services/organizations';
 import type { Json } from '@/types/database';
-import { createStripeConnectLink, createStripeDashboardLink, checkStripeStatus } from '@/services/stripe-connect';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { NotificationSettings, OrganizationSettings } from '@/types/database';
@@ -224,51 +223,6 @@ const TeacherProfilePage = () => {
     toast.success('Endringer lagret');
     setIsSaving(false);
   };
-
-  // Stripe handlers
-  const isStripeConnected = !!currentOrganization?.stripe_onboarding_complete;
-  const hasStripeAccount = !!currentOrganization?.stripe_account_id;
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const [checkingStripeStatus, setCheckingStripeStatus] = useState(false);
-
-  const handleCheckStripeStatus = useCallback(async () => {
-    if (!currentOrganization?.id) return;
-    setCheckingStripeStatus(true);
-    const { data, error } = await checkStripeStatus(currentOrganization.id);
-    if (error) {
-      toast.error('Kunne ikke sjekke status. Prøv igjen.');
-    } else if (data?.onboardingComplete) {
-      await refreshOrganizations();
-      toast.success('Betalinger er satt opp');
-    } else {
-      toast('Oppsettet er ikke fullført ennå. Fullfør hos Stripe.');
-    }
-    setCheckingStripeStatus(false);
-  }, [currentOrganization?.id, refreshOrganizations]);
-
-  const handleStripeAction = useCallback(async () => {
-    if (!currentOrganization?.id) return;
-    setStripeLoading(true);
-    if (isStripeConnected) {
-      const { data, error } = await createStripeDashboardLink(currentOrganization.id);
-      if (error || !data?.url) {
-        toast.error(error?.message || 'Kunne ikke åpne Stripe-oversikten');
-        setStripeLoading(false);
-        return;
-      }
-      window.location.href = data.url;
-      // Don't setStripeLoading(false) — page is navigating away
-    } else {
-      const { data, error } = await createStripeConnectLink(currentOrganization.id);
-      if (error || !data?.url) {
-        toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-        setStripeLoading(false);
-        return;
-      }
-      window.location.href = data.url;
-      // Don't setStripeLoading(false) — page is navigating away
-    }
-  }, [currentOrganization?.id, isStripeConnected, refreshOrganizations]);
 
   // Password change state
   const [passwordExpanded, setPasswordExpanded] = useState(false);
@@ -471,7 +425,7 @@ const TeacherProfilePage = () => {
                                 type="text"
                                 value={city}
                                 onChange={(e) => setCity(e.target.value)}
-                                placeholder="F.eks. Oslo"
+                                placeholder="Oslo"
                             />
                             <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Vises på din offentlige side.</p>
                         </div>
@@ -505,41 +459,9 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-medium text-foreground">Konto & Sikkerhet</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Betalinger, passord og sikkerhet.</p>
+                      <p className="text-sm mt-1 text-muted-foreground">Passord og sikkerhet.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
-                          {/* Betalinger */}
-                          <div className="flex items-center justify-between px-6 py-4">
-                              <div>
-                                  <span className="text-sm font-medium block text-foreground">Betalinger</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">
-                                      {isStripeConnected ? 'Tilkoblet Stripe' : 'Sett opp Stripe for å motta betaling.'}
-                                  </span>
-                              </div>
-                              <div className="flex items-center gap-2 ml-4 shrink-0 flex-wrap justify-end">
-                                  {!isStripeConnected && hasStripeAccount && (
-                                      <Button
-                                          variant="ghost"
-                                          size="compact"
-                                          onClick={handleCheckStripeStatus}
-                                          loading={checkingStripeStatus}
-                                          loadingText="Sjekker"
-                                      >
-                                          Sjekk status
-                                      </Button>
-                                  )}
-                                  <Button
-                                      variant="outline-soft"
-                                      size="compact"
-                                      onClick={handleStripeAction}
-                                      loading={stripeLoading}
-                                      loadingText={isStripeConnected ? 'Åpner' : 'Sender deg til Stripe …'}
-                                  >
-                                      {isStripeConnected ? 'Se utbetalinger' : 'Sett opp'}
-                                  </Button>
-                              </div>
-                          </div>
-
                           {/* Endre passord */}
                           <div className="px-6 py-4">
                               <div className="flex items-center justify-between">
@@ -616,7 +538,7 @@ const TeacherProfilePage = () => {
                                           {passwordErrors.newPassword ? (
                                               <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Minimum 8 tegn.</p>
+                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Må være minst 8 tegn</p>
                                           )}
                                       </div>
 
