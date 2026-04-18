@@ -302,27 +302,11 @@ const TeacherDashboard = () => {
               transition={pageTransition}
             >
               <header className="mb-8">
-                <div className="flex items-start justify-between gap-4">
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                    {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
-                  </h1>
-                  {!isLoading && !loadError && isSetupComplete && hasCourses && (
-                    <Button asChild size="sm" className="hidden gap-1.5 md:inline-flex">
-                      <Link to="/teacher/new-course">
-                        <CalendarPlus className="h-3.5 w-3.5" />
-                        Opprett kurs
-                      </Link>
-                    </Button>
-                  )}
-                </div>
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                  {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
+                </h1>
                 {!isLoading && !loadError && isSetupComplete && hasCourses && (
                   <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
-                    <Button asChild size="sm" className="gap-1.5">
-                      <Link to="/teacher/new-course">
-                        <CalendarPlus className="h-3.5 w-3.5" />
-                        Opprett kurs
-                      </Link>
-                    </Button>
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
                       <Link to="/teacher/schedule">
                         <Calendar className="h-3.5 w-3.5" />

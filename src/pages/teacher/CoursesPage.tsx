@@ -1,18 +1,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  CalendarPlus,
-  Calendar,
-} from '@/lib/icons';
+import { Calendar } from '@/lib/icons';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
-import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -244,20 +239,10 @@ const CoursesPage = () => {
           transition={pageTransition}
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
-              {!showCoursesEmptyState && (
-                <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
-              )}
-            </div>
+          <div className="mb-8">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
             {!showCoursesEmptyState && (
-              <Button asChild size="sm" className="gap-1.5">
-                <Link to="/teacher/new-course">
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  Opprett kurs
-                </Link>
-              </Button>
+              <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
             )}
           </div>
 

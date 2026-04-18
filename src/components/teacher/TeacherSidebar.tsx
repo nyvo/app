@@ -6,6 +6,7 @@ import {
   Inbox,
   CalendarDays,
   Calendar,
+  CalendarPlus,
   MapPin,
   Wallet,
   Settings,
@@ -98,9 +99,6 @@ export const TeacherSidebar = () => {
       return location.pathname === '/teacher' || location.pathname === '/teacher/';
     }
     if (location.pathname.startsWith(href)) return true;
-    if (href === '/teacher/courses') {
-      return location.pathname === '/teacher/new-course';
-    }
     return false;
   };
 
@@ -143,6 +141,26 @@ export const TeacherSidebar = () => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
+      <SidebarGroup className="pt-3 pb-3">
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip="Opprett kurs"
+                isActive={location.pathname === '/teacher/new-course'}
+                className="h-9 justify-center bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+              >
+                <Link to="/teacher/new-course">
+                  <CalendarPlus />
+                  <span>Opprett kurs</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
 
       <SidebarContent>
         {navSections.map((section) => (

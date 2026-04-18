@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { CalendarPlus, ChevronLeft, ChevronRight } from '@/lib/icons';
+import { ChevronLeft, ChevronRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { MONTH_ABBR } from './types';
 
@@ -64,25 +63,15 @@ export function ScheduleHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-3 md:flex">
-            <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full bg-chart-3" />
-              <span className="text-xs font-medium text-muted-foreground">Kursrekke</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full bg-success" />
-              <span className="text-xs font-medium text-muted-foreground">Arrangement</span>
-            </div>
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-chart-3" />
+            <span className="text-xs font-medium text-muted-foreground">Kursrekke</span>
           </div>
-          {hasCourses && (
-            <Button asChild size="sm" className="gap-1.5 hidden md:flex">
-              <Link to="/teacher/new-course">
-                <CalendarPlus className="h-3.5 w-3.5" />
-                Opprett kurs
-              </Link>
-            </Button>
-          )}
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-success" />
+            <span className="text-xs font-medium text-muted-foreground">Arrangement</span>
+          </div>
         </div>
       </div>
 
