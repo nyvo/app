@@ -121,9 +121,9 @@ export const CourseParticipantsTab = ({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <Card className="overflow-hidden gap-0 py-0 divide-y divide-border">
       {/* Toolbar */}
-      <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
+      <div className="flex flex-col justify-between gap-3 p-3 md:flex-row md:items-center">
         <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
           <SearchInput
             value={searchQuery}
@@ -144,10 +144,9 @@ export const CourseParticipantsTab = ({
         </Button>
       </div>
 
-      {/* Table Container */}
-      <Card className="overflow-hidden gap-0 py-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-background/50">
                 <th scope="col" className="text-xs font-medium tracking-wide w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
@@ -227,10 +226,9 @@ export const CourseParticipantsTab = ({
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 };

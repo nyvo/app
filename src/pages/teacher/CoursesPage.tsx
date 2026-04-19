@@ -10,7 +10,7 @@ import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -59,6 +59,7 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
 }
 
 type StatusFilter = 'all' | 'active' | 'upcoming' | 'past' | 'draft';
+type SortBy = 'next' | 'title' | 'updated';
 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
@@ -66,6 +67,7 @@ const CoursesPage = () => {
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('next');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
@@ -200,19 +202,28 @@ const CoursesPage = () => {
 
         return true;
       })
-      .map(({ row }) => row)
       .sort((a, b) => {
+        if (sortBy === 'title') {
+          return a.row.courseTitle.localeCompare(b.row.courseTitle, 'nb-NO');
+        }
+        if (sortBy === 'updated') {
+          const au = a.course.updated_at || a.course.created_at || '';
+          const bu = b.course.updated_at || b.course.created_at || '';
+          return bu.localeCompare(au);
+        }
+        // 'next' — default
         if (statusFilter === 'past' || statusFilter === 'draft') {
-          return b.sessionDate.localeCompare(a.sessionDate);
+          return b.row.sessionDate.localeCompare(a.row.sessionDate);
         }
         if (statusFilter === 'all') {
-          const aIsDraft = a.courseStatus === 'draft';
-          const bIsDraft = b.courseStatus === 'draft';
+          const aIsDraft = a.row.courseStatus === 'draft';
+          const bIsDraft = b.row.courseStatus === 'draft';
           if (aIsDraft !== bIsDraft) return aIsDraft ? 1 : -1;
         }
-        return a.sessionDate.localeCompare(b.sessionDate);
-      });
-  }, [allRows, statusFilter, searchQuery]);
+        return a.row.sessionDate.localeCompare(b.row.sessionDate);
+      })
+      .map(({ row }) => row);
+  }, [allRows, statusFilter, searchQuery, sortBy]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -245,64 +256,80 @@ const CoursesPage = () => {
               <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
             )}
           </div>
-
-          {/* Search + Filters */}
-          {!showCoursesEmptyState && (
-            <div className="flex flex-col md:flex-row md:items-center gap-3 pb-4">
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Søk etter kurs"
-                aria-label="Søk etter kurs"
-                className="w-full md:flex-1 max-w-xs"
-              />
-              <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <TabsList variant="contained">
-                  {([
-                    { value: 'all' as const, label: 'Alle' },
-                    { value: 'active' as const, label: 'Aktive' },
-                    { value: 'upcoming' as const, label: 'Kommende' },
-                    { value: 'past' as const, label: 'Arkiv' },
-                    { value: 'draft' as const, label: 'Utkast' },
-                  ]).map(({ value, label }) => {
-                    const count = filterCounts[value];
-                    if (value !== 'all' && count === 0) return null;
-                    return (
-                      <TabsTrigger key={value} value={value}>
-                        {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-              </Tabs>
-            </div>
-          )}
         </motion.header>
 
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
-          {isLoading ? (
-            <div role="status" aria-live="polite" aria-label="Laster kurs">
-              <span className="sr-only">Henter kurs</span>
-              <CourseListSkeleton />
-            </div>
-          ) : error ? (
-            <ErrorState
-              title="Kunne ikke hente kurs"
-              message={error}
-              onRetry={loadData}
-              variant="card"
-            />
-          ) : showCoursesEmptyState ? (
+          {showCoursesEmptyState ? (
             <CoursesEmptyState />
-          ) : filteredRows.length === 0 ? (
-            <EmptyState
-              icon={Calendar}
-              title={searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her'}
-              description={emptyDescription}
-              className="py-16"
-            />
           ) : (
-            <CourseListView courses={filteredRows} />
+            <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Søk etter kurs"
+                  aria-label="Søk etter kurs"
+                  className="w-full md:flex-1 max-w-xs"
+                />
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter status">
+                    <span className="text-muted-foreground">Status:</span>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {([
+                      { value: 'all' as const, label: 'Alle' },
+                      { value: 'active' as const, label: 'Aktive' },
+                      { value: 'upcoming' as const, label: 'Kommende' },
+                      { value: 'past' as const, label: 'Arkiv' },
+                      { value: 'draft' as const, label: 'Utkast' },
+                    ]).map(({ value, label }) => {
+                      const count = filterCounts[value];
+                      if (value !== 'all' && count === 0) return null;
+                      return (
+                        <SelectItem key={value} value={value}>
+                          {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                  <SelectTrigger size="sm" className="w-full md:w-auto md:ml-auto" aria-label="Sorter kurs">
+                    <span className="text-muted-foreground">Sorter:</span>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="next">Neste time</SelectItem>
+                    <SelectItem value="title">Tittel (A–Å)</SelectItem>
+                    <SelectItem value="updated">Sist endret</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isLoading ? (
+                <div role="status" aria-live="polite" aria-label="Laster kurs">
+                  <span className="sr-only">Henter kurs</span>
+                  <CourseListSkeleton />
+                </div>
+              ) : error ? (
+                <ErrorState
+                  title="Kunne ikke hente kurs"
+                  message={error}
+                  onRetry={loadData}
+                  variant="card"
+                />
+              ) : filteredRows.length === 0 ? (
+                <EmptyState
+                  icon={Calendar}
+                  title={searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her'}
+                  description={emptyDescription}
+                  className="py-16"
+                />
+              ) : (
+                <CourseListView courses={filteredRows} />
+              )}
+            </div>
           )}
         </div>
         <EmptyStateToggle />

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { PAYMENT_FILTER_OPTIONS, type PaymentFilter } from '@/components/teacher/SignupFilterDropdown';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -60,6 +60,8 @@ function detectException(signup: SignupDisplay): ExceptionType | null {
   return null;
 }
 
+type SortBy = 'newest' | 'oldest' | 'name' | 'course';
+
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
@@ -69,6 +71,8 @@ export const SignupsPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<PaymentFilter>('all');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -183,27 +187,52 @@ export const SignupsPage = () => {
     return counts;
   }, [displaySignups]);
 
-  // Apply filter + search
-  const filteredSignups = useMemo(() => {
-    let result = displaySignups;
-
-    // Filter by active/archived + payment status
+  // Signups after applying the status tab filter only — shared between the
+  // course-filter dropdown options and the final filtered list, so the
+  // dropdown only ever shows courses that exist in the current tab.
+  const statusFilteredSignups = useMemo(() => {
     if (activeFilter === 'archived') {
-      result = result.filter(s => s.courseEnded);
-    } else {
-      // All non-archived filters work within active signups only
-      result = result.filter(s => !s.courseEnded);
+      return displaySignups.filter(s => s.courseEnded);
+    }
+    let r = displaySignups.filter(s => !s.courseEnded);
+    if (activeFilter === 'pending') {
+      r = r.filter(s =>
+        (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
+      );
+    } else if (activeFilter === 'refunded') {
+      r = r.filter(s => s.paymentStatus === 'refunded');
+    }
+    return r;
+  }, [displaySignups, activeFilter]);
 
-      if (activeFilter === 'pending') {
-        result = result.filter(s =>
-          (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
-        );
-      } else if (activeFilter === 'refunded') {
-        result = result.filter(s => s.paymentStatus === 'refunded');
+  // Unique courses for the dropdown — scoped to the active tab.
+  const uniqueCourses = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const s of statusFilteredSignups) {
+      if (s.courseId && !seen.has(s.courseId)) {
+        seen.set(s.courseId, s.className);
       }
     }
+    return Array.from(seen, ([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title, 'nb-NO'));
+  }, [statusFilteredSignups]);
 
-    // Search
+  // If the selected course isn't in the current tab, reset to "Alle kurs".
+  useEffect(() => {
+    if (courseFilter === 'all') return;
+    if (!uniqueCourses.some(c => c.id === courseFilter)) {
+      setCourseFilter('all');
+    }
+  }, [uniqueCourses, courseFilter]);
+
+  // Apply course filter + search + sort on top of the tab-filtered set.
+  const filteredSignups = useMemo(() => {
+    let result = statusFilteredSignups;
+
+    if (courseFilter !== 'all') {
+      result = result.filter(s => s.courseId === courseFilter);
+    }
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       result = result.filter(s =>
@@ -212,15 +241,33 @@ export const SignupsPage = () => {
       );
     }
 
-    return result;
-  }, [displaySignups, activeFilter, searchQuery]);
+    const sorted = [...result];
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return a.registeredAtDate.getTime() - b.registeredAtDate.getTime();
+        case 'name':
+          return a.participantName.localeCompare(b.participantName, 'nb-NO');
+        case 'course': {
+          const c = a.className.localeCompare(b.className, 'nb-NO');
+          if (c !== 0) return c;
+          return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
+        }
+        case 'newest':
+        default:
+          return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
+      }
+    });
+    return sorted;
+  }, [statusFilteredSignups, courseFilter, searchQuery, sortBy]);
 
   const clearFilters = () => {
     setActiveFilter('all');
     setSearchQuery('');
+    setCourseFilter('all');
   };
 
-  const hasFilters = activeFilter !== 'all' || searchQuery.trim() !== '';
+  const hasFilters = activeFilter !== 'all' || searchQuery.trim() !== '' || courseFilter !== 'all';
 
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
     onSendPaymentLink: async (signupId: string) => {
@@ -266,50 +313,80 @@ export const SignupsPage = () => {
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">Påmeldinger</h1>
             <p className="text-sm mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
           </div>
-
-          {/* Search + Filters */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3 pb-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Søk etter navn"
-              aria-label="Søk etter deltakere"
-              className="w-full md:flex-1 max-w-xs"
-            />
-            <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)}>
-              <TabsList variant="contained">
-                {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
-                  const count = filterCounts[value];
-                  if (value !== 'all' && count === 0) return null;
-                  return (
-                    <TabsTrigger key={value} value={value}>
-                      {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </Tabs>
-          </div>
         </motion.header>
 
-        {/* Content Area */}
-        <div className="flex-1 flex flex-col px-6 lg:px-8 pb-6 lg:pb-8">
-          {error ? (
-            <ErrorState
-              title="Kunne ikke laste påmeldinger"
-              message={error}
-              onRetry={loadSignups}
-            />
-          ) : (
-            <SignupListView
-              signups={filteredSignups}
-              isLoading={loading}
-              isEmpty={displaySignups.length === 0}
-              hasFilters={hasFilters}
-              onClearFilters={clearFilters}
-              actionHandlers={actionHandlers}
-            />
-          )}
+        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+          <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+            <div className="flex flex-wrap items-center gap-3 p-3">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Søk etter navn"
+                aria-label="Søk etter deltakere"
+                className="w-full md:flex-1 md:max-w-xs"
+              />
+              <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)}>
+                <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter status">
+                  <span className="text-muted-foreground">Status:</span>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
+                    const count = filterCounts[value];
+                    if (value !== 'all' && count === 0) return null;
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
+                <Select value={courseFilter} onValueChange={setCourseFilter}>
+                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter kurs">
+                    <span className="text-muted-foreground">Kurs:</span>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle</SelectItem>
+                    {uniqueCourses.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Sorter påmeldinger">
+                    <span className="text-muted-foreground">Sorter:</span>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Nyeste først</SelectItem>
+                    <SelectItem value="oldest">Eldste først</SelectItem>
+                    <SelectItem value="name">Navn (A–Å)</SelectItem>
+                    <SelectItem value="course">Kurs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {error ? (
+              <ErrorState
+                title="Kunne ikke laste påmeldinger"
+                message={error}
+                onRetry={loadSignups}
+              />
+            ) : (
+              <SignupListView
+                signups={filteredSignups}
+                isLoading={loading}
+                isEmpty={displaySignups.length === 0}
+                hasFilters={hasFilters}
+                onClearFilters={clearFilters}
+                actionHandlers={actionHandlers}
+              />
+            )}
+          </div>
         </div>
       </div>
   );

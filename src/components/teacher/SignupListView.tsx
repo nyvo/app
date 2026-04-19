@@ -36,7 +36,7 @@ export function SignupListView({
 
   if (isLoading) {
     return (
-      <div className="space-y-1" role="status" aria-live="polite">
+      <div className="divide-y divide-border" role="status" aria-live="polite">
         <span className="sr-only">Henter påmeldinger</span>
         {[1, 2, 3, 4, 5].map(i => (
           <div key={i} className="flex items-start gap-3 px-3 py-3">
@@ -69,7 +69,7 @@ export function SignupListView({
             Nullstill filter
           </Button>
         ) : undefined}
-        className={isEmpty && !hasFilters ? 'pt-[20vh]' : undefined}
+        className="py-16"
       />
     );
   }
@@ -82,8 +82,8 @@ export function SignupListView({
   const isTruncated = remainingCount > 0;
 
   return (
-    <div>
-      <div className="overflow-hidden rounded-lg border border-border bg-card divide-y divide-border">
+    <>
+      <div className="divide-y divide-border">
         {visibleSignups.map(signup => (
           <SignupRow
             key={signup.id}
@@ -94,7 +94,7 @@ export function SignupListView({
       </div>
 
       {(isTruncated || visibleCount > INITIAL_VISIBLE) && (
-        <div className="flex justify-center gap-3 pt-6 pb-2">
+        <div className="flex justify-center gap-3 p-4">
           {isTruncated && (
             <Button
               variant="outline-soft"
@@ -115,6 +115,6 @@ export function SignupListView({
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }

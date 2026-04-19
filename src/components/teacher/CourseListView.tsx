@@ -1,64 +1,56 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ImageIcon } from '@/lib/icons';
+import { BookOpen, CalendarDays, ImageIcon, MapPin } from '@/lib/icons';
+import type { LucideIcon } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
+import type { CourseType } from '@/types/database';
 
-/**
- * Shows "Lav påmelding" when starting within 7 days with < 40% enrollment.
- */
-function getUrgencyInfo(session: SessionScheduleRow): { isUrgent: boolean; reason?: string } {
-  if (session.courseStatus !== 'upcoming' || !session.courseStartDate) {
-    return { isUrgent: false };
-  }
+const WEEKDAYS_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
+const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
-  const now = new Date();
-  const startDate = new Date(session.courseStartDate);
-  const daysUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+const TYPE_META: Record<CourseType, { label: string; Icon: LucideIcon }> = {
+  'course-series': { label: 'Kursrekke', Icon: BookOpen },
+  'event':         { label: 'Arrangement', Icon: BookOpen },
+  'online':        { label: 'Nett', Icon: BookOpen },
+};
 
-  if (daysUntilStart < 0) return { isUrgent: false };
+function formatNextSession(sessionDate: string | null | undefined, startTime: string | null | undefined): string {
+  if (!sessionDate) return '—';
+  const date = new Date(sessionDate);
+  if (isNaN(date.getTime())) return '—';
 
-  const enrollmentRate = session.maxParticipants && session.maxParticipants > 0
-    ? session.signupsCount / session.maxParticipants
-    : 1;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (daysUntilStart <= 7 && enrollmentRate < 0.4) {
-    return { isUrgent: true, reason: 'Lav påmelding' };
-  }
+  const timePart = startTime ? ` kl. ${startTime}` : '';
 
-  return { isUrgent: false };
+  if (diffDays === 0) return `I dag${timePart}`;
+  if (diffDays === 1) return `I morgen${timePart}`;
+
+  const weekday = WEEKDAYS_SHORT[date.getDay()];
+  const month = MONTHS_SHORT[date.getMonth()];
+  return `${weekday} ${date.getDate()}. ${month}${timePart}`;
 }
 
-function getEnrollmentLabel(session: SessionScheduleRow): string {
-  const { signupsCount, maxParticipants } = session;
-  if (!maxParticipants) return `${signupsCount} påmeldte`;
-  if (signupsCount >= maxParticipants) return 'Fullt';
-  return `${signupsCount}/${maxParticipants} påmeldte`;
+function formatSeriesProgress(totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
+  if (!totalWeeks || !courseStartDate) return null;
+  const start = new Date(courseStartDate);
+  if (isNaN(start.getTime())) return null;
+  const today = new Date();
+  const weeksElapsed = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
+  if (weeksElapsed < 0) return `Starter uke 1`;
+  const currentWeek = Math.min(weeksElapsed + 1, totalWeeks);
+  return `Uke ${currentWeek} av ${totalWeeks}`;
 }
 
-/**
- * Extracts a clean schedule label from time_schedule.
- * Series: "Mandager, 18:00" → "Mandager · 18:00"
- * Event:  "Mandag, 18:00"   → "Mandag · 18:00"
- */
-function formatScheduleLabel(timeSchedule: string | null | undefined, startTime: string): string {
-  if (!timeSchedule) return startTime || '';
-
-  const match = timeSchedule.match(/^([A-Za-zÆØÅæøå]+)[,\s]+(\d{1,2}:\d{2})/);
-  if (match) {
-    return `${match[1]} · ${match[2]}`;
-  }
-
-  const dayMatch = timeSchedule.match(/^([A-Za-zÆØÅæøå]+)/);
-  if (dayMatch && startTime) return `${dayMatch[1]} · ${startTime}`;
-
-  return startTime || timeSchedule;
-}
-
-function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
+function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: string; className?: string }) {
   const [failed, setFailed] = useState(false);
   const handleError = useCallback(() => setFailed(true), []);
 
@@ -68,64 +60,104 @@ function CourseImage({ src, alt }: { src?: string | null; alt: string }) {
         src={src}
         alt={alt}
         onError={handleError}
-        className="size-14 rounded-lg object-cover shrink-0 bg-muted"
+        className={`rounded-lg object-cover shrink-0 bg-muted ${className}`}
       />
     );
   }
 
   return (
-    <div className="size-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+    <div className={`rounded-lg bg-muted flex items-center justify-center shrink-0 ${className}`}>
       <ImageIcon className="size-5 text-muted-foreground/40" />
     </div>
   );
 }
 
-export function CourseCard({ course }: { course: SessionScheduleRow }) {
-  const urgency = getUrgencyInfo(course);
-  const enrollmentLabel = getEnrollmentLabel(course);
-  const scheduleLabel = formatScheduleLabel(course.timeSchedule, course.startTime);
+function SignupsBlock({ signups, max }: { signups: number; max: number | null }) {
+  if (!max) {
+    return <span className="text-sm font-medium text-foreground whitespace-nowrap">{signups} påmeldte</span>;
+  }
+  const isFull = signups >= max;
+  const pct = isFull ? 100 : Math.min(100, Math.round((signups / max) * 100));
+  return (
+    <div className="flex flex-col items-end">
+      <span className="text-sm font-medium text-foreground whitespace-nowrap">
+        {isFull ? 'Fullt' : `${signups}/${max}`}
+      </span>
+      <div className="mt-1.5 h-1 w-16 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full bg-chart-2"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
-  const showStatusBadge = course.courseStatus === 'draft' || course.courseStatus === 'cancelled' || course.courseStatus === 'completed';
+export function CourseCard({ course }: { course: SessionScheduleRow }) {
+  const typeMeta = TYPE_META[course.courseType] ?? { label: '', Icon: CalendarDays };
+  const nextSessionLabel = formatNextSession(course.sessionDate, course.startTime);
+  const seriesProgress = course.courseType === 'course-series'
+    ? formatSeriesProgress(course.totalWeeks, course.courseStartDate)
+    : null;
+
+  const statusLabel = course.courseStatus === 'draft' ? 'Utkast'
+    : course.courseStatus === 'cancelled' ? 'Avlyst'
+    : course.courseStatus === 'completed' ? 'Fullført'
+    : null;
 
   return (
     <Link
       to={`/teacher/courses/${course.courseId}`}
-      className="flex items-center gap-3 rounded-lg border border-border p-3 smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      className="group block smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
     >
-      <CourseImage src={course.imageUrl} alt={course.courseTitle} />
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-          <h3 className="text-base font-medium truncate text-foreground">
-            {course.courseTitle}
-          </h3>
-          {showStatusBadge && (
-            <StatusIndicator
-              variant="neutral"
-              mode="badge"
-              size="sm"
-              label={course.courseStatus === 'draft' ? 'Utkast' : course.courseStatus === 'cancelled' ? 'Avlyst' : 'Fullført'}
-              className="flex-shrink-0"
-            />
-          )}
-          {!showStatusBadge && urgency.isUrgent && urgency.reason && (
-            <StatusIndicator
-              variant="warning"
-              mode="badge"
-              size="sm"
-              label={urgency.reason}
-              className="flex-shrink-0"
-            />
-          )}
-        </div>
-        <div className="mt-0.5 flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground">
-          {scheduleLabel && (
-            <span className="truncate">{scheduleLabel}</span>
-          )}
+      <div className="flex items-start gap-3 p-3 md:gap-4">
+        <CourseImage
+          src={course.imageUrl}
+          alt={course.courseTitle}
+          className="size-14 md:size-20"
+        />
+
+        <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-medium text-foreground truncate">
+              {course.courseTitle}
+            </h3>
+
+            <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                <span className="flex items-center gap-1.5 shrink-0">
+                  <typeMeta.Icon className="size-3.5 shrink-0" />
+                  {typeMeta.label}{seriesProgress ? `, ${seriesProgress.toLowerCase()}` : ''}
+                </span>
+                {course.location && (
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <MapPin className="size-3.5 shrink-0" />
+                    <span className="truncate">{course.location}</span>
+                  </span>
+                )}
+                {statusLabel && (
+                  <StatusIndicator
+                    variant="neutral"
+                    mode="badge"
+                    size="sm"
+                    label={statusLabel}
+                    className="shrink-0"
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <CalendarDays className="size-3.5 shrink-0" />
+                <span>{nextSessionLabel}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 md:mt-0 shrink-0 self-start md:self-center">
+            <SignupsBlock signups={course.signupsCount} max={course.maxParticipants} />
+          </div>
         </div>
       </div>
-      <span className="text-sm font-medium whitespace-nowrap flex-shrink-0 text-foreground text-right">
-        {enrollmentLabel}
-      </span>
     </Link>
   );
 }
@@ -140,7 +172,6 @@ export function CourseListView({ courses }: CourseListViewProps) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const prevCoursesRef = useRef(courses);
 
-  // Reset visible count when course list changes (filter/search)
   useEffect(() => {
     if (prevCoursesRef.current !== courses) {
       setVisibleCount(ITEMS_PER_PAGE);
@@ -152,8 +183,8 @@ export function CourseListView({ courses }: CourseListViewProps) {
   const hasMore = visibleCount < courses.length;
 
   return (
-    <div>
-      <div className="flex flex-col gap-2">
+    <>
+      <div className="divide-y divide-border">
         {visible.map(c => (
           <motion.div
             key={c.sessionId}
@@ -166,7 +197,7 @@ export function CourseListView({ courses }: CourseListViewProps) {
         ))}
       </div>
       {hasMore && (
-        <div className="flex justify-center pt-6 pb-2">
+        <div className="flex justify-center p-4">
           <Button
             variant="outline-soft"
             size="sm"
@@ -176,21 +207,26 @@ export function CourseListView({ courses }: CourseListViewProps) {
           </Button>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
 export function CourseListSkeleton() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="divide-y divide-border">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
-          <Skeleton className="size-14 rounded-lg shrink-0" />
-          <div className="flex-1 min-w-0 space-y-1.5">
-            <Skeleton className="h-5 w-44 max-w-full" />
-            <Skeleton className="h-3 w-32 max-w-full" />
+        <div key={i} className="flex items-start gap-3 p-3 md:gap-4">
+          <Skeleton className="size-14 md:size-20 rounded-lg shrink-0" />
+          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-4">
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <Skeleton className="h-5 w-44 max-w-full" />
+              <Skeleton className="h-3 w-32 max-w-full" />
+              <Skeleton className="h-4 w-28 max-w-full" />
+            </div>
+            <div className="mt-3 md:mt-0">
+              <Skeleton className="h-4 w-16" />
+            </div>
           </div>
-          <Skeleton className="h-4 w-20 shrink-0" />
         </div>
       ))}
     </div>

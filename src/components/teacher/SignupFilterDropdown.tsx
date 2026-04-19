@@ -1,13 +1,4 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Filter, ChevronDown } from '@/lib/icons';
-import { cn } from '@/lib/utils';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, CreditCard, Undo2, Archive, type LucideIcon } from '@/lib/icons';
 
 export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';
@@ -36,40 +27,27 @@ interface SignupFilterDropdownProps {
 }
 
 export function SignupFilterDropdown({ value, onChange, counts }: SignupFilterDropdownProps) {
-  const currentLabel = COMBINED_FILTER_OPTIONS.find(o => o.value === value)?.label || 'Alle';
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline-soft"
-          size="default"
-          className={cn(
-            'gap-2 whitespace-nowrap',
-            value !== 'all'
-              ? 'text-foreground'
-              : 'text-muted-foreground'
-          )}
-        >
-          <Filter className="h-3.5 w-3.5" />
-          Filter: {currentLabel}
-          <ChevronDown className="ml-1 h-3.5 w-3.5" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+    <Select value={value} onValueChange={(v) => onChange(v as CombinedFilter)}>
+      <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer deltakere">
+        <span className="text-muted-foreground">Filter:</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
         {COMBINED_FILTER_OPTIONS.map(option => {
-          const isEmpty = option.value !== 'all' && counts[option.value] === 0;
+          const count = counts[option.value];
+          const isEmpty = option.value !== 'all' && count === 0;
           return (
-            <DropdownMenuItem
+            <SelectItem
               key={option.value}
+              value={option.value}
               disabled={isEmpty}
-              onSelect={() => onChange(option.value)}
             >
-              {option.label}
-            </DropdownMenuItem>
+              {option.label}{option.value !== 'all' && count > 0 ? ` (${count})` : ''}
+            </SelectItem>
           );
         })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </SelectContent>
+    </Select>
   );
 }
