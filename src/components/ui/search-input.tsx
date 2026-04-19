@@ -1,5 +1,5 @@
 import { Search } from '@/lib/icons';
-import { cn } from '@/lib/utils';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 
 interface SearchInputProps {
   value: string;
@@ -17,16 +17,17 @@ export const SearchInput = ({
   className,
 }: SearchInputProps) => {
   return (
-    <div className={cn('relative group', className)}>
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors pointer-events-none" />
-      <input
-        type="text"
+    <InputGroup className={className}>
+      <InputGroupAddon>
+        <Search />
+      </InputGroupAddon>
+      <InputGroupInput
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={ariaLabel || placeholder}
-        className="h-9 w-full rounded-lg border border-input bg-card pl-10 pr-4 text-sm text-foreground transition-[background-color,border-color,color,opacity] duration-150 ease-out placeholder:text-muted-foreground hover:border-ring focus:border-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:hover:border-input"
       />
-    </div>
+    </InputGroup>
   );
 };
