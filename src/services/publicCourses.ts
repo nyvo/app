@@ -7,15 +7,25 @@ interface PublicCourseInstructor {
   id: string
   name: string | null
   avatar_url: string | null
+  bio: string | null
+  role: 'primary' | 'guest'
+  display_order: number
 }
 
 interface PublicCourseOrganization {
   name: string
   slug: string
   stripe_onboarding_complete: boolean
+  default_course_image_url: string | null
 }
 
 // Internal type for the joined course query result
+interface CourseInstructorJoinRow {
+  role: 'primary' | 'guest'
+  display_order: number
+  profile: { id: string; name: string | null; avatar_url: string | null; bio: string | null } | null
+}
+
 interface CourseQueryResult {
   id: string
   title: string
@@ -28,13 +38,16 @@ interface CourseQueryResult {
   duration: number | null
   max_participants: number | null
   price: number | null
+  allows_drop_in: boolean | null
+  drop_in_price: number | null
+  total_weeks: number | null
   start_date: string | null
   end_date: string | null
   image_url: string | null
   organization_id: string
   practical_info: Json | null
   organization: PublicCourseOrganization | null
-  instructor: PublicCourseInstructor | null
+  course_instructors: CourseInstructorJoinRow[] | null
 }
 
 // Next session info for ongoing courses
@@ -57,6 +70,9 @@ export interface PublicCourseWithDetails {
   duration: number | null
   max_participants: number | null
   price: number | null
+  allows_drop_in: boolean | null
+  drop_in_price: number | null
+  total_weeks: number | null
   start_date: string | null
   end_date: string | null
   image_url: string | null
@@ -64,8 +80,37 @@ export interface PublicCourseWithDetails {
   practical_info: PracticalInfo | null
   spots_available: number
   organization: PublicCourseOrganization | null
+  /** Legacy single-instructor field. Mirrors `instructors[0]` (primary). Kept for back-compat. */
   instructor: PublicCourseInstructor | null
+  /** All instructors, primary first then guests in display_order. */
+  instructors: PublicCourseInstructor[]
   next_session: NextSessionInfo | null
+}
+
+/** Flatten course_instructors join rows into a sorted PublicCourseInstructor array, primary first. */
+function flattenInstructors(rows: CourseInstructorJoinRow[] | null | undefined): PublicCourseInstructor[] {
+  if (!rows || rows.length === 0) return []
+  return rows
+    .filter(r => r.profile !== null)
+    .map(r => ({
+      id: r.profile!.id,
+      name: r.profile!.name,
+      avatar_url: r.profile!.avatar_url,
+      bio: r.profile!.bio,
+      role: r.role,
+      display_order: r.display_order,
+    }))
+    .sort((a, b) => {
+      if (a.role !== b.role) return a.role === 'primary' ? -1 : 1
+      return a.display_order - b.display_order
+    })
+}
+
+/** Resolve the course hero image using the per-course value first, then the studio default. */
+export function resolveCourseImage(
+  course: Pick<PublicCourseWithDetails, 'image_url' | 'organization'>,
+): string | null {
+  return course.image_url ?? course.organization?.default_course_image_url ?? null
 }
 
 export interface PublicCoursesFilters {
@@ -98,15 +143,18 @@ export async function fetchPublicCourses(
       duration,
       max_participants,
       price,
+      allows_drop_in,
+      drop_in_price,
+      total_weeks,
       start_date,
       end_date,
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, stripe_onboarding_complete),
-      instructor:instructor_id(id, name, avatar_url)
+      organization:organizations(name, slug, stripe_onboarding_complete, default_course_image_url),
+      course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `, { count: filters?.limit ? 'exact' : undefined })
-    .neq('status', 'cancelled')
+    .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
 
   // Apply filters
@@ -126,8 +174,18 @@ export async function fetchPublicCourses(
     // Archive: courses whose end_date (or start_date if no end_date) is before today
     query = query.or(`end_date.lt.${todayStr},and(end_date.is.null,start_date.lt.${todayStr})`)
   } else {
-    // Active: courses whose end_date (or start_date if no end_date) is today or later, OR has no date
-    query = query.or(`end_date.gte.${todayStr},and(end_date.is.null,start_date.gte.${todayStr}),and(end_date.is.null,start_date.is.null)`)
+    // Active: courses whose end_date (or start_date if no end_date) is today or later,
+    // OR has no dates at all, OR is a recently-cancelled course within the 30-day grace window
+    // (caller then runs client-side isVisible() for the strict rule).
+    const graceFloor = new Date()
+    graceFloor.setDate(graceFloor.getDate() - 30)
+    const graceFloorStr = graceFloor.toISOString().split('T')[0]
+    query = query.or(
+      `end_date.gte.${todayStr},` +
+      `and(end_date.is.null,start_date.gte.${todayStr}),` +
+      `and(end_date.is.null,start_date.is.null),` +
+      `and(status.eq.cancelled,start_date.gte.${graceFloorStr})`
+    )
   }
 
   // Apply pagination
@@ -214,6 +272,7 @@ export async function fetchPublicCourses(
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
+    const instructors = flattenInstructors(course.course_instructors)
 
     return {
       id: course.id,
@@ -227,13 +286,17 @@ export async function fetchPublicCourses(
       duration: course.duration,
       max_participants: course.max_participants,
       price: course.price,
+      allows_drop_in: course.allows_drop_in,
+      drop_in_price: course.drop_in_price,
+      total_weeks: course.total_weeks,
       start_date: course.start_date,
       end_date: course.end_date,
       image_url: course.image_url,
       organization_id: course.organization_id,
       practical_info: (course.practical_info as unknown as PracticalInfo) || null,
       organization: course.organization as unknown as PublicCourseOrganization | null,
-      instructor: course.instructor as unknown as PublicCourseInstructor | null,
+      instructor: instructors[0] ?? null,
+      instructors,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
     }
@@ -260,13 +323,16 @@ export async function fetchPublicCourseById(
       duration,
       max_participants,
       price,
+      allows_drop_in,
+      drop_in_price,
+      total_weeks,
       start_date,
       end_date,
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, stripe_onboarding_complete),
-      instructor:instructor_id(id, name, avatar_url)
+      organization:organizations(name, slug, stripe_onboarding_complete, default_course_image_url),
+      course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `)
     .eq('id', courseId)
     .neq('status', 'cancelled')
@@ -297,6 +363,8 @@ export async function fetchPublicCourseById(
   const maxParticipants = typedCourse.max_participants || 0
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
 
+  const instructors = flattenInstructors(typedCourse.course_instructors)
+
   const publicCourse: PublicCourseWithDetails = {
     id: typedCourse.id,
     title: typedCourse.title,
@@ -309,13 +377,17 @@ export async function fetchPublicCourseById(
     duration: typedCourse.duration,
     max_participants: typedCourse.max_participants,
     price: typedCourse.price,
+    allows_drop_in: typedCourse.allows_drop_in,
+    drop_in_price: typedCourse.drop_in_price,
+    total_weeks: typedCourse.total_weeks,
     start_date: typedCourse.start_date,
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
     organization_id: typedCourse.organization_id,
     practical_info: (typedCourse.practical_info as unknown as PracticalInfo) || null,
     organization: typedCourse.organization,
-    instructor: typedCourse.instructor || null,
+    instructor: instructors[0] ?? null,
+    instructors,
     spots_available: spotsAvailable,
     next_session: null, // Detail page fetches sessions separately
   }

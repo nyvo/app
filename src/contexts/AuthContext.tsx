@@ -367,6 +367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       stripe_onboarding_complete: false,
       studio_shared_at: null,
       settings: {},
+      default_course_image_url: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }

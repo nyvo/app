@@ -12,6 +12,8 @@ const toggleVariants = cva(
         default: "bg-transparent",
         outline: "border border-input bg-transparent shadow-xs hover:bg-muted",
         pill: "rounded-lg text-xs px-3 py-1.5 bg-transparent border border-transparent text-muted-foreground ios-ease transition-[background-color,color,opacity,box-shadow] hover:text-foreground hover:bg-card hover:border-input aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:border-transparent aria-pressed:hover:bg-primary/90 aria-pressed:hover:border-transparent data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-transparent",
+        segmented:
+          "h-8 min-w-0 rounded-sm px-3 text-xs font-medium bg-transparent text-muted-foreground ios-ease transition-[background-color,color,box-shadow] hover:text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:shadow-xs aria-pressed:hover:bg-primary/90 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-xs data-[state=on]:hover:bg-primary/90",
       },
       size: {
         default:
