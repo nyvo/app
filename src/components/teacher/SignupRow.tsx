@@ -35,6 +35,14 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
             <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">
               {signup.participantEmail}
             </p>
+            {!hideCourse && (
+              <Link
+                to={`/teacher/courses/${signup.courseId}`}
+                className="mt-0.5 inline-block max-w-full truncate text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground sm:hidden"
+              >
+                {signup.className}
+              </Link>
+            )}
           </div>
         </div>
       </td>
