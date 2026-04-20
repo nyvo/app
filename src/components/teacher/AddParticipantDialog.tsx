@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { UserPlus } from '@/lib/icons';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import { isValidEmail } from '@/lib/utils';
@@ -164,7 +166,7 @@ export function AddParticipantDialog({
         organization_id: organizationId,
         course_id: courseId,
         participant_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-        participant_email: formData.email.trim(),
+        participant_email: formData.email.trim().toLowerCase(),
         participant_phone: formData.phone.trim() || null,
         note: formData.note.trim() || null,
         status: 'confirmed',
@@ -209,16 +211,14 @@ export function AddParticipantDialog({
             {/* Info banner if full */}
             {isFull && (
               <Alert variant="info" size="sm">
-                <p className="text-sm text-muted-foreground">
-                  Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
-                </p>
+                Kurset er fullt. Det er ikke mulig å legge til flere deltakere.
               </Alert>
             )}
 
             {/* Error banner */}
             {submitError && (
-              <Alert variant="error" icon={false}>
-                <p className="text-sm text-destructive">{submitError}</p>
+              <Alert variant="error" size="sm">
+                {submitError}
               </Alert>
             )}
 
@@ -344,7 +344,7 @@ export function AddParticipantDialog({
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="text-xs font-medium mb-1.5 block text-foreground">
-                Telefonnummer <span className="text-sm text-muted-foreground">(valgfritt)</span>
+                Telefonnummer <span className="text-muted-foreground">(valgfritt)</span>
               </label>
               <Input
                 id="phone"
@@ -364,7 +364,7 @@ export function AddParticipantDialog({
             {/* Note */}
             <div>
               <label htmlFor="note" className="text-xs font-medium mb-1.5 block text-foreground">
-                Notat <span className="text-sm text-muted-foreground">(valgfritt)</span>
+                Notat <span className="text-muted-foreground">(valgfritt)</span>
               </label>
               <Textarea
                 id="note"
@@ -380,36 +380,25 @@ export function AddParticipantDialog({
 
             {/* Payment Toggle */}
             <div>
-              <p id="payment-label" className="text-xs font-medium mb-2 text-foreground">
+              <p id="payment-label" className="text-xs font-medium mb-1.5 text-foreground">
                 Betalingsstatus
               </p>
-              <div
-                role="radiogroup"
+              <ToggleGroup
+                type="single"
+                value={paymentMarked}
+                onValueChange={(v) => {
+                  if (v === 'pending' || v === 'paid') setPaymentMarked(v);
+                }}
+                variant="segmented"
+                size="sm"
                 aria-labelledby="payment-label"
-                className="flex gap-1 border-b border-border"
+                disabled={isSubmitting}
+                className="w-full"
               >
-                {[
-                  { value: 'pending' as const, label: 'Venter betaling' },
-                  { value: 'paid' as const, label: 'Betalt' },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={paymentMarked === option.value}
-                    onClick={() => setPaymentMarked(option.value)}
-                    disabled={isSubmitting}
-                    className={`text-xs font-medium tracking-wide cursor-pointer flex-1 py-1.5 px-3 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed -mb-px border-b-2 ${
-                      paymentMarked === option.value
-                            ? 'border-primary text-foreground'
-                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Betalingen registreres ikke i Stripe</p>
+                <ToggleGroupItem value="pending" className="flex-1">Venter betaling</ToggleGroupItem>
+                <ToggleGroupItem value="paid" className="flex-1">Betalt</ToggleGroupItem>
+              </ToggleGroup>
+              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Registreres utenfor Stripe</p>
             </div>
 
             <DialogFooter>
@@ -422,7 +411,8 @@ export function AddParticipantDialog({
               >
                 Avbryt
               </Button>
-              <Button type="submit" size="sm" loading={isSubmitting} loadingText="Legger til">
+              <Button type="submit" size="sm" disabled={isFull} loading={isSubmitting} loadingText="Legger til">
+                <UserPlus className="h-3.5 w-3.5" />
                 Legg til deltaker
               </Button>
             </DialogFooter>
