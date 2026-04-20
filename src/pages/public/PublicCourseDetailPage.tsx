@@ -304,7 +304,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
         size="default"
         disabled={submitting}
         loading={submitting}
-        loadingText="Starter betaling"
+        loadingText={isFree ? 'Melder på' : 'Starter betaling'}
       >
         {isFree ? 'Meld på' : `Betal ${formatKroner(course.price)}`}
       </Button>
