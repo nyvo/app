@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { PAYMENT_FILTER_OPTIONS, type PaymentFilter } from '@/components/teacher/SignupFilterDropdown';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ErrorState } from '@/components/ui/error-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -9,7 +8,7 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import type { SignupStatus, PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
 import { SearchInput } from '@/components/ui/search-input';
-import { SignupListView } from '@/components/teacher/SignupListView';
+import { SignupListView, PastSignupsList } from '@/components/teacher/SignupListView';
 import { toast } from 'sonner';
 import { friendlyError } from '@/lib/error-messages';
 import {
@@ -60,7 +59,17 @@ function detectException(signup: SignupDisplay): ExceptionType | null {
   return null;
 }
 
-type SortBy = 'newest' | 'oldest' | 'name' | 'course';
+// A signup is actionable ("Til oppfølging") when the teacher needs to do something.
+// Resolved states (refunded, participant cancelled) are excluded — they live in
+// their natural tab with row badges that carry the signal.
+function isFollowup(s: SignupDisplay): boolean {
+  if (s.paymentStatus === 'pending' && s.status === 'confirmed') return true;
+  if (s.paymentStatus === 'failed') return true;
+  if (s.status === 'course_cancelled' && s.paymentStatus !== 'refunded') return true;
+  return false;
+}
+
+type ViewTab = 'active' | 'followup' | 'past';
 
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
@@ -70,9 +79,7 @@ export const SignupsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<PaymentFilter>('all');
-  const [courseFilter, setCourseFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const [viewTab, setViewTab] = useState<ViewTab>('active');
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -154,8 +161,10 @@ export const SignupsPage = () => {
         note: signup.note || undefined,
         amountPaid: signup.amount_paid ?? null,
         stripePaymentIntentId: signup.stripe_payment_intent_id || null,
+        receiptUrl: signup.stripe_receipt_url || null,
         organizationId: signup.organization_id,
         courseEnded,
+        courseEndDate: courseEndDate ?? courseStartDate ?? null,
         courseCapacity: signup.course?.max_participants ?? null,
       };
 
@@ -171,103 +180,50 @@ export const SignupsPage = () => {
     return mapped;
   }, [signups, nextSessionDates]);
 
-  // Filter counts for pills (payment filters count within active signups only)
-  const filterCounts = useMemo((): Record<PaymentFilter, number> => {
-    const active = displaySignups.filter(s => !s.courseEnded);
-    const counts: Record<PaymentFilter, number> = {
-      all: active.length,
-      pending: 0,
-      refunded: 0,
-      archived: displaySignups.filter(s => s.courseEnded).length,
-    };
-    for (const s of active) {
-      if ((s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed') counts.pending++;
-      if (s.paymentStatus === 'refunded') counts.refunded++;
-    }
-    return counts;
-  }, [displaySignups]);
+  const followupCount = useMemo(
+    () => displaySignups.reduce((n, s) => n + (isFollowup(s) ? 1 : 0), 0),
+    [displaySignups],
+  );
 
-  // Signups after applying the status tab filter only — shared between the
-  // course-filter dropdown options and the final filtered list, so the
-  // dropdown only ever shows courses that exist in the current tab.
-  const statusFilteredSignups = useMemo(() => {
-    if (activeFilter === 'archived') {
-      return displaySignups.filter(s => s.courseEnded);
-    }
-    let r = displaySignups.filter(s => !s.courseEnded);
-    if (activeFilter === 'pending') {
-      r = r.filter(s =>
-        (s.paymentStatus === 'pending' && s.status === 'confirmed') || s.paymentStatus === 'failed'
-      );
-    } else if (activeFilter === 'refunded') {
-      r = r.filter(s => s.paymentStatus === 'refunded');
-    }
-    return r;
-  }, [displaySignups, activeFilter]);
-
-  // Unique courses for the dropdown — scoped to the active tab.
-  const uniqueCourses = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const s of statusFilteredSignups) {
-      if (s.courseId && !seen.has(s.courseId)) {
-        seen.set(s.courseId, s.className);
-      }
-    }
-    return Array.from(seen, ([id, title]) => ({ id, title }))
-      .sort((a, b) => a.title.localeCompare(b.title, 'nb-NO'));
-  }, [statusFilteredSignups]);
-
-  // If the selected course isn't in the current tab, reset to "Alle kurs".
-  useEffect(() => {
-    if (courseFilter === 'all') return;
-    if (!uniqueCourses.some(c => c.id === courseFilter)) {
-      setCourseFilter('all');
-    }
-  }, [uniqueCourses, courseFilter]);
-
-  // Apply course filter + search + sort on top of the tab-filtered set.
   const filteredSignups = useMemo(() => {
-    let result = statusFilteredSignups;
+    const q = searchQuery.toLowerCase().trim();
 
-    if (courseFilter !== 'all') {
-      result = result.filter(s => s.courseId === courseFilter);
-    }
+    let result = displaySignups.filter(s => {
+      if (viewTab === 'followup') return isFollowup(s);
+      if (viewTab === 'past') return !!s.courseEnded && !isFollowup(s);
+      return !s.courseEnded && !isFollowup(s);
+    });
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+    if (q) {
       result = result.filter(s =>
-        s.participantName.toLowerCase().includes(query) ||
-        s.participantEmail.toLowerCase().includes(query)
+        s.participantName.toLowerCase().includes(q) ||
+        s.participantEmail.toLowerCase().includes(q),
       );
     }
 
     const sorted = [...result];
     sorted.sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return a.registeredAtDate.getTime() - b.registeredAtDate.getTime();
-        case 'name':
-          return a.participantName.localeCompare(b.participantName, 'nb-NO');
-        case 'course': {
-          const c = a.className.localeCompare(b.className, 'nb-NO');
-          if (c !== 0) return c;
-          return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
-        }
-        case 'newest':
-        default:
-          return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
+      if (viewTab === 'followup') {
+        return a.registeredAtDate.getTime() - b.registeredAtDate.getTime();
       }
+      if (viewTab === 'past') {
+        const aEnd = a.courseEndDate || '';
+        const bEnd = b.courseEndDate || '';
+        const byCourseEnd = bEnd.localeCompare(aEnd);
+        if (byCourseEnd !== 0) return byCourseEnd;
+        return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
+      }
+      return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
     });
     return sorted;
-  }, [statusFilteredSignups, courseFilter, searchQuery, sortBy]);
+  }, [displaySignups, viewTab, searchQuery]);
 
   const clearFilters = () => {
-    setActiveFilter('all');
+    setViewTab('active');
     setSearchQuery('');
-    setCourseFilter('all');
   };
 
-  const hasFilters = activeFilter !== 'all' || searchQuery.trim() !== '' || courseFilter !== 'all';
+  const hasFilters = viewTab !== 'active' || searchQuery.trim() !== '';
 
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
     onSendPaymentLink: async (signupId: string) => {
@@ -317,57 +273,33 @@ export const SignupsPage = () => {
 
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
           <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
-            <div className="flex flex-wrap items-center gap-3 p-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
+              <ToggleGroup
+                type="single"
+                value={viewTab}
+                onValueChange={(v) => { if (v) setViewTab(v as ViewTab); }}
+                variant="segmented"
+                aria-label="Filtrer påmeldinger"
+              >
+                <ToggleGroupItem value="active">Påmeldinger</ToggleGroupItem>
+                <ToggleGroupItem value="followup">
+                  Til oppfølging
+                  {followupCount > 0 && (
+                    <span
+                      aria-hidden
+                      className="ml-1.5 inline-block size-1.5 rounded-full bg-current align-middle"
+                    />
+                  )}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="past">Fullførte</ToggleGroupItem>
+              </ToggleGroup>
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="Søk etter navn"
                 aria-label="Søk etter deltakere"
-                className="w-full md:flex-1 md:max-w-xs"
+                className="w-full md:w-auto md:ml-auto md:max-w-xs"
               />
-              <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as PaymentFilter)}>
-                <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter status">
-                  <span className="text-muted-foreground">Status:</span>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_FILTER_OPTIONS.map(({ value, label }) => {
-                    const count = filterCounts[value];
-                    if (value !== 'all' && count === 0) return null;
-                    return (
-                      <SelectItem key={value} value={value}>
-                        {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
-                <Select value={courseFilter} onValueChange={setCourseFilter}>
-                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter kurs">
-                    <span className="text-muted-foreground">Kurs:</span>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle</SelectItem>
-                    {uniqueCourses.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Sorter påmeldinger">
-                    <span className="text-muted-foreground">Sorter:</span>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Nyeste først</SelectItem>
-                    <SelectItem value="oldest">Eldste først</SelectItem>
-                    <SelectItem value="name">Navn (A–Å)</SelectItem>
-                    <SelectItem value="course">Kurs</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {error ? (
@@ -376,6 +308,8 @@ export const SignupsPage = () => {
                 message={error}
                 onRetry={loadSignups}
               />
+            ) : viewTab === 'past' && !searchQuery && filteredSignups.length > 0 ? (
+              <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
             ) : (
               <SignupListView
                 signups={filteredSignups}
@@ -384,6 +318,7 @@ export const SignupsPage = () => {
                 hasFilters={hasFilters}
                 onClearFilters={clearFilters}
                 actionHandlers={actionHandlers}
+                viewTab={viewTab}
               />
             )}
           </div>

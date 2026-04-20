@@ -7,8 +7,9 @@ import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { PaymentBadge, type PaymentStatus } from '@/components/ui/payment-badge';
-import { StatusBadge, type SignupStatus } from '@/components/ui/status-badge';
+import type { PaymentStatus } from '@/components/ui/payment-badge';
+import type { SignupStatus } from '@/components/ui/status-badge';
+import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { NotePopover } from '@/components/ui/note-popover';
 import { Card } from '@/components/ui/card';
 import { ParticipantActionMenu, type ParticipantActionHandlers, type ActionableParticipant } from './ParticipantActionMenu';
@@ -150,8 +151,7 @@ export const CourseParticipantsTab = ({
             <thead>
               <tr className="border-b border-border bg-background/50">
                 <th scope="col" className="text-xs font-medium tracking-wide w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
-                <th scope="col" className="text-xs font-medium tracking-wide w-32 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
-                <th scope="col" className="text-xs font-medium tracking-wide hidden w-40 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Betaling</th>
+                <th scope="col" className="text-xs font-medium tracking-wide w-40 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
                 <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
                 <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
                 <th scope="col" className="text-xs font-medium tracking-wide w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
@@ -160,14 +160,14 @@ export const CourseParticipantsTab = ({
             <tbody className="divide-y divide-border">
               {participantsLoading ? (
                 <>
-                  <SkeletonTableRow columns={6} hasAvatar={true} />
-                  <SkeletonTableRow columns={6} hasAvatar={true} />
-                  <SkeletonTableRow columns={6} hasAvatar={true} />
-                  <tr className="sr-only"><td colSpan={6}>Laster deltakere</td></tr>
+                  <SkeletonTableRow columns={5} hasAvatar={true} />
+                  <SkeletonTableRow columns={5} hasAvatar={true} />
+                  <SkeletonTableRow columns={5} hasAvatar={true} />
+                  <tr className="sr-only"><td colSpan={5}>Laster deltakere</td></tr>
                 </>
               ) : filteredParticipants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center">
+                  <td colSpan={5} className="py-12 text-center">
                     <p className="text-sm text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                     {hasActiveFilters && (
                       <Button variant="link" size="sm" onClick={clearFilters} className="text-xs font-medium tracking-wide text-primary">
@@ -189,13 +189,9 @@ export const CourseParticipantsTab = ({
                         </div>
                       </div>
                     </td>
-                    {/* Status (signup) */}
+                    {/* Status (derived from signup + payment) */}
                     <td className="px-4 py-3 sm:px-6">
-                      <StatusBadge status={participant.status} />
-                    </td>
-                    {/* Betaling (payment) */}
-                    <td className="hidden px-4 py-4 sm:px-6 md:table-cell">
-                      <PaymentBadge status={participant.paymentStatus} />
+                      <SignupStatusBadge status={participant.status} paymentStatus={participant.paymentStatus} />
                     </td>
                     {/* Kvittering (receipt) */}
                     <td className="hidden px-4 py-4 sm:px-6 md:table-cell">

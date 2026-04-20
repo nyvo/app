@@ -42,9 +42,11 @@ export interface SignupDisplay {
   note?: string;
   amountPaid?: number | null;
   stripePaymentIntentId?: string | null;
+  receiptUrl?: string | null;
   organizationId?: string;
   exceptionType?: ExceptionType | null;
   courseEnded?: boolean;
+  courseEndDate?: string | null;
   courseCapacity?: number | null;
 }
 
@@ -67,6 +69,7 @@ export interface Database {
           stripe_onboarding_complete: boolean | null
           studio_shared_at: string | null
           settings: Json | null
+          default_course_image_url: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -85,6 +88,7 @@ export interface Database {
           stripe_onboarding_complete?: boolean | null
           studio_shared_at?: string | null
           settings?: Json | null
+          default_course_image_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -103,6 +107,7 @@ export interface Database {
           stripe_onboarding_complete?: boolean | null
           studio_shared_at?: string | null
           settings?: Json | null
+          default_course_image_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -113,6 +118,7 @@ export interface Database {
           email: string
           name: string | null
           avatar_url: string | null
+          bio: string | null
           phone: string | null
           is_platform_admin: boolean | null
           onboarding_completed_at: string | null
@@ -125,6 +131,7 @@ export interface Database {
           email: string
           name?: string | null
           avatar_url?: string | null
+          bio?: string | null
           phone?: string | null
           is_platform_admin?: boolean | null
           onboarding_completed_at?: string | null
@@ -137,6 +144,7 @@ export interface Database {
           email?: string
           name?: string | null
           avatar_url?: string | null
+          bio?: string | null
           phone?: string | null
           is_platform_admin?: boolean | null
           onboarding_completed_at?: string | null
@@ -243,6 +251,29 @@ export interface Database {
           practical_info?: Json | null
           created_at?: string | null
           updated_at?: string | null
+        }
+      }
+      course_instructors: {
+        Row: {
+          course_id: string
+          profile_id: string
+          role: 'primary' | 'guest'
+          display_order: number
+          created_at: string
+        }
+        Insert: {
+          course_id: string
+          profile_id: string
+          role?: 'primary' | 'guest'
+          display_order?: number
+          created_at?: string
+        }
+        Update: {
+          course_id?: string
+          profile_id?: string
+          role?: 'primary' | 'guest'
+          display_order?: number
+          created_at?: string
         }
       }
       signups: {
@@ -750,6 +781,11 @@ export type MessageUpdate = Database['public']['Tables']['messages']['Update']
 export type CourseSession = Database['public']['Tables']['course_sessions']['Row']
 export type CourseSessionInsert = Database['public']['Tables']['course_sessions']['Insert']
 export type CourseSessionUpdate = Database['public']['Tables']['course_sessions']['Update']
+
+export type CourseInstructor = Database['public']['Tables']['course_instructors']['Row']
+export type CourseInstructorInsert = Database['public']['Tables']['course_instructors']['Insert']
+export type CourseInstructorUpdate = Database['public']['Tables']['course_instructors']['Update']
+export type CourseInstructorRole = CourseInstructor['role']
 
 export type CourseSignupPackage = Database['public']['Tables']['course_signup_packages']['Row']
 export type CourseSignupPackageInsert = Database['public']['Tables']['course_signup_packages']['Insert']
