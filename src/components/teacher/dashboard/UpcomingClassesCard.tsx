@@ -99,14 +99,18 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
     )
   }
 
+  let lastDate: string | null = null
+
   return (
     <div className="space-y-3">
       {upcoming.map((course) => {
         const hasAttendance = course.signups != null && course.capacity != null && course.capacity > 0
+        const showLabel = course.date !== lastDate
+        lastDate = course.date ?? lastDate
         return (
           <div key={`${course.id}-${course.date}-${course.time}`} className="grid grid-cols-[theme(spacing.16)_1fr] pl-6 pr-6">
             <span className="text-xs font-medium text-muted-foreground">
-              {formatDayLabel(course.date!, today, weekSunday)}
+              {showLabel ? formatDayLabel(course.date!, today, weekSunday) : ''}
             </span>
             <Link
               to={`/teacher/courses/${course.id}`}
