@@ -68,6 +68,7 @@ export {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   ChevronsUpDown,
   CircleAlert,
   CircleCheck,
