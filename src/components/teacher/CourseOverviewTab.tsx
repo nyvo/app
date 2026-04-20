@@ -5,11 +5,11 @@ import {
 } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { Badge } from '@/components/ui/badge';
 import { SessionList } from '@/components/teacher/SessionList';
 import { formatKroner } from '@/lib/utils';
-import type { SignupStatus } from '@/types/database';
+import type { SignupStatus, PaymentStatus } from '@/types/database';
 import type { CourseWeek, SessionEditHandlers } from './session-types';
 
 // Format date range for display (e.g., "17. jan – 7. feb 2025")
@@ -55,6 +55,7 @@ interface RecentParticipant {
   name: string;
   email: string;
   status: SignupStatus;
+  paymentStatus: PaymentStatus;
 }
 
 interface CourseOverviewTabProps {
@@ -270,7 +271,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
                     <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{p.email}</p>
                   </div>
-                  <StatusBadge status={p.status} size="sm" />
+                  <SignupStatusBadge status={p.status} paymentStatus={p.paymentStatus} size="sm" />
                 </div>
               ))}
             </div>
