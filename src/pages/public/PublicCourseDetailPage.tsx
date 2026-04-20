@@ -1,433 +1,568 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import {
-  ChevronLeft,
-} from '@/lib/icons';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { fetchPublicCourseById, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { checkCourseAvailability, createSignup, sendSignupConfirmationEmail } from '@/services/signups';
-import { createPaymentIntent } from '@/services/checkout';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Calendar, Clock, Users, ImageIcon, Leaf } from '@/lib/icons';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { StatusIndicator } from '@/components/ui/status-indicator';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { EmbeddedPayment } from '@/components/public/course-details/EmbeddedPayment';
+import {
+  fetchPublicCourseById,
+  resolveCourseImage,
+  type PublicCourseWithDetails,
+} from '@/services/publicCourses';
+import { fetchCourseSessions } from '@/services/courses';
+import { checkCourseAvailability, createFreeSignup, sendSignupConfirmationEmail } from '@/services/signups';
+import { createPaymentIntent } from '@/services/checkout';
 import { friendlyError } from '@/lib/error-messages';
-import { practicalInfoToHighlights } from '@/utils/practicalInfoUtils';
-import { isValidEmail } from '@/lib/utils';
+import { formatKroner, isValidEmail, cn } from '@/lib/utils';
+import type { CourseSession } from '@/types/database';
 
-// Import new components
-import { PublicCourseHeader } from '@/components/public/course-details/PublicCourseHeader';
-import { CourseHero } from '@/components/public/course-details/CourseHero';
-import { InstructorCard } from '@/components/public/course-details/InstructorCard';
-import { CourseMetaGrid } from '@/components/public/course-details/CourseMetaGrid';
-import { CourseDescription } from '@/components/public/course-details/CourseDescription';
-import { BookingSidebar } from '@/components/public/course-details/BookingSidebar';
+// ────────────────────────────────────────────────────────────────────────────
+// Formatting helpers
+// ────────────────────────────────────────────────────────────────────────────
 
-// Helper to format date for display
-function formatCourseDate(dateString: string | null): { month: string; day: string; dayName: string; fullDate: string; shortDate: string } {
-  if (!dateString) {
-    return { month: '—', day: '—', dayName: '', fullDate: 'Dato mangler', shortDate: '—' };
-  }
+const WEEKDAYS = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
-  const date = new Date(dateString);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
-  const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
-  const shortDays = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'];
-
-  return {
-    month: months[date.getMonth()],
-    day: String(date.getDate()).padStart(2, '0'),
-    dayName: days[date.getDay()],
-    fullDate: `${days[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`,
-    shortDate: `${shortDays[date.getDay()]}, ${date.getDate()}. ${months[date.getMonth()]}`
-  };
-}
-
-// Extract time from time_schedule and convert to 24-hour format
-function extractTime(timeSchedule: string | null): string {
+function extractStartTime(timeSchedule: string | null): string {
   if (!timeSchedule) return '';
-
-  // Match time with optional AM/PM
-  const match = timeSchedule.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!match) return '';
-
-  let hours = parseInt(match[1], 10);
-  const minutes = match[2];
-  const meridiem = match[3]?.toUpperCase();
-
-  // Convert to 24-hour format if AM/PM is present
-  if (meridiem === 'PM' && hours !== 12) {
-    hours += 12;
-  } else if (meridiem === 'AM' && hours === 12) {
-    hours = 0;
-  }
-
-  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
+  return match ? match[1] : '';
 }
 
-const PublicCourseDetailPage = () => {
-  const { slug, courseId } = useParams<{ slug: string; courseId: string }>();
-  const { user, signOut } = useAuth();
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
 
-  // Data fetching state
-  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+function formatSessionTime(time: string | null): string {
+  if (!time) return '';
+  return time.slice(0, 5);
+}
 
-  // Booking flow state
+function formatDuration(duration: number | null): string {
+  if (!duration) return '';
+  if (duration < 60) return `${duration} min`;
+  const h = Math.floor(duration / 60);
+  const m = duration % 60;
+  return m === 0 ? `${h} t` : `${h} t ${m} min`;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Booking card — price header, form, inline Stripe payment
+// ────────────────────────────────────────────────────────────────────────────
+
+interface BookingFormState {
+  name: string;
+  email: string;
+  phone: string;
+  terms: boolean;
+}
+
+function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; studioSlug: string }) {
+  const [form, setForm] = useState<BookingFormState>({ name: '', email: '', phone: '', terms: false });
+  const [errors, setErrors] = useState<Partial<Record<keyof BookingFormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
-
-  // Embedded payment state
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    message: '',
-    termsAccepted: false
-  });
+  const isFull = course.max_participants !== null && course.spots_available <= 0;
+  const isFree = !course.price || course.price <= 0;
+  const isCancelled = course.status === 'cancelled';
+  const startTime = extractStartTime(course.time_schedule);
+  const isSeries = course.course_type === 'course-series';
+  const weeksLabel = isSeries && course.total_weeks ? `${course.total_weeks} uker` : null;
 
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const spotsLabel = course.max_participants
+    ? course.spots_available <= 0
+      ? 'Fullt'
+      : course.spots_available <= 3
+        ? `${course.spots_available} plasser igjen`
+        : null
+    : null;
 
-  // Fetch course data and sessions
-  useEffect(() => {
-    async function loadCourseAndSessions() {
-      if (!courseId) {
-        setFetchError('Fant ikke kurset');
-        setLoading(false);
-        return;
-      }
+  function updateField<K extends keyof BookingFormState>(key: K, value: BookingFormState[K]) {
+    setForm(prev => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: false }));
+  }
 
-      setLoading(true);
-      setFetchError(null);
+  function validate(): boolean {
+    const next: typeof errors = {};
+    if (!form.name.trim()) next.name = true;
+    if (!form.email.trim() || !isValidEmail(form.email)) next.email = true;
+    if (!form.phone.trim()) next.phone = true;
+    if (!form.terms) next.terms = true;
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
 
-      // Fetch course data
-      const { data, error } = await fetchPublicCourseById(courseId);
-
-      if (error) {
-        setFetchError('Kunne ikke hente kurs');
-        setLoading(false);
-        return;
-      }
-
-      if (!data) {
-        setFetchError('Kurset finnes ikke eller er ikke tilgjengelig');
-        setLoading(false);
-        return;
-      }
-
-      setCourse(data);
-      setLoading(false);
-    }
-
-    loadCourseAndSessions();
-  }, [courseId]);
-
-
-  const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    const newErrors = { ...errors };
-
-    if (field === 'firstName' && !formData.firstName.trim()) {
-      newErrors.firstName = true;
-    } else if (field === 'firstName') {
-      delete newErrors.firstName;
-    }
-
-    if (field === 'lastName' && !formData.lastName.trim()) {
-      newErrors.lastName = true;
-    } else if (field === 'lastName') {
-      delete newErrors.lastName;
-    }
-
-    if (field === 'email') {
-      if (!formData.email.trim()) {
-        newErrors.email = true;
-      } else if (!isValidEmail(formData.email)) {
-        newErrors.email = true;
-      } else {
-        delete newErrors.email;
-      }
-    }
-
-    setErrors(newErrors);
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, boolean> = {};
-    let isValid = true;
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = true;
-      isValid = false;
-    }
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = true;
-      isValid = false;
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = true;
-      isValid = false;
-    } else if (!isValidEmail(formData.email)) {
-      newErrors.email = true;
-      isValid = false;
-    }
-
-    if (!formData.termsAccepted) {
-      newErrors.termsAccepted = true;
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: false
-      }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    setTouched({ firstName: true, lastName: true, email: true, termsAccepted: true });
-
-    if (!validateForm()) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
-      if (firstErrorField) {
-        firstErrorField.focus();
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      return;
-    }
-
-    if (!course || !courseId || !slug) return;
-
+    if (!validate()) return;
     setSubmitting(true);
 
-    // Check availability
-    const { available, error: availError } = await checkCourseAvailability(courseId);
-
+    const { available, error: availError } = await checkCourseAvailability(course.id);
     if (availError) {
       toast.error('Kunne ikke sjekke tilgjengelighet. Prøv igjen.');
       setSubmitting(false);
       return;
     }
-
     if (available <= 0) {
       toast.error('Kurset er fullt.');
       setSubmitting(false);
       return;
     }
 
-    const isFree = !course.price || course.price <= 0;
-
     if (isFree) {
-      // Free course: create signup directly without payment
-      const { data: signupData, error: signupError } = await createSignup({
-        course_id: courseId,
-        organization_id: course.organization_id,
-        participant_name: `${formData.firstName} ${formData.lastName}`.trim(),
-        participant_email: formData.email,
-        status: 'confirmed',
-        payment_status: 'paid',
-        user_id: user?.id || null,
-        note: formData.message || null,
+      const { data: signupData, error: signupError } = await createFreeSignup({
+        courseId: course.id,
+        participantName: form.name.trim(),
+        participantEmail: form.email.trim(),
+        participantPhone: form.phone.trim(),
       });
-
       if (signupError) {
         toast.error(friendlyError(signupError, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
         setSubmitting(false);
         return;
       }
-
-      // Send confirmation email (non-blocking) — server looks up data by IDs
-      if (signupData?.id) {
-        sendSignupConfirmationEmail(courseId, signupData.id);
-      }
-
-      toast.success('Påmelding fullført');
-      setSubmitting(false);
-      window.location.href = `/checkout/success?free=true&org=${slug}`;
+      if (signupData?.signupId) sendSignupConfirmationEmail(course.id, signupData.signupId);
+      window.location.href = `/checkout/success?free=true&org=${studioSlug}`;
       return;
     }
 
-    // Paid course: create PaymentIntent for embedded payment
     const { data: paymentData, error: paymentError } = await createPaymentIntent({
-      courseId,
-      organizationSlug: slug,
-      customerEmail: formData.email,
-      customerName: `${formData.firstName} ${formData.lastName}`.trim(),
+      courseId: course.id,
+      organizationSlug: studioSlug,
+      customerEmail: form.email.trim(),
+      customerName: form.name.trim(),
+      customerPhone: form.phone.trim(),
     });
-
     if (paymentError || !paymentData) {
       toast.error(friendlyError(paymentError, 'Kunne ikke starte betaling. Prøv igjen.'));
       setSubmitting(false);
       return;
     }
-
-    // Show inline payment form
     setClientSecret(paymentData.clientSecret);
     setSubmitting(false);
-  };
+  }
 
-  const handlePaymentSuccess = (paymentIntentId: string) => {
-    setClientSecret(null);
-    // Navigate to success page with payment_intent_id
-    window.location.href = `/checkout/success?payment_intent_id=${paymentIntentId}&org=${slug}`;
-  };
+  const fieldLabelCls = 'text-xs font-medium mb-1.5 block text-foreground';
+  const errorCls = 'text-xs font-medium tracking-wide text-destructive mt-1';
 
-  const handlePaymentBack = () => {
-    setClientSecret(null);
-  };
+  // Header shown in every state
+  const PriceHeader = (
+    <div className="space-y-1">
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+          {formatKroner(course.price)}
+        </span>
+        {isSeries && course.total_weeks && (
+          <span className="text-xs text-muted-foreground">for hele kursrekken</span>
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium tracking-wide text-muted-foreground">
+        {course.start_date && (
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="size-3 shrink-0" />
+            {isSeries ? 'Starter ' : ''}{formatDate(course.start_date)}
+            {startTime && ` · kl. ${startTime}`}
+          </span>
+        )}
+        {(weeksLabel || course.duration) && (
+          <span className="inline-flex items-center gap-1">
+            <Clock className="size-3 shrink-0" />
+            {weeksLabel || formatDuration(course.duration)}
+          </span>
+        )}
+        {spotsLabel && (
+          <StatusIndicator
+            variant={spotsLabel === 'Fullt' ? 'neutral' : 'warning'}
+            mode="badge"
+            size="sm"
+            label={spotsLabel}
+            icon={Users}
+          />
+        )}
+      </div>
+    </div>
+  );
 
-  const handlePaymentError = (error: string) => {
-    // Error is shown inside the dialog, only toast if dialog closes
-    console.error('Payment error:', error);
-  };
-
-
-  if (loading) {
+  if (isCancelled) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background" role="status" aria-live="polite">
-        <Card className="w-full max-w-lg border-border bg-card">
-          <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 text-center">
-            <Spinner size="xl" aria-hidden="true" />
-            <p className="text-sm text-muted-foreground">Laster kurs</p>
-          </div>
-        </Card>
-        <span className="sr-only">Laster kurs</span>
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        {PriceHeader}
+        <Alert variant="warning" size="sm">
+          <AlertDescription>Kurset er avlyst.</AlertDescription>
+        </Alert>
       </div>
     );
   }
+
+  if (isFull) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+        {PriceHeader}
+        <div className="rounded-md bg-muted/60 px-3 py-2.5 text-center">
+          <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
+          <p className="text-xs mt-0.5 text-muted-foreground">Ingen ledige plasser igjen.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (clientSecret) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-5">
+        <EmbeddedPayment
+          clientSecret={clientSecret}
+          courseName={course.title}
+          price={course.price || 0}
+          onPaymentSuccess={(paymentIntentId) => {
+            window.location.href = `/checkout/success?payment_intent_id=${paymentIntentId}&org=${studioSlug}`;
+          }}
+          onPaymentError={(err) => console.error('Payment error:', err)}
+          onBack={() => setClientSecret(null)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-5 space-y-5">
+      {PriceHeader}
+
+      <div className="space-y-3.5">
+        <div>
+          <label htmlFor="bk-name" className={fieldLabelCls}>Navn</label>
+          <Input
+            id="bk-name"
+            type="text"
+            autoComplete="name"
+            value={form.name}
+            onChange={(e) => updateField('name', e.target.value)}
+            aria-invalid={errors.name || undefined}
+            placeholder="Ola Nordmann"
+          />
+          {errors.name && <p role="alert" className={errorCls}>Fyll inn navn.</p>}
+        </div>
+
+        <div>
+          <label htmlFor="bk-email" className={fieldLabelCls}>E-post</label>
+          <Input
+            id="bk-email"
+            type="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => updateField('email', e.target.value)}
+            aria-invalid={errors.email || undefined}
+            placeholder="ola@eksempel.no"
+          />
+          {errors.email && <p role="alert" className={errorCls}>Fyll inn en gyldig e-postadresse.</p>}
+        </div>
+
+        <div>
+          <label htmlFor="bk-phone" className={fieldLabelCls}>Telefon</label>
+          <Input
+            id="bk-phone"
+            type="tel"
+            autoComplete="tel"
+            value={form.phone}
+            onChange={(e) => updateField('phone', e.target.value)}
+            aria-invalid={errors.phone || undefined}
+            placeholder="9xx xx xxx"
+          />
+          {errors.phone && <p role="alert" className={errorCls}>Fyll inn telefonnummer.</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="bk-terms"
+            checked={form.terms}
+            onCheckedChange={(v) => updateField('terms', v === true)}
+            aria-invalid={errors.terms || undefined}
+            className="mt-0.5"
+          />
+          <label htmlFor="bk-terms" className="text-xs text-muted-foreground leading-relaxed select-none cursor-pointer">
+            Jeg godtar <Link to="/terms" target="_blank" className="text-foreground underline underline-offset-2">vilkårene</Link> og <Link to="/terms" target="_blank" className="text-foreground underline underline-offset-2">angreretten</Link>.
+          </label>
+        </div>
+        {errors.terms && <p role="alert" className={errorCls}>Du må godta vilkårene for å gå videre.</p>}
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full"
+        size="default"
+        disabled={submitting}
+        loading={submitting}
+        loadingText="Starter betaling"
+      >
+        {isFree ? 'Meld på' : `Betal ${formatKroner(course.price)}`}
+      </Button>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Ingen konto nødvendig · Kvittering på e-post
+      </p>
+    </form>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Instructors
+// ────────────────────────────────────────────────────────────────────────────
+
+function InstructorsSection({ instructors }: { instructors: PublicCourseWithDetails['instructors'] }) {
+  if (instructors.length === 0) return null;
+  const heading = instructors.length === 1 ? 'Om instruktøren' : 'Om instruktørene';
+
+  return (
+    <Section title={heading}>
+      <div className="flex flex-col gap-5">
+        {instructors.map((i) => (
+          <div key={i.id} className="flex items-start gap-3">
+            <UserAvatar name={i.name} src={i.avatar_url} size="md" className="mt-0.5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-foreground">{i.name || 'Instruktør'}</span>
+                {i.role === 'guest' && (
+                  <StatusIndicator variant="neutral" mode="badge" size="sm" label="Gjesteinstruktør" />
+                )}
+              </div>
+              {i.bio && (
+                <p className="text-sm text-muted-foreground leading-relaxed mt-1 whitespace-pre-wrap">
+                  {i.bio}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Sessions — collapsed in an accordion, closed by default
+// ────────────────────────────────────────────────────────────────────────────
+
+function SessionsAccordion({ sessions }: { sessions: CourseSession[] }) {
+  const upcoming = sessions.filter(s => s.status !== 'cancelled');
+  if (upcoming.length === 0) return null;
+
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="sessions" className="border-b-0 rounded-lg border border-border px-4">
+        <AccordionTrigger className="py-3 hover:no-underline">
+          <span className="text-sm font-medium text-foreground">
+            Datoer ({upcoming.length})
+          </span>
+        </AccordionTrigger>
+        <AccordionContent>
+          <ul className="divide-y divide-border -mt-1">
+            {upcoming.map((s) => (
+              <li key={s.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <span className="text-foreground">{formatDate(s.session_date)}</span>
+                {s.start_time && (
+                  <span className="text-muted-foreground tabular-nums">kl. {formatSessionTime(s.start_time)}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Generic section wrapper
+// ────────────────────────────────────────────────────────────────────────────
+
+function Section({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={cn('space-y-3', className)}>
+      <h3 className="text-xs font-medium tracking-wide uppercase text-muted-foreground">{title}</h3>
+      <div className="text-sm text-foreground">{children}</div>
+    </section>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Hero
+// ────────────────────────────────────────────────────────────────────────────
+
+function HeroImage({ course }: { course: PublicCourseWithDetails }) {
+  const src = resolveCourseImage(course);
+  if (!src) {
+    return (
+      <div className="flex aspect-[16/9] sm:aspect-[21/9] w-full items-center justify-center bg-muted rounded-lg">
+        <ImageIcon className="size-10 text-muted-foreground/40" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={course.title}
+      className="aspect-[16/9] sm:aspect-[21/9] w-full object-cover rounded-lg"
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Main page
+// ────────────────────────────────────────────────────────────────────────────
+
+export default function PublicCourseDetailPage() {
+  const { slug, courseId } = useParams<{ slug: string; courseId: string }>();
+  const navigate = useNavigate();
+  const [course, setCourse] = useState<PublicCourseWithDetails | null>(null);
+  const [sessions, setSessions] = useState<CourseSession[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      if (!courseId) return;
+      setLoading(true);
+      setError(null);
+      const [courseRes, sessionsRes] = await Promise.all([
+        fetchPublicCourseById(courseId),
+        fetchCourseSessions(courseId),
+      ]);
+      if (!active) return;
+      if (courseRes.error || !courseRes.data) {
+        setError('Kurset finnes ikke eller er ikke tilgjengelig.');
+        setLoading(false);
+        return;
+      }
+      setCourse(courseRes.data);
+      setSessions(sessionsRes.data || []);
+      setLoading(false);
+    }
+    load();
+    return () => { active = false };
+  }, [courseId]);
 
   const backUrl = slug ? `/studio/${slug}` : '/';
 
-  if (fetchError || !course) {
-    return (
-      <div className="min-h-screen w-full bg-background">
-        <header className="border-b border-border bg-background">
-          <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
-            <Link to={backUrl} className="text-base font-medium text-foreground">
-              Ease
-            </Link>
-          </div>
-        </header>
-        <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
-          <Card className="border-border bg-card">
-            <EmptyState
-              title={fetchError || 'Kurset ble ikke funnet'}
-              description="Siden kan være flyttet, utilgjengelig eller ikke lenger aktiv."
-              variant="public"
-              action={
-                <Button asChild variant="outline" size="compact">
-                  <Link to={backUrl}>
-                    <ChevronLeft className="mr-1 h-4 w-4" />
-                    Tilbake til kurs
-                  </Link>
-                </Button>
-              }
-            />
-          </Card>
-        </main>
-      </div>
-    );
-  }
+  const cancellationCopy = useMemo(
+    () => 'Gratis avbestilling inntil 24 timer før kursstart. Senere avbestilling eller uteblivelse refunderes ikke.',
+    [],
+  );
 
-  // Main course detail / booking flow
-  const dateInfo = formatCourseDate(course.start_date);
-  const time = extractTime(course.time_schedule);
-  const isFull = course.spots_available === 0;
+  const handleBack = () => navigate(backUrl);
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      <PublicCourseHeader
-        organizationSlug={slug || ''}
-        organizationName={course.organization?.name || 'Ease'}
-        user={user}
-        onSignOut={signOut}
-      />
-
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-6 py-8 md:py-14">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-14">
-          {/* Left Column — Course Info (5/12), hidden on mobile during payment */}
-          <div className={`md:col-span-5 space-y-10 ${clientSecret ? 'hidden md:block' : ''}`}>
-            {/* Hero + Description grouped tightly */}
-            <div className="space-y-4">
-              <CourseHero
-                title={course.title}
-                description={course.description}
-                spotsAvailable={course.spots_available}
-              />
-
-              <CourseDescription
-                description={course.description}
-                highlights={practicalInfoToHighlights(course.practical_info)}
-              />
+    <div className="fixed inset-0 z-40 flex flex-col bg-background">
+      {/* Header with back button */}
+      <header className="sticky top-0 z-10 shrink-0 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:px-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="-ml-2"
+          >
+            <ArrowLeft className="size-4" />
+            Tilbake
+          </Button>
+          <Link to="/" className="hidden sm:flex items-center gap-2 group ml-auto">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-background border border-border group-hover:border-ring transition-colors">
+              <Leaf className="size-3.5 text-foreground" />
             </div>
-
-            {/* Meta: Date/Time + Location */}
-            <CourseMetaGrid
-              time={time}
-              location={course.location}
-              duration={course.duration}
-              dateInfo={dateInfo}
-            />
-
-            {/* Instructor */}
-            {course.instructor && (
-              <InstructorCard
-                instructor={{
-                  name: course.instructor.name || 'Instruktør',
-                  role: 'Instruktør',
-                  avatar_url: course.instructor.avatar_url,
-                  profileUrl: undefined,
-                }}
-              />
-            )}
-          </div>
-
-          {/* Right Column — Booking Form (7/12) */}
-          <div className="md:col-span-7">
-            <BookingSidebar
-              course={course}
-              isFull={isFull}
-              isAlreadySignedUp={false}
-              formData={formData}
-              errors={errors}
-              touched={touched}
-              submitting={submitting}
-              onSubmit={handleSubmit}
-              onInputChange={handleInputChange}
-              onBlur={handleBlur}
-              clientSecret={clientSecret}
-              onPaymentSuccess={handlePaymentSuccess}
-              onPaymentError={handlePaymentError}
-              onPaymentBack={handlePaymentBack}
-            />
-          </div>
+            <span className="text-sm font-medium text-foreground">Ease</span>
+          </Link>
         </div>
-      </main>
+      </header>
 
+      {/* Scrollable main content */}
+      <main className="flex-1 overflow-y-auto">
+        {loading && (
+          <div className="flex min-h-[60vh] items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-6 text-center">
+            <p className="text-sm font-medium text-foreground">{error}</p>
+            <Button variant="outline" size="sm" onClick={handleBack}>
+              Tilbake til timeplan
+            </Button>
+          </div>
+        )}
+
+        {!loading && !error && course && (
+          <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+            {/* Hero full width */}
+            <HeroImage course={course} />
+
+            {/* Two-column layout on lg+ (1024px): content left, sticky booking right */}
+            <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12">
+              {/* Left: content column */}
+              <div className="space-y-8 min-w-0">
+                <header className="space-y-1.5">
+                  <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+                    {course.title}
+                  </h1>
+                  {course.organization && (
+                    <p className="text-sm text-muted-foreground">
+                      <Link to={`/studio/${course.organization.slug}`} className="hover:text-foreground smooth-transition">
+                        {course.organization.name}
+                      </Link>
+                    </p>
+                  )}
+                </header>
+
+                {course.description && (
+                  <Section title="Om kurset">
+                    <p className="leading-relaxed text-foreground whitespace-pre-wrap">
+                      {course.description}
+                    </p>
+                  </Section>
+                )}
+
+                {/* Mobile + tablet: booking card inline after description */}
+                <div className="lg:hidden">
+                  <BookingCard course={course} studioSlug={slug || ''} />
+                </div>
+
+                <SessionsAccordion sessions={sessions} />
+
+                <InstructorsSection instructors={course.instructors} />
+
+                {course.location && (
+                  <Section title="Sted">
+                    <p className="leading-relaxed">{course.location}</p>
+                  </Section>
+                )}
+
+                <Section title="Avbestilling">
+                  <p className="leading-relaxed text-muted-foreground">{cancellationCopy}</p>
+                </Section>
+              </div>
+
+              {/* Right: sticky booking card (lg+ only) */}
+              <aside className="hidden lg:block">
+                <div className="sticky top-20">
+                  <BookingCard course={course} studioSlug={slug || ''} />
+                </div>
+              </aside>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
-};
-
-export default PublicCourseDetailPage;
+}

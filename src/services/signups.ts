@@ -172,6 +172,32 @@ export async function teacherCancelSignup(
   }
 }
 
+// Create a signup for a free course. Routes through an edge function that
+// verifies the course price server-side and calls the atomic capacity RPC,
+// so the client cannot forge a free signup for a paid course.
+export async function createFreeSignup(input: {
+  courseId: string
+  participantName: string
+  participantEmail: string
+  participantPhone: string
+}): Promise<{ data: { signupId: string } | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-free-signup', {
+      body: input,
+    })
+
+    if (error) {
+      return { data: null, error: new Error(error.message || 'Kunne ikke fullføre påmelding') }
+    }
+    if (data?.error) {
+      return { data: null, error: new Error(data.error) }
+    }
+    return { data: data as { signupId: string }, error: null }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+  }
+}
+
 // Send a new payment link to a participant
 export async function sendPaymentLink(
   signupId: string
