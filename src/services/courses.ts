@@ -123,105 +123,6 @@ export interface SessionTimeOverride {
   time: string // e.g., "18:00"
 }
 
-// Schedule conflict result
-export interface ScheduleConflict {
-  sessionDate: string
-  startTime: string
-  conflictingCourse: {
-    id: string
-    title: string
-    startTime: string
-    endTime: string
-  }
-}
-
-// Check for schedule conflicts before creating a course
-async function checkScheduleConflicts(
-  organizationId: string,
-  plannedSessions: { date: string; startTime: string; duration: number }[]
-): Promise<{ conflicts: ScheduleConflict[]; error: Error | null }> {
-  if (plannedSessions.length === 0) {
-    return { conflicts: [], error: null }
-  }
-
-  // Get all session dates we need to check
-  const sessionDates = plannedSessions.map(s => s.date)
-
-  // Fetch existing sessions for this organization on those dates
-  const { data: existingSessions, error } = await typedFrom('course_sessions')
-    .select(`
-      id,
-      session_date,
-      start_time,
-      course:courses!inner(
-        id,
-        title,
-        organization_id,
-        duration,
-        status
-      )
-    `)
-    .in('session_date', sessionDates)
-    .eq('course.organization_id', organizationId)
-    .neq('course.status', 'cancelled')
-    .neq('status', 'cancelled')
-
-  if (error) {
-    return { conflicts: [], error: error as Error }
-  }
-
-  if (!existingSessions || existingSessions.length === 0) {
-    return { conflicts: [], error: null }
-  }
-
-  const conflicts: ScheduleConflict[] = []
-  const typedSessions = existingSessions as unknown as SessionWithCourseJoin[]
-
-  // Check each planned session against existing sessions
-  for (const planned of plannedSessions) {
-    const plannedStart = timeToMinutes(planned.startTime)
-    const plannedEnd = plannedStart + planned.duration
-
-    for (const existing of typedSessions) {
-      const existingCourse = existing.course
-
-      // Skip if different date
-      if (existing.session_date !== planned.date) continue
-
-      const existingStart = timeToMinutes(existing.start_time)
-      // Ensure duration is at least 1 minute (default to 60 if missing or zero)
-      const existingDuration = existingCourse.duration > 0 ? existingCourse.duration : 60
-      const existingEnd = existingStart + existingDuration
-
-      // Check for time overlap
-      // Two sessions overlap if: start1 < end2 AND start2 < end1
-      if (plannedStart < existingEnd && existingStart < plannedEnd) {
-        // Calculate end time string
-        const endHours = Math.floor(existingEnd / 60)
-        const endMins = existingEnd % 60
-        const endTimeStr = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
-
-        // Format start time to HH:MM (strip seconds if present)
-        const startTimeStr = existing.start_time.slice(0, 5)
-
-        conflicts.push({
-          sessionDate: planned.date,
-          startTime: planned.startTime,
-          conflictingCourse: {
-            id: existingCourse.id,
-            title: existingCourse.title,
-            startTime: startTimeStr,
-            endTime: endTimeStr
-          }
-        })
-        break // Only report one conflict per planned session
-      }
-    }
-  }
-
-  return { conflicts, error: null }
-}
-
 // Helper to convert time string to minutes since midnight
 function timeToMinutes(time: string): number {
   if (!time || !time.includes(':')) {
@@ -393,39 +294,12 @@ export async function createCourse(
   options?: {
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
-    skipConflictCheck?: boolean // Skip conflict validation (for testing/admin)
   }
-): Promise<{ data: Course | null; error: Error | null; conflicts?: ScheduleConflict[] }> {
+): Promise<{ data: Course | null; error: Error | null }> {
   const startTime = parseStartTime(courseData.time_schedule)
-  const duration = courseData.duration || 60
 
-  // Generate the session dates once — reused for both conflict check and insert
+  // Generate the session dates once — used below for insert
   const sessionEntries = generateSessionDates(courseData, startTime, options)
-
-  if (!options?.skipConflictCheck && courseData.start_date && courseData.organization_id && sessionEntries.length > 0) {
-    const plannedSessions = sessionEntries.map(e => ({
-      date: e.date,
-      startTime: e.startTime,
-      duration,
-    }))
-
-    const { conflicts, error: conflictError } = await checkScheduleConflicts(
-      courseData.organization_id,
-      plannedSessions
-    )
-
-    if (conflictError) {
-      return { data: null, error: conflictError }
-    }
-
-    if (conflicts.length > 0) {
-      return {
-        data: null,
-        error: new Error('Det finnes allerede et kurs på dette tidspunktet.'),
-        conflicts
-      }
-    }
-  }
 
   const { data, error } = await typedFrom('courses')
     .insert(courseData)

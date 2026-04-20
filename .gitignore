@@ -31,6 +31,7 @@ dist-ssr
 test-results/
 playwright-report/
 .playwright-state/
+e2e/visual-audit-out/
 
 # Stripe CLI
 stripe-cli/

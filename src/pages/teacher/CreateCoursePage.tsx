@@ -2,7 +2,6 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { addDays } from 'date-fns';
 import {
   Layers,
   CalendarDays,
@@ -35,7 +34,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { LocationCombobox } from '@/components/ui/location-combobox';
 import { useLocations } from '@/hooks/use-locations';
 import { RadioGroup, RadioGroupItem, RadioGroupCardItem } from '@/components/ui/radio-group';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
 import { Stepper } from '@/components/ui/stepper';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
@@ -134,6 +133,37 @@ const CreateCoursePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Existing sessions on the chosen start date — used to warn about overlaps.
+  // We only check the first session's date; later weeks in a series are
+  // allowed to overlap silently (the schedule view renders them side-by-side).
+  const [sessionsOnStartDate, setSessionsOnStartDate] = useState<ExistingSession[]>([]);
+
+  useEffect(() => {
+    if (!currentOrganization?.id || !startDate) {
+      setSessionsOnStartDate([]);
+      return;
+    }
+    const dateKey = formatLocalDateKey(startDate);
+    let cancelled = false;
+    fetchExistingSessions(currentOrganization.id, [dateKey]).then(({ data }) => {
+      if (!cancelled) setSessionsOnStartDate(data);
+    });
+    return () => { cancelled = true; };
+  }, [currentOrganization?.id, startDate]);
+
+  // Find the first existing session on the start date that overlaps the
+  // chosen start/end time. Null if nothing overlaps (or inputs incomplete).
+  const conflictingSession = useMemo<ExistingSession | null>(() => {
+    if (!startTime || !endTime) return null;
+    const plannedStart = timeToMin(startTime);
+    const plannedEnd = timeToMin(endTime);
+    if (plannedEnd <= plannedStart) return null;
+    for (const s of sessionsOnStartDate) {
+      if (plannedStart < s.endMinutes && s.startMinutes < plannedEnd) return s;
+    }
+    return null;
+  }, [sessionsOnStartDate, startTime, endTime]);
+
   useEffect(() => {
     setBreadcrumbs([
       { label: 'Hjem', to: '/teacher' },
@@ -203,14 +233,6 @@ const CreateCoursePage = () => {
 
   const isFormValid = Object.keys(errors).length === 0;
 
-  // Clear conflict error when timeslot fields change
-  useEffect(() => {
-    if (submitError === 'conflict') {
-      setSubmitError(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, startTime, endTime, weeks]);
-
   // Unsaved changes warning
   const hasUnsavedChanges = useMemo(() => {
     return !!(title.trim() || startDate || startTime || location.trim() || price || capacity || description.trim() || imageFile);
@@ -226,44 +248,6 @@ const CreateCoursePage = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges, isSubmitting]);
-
-  // Fetch existing sessions for the selected date(s) to show overlap warnings
-  const [existingSessions, setExistingSessions] = useState<ExistingSession[]>([]);
-
-  useEffect(() => {
-    if (!startDate || !currentOrganization?.id) {
-      setExistingSessions([]);
-      return;
-    }
-
-    const dates: string[] = [];
-
-    if (courseType === 'series') {
-      const weeksNum = parseInt(weeks) || 1;
-      for (let i = 0; i < weeksNum; i++) {
-        dates.push(formatLocalDateKey(addDays(startDate, i * 7)));
-      }
-    } else {
-      dates.push(formatLocalDateKey(startDate));
-    }
-
-    fetchExistingSessions(currentOrganization.id, dates).then(({ data }) => {
-      setExistingSessions(data);
-    });
-  }, [startDate, weeks, courseType, currentOrganization?.id]);
-
-  // Check if the selected time + duration overlaps with any existing session
-  const timeConflicts = useMemo(() => {
-    if (!startTime || existingSessions.length === 0) return [];
-
-    const dur = duration || 60;
-    const candidateStart = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
-    const candidateEnd = candidateStart + dur;
-
-    return existingSessions.filter(
-      s => candidateStart < s.endMinutes && s.startMinutes < candidateEnd
-    );
-  }, [startTime, duration, existingSessions]);
 
   const currentPracticalInfo = useMemo<PracticalInfo | null>(() => {
     const info: PracticalInfo = {};
@@ -360,16 +344,12 @@ const CreateCoursePage = () => {
         practical_info: currentPracticalInfo ? (currentPracticalInfo as unknown as Json) : null,
       };
 
-      const { data: createdCourse, error, conflicts } = await createCourse(courseData, {
+      const { data: createdCourse, error } = await createCourse(courseData, {
         eventDays: courseType === 'single' ? 1 : undefined,
       });
 
       if (error || !createdCourse) {
-        if (conflicts && conflicts.length > 0) {
-          setSubmitError('conflict');
-        } else {
-          setSubmitError(error?.message || 'Kunne ikke opprette kurset');
-        }
+        setSubmitError(error?.message || 'Kunne ikke opprette kurset');
         return;
       }
 
@@ -695,19 +675,12 @@ const CreateCoursePage = () => {
                         {errors.startTime || errors.endTime}
                       </p>
                     )}
+                    {!showError('startTime') && !showError('endTime') && conflictingSession && (
+                      <Alert variant="info" size="sm" className="mt-3 text-muted-foreground">
+                        {conflictingSession.courseTitle} ligger allerede på {conflictingSession.startTime}–{conflictingSession.endTime} denne dagen. Du kan opprette likevel.
+                      </Alert>
+                    )}
                   </div>
-
-                  {/* Time conflict warning */}
-                  {timeConflicts.length > 0 && (
-                    <Alert variant="warning" size="sm">
-
-                      <AlertDescription variant="warning">
-                        {timeConflicts.length === 1
-                          ? `«${timeConflicts[0].courseTitle}» overlapper (kl. ${timeConflicts[0].startTime}–${timeConflicts[0].endTime})`
-                          : `${timeConflicts.length} kurs overlapper med dette tidspunktet`}
-                      </AlertDescription>
-                    </Alert>
-                  )}
 
                   {/* Location */}
                   <div>
@@ -953,8 +926,8 @@ const CreateCoursePage = () => {
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-background/80 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg lg:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3">
+      <footer className="shrink-0 border-t border-border bg-background/80 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 lg:px-8">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <p className="text-sm text-center text-destructive">
@@ -965,24 +938,7 @@ const CreateCoursePage = () => {
             {submitError && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm text-destructive">
-                      {submitError === 'conflict' ? 'Tidspunktet er opptatt. Velg et annet.' : submitError}
-                    </p>
-                    {submitError === 'conflict' && currentStep !== 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCurrentStep(1);
-                          contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                          setTimeout(() => startTimeRef.current?.focus(), 400);
-                        }}
-                        className="text-xs font-medium tracking-wide whitespace-nowrap text-destructive underline underline-offset-2 transition-[color] hover:text-destructive/80"
-                      >
-                        Endre tidspunkt
-                      </button>
-                    )}
-                  </div>
+                  <p className="text-sm text-destructive">{submitError}</p>
                   <Button
                     variant="ghost"
                     size="icon-sm"

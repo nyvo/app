@@ -6,15 +6,18 @@ interface EventCardProps {
   event: ScheduleEvent;
   isSelected?: boolean;
   onSelect?: (event: ScheduleEvent) => void;
+  columnIndex?: number;
+  columnCount?: number;
 }
 
-export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
-  const positionStyle = getEventStyle(event.startTime, event.endTime);
+export function EventCard({ event, isSelected, onSelect, columnIndex = 0, columnCount = 1 }: EventCardProps) {
+  const positionStyle = getEventStyle(event.startTime, event.endTime, columnIndex, columnCount);
   const isCompleted = event.status === 'completed';
   const isActive = event.status === 'active';
 
   const heightPx = parseFloat(positionStyle.height);
   const isCompact = heightPx < 60;
+  const isNarrow = columnCount > 1;
 
   const isSeries = event.courseType !== 'event';
 
@@ -29,7 +32,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       type="button"
       onClick={() => onSelect?.(event)}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
-      className={`group absolute left-1.5 right-1.5 overflow-hidden rounded-lg p-0 text-left smooth-transition cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+      className={`group absolute overflow-hidden rounded-lg p-0 text-left smooth-transition cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
         isSelected
           ? 'ring-1 ring-primary/20'
           : ''
@@ -39,7 +42,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       <div className={`flex h-full rounded-md border ${accentColor.bg} ${accentColor.border}`}>
         <div className={`w-1 shrink-0 rounded-l-md ${accentColor.stripe}`} />
         <div className="flex-1 p-2 flex flex-col min-w-0">
-          {isCompact ? (
+          {isCompact || isNarrow ? (
             <div className="flex items-center gap-1.5">
               <p className="text-xs font-medium tracking-wide truncate text-foreground">
                 {event.title}
