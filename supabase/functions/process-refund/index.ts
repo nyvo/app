@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup has already been refunded', 400)
     }
 
-    // Check 48-hour cancellation policy
+    // Check 24-hour cancellation policy
     const course = signup.course as { title: string; start_date: string; time_schedule: string; location: string; organization_id: string } | null
 
     // Determine the relevant date for cancellation check.
@@ -112,8 +112,8 @@ Deno.serve(async (req: Request) => {
     const now = new Date()
     const hoursUntilEvent = eventDate ? (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60) : 999
 
-    // 48-hour policy check
-    const CANCELLATION_DEADLINE_HOURS = 48
+    // 24-hour policy check
+    const CANCELLATION_DEADLINE_HOURS = 24
     const canGetRefund = hoursUntilEvent >= CANCELLATION_DEADLINE_HOURS
 
     let refundResult = null
@@ -214,7 +214,7 @@ Deno.serve(async (req: Request) => {
         refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
         message: canGetRefund && refundSucceeded
           ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
-          : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 48 timer før kursstart.',
+          : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 24 timer før kursstart.',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, CalendarDays, ImageIcon, MapPin } from '@/lib/icons';
+import { BookOpen, CalendarDays, ChevronDown, ImageIcon, MapPin } from '@/lib/icons';
 import type { LucideIcon } from '@/lib/icons';
 import { motion } from 'framer-motion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -74,13 +75,13 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
 
 function SignupsBlock({ signups, max }: { signups: number; max: number | null }) {
   if (!max) {
-    return <span className="text-sm font-medium text-foreground whitespace-nowrap">{signups} påmeldte</span>;
+    return <span className="text-xs font-medium text-foreground whitespace-nowrap">{signups} påmeldte</span>;
   }
   const isFull = signups >= max;
   const pct = isFull ? 100 : Math.min(100, Math.round((signups / max) * 100));
   return (
     <div className="flex flex-col items-end">
-      <span className="text-sm font-medium text-foreground whitespace-nowrap">
+      <span className="text-xs font-medium text-foreground whitespace-nowrap">
         {isFull ? 'Fullt' : `${signups}/${max}`}
       </span>
       <div className="mt-1.5 h-1 w-16 rounded-full bg-muted overflow-hidden">
@@ -119,11 +120,11 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
 
         <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-medium text-foreground truncate">
+            <h3 className="text-sm font-medium text-foreground truncate">
               {course.courseTitle}
             </h3>
 
-            <div className="mt-2 flex flex-col gap-1 text-sm text-muted-foreground">
+            <div className="mt-1 flex flex-col gap-0.5 text-xs font-medium tracking-wide text-muted-foreground">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
                 <span className="flex items-center gap-1.5 shrink-0">
                   <typeMeta.Icon className="size-3.5 shrink-0" />
@@ -208,6 +209,117 @@ export function CourseListView({ courses }: CourseListViewProps) {
         </div>
       )}
     </>
+  );
+}
+
+type YearState = { expanded: boolean; visibleCount: number };
+
+export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) {
+  const groups = useMemo(() => {
+    const map = new Map<number, SessionScheduleRow[]>();
+    for (const c of courses) {
+      const dateStr = c.courseEndDate || c.courseStartDate || c.sessionDate;
+      if (!dateStr) continue;
+      const year = new Date(dateStr).getFullYear();
+      if (!Number.isFinite(year)) continue;
+      const existing = map.get(year);
+      if (existing) existing.push(c);
+      else map.set(year, [c]);
+    }
+    return Array.from(map.entries())
+      .map(([year, rows]) => ({ year, rows }))
+      .sort((a, b) => b.year - a.year);
+  }, [courses]);
+
+  const [state, setState] = useState<Record<number, YearState>>({});
+
+  useEffect(() => {
+    setState(prev => {
+      const next: Record<number, YearState> = {};
+      groups.forEach((g, i) => {
+        next[g.year] = prev[g.year] ?? { expanded: i === 0, visibleCount: ITEMS_PER_PAGE };
+      });
+      return next;
+    });
+  }, [groups]);
+
+  if (groups.length === 0) return null;
+
+  return (
+    <div className="divide-y divide-border">
+      {groups.map(g => {
+        const s = state[g.year] ?? { expanded: false, visibleCount: ITEMS_PER_PAGE };
+        const visible = s.expanded ? g.rows.slice(0, s.visibleCount) : [];
+        const hasMore = s.expanded && s.visibleCount < g.rows.length;
+        const sectionId = `past-year-${g.year}`;
+
+        return (
+          <div key={g.year}>
+            <button
+              type="button"
+              onClick={() =>
+                setState(prev => ({
+                  ...prev,
+                  [g.year]: {
+                    expanded: !(prev[g.year]?.expanded ?? false),
+                    visibleCount: prev[g.year]?.visibleCount ?? ITEMS_PER_PAGE,
+                  },
+                }))
+              }
+              aria-expanded={s.expanded}
+              aria-controls={sectionId}
+              className="w-full flex items-center justify-between gap-3 px-3 py-3 text-left smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+            >
+              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <ChevronDown
+                  className={`size-4 text-muted-foreground transition-transform ${s.expanded ? '' : '-rotate-90'}`}
+                />
+                {g.year}
+              </span>
+              <Badge variant="secondary" className="text-muted-foreground tracking-wide">
+                {g.rows.length} kurs
+              </Badge>
+            </button>
+
+            {s.expanded && (
+              <div id={sectionId}>
+                <div className="divide-y divide-border border-t border-border">
+                  {visible.map(c => (
+                    <motion.div
+                      key={c.sessionId}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <CourseCard course={c} />
+                    </motion.div>
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="flex justify-center p-4 border-t border-border">
+                    <Button
+                      variant="outline-soft"
+                      size="sm"
+                      onClick={() =>
+                        setState(prev => ({
+                          ...prev,
+                          [g.year]: {
+                            expanded: true,
+                            visibleCount: (prev[g.year]?.visibleCount ?? ITEMS_PER_PAGE) + ITEMS_PER_PAGE,
+                          },
+                        }))
+                      }
+                    >
+                      Vis flere
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

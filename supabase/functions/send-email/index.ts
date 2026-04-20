@@ -445,7 +445,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
       ${canGetRefund && refundAmount ? `
         <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} vil bli refundert til betalingskortet ditt innen 5\u201310 virkedager.</p>
       ` : `
-        <p><strong>Merk:</strong> Avbestillingen var mindre enn 48 timer f\u00f8r kursstart, og kvalifiserer ikke for refusjon.</p>
+        <p><strong>Merk:</strong> Avbestillingen var mindre enn 24 timer f\u00f8r kursstart, og kvalifiserer ikke for refusjon.</p>
       `}
     </div>
 
@@ -458,7 +458,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
     `,
     text: canGetRefund
       ? `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Refusjon på ${formatKr(refundAmount || 0)} vil bli refundert innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Siden avbestillingen skjedde mindre enn 48 timer f\u00f8r kursstart, kan vi dessverre ikke tilby refusjon.`
+      : `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Siden avbestillingen skjedde mindre enn 24 timer f\u00f8r kursstart, kan vi dessverre ikke tilby refusjon.`
   }
 }
 

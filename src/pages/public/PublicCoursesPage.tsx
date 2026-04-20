@@ -1,74 +1,36 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import {
-  MapPin,
-  Leaf,
-  BookOpen,
-  Search,
-} from '@/lib/icons';
+import { MapPin, Leaf } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { SearchInput } from '@/components/ui/search-input';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PublicCourseTable } from '@/components/public/PublicCourseTable';
+import { BookOpen } from '@/lib/icons';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { ScheduleDayList } from '@/components/public/schedule/ScheduleDayList';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug } from '@/services/organizations';
-import { extractTimeFromSchedule } from '@/utils/timeExtraction';
-import { getDayOfWeekFromSchedule } from '@/components/public/courseCardUtils';
-import type { Organization } from '@/types/database';
+import type { Organization, CourseType } from '@/types/database';
 
-// Split courses into Kursrekker and Arrangementer
-function splitCoursesByType(courses: PublicCourseWithDetails[]): {
-  kursrekker: PublicCourseWithDetails[];
-  arrangementer: PublicCourseWithDetails[];
-} {
-  const kursrekker = courses.filter((c) => c.course_type === 'course-series');
-  const arrangementer = courses.filter(
-    (c) => c.course_type === 'event' || c.course_type === 'online'
-  );
-  return { kursrekker, arrangementer };
-}
+type TypeFilter = 'all' | CourseType;
 
-// Sort kursrekker: active first, then by day-of-week, then time, then alpha
-function sortKursrekker(courses: PublicCourseWithDetails[]): PublicCourseWithDetails[] {
-  const statusOrder: Record<string, number> = { active: 0, upcoming: 1 };
-  return [...courses].sort((a, b) => {
-    const statusDiff =
-      (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
-    if (statusDiff !== 0) return statusDiff;
+const TYPE_LABELS: Record<TypeFilter, string> = {
+  all: 'Alle',
+  'course-series': 'Kursrekker',
+  event: 'Arrangementer',
+  online: 'Nett',
+};
 
-    const dayA = getDayOfWeekFromSchedule(a.time_schedule);
-    const dayB = getDayOfWeekFromSchedule(b.time_schedule);
-    if (dayA !== dayB) return dayA - dayB;
+const CANCELLED_GRACE_DAYS = 30;
 
-    const timeA = extractTimeFromSchedule(a.time_schedule);
-    const timeB = extractTimeFromSchedule(b.time_schedule);
-    if (timeA && timeB) {
-      const timeDiff = timeA.hour - timeB.hour;
-      if (timeDiff !== 0) return timeDiff;
-    }
-
-    return a.title.localeCompare(b.title, 'nb-NO');
-  });
-}
-
-// Sort arrangementer: chronological by date, then time, then alpha
-function sortArrangementer(courses: PublicCourseWithDetails[]): PublicCourseWithDetails[] {
-  return [...courses].sort((a, b) => {
-    const dateA = a.next_session?.session_date || a.start_date || '';
-    const dateB = b.next_session?.session_date || b.start_date || '';
-
-    if (dateA !== dateB) {
-      return new Date(dateA).getTime() - new Date(dateB).getTime();
-    }
-
-    const timeA = extractTimeFromSchedule(a.time_schedule);
-    const timeB = extractTimeFromSchedule(b.time_schedule);
-    if (timeA && timeB) return timeA.hour - timeB.hour;
-
-    return a.title.localeCompare(b.title, 'nb-NO');
-  });
+function isVisible(course: PublicCourseWithDetails): boolean {
+  if (course.status === 'cancelled') {
+    if (!course.start_date) return false;
+    const graceMs = CANCELLED_GRACE_DAYS * 24 * 60 * 60 * 1000;
+    const start = new Date(course.start_date).getTime();
+    if (isNaN(start)) return false;
+    return Date.now() - start <= graceMs;
+  }
+  return course.status === 'active' || course.status === 'upcoming';
 }
 
 const PublicCoursesPage = () => {
@@ -77,28 +39,7 @@ const PublicCoursesPage = () => {
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Filter courses by search query
-  const filteredCourses = useMemo(() => {
-    if (!searchQuery.trim()) return courses;
-    const q = searchQuery.toLowerCase().trim();
-    return courses.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      (c.description || '').toLowerCase().includes(q) ||
-      (c.instructor?.name || '').toLowerCase().includes(q) ||
-      (c.location || '').toLowerCase().includes(q)
-    );
-  }, [courses, searchQuery]);
-
-  // Split and sort courses by type
-  const { kursrekker, arrangementer } = useMemo(() => {
-    const split = splitCoursesByType(filteredCourses);
-    return {
-      kursrekker: sortKursrekker(split.kursrekker),
-      arrangementer: sortArrangementer(split.arrangementer),
-    };
-  }, [filteredCourses]);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
 
   useEffect(() => {
     async function loadData() {
@@ -107,65 +48,76 @@ const PublicCoursesPage = () => {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       setError(null);
 
-      // Fetch organization by slug
       const { data: orgData, error: orgError } = await fetchOrganizationBySlug(slug);
-
       if (orgError || !orgData) {
         setError('Fant ikke studioet');
         setLoading(false);
         return;
       }
-
       setOrganization(orgData);
 
-      // Fetch active courses
       const activeResult = await fetchPublicCourses({ organizationSlug: slug });
-
       if (activeResult.error) {
         setError('Kunne ikke laste kurs');
         setLoading(false);
         return;
       }
-
       setCourses(activeResult.data || []);
-
       setLoading(false);
     }
-
     loadData();
   }, [slug]);
 
-  const isEmpty = !loading && filteredCourses.length === 0 && organization;
-  const hasCoursesButNoResults = !loading && courses.length > 0 && filteredCourses.length === 0;
+  const visibleCourses = useMemo(
+    () => courses.filter(isVisible),
+    [courses],
+  );
+
+  const typeCounts = useMemo(() => {
+    const counts: Record<TypeFilter, number> = {
+      all: visibleCourses.length,
+      'course-series': 0,
+      event: 0,
+      online: 0,
+    };
+    for (const c of visibleCourses) counts[c.course_type]++;
+    return counts;
+  }, [visibleCourses]);
+
+  const filtered = useMemo(
+    () => typeFilter === 'all' ? visibleCourses : visibleCourses.filter(c => c.course_type === typeFilter),
+    [visibleCourses, typeFilter],
+  );
+
+  const availableTypes = (Object.keys(TYPE_LABELS) as TypeFilter[])
+    .filter(t => t === 'all' || typeCounts[t] > 0);
+
+  const showTypeFilter = availableTypes.length > 2; // >1 real type + 'all'
 
   return (
-    <div className="min-h-screen w-full bg-background text-sidebar-foreground overflow-x-hidden">
-      {/* Minimal Navbar */}
+    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
+      {/* Minimal navbar */}
       <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
               <Leaf className="h-4 w-4 text-foreground" />
             </div>
             <span className="text-base font-medium text-foreground">Ease</span>
           </Link>
-
         </div>
       </nav>
 
-      <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-        {/* Loading State */}
+      <main className="mx-auto max-w-4xl px-6 py-8 sm:py-12">
         {loading && (
           <div className="flex items-center justify-center py-24">
             <Spinner size="lg" />
           </div>
         )}
 
-        {/* Error State */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <h3 className="text-base font-medium mb-2 text-foreground">{error}</h3>
@@ -175,127 +127,61 @@ const PublicCoursesPage = () => {
           </div>
         )}
 
-        {/* Organization Content */}
         {organization && !loading && !error && (
-          <div className="space-y-12">
-            {/* Hero Section - Studio Info */}
-            <header className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-              <div className="flex items-start gap-6">
-              {/* Logo */}
-                <div className="h-20 w-20 overflow-hidden rounded-lg shrink-0 md:h-24 md:w-24">
-                  {organization.logo_url ? (
-                    <img
-                      src={organization.logo_url}
-                      alt={organization.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-lg border border-primary/70 bg-primary">
-                      <span className="text-4xl font-semibold tracking-tight text-primary-foreground">
-                        {organization.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-              {/* Text Info */}
-                <div className="min-w-0 flex-1 space-y-2">
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                    {organization.name}
-                  </h1>
-
-                  {organization.city && (
-                    <div className="text-sm flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                      {organization.city}
-                    </div>
-                  )}
-
-                  {organization.description && (
-                    <p className="text-sm max-w-2xl pt-1 leading-relaxed text-muted-foreground">
-                      {organization.description}
-                    </p>
-                  )}
-                </div>
+          <>
+            {/* Tight studio header — no hero */}
+            <header className="mb-8">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                {organization.name}
+              </h1>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                {organization.city && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3.5" />
+                    {organization.city}
+                  </span>
+                )}
+                {organization.description && (
+                  <span className="max-w-prose">{organization.description}</span>
+                )}
               </div>
-
-              {courses.length > 2 && (
-                <Card className="border-border bg-muted p-5">
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <p className="text-base font-medium text-foreground">Finn riktig kurs</p>
-                      <p className="text-sm text-muted-foreground">
-                        Søk etter kurs, instruktør eller sted.
-                      </p>
-                    </div>
-                    <SearchInput
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      placeholder="Søk etter kurs, instruktør eller sted"
-                      aria-label="Søk etter kurs"
-                    />
-                  </div>
-                </Card>
-              )}
             </header>
 
-            {/* Empty State */}
-            {isEmpty && (
-              <Card className="border-border bg-card">
-                <EmptyState
-                  icon={hasCoursesButNoResults ? Search : BookOpen}
-                  title={hasCoursesButNoResults ? 'Ingen treff' : 'Ingen aktive kurs'}
-                  description={
-                    hasCoursesButNoResults
-                      ? 'Prøv et annet søkeord.'
-                      : 'Det er ingen planlagte kurs for øyeblikket.'
-                  }
-                  variant="public"
-                />
-              </Card>
+            {/* Type filter */}
+            {showTypeFilter && (
+              <div className="mb-4">
+                <ToggleGroup
+                  type="single"
+                  value={typeFilter}
+                  onValueChange={(v) => { if (v) setTypeFilter(v as TypeFilter); }}
+                  variant="segmented"
+                  aria-label="Filtrer kurstyper"
+                >
+                  {availableTypes.map(t => (
+                    <ToggleGroupItem key={t} value={t}>
+                      {TYPE_LABELS[t]}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
             )}
 
-            {/* Course Lists — narrower container within the wider page */}
-            <div className="mx-auto max-w-4xl">
-              {/* Kursrekker Section */}
-              {!isEmpty && kursrekker.length > 0 && (
-                <section className="space-y-5">
-                  <div className="space-y-1">
-                    <h2 className="text-base font-medium text-foreground">
-                      Kursrekker
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Faste kurs over flere uker.
-                    </p>
-                  </div>
-                  <PublicCourseTable
-                    courses={kursrekker}
-                    studioSlug={slug || ''}
-                    signedUpCourseIds={new Set<string>()}
-                  />
-                </section>
-              )}
-
-              {/* Arrangementer Section */}
-              {!isEmpty && arrangementer.length > 0 && (
-                <section className="space-y-5 pt-12">
-                  <div className="space-y-1">
-                    <h2 className="text-base font-medium text-foreground">
-                      Arrangementer
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      Enkeltkurs og kommende arrangementer.
-                    </p>
-                  </div>
-                  <PublicCourseTable
-                    courses={arrangementer}
-                    studioSlug={slug || ''}
-                    signedUpCourseIds={new Set<string>()}
-                  />
-                </section>
-              )}
-            </div>
-          </div>
+            {/* Schedule */}
+            {filtered.length > 0 ? (
+              <ScheduleDayList courses={filtered} studioSlug={slug || ''} />
+            ) : (
+              <EmptyState
+                icon={BookOpen}
+                title="Ingen planlagte kurs"
+                description={
+                  typeFilter === 'all'
+                    ? 'Det er ingen planlagte kurs akkurat nå.'
+                    : 'Ingen kurs i denne kategorien.'
+                }
+                variant="public"
+              />
+            )}
+          </>
         )}
       </main>
     </div>

@@ -331,7 +331,7 @@ Si hva som mangler + neste steg.
 
 ### Avbestilling
 - Tittel: "Avbestille?"
-- Tekst: "Du får refusjon fordi det er mer enn 48 timer til start."
+- Tekst: "Du får refusjon fordi det er mer enn 24 timer til start."
 - CTA: **Avbestill** / **Behold plassen**
 - Toast: "Avbestilt. Du får refusjon."
 

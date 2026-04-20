@@ -24,7 +24,7 @@ const statusConfig: Record<BadgeStatus, StatusConfig> = {
     showIcon: false,
   },
   course_cancelled: {
-    variant: 'neutral',
+    variant: 'warning',
     label: 'Kurs avlyst',
     showIcon: false,
   },

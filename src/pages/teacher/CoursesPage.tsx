@@ -7,10 +7,10 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseListSkeleton } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton, PastCoursesList } from '@/components/teacher/CourseListView';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -58,16 +58,14 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
   };
 }
 
-type StatusFilter = 'all' | 'active' | 'upcoming' | 'past' | 'draft';
-type SortBy = 'next' | 'title' | 'updated';
+type ViewTab = 'active' | 'past' | 'draft';
 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
   const { currentOrganization } = useAuth();
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [sortBy, setSortBy] = useState<SortBy>('next');
+  const [viewTab, setViewTab] = useState<ViewTab>('active');
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
@@ -145,85 +143,51 @@ const CoursesPage = () => {
     }));
   }, [courses, signupsCounts, nextSessionDates]);
 
-  // Filter counts across all courses
-  const filterCounts = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const counts = { all: 0, active: 0, upcoming: 0, past: 0, draft: 0 };
-    for (const { course } of allRows) {
-      if (course.status === 'draft') {
-        counts.draft++;
-        counts.all++;
-        continue;
-      }
-      const cutoff = course.end_date || course.start_date;
-      const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
-      if (isPast) {
-        counts.past++;
-      } else {
-        counts.all++;
-        if (course.status === 'active') counts.active++;
-        else if (course.status === 'upcoming') counts.upcoming++;
-      }
-    }
-    return counts;
-  }, [allRows]);
+  const draftCount = useMemo(
+    () => allRows.reduce((n, { course }) => n + (course.status === 'draft' ? 1 : 0), 0),
+    [allRows],
+  );
 
-  // Apply status + search filters
   const filteredRows = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const q = searchQuery.toLowerCase().trim();
 
+    const isPast = (course: Course) => {
+      const cutoff = course.end_date || course.start_date;
+      return course.status === 'cancelled' || course.status === 'completed' || (cutoff != null && cutoff < today);
+    };
+
     return allRows
       .filter(({ row, course }) => {
-        // Status filtering
-        if (statusFilter === 'draft') {
+        if (viewTab === 'draft') {
           if (course.status !== 'draft') return false;
-        } else if (statusFilter === 'active') {
-          if (course.status !== 'active') return false;
-        } else if (statusFilter === 'upcoming') {
-          if (course.status !== 'upcoming') return false;
-        } else if (statusFilter === 'past') {
-          const cutoff = course.end_date || course.start_date;
-          const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
-          if (!isPast) return false;
+        } else if (viewTab === 'past') {
+          if (course.status === 'draft') return false;
+          if (!isPast(course)) return false;
         } else {
-          // 'all' — show everything except past
-          if (course.status === 'draft') {
-            // drafts are visible in 'all'
-          } else {
-            const cutoff = course.end_date || course.start_date;
-            const isPast = course.status === 'cancelled' || course.status === 'completed' || (cutoff && cutoff < today);
-            if (isPast) return false;
-          }
+          if (course.status === 'draft') return false;
+          if (isPast(course)) return false;
         }
 
-        // Search filtering
         if (q && !row.courseTitle.toLowerCase().includes(q) && !row.location.toLowerCase().includes(q)) return false;
 
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === 'title') {
-          return a.row.courseTitle.localeCompare(b.row.courseTitle, 'nb-NO');
+        if (viewTab === 'active') {
+          return a.row.sessionDate.localeCompare(b.row.sessionDate);
         }
-        if (sortBy === 'updated') {
-          const au = a.course.updated_at || a.course.created_at || '';
-          const bu = b.course.updated_at || b.course.created_at || '';
-          return bu.localeCompare(au);
+        if (viewTab === 'past') {
+          const aKey = a.course.end_date || a.course.start_date || '';
+          const bKey = b.course.end_date || b.course.start_date || '';
+          return bKey.localeCompare(aKey);
         }
-        // 'next' — default
-        if (statusFilter === 'past' || statusFilter === 'draft') {
-          return b.row.sessionDate.localeCompare(a.row.sessionDate);
-        }
-        if (statusFilter === 'all') {
-          const aIsDraft = a.row.courseStatus === 'draft';
-          const bIsDraft = b.row.courseStatus === 'draft';
-          if (aIsDraft !== bIsDraft) return aIsDraft ? 1 : -1;
-        }
-        return a.row.sessionDate.localeCompare(b.row.sessionDate);
+        const au = a.course.updated_at || a.course.created_at || '';
+        const bu = b.course.updated_at || b.course.created_at || '';
+        return bu.localeCompare(au);
       })
       .map(({ row }) => row);
-  }, [allRows, statusFilter, searchQuery, sortBy]);
+  }, [allRows, viewTab, searchQuery]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
 
@@ -232,11 +196,14 @@ const CoursesPage = () => {
     return () => setAction(null);
   }, [setAction]);
 
-  const emptyDescription = statusFilter === 'draft'
-    ? 'Du har ingen utkast.'
-    : searchQuery
+  const emptyTitle = searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her';
+  const emptyDescription = searchQuery
     ? 'Prøv et annet søkeord eller fjern søket.'
-    : 'Prøv et annet filter.';
+    : viewTab === 'draft'
+      ? 'Du har ingen utkast.'
+      : viewTab === 'past'
+        ? 'Ingen fullførte kurs ennå.'
+        : 'Ingen aktive eller kommende kurs akkurat nå.';
 
   return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
@@ -264,47 +231,32 @@ const CoursesPage = () => {
           ) : (
             <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
               <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
+                <ToggleGroup
+                  type="single"
+                  value={viewTab}
+                  onValueChange={(v) => { if (v) setViewTab(v as ViewTab); }}
+                  variant="segmented"
+                  aria-label="Filtrer kurs"
+                >
+                  <ToggleGroupItem value="active">Aktive</ToggleGroupItem>
+                  <ToggleGroupItem value="past">Fullførte</ToggleGroupItem>
+                  <ToggleGroupItem value="draft">
+                    Utkast
+                    {draftCount > 0 && (
+                      <span aria-hidden className="relative ml-1.5 inline-flex size-1.5 align-middle">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-2 opacity-75 [animation-duration:1.6s]" />
+                        <span className="relative inline-flex size-1.5 rounded-full bg-chart-2" />
+                      </span>
+                    )}
+                  </ToggleGroupItem>
+                </ToggleGroup>
                 <SearchInput
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="Søk etter kurs"
                   aria-label="Søk etter kurs"
-                  className="w-full md:flex-1 max-w-xs"
+                  className="w-full md:w-auto md:ml-auto md:max-w-xs"
                 />
-                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                  <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer etter status">
-                    <span className="text-muted-foreground">Status:</span>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {([
-                      { value: 'all' as const, label: 'Alle' },
-                      { value: 'active' as const, label: 'Aktive' },
-                      { value: 'upcoming' as const, label: 'Kommende' },
-                      { value: 'past' as const, label: 'Arkiv' },
-                      { value: 'draft' as const, label: 'Utkast' },
-                    ]).map(({ value, label }) => {
-                      const count = filterCounts[value];
-                      if (value !== 'all' && count === 0) return null;
-                      return (
-                        <SelectItem key={value} value={value}>
-                          {label}{value !== 'all' && count > 0 ? ` (${count})` : ''}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-                  <SelectTrigger size="sm" className="w-full md:w-auto md:ml-auto" aria-label="Sorter kurs">
-                    <span className="text-muted-foreground">Sorter:</span>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="next">Neste time</SelectItem>
-                    <SelectItem value="title">Tittel (A–Å)</SelectItem>
-                    <SelectItem value="updated">Sist endret</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {isLoading ? (
@@ -322,10 +274,12 @@ const CoursesPage = () => {
               ) : filteredRows.length === 0 ? (
                 <EmptyState
                   icon={Calendar}
-                  title={searchQuery ? 'Ingen kurs funnet' : 'Ingen kurs her'}
+                  title={emptyTitle}
                   description={emptyDescription}
                   className="py-16"
                 />
+              ) : viewTab === 'past' && !searchQuery ? (
+                <PastCoursesList courses={filteredRows} />
               ) : (
                 <CourseListView courses={filteredRows} />
               )}

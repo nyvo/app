@@ -1,14 +1,4 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, CreditCard, Undo2, Archive, type LucideIcon } from '@/lib/icons';
-
-export type PaymentFilter = 'all' | 'pending' | 'refunded' | 'archived';
-
-export const PAYMENT_FILTER_OPTIONS: Array<{ value: PaymentFilter; label: string; icon: LucideIcon }> = [
-  { value: 'all', label: 'Alle', icon: Users },
-  { value: 'pending', label: 'Betaling', icon: CreditCard },
-  { value: 'refunded', label: 'Refundert', icon: Undo2 },
-  { value: 'archived', label: 'Arkiv', icon: Archive },
-];
 
 export type CombinedFilter = 'all' | 'payment_issues' | 'cancelled' | 'refunded' | 'ended';
 

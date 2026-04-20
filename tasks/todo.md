@@ -189,8 +189,10 @@ Replace `src/pages/public/PublicCourseDetailPage.tsx`. Introduce hybrid drawer +
 - [x] `src/pages/public/PublicCourseDetailPage.tsx` — swap the free-course branch from direct `createSignup` insert to `createFreeSignup`.
 - [x] Migration `20260420010000_tighten_signups_insert_rls.sql` — drop old permissive policy, add authenticated-only `is_org_member(organization_id)` policy. Anon inserts are now forbidden; public free bookings flow through the edge function (service role bypasses RLS).
 - [x] Typecheck passes.
-- [ ] Deploy: apply migration + deploy the new edge function (requires Supabase CLI push).
-- [ ] Browser verify: free-course signup still works, paid flow unaffected, signups tables render the new single-status column at mobile + desktop.
+- [x] Deploy: edge function live (`create-free-signup` v1), migration applied on `nollnnkksgicsvuthnjq`, frontend shipped to main (commit `1a6db7f`).
+- [x] Browser verify: free-course signup works end-to-end through the edge function; loading label fixed to "Melder på" for free courses, "Starter betaling" for paid.
+- [x] Walked `/teacher/signups` tabs and `CourseDetail → Deltakere` at mobile + desktop — single-status column renders cleanly.
+- [ ] Not yet exercised (needs specific data to reach): note popover (requires a signup with a note), receipt icon (requires a Stripe `stripe_receipt_url` on the signup), action menu states, cancelled-row muting, `PastSignupsList` grouping (requires a past/ended course with signups). Code paths unchanged from the pre-refactor behaviour — the table only restyles them.
 
 ## Review
 - Derived-status logic: refund wins (shows "Refundert" regardless of signup status), then cancellation states, then confirmed + payment sub-state. Matches the natural teacher mental model: "is there anything to do with this row?"
