@@ -134,10 +134,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Tidspunkt</p>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium tabular-nums text-foreground">
                   {course.timeSchedule || 'Ikke angitt'}
                   {course.durationMinutes > 0 && (
-                    <span className="text-sm ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
+                    <span className="text-sm tabular-nums ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
                   )}
                 </p>
               </div>
@@ -147,22 +147,22 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Pris</p>
-                <p className="text-sm font-medium text-foreground">{formatKroner(course.price)}</p>
+                <p className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(course.price)}</p>
               </div>
             </div>
 
             <div className="min-w-0 xl:pl-10 xl:border-l xl:border-border">
               <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kapasitet</p>
-              <p className="text-base font-medium mb-2 text-foreground">
+              <p className="text-base font-medium tabular-nums mb-2 text-foreground">
                 {course.enrolled ?? 0} av {course.capacity} påmeldt
               </p>
               {course.capacity > 0 && (
                 course.enrolled >= course.capacity ? (
-                  <Badge variant="secondary" className="mb-2 border border-border bg-muted text-foreground">
+                  <Badge variant="neutral" shape="rect" size="sm" className="mb-2">
                     Fullt
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="mb-2 border border-border bg-muted text-foreground">
+                  <Badge variant="neutral" shape="rect" size="sm" className="mb-2">
                     {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
                   </Badge>
                 )
@@ -178,7 +178,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               disabled={course.enrolled === 0}
               onClick={onMessageParticipants}
             >
-              <Send className="h-3.5 w-3.5" />
+              <Send className="size-3.5" />
               Send melding til påmeldte
             </Button>
           </div>
@@ -203,7 +203,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               ) : (
                 <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg bg-muted lg:aspect-square">
-                  <Image className="mx-auto mb-2 h-5 w-5 text-muted-foreground/40" />
+                  <Image className="mx-auto mb-2 size-5 text-muted-foreground/40" />
                 </div>
               )}
             </div>
@@ -269,7 +269,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                    <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{p.email}</p>
+                    <p className="text-xs font-mono truncate text-muted-foreground">{p.email}</p>
                   </div>
                   <SignupStatusBadge status={p.status} paymentStatus={p.paymentStatus} size="sm" />
                 </div>

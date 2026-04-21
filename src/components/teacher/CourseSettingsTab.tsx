@@ -205,7 +205,7 @@ export const CourseSettingsTab = ({
             <div className="space-y-2">
               <div>
                 <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
-                <p className="text-sm text-muted-foreground">Vises på kurssiden og i oversikten.</p>
+                <p className="text-xs text-muted-foreground">Vises på kurssiden og i oversikten.</p>
               </div>
               <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted">
                 <ImageUpload
@@ -269,7 +269,7 @@ export const CourseSettingsTab = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <span className="text-sm font-medium shrink-0 text-muted-foreground">–</span>
+              <span className="text-sm font-medium shrink-0 text-tertiary-foreground">–</span>
               <Select
                 value={endTime}
                 onValueChange={handleEndTimeChange}
@@ -310,7 +310,7 @@ export const CourseSettingsTab = ({
             />
             {currentEnrolled > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">
-                <p className="text-xs font-medium tracking-wide text-muted-foreground">
+                <p className="text-xs tabular-nums text-muted-foreground">
                   {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''} akkurat nå
                 </p>
                 <InfoTooltip content={`Kan ikke settes lavere enn ${currentEnrolled} fordi det allerede er ${currentEnrolled} påmeldt${currentEnrolled > 1 ? 'e' : ''}.`} />
@@ -320,7 +320,7 @@ export const CourseSettingsTab = ({
         </div>
           {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
             <Alert variant="warning" size="sm" icon={false}>
-              <p className="text-xs font-medium tracking-wide text-destructive">
+              <p className="text-xs font-medium tabular-nums text-destructive">
                 Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
               </p>
             </Alert>
@@ -352,7 +352,7 @@ export const CourseSettingsTab = ({
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+            <p className="text-xs mt-1.5 text-muted-foreground">
               Velg det laveste nivået som passer.
             </p>
           </div>
@@ -416,7 +416,7 @@ export const CourseSettingsTab = ({
                     className="text-muted-foreground hover:text-destructive hover:bg-transparent"
                     aria-label={`Fjern punkt ${i + 1}`}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-4" />
                   </Button>
                 </div>
               ))}
@@ -428,7 +428,7 @@ export const CourseSettingsTab = ({
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
                   className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus className="size-3.5" />
                   Legg til punkt
                 </Button>
               )}
@@ -449,7 +449,7 @@ export const CourseSettingsTab = ({
               <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
               <p className="text-sm text-muted-foreground">
                 {refundPreview.count > 0
-                  ? `${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`
+                  ? <><span className="tabular-nums">{refundPreview.count}</span> {`deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`}</>
                   : 'Kurset vil bli avlyst.'}
               </p>
             </div>

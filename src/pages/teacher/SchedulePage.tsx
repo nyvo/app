@@ -255,7 +255,7 @@ export const SchedulePage = () => {
           action={
             <Button asChild size="default" className="gap-2">
               <Link to="/teacher/new-course">
-                <CalendarPlus className="h-4 w-4" />
+                <CalendarPlus className="size-4" />
                 Opprett kurs
               </Link>
             </Button>
@@ -320,7 +320,7 @@ export const SchedulePage = () => {
                           {day.name}
                         </span>
                         <span
-                          className={`text-xs font-medium flex size-7 items-center justify-center rounded-full ${
+                          className={`text-xs font-mono font-medium tabular-nums flex size-7 items-center justify-center rounded-full ${
                             day.isToday
                               ? 'bg-primary text-primary-foreground'
                               : 'text-muted-foreground'
@@ -350,7 +350,7 @@ export const SchedulePage = () => {
                     <div className="flex flex-col bg-white dark:bg-background">
                       {TIME_SLOTS.map((time) => (
                         <div key={time} className="h-[100px] border-b border-border/60 px-2 py-1">
-                          <span className="text-xs font-medium tracking-wide text-muted-foreground">{time.replace(':00', '')}</span>
+                          <span className="text-xs font-mono tabular-nums text-tertiary-foreground">{time.replace(':00', '')}</span>
                         </div>
                       ))}
                     </div>

@@ -117,7 +117,7 @@ function Kpi({
     <div>
       <p className="text-xs font-medium tracking-wide text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+        <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">{value}</p>
         {delta}
       </div>
     </div>

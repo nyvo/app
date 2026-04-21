@@ -20,7 +20,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
           <SkeletonCard key={i} className="min-h-[100px] sm:min-h-[112px] p-4 sm:p-5">
             <div className="flex items-center justify-between">
               <Skeleton className="h-10 w-12" />
-              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="size-5 rounded" />
             </div>
             <div className="mt-3">
               <Skeleton className="h-4 w-32 max-w-full" />
@@ -40,7 +40,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
               <div className="space-y-1">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 px-2 py-3">
-                    <Skeleton className="h-11 w-11 rounded-lg shrink-0" />
+                    <Skeleton className="size-11 rounded-lg shrink-0" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-4 w-40 max-w-full" />
                       <Skeleton className="h-3 w-28 max-w-full" />

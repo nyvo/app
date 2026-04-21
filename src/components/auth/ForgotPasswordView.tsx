@@ -70,7 +70,7 @@ export const ForgotPasswordView = () => {
         title=""
         customContent
         footer={
-          <p className="text-xs font-medium tracking-wide text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
               Til innlogging
             </Link>
@@ -78,7 +78,7 @@ export const ForgotPasswordView = () => {
         }
       >
         <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <CheckCircle2 className="size-8 text-green-800" />
+          <CheckCircle2 className="size-8 text-success" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -87,13 +87,13 @@ export const ForgotPasswordView = () => {
           </h1>
           <p className="text-sm text-muted-foreground">
             Vi har sendt en lenke til{' '}
-            <span className="text-sm font-medium text-foreground">{formData.email}</span>
+            <span className="font-mono text-foreground">{formData.email}</span>
           </p>
         </div>
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground">
               {AUTH_HINTS.checkSpam}
             </p>
           </Alert>
@@ -118,7 +118,7 @@ export const ForgotPasswordView = () => {
       title="Glemt passord?"
       subtitle="Skriv inn e-posten din, så sender vi en lenke."
       footer={
-        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Husker du passordet ditt?{' '}
           <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
@@ -141,7 +141,7 @@ export const ForgotPasswordView = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-destructive">{errors.general}</p>
           </Alert>
         )}
 

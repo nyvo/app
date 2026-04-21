@@ -39,9 +39,9 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
             className="md:hidden -ml-2 text-muted-foreground hover:text-foreground"
             aria-label="Tilbake"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="size-6" />
           </Button>
-          <h3 className="text-base font-medium text-foreground">Ny melding</h3>
+          <h3 className="text-base font-semibold text-foreground">Ny melding</h3>
         </div>
         <Button
           variant="ghost"
@@ -50,15 +50,15 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
           className="rounded-full text-muted-foreground hover:text-foreground"
           aria-label="Lukk ny melding"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </Button>
       </header>
 
       <div className="px-6 py-6 space-y-6 lg:px-8">
         <div className="space-y-2">
-          <label htmlFor="compose-recipient" className="text-xs font-medium ml-1 text-foreground">Til</label>
+          <label htmlFor="compose-recipient" className="text-xs font-medium ml-1 text-muted-foreground">Til</label>
           <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-[color] pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground group-focus-within:text-foreground transition-[color] pointer-events-none" />
             <Input
               id="compose-recipient"
               type="text"
@@ -72,7 +72,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
         </div>
 
         <div className="space-y-3">
-          <label htmlFor="compose-message-body" className="text-xs font-medium ml-1 text-foreground">Melding</label>
+          <label htmlFor="compose-message-body" className="text-xs font-medium ml-1 text-muted-foreground">Melding</label>
           <div className="rounded-lg border border-border bg-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
             <Textarea
               id="compose-message-body"
@@ -119,7 +119,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
                 ) : (
                   <>
                     <span>Send</span>
-                    <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                    <Send className="size-3.5" aria-hidden="true" />
                   </>
                 )}
               </Button>

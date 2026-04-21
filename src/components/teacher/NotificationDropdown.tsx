@@ -11,31 +11,26 @@ import type { Notification, NotificationSeverity } from '@/hooks/use-notificatio
 const SEVERITY_STYLES: Record<NotificationSeverity, {
   card: string;
   icon: string;
-  dot: string;
   Icon: typeof CircleAlert;
 }> = {
   danger: {
-    card: 'bg-red-100 border-red-300',
-    icon: 'text-red-700',
-    dot: 'bg-red-700',
+    card: 'bg-destructive/10 border-destructive/20',
+    icon: 'text-destructive',
     Icon: CircleAlert,
   },
   warning: {
-    card: 'bg-amber-100 border-amber-300',
-    icon: 'text-amber-900',
-    dot: 'bg-amber-900',
+    card: 'bg-warning/10 border-warning/20',
+    icon: 'text-warning',
     Icon: TriangleAlert,
   },
   success: {
-    card: 'bg-green-100 border-green-300',
-    icon: 'text-green-800',
-    dot: 'bg-green-800',
+    card: 'bg-success/10 border-success/20',
+    icon: 'text-success',
     Icon: CircleCheck,
   },
   neutral: {
-    card: 'bg-blue-100 border-blue-300',
-    icon: 'text-blue-900',
-    dot: 'bg-blue-900',
+    card: 'bg-info/10 border-info/20',
+    icon: 'text-info',
     Icon: Bell,
   },
 };
@@ -78,9 +73,6 @@ export function NotificationDropdown() {
 
   const grouped = useMemo(() => groupNotifications(notifications), [notifications]);
 
-  const topSeverity = notifications[0]?.severity ?? 'neutral';
-  const bellDotColor = SEVERITY_STYLES[topSeverity].dot;
-
   const visibleGroups = grouped.filter((g) => !hiddenKeys.has(g.key));
 
   const handleDismissAll = () => {
@@ -110,21 +102,21 @@ export function NotificationDropdown() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground">
-          <Bell className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="relative size-8 text-muted-foreground">
+          <Bell className="size-4" />
           {hasNotifications && (
-            <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ${bellDotColor}`} />
+            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent" />
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" sideOffset={8} className="w-80 p-0">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="text-sm font-medium text-foreground">Varsler</p>
+          <p className="text-base font-semibold text-foreground">Varsler</p>
           {hasNotifications && (
             <button
               onClick={handleDismissAll}
               disabled={dismissingAll}
-              className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground active:scale-[0.97] disabled:opacity-50"
+              className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground active:scale-[0.97] disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
             >
               Fjern alle
             </button>
@@ -156,7 +148,7 @@ export function NotificationDropdown() {
                       onClick={() => setOpen(false)}
                       className={`flex min-w-0 flex-1 items-start gap-3 rounded-lg border px-3 py-2.5 outline-none smooth-transition hover:opacity-80 ${styles.card}`}
                     >
-                      <SeverityIcon className={`mt-0.5 h-4 w-4 shrink-0 ${styles.icon}`} />
+                      <SeverityIcon className={`mt-0.5 size-3.5 shrink-0 ${styles.icon}`} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-medium text-foreground truncate">{group.representative.title}</p>
@@ -167,7 +159,7 @@ export function NotificationDropdown() {
                           )}
                         </div>
                         {group.representative.body && (
-                          <p className="text-xs font-medium tracking-wide text-muted-foreground">{group.representative.body}</p>
+                          <p className="text-xs text-muted-foreground">{group.representative.body}</p>
                         )}
                       </div>
                     </Link>
@@ -176,10 +168,10 @@ export function NotificationDropdown() {
                         e.preventDefault();
                         handleDismissGroup(group);
                       }}
-                      className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[transform,color] duration-150 ease-out hover:text-foreground active:scale-[0.9]"
+                      className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[transform,color] duration-150 ease-out hover:text-foreground active:scale-[0.9] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                       aria-label="Fjern varsel"
                     >
-                      <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                      <X className="size-3.5 stroke-[2.5]" />
                     </button>
                   </motion.div>
                 );
@@ -187,9 +179,10 @@ export function NotificationDropdown() {
             </AnimatePresence>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground px-4 py-8 text-center">
-            Ingen varsler
-          </p>
+          <div className="flex flex-col items-center gap-1 py-8 text-center">
+            <p className="text-sm font-medium text-foreground">Ingen varsler</p>
+            <p className="text-xs text-muted-foreground">Du er oppdatert.</p>
+          </div>
         )}
       </PopoverContent>
     </Popover>

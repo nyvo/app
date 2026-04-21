@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Check, Heart, Home, MapPin, MapPinPlus, DoorOpen, Plus, Trash2, X } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -83,7 +84,7 @@ const LocationsPage = () => {
         className="px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-8 pt-6 lg:pt-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Steder</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Steder</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Lagre steder du bruker ofte, så kan du velge dem raskt når du oppretter kurs.
           </p>
@@ -238,7 +239,7 @@ function LocationCard({
                       else if (e.key === 'Escape') cancelName();
                     }}
                     placeholder="Navn på stedet"
-                    className="h-7 max-w-56 px-2 text-sm font-medium leading-tight shadow-none"
+                    className="h-7 max-w-56 px-2 text-sm font-medium shadow-none"
                   />
                   <Button type="button" variant="ghost" size="icon-xs" onClick={commitName} aria-label="Lagre" className="active:scale-[0.95]">
                     <Check className="size-3.5" />
@@ -256,7 +257,7 @@ function LocationCard({
                   aria-label="Rediger navn"
                   className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
                 >
-                  <h2 className="truncate text-base font-medium leading-tight text-foreground">{name}</h2>
+                  <h2 className="truncate text-base font-semibold text-foreground">{name}</h2>
                   <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>
                 </motion.button>
               )}
@@ -292,7 +293,7 @@ function LocationCard({
               transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
               className="flex items-center"
             >
-              <Heart className={cn('size-3', isFavorite && 'fill-current')} />
+              <Heart className={cn('size-3.5', isFavorite && 'fill-current')} />
             </motion.span>
             {isFavorite ? 'Favoritt' : 'Lagre som favoritt'}
           </Button>
@@ -318,7 +319,7 @@ function LocationCard({
                       else if (e.key === 'Escape') cancelAddress();
                     }}
                     placeholder="Skriv inn adresse"
-                    className="h-7 max-w-64 px-2 text-sm leading-tight shadow-none"
+                    className="h-7 max-w-64 px-2 text-sm shadow-none"
                   />
                   <Button type="button" variant="ghost" size="icon-xs" onClick={commitAddress} aria-label="Lagre" className="active:scale-[0.95]">
                     <Check className="size-3.5" />
@@ -339,7 +340,7 @@ function LocationCard({
                     address ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
-                  {!address && <Plus className="size-3 shrink-0" />}
+                  {!address && <Plus className="size-4 shrink-0" />}
                   <span className="truncate">
                     {address || 'Legg til adresse'}
                   </span>
@@ -365,16 +366,16 @@ function LocationCard({
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.15, ease }}
-                      className="inline-flex h-7 items-center gap-1 rounded-md bg-muted pl-2 pr-1 text-xs font-medium text-foreground"
+                      className={cn(badgeVariants({ variant: 'secondary', shape: 'rect', size: 'md' }), 'h-7 pl-2 pr-1 gap-1')}
                     >
                       {room}
                       <button
                         type="button"
                         onClick={() => removeRoom(room)}
-                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground active:scale-[0.9]"
+                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground active:scale-[0.9] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                         aria-label={`Fjern ${room}`}
                       >
-                        <X className="size-3" />
+                        <X className="size-3.5" />
                       </button>
                     </motion.span>
                   ))}
@@ -410,7 +411,7 @@ function LocationCard({
                   onClick={startAddRoom}
                   className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-muted-foreground transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
                 >
-                  <Plus className="size-3" />
+                  <Plus className="size-4" />
                   Legg til rom
                 </motion.button>
               )}
@@ -458,10 +459,10 @@ function NewLocationCard({ onClick, loading }: { onClick: () => void; loading: b
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground/30 hover:bg-muted/30 focus-visible:border-foreground/30 focus-visible:bg-muted/30 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
+      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground hover:bg-muted/50 focus-visible:border-foreground focus-visible:bg-muted/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
     >
       <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-[color] duration-150 ease-out group-hover:text-foreground">
-        <MapPinPlus className={cn('size-3.5', loading && 'animate-pulse')} />
+        <MapPinPlus className={cn('size-4', loading && 'animate-pulse')} />
         {loading ? 'Oppretter …' : 'Legg til sted'}
       </div>
     </button>

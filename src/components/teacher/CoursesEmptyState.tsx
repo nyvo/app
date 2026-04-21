@@ -13,7 +13,7 @@ export const CoursesEmptyState = () => {
         action={(
           <Button asChild size="default" className="gap-2">
             <Link to="/teacher/new-course">
-              <CalendarPlus className="h-4 w-4" />
+              <CalendarPlus className="size-4" />
               Opprett kurs
             </Link>
           </Button>

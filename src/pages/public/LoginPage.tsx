@@ -88,7 +88,7 @@ const LoginPage = () => {
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
       footer={
-        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Har du ikke konto?{' '}
           <Link to={ROUTES.signup} className="text-sm font-medium text-foreground hover:underline">
             Opprett konto
@@ -141,7 +141,7 @@ const LoginPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-destructive">{errors.general}</p>
             {errors.general === AUTH_ERRORS.invalidCredentials && (
               <Link
                 to={ROUTES.forgotPassword}

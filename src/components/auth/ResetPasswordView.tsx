@@ -95,8 +95,8 @@ export const ResetPasswordView = () => {
   if (isValidSession === false) {
     return (
       <AuthLayout title="" customContent>
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
-          <AlertCircle className="size-8 text-red-700" />
+        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
+          <AlertCircle className="size-8 text-destructive" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -124,7 +124,7 @@ export const ResetPasswordView = () => {
     return (
       <AuthLayout title="" customContent>
         <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <CheckCircle2 className="size-8 text-green-800" />
+          <CheckCircle2 className="size-8 text-success" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
@@ -150,7 +150,7 @@ export const ResetPasswordView = () => {
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={
-        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Trenger du hjelp?
         </p>
       }
@@ -182,14 +182,14 @@ export const ResetPasswordView = () => {
 
         <div className="rounded-lg bg-muted p-3">
           <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
-          <ul className="text-xs font-medium tracking-wide ml-3 space-y-0.5 text-muted-foreground">
+          <ul className="text-xs ml-3 space-y-0.5 text-muted-foreground">
             <li className="list-disc">Minst 10 tegn</li>
           </ul>
         </div>
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-destructive">{errors.general}</p>
           </Alert>
         )}
 

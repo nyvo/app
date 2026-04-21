@@ -392,7 +392,7 @@ const CreateCoursePage = () => {
             transition={{ duration: 0.3 }}
             className="space-y-1"
           >
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-3xl font-semibold text-foreground">
               Opprett kurs
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -423,7 +423,7 @@ const CreateCoursePage = () => {
               {/* ── Step 1: Kurstype + Detaljer ── */}
               <section>
                 <div className="mb-6">
-                  <h2 id="course-type-heading" className="text-base font-medium text-foreground">Kurstype</h2>
+                  <h2 id="course-type-heading" className="text-base font-semibold text-foreground">Kurstype</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
@@ -450,11 +450,11 @@ const CreateCoursePage = () => {
               {/* ── Section 2: Basic Details ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-base font-medium text-foreground">Detaljer</h2>
+                  <h2 className="text-base font-semibold text-foreground">Detaljer</h2>
                 </div>
                 <div className="space-y-6">
                   <div>
-                    <label htmlFor="create-title" className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label htmlFor="create-title" className="text-sm font-medium mb-1.5 block text-foreground">
                       Tittel
                     </label>
                     <Input
@@ -474,8 +474,8 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('title') && (
-                      <p id="create-title-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                      <p id="create-title-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.title}
                       </p>
                     )}
@@ -483,7 +483,7 @@ const CreateCoursePage = () => {
 
                   {/* Description */}
                   <div className="relative">
-                    <label htmlFor="create-description" className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label htmlFor="create-description" className="text-sm font-medium mb-1.5 block text-foreground">
                       Beskrivelse
                       <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
@@ -497,7 +497,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs font-medium tracking-wide ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-amber-500') : 'text-muted-foreground'}`}>
+                      <p className={`text-xs tabular-nums ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -505,7 +505,7 @@ const CreateCoursePage = () => {
 
                   {/* Cover Image */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Kursbilde
                       <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
                     </label>
@@ -535,14 +535,14 @@ const CreateCoursePage = () => {
               {/* ── Step 2: Tid og sted ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-base font-medium text-foreground">Tid og sted</h2>
+                  <h2 className="text-base font-semibold text-foreground">Tid og sted</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Når og hvor skal kurset holdes?</p>
                 </div>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
                   <div className={cn("grid grid-cols-1 gap-6", courseType === 'series' && "sm:grid-cols-2")}>
                     <div>
-                      <label htmlFor="create-start-date" className="text-xs font-medium mb-1.5 block text-foreground">
+                      <label htmlFor="create-start-date" className="text-sm font-medium mb-1.5 block text-foreground">
                         {courseType === 'single' ? 'Dato' : 'Startdato'}
                       </label>
                       <DatePicker
@@ -561,8 +561,8 @@ const CreateCoursePage = () => {
                         aria-invalid={showError('startDate') ? 'true' : undefined}
                       />
                       {showError('startDate') && (
-                        <p id="startDate-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                          <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                        <p id="startDate-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                          <AlertCircle className="size-3" aria-hidden="true" />
                           {errors.startDate}
                         </p>
                       )}
@@ -570,7 +570,7 @@ const CreateCoursePage = () => {
 
                     {courseType === 'series' && (
                       <div>
-                        <label id="create-weeks-label" className="text-xs font-medium mb-1.5 block text-foreground">
+                        <label id="create-weeks-label" className="text-sm font-medium mb-1.5 block text-foreground">
                           Uker
                         </label>
                         <Input
@@ -594,8 +594,8 @@ const CreateCoursePage = () => {
                           )}
                         />
                         {showError('weeks') && (
-                          <p id="weeks-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                            <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                          <p id="weeks-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                            <AlertCircle className="size-3" aria-hidden="true" />
                             {errors.weeks}
                           </p>
                         )}
@@ -605,7 +605,7 @@ const CreateCoursePage = () => {
 
                   {/* Time range row */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Tidspunkt
                     </label>
                     <div className="flex items-center gap-2">
@@ -670,8 +670,8 @@ const CreateCoursePage = () => {
                       </Select>
                     </div>
                     {(showError('startTime') || showError('endTime')) && (
-                      <p className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                      <p className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.startTime || errors.endTime}
                       </p>
                     )}
@@ -684,7 +684,7 @@ const CreateCoursePage = () => {
 
                   {/* Location */}
                   <div>
-                    <label htmlFor="create-location" className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label htmlFor="create-location" className="text-sm font-medium mb-1.5 block text-foreground">
                       Sted
                     </label>
                     <LocationCombobox
@@ -702,8 +702,8 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('location') && (
-                      <p id="create-location-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                      <p id="create-location-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.location}
                       </p>
                     )}
@@ -725,12 +725,12 @@ const CreateCoursePage = () => {
               {/* ── Step 3: Påmelding ── */}
               <section>
                 <div className="mb-6">
-                  <h2 className="text-base font-medium text-foreground">Påmelding</h2>
+                  <h2 className="text-base font-semibold text-foreground">Påmelding</h2>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Price */}
                   <div>
-                    <label htmlFor="create-price" className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label htmlFor="create-price" className="text-sm font-medium mb-1.5 block text-foreground">
                       Pris
                       <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">per person</span>
                     </label>
@@ -757,8 +757,8 @@ const CreateCoursePage = () => {
                       </div>
                     </div>
                     {showError('price') && (
-                      <p id="create-price-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                      <p id="create-price-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.price}
                       </p>
                     )}
@@ -766,7 +766,7 @@ const CreateCoursePage = () => {
 
                   {/* Capacity */}
                   <div>
-                    <label htmlFor="create-capacity" className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label htmlFor="create-capacity" className="text-sm font-medium mb-1.5 block text-foreground">
                       Maks antall deltakere
                     </label>
                     <Input
@@ -787,8 +787,8 @@ const CreateCoursePage = () => {
                       )}
                     />
                     {showError('capacity') && (
-                      <p id="create-capacity-error" className="text-xs font-medium tracking-wide mt-1.5 flex items-center gap-1 text-destructive" role="alert">
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
+                      <p id="create-capacity-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.capacity}
                       </p>
                     )}
@@ -800,15 +800,15 @@ const CreateCoursePage = () => {
               <section>
                 <div className="mb-6">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-medium text-foreground">Praktisk info</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Valgfritt</span>
+                    <h2 className="text-base font-semibold text-foreground">Praktisk info</h2>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xxs font-medium text-muted-foreground">Valgfritt</span>
                   </div>
                   <p className="text-sm mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Nivå
                     </label>
                     <ToggleGroup
@@ -831,7 +831,7 @@ const CreateCoursePage = () => {
 
                   {/* Equipment - Radio buttons (single factual statement) */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Utstyr
                     </label>
                     <RadioGroup
@@ -849,7 +849,7 @@ const CreateCoursePage = () => {
 
                   {/* Arrival time - Dropdown select */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Oppmøte før start
                     </label>
                     <Select
@@ -873,7 +873,7 @@ const CreateCoursePage = () => {
 
                   {/* Custom bullets */}
                   <div>
-                    <label className="text-xs font-medium mb-1.5 block text-foreground">
+                    <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Egne punkter
                     </label>
                     <div className="space-y-2">
@@ -899,7 +899,7 @@ const CreateCoursePage = () => {
                             className="text-muted-foreground hover:text-destructive hover:bg-transparent"
                             aria-label={`Fjern punkt ${i + 1}`}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="size-4" />
                           </Button>
                         </div>
                       ))}
@@ -911,7 +911,7 @@ const CreateCoursePage = () => {
                           onClick={() => setCustomBullets([...customBullets, ''])}
                           className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                         >
-                          <Plus className="h-3.5 w-3.5" />
+                          <Plus className="size-3.5" />
                           Legg til punkt
                         </Button>
                       )}
@@ -926,7 +926,7 @@ const CreateCoursePage = () => {
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-background/80 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg">
+      <footer className="shrink-0 border-t border-border bg-surface-elevated py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-lg">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 lg:px-8">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
@@ -947,7 +947,7 @@ const CreateCoursePage = () => {
                     className="text-destructive/60 hover:text-destructive hover:bg-transparent shrink-0"
                     aria-label="Lukk"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="size-4" />
                   </Button>
                 </div>
               </Alert>
@@ -970,7 +970,7 @@ const CreateCoursePage = () => {
                       onClick={handleBack}
                       disabled={isSubmitting}
                     >
-                      <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                      <ArrowLeft className="size-3.5" aria-hidden="true" />
                       Tilbake
                     </Button>
                   )}
@@ -982,7 +982,7 @@ const CreateCoursePage = () => {
                       disabled={isSubmitting}
                     >
                       Neste
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      <ArrowRight className="size-3.5" aria-hidden="true" />
                     </Button>
                   )}
                   {currentStep === 2 && (
@@ -995,7 +995,7 @@ const CreateCoursePage = () => {
                       loadingText="Oppretter …"
                     >
                       Opprett kurs
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      <ArrowRight className="size-3.5" aria-hidden="true" />
                     </Button>
                   )}
             </div>

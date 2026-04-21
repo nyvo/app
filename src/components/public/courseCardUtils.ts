@@ -7,7 +7,7 @@ export function getAvailabilityText(spotsAvailable: number): string {
   return 'Ledige plasser';
 }
 
-// Availability StatusIndicator variant based on spots remaining
+// Availability Badge variant based on spots remaining
 export function getAvailabilityVariant(spotsAvailable: number): 'success' | 'warning' | 'neutral' {
   if (spotsAvailable === 0) return 'neutral';
   if (spotsAvailable <= 3) return 'warning';

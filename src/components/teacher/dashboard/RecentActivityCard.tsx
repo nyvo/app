@@ -123,7 +123,7 @@ function ActivityBody({
               <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
               <p className="mt-0.5 truncate text-sm text-muted-foreground">{item.description}</p>
             </div>
-            <span className="shrink-0 text-xs font-medium tracking-wide text-muted-foreground">
+            <span className="shrink-0 text-xs tabular-nums text-tertiary-foreground">
               {item.timestamp}
             </span>
           </Link>

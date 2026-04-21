@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, CalendarDays, ChevronDown, ImageIcon, MapPin } from '@/lib/icons';
-import type { LucideIcon } from '@/lib/icons';
+import { CalendarDays, Check, ChevronDown, ImageIcon, Users } from '@/lib/icons';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseType } from '@/types/database';
@@ -13,10 +13,10 @@ import type { CourseType } from '@/types/database';
 const WEEKDAYS_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
-const TYPE_META: Record<CourseType, { label: string; Icon: LucideIcon }> = {
-  'course-series': { label: 'Kursrekke', Icon: BookOpen },
-  'event':         { label: 'Arrangement', Icon: BookOpen },
-  'online':        { label: 'Nett', Icon: BookOpen },
+const TYPE_LABEL: Record<CourseType, string> = {
+  'course-series': 'Kursrekke',
+  'event':         'Arrangement',
+  'online':        'Nett',
 };
 
 function formatNextSession(sessionDate: string | null | undefined, startTime: string | null | undefined): string {
@@ -46,7 +46,9 @@ function formatSeriesProgress(totalWeeks: number | null | undefined, courseStart
   if (isNaN(start.getTime())) return null;
   const today = new Date();
   const weeksElapsed = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-  if (weeksElapsed < 0) return `Starter uke 1`;
+  // Course hasn't started yet — show total length so teacher sees the duration.
+  // The start date is already in the date row; "Starter uke 1" was tautological.
+  if (weeksElapsed < 0) return totalWeeks === 1 ? '1 uke' : `${totalWeeks} uker`;
   const currentWeek = Math.min(weeksElapsed + 1, totalWeeks);
   return `Uke ${currentWeek} av ${totalWeeks}`;
 }
@@ -73,89 +75,65 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
   );
 }
 
-function SignupsBlock({ signups, max }: { signups: number; max: number | null }) {
-  if (!max) {
-    return <span className="text-xs font-medium text-foreground whitespace-nowrap">{signups} påmeldte</span>;
-  }
-  const isFull = signups >= max;
-  const pct = isFull ? 100 : Math.min(100, Math.round((signups / max) * 100));
-  return (
-    <div className="flex flex-col items-end">
-      <span className="text-xs font-medium text-foreground whitespace-nowrap">
-        {isFull ? 'Fullt' : `${signups}/${max}`}
-      </span>
-      <div className="mt-1.5 h-1 w-16 rounded-full bg-muted overflow-hidden">
-        <div
-          className="h-full bg-chart-2"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
+function formatSignups(signups: number, max: number | null): string {
+  if (!max) return `${signups} påmeldte`;
+  return signups >= max ? 'Fullt' : `${signups}/${max}`;
 }
 
 export function CourseCard({ course }: { course: SessionScheduleRow }) {
-  const typeMeta = TYPE_META[course.courseType] ?? { label: '', Icon: CalendarDays };
   const nextSessionLabel = formatNextSession(course.sessionDate, course.startTime);
   const seriesProgress = course.courseType === 'course-series'
     ? formatSeriesProgress(course.totalWeeks, course.courseStartDate)
     : null;
 
-  const statusLabel = course.courseStatus === 'draft' ? 'Utkast'
-    : course.courseStatus === 'cancelled' ? 'Avlyst'
-    : course.courseStatus === 'completed' ? 'Fullført'
-    : null;
+  // Right-column chip always shows type-derived info for consistency across every row.
+  // Series → week progress ("Uke 6 av 8"); others → type label ("Arrangement", "Nett").
+  const chipLabel = seriesProgress ?? TYPE_LABEL[course.courseType] ?? 'Kursrekke';
 
   return (
     <Link
       to={`/teacher/courses/${course.courseId}`}
-      className="group block smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+      className="group block smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
     >
       <div className="flex items-start gap-3 p-3 md:gap-4">
         <CourseImage
           src={course.imageUrl}
           alt={course.courseTitle}
-          className="size-14 md:size-20"
+          className="h-12 w-20 md:h-14 md:w-24 shrink-0"
         />
 
-        <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-4">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-foreground truncate">
+        {/* Two-column layout: title/date on the left, capacity/chip on the right.
+            Left-edge aligned top-down: title → date.
+            Right-edge aligned top-down: capacity → chip. */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+          {/* Row 1: Title (left) + Capacity (right) — primary tier, equal importance. */}
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
               {course.courseTitle}
             </h3>
-
-            <div className="mt-1 flex flex-col gap-0.5 text-xs font-medium tracking-wide text-muted-foreground">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
-                <span className="flex items-center gap-1.5 shrink-0">
-                  <typeMeta.Icon className="size-3.5 shrink-0" />
-                  {typeMeta.label}{seriesProgress ? `, ${seriesProgress.toLowerCase()}` : ''}
-                </span>
-                {course.location && (
-                  <span className="flex items-center gap-1.5 min-w-0">
-                    <MapPin className="size-3.5 shrink-0" />
-                    <span className="truncate">{course.location}</span>
-                  </span>
-                )}
-                {statusLabel && (
-                  <StatusIndicator
-                    variant="neutral"
-                    mode="badge"
-                    size="sm"
-                    label={statusLabel}
-                    className="shrink-0"
-                  />
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <CalendarDays className="size-3.5 shrink-0" />
-                <span>{nextSessionLabel}</span>
-              </div>
-            </div>
+            <span className="flex items-center gap-1.5 text-sm font-medium tabular-nums text-foreground whitespace-nowrap shrink-0">
+              <Users className="size-4 shrink-0" />
+              {formatSignups(course.signupsCount, course.maxParticipants)}
+            </span>
           </div>
 
-          <div className="mt-3 md:mt-0 shrink-0 self-start md:self-center">
-            <SignupsBlock signups={course.signupsCount} max={course.maxParticipants} />
+          {/* Row 2: Date (left, under title) + chips (right, under capacity) — meta tier. */}
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground flex-1 min-w-0">
+              <CalendarDays className="size-3.5 shrink-0" />
+              <span className="truncate">{nextSessionLabel}</span>
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {course.allowsDropIn && (
+                <Badge variant="accent" shape="rect" size="sm">
+                  <Check />
+                  Drop-in
+                </Badge>
+              )}
+              <Badge variant="secondary" shape="rect" size="sm">
+                {chipLabel}
+              </Badge>
+            </div>
           </div>
         </div>
       </div>
@@ -163,52 +141,27 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
   );
 }
 
-const ITEMS_PER_PAGE = 6;
+export const COURSES_PER_PAGE = 6;
+const ITEMS_PER_PAGE = COURSES_PER_PAGE;
 
 interface CourseListViewProps {
   courses: SessionScheduleRow[];
 }
 
 export function CourseListView({ courses }: CourseListViewProps) {
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
-  const prevCoursesRef = useRef(courses);
-
-  useEffect(() => {
-    if (prevCoursesRef.current !== courses) {
-      setVisibleCount(ITEMS_PER_PAGE);
-      prevCoursesRef.current = courses;
-    }
-  }, [courses]);
-
-  const visible = courses.slice(0, visibleCount);
-  const hasMore = visibleCount < courses.length;
-
   return (
-    <>
-      <div className="divide-y divide-border">
-        {visible.map(c => (
-          <motion.div
-            key={c.sessionId}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.18 }}
-          >
-            <CourseCard course={c} />
-          </motion.div>
-        ))}
-      </div>
-      {hasMore && (
-        <div className="flex justify-center p-4">
-          <Button
-            variant="outline-soft"
-            size="sm"
-            onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
-          >
-            Vis flere
-          </Button>
-        </div>
-      )}
-    </>
+    <div className="divide-y divide-border">
+      {courses.map(c => (
+        <motion.div
+          key={c.sessionId}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18 }}
+        >
+          <CourseCard course={c} />
+        </motion.div>
+      ))}
+    </div>
   );
 }
 
@@ -231,22 +184,13 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
       .sort((a, b) => b.year - a.year);
   }, [courses]);
 
+  // All years default to collapsed — matches PastSignupsList pattern; teacher clicks to drill in.
   const [state, setState] = useState<Record<number, YearState>>({});
-
-  useEffect(() => {
-    setState(prev => {
-      const next: Record<number, YearState> = {};
-      groups.forEach((g, i) => {
-        next[g.year] = prev[g.year] ?? { expanded: i === 0, visibleCount: ITEMS_PER_PAGE };
-      });
-      return next;
-    });
-  }, [groups]);
 
   if (groups.length === 0) return null;
 
   return (
-    <div className="divide-y divide-border">
+    <div className="space-y-3">
       {groups.map(g => {
         const s = state[g.year] ?? { expanded: false, visibleCount: ITEMS_PER_PAGE };
         const visible = s.expanded ? g.rows.slice(0, s.visibleCount) : [];
@@ -254,7 +198,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
         const sectionId = `past-year-${g.year}`;
 
         return (
-          <div key={g.year}>
+          <Card key={g.year} className="gap-0 overflow-hidden p-0">
             <button
               type="button"
               onClick={() =>
@@ -268,35 +212,36 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
               }
               aria-expanded={s.expanded}
               aria-controls={sectionId}
-              className="w-full flex items-center justify-between gap-3 px-3 py-3 text-left smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
             >
-              <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <div className="flex items-center gap-2">
                 <ChevronDown
-                  className={`size-4 text-muted-foreground transition-transform ${s.expanded ? '' : '-rotate-90'}`}
+                  className={cn(
+                    'size-4 shrink-0 text-muted-foreground transition-transform',
+                    !s.expanded && '-rotate-90',
+                  )}
                 />
-                {g.year}
-              </span>
-              <Badge variant="secondary" className="text-muted-foreground tracking-wide">
+                <span className="text-sm font-medium font-mono tabular-nums text-foreground">{g.year}</span>
+              </div>
+              <span className="text-xs tabular-nums text-muted-foreground shrink-0">
                 {g.rows.length} kurs
-              </Badge>
+              </span>
             </button>
 
             {s.expanded && (
-              <div id={sectionId}>
-                <div className="divide-y divide-border border-t border-border">
-                  {visible.map(c => (
-                    <motion.div
-                      key={c.sessionId}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      <CourseCard course={c} />
-                    </motion.div>
-                  ))}
-                </div>
+              <div id={sectionId} className="border-t border-border divide-y divide-border">
+                {visible.map(c => (
+                  <motion.div
+                    key={c.sessionId}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <CourseCard course={c} />
+                  </motion.div>
+                ))}
                 {hasMore && (
-                  <div className="flex justify-center p-4 border-t border-border">
+                  <div className="flex justify-center p-3">
                     <Button
                       variant="outline-soft"
                       size="sm"
@@ -316,7 +261,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                 )}
               </div>
             )}
-          </div>
+          </Card>
         );
       })}
     </div>
@@ -328,15 +273,15 @@ export function CourseListSkeleton() {
     <div className="divide-y divide-border">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-start gap-3 p-3 md:gap-4">
-          <Skeleton className="size-14 md:size-20 rounded-lg shrink-0" />
-          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-4">
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <Skeleton className="h-5 w-44 max-w-full" />
-              <Skeleton className="h-3 w-32 max-w-full" />
-              <Skeleton className="h-4 w-28 max-w-full" />
+          <Skeleton className="h-12 w-20 md:h-14 md:w-24 rounded-lg shrink-0" />
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div className="flex items-baseline gap-3">
+              <Skeleton className="h-4 w-48 max-w-full flex-1" />
+              <Skeleton className="h-4 w-12 shrink-0" />
             </div>
-            <div className="mt-3 md:mt-0">
-              <Skeleton className="h-4 w-16" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-3 w-32 flex-1" />
+              <Skeleton className="h-5 w-24 shrink-0" />
             </div>
           </div>
         </div>

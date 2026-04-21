@@ -1,14 +1,23 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { Calendar, Search } from '@/lib/icons';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ErrorState } from '@/components/ui/error-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
 
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import type { SignupStatus, PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
 import { SearchInput } from '@/components/ui/search-input';
-import { SignupListView, PastSignupsList } from '@/components/teacher/SignupListView';
+import {
+  SignupListView,
+  PastSignupsList,
+  SIGNUPS_INITIAL_VISIBLE,
+  SIGNUPS_LOAD_MORE_INCREMENT,
+  SIGNUPS_SHOW_ALL_THRESHOLD,
+} from '@/components/teacher/SignupListView';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { friendlyError } from '@/lib/error-messages';
 import {
@@ -80,6 +89,7 @@ export const SignupsPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
+  const [visibleCount, setVisibleCount] = useState(SIGNUPS_INITIAL_VISIBLE);
 
   // Fetch signups from database
   const loadSignups = useCallback(async () => {
@@ -218,6 +228,20 @@ export const SignupsPage = () => {
     return sorted;
   }, [displaySignups, viewTab, searchQuery]);
 
+  useEffect(() => {
+    setVisibleCount(SIGNUPS_INITIAL_VISIBLE);
+  }, [viewTab, searchQuery]);
+
+  const usePastGrouping = viewTab === 'past' && !searchQuery && filteredSignups.length > 0;
+  const effectiveVisible = (filteredSignups.length - visibleCount) <= SIGNUPS_SHOW_ALL_THRESHOLD
+    ? filteredSignups.length
+    : visibleCount;
+  const visibleSignups = filteredSignups.slice(0, effectiveVisible);
+  const remainingCount = filteredSignups.length - effectiveVisible;
+  const isTruncated = remainingCount > 0;
+  const canCollapse = visibleCount > SIGNUPS_INITIAL_VISIBLE;
+  const showPagination = !error && !usePastGrouping && filteredSignups.length > 0 && (isTruncated || canCollapse);
+
   const clearFilters = () => {
     setViewTab('active');
     setSearchQuery('');
@@ -266,12 +290,13 @@ export const SignupsPage = () => {
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Påmeldinger</h1>
+            <h1 className="text-3xl font-semibold text-foreground">Påmeldinger</h1>
             <p className="text-sm mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
           </div>
         </motion.header>
 
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+          {/* Toolbar — always its own card. For non-past tabs the table renders inside it; for Fullførte the cards render outside, below. */}
           <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
             <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
               <ToggleGroup
@@ -308,11 +333,23 @@ export const SignupsPage = () => {
                 message={error}
                 onRetry={loadSignups}
               />
-            ) : viewTab === 'past' && !searchQuery && filteredSignups.length > 0 ? (
-              <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
+            ) : usePastGrouping ? (
+              loading ? null : filteredSignups.length === 0 ? (
+                <EmptyState
+                  icon={hasFilters ? Search : Calendar}
+                  title={hasFilters ? 'Ingen treff' : 'Ingen fullførte påmeldinger'}
+                  description={hasFilters ? 'Prøv et annet søkeord eller bytt fane.' : 'Påmeldinger dukker opp her når kurs er ferdige.'}
+                  className="py-16"
+                />
+              ) : (
+                /* Padding so the inner cards don't sit flush against the outer card edges. */
+                <div className="p-3">
+                  <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
+                </div>
+              )
             ) : (
               <SignupListView
-                signups={filteredSignups}
+                signups={visibleSignups}
                 isLoading={loading}
                 isEmpty={displaySignups.length === 0}
                 hasFilters={hasFilters}
@@ -322,6 +359,28 @@ export const SignupsPage = () => {
               />
             )}
           </div>
+          {showPagination && (
+            <div className="mt-3 flex justify-center gap-3">
+              {isTruncated && (
+                <Button
+                  variant="outline-soft"
+                  size="sm"
+                  onClick={() => setVisibleCount(prev => prev + SIGNUPS_LOAD_MORE_INCREMENT)}
+                >
+                  Vis {Math.min(remainingCount, SIGNUPS_LOAD_MORE_INCREMENT)} flere
+                </Button>
+              )}
+              {canCollapse && (
+                <Button
+                  variant="outline-soft"
+                  size="sm"
+                  onClick={() => setVisibleCount(SIGNUPS_INITIAL_VISIBLE)}
+                >
+                  Vis færre
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
   );

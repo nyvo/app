@@ -256,7 +256,7 @@ export function AddParticipantDialog({
                   <p
                     id="firstName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
+                    className="text-xs mt-1.5 text-destructive"
                   >
                     {errors.firstName}
                   </p>
@@ -295,7 +295,7 @@ export function AddParticipantDialog({
                   <p
                     id="lastName-error"
                     role="alert"
-                    className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
+                    className="text-xs mt-1.5 text-destructive"
                   >
                     {errors.lastName}
                   </p>
@@ -330,12 +330,12 @@ export function AddParticipantDialog({
                 <p
                   id="email-error"
                   role="alert"
-                  className="text-xs font-medium tracking-wide mt-1.5 text-destructive"
+                  className="text-xs mt-1.5 text-destructive"
                 >
                   {errors.email}
                 </p>
               ) : (
-                <p id="email-hint" className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+                <p id="email-hint" className="text-xs mt-1.5 text-muted-foreground">
                   Bekreftelse sendes hit
                 </p>
               )}
@@ -356,7 +356,7 @@ export function AddParticipantDialog({
                 aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
-              <p id="phone-hint" className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+              <p id="phone-hint" className="text-xs mt-1.5 text-muted-foreground">
                 For kontakt ved endringer
               </p>
             </div>
@@ -375,7 +375,7 @@ export function AddParticipantDialog({
                 rows={3}
                 disabled={isSubmitting}
               />
-              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Synlig kun for instruktør</p>
+              <p className="text-xs mt-1.5 text-muted-foreground">Synlig kun for instruktør</p>
             </div>
 
             {/* Payment Toggle */}
@@ -398,7 +398,7 @@ export function AddParticipantDialog({
                 <ToggleGroupItem value="pending" className="flex-1">Venter betaling</ToggleGroupItem>
                 <ToggleGroupItem value="paid" className="flex-1">Betalt</ToggleGroupItem>
               </ToggleGroup>
-              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Registreres utenfor Stripe</p>
+              <p className="text-xs mt-1.5 text-muted-foreground">Registreres utenfor Stripe</p>
             </div>
 
             <DialogFooter>
@@ -412,7 +412,7 @@ export function AddParticipantDialog({
                 Avbryt
               </Button>
               <Button type="submit" size="sm" disabled={isFull} loading={isSubmitting} loadingText="Legger til">
-                <UserPlus className="h-3.5 w-3.5" />
+                <UserPlus className="size-3.5" />
                 Legg til deltaker
               </Button>
             </DialogFooter>

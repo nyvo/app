@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { X, MapPin, Users, Clock, ArrowUpRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Badge } from '@/components/ui/badge';
 import type { ScheduleEvent } from './types';
 import { formatTime } from './utils';
 
@@ -42,8 +42,8 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
       <div className="p-6">
         <div className="flex items-start justify-between gap-2 mb-6">
           <div className="min-w-0">
-            <h2 className="text-base font-medium text-foreground truncate">{event.title}</h2>
-            <p className="text-xs font-medium tracking-wide text-muted-foreground mt-0.5">
+            <h2 className="text-base font-semibold text-foreground truncate">{event.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {formatFullDate(sessionDate)}
             </p>
           </div>
@@ -53,45 +53,42 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
             onClick={onClose}
             aria-label="Lukk"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </Button>
         </div>
 
         {/* Status */}
         <div className="mb-6">
-          <StatusIndicator
-            variant={statusVariant}
-            mode="badge"
-            size="sm"
-            label={statusLabel}
-          />
+          <Badge variant={statusVariant} shape="rect" size="sm">
+            {statusLabel}
+          </Badge>
         </div>
 
         {/* Details */}
         <div className="space-y-4">
           <div className="flex items-center gap-2.5">
-            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Clock className="size-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-xs font-medium text-foreground">Tidspunkt</p>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">Tidspunkt</p>
+              <p className="text-sm font-mono tabular-nums text-foreground">
                 {formatTime(event.startTime)} – {formatTime(event.endTime)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+            <MapPin className="size-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-xs font-medium text-foreground">Sted</p>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground">{event.location}</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">Sted</p>
+              <p className="text-sm text-foreground">{event.location}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Users className="size-4 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-xs font-medium text-foreground">Deltakere</p>
-              <p className="text-xs font-medium tracking-wide text-muted-foreground">{enrollmentLabel}</p>
+              <p className="text-xs font-medium tracking-wide text-muted-foreground">Deltakere</p>
+              <p className="text-sm tabular-nums text-foreground">{enrollmentLabel}</p>
             </div>
           </div>
         </div>
@@ -103,7 +100,7 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground smooth-transition"
           >
             Se kursdetaljer
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <ArrowUpRight className="size-3.5" />
           </Link>
         </div>
       </div>

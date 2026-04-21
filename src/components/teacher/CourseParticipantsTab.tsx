@@ -12,6 +12,7 @@ import type { SignupStatus } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { NotePopover } from '@/components/ui/note-popover';
 import { Card } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { ParticipantActionMenu, type ParticipantActionHandlers, type ActionableParticipant } from './ParticipantActionMenu';
 import { SignupFilterDropdown, type CombinedFilter } from './SignupFilterDropdown';
 import type { ExceptionType } from '@/types/database';
@@ -140,91 +141,94 @@ export const CourseParticipantsTab = ({
           />
         </div>
         <Button size="compact" onClick={onOpenAddDialog}>
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" />
           Legg til deltaker
         </Button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border bg-background/50">
-                <th scope="col" className="text-xs font-medium tracking-wide w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
-                <th scope="col" className="text-xs font-medium tracking-wide w-40 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
-                <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
-                <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
-                <th scope="col" className="text-xs font-medium tracking-wide w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {participantsLoading ? (
-                <>
-                  <SkeletonTableRow columns={5} hasAvatar={true} />
-                  <SkeletonTableRow columns={5} hasAvatar={true} />
-                  <SkeletonTableRow columns={5} hasAvatar={true} />
-                  <tr className="sr-only"><td colSpan={5}>Laster deltakere</td></tr>
-                </>
-              ) : filteredParticipants.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center">
-                    <p className="text-sm text-muted-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
-                    {hasActiveFilters && (
-                      <Button variant="link" size="sm" onClick={clearFilters} className="text-xs font-medium tracking-wide text-primary">
-                        Nullstill filter
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ) : (
-                filteredParticipants.map((participant) => (
-                  <tr key={participant.id} className="group smooth-transition hover:bg-muted">
-                    {/* Navn */}
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <UserAvatar name={participant.name} email={participant.email} size="sm" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate text-foreground">{participant.name}</p>
-                          <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">{participant.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    {/* Status (derived from signup + payment) */}
-                    <td className="px-4 py-3 sm:px-6">
-                      <SignupStatusBadge status={participant.status} paymentStatus={participant.paymentStatus} />
-                    </td>
-                    {/* Kvittering (receipt) */}
-                    <td className="hidden px-4 py-4 sm:px-6 md:table-cell">
-                      {participant.receiptUrl && (
-                        <a
-                          href={participant.receiptUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
-                          aria-label="Åpne kvittering"
-                          title="Åpne kvittering"
-                        >
-                          <FileText className="h-4 w-4" />
-                        </a>
-                      )}
-                    </td>
-                    {/* Notater */}
-                    <td className="hidden px-4 py-4 text-right sm:table-cell sm:px-6">
-                      <NotePopover note={participant.notes} />
-                    </td>
-                    {/* Handlinger */}
-                    <td className="px-4 py-4 sm:px-6">
-                      <ParticipantActionMenu
-                        signup={toActionable(participant, courseName)}
-                        handlers={actionHandlers}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <tr>
+            <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
+            <TableHead className="w-40">Status</TableHead>
+            <TableHead className="hidden w-20 md:table-cell">Kvittering</TableHead>
+            <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
+            <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
+          </tr>
+        </TableHeader>
+        <TableBody>
+          {participantsLoading ? (
+            <>
+              <SkeletonTableRow columns={5} hasAvatar={true} />
+              <SkeletonTableRow columns={5} hasAvatar={true} />
+              <SkeletonTableRow columns={5} hasAvatar={true} />
+              <tr className="sr-only"><td colSpan={5}>Laster deltakere</td></tr>
+            </>
+          ) : filteredParticipants.length === 0 ? (
+            <tr>
+              <td colSpan={5}>
+                <div className="flex flex-col items-center gap-1 py-8 text-center">
+                  <p className="text-sm font-medium text-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveFilters ? 'Prøv å justere filtrene.' : 'Deltakere vises her når de melder seg på.'}
+                  </p>
+                  {hasActiveFilters && (
+                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-2 text-xs font-medium tracking-wide text-primary">
+                      Nullstill filter
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ) : (
+            filteredParticipants.map((participant) => (
+              <TableRow key={participant.id}>
+                {/* Navn */}
+                <TableCell>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <UserAvatar name={participant.name} email={participant.email} size="sm" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate text-foreground">{participant.name}</p>
+                      <p className="text-xs font-mono truncate text-muted-foreground">{participant.email}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                {/* Status (derived from signup + payment) */}
+                <TableCell>
+                  <SignupStatusBadge status={participant.status} paymentStatus={participant.paymentStatus} />
+                </TableCell>
+                {/* Kvittering (receipt) */}
+                <TableCell className="hidden md:table-cell">
+                  {participant.receiptUrl && (
+                    <a
+                      href={participant.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
+                      aria-label="Åpne kvittering"
+                      title="Åpne kvittering"
+                    >
+                      <FileText className="size-4" />
+                    </a>
+                  )}
+                </TableCell>
+                {/* Notater */}
+                <TableCell className="hidden sm:table-cell">
+                  <NotePopover note={participant.notes} />
+                </TableCell>
+                {/* Handlinger */}
+                <TableCell>
+                  <ParticipantActionMenu
+                    signup={toActionable(participant, courseName)}
+                    handlers={actionHandlers}
+                  />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </Card>
   );
 };

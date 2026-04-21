@@ -1,6 +1,5 @@
 import { memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { extractDayName } from '@/utils/dateFormatting';
@@ -47,12 +46,9 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
   }, [registrations]);
 
   const content = displayedRegistrations.length === 0 ? (
-    <div className="flex flex-col items-center justify-center p-8 text-center">
-      <div className="mb-4 flex size-10 items-center justify-center rounded-lg border border-border bg-background">
-        <UserPlus className="size-4 text-muted-foreground" />
-      </div>
-      <p className="text-base font-medium text-foreground">Ingen nye påmeldinger</p>
-      <p className="text-sm mt-1 text-muted-foreground">Nye påmeldinger vises her.</p>
+    <div className="flex flex-col items-center gap-1 py-8 text-center">
+      <p className="text-sm font-medium text-foreground">Ingen nye påmeldinger</p>
+      <p className="text-xs text-muted-foreground">Nye påmeldinger vises her.</p>
     </div>
   ) : (
     <div className={cn("divide-y divide-border", hideCard ? "" : "px-3 py-3")}>
@@ -66,14 +62,14 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
             to="/teacher/signups"
             className={cn(
               "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50",
-              registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-amber-500"
+              registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
             )}
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-foreground">
                 {registration.participant.name}
               </p>
-              <p className="text-xs font-medium tracking-wide mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+              <p className="text-sm mt-0.5 flex items-center gap-1.5 text-muted-foreground">
                 <span className="truncate">{registration.course}</span>
                 <span className="text-muted-foreground mx-1.5">·</span>
                 <span className="truncate">
@@ -82,7 +78,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
               </p>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-xs font-medium tracking-wide text-muted-foreground">
+              <span className="text-xs tabular-nums text-tertiary-foreground">
                 {registration.registeredAt}
               </span>
             </div>
@@ -96,7 +92,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
     <div className="flex flex-col">
       {!hideHeader && (
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-medium text-foreground">Siste påmeldinger</h2>
+          <h2 className="text-base font-semibold text-foreground">Siste påmeldinger</h2>
           <Link
             to="/teacher/signups"
             className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground"

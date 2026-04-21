@@ -302,26 +302,26 @@ const TeacherDashboard = () => {
               transition={pageTransition}
             >
               <header className="mb-8">
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                <h1 className="text-3xl font-semibold text-foreground">
                   {getTimeBasedGreeting()}{userName ? `, ${userName}` : ''}
                 </h1>
                 {!isLoading && !loadError && isSetupComplete && hasCourses && (
                   <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
                       <Link to="/teacher/schedule">
-                        <Calendar className="h-3.5 w-3.5" />
+                        <Calendar className="size-3.5" />
                         Timeplan
                       </Link>
                     </Button>
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
                       <Link to="/teacher/signups">
-                        <Users className="h-3.5 w-3.5" />
+                        <Users className="size-3.5" />
                         Påmeldinger
                       </Link>
                     </Button>
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
                       <Link to="/teacher/messages">
-                        <MessageSquare className="h-3.5 w-3.5" />
+                        <MessageSquare className="size-3.5" />
                         Meldinger
                       </Link>
                     </Button>
@@ -333,8 +333,8 @@ const TeacherDashboard = () => {
               {showSetupBanner && !isLoading && (
                 <Card className="mb-6 flex items-center justify-between gap-3 px-4 py-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="h-3 w-3" />
+                    <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="size-3" />
                     </div>
                     <p className="text-sm font-medium text-foreground">
                       Alt er klart — du kan nå ta imot påmeldinger og betalinger
@@ -344,10 +344,10 @@ const TeacherDashboard = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowSetupBanner(false)}
-                    className="h-8 w-8 shrink-0"
+                    className="size-8 shrink-0"
                     aria-label="Lukk"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="size-3.5" />
                   </Button>
                 </Card>
               )}
@@ -357,16 +357,16 @@ const TeacherDashboard = () => {
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <div className="mb-4 rounded-full bg-muted p-4">
-                    <AlertCircle className="h-8 w-8 text-red-700 stroke-[1.5]" />
+                    <AlertCircle className="size-8 text-destructive" />
                   </div>
-                  <h3 className="text-base font-medium mb-1 text-foreground">Kunne ikke laste oversikten</h3>
+                  <h3 className="text-base font-semibold mb-1 text-foreground">Kunne ikke laste oversikten</h3>
                   <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="compact"
                     onClick={() => window.location.reload()}
                   >
-                    <RefreshCw className="h-3.5 w-3.5" />
+                    <RefreshCw className="size-3.5" />
                     Prøv på nytt
                   </Button>
                 </div>
@@ -398,9 +398,9 @@ const TeacherDashboard = () => {
                   <Card className="lg:col-span-2">
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
-                        <Plus className="h-6 w-6 text-muted-foreground stroke-[1.5]" />
+                        <Plus className="size-6 text-muted-foreground" />
                       </div>
-                      <h2 className="text-xl font-semibold tracking-tight leading-tight text-foreground text-center">
+                      <h2 className="text-xl font-semibold text-foreground text-center">
                         Opprett ditt første kurs
                       </h2>
                       <p className="text-sm mt-2 mb-6 max-w-md text-center text-muted-foreground">
@@ -408,7 +408,7 @@ const TeacherDashboard = () => {
                       </p>
                       <Button asChild size="default" className="gap-2">
                         <Link to="/teacher/new-course">
-                          <CalendarPlus className="h-4 w-4" />
+                          <CalendarPlus className="size-4" />
                           Opprett kurs
                         </Link>
                       </Button>
@@ -449,11 +449,11 @@ const TeacherDashboard = () => {
               <div className="flex flex-col gap-3 py-2">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 rounded-lg border border-border bg-muted p-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
+                    <Shield className="size-4 text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
-                    <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">
+                    <p className="text-xs mt-0.5 text-muted-foreground">
                       Pengene fra påmeldinger overføres direkte til din konto. Ease tar ingen del av betalingen.
                     </p>
                   </div>
@@ -463,13 +463,13 @@ const TeacherDashboard = () => {
 
                 <div>
                   <p className="text-xs font-medium tracking-wide mb-2 text-foreground">Du trenger</p>
-                  <ul className="text-xs font-medium tracking-wide flex flex-col gap-1.5 text-muted-foreground">
+                  <ul className="text-xs flex flex-col gap-1.5 text-muted-foreground">
                     <li className="flex items-center gap-2">
-                      <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                      <span className="size-1 rounded-full bg-muted-foreground shrink-0" />
                       Bankkonto for utbetalinger
                     </li>
                     <li className="flex items-center gap-2">
-                      <span className="h-1 w-1 rounded-full bg-muted-foreground shrink-0" />
+                      <span className="size-1 rounded-full bg-muted-foreground shrink-0" />
                       Organisasjonsnummer (valgfritt)
                     </li>
                   </ul>
@@ -485,7 +485,7 @@ const TeacherDashboard = () => {
                   size="sm"
                   onClick={() => setShowStripeExplainer(false)}
                   disabled={connectingStripe}
-                  className="text-xs font-medium tracking-wide text-muted-foreground w-full"
+                  className="text-muted-foreground w-full"
                 >
                   Jeg gjør dette senere
                 </Button>

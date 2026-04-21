@@ -9,7 +9,7 @@ interface DeltaChipProps {
 
 export function DeltaChip({ delta, invert = false }: DeltaChipProps) {
   if (delta.percent === null || delta.direction === 'flat') {
-    return <span className="text-xs font-medium tracking-wide text-muted-foreground">—</span>
+    return <span className="text-xs font-medium text-muted-foreground">—</span>
   }
 
   const isPositive = invert ? delta.direction === 'down' : delta.direction === 'up'
@@ -19,7 +19,7 @@ export function DeltaChip({ delta, invert = false }: DeltaChipProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium tracking-wide',
+        'inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums',
         isPositive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
       )}
     >

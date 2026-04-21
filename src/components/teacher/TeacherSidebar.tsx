@@ -115,14 +115,14 @@ export const TeacherSidebar = () => {
                 aria-label={sidebarToggleLabel}
                 title={sidebarToggleLabel}
               >
-                <PanelLeft className="h-4 w-4" />
+                <PanelLeft className="size-4" />
               </button>
             ) : (
               <div className="flex items-center gap-1">
                 <SidebarMenuButton asChild size="lg" className="flex-1">
                   <Link to="/teacher">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                      <Leaf className="h-4 w-4" />
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                      <Leaf className="size-4" />
                     </div>
                     <span className="font-medium">Ease</span>
                   </Link>
@@ -130,11 +130,11 @@ export const TeacherSidebar = () => {
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2"
                   aria-label={sidebarToggleLabel}
                   title={sidebarToggleLabel}
                 >
-                  <PanelLeft className="h-4 w-4" />
+                  <PanelLeft className="size-4" />
                 </button>
               </div>
             )}
@@ -150,7 +150,7 @@ export const TeacherSidebar = () => {
                 asChild
                 tooltip="Opprett kurs"
                 isActive={location.pathname === '/teacher/new-course'}
-                className="h-9 justify-center bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
+                className="h-9 justify-center bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground active:bg-primary/80 active:text-primary-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground"
               >
                 <Link to="/teacher/new-course">
                   <CalendarPlus />
@@ -180,7 +180,7 @@ export const TeacherSidebar = () => {
                         <span>{item.label}</span>
                         {item.href === '/teacher/messages' && unreadMessages > 0 && (
                           <span
-                            className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground"
+                            className="ml-auto flex size-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground"
                             aria-label={`${unreadMessages > 9 ? 'Mer enn 9' : unreadMessages} uleste meldinger`}
                           >
                             <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
@@ -211,7 +211,7 @@ export const TeacherSidebar = () => {
                     size="sm"
                   />
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="text-xs font-medium truncate text-foreground">{profile?.name || currentOrganization?.name || 'Konto'}</span>
+                    <span className="text-sm font-medium truncate text-foreground">{profile?.name || currentOrganization?.name || 'Konto'}</span>
                     <span className="text-xs font-medium tracking-wide truncate text-muted-foreground">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
@@ -233,8 +233,8 @@ export const TeacherSidebar = () => {
                       size="sm"
                     />
                     <div className="grid flex-1 text-left leading-tight">
-                      <span className="text-xs font-medium truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
-                      <span className="text-xs font-medium tracking-wide truncate text-muted-foreground">{profile?.email}</span>
+                      <span className="text-sm font-medium truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
+                      <span className="text-xs font-mono truncate text-muted-foreground">{profile?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

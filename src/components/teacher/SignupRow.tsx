@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { NotePopover } from '@/components/ui/note-popover';
+import { TableRow, TableCell } from '@/components/ui/table';
 import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupDisplay } from '@/types/database';
 
@@ -20,9 +21,9 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
   );
 
   return (
-    <tr className={cn('group smooth-transition', !isCancelled && 'hover:bg-muted')}>
+    <TableRow className={cn(isCancelled && 'hover:bg-transparent')}>
       {/* Navn */}
-      <td className="px-4 py-4 sm:px-6">
+      <TableCell>
         <div className="flex min-w-0 items-center gap-3">
           <UserAvatar name={signup.participantName} email={signup.participantEmail} size="sm" />
           <div className="min-w-0">
@@ -32,69 +33,69 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
             )}>
               {signup.participantName}
             </p>
-            <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">
+            <p className="text-xs font-mono truncate text-muted-foreground">
               {signup.participantEmail}
             </p>
             {!hideCourse && (
               <Link
                 to={`/teacher/courses/${signup.courseId}`}
-                className="mt-0.5 inline-block max-w-full truncate text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground sm:hidden"
+                className="mt-0.5 inline-block max-w-full truncate text-xs text-muted-foreground smooth-transition hover:text-foreground sm:hidden"
               >
                 {signup.className}
               </Link>
             )}
           </div>
         </div>
-      </td>
+      </TableCell>
 
       {/* Kurs */}
       {!hideCourse && (
-        <td className="hidden px-4 py-4 sm:table-cell sm:px-6">
+        <TableCell className="hidden sm:table-cell">
           <Link
             to={`/teacher/courses/${signup.courseId}`}
             className="inline-block min-w-0 max-w-[14rem] truncate text-sm font-medium text-muted-foreground smooth-transition hover:text-foreground"
           >
             {signup.className}
           </Link>
-        </td>
+        </TableCell>
       )}
 
       {/* Status (derived from signup + payment) */}
-      <td className="px-4 py-3 sm:px-6">
+      <TableCell>
         <SignupStatusBadge status={signup.status} paymentStatus={signup.paymentStatus} />
-      </td>
+      </TableCell>
 
       {/* Kvittering */}
-      <td className="hidden px-4 py-4 sm:px-6 md:table-cell">
+      <TableCell className="hidden md:table-cell">
         {signup.receiptUrl && (
           <a
             href={signup.receiptUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
+            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
             aria-label="Åpne kvittering"
             title="Åpne kvittering"
           >
-            <FileText className="h-4 w-4" />
+            <FileText className="size-4" />
           </a>
         )}
-      </td>
+      </TableCell>
 
       {/* Notater */}
-      <td className="hidden px-4 py-4 text-right sm:table-cell sm:px-6">
+      <TableCell className="hidden sm:table-cell">
         <NotePopover note={signup.note} />
-      </td>
+      </TableCell>
 
       {/* Handlinger */}
-      <td className="px-4 py-4 sm:px-6">
+      <TableCell>
         {hasActions && actionHandlers ? (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center">
-            <MoreHorizontal className="h-4 w-4 text-muted-foreground/30" />
+          <div className="flex size-8 items-center justify-center">
+            <MoreHorizontal className="size-4 text-disabled-foreground" />
           </div>
         )}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

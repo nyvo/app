@@ -100,11 +100,11 @@ const PublicCoursesPage = () => {
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
       {/* Minimal navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b border-border">
+      <nav className="sticky top-0 z-50 w-full bg-surface-elevated backdrop-blur-md border-b border-border">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
-              <Leaf className="h-4 w-4 text-foreground" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
+              <Leaf className="size-4 text-foreground" />
             </div>
             <span className="text-base font-medium text-foreground">Ease</span>
           </Link>
@@ -120,7 +120,7 @@ const PublicCoursesPage = () => {
 
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-base font-medium mb-2 text-foreground">{error}</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">{error}</h3>
             <Button asChild variant="link" className="text-muted-foreground">
               <Link to="/">Gå til forsiden</Link>
             </Button>
@@ -131,7 +131,7 @@ const PublicCoursesPage = () => {
           <>
             {/* Tight studio header — no hero */}
             <header className="mb-8">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
                 {organization.name}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">

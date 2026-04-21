@@ -58,9 +58,9 @@ export const SessionList: React.FC<SessionListProps> = ({
     <div>
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="space-y-0.5">
-          <h2 className="text-base font-medium text-foreground">Kursplan</h2>
+          <h2 className="text-lg font-semibold text-foreground">Kursplan</h2>
           <p className="text-sm text-muted-foreground">
-            Dette kurset varer i {sessions.length} {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
+            Dette kurset varer i <span className="tabular-nums">{sessions.length}</span> {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
           </p>
         </div>
         {sessions.length > 6 && (
@@ -72,7 +72,7 @@ export const SessionList: React.FC<SessionListProps> = ({
             className="text-xs font-medium tracking-wide h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
           >
             {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`size-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
           </Button>
         )}
       </div>
@@ -88,7 +88,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                 {/* Session row */}
                 <div
                   className={`group flex items-center justify-between gap-4 px-6 py-4 smooth-transition ${
-                    isPast ? 'bg-muted/30 text-muted-foreground' : 'hover:bg-muted/60'
+                    isPast ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted'
                   }`}
                 >
                   <div className={`flex min-w-0 items-center gap-4 ${isPast ? 'opacity-60' : ''}`}>
@@ -100,12 +100,12 @@ export const SessionList: React.FC<SessionListProps> = ({
                       <div className="flex flex-wrap items-center gap-2">
                         <p className={`text-sm font-medium ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
                         {!isPast && session.isNext ? (
-                          <Badge variant="secondary" className="border border-border bg-muted text-foreground">
+                          <Badge variant="neutral" shape="rect" size="sm">
                             Neste
                           </Badge>
                         ) : null}
                       </div>
-                      <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">{session.date} {session.time}</p>
+                      <p className="text-xs tabular-nums mt-0.5 text-muted-foreground">{session.date} <span className="font-mono">{session.time}</span></p>
                     </div>
                   </div>
                   {!isPast && (
@@ -123,7 +123,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                 {/* Inline edit panel */}
                 {isEditing && (
-                  <div className="border-t border-border bg-muted/40 px-6 py-4">
+                  <div className="border-t border-border bg-muted/50 px-6 py-4">
                     <div className="space-y-4 rounded-lg border border-border bg-card p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
@@ -146,7 +146,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="text-xs font-medium tracking-wide text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="text-xs text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
                       <div className="flex gap-2">

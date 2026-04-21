@@ -30,7 +30,7 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
           {event.title}
         </p>
         {isActive && (
-          <Badge variant="secondary" className="shrink-0 border-0 bg-green-100 text-green-800 ring-1 ring-inset ring-green-300">
+          <Badge variant="success" shape="rect" size="sm" className="shrink-0">
             Pågår
           </Badge>
         )}
@@ -40,13 +40,13 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
       </div>
 
       {/* Time + signups — secondary row */}
-      <div className="mt-1 flex items-center justify-between text-muted-foreground">
-        <span className="text-xs font-medium tracking-wide">
+      <div className="mt-1 flex items-center justify-between">
+        <span className="text-xs tabular-nums text-tertiary-foreground">
           {formatTime(event.startTime)}–{formatTime(event.endTime)}
         </span>
         {!isCompleted && (
-          <span className="text-xs font-medium tracking-wide flex items-center gap-1">
-            <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+          <span className="text-xs tabular-nums text-tertiary-foreground flex items-center gap-1">
+            <Users className="size-3.5 text-tertiary-foreground" aria-hidden="true" />
             {event.signups}{event.maxCapacity ? `/${event.maxCapacity}` : ''}
           </span>
         )}

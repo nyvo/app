@@ -357,14 +357,14 @@ const TeacherProfilePage = () => {
                   {/* Personlig informasjon */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
-                      <h2 className="text-base font-medium text-foreground">Personlig informasjon</h2>
+                      <h2 className="text-base font-semibold text-foreground">Personlig informasjon</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
                     <Card className="md:col-span-2">
                       <CardContent className="md:px-8">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label htmlFor="profile-firstname" className="text-xs font-medium mb-1.5 block text-foreground">Fornavn</label>
+                            <label htmlFor="profile-firstname" className="text-sm font-medium mb-1.5 block text-foreground">Fornavn</label>
                             <Input
                                 id="profile-firstname"
                                 type="text"
@@ -374,12 +374,12 @@ const TeacherProfilePage = () => {
                                 aria-invalid={!!errors.firstName}
                             />
                             {errors.firstName && touched.firstName && (
-                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{errors.firstName}</p>
+                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.firstName}</p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="profile-lastname" className="text-xs font-medium mb-1.5 block text-foreground">Etternavn</label>
+                            <label htmlFor="profile-lastname" className="text-sm font-medium mb-1.5 block text-foreground">Etternavn</label>
                             <Input
                                 id="profile-lastname"
                                 type="text"
@@ -389,12 +389,12 @@ const TeacherProfilePage = () => {
                                 aria-invalid={!!errors.lastName}
                             />
                             {errors.lastName && touched.lastName && (
-                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{errors.lastName}</p>
+                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.lastName}</p>
                             )}
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-email" className="text-xs font-medium mb-1.5 block text-foreground">E-post</label>
+                            <label htmlFor="profile-email" className="text-sm font-medium mb-1.5 block text-foreground">E-post</label>
                             <Input
                                 id="profile-email"
                                 type="email"
@@ -404,14 +404,14 @@ const TeacherProfilePage = () => {
                                 aria-invalid={!!errors.email}
                             />
                             {errors.email && touched.email ? (
-                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{errors.email}</p>
+                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.email}</p>
                             ) : (
-                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              <p className="text-xs mt-1.5 text-muted-foreground">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-city" className="text-xs font-medium mb-1.5 block text-foreground">By / Sted</label>
+                            <label htmlFor="profile-city" className="text-sm font-medium mb-1.5 block text-foreground">By / Sted</label>
                             <Input
                                 id="profile-city"
                                 type="text"
@@ -419,11 +419,11 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => setCity(e.target.value)}
                                 placeholder="Oslo"
                             />
-                            <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Vises på din offentlige side.</p>
+                            <p className="text-xs mt-1.5 text-muted-foreground">Vises på din offentlige side.</p>
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="profile-description" className="text-xs font-medium mb-1.5 block text-foreground">Om deg</label>
+                            <label htmlFor="profile-description" className="text-sm font-medium mb-1.5 block text-foreground">Om deg</label>
                             <Textarea
                                 id="profile-description"
                                 rows={4}
@@ -433,13 +433,13 @@ const TeacherProfilePage = () => {
                                 placeholder="Fortell litt om deg"
                                 aria-invalid={!!errors.studioDescription}
                             />
-                            <div className="text-xs font-medium tracking-wide mt-1.5 flex justify-between">
+                            <div className="mt-1.5 flex justify-between">
                                 {errors.studioDescription && touched.studioDescription ? (
-                                  <span className="text-destructive">{errors.studioDescription}</span>
+                                  <span className="text-xs font-medium text-destructive">{errors.studioDescription}</span>
                                 ) : (
-                                  <span className="text-muted-foreground">Vises på din offentlige side.</span>
+                                  <span className="text-xs text-muted-foreground">Vises på din offentlige side.</span>
                                 )}
-                                <span className={studioDescription.length > 500 ? 'text-destructive' : 'text-muted-foreground'}>{studioDescription.length}/500</span>
+                                <span className={`text-xs tabular-nums ${studioDescription.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>{studioDescription.length}/500</span>
                             </div>
                         </div>
                       </div>
@@ -450,7 +450,7 @@ const TeacherProfilePage = () => {
                   {/* Konto & Sikkerhet */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
-                      <h2 className="text-base font-medium text-foreground">Konto & Sikkerhet</h2>
+                      <h2 className="text-base font-semibold text-foreground">Konto & Sikkerhet</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Passord og sikkerhet.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
@@ -459,7 +459,7 @@ const TeacherProfilePage = () => {
                               <div className="flex items-center justify-between">
                                   <div>
                                       <span className="text-sm font-medium block text-foreground">Endre passord</span>
-                                      <span className="text-xs font-medium tracking-wide block text-muted-foreground">Oppdater passordet ditt.</span>
+                                      <span className="text-xs block text-muted-foreground">Oppdater passordet ditt.</span>
                                   </div>
                                   <Button
                                       variant={passwordExpanded ? 'ghost' : 'outline-soft'}
@@ -483,7 +483,7 @@ const TeacherProfilePage = () => {
                               {passwordExpanded && (
                                   <div className="mt-4 space-y-4 rounded-lg bg-muted p-6 animate-in fade-in slide-in-from-top-1 duration-200 ease-out">
                                       <div>
-                                          <label htmlFor="current-password" className="text-xs font-medium mb-1.5 block text-foreground">Nåværende passord</label>
+                                          <label htmlFor="current-password" className="text-sm font-medium mb-1.5 block text-foreground">Nåværende passord</label>
                                           <div className="relative">
                                               <Input
                                                   id="current-password"
@@ -496,19 +496,19 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                                                   aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
-                                                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.currentPassword && (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{passwordErrors.currentPassword}</p>
+                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.currentPassword}</p>
                                           )}
                                       </div>
 
                                       <div>
-                                          <label htmlFor="new-password" className="text-xs font-medium mb-1.5 block text-foreground">Nytt passord</label>
+                                          <label htmlFor="new-password" className="text-sm font-medium mb-1.5 block text-foreground">Nytt passord</label>
                                           <div className="relative">
                                               <Input
                                                   id="new-password"
@@ -521,21 +521,21 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                                                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
-                                                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.newPassword ? (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
+                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
+                                              <p className="text-xs mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
                                           )}
                                       </div>
 
                                       <div>
-                                          <label htmlFor="confirm-password" className="text-xs font-medium mb-1.5 block text-foreground">Bekreft nytt passord</label>
+                                          <label htmlFor="confirm-password" className="text-sm font-medium mb-1.5 block text-foreground">Bekreft nytt passord</label>
                                           <Input
                                               id="confirm-password"
                                               type={showNewPassword ? 'text' : 'password'}
@@ -545,7 +545,7 @@ const TeacherProfilePage = () => {
                                               autoComplete="new-password"
                                           />
                                           {passwordErrors.confirmPassword && (
-                                              <p className="text-xs font-medium tracking-wide mt-1.5 text-destructive">{passwordErrors.confirmPassword}</p>
+                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.confirmPassword}</p>
                                           )}
                                       </div>
 
@@ -579,7 +579,7 @@ const TeacherProfilePage = () => {
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Logg ut alle enheter</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">Logger deg ut overalt.</span>
+                                  <span className="text-xs block text-muted-foreground">Logger deg ut overalt.</span>
                               </div>
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
@@ -616,14 +616,14 @@ const TeacherProfilePage = () => {
                   {/* E-postvarslinger */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
-                      <h2 className="text-base font-medium text-foreground">E-postvarslinger</h2>
+                      <h2 className="text-base font-semibold text-foreground">E-postvarslinger</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Nye påmeldinger</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
+                                  <span className="text-xs block text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -636,7 +636,7 @@ const TeacherProfilePage = () => {
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Avbestillinger</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">Få e-post når noen avbestiller.</span>
+                                  <span className="text-xs block text-muted-foreground">Få e-post når noen avbestiller.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -649,7 +649,7 @@ const TeacherProfilePage = () => {
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Nye meldinger</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">Få e-post når du mottar en ny melding.</span>
+                                  <span className="text-xs block text-muted-foreground">Få e-post når du mottar en ny melding.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -664,14 +664,14 @@ const TeacherProfilePage = () => {
                   {/* Slett konto */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
-                      <h2 className="text-base font-medium text-foreground">Slett konto</h2>
+                      <h2 className="text-base font-semibold text-foreground">Slett konto</h2>
                       <p className="text-sm mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>
-                                  <span className="text-xs font-medium tracking-wide block text-muted-foreground">All data slettes permanent.</span>
+                                  <span className="text-xs block text-muted-foreground">All data slettes permanent.</span>
                               </div>
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>
@@ -691,7 +691,7 @@ const TeacherProfilePage = () => {
                                           </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <div className="py-2">
-                                          <label className="text-xs font-medium mb-1.5 block text-foreground">
+                                          <label className="text-sm font-medium mb-1.5 block text-foreground">
                                               Skriv SLETT for å bekrefte
                                           </label>
                                           <Input
@@ -720,7 +720,7 @@ const TeacherProfilePage = () => {
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (
-              <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-3 border-t border-border bg-background/80 p-4 backdrop-blur-md md:static md:mt-8 md:border-none md:bg-transparent md:p-0 md:backdrop-blur-none">
+              <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-3 border-t border-border bg-surface-elevated p-4 backdrop-blur-md md:static md:mt-8 md:border-none md:bg-transparent md:p-0 md:backdrop-blur-none">
                   <Button variant="ghost" size="compact" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
                   <Button
                     size="compact"

@@ -110,7 +110,7 @@ export function TeacherTopBar() {
         )}
       >
         <Breadcrumb className="min-w-0 flex-1">
-          <BreadcrumbList className="text-xs font-medium gap-2 text-muted-foreground">
+          <BreadcrumbList className="text-sm gap-2 text-muted-foreground">
             {crumbs.map((crumb, index) => {
               const isLast = index === crumbs.length - 1;
 
@@ -122,10 +122,10 @@ export function TeacherTopBar() {
                         <Link to={crumb.to}>{crumb.label}</Link>
                       </BreadcrumbLink>
                     ) : (
-                      <BreadcrumbPage className="font-medium">{crumb.label}</BreadcrumbPage>
+                      <BreadcrumbPage className="font-medium text-foreground">{crumb.label}</BreadcrumbPage>
                     )}
                   </BreadcrumbItem>
-                  {!isLast && <BreadcrumbSeparator />}
+                  {!isLast && <BreadcrumbSeparator className="text-disabled-foreground" />}
                 </Fragment>
               );
             })}
@@ -138,9 +138,9 @@ export function TeacherTopBar() {
             </Button>
           )}
           <NotificationDropdown />
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+          <Button asChild variant="ghost" size="icon" className="size-8 text-muted-foreground">
             <Link to="/teacher/profile">
-              <Settings className="h-4 w-4" />
+              <Settings className="size-4" />
             </Link>
           </Button>
         </div>

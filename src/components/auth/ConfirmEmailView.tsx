@@ -41,25 +41,26 @@ export const ConfirmEmailView = () => {
 
   return (
     <AuthLayout title="" customContent>
-      <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
-        <Mail className="size-5 text-muted-foreground" />
+      <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
+        <Mail className="size-8 text-muted-foreground" />
       </div>
 
-      <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
-        Sjekk e-posten din
-      </h1>
-
-      <p className="text-sm mb-8 text-center text-muted-foreground leading-relaxed">
-        {email ? (
-          <>
-            Vi har sendt en bekreftelseslenke til{' '}
-            <span className="text-sm font-medium text-foreground">{email}</span>.
-            Du må bekrefte e-posten før du kan logge inn.
-          </>
-        ) : (
-          'Vi har sendt en bekreftelseslenke til e-posten din. Du må bekrefte før du kan logge inn.'
-        )}
-      </p>
+      <div className="text-center mb-8 space-y-2 w-full">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Sjekk e-posten din
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {email ? (
+            <>
+              Vi har sendt en bekreftelseslenke til{' '}
+              <span className="font-mono text-foreground">{email}</span>.
+              Du må bekrefte e-posten før du kan logge inn.
+            </>
+          ) : (
+            'Vi har sendt en bekreftelseslenke til e-posten din. Du må bekrefte før du kan logge inn.'
+          )}
+        </p>
+      </div>
 
       <div className="w-full space-y-3">
         {email && (
@@ -79,7 +80,7 @@ export const ConfirmEmailView = () => {
         </Button>
       </div>
 
-      <p className="text-xs font-medium tracking-wide mt-6 text-center text-muted-foreground">
+      <p className="text-xs mt-6 text-center text-muted-foreground">
         {AUTH_HINTS.checkSpamAlt}
       </p>
     </AuthLayout>

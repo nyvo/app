@@ -34,9 +34,9 @@ export function ConversationList({
       {/* List Header */}
       <div className="border-b border-border px-6 py-4 lg:px-8">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-medium text-foreground">Samtaler</h2>
+          <h2 className="text-base font-semibold text-foreground">Samtaler</h2>
           <Button onClick={onNewMessage} size="compact" className="gap-2">
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="size-3.5" />
             Ny melding
           </Button>
         </div>
@@ -65,7 +65,7 @@ export function ConversationList({
             <button
               key={conversation.id}
               onClick={() => onSelect(conversation)}
-              className={`group relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left ios-ease ${
+              className={`group relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left ios-ease outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 ${
                 activeConversationId === conversation.id && !isComposing
                   ? 'border-border bg-muted'
                   : conversation.is_read
@@ -82,7 +82,7 @@ export function ConversationList({
                   className={activeConversationId !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
                 />
                 {conversation.unread_count > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
+                  <Badge className="absolute -top-1 -right-1 size-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
                     {conversation.unread_count}
                   </Badge>
                 )}
@@ -98,7 +98,7 @@ export function ConversationList({
                   >
                     {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
                   </span>
-                  <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                  <span className="text-xs tabular-nums text-tertiary-foreground">
                     {formatMessageTimestamp(conversation.updated_at)}
                   </span>
                 </div>
@@ -115,7 +115,7 @@ export function ConversationList({
                 </p>
               </div>
               {conversation.unread_count > 0 && (
-                <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" role="img" aria-label="Ulest" />
+                <div className="size-2 rounded-full bg-accent shrink-0 mt-2" role="img" aria-label="Ulest" />
               )}
             </button>
           ))

@@ -61,7 +61,7 @@ export const MessagesList = memo(function MessagesList({ messages, hideHeader = 
     <div className="flex flex-col">
       {!hideHeader && (
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-base font-medium text-foreground">Meldinger</h3>
+          <h3 className="text-base font-semibold text-foreground">Meldinger</h3>
           <Link to="/teacher/messages" className="text-xs font-medium tracking-wide text-muted-foreground transition-[color] hover:text-foreground">Se alle</Link>
         </div>
       )}

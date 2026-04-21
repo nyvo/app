@@ -230,7 +230,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
     <main className="flex-1 overflow-y-auto bg-background min-h-screen flex flex-col">
       {/* Minimal top bar */}
       <div className="flex justify-end px-6 lg:px-8 pt-6 lg:pt-8">
-        <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-xs font-medium tracking-wide text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground">
+        <Button variant="ghost" size="sm" onClick={() => signOut()}>
           Logg ut
         </Button>
       </div>
@@ -257,7 +257,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         isActive || isDone ? 'bg-primary' : 'bg-border'
                       }`} />
                       <p className={`text-xs font-medium tracking-wide smooth-transition ${
-                        isActive ? 'font-medium text-foreground' : 'text-muted-foreground'
+                        isActive ? 'text-foreground' : 'text-muted-foreground'
                       }`}>
                         {seg.label}
                       </p>
@@ -279,7 +279,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-base font-medium mb-1 text-foreground">
+                  <h2 className="text-base font-semibold mb-1 text-foreground">
                     Først litt om deg
                   </h2>
                   <p className="text-sm mb-6 text-muted-foreground">
@@ -289,7 +289,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   <div className="flex flex-col gap-4 mb-8">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="welcome-first-name" className="text-xs font-medium mb-1.5 block text-foreground">
+                        <label htmlFor="welcome-first-name" className="text-sm font-medium mb-1.5 block text-foreground">
                           Fornavn
                         </label>
                         <Input
@@ -303,11 +303,11 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           aria-describedby={firstNameError ? 'welcome-first-name-error' : undefined}
                         />
                         {firstNameError && (
-                          <p id="welcome-first-name-error" className="text-xs font-medium tracking-wide mt-1.5 text-destructive" role="alert">{firstNameError}</p>
+                          <p id="welcome-first-name-error" className="text-xs font-medium mt-1.5 text-destructive" role="alert">{firstNameError}</p>
                         )}
                       </div>
                       <div>
-                        <label htmlFor="welcome-last-name" className="text-xs font-medium mb-1.5 block text-foreground">
+                        <label htmlFor="welcome-last-name" className="text-sm font-medium mb-1.5 block text-foreground">
                           Etternavn
                         </label>
                         <Input
@@ -320,13 +320,13 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           aria-describedby={lastNameError ? 'welcome-last-name-error' : undefined}
                         />
                         {lastNameError && (
-                          <p id="welcome-last-name-error" className="text-xs font-medium tracking-wide mt-1.5 text-destructive" role="alert">{lastNameError}</p>
+                          <p id="welcome-last-name-error" className="text-xs font-medium mt-1.5 text-destructive" role="alert">{lastNameError}</p>
                         )}
                       </div>
                     </div>
 
                     <div>
-                      <label htmlFor="welcome-city" className="text-xs font-medium mb-1.5 block text-foreground">
+                      <label htmlFor="welcome-city" className="text-sm font-medium mb-1.5 block text-foreground">
                         By / Sted
                       </label>
                       <Input
@@ -339,9 +339,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         aria-describedby={cityError ? 'welcome-city-error' : 'welcome-city-hint'}
                       />
                       {cityError ? (
-                        <p id="welcome-city-error" className="text-xs font-medium tracking-wide mt-1.5 text-destructive" role="alert">{cityError}</p>
+                        <p id="welcome-city-error" className="text-xs font-medium mt-1.5 text-destructive" role="alert">{cityError}</p>
                       ) : (
-                        <p id="welcome-city-hint" className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+                        <p id="welcome-city-hint" className="text-xs mt-1.5 text-muted-foreground">
                           Hjelper elever å finne kurs i nærheten.
                         </p>
                       )}
@@ -350,7 +350,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                   <Button onClick={() => { if (validateStep0()) setStep(1) }} className="w-full">
                     Fortsett
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 </motion.div>
               )}
@@ -366,7 +366,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-base font-medium mb-1 text-foreground">
+                  <h2 className="text-base font-semibold mb-1 text-foreground">
                     Om virksomheten din
                   </h2>
                   <p className="text-sm mb-6 text-muted-foreground">
@@ -376,9 +376,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   <div className="flex flex-col gap-4 mb-8">
                     {/* Org number lookup */}
                     <div>
-                      <label htmlFor="welcome-org-nr" className="text-xs font-medium mb-1.5 block text-foreground">
+                      <label htmlFor="welcome-org-nr" className="text-sm font-medium mb-1.5 block text-foreground">
                         Organisasjonsnummer
-                        <span className="text-sm ml-1 text-muted-foreground">(valgfritt)</span>
+                        <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">(valgfritt)</span>
                       </label>
                       <div className="relative">
                         <Input
@@ -392,14 +392,14 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                           {isLookingUp ? (
-                            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                            <Loader2 className="size-4 text-muted-foreground animate-spin" />
                           ) : (
-                            <Search className="h-4 w-4 text-muted-foreground" />
+                            <Search className="size-4 text-muted-foreground" />
                           )}
                         </div>
                       </div>
                       {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
-                        <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+                        <p className="text-xs mt-1.5 text-muted-foreground">
                           Fant ingen treff. Fyll inn manuelt under.
                         </p>
                       )}
@@ -410,14 +410,14 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       <Card className="bg-muted/50 p-4">
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
-                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <Building className="size-4 text-muted-foreground" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-medium truncate text-foreground">
                                 {lookupResult.name}
                               </p>
-                              <Check className="h-3.5 w-3.5 text-green-800 shrink-0" />
+                              <Check className="size-3.5 text-success shrink-0" />
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                               {lookupResult.orgForm && (
@@ -425,12 +425,12 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                               )}
                               {lookupResult.city && (
                                 <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="h-3 w-3" />
+                                  <MapPin className="size-3" />
                                   {lookupResult.city}
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs font-medium tracking-wide mt-1 text-muted-foreground tabular-nums">
+                            <p className="text-xs font-mono tabular-nums mt-1 text-muted-foreground">
                               Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
                             </p>
                           </div>
@@ -443,7 +443,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                     {/* Studio name */}
                     <div>
-                      <label htmlFor="welcome-studio" className="text-xs font-medium mb-1.5 block text-foreground">
+                      <label htmlFor="welcome-studio" className="text-sm font-medium mb-1.5 block text-foreground">
                         Navn på virksomheten
                       </label>
                       <Input
@@ -458,9 +458,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         aria-describedby={studioError ? 'welcome-studio-error' : undefined}
                       />
                       {studioError ? (
-                        <p id="welcome-studio-error" className="text-xs font-medium tracking-wide mt-1.5 text-destructive" role="alert">{studioError}</p>
+                        <p id="welcome-studio-error" className="text-xs font-medium mt-1.5 text-destructive" role="alert">{studioError}</p>
                       ) : (
-                        <p className="text-xs font-medium tracking-wide mt-1.5 text-muted-foreground">
+                        <p className="text-xs mt-1.5 text-muted-foreground">
                           Vises på din offentlige kursside. Du kan endre dette senere.
                         </p>
                       )}
@@ -469,7 +469,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
                   <div className="grid grid-cols-2 gap-3">
                     <Button variant="outline-soft" onClick={() => setStep(0)}>
-                      <ArrowLeft className="h-3.5 w-3.5" />
+                      <ArrowLeft className="size-3.5" />
                       Tilbake
                     </Button>
                     <Button
@@ -484,7 +484,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                       loadingText="Lagrer"
                     >
                       Fullfør
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      <ArrowRight className="size-3.5" />
                     </Button>
                   </div>
                 </motion.div>
@@ -501,10 +501,10 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   transition={keyboardNav.current ? slideTransitionFast : slideTransition}
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
-                  <h2 className="text-base font-medium mb-2 text-foreground">
+                  <h2 className="text-base font-semibold mb-2 text-foreground">
                     {displayName ? `Bra, ${displayName} — grunnlaget er på plass` : 'Grunnlaget er på plass'}
                   </h2>
-                  <p className="text-sm mb-6 text-muted-foreground leading-relaxed">
+                  <p className="text-sm mb-6 text-muted-foreground">
                     To steg igjen før du kan ta imot påmeldinger og betaling.
                   </p>
 
@@ -515,17 +515,17 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                     ].map((item) => (
                       <div key={item.label} className="flex items-center gap-3">
                         <div className="flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-border">
-                          <item.icon className="h-3 w-3 text-muted-foreground" />
+                          <item.icon className="size-3 text-muted-foreground" />
                         </div>
                         <span className="text-sm text-foreground">{item.label}</span>
-                        <span className="text-xs font-medium tracking-wide ml-auto text-muted-foreground">{item.time}</span>
+                        <span className="text-xs font-medium tracking-wide tabular-nums ml-auto text-muted-foreground">{item.time}</span>
                       </div>
                     ))}
                   </div>
 
                   <Button onClick={onComplete} className="w-full">
                     Fortsett til oversikten
-                    <ArrowRight className="h-3.5 w-3.5" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 </motion.div>
               )}

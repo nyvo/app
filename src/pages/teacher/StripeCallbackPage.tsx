@@ -102,10 +102,10 @@ const StripeCallbackPage = () => {
         <div className="w-full flex flex-col items-center text-center">
           {state === 'loading' && (
             <>
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
                 <Spinner size="md" />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
+              <h1 className="text-3xl font-semibold mb-2 text-foreground">
                 Bekrefter betalingsoppsettet
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -117,12 +117,12 @@ const StripeCallbackPage = () => {
           {state === 'incomplete' && (
             <>
               <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
-                <AlertCircle className="size-5 text-amber-900" />
+                <AlertCircle className="size-5 text-warning" />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
+              <h1 className="text-3xl font-semibold mb-2 text-foreground">
                 Betalingsoppsettet er ikke fullført
               </h1>
-              <p className="text-sm mb-8 text-muted-foreground leading-relaxed">
+              <p className="text-sm mb-8 text-muted-foreground">
                 Det ser ut som oppsettet hos Stripe ikke ble fullført. Du kan prøve igjen eller gå tilbake til oversikten.
               </p>
               <div className="w-full space-y-3">
@@ -144,12 +144,12 @@ const StripeCallbackPage = () => {
           {state === 'error' && (
             <>
               <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
-                <AlertCircle className="size-5 text-red-700" />
+                <AlertCircle className="size-5 text-destructive" />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
+              <h1 className="text-3xl font-semibold mb-2 text-foreground">
                 Noe gikk galt
               </h1>
-              <p className="text-sm mb-8 text-muted-foreground leading-relaxed">
+              <p className="text-sm mb-8 text-muted-foreground">
                 {errorMessage || 'Kunne ikke bekrefte betalingsoppsettet. Prøv igjen.'}
               </p>
               <div className="w-full space-y-3">
@@ -171,9 +171,9 @@ const StripeCallbackPage = () => {
           {state === 'success' && (
             <>
               <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-muted">
-                <CheckCircle2 className="size-5 text-green-800" />
+                <CheckCircle2 className="size-5 text-success" />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">
+              <h1 className="text-3xl font-semibold mb-2 text-foreground">
                 Betalinger er klare
               </h1>
               <p className="text-sm text-muted-foreground">

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, CalendarPlus } from '@/lib/icons';
 import { PageLoader } from '@/components/ui/page-loader';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { MobileEventCard } from './MobileEventCard';
 import type { ScheduleEvent } from './types';
 import type { WeekDay } from '@/utils/dateUtils';
@@ -54,7 +56,7 @@ export function MobileDayView({
               onClick={() => onDaySelect(index)}
               aria-pressed={selectedDayIndex === index}
               aria-current={day.isToday ? 'date' : undefined}
-              className={`flex h-16 min-w-[56px] cursor-pointer flex-col items-center justify-center rounded-md smooth-transition ${
+              className={`flex h-16 min-w-[56px] cursor-pointer flex-col items-center justify-center rounded-md smooth-transition outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                 selectedDayIndex === index
                   ? 'bg-primary text-primary-foreground'
                   : day.isToday
@@ -63,7 +65,7 @@ export function MobileDayView({
               }`}
             >
               <span className="text-xs font-medium tracking-wide">{day.name.slice(0, 3)}</span>
-              <span className="text-base font-medium mt-0.5">{day.date}</span>
+              <span className="text-base font-mono font-medium tabular-nums mt-0.5">{day.date}</span>
             </button>
           ))}
         </div>
@@ -74,50 +76,31 @@ export function MobileDayView({
         {isLoading ? (
           <PageLoader message="Laster timeplan" />
         ) : error ? (
-          <div className="flex items-center justify-center h-64 p-6">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-red-100 border border-red-300">
-                <CalendarDays className="h-7 w-7 text-red-700" />
-              </div>
-              <h3 className="text-base font-medium mb-1 text-foreground">Noe gikk galt</h3>
-              <p className="text-sm mb-4 text-muted-foreground">{error}</p>
-              <Button onClick={onRetry} size="compact">Prøv på nytt</Button>
-            </div>
-          </div>
+          <ErrorState variant="inline" message={error} onRetry={onRetry} />
         ) : !hasEventsThisWeek ? (
-          <div className="flex items-center justify-center h-64 p-6">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
-                <CalendarDays className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h3 className="text-base font-medium mb-1 text-foreground">Ingen timer denne uken</h3>
-              <p className="text-sm mb-4 text-muted-foreground">
-                {!hasCourses
-                  ? 'Opprett et kurs for å komme i gang.'
-                  : 'Ingen planlagte timer denne uken.'}
-              </p>
+          <EmptyState
+            variant="compact"
+            icon={CalendarDays}
+            title="Ingen timer denne uken"
+            description={!hasCourses
+              ? 'Opprett et kurs for å komme i gang.'
+              : 'Ingen planlagte timer denne uken.'}
+            action={
               <Button asChild size="compact" className="gap-2">
                 <Link to="/teacher/new-course">
-                  <CalendarPlus className="h-3.5 w-3.5" />
+                  <CalendarPlus className="size-3.5" />
                   Opprett kurs
                 </Link>
               </Button>
-            </div>
-          </div>
+            }
+          />
         ) : dayEvents.length === 0 ? (
-          <div className="flex items-center justify-center h-64 p-6">
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-background border border-border">
-                <CalendarDays className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h3 className="text-base font-medium mb-1 text-foreground">
-                Ingen timer {selectedDay?.isToday ? 'i dag' : 'denne dagen'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Velg en annen dag for å se timer.
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            variant="compact"
+            icon={CalendarDays}
+            title={`Ingen timer ${selectedDay?.isToday ? 'i dag' : 'denne dagen'}`}
+            description="Velg en annen dag for å se timer."
+          />
         ) : (
           <div className="space-y-3 p-4">
             {[...dayEvents]

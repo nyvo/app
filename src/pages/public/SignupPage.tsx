@@ -91,7 +91,7 @@ const SignupPage = () => {
       title="Opprett din konto"
       subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
       footer={
-        <p className="text-xs font-medium tracking-wide text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Har du allerede en konto?{' '}
           <Link to={ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
@@ -138,7 +138,7 @@ const SignupPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium tracking-wide text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-destructive">{errors.general}</p>
           </Alert>
         )}
 
@@ -151,7 +151,7 @@ const SignupPage = () => {
           Opprett konto
         </Button>
 
-        <p className="text-xs font-medium tracking-wide pt-2 text-center text-muted-foreground">
+        <p className="text-xs pt-2 text-center text-muted-foreground">
           Ved å opprette konto godtar du{' '}
           <Link to="/terms" className="underline hover:text-foreground">
             vilkår

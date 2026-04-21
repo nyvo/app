@@ -1,11 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Search, Calendar, ChevronDown } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
+import { useMemo, useState } from 'react';
+import { Search, Calendar, ChevronDown, FileText } from '@/lib/icons';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Table, TableHeader, TableBody, TableHead } from '@/components/ui/table';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
+import { NotePopover } from '@/components/ui/note-popover';
 import { SignupRow } from './SignupRow';
-import type { ParticipantActionHandlers } from './ParticipantActionMenu';
+import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupDisplay } from '@/types/database';
 
 export type SignupsViewTab = 'active' | 'followup' | 'past';
@@ -20,9 +25,9 @@ interface SignupListViewProps {
   viewTab?: SignupsViewTab;
 }
 
-const INITIAL_VISIBLE = 20;
-const LOAD_MORE_INCREMENT = 20;
-const SHOW_ALL_THRESHOLD = 5;
+export const SIGNUPS_INITIAL_VISIBLE = 20;
+export const SIGNUPS_LOAD_MORE_INCREMENT = 20;
+export const SIGNUPS_SHOW_ALL_THRESHOLD = 5;
 const COLUMN_COUNT = 6;
 
 function emptyCopy(viewTab: SignupsViewTab | undefined, hasFilters: boolean, isEmptyOrg: boolean) {
@@ -39,18 +44,18 @@ function emptyCopy(viewTab: SignupsViewTab | undefined, hasFilters: boolean, isE
 
 function SignupTableHead({ hideCourse = false }: { hideCourse?: boolean }) {
   return (
-    <thead>
-      <tr className="border-b border-border bg-background/50">
-        <th scope="col" className="text-xs font-medium tracking-wide w-auto px-4 py-3 text-muted-foreground sm:px-6">Navn</th>
+    <TableHeader>
+      <tr>
+        <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
         {!hideCourse && (
-          <th scope="col" className="text-xs font-medium tracking-wide hidden w-40 px-4 py-3 text-muted-foreground sm:table-cell sm:px-6">Kurs</th>
+          <TableHead className="hidden w-40 sm:table-cell">Kurs</TableHead>
         )}
-        <th scope="col" className="text-xs font-medium tracking-wide w-40 px-4 py-3 text-muted-foreground sm:px-6">Status</th>
-        <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-muted-foreground sm:px-6 md:table-cell">Kvittering</th>
-        <th scope="col" className="text-xs font-medium tracking-wide hidden w-20 px-4 py-3 text-right text-muted-foreground sm:table-cell sm:px-6">Notater</th>
-        <th scope="col" className="text-xs font-medium tracking-wide w-12 px-4 py-3 text-muted-foreground sm:px-6"><span className="sr-only">Handlinger</span></th>
+        <TableHead className="w-40">Status</TableHead>
+        <TableHead className="hidden w-20 md:table-cell">Kvittering</TableHead>
+        <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
+        <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
       </tr>
-    </thead>
+    </TableHeader>
   );
 }
 
@@ -63,24 +68,18 @@ export function SignupListView({
   actionHandlers,
   viewTab,
 }: SignupListViewProps) {
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
-
-  useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [signups]);
-
   if (isLoading) {
     return (
-      <div className="overflow-x-auto" role="status" aria-live="polite">
+      <div role="status" aria-live="polite">
         <span className="sr-only">Henter påmeldinger</span>
-        <table className="w-full text-left border-collapse">
+        <Table>
           <SignupTableHead />
-          <tbody className="divide-y divide-border">
+          <TableBody>
             {[1, 2, 3, 4, 5].map(i => (
               <SkeletonTableRow key={i} columns={COLUMN_COUNT} hasAvatar />
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     );
   }
@@ -107,53 +106,19 @@ export function SignupListView({
     );
   }
 
-  const effectiveVisible = (signups.length - visibleCount) <= SHOW_ALL_THRESHOLD
-    ? signups.length
-    : visibleCount;
-  const visibleSignups = signups.slice(0, effectiveVisible);
-  const remainingCount = signups.length - effectiveVisible;
-  const isTruncated = remainingCount > 0;
-
   return (
-    <>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <SignupTableHead />
-          <tbody className="divide-y divide-border">
-            {visibleSignups.map(signup => (
-              <SignupRow
-                key={signup.id}
-                signup={signup}
-                actionHandlers={actionHandlers}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {(isTruncated || visibleCount > INITIAL_VISIBLE) && (
-        <div className="flex justify-center gap-3 p-4">
-          {isTruncated && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(prev => prev + LOAD_MORE_INCREMENT)}
-            >
-              Vis {Math.min(remainingCount, LOAD_MORE_INCREMENT)} flere
-            </Button>
-          )}
-          {visibleCount > INITIAL_VISIBLE && (
-            <Button
-              variant="outline-soft"
-              size="sm"
-              onClick={() => setVisibleCount(INITIAL_VISIBLE)}
-            >
-              Vis færre
-            </Button>
-          )}
-        </div>
-      )}
-    </>
+    <Table>
+      <SignupTableHead />
+      <TableBody>
+        {signups.map(signup => (
+          <SignupRow
+            key={signup.id}
+            signup={signup}
+            actionHandlers={actionHandlers}
+          />
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -173,6 +138,80 @@ function formatEndDate(dateStr: string | null): string {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return '';
   return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/**
+ * Compact one-line view of a signup, used inside the expanded body of a
+ * completed-course card. Drops the per-column table chrome — the surrounding
+ * card already provides the course context, so this row only needs identity +
+ * status + actions.
+ */
+function CompactPastSignupItem({
+  signup,
+  actionHandlers,
+}: {
+  signup: SignupDisplay;
+  actionHandlers?: ParticipantActionHandlers;
+}) {
+  const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
+  const hasActions = !!actionHandlers && (
+    !isCancelled || !!signup.stripePaymentIntentId || !!signup.exceptionType
+  );
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 smooth-transition hover:bg-muted/50">
+      <UserAvatar name={signup.participantName} email={signup.participantEmail} size="sm" />
+      <div className="min-w-0 flex-1">
+        <p className={cn(
+          'text-sm font-medium truncate',
+          isCancelled ? 'text-muted-foreground' : 'text-foreground',
+        )}>
+          {signup.participantName}
+        </p>
+        <p className="text-xs font-mono truncate text-muted-foreground">
+          {signup.participantEmail}
+        </p>
+      </div>
+      <SignupStatusBadge
+        status={signup.status}
+        paymentStatus={signup.paymentStatus}
+        className="shrink-0"
+      />
+      <div className="flex items-center gap-1 shrink-0">
+        {signup.receiptUrl && (
+          <a
+            href={signup.receiptUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
+            aria-label="Åpne kvittering"
+            title="Åpne kvittering"
+          >
+            <FileText className="size-4" />
+          </a>
+        )}
+        <NotePopover note={signup.note} />
+        {hasActions && actionHandlers && (
+          <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Builds a "5 påmeldte · 1 refundert · 2 avbestilt" summary string so teachers
+ * can see at-a-glance whether a course had anomalies, without expanding it.
+ */
+function summarizeGroup(signups: SignupDisplay[]): string {
+  const total = signups.length;
+  const refunded = signups.filter(s => s.paymentStatus === 'refunded').length;
+  const cancelled = signups.filter(s => s.status === 'cancelled' || s.status === 'course_cancelled').length;
+
+  const parts = [`${total} ${total === 1 ? 'påmeldt' : 'påmeldte'}`];
+  if (refunded > 0) parts.push(`${refunded} refundert`);
+  if (cancelled > 0) parts.push(`${cancelled} avbestilt`);
+  return parts.join(' · ');
 }
 
 export function PastSignupsList({
@@ -200,31 +239,23 @@ export function PastSignupsList({
     return Array.from(map.values()).sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
   }, [signups]);
 
+  // All groups default to collapsed — keeps initial view scannable.
   const [state, setState] = useState<Record<string, GroupState>>({});
-
-  useEffect(() => {
-    setState(prev => {
-      const next: Record<string, GroupState> = {};
-      groups.forEach((g, i) => {
-        next[g.courseId] = prev[g.courseId] ?? { expanded: i === 0, visibleCount: PAST_GROUP_PAGE_SIZE };
-      });
-      return next;
-    });
-  }, [groups]);
 
   if (groups.length === 0) return null;
 
   return (
-    <div className="divide-y divide-border">
+    <div className="space-y-3">
       {groups.map(g => {
         const s = state[g.courseId] ?? { expanded: false, visibleCount: PAST_GROUP_PAGE_SIZE };
         const visible = s.expanded ? g.signups.slice(0, s.visibleCount) : [];
         const hasMore = s.expanded && s.visibleCount < g.signups.length;
         const sectionId = `past-signups-${g.courseId}`;
         const endLabel = formatEndDate(g.endDate);
+        const summary = summarizeGroup(g.signups);
 
         return (
-          <div key={g.courseId}>
+          <Card key={g.courseId} className="gap-0 overflow-hidden p-0">
             <button
               type="button"
               onClick={() =>
@@ -238,45 +269,42 @@ export function PastSignupsList({
               }
               aria-expanded={s.expanded}
               aria-controls={sectionId}
-              className="w-full flex items-center justify-between gap-3 px-3 py-3 text-left smooth-transition hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
             >
-              <span className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <ChevronDown
-                  className={`size-4 shrink-0 text-muted-foreground transition-transform ${s.expanded ? '' : '-rotate-90'}`}
-                />
-                <span className="min-w-0 truncate">
-                  <span className="text-sm font-medium text-foreground">{g.className}</span>
-                  {endLabel && (
-                    <span className="ml-2 text-xs font-medium tracking-wide text-muted-foreground">
-                      Sluttet {endLabel}
-                    </span>
+                  className={cn(
+                    'size-4 shrink-0 text-muted-foreground transition-transform',
+                    !s.expanded && '-rotate-90',
                   )}
-                </span>
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {g.className}
+                  </p>
+                  {endLabel && (
+                    <p className="text-xs text-tertiary-foreground">
+                      Sluttet {endLabel}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+                {summary}
               </span>
-              <Badge variant="secondary" className="text-muted-foreground tracking-wide shrink-0">
-                {g.signups.length} {g.signups.length === 1 ? 'påmeldt' : 'påmeldte'}
-              </Badge>
             </button>
 
             {s.expanded && (
-              <div id={sectionId} className="border-t border-border">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <SignupTableHead hideCourse />
-                    <tbody className="divide-y divide-border">
-                      {visible.map(signup => (
-                        <SignupRow
-                          key={signup.id}
-                          signup={signup}
-                          actionHandlers={actionHandlers}
-                          hideCourse
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div id={sectionId} className="border-t border-border divide-y divide-border">
+                {visible.map(signup => (
+                  <CompactPastSignupItem
+                    key={signup.id}
+                    signup={signup}
+                    actionHandlers={actionHandlers}
+                  />
+                ))}
                 {hasMore && (
-                  <div className="flex justify-center p-4 border-t border-border">
+                  <div className="flex justify-center p-3">
                     <Button
                       variant="outline-soft"
                       size="sm"
@@ -296,7 +324,7 @@ export function PastSignupsList({
                 )}
               </div>
             )}
-          </div>
+          </Card>
         );
       })}
     </div>

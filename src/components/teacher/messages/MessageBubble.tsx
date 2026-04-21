@@ -20,7 +20,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
       }`}
     >
       {isOutgoing ? (
-        <Badge className="mb-1 flex h-8 w-8 items-center justify-center rounded-full px-0 text-xs shrink-0">
+        <Badge className="mb-1 flex size-8 items-center justify-center rounded-full px-0 text-xs shrink-0">
           Du
         </Badge>
       ) : (
@@ -42,7 +42,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
           }`}
         >
           <p
-            className={`text-sm leading-relaxed ${
+            className={`text-sm ${
               isOutgoing ? '' : 'text-foreground'
             }`}
           >
@@ -50,13 +50,13 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
           </p>
         </div>
         <span
-          className={`text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground ${
+          className={`text-xs tabular-nums flex items-center gap-1 text-tertiary-foreground ${
             isOutgoing ? 'pr-1' : 'pl-1'
           }`}
         >
           {formatMessageTimestamp(message.created_at)}
           {isOutgoing && message.is_read && (
-            <CheckCheck className="h-3 w-3 text-success" />
+            <CheckCheck className="size-3 text-success" />
           )}
         </span>
       </div>

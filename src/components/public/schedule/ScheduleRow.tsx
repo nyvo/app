@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { MapPin, User } from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
-import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Badge } from '@/components/ui/badge';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface ScheduleRowProps {
@@ -71,23 +71,23 @@ export function ScheduleRow({ course, studioSlug, displayDate }: ScheduleRowProp
             {course.title}
           </span>
           {isCancelled && (
-            <StatusIndicator variant="warning" mode="badge" size="sm" label="Avlyst" />
+            <Badge variant="warning" shape="rect" size="sm">Avlyst</Badge>
           )}
           {seriesBadge && !isCancelled && (
-            <StatusIndicator variant="neutral" mode="badge" size="sm" label={seriesBadge} />
+            <Badge variant="neutral" shape="rect" size="sm">{seriesBadge}</Badge>
           )}
         </div>
 
-        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-xs font-medium tracking-wide text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-xs text-muted-foreground">
           {instructorName && (
             <span className="flex items-center gap-1 truncate">
-              <User className="size-3 shrink-0" />
+              <User className="size-3.5 shrink-0" />
               <span className="truncate">{instructorName}</span>
             </span>
           )}
           {course.location && (
             <span className="hidden sm:flex items-center gap-1 truncate">
-              <MapPin className="size-3 shrink-0" />
+              <MapPin className="size-3.5 shrink-0" />
               <span className="truncate">{course.location}</span>
             </span>
           )}
@@ -102,7 +102,7 @@ export function ScheduleRow({ course, studioSlug, displayDate }: ScheduleRowProp
         {spots && (
           <span className={cn(
             'text-xs font-medium tracking-wide whitespace-nowrap',
-            isFull ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-500',
+            isFull ? 'text-muted-foreground' : 'text-warning',
           )}>
             {spots}
           </span>

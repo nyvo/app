@@ -13,7 +13,7 @@ const NotFoundPage = () => {
         
         <Link to="/" className="flex items-center gap-2 select-none">
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-            <Infinity className="w-3.5 h-3.5" />
+            <Infinity className="size-3.5" />
           </div>
           <span className="text-base font-medium text-foreground">
             Ease
@@ -37,7 +37,7 @@ const NotFoundPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
             Siden ble ikke funnet
           </h1>
-          <p className="text-sm mb-8 text-muted-foreground">
+          <p className="text-base mb-8 text-muted-foreground">
             Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
           </p>
 

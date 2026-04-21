@@ -33,7 +33,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
       <CardContent>
         {/* Progress bar */}
         <div className="mb-4">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground mb-1.5">
+          <p className="text-xs text-muted-foreground mb-1.5">
             {motivationalSubtitle}
           </p>
           <div
@@ -87,7 +87,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                     {step.title}
                   </p>
                   {isNext && (
-                    <p className="text-xs font-medium tracking-wide mt-0.5 text-muted-foreground">
+                    <p className="text-xs mt-0.5 text-muted-foreground">
                       {step.description}
                     </p>
                   )}
@@ -95,8 +95,8 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
                 {/* Completed check (right side) */}
                 {step.isComplete && (
-                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-green-100 border border-green-300">
-                    <Check className="h-3 w-3 text-green-800" />
+                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-success/10 border border-success/20">
+                    <Check className="size-3 text-success" />
                   </div>
                 )}
 
@@ -104,7 +104,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 {!step.isComplete && isNext && (
                   <>
                     {isLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin shrink-0" />
+                      <Loader2 className="size-3.5 text-muted-foreground animate-spin shrink-0" />
                     ) : step.actionHref ? (
                       <Button variant="outline-soft" size="compact" asChild>
                         <Link to={step.actionHref}>

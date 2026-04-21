@@ -86,7 +86,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             {loading ? (
               <Spinner size="md" />
             ) : (
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal className="size-4" />
             )}
           </Button>
         </DropdownMenuTrigger>
@@ -102,14 +102,14 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 onClick={() => runAction(() => handlers.onSendPaymentLink(signup.id))}
                 disabled={loading}
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="size-4 mr-2" />
                 Send betalingslenke på nytt
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setConfirmDialog('resolve')}
                 disabled={loading}
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="size-4 mr-2" />
                 Merk som betalt
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -125,14 +125,14 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 onClick={() => runAction(() => handlers.onSendPaymentLink(signup.id))}
                 disabled={loading}
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="size-4 mr-2" />
                 Send påminnelse
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setConfirmDialog('resolve')}
                 disabled={loading}
               >
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="size-4 mr-2" />
                 Merk som betalt
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -146,7 +146,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
               disabled={loading}
               className="text-primary focus:text-primary"
             >
-              <XCircle className="h-4 w-4 mr-2" />
+              <XCircle className="size-4 mr-2" />
               Avbestill påmelding
             </DropdownMenuItem>
           )}
@@ -161,7 +161,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink className="size-4 mr-2" />
                   Se i Stripe
                 </a>
               </DropdownMenuItem>
@@ -180,10 +180,10 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs font-mono text-muted-foreground truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                    <span className="text-sm font-medium text-foreground tabular-nums">{formatKroner(signup.amountPaid)}</span>
+                    <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { StatusIndicator } from '@/components/ui/status-indicator';
+import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -154,7 +154,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
   }
 
   const fieldLabelCls = 'text-xs font-medium mb-1.5 block text-foreground';
-  const errorCls = 'text-xs font-medium tracking-wide text-destructive mt-1';
+  const errorCls = 'text-xs font-medium text-destructive mt-1';
 
   // Header shown in every state
   const PriceHeader = (
@@ -167,28 +167,25 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
           <span className="text-xs text-muted-foreground">for hele kursrekken</span>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium tracking-wide text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {course.start_date && (
           <span className="inline-flex items-center gap-1">
-            <Calendar className="size-3 shrink-0" />
+            <Calendar className="size-3.5 shrink-0" />
             {isSeries ? 'Starter ' : ''}{formatDate(course.start_date)}
             {startTime && ` · kl. ${startTime}`}
           </span>
         )}
         {(weeksLabel || course.duration) && (
           <span className="inline-flex items-center gap-1">
-            <Clock className="size-3 shrink-0" />
+            <Clock className="size-3.5 shrink-0" />
             {weeksLabel || formatDuration(course.duration)}
           </span>
         )}
         {spotsLabel && (
-          <StatusIndicator
-            variant={spotsLabel === 'Fullt' ? 'neutral' : 'warning'}
-            mode="badge"
-            size="sm"
-            label={spotsLabel}
-            icon={Users}
-          />
+          <Badge variant={spotsLabel === 'Fullt' ? 'neutral' : 'warning'} shape="rect" size="sm">
+            <Users />
+            {spotsLabel}
+          </Badge>
         )}
       </div>
     </div>
@@ -332,13 +329,13 @@ function InstructorsSection({ instructors }: { instructors: PublicCourseWithDeta
             <UserAvatar name={i.name} src={i.avatar_url} size="md" className="mt-0.5 shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-foreground">{i.name || 'Instruktør'}</span>
+                <span className="text-base font-medium text-foreground">{i.name || 'Instruktør'}</span>
                 {i.role === 'guest' && (
-                  <StatusIndicator variant="neutral" mode="badge" size="sm" label="Gjesteinstruktør" />
+                  <Badge variant="neutral" shape="rect" size="sm">Gjesteinstruktør</Badge>
                 )}
               </div>
               {i.bio && (
-                <p className="text-sm text-muted-foreground leading-relaxed mt-1 whitespace-pre-wrap">
+                <p className="text-base text-muted-foreground leading-relaxed mt-1 whitespace-pre-wrap">
                   {i.bio}
                 </p>
               )}
@@ -391,7 +388,7 @@ function Section({ title, children, className }: { title: string; children: Reac
   return (
     <section className={cn('space-y-3', className)}>
       <h3 className="text-xs font-medium tracking-wide uppercase text-muted-foreground">{title}</h3>
-      <div className="text-sm text-foreground">{children}</div>
+      <div className="text-base text-foreground">{children}</div>
     </section>
   );
 }
@@ -466,7 +463,7 @@ export default function PublicCourseDetailPage() {
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-background">
       {/* Header with back button */}
-      <header className="sticky top-0 z-10 shrink-0 border-b border-border bg-background/95 backdrop-blur-md">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-border bg-surface-elevated backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:px-6">
           <Button
             variant="ghost"
@@ -478,7 +475,7 @@ export default function PublicCourseDetailPage() {
             Tilbake
           </Button>
           <Link to="/" className="hidden sm:flex items-center gap-2 group ml-auto">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-background border border-border group-hover:border-ring transition-colors">
+            <div className="flex size-7 items-center justify-center rounded-md bg-background border border-border group-hover:border-ring transition-colors">
               <Leaf className="size-3.5 text-foreground" />
             </div>
             <span className="text-sm font-medium text-foreground">Ease</span>
@@ -517,7 +514,7 @@ export default function PublicCourseDetailPage() {
                     {course.title}
                   </h1>
                   {course.organization && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       <Link to={`/studio/${course.organization.slug}`} className="hover:text-foreground smooth-transition">
                         {course.organization.name}
                       </Link>

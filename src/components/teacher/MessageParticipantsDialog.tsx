@@ -112,7 +112,7 @@ export function MessageParticipantsDialog({
         <DialogHeader>
           <DialogTitle>Melding til deltakere</DialogTitle>
           <DialogDescription>
-            Sendes på e-post til {participants.length} deltaker{participants.length !== 1 ? 'e' : ''} i {courseName}
+            Sendes på e-post til <span className="tabular-nums">{participants.length}</span> deltaker{participants.length !== 1 ? 'e' : ''} i {courseName}
           </DialogDescription>
         </DialogHeader>
 
@@ -145,7 +145,7 @@ export function MessageParticipantsDialog({
             loading={isSending}
             loadingText="Sender"
           >
-            <Send className="h-3.5 w-3.5" />
+            <Send className="size-3.5" />
             Send melding
           </Button>
         </DialogFooter>

@@ -4,6 +4,7 @@ import { ExternalLink } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ErrorState } from '@/components/ui/error-state';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -135,7 +136,7 @@ const PaymentsPage = () => {
         className="px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-10 border-b border-border pt-6 pb-8 lg:pt-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-3xl font-semibold text-foreground">
             Betalinger
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">Oversikt over utbetalinger og transaksjoner.</p>
@@ -146,7 +147,7 @@ const PaymentsPage = () => {
           {!isStripeConnected && (
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
-                <h2 className="text-base font-medium text-foreground">Sett opp betalinger</h2>
+                <h2 className="text-base font-semibold text-foreground">Sett opp betalinger</h2>
                 <p className="text-sm mt-1 text-muted-foreground">Knytt kontoen din til Stripe for å motta betaling fra deltakere.</p>
               </div>
               <Card className="md:col-span-2">
@@ -191,7 +192,7 @@ const PaymentsPage = () => {
               {/* Oversikt — balance cards */}
               <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                 <div>
-                  <h2 className="text-base font-medium text-foreground">Oversikt</h2>
+                  <h2 className="text-base font-semibold text-foreground">Oversikt</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Saldo og kommende utbetalinger.</p>
                 </div>
                 <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -222,22 +223,23 @@ const PaymentsPage = () => {
               {/* Siste utbetalinger */}
               <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                 <div>
-                  <h2 className="text-base font-medium text-foreground">Siste utbetalinger</h2>
+                  <h2 className="text-base font-semibold text-foreground">Siste utbetalinger</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Utbetalinger til bankkontoen din.</p>
                 </div>
                 <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                   {loading ? (
                     <SkeletonRows count={3} />
                   ) : error ? (
-                    <div className="px-6 py-8 text-center">
-                      <p className="text-sm text-muted-foreground">{error}</p>
-                      <Button variant="ghost" size="compact" onClick={fetchData} className="mt-2">
-                        Prøv igjen
-                      </Button>
-                    </div>
+                    <ErrorState
+                      variant="inline"
+                      message={error}
+                      onRetry={fetchData}
+                      retryLabel="Prøv igjen"
+                    />
                   ) : !balanceData?.payouts.length ? (
-                    <div className="px-6 py-8 text-center">
-                      <p className="text-sm text-muted-foreground">Ingen utbetalinger ennå</p>
+                    <div className="flex flex-col items-center gap-1 py-8 text-center">
+                      <p className="text-sm font-medium text-foreground">Ingen utbetalinger ennå</p>
+                      <p className="text-xs text-muted-foreground">Utbetalinger vises her når de er klare.</p>
                     </div>
                   ) : (
                     balanceData.payouts.map((payout) => (
@@ -250,30 +252,31 @@ const PaymentsPage = () => {
               {/* Siste transaksjoner */}
               <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                 <div>
-                  <h2 className="text-base font-medium text-foreground">Siste transaksjoner</h2>
+                  <h2 className="text-base font-semibold text-foreground">Siste transaksjoner</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Betalinger fra deltakere.</p>
                 </div>
                 <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                   {loading ? (
                     <SkeletonRows count={4} />
                   ) : !transactions.length ? (
-                    <div className="px-6 py-8 text-center">
-                      <p className="text-sm text-muted-foreground">Ingen transaksjoner ennå</p>
+                    <div className="flex flex-col items-center gap-1 py-8 text-center">
+                      <p className="text-sm font-medium text-foreground">Ingen transaksjoner ennå</p>
+                      <p className="text-xs text-muted-foreground">Påmeldinger fra deltakere vises her.</p>
                     </div>
                   ) : (
                     transactions.map((tx) => (
                       <div key={tx.id} className="flex items-center justify-between px-6 py-3.5">
                         <div className="min-w-0 flex-1">
                           <span className="text-sm font-medium block text-foreground truncate">{tx.participant_name}</span>
-                          <span className="text-xs font-medium tracking-wide block text-muted-foreground truncate">
+                          <span className="text-xs block text-muted-foreground truncate">
                             {tx.course?.title || '—'}
                           </span>
                         </div>
                         <div className="text-right ml-4 shrink-0">
-                          <span className="text-sm font-medium tabular-nums text-foreground">
+                          <span className="text-sm font-medium font-mono tabular-nums text-foreground">
                             {formatKroner(tx.amount_paid)}
                           </span>
-                          <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+                          <span className="text-xs tabular-nums block text-muted-foreground">
                             {formatDate(tx.created_at)}
                           </span>
                         </div>
@@ -286,7 +289,7 @@ const PaymentsPage = () => {
               {/* Kontostatus */}
               <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                 <div>
-                  <h2 className="text-base font-medium text-foreground">Kontostatus</h2>
+                  <h2 className="text-base font-semibold text-foreground">Kontostatus</h2>
                   <p className="text-sm mt-1 text-muted-foreground">Stripe-konto og innstillinger.</p>
                 </div>
                 <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
@@ -294,16 +297,16 @@ const PaymentsPage = () => {
                   <div className="flex items-center justify-between px-6 py-4">
                     <div>
                       <span className="text-sm font-medium block text-foreground">Status</span>
-                      <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+                      <span className="text-xs block text-muted-foreground">
                         {balanceData?.account.charges_enabled && balanceData?.account.payouts_enabled
                           ? 'Aktiv'
                           : 'Under behandling'}
                       </span>
                     </div>
-                    <div className={`h-2 w-2 rounded-full ${
+                    <div className={`size-2 rounded-full ${
                       balanceData?.account.charges_enabled && balanceData?.account.payouts_enabled
                         ? 'bg-success'
-                        : 'bg-amber-500'
+                        : 'bg-warning'
                     }`} />
                   </div>
 
@@ -311,7 +314,7 @@ const PaymentsPage = () => {
                   <div className="flex items-center justify-between px-6 py-4">
                     <div>
                       <span className="text-sm font-medium block text-foreground">Stripe-oversikt</span>
-                      <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+                      <span className="text-xs block text-muted-foreground">
                         Se detaljer, endre bankkonto og utbetalingsinnstillinger.
                       </span>
                     </div>
@@ -323,7 +326,7 @@ const PaymentsPage = () => {
                       loadingText="Åpner"
                     >
                       Åpne
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                      <ExternalLink className="ml-1.5 size-3.5" />
                     </Button>
                   </div>
 
@@ -332,7 +335,7 @@ const PaymentsPage = () => {
                     <div className="flex items-center justify-between px-6 py-4">
                       <div>
                         <span className="text-sm font-medium block text-foreground">Stripe trenger mer informasjon</span>
-                        <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+                        <span className="text-xs block text-muted-foreground">
                           Fullfør oppsettet for å unngå avbrudd i utbetalingene.
                         </span>
                       </div>
@@ -361,11 +364,11 @@ function BalanceCard({ label, value, loading }: { label: string; value?: string;
   return (
     <Card>
       <CardContent className="py-4 px-5">
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium tracking-wide text-muted-foreground">{label}</span>
         {loading ? (
           <div className="mt-1 h-7 w-24 animate-pulse rounded bg-muted" />
         ) : (
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">{value}</p>
+          <p className="mt-1 text-2xl font-semibold font-mono tabular-nums text-foreground">{value}</p>
         )}
       </CardContent>
     </Card>
@@ -400,10 +403,10 @@ function PayoutRow({
   return (
     <div className="flex items-center justify-between px-6 py-3.5">
       <div className="min-w-0 flex-1">
-        <span className="text-sm font-medium block text-foreground">
+        <span className="text-sm font-medium font-mono tabular-nums block text-foreground">
           {formatKroner(oreToKroner(payout.amount))}
         </span>
-        <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+        <span className="text-xs tabular-nums block text-muted-foreground">
           {formatDate(payout.arrival_date)}
           {payout.destination_last4 && ` · •••• ${payout.destination_last4}`}
         </span>

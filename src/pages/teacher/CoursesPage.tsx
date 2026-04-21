@@ -1,16 +1,18 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { motion } from 'framer-motion';
-import { Calendar } from '@/lib/icons';
+import { ArrowUpDown, Calendar } from '@/lib/icons';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseListSkeleton, PastCoursesList } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton, PastCoursesList, COURSES_PER_PAGE } from '@/components/teacher/CourseListView';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { getShowEmptyState } from '@/lib/utils';
@@ -55,10 +57,19 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
     totalWeeks: course.total_weeks,
     timeSchedule: course.time_schedule || null,
     imageUrl: course.image_url || null,
+    allowsDropIn: course.allows_drop_in,
   };
 }
 
 type ViewTab = 'active' | 'past' | 'draft';
+type SortKey = 'next' | 'name' | 'signups' | 'updated';
+
+// Default sort per tab — matches the most useful order for each view.
+const DEFAULT_SORT_FOR_TAB: Record<ViewTab, SortKey> = {
+  active: 'next',
+  past: 'updated',
+  draft: 'updated',
+};
 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
@@ -66,6 +77,8 @@ const CoursesPage = () => {
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
+  const [sortKey, setSortKey] = useState<SortKey>('next');
+  const [visibleCount, setVisibleCount] = useState(COURSES_PER_PAGE);
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
@@ -174,22 +187,37 @@ const CoursesPage = () => {
         return true;
       })
       .sort((a, b) => {
-        if (viewTab === 'active') {
-          return a.row.sessionDate.localeCompare(b.row.sessionDate);
+        switch (sortKey) {
+          case 'next':
+            return a.row.sessionDate.localeCompare(b.row.sessionDate);
+          case 'name':
+            return a.row.courseTitle.localeCompare(b.row.courseTitle, 'nb');
+          case 'signups':
+            return b.row.signupsCount - a.row.signupsCount;
+          case 'updated': {
+            const au = a.course.updated_at || a.course.created_at || '';
+            const bu = b.course.updated_at || b.course.created_at || '';
+            return bu.localeCompare(au);
+          }
         }
-        if (viewTab === 'past') {
-          const aKey = a.course.end_date || a.course.start_date || '';
-          const bKey = b.course.end_date || b.course.start_date || '';
-          return bKey.localeCompare(aKey);
-        }
-        const au = a.course.updated_at || a.course.created_at || '';
-        const bu = b.course.updated_at || b.course.created_at || '';
-        return bu.localeCompare(au);
       })
       .map(({ row }) => row);
-  }, [allRows, viewTab, searchQuery]);
+  }, [allRows, viewTab, searchQuery, sortKey]);
 
   const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
+
+  useEffect(() => {
+    setVisibleCount(COURSES_PER_PAGE);
+  }, [viewTab, searchQuery, sortKey]);
+
+  // When the user switches tab, reset sort to that tab's most useful default.
+  useEffect(() => {
+    setSortKey(DEFAULT_SORT_FOR_TAB[viewTab]);
+  }, [viewTab]);
+
+  const visibleRows = filteredRows.slice(0, visibleCount);
+  const hasMoreRows = visibleCount < filteredRows.length;
+  const showLoadMore = !isLoading && !error && filteredRows.length > 0 && !(viewTab === 'past' && !searchQuery) && hasMoreRows;
 
   useEffect(() => {
     setAction(null);
@@ -218,7 +246,7 @@ const CoursesPage = () => {
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
           <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
+            <h1 className="text-3xl font-semibold text-foreground">Mine kurs</h1>
             {!showCoursesEmptyState && (
               <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
             )}
@@ -250,13 +278,27 @@ const CoursesPage = () => {
                     )}
                   </ToggleGroupItem>
                 </ToggleGroup>
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Søk etter kurs"
-                  aria-label="Søk etter kurs"
-                  className="w-full md:w-auto md:ml-auto md:max-w-xs"
-                />
+                <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
+                  <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                    <SelectTrigger className="w-44" aria-label="Sorter kurs">
+                      <ArrowUpDown className="size-3.5 text-muted-foreground" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="next">Neste økt</SelectItem>
+                      <SelectItem value="name">Navn (A–Å)</SelectItem>
+                      <SelectItem value="signups">Påmeldte (mest fullt)</SelectItem>
+                      <SelectItem value="updated">Sist endret</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Søk etter kurs"
+                    aria-label="Søk etter kurs"
+                    className="flex-1 md:max-w-xs"
+                  />
+                </div>
               </div>
 
               {isLoading ? (
@@ -279,10 +321,23 @@ const CoursesPage = () => {
                   className="py-16"
                 />
               ) : viewTab === 'past' && !searchQuery ? (
-                <PastCoursesList courses={filteredRows} />
+                <div className="p-3">
+                  <PastCoursesList courses={filteredRows} />
+                </div>
               ) : (
-                <CourseListView courses={filteredRows} />
+                <CourseListView courses={visibleRows} />
               )}
+            </div>
+          )}
+          {showLoadMore && (
+            <div className="mt-3 flex justify-center">
+              <Button
+                variant="outline-soft"
+                size="sm"
+                onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
+              >
+                Vis flere
+              </Button>
             </div>
           )}
         </div>

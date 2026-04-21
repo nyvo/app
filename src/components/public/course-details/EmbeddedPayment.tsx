@@ -91,9 +91,9 @@ function PaymentForm({
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="text-xs font-medium tracking-wide text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+        className="text-xs font-medium text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
       >
-        <ChevronLeft className="h-3.5 w-3.5" />
+        <ChevronLeft className="size-3.5" />
         Tilbake
       </Button>
 
@@ -101,18 +101,18 @@ function PaymentForm({
       <div className="space-y-3 rounded-lg bg-muted p-4">
         <div className="flex justify-between items-center">
           <span className="text-sm text-foreground">{courseName}</span>
-          <span className="text-sm text-foreground">{formatKroner(price)}</span>
+          <span className="text-sm font-mono tabular-nums text-foreground">{formatKroner(price)}</span>
         </div>
         {calculateServiceFee(price) > 0 && (
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Servicegebyr</span>
-            <span className="text-sm text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
+            <span className="text-sm font-mono tabular-nums text-muted-foreground">{formatKroner(calculateServiceFee(price))}</span>
           </div>
         )}
         <Separator />
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-foreground">Totalt</span>
-          <span className="text-sm font-medium text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
+          <span className="text-sm font-mono font-medium tabular-nums text-foreground">{formatKroner(calculateTotalPrice(price))}</span>
         </div>
       </div>
 
@@ -146,12 +146,12 @@ function PaymentForm({
         loading={processing}
         loadingText="Behandler betaling"
       >
-        <Lock className="h-3.5 w-3.5 mr-1.5" />
+        <Lock className="size-3.5 mr-1.5" />
         Betal {formatKroner(calculateTotalPrice(price))}
       </Button>
 
-      <p className="text-xs font-medium tracking-wide flex items-center justify-center gap-1 text-center text-muted-foreground">
-        <CreditCard className="h-3 w-3" />
+      <p className="text-xs flex items-center justify-center gap-1 text-center text-muted-foreground">
+        <CreditCard className="size-3.5" />
         Sikker betaling via Stripe
       </p>
     </form>

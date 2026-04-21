@@ -46,7 +46,7 @@ export function ChatView({
             onClick={onBack}
             aria-label="Tilbake til samtaler"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="size-6" />
           </Button>
           <div className="relative">
             <UserAvatar
@@ -58,10 +58,10 @@ export function ChatView({
             />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-medium truncate text-foreground">
+            <h3 className="text-base font-semibold truncate text-foreground">
               {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
             </h3>
-            <p className="text-xs font-medium tracking-wide truncate text-muted-foreground">
+            <p className="text-xs font-mono truncate text-muted-foreground">
               {conversation.participant?.email || 'Elev'}
             </p>
           </div>

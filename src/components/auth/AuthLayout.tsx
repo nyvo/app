@@ -26,7 +26,7 @@ export function AuthLayout({
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
         <Link to="/" className="flex items-center gap-2 select-none mx-auto">
           <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-            <Infinity className="w-3.5 h-3.5" />
+            <Infinity className="size-3.5" />
           </div>
           <span className="text-base font-medium text-foreground">
             Ease

@@ -502,8 +502,8 @@ const CourseDetailPage = () => {
 
           <div className="flex-1 flex items-center justify-center text-center">
             <div>
-            <h1 className="text-3xl font-semibold tracking-tight mb-2 text-foreground">Kurs ikke funnet</h1>
-            <p className="text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
+            <h1 className="text-3xl font-semibold mb-2 text-foreground">Kurs ikke funnet</h1>
+            <p className="text-sm text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             </div>
           </div>
         </div>
@@ -614,7 +614,7 @@ const CourseDetailPage = () => {
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                <h1 className="text-3xl font-semibold text-foreground">
                   {course.title}
                 </h1>
                 <div className="text-sm mt-1 flex items-center gap-3 text-muted-foreground">
@@ -632,7 +632,7 @@ const CourseDetailPage = () => {
                   )}
                   {course.createdAt && (
                     <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
+                      <Calendar className="size-3.5" />
                       Opprettet {formatDateNorwegian(new Date(course.createdAt), 'd. MMM')}
                     </span>
                   )}
@@ -672,18 +672,18 @@ const CourseDetailPage = () => {
                       onClick={() => currentOrganization?.slug && window.open(`/studio/${currentOrganization.slug}/${id}`, '_blank')}
                       disabled={!currentOrganization?.slug}
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <ExternalLink className="size-3.5" />
                       Vis side
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline-soft" size="compact" className="px-2">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setShowUnpublishConfirm(true)}>
-                          <EyeOff className="h-3.5 w-3.5 mr-2" />
+                          <EyeOff className="size-3.5 mr-2" />
                           Gjør til utkast
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -906,7 +906,7 @@ const CourseDetailPage = () => {
           {refundPreview.count > 0 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <span className="text-xs font-medium block text-foreground">
+                <span className="text-xs font-medium tracking-wide block text-muted-foreground">
                   Refunderes
                 </span>
                 <div className="max-h-[200px] overflow-y-auto">
@@ -918,8 +918,8 @@ const CourseDetailPage = () => {
                         i < refundPreview.participants.length - 1 && 'border-b border-border'
                       )}
                     >
-                      <span className="text-sm text-foreground">{p.participant_name || p.participant_email}</span>
-                      <span className="text-sm tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
+                      <span className="text-sm font-medium text-foreground">{p.participant_name || p.participant_email}</span>
+                      <span className="text-sm font-mono tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
                     </div>
                   ))}
                 </div>
@@ -927,7 +927,7 @@ const CourseDetailPage = () => {
 
               <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">Total refusjon</span>
-                <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
+                <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>
             </div>
           )}

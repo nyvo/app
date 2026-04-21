@@ -22,7 +22,7 @@ export function EventCard({ event, isSelected, onSelect, columnIndex = 0, column
   const isSeries = event.courseType !== 'event';
 
   const accentColor = isCompleted
-    ? { stripe: 'bg-muted-foreground/30', bg: 'bg-muted/40', border: 'border-border' }
+    ? { stripe: 'bg-muted-foreground/30', bg: 'bg-muted/50', border: 'border-border' }
     : isSeries
       ? { stripe: 'bg-chart-3', bg: 'bg-chart-3/8', border: 'border-chart-3/25' }
       : { stripe: 'bg-success', bg: 'bg-success/8', border: 'border-success/25' };
@@ -44,10 +44,10 @@ export function EventCard({ event, isSelected, onSelect, columnIndex = 0, column
         <div className="flex-1 p-2 flex flex-col min-w-0">
           {isCompact || isNarrow ? (
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-medium tracking-wide truncate text-foreground">
+              <p className="text-xs font-medium truncate text-foreground">
                 {event.title}
               </p>
-              <span className="text-xs font-medium tracking-wide shrink-0 text-muted-foreground">
+              <span className="text-xs tabular-nums shrink-0 text-foreground">
                 {formatTime(event.startTime)}
               </span>
             </div>
@@ -58,14 +58,14 @@ export function EventCard({ event, isSelected, onSelect, columnIndex = 0, column
                   {event.title}
                 </p>
                 {isActive && (
-                  <Badge variant="secondary" className="shrink-0 border-0 bg-green-100 px-1.5 py-0.5 text-xxs text-green-800 ring-1 ring-inset ring-green-300">
+                  <Badge variant="success" shape="rect" size="xs" className="shrink-0">
                     Pågår
                   </Badge>
                 )}
               </div>
               <div className="mt-auto pt-1.5">
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Tidspunkt</p>
-                <p className="text-xs font-medium tracking-wide text-foreground">
+                <p className="text-xs tabular-nums text-foreground">
                   {formatTime(event.startTime)} – {formatTime(event.endTime)}
                 </p>
               </div>

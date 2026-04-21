@@ -63,7 +63,7 @@ export function PublishCourseDialog({
             loadingText="Sender deg til Stripe …"
           >
             Sett opp betalinger
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="size-3.5" />
           </Button>
         </DialogFooter>
       </DialogContent>
