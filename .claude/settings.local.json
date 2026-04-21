@@ -140,7 +140,8 @@
       "Bash(tee e2e/.auth/timestamp.env)",
       "Bash(VA_TIMESTAMP=1776700072 npx playwright test e2e/visual-audit-setup.spec.ts --reporter=list)",
       "Bash(VA_ACTIVE_COURSE_ID=cfb38a4f-7405-4e11-a26c-f0f3104cc860 VA_PAST_COURSE_ID=0910083d-32ea-4a91-b9a1-f0d93fdcfeaf npx playwright test e2e/visual-audit-screenshots.spec.ts --reporter=list)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "Bash(npx eslint *)"
     ],
     "deny": [],
     "ask": []
