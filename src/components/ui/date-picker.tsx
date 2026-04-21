@@ -64,7 +64,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           <span className={cn(!value && 'text-muted-foreground')}>
             {value ? formatDateNorwegian(value) : placeholder}
           </span>
-          <ChevronDown className={cn('h-4 w-4 text-muted-foreground shrink-0', error && 'text-destructive')} />
+          <ChevronDown className={cn('size-4 text-muted-foreground shrink-0', error && 'text-destructive')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className='w-auto overflow-hidden p-0' align='start' showOverlay>
@@ -85,7 +85,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
             weekdays: "flex justify-between",
             weekday: "text-muted-foreground w-11 text-center text-xs font-normal",
             week: "flex justify-between w-full mt-1",
-            day: "h-11 w-11 p-0 text-center",
+            day: "size-11 p-0 text-center",
           }}
         />
       </PopoverContent>

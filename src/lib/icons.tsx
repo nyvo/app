@@ -53,6 +53,7 @@ export {
   ArrowLeft,
   ArrowRight,
   ArrowRightLeft,
+  ArrowUpDown,
   ArrowUpRight,
   Bell,
   BookOpen,

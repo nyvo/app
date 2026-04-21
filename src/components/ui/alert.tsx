@@ -12,9 +12,9 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
-        info: "bg-card [&_svg]:text-blue-900",
-        success: "bg-card [&_svg]:text-green-800",
-        warning: "bg-card [&_svg]:text-amber-900",
+        info: "bg-card [&_svg]:text-info",
+        success: "bg-card [&_svg]:text-success",
+        warning: "bg-card [&_svg]:text-warning",
         error: "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90",
         neutral: "bg-card [&_svg]:text-muted-foreground",
       },
@@ -32,9 +32,9 @@ const alertVariants = cva(
 
 const variantTextColor: Record<string, string> = {
   default: "text-foreground",
-  info: "text-blue-900",
-  success: "text-green-800",
-  warning: "text-amber-900",
+  info: "text-info",
+  success: "text-success",
+  warning: "text-warning",
   error: "text-destructive",
   destructive: "text-destructive",
   neutral: "text-foreground",

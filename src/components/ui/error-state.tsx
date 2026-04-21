@@ -32,10 +32,10 @@ export const ErrorState = React.memo(function ErrorState({
       role="alert"
       aria-live="polite"
     >
-      <div className="mb-4 flex size-12 items-center justify-center rounded-lg border border-red-300/70 bg-red-100/60">
-        <AlertCircle className="h-6 w-6 text-red-700 stroke-[1.5]" aria-hidden="true" />
+      <div className="mb-4 flex size-12 items-center justify-center rounded-lg border border-destructive/20 bg-destructive/10">
+        <AlertCircle className="size-6 text-destructive" aria-hidden="true" />
       </div>
-      <h3 className="text-base font-medium mb-1 text-foreground">{title}</h3>
+      <h3 className="text-base font-semibold mb-1 text-foreground">{title}</h3>
       <p className="text-sm mb-4 max-w-xs text-muted-foreground">{message}</p>
       {onRetry && (
         <Button
@@ -43,7 +43,7 @@ export const ErrorState = React.memo(function ErrorState({
           size="compact"
           onClick={onRetry}
         >
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+          <RefreshCw className="size-3.5" aria-hidden="true" />
           {retryLabel}
         </Button>
       )}

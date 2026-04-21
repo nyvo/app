@@ -1,54 +1,21 @@
-import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
+import { Badge, type badgeVariants } from './badge';
+import type { VariantProps } from 'class-variance-authority';
 import type { SignupStatus } from '@/types/database';
 
 export type { SignupStatus };
 export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
 export type BadgeStatus = SignupStatus | CourseStatus;
 
-interface StatusConfig {
-  variant: IndicatorVariant;
-  label: string;
-  showIcon: boolean;
-}
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
-const statusConfig: Record<BadgeStatus, StatusConfig> = {
-  // Signup statuses
-  confirmed: {
-    variant: 'success',
-    label: 'Påmeldt',
-    showIcon: false,
-  },
-  cancelled: {
-    variant: 'neutral',
-    label: 'Avbestilt',
-    showIcon: false,
-  },
-  course_cancelled: {
-    variant: 'warning',
-    label: 'Kurs avlyst',
-    showIcon: false,
-  },
-  // Course statuses
-  draft: {
-    variant: 'neutral',
-    label: 'Utkast',
-    showIcon: false,
-  },
-  active: {
-    variant: 'success',
-    label: 'Pågår',
-    showIcon: false,
-  },
-  upcoming: {
-    variant: 'success',
-    label: 'Kommende',
-    showIcon: false,
-  },
-  completed: {
-    variant: 'neutral',
-    label: 'Fullført',
-    showIcon: false,
-  },
+const config: Record<BadgeStatus, { variant: BadgeVariant; label: string }> = {
+  confirmed:        { variant: 'success', label: 'Påmeldt' },
+  cancelled:        { variant: 'neutral', label: 'Avbestilt' },
+  course_cancelled: { variant: 'warning', label: 'Kurs avlyst' },
+  draft:            { variant: 'neutral', label: 'Utkast' },
+  active:           { variant: 'success', label: 'Pågår' },
+  upcoming:         { variant: 'success', label: 'Kommende' },
+  completed:        { variant: 'neutral', label: 'Fullført' },
 };
 
 interface StatusBadgeProps {
@@ -58,27 +25,23 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-export function StatusBadge({
-  status,
-  size = 'md',
-  customLabel,
-  className
-}: StatusBadgeProps) {
-  const config = statusConfig[status];
-  const label = customLabel || config.label;
-
-  // Map md/sm to StatusIndicator sizes
-  const indicatorSize: IndicatorSize = size === 'sm' ? 'sm' : 'md';
-
+/**
+ * StatusBadge — for course and generic signup status in tables / list rows.
+ * Uses rect shape (slightly rounded) because it lives in data-dense surfaces.
+ * For combined signup+payment state, use SignupStatusBadge. For payment state alone, use PaymentBadge.
+ */
+export function StatusBadge({ status, size = 'sm', customLabel, className }: StatusBadgeProps) {
+  const { variant, label } = config[status];
   return (
-    <StatusIndicator
-      variant={config.variant}
-      mode="badge"
-      size={indicatorSize}
-      label={label}
-      icon={undefined}
-      ariaLabel={`Status: ${label}`}
+    <Badge
+      variant={variant}
+      shape="rect"
+      size={size}
       className={className}
-    />
+      role="status"
+      aria-label={`Status: ${customLabel || label}`}
+    >
+      {customLabel || label}
+    </Badge>
   );
 }

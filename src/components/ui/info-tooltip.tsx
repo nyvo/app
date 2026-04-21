@@ -35,7 +35,7 @@ export function InfoTooltip({
             )}
             aria-label="Mer informasjon"
           >
-            <Info className={cn('h-3.5 w-3.5', iconClassName)} />
+            <Info className={cn('size-3.5', iconClassName)} />
           </button>
         </TooltipTrigger>
         <TooltipContent side={side}>

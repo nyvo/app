@@ -21,11 +21,11 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
     const parts = dateStr.split('-');
     date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   } else {
-    return <div className={cn("h-11 w-11 rounded-lg bg-muted", className)} />;
+    return <div className={cn("size-11 rounded-lg bg-muted", className)} />;
   }
 
   if (isNaN(date.getTime())) {
-    return <div className={cn("h-11 w-11 rounded-lg bg-muted", className)} />;
+    return <div className={cn("size-11 rounded-lg bg-muted", className)} />;
   }
 
   const month = MONTHS[date.getMonth()];
@@ -34,7 +34,7 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
   return (
     <div
       className={cn(
-        "flex h-11 w-11 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
+        "flex size-11 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
         className
       )}
     >

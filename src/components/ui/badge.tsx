@@ -4,32 +4,71 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Badge — a single primitive for all pill/badge rendering in the app.
+ *
+ * Variant dimensions:
+ *   variant : semantic colour + weight (success/warning/destructive/info/neutral + default/secondary/outline/ghost/link)
+ *   shape   : visual container rounding — "pill" (round, for card meta) or "rect" (slightly rounded, for status rows/tables)
+ *   size    : xs / sm / md
+ *
+ * The 3 typed wrappers (StatusBadge, PaymentBadge, SignupStatusBadge) pick variant + label
+ * from a status enum and render <Badge/>. Do NOT render `<Badge variant="success">…</Badge>` ad-hoc
+ * for a payment status — use PaymentBadge so copy + silence rules stay centralized.
+ */
 const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium tracking-wide transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default:
+          "bg-primary text-primary-foreground border-transparent [a]:hover:bg-primary/80",
         secondary:
-          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
-        destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+          "bg-secondary text-secondary-foreground border-transparent [a]:hover:bg-secondary/80",
         outline:
-          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+          "bg-transparent border-border text-foreground [a]:hover:bg-muted",
         ghost:
-          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-transparent border-transparent hover:bg-muted",
+        destructive:
+          "bg-destructive/10 text-destructive border-transparent focus-visible:ring-destructive/20 [a]:hover:bg-destructive/20",
+        success:
+          "bg-success/10 text-success border-transparent",
+        warning:
+          "bg-warning/10 text-warning border-transparent",
+        info:
+          "bg-info/10 text-info border-transparent",
+        neutral:
+          "bg-muted text-muted-foreground border-transparent",
+        accent:
+          "bg-chart-2/10 text-chart-2 border-transparent",
+        link:
+          "bg-transparent border-transparent text-primary tracking-normal underline-offset-4 hover:underline",
+      },
+      shape: {
+        // Card meta / counts / decorative chips — fully rounded pill
+        pill: "rounded-4xl",
+        // Status in tables / rows — slightly rounded rectangle
+        rect: "rounded-md",
+      },
+      size: {
+        xs: "h-4 px-1.5 text-xxs [&>svg]:size-2.5",
+        sm: "h-5 px-2 text-xs [&>svg]:size-3",
+        md: "h-6 px-2.5 text-xs [&>svg]:size-3.5",
       },
     },
     defaultVariants: {
       variant: "default",
+      shape: "pill",
+      size: "sm",
     },
   }
 )
 
 function Badge({
   className,
-  variant = "default",
+  variant,
+  shape,
+  size,
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -40,7 +79,8 @@ function Badge({
     <Comp
       data-slot="badge"
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      data-shape={shape}
+      className={cn(badgeVariants({ variant, shape, size }), className)}
       {...props}
     />
   )

@@ -1,92 +1,56 @@
-import { StatusIndicator, type IndicatorVariant, type IndicatorMode, type IndicatorSize } from './status-indicator';
+import { Badge, type badgeVariants } from './badge';
+import type { VariantProps } from 'class-variance-authority';
 import type { PaymentStatus } from '@/types/database';
 
 export type { PaymentStatus };
 export type PaymentVisibility = 'always' | 'exceptions';
 
-interface PaymentConfig {
-  variant: IndicatorVariant;
-  label: string;
-  showIcon: boolean;
-}
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
-const paymentConfig: Record<PaymentStatus, PaymentConfig> = {
-  paid: {
-    variant: 'success',
-    label: 'Betalt',
-    showIcon: false,
-  },
-  pending: {
-    variant: 'warning',
-    label: 'Venter betaling',
-    showIcon: false,
-  },
-  failed: {
-    variant: 'error',
-    label: 'Betaling feilet',
-    showIcon: false,
-  },
-  refunded: {
-    variant: 'neutral',
-    label: 'Refundert',
-    showIcon: false,
-  },
+const config: Record<PaymentStatus, { variant: BadgeVariant; label: string }> = {
+  paid:     { variant: 'success',     label: 'Betalt' },
+  pending:  { variant: 'warning',     label: 'Venter betaling' },
+  failed:   { variant: 'destructive', label: 'Betaling feilet' },
+  refunded: { variant: 'neutral',     label: 'Refundert' },
 };
 
 interface PaymentBadgeProps {
   status: PaymentStatus;
   size?: 'sm' | 'md';
-  mode?: IndicatorMode;
   customLabel?: string;
   className?: string;
   /**
-   * Controls visibility behavior:
-   * - "exceptions" (default): Renders nothing for "paid" status (silence is success)
-   * - "always": Renders all statuses including "paid"
+   * Controls visibility:
+   * - "exceptions" (default): renders NOTHING when status is "paid" — silent success in admin views
+   * - "always": renders all statuses including "Betalt" — use in student-facing confirmations
    */
   visibility?: PaymentVisibility;
 }
 
 /**
- * PaymentBadge - Displays payment status with configurable visibility
- *
- * Default behavior (visibility="exceptions"):
- * - "paid" renders NOTHING (silent success for dense teacher/admin views)
- * - Other statuses render normally (exceptions are visible)
- *
- * Alternative (visibility="always"):
- * - All statuses render, including "Betalt" for paid (useful in student-facing contexts)
- *
- * Uses StatusIndicator internally for consistency and accessibility.
+ * PaymentBadge — for payment status in teacher/admin contexts.
+ * Defaults to silent on "paid" so problem states stand out in dense lists.
  */
 export function PaymentBadge({
   status,
-  size = 'md',
-  mode = 'badge',
+  size = 'sm',
   customLabel,
   className,
   visibility = 'exceptions',
 }: PaymentBadgeProps) {
-  // Exception-only mode: paid is silent
-  if (visibility === 'exceptions' && status === 'paid') {
-    return null;
-  }
+  if (visibility === 'exceptions' && status === 'paid') return null;
 
-  const config = paymentConfig[status];
-  const label = customLabel || config.label;
-
-  // Map md/sm to StatusIndicator sizes
-  const indicatorSize: IndicatorSize = size === 'sm' ? 'sm' : 'md';
-
+  const { variant, label } = config[status];
   return (
-    <StatusIndicator
-      variant={config.variant}
-      mode={mode}
-      size={indicatorSize}
-      label={label}
-      icon={undefined}
-      ariaLabel={`Betaling: ${label}`}
+    <Badge
+      variant={variant}
+      shape="rect"
+      size={size}
       className={className}
-    />
+      role="status"
+      aria-label={`Betaling: ${customLabel || label}`}
+    >
+      {customLabel || label}
+    </Badge>
   );
 }

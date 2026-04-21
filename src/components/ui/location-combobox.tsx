@@ -114,7 +114,7 @@ export function LocationCombobox({
           {...ariaProps}
         >
           <span className="truncate">{value || placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -140,9 +140,9 @@ export function LocationCombobox({
                 value === opt.value && 'bg-accent'
               )}
             >
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
               <span className="flex-1 truncate">{opt.label}</span>
-              {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0" />}
+              {value === opt.value && <Check className="size-3.5 shrink-0" />}
             </button>
           ))}
 
@@ -160,9 +160,9 @@ export function LocationCombobox({
                     value === groupName && 'bg-accent'
                   )}
                 >
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
                   <span className="flex-1 truncate">{groupName}</span>
-                  {value === groupName && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  {value === groupName && <Check className="size-3.5 shrink-0" />}
                 </button>
               )}
               {/* Rooms indented under venue */}
@@ -177,9 +177,9 @@ export function LocationCombobox({
                       value === opt.value ? 'bg-accent font-medium' : 'text-muted-foreground'
                     )}
                   >
-                    <DoorOpen className="h-3.5 w-3.5 shrink-0" />
+                    <DoorOpen className="size-3.5 shrink-0" />
                     <span className="flex-1 truncate">{opt.label}</span>
-                    {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    {value === opt.value && <Check className="size-3.5 shrink-0" />}
                   </button>
                 ))}
               </div>

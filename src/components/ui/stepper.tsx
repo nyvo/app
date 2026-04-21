@@ -73,7 +73,7 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
               <>
                 <span
                   className={cn(
-                    'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                    'relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors',
                     isCompleted && 'bg-primary text-primary-foreground',
                     isActive && 'bg-primary text-primary-foreground',
                     isUpcoming &&
@@ -81,7 +81,7 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
                   )}
                 >
                   {isCompleted ? (
-                    <Check className="h-4 w-4 text-primary-foreground" aria-hidden />
+                    <Check className="size-4 text-primary-foreground" aria-hidden />
                   ) : (
                     index + 1
                   )}

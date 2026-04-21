@@ -1,5 +1,7 @@
-import { StickyNote } from '@/lib/icons';
+import { MessageSquare } from '@/lib/icons';
+import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { badgeVariants } from '@/components/ui/badge';
 
 interface NotePopoverProps {
   note?: string;
@@ -13,16 +15,21 @@ export function NotePopover({ note, className }: NotePopoverProps) {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`inline-flex items-center justify-center h-8 w-8 rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-muted ${className || ''}`}
-          aria-label="Vis notat"
-          title="Vis notat"
+          type="button"
+          aria-label="Les notat"
+          className={cn(
+            badgeVariants({ variant: 'neutral', shape: 'rect', size: 'md' }),
+            'cursor-pointer smooth-transition hover:bg-muted-foreground/10 hover:text-foreground',
+            className,
+          )}
         >
-          <StickyNote className="h-4 w-4 shrink-0" />
+          <MessageSquare aria-hidden="true" />
+          Les notat
         </button>
       </PopoverTrigger>
       <PopoverContent align="center" side="top" className="w-56 p-3">
         <div className="flex items-start gap-2">
-          <StickyNote className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+          <MessageSquare className="size-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
           <p className="text-sm text-muted-foreground leading-relaxed">{note}</p>
         </div>
       </PopoverContent>

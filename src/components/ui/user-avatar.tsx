@@ -15,12 +15,12 @@ interface UserAvatarProps {
 }
 
 const sizeConfig: Record<AvatarSize, { container: string; text: string; icon: string }> = {
-  xxs: { container: 'h-4 w-4', text: 'text-[6px]', icon: 'h-2.5 w-2.5' },
-  xs:  { container: 'h-6 w-6', text: 'text-[10px]', icon: 'h-3 w-3' },
-  sm:  { container: 'h-8 w-8', text: 'text-xxs', icon: 'h-4 w-4' },
-  md:  { container: 'h-9 w-9', text: 'text-xs', icon: 'h-4 w-4' },
-  lg:  { container: 'h-10 w-10', text: 'text-sm', icon: 'h-5 w-5' },
-  xl:  { container: 'h-16 w-16', text: 'text-xl', icon: 'h-8 w-8' },
+  xxs: { container: 'size-4', text: 'text-[6px]', icon: 'size-2.5' },
+  xs:  { container: 'size-6', text: 'text-[10px]', icon: 'size-3' },
+  sm:  { container: 'size-8', text: 'text-xxs', icon: 'size-4' },
+  md:  { container: 'size-9', text: 'text-xs', icon: 'size-4' },
+  lg:  { container: 'size-10', text: 'text-sm', icon: 'size-5' },
+  xl:  { container: 'size-16', text: 'text-xl', icon: 'size-8' },
 };
 
 /** Minimalist silhouette SVG for when no name or email is available */

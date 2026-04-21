@@ -1,5 +1,8 @@
-import { StatusIndicator, type IndicatorVariant, type IndicatorSize } from './status-indicator';
+import { Badge, type badgeVariants } from './badge';
+import type { VariantProps } from 'class-variance-authority';
 import type { SignupStatus, PaymentStatus } from '@/types/database';
+
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
 interface SignupStatusBadgeProps {
   status: SignupStatus;
@@ -8,49 +11,32 @@ interface SignupStatusBadgeProps {
   className?: string;
 }
 
-interface DerivedStatus {
-  label: string;
-  variant: IndicatorVariant;
+function derive(status: SignupStatus, payment: PaymentStatus): { variant: BadgeVariant; label: string } {
+  if (payment === 'refunded')           return { variant: 'neutral',     label: 'Refundert' };
+  if (status === 'cancelled')           return { variant: 'neutral',     label: 'Avbestilt' };
+  if (status === 'course_cancelled')    return { variant: 'warning',     label: 'Kurs avlyst' };
+  if (payment === 'failed')             return { variant: 'destructive', label: 'Betaling feilet' };
+  if (payment === 'pending')            return { variant: 'warning',     label: 'Venter betaling' };
+  return { variant: 'success', label: 'Påmeldt' };
 }
 
-function deriveStatus(status: SignupStatus, paymentStatus: PaymentStatus): DerivedStatus {
-  if (paymentStatus === 'refunded') {
-    return { label: 'Refundert', variant: 'neutral' };
-  }
-  if (status === 'cancelled') {
-    return { label: 'Avbestilt', variant: 'neutral' };
-  }
-  if (status === 'course_cancelled') {
-    return { label: 'Kurs avlyst', variant: 'warning' };
-  }
-  // status === 'confirmed'
-  if (paymentStatus === 'failed') {
-    return { label: 'Betaling feilet', variant: 'error' };
-  }
-  if (paymentStatus === 'pending') {
-    return { label: 'Venter betaling', variant: 'warning' };
-  }
-  return { label: 'Påmeldt', variant: 'success' };
-}
-
-export function SignupStatusBadge({
-  status,
-  paymentStatus,
-  size = 'md',
-  className,
-}: SignupStatusBadgeProps) {
-  const { label, variant } = deriveStatus(status, paymentStatus);
-  const indicatorSize: IndicatorSize = size === 'sm' ? 'sm' : 'md';
-
+/**
+ * SignupStatusBadge — combined signup + payment state, derived.
+ * Payment state takes precedence over signup state when there's a conflict
+ * (a refunded cancellation reads as "Refundert", not "Avbestilt").
+ */
+export function SignupStatusBadge({ status, paymentStatus, size = 'sm', className }: SignupStatusBadgeProps) {
+  const { variant, label } = derive(status, paymentStatus);
   return (
-    <StatusIndicator
+    <Badge
       variant={variant}
-      mode="badge"
-      size={indicatorSize}
-      label={label}
-      icon={undefined}
-      ariaLabel={`Status: ${label}`}
+      shape="rect"
+      size={size}
       className={className}
-    />
+      role="status"
+      aria-label={`Status: ${label}`}
+    >
+      {label}
+    </Badge>
   );
 }

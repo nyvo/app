@@ -161,7 +161,7 @@ export function ImageUpload({
                 disabled={disabled}
                 aria-label="Fjern bilde"
               >
-                <X className="h-4 w-4" aria-hidden="true" />
+                <X className="size-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -191,8 +191,8 @@ export function ImageUpload({
             ${displayError ? 'border-destructive' : ''}
           `}
         >
-          <div className="h-10 w-10 rounded-lg bg-card border border-input flex items-center justify-center">
-            <ImagePlus className="h-5 w-5 text-muted-foreground" />
+          <div className="size-10 rounded-lg bg-card border border-input flex items-center justify-center">
+            <ImagePlus className="size-5 text-muted-foreground" />
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-foreground">
@@ -205,7 +205,7 @@ export function ImageUpload({
 
       {displayError && (
         <p className="mt-2 text-xs text-destructive flex items-center gap-1">
-          <AlertCircle className="h-3 w-3" />
+          <AlertCircle className="size-3" />
           {displayError}
         </p>
       )}
