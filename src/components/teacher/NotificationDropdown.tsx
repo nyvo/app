@@ -116,7 +116,7 @@ export function NotificationDropdown() {
             <button
               onClick={handleDismissAll}
               disabled={dismissingAll}
-              className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground active:scale-[0.97] disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+              className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
             >
               Fjern alle
             </button>
@@ -168,7 +168,7 @@ export function NotificationDropdown() {
                         e.preventDefault();
                         handleDismissGroup(group);
                       }}
-                      className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[transform,color] duration-150 ease-out hover:text-foreground active:scale-[0.9] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-[transform,color] duration-150 ease-out hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                       aria-label="Fjern varsel"
                     >
                       <X className="size-3.5 stroke-[2.5]" />

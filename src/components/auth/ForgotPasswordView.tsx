@@ -104,7 +104,7 @@ export const ForgotPasswordView = () => {
               resetForm()
             }}
             variant="outline-soft"
-            className="w-full h-11"
+            size="cta" className="w-full"
           >
             Send på nytt
           </Button>
@@ -149,7 +149,7 @@ export const ForgotPasswordView = () => {
           type="submit"
           loading={isSubmitting}
           loadingText="Sender"
-          className="w-full h-11 mt-2"
+          size="cta" className="w-full mt-2"
         >
           Send lenke
         </Button>

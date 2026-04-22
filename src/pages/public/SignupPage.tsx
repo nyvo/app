@@ -146,7 +146,7 @@ const SignupPage = () => {
           type="submit"
           loading={isSubmitting}
           loadingText="Oppretter konto"
-          className="w-full h-11 mt-2"
+          size="cta" className="w-full mt-2"
         >
           Opprett konto
         </Button>

@@ -114,7 +114,7 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
             </span>
             <Link
               to={`/teacher/courses/${course.id}`}
-              className="group rounded-lg bg-chart-2/10 outline-none smooth-transition hover:bg-chart-2/15 focus-visible:bg-chart-2/15"
+              className="group rounded-lg bg-chart-2/10 outline-none smooth-transition hover:bg-chart-2/20 focus-visible:bg-chart-2/20"
             >
               <div className="p-3 space-y-0.5">
                 <h3 className="truncate text-sm font-medium text-foreground">{course.title}</h3>

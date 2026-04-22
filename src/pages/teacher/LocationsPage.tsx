@@ -241,10 +241,10 @@ function LocationCard({
                     placeholder="Navn på stedet"
                     className="h-7 max-w-56 px-2 text-sm font-medium shadow-none"
                   />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitName} aria-label="Lagre" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitName} aria-label="Lagre" className="">
                     <Check className="size-3.5" />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelName} aria-label="Avbryt" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelName} aria-label="Avbryt" className="">
                     <X className="size-3.5" />
                   </Button>
                 </motion.div>
@@ -255,7 +255,7 @@ function LocationCard({
                   type="button"
                   onClick={() => setEditingField('name')}
                   aria-label="Rediger navn"
-                  className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
+                  className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
                 >
                   <h2 className="truncate text-base font-semibold text-foreground">{name}</h2>
                   <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>
@@ -266,7 +266,7 @@ function LocationCard({
           <Button
             type="button"
             variant="outline-soft"
-            size="compact"
+            size="sm"
             disabled={!isFavorite && hasFavorite}
             onClick={async () => {
               if (!organizationId) return;
@@ -282,8 +282,8 @@ function LocationCard({
             }}
             aria-pressed={isFavorite}
             className={cn(
-              'h-6 shrink-0 gap-1.5 px-2 text-xs active:scale-[0.95] transition-[background-color,border-color,color] duration-200 ease-out',
-              isFavorite && 'border-chart-2/30 bg-chart-2/10 text-chart-2 hover:bg-chart-2/15 hover:text-chart-2'
+              'h-6 shrink-0 gap-1.5 px-2 text-xs transition-[background-color,border-color,color] duration-200 ease-out',
+              isFavorite && 'border-chart-2/20 bg-chart-2/10 text-chart-2 hover:bg-chart-2/20 hover:text-chart-2'
             )}
           >
             <motion.span
@@ -321,10 +321,10 @@ function LocationCard({
                     placeholder="Skriv inn adresse"
                     className="h-7 max-w-64 px-2 text-sm shadow-none"
                   />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitAddress} aria-label="Lagre" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitAddress} aria-label="Lagre" className="">
                     <Check className="size-3.5" />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelAddress} aria-label="Avbryt" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelAddress} aria-label="Avbryt" className="">
                     <X className="size-3.5" />
                   </Button>
                 </motion.div>
@@ -336,7 +336,7 @@ function LocationCard({
                   onClick={() => setEditingField('address')}
                   aria-label="Rediger adresse"
                   className={cn(
-                    "-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]",
+                    "-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none",
                     address ? "text-foreground" : "text-muted-foreground"
                   )}
                 >
@@ -372,7 +372,7 @@ function LocationCard({
                       <button
                         type="button"
                         onClick={() => removeRoom(room)}
-                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground active:scale-[0.9] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                         aria-label={`Fjern ${room}`}
                       >
                         <X className="size-3.5" />
@@ -396,10 +396,10 @@ function LocationCard({
                     placeholder="Navn på rom"
                     className="h-7 w-32 px-2 text-xs"
                   />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitNewRoom} aria-label="Lagre" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitNewRoom} aria-label="Lagre" className="">
                     <Check className="size-3.5" />
                   </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => { setNewRoom(''); setAddingRoom(false); }} aria-label="Avbryt" className="active:scale-[0.95]">
+                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => { setNewRoom(''); setAddingRoom(false); }} aria-label="Avbryt" className="">
                     <X className="size-3.5" />
                   </Button>
                 </motion.div>
@@ -409,7 +409,7 @@ function LocationCard({
                   {...editSwap}
                   type="button"
                   onClick={startAddRoom}
-                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-muted-foreground transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:scale-[0.98]"
+                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-muted-foreground transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
                 >
                   <Plus className="size-4" />
                   Legg til rom
@@ -425,9 +425,9 @@ function LocationCard({
             <AlertDialogTrigger asChild>
               <Button
                 type="button"
-                variant="destructive-outline"
-                size="compact"
-                className="active:scale-[0.97]"
+                variant="destructive"
+                size="sm"
+                className=""
               >
                 <Trash2 className="size-3.5" />
                 Slett sted
@@ -459,7 +459,7 @@ function NewLocationCard({ onClick, loading }: { onClick: () => void; loading: b
       type="button"
       onClick={onClick}
       disabled={loading}
-      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground hover:bg-muted/50 focus-visible:border-foreground focus-visible:bg-muted/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
+      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground hover:bg-muted/50 focus-visible:border-foreground focus-visible:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
     >
       <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-[color] duration-150 ease-out group-hover:text-foreground">
         <MapPinPlus className={cn('size-4', loading && 'animate-pulse')} />

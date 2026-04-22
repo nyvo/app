@@ -140,7 +140,7 @@ export const CourseParticipantsTab = ({
             counts={filterCounts}
           />
         </div>
-        <Button size="compact" onClick={onOpenAddDialog}>
+        <Button size="sm" onClick={onOpenAddDialog}>
           <Plus className="size-4" />
           Legg til deltaker
         </Button>

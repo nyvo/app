@@ -66,10 +66,10 @@ export const SessionList: React.FC<SessionListProps> = ({
         {sessions.length > 6 && (
           <Button
             type="button"
-            variant="ghost"
-            size="sm"
+            variant="plain"
+            size="xs"
             onClick={() => setShowAll((current) => !current)}
-            className="text-xs font-medium tracking-wide h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            className="font-medium tracking-wide"
           >
             {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
             <ChevronDown className={`size-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
@@ -94,7 +94,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                   <div className={`flex min-w-0 items-center gap-4 ${isPast ? 'opacity-60' : ''}`}>
                     <DateBadge
                       dateStr={session.originalDate?.split('T')[0]}
-                      className={isPast ? 'border-border/70 bg-muted text-muted-foreground' : undefined}
+                      className={isPast ? 'border-border bg-muted text-muted-foreground' : undefined}
                     />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -110,10 +110,10 @@ export const SessionList: React.FC<SessionListProps> = ({
                   </div>
                   {!isPast && (
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant="plain"
+                      size="xs"
                       onClick={() => handleEditClick(session.id)}
-                      className="text-xs font-medium tracking-wide h-auto px-2 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-transparent hover:text-foreground"
+                      className="px-2 font-medium tracking-wide opacity-0 group-hover:opacity-100"
                       aria-label={`Rediger ${session.title}`}
                     >
                       Rediger
@@ -152,7 +152,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       <div className="flex gap-2">
                         <Button
                           variant="ghost"
-                          size="compact"
+                          size="sm"
                           className="flex-1"
                           onClick={() => handleCancel(session.id)}
                           disabled={savingSessionId === session.id}
@@ -160,7 +160,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           Avbryt
                         </Button>
                         <Button
-                          size="compact"
+                          size="sm"
                           className="flex-1"
                           onClick={() => handleSave(session.id)}
                           disabled={savingSessionId === session.id || !hasRealSessions || !sessionEdits[session.id]}

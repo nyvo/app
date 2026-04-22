@@ -129,8 +129,33 @@
 - **Meta rows sit on one tier, not two.** If a card/row has multiple lines of metadata under a primary title (e.g. "type + location" on one line, "next session date" on the next), they're equal-weight information — both go on `text-muted-foreground`. Don't drop one line to `text-tertiary-foreground` just because it contains a timestamp. Tertiary is for meta that's genuinely *less* important than the line above it (e.g. a timestamp in the corner of an activity row, next to a primary+secondary pair).
 - **Weight discipline:** `font-medium` (500) for UI labels, chips, button text. `font-semibold` (600) for headings and emphasised body. **Never `font-bold` (700)** — it reads marketing at dashboard sizes and breaks the calm feel. If you need more emphasis, step up the size token before reaching for a heavier weight.
 - **Inline numbers in sans copy:** if a number appears inside a sentence where `font-mono` would look out of place (e.g. "12 av 14 påmeldte"), add `tabular-nums` to the containing element so digits still align across rows.
-- **Border tier discipline:** use `border-border` for subtle/decorative borders (cards, inputs, row separators). For intentional section breaks use `<Separator />` (which uses `border-border` too). Do not introduce one-off border colors, and do not reach for `border-muted-foreground` to "make it visible" — that's a hierarchy smell, usually the right answer is a `<Separator />` or different spacing.
+- **Corner radius convention** — four tiers:
+
+  | Radius | Where | Use for |
+  |--------|-------|---------|
+  | `rounded-md` (`--radius-md`, ~6px) | Buttons, inputs, chips, small controls | Interactive elements sized ≤40px |
+  | `rounded-lg` (`--radius-lg`, ~7px) | Cards, panels, list containers, surface tiles | **All card-like surfaces — `<Card>` primitive, hand-rolled panels, feature grids.** One radius for every "surface" in the app. |
+  | `rounded-xl` (`--radius-xl`, ~10px) | Dialogs, alert-dialogs, modal content, floating sidebar inset | Elevated overlays only — never plain surfaces. The extra roundness is the signal that this is lifted above the page. |
+  | `rounded-full` (9999px) | Avatars, live-indicator dots, pill badges, pill-shape button | Circular/pill by definition |
+
+  **Rule:** if you're rendering a surface with `border` and/or `bg-card`/`bg-background`/`bg-muted`, it's `rounded-lg`. No exceptions. The `<Card>` primitive is aligned to this — do not override to `rounded-xl` on a plain card. Reserve `rounded-xl` for things that genuinely *float* (dialogs, modals).
+
+  **Don't reach for `rounded-[Npx]`.** The two legitimate reasons are already in shadcn primitives (`button.tsx` capping small-button radius with `min(var(--radius-md), 8-10px)`; decorative swatches under 10px using `rounded-[2px]`). If you think you need a new arbitrary value, the answer is usually a different semantic size.
+
+- **Border tier discipline:** two tokens, clear split.
+  - `border-border` — default for cards, inputs, row separators. Use for anything that needs visible structure. `<Separator />` uses this too.
+  - `border-border-subtle` — only for **repeating structural lines** where `border-border` would accumulate into visual noise: schedule gridlines (100px time-slot rows stacked), calendar grids, skeleton dividers in loading states. If you're tempted to reach for this on a single separator, use `border-border` instead — the subtle tier is earned by repetition, not by one-off preference.
+  - Do not introduce one-off border colors and do not reach for `border-muted-foreground` to "make it visible" — that's a hierarchy smell, usually the right answer is a `<Separator />` or different spacing.
 - **Status colors are signals, not decoration.** Four semantic tokens exist: `success` (positive state, delta up, payout sent), `destructive` (error, refund, delete), `warning` (caution, pending, under review), `info` (neutral notification, non-urgent). Never use raw Tailwind colour utilities (`bg-green-100`, `text-red-700`, `text-amber-500`, `bg-blue-100`) for semantic state — always use the token. Rule: max 1 chromatic color per card body (DeltaChip is its own element and doesn't count).
+- **Accent colour (`chart-2`, blue-violet)** — the app's *one* chromatic accent for non-semantic emphasis. Five canonical uses, nothing else:
+  1. **Data viz** — line/area/bar strokes and fills in recharts. Use `var(--color-chart-2)` in SVG / chart config.
+  2. **Tinted icon container** (`bg-chart-2/10 text-chart-2` on a rounded square, size-9/10) — the icon is the chart-2-coloured element on a faint chart-2 wash. Used for "this row represents X" glyphs (activity icons, location pin).
+  3. **Tinted interactive chip/toggle** — same tinted surface plus `border-chart-2/20` for button-like chrome, `hover:bg-chart-2/20 hover:text-chart-2` on hover. Used for favourite-toggles and accent chips.
+  4. **Full-row tint** (`bg-chart-2/10`) where the content on top is **normal** `text-foreground` / `text-tertiary-foreground`, not chart-2. The blue is ambient emphasis ("next up"), not the content colour. Used sparingly — one highlighted row per list.
+  5. **Solid live-indicator dot** (`bg-chart-2` + `animate-ping`) for "happening now" signals in dense lists. Never solid chart-2 elsewhere.
+  - **Badge consumers:** don't hand-roll the tinted surface. Use `<Badge variant="accent">` — it bakes in `bg-chart-2/10 text-chart-2 border-transparent`.
+  - **Don't mix with semantic state.** If a row is `success` (paid), don't also tint it chart-2. The accent is for category/emphasis, not state. Status tokens win.
+  - **Opacity rule reminder:** stick to `/10` bg + `/20` border / hover. No `/15`, `/30`, `/25`, etc.
 - **Form validation errors** use `text-xs font-medium text-destructive`. Keep 500 weight (colour alone isn't enough for colour-blind users) but DO NOT add `tracking-wide` — errors are sentences, not labels. Matches shadcn's own `<FormMessage>` convention.
 - **Sentences vs labels at `text-xs` size** — the single biggest inconsistency to watch for.
   - **Label** (short, scannable, sits above a value or in a table header): `text-xs font-medium tracking-wide text-muted-foreground`. Examples: KPI labels ("Inntekter", "Kapasitet"), table column headers ("Navn", "Status"), dropdown menu section labels ("Betaling feilet"), chips ("Valgfritt", "per person"), short status tags.
@@ -238,9 +263,86 @@
 
   **Silence-on-success pattern:** `PaymentBadge` with default `visibility="exceptions"` renders NOTHING for `paid`. Use this in dense admin lists where the success state is the expected happy path — the badge should only appear when there's a problem to flag. Applied analogously: if you're tempted to show "Active" on every row of a list, consider whether silence on the happy path is clearer.
 
+- **Buttons** — one primitive (`<Button>`) with three dimensions:
+
+  | Prop | Options | Meaning |
+  |------|---------|---------|
+  | `variant` | `default` · `secondary` · `outline` · `outline-soft` · `ghost` · `destructive` · `link` · `plain` | Colour + emphasis |
+  | `shape` | `default` (rect, `rounded-md`) · `pill` (`rounded-full`) | **`pill` only on hero CTAs in marketing / landing contexts.** Dashboard + forms always use rect so buttons share geometry with adjacent inputs. |
+  | `size` | `xs` · `sm` · `default` · `lg` · `cta` · `icon` · `icon-xs` · `icon-sm` · `icon-lg` | Density |
+
+  **Variant decision tree:**
+  - `default` → **primary** action per section. Max 1–2 per screen. Solid primary-colour fill.
+  - `secondary` → alternative action (e.g. "Avbryt" paired with a default). Subtle gray fill.
+  - `outline` → secondary action with more chrome (toolbars, filter buttons). Border + full text colour.
+  - `outline-soft` → tertiary / cancel in dialogs. Same shape as `outline` but text is `muted-foreground` — softer than `outline`.
+  - `ghost` → icon buttons, nav items, close buttons, hover-revealed actions.
+  - `destructive` → destructive action (delete, cancel-with-refund, remove). **Solid red** — use in both menus/inline AND AlertDialog confirmations. Don't pair two destructive buttons in the same action row.
+  - `link` → inline text link styled as button (rare).
+  - `plain` → **inline text action** with button semantics but no chrome (no background, no border, no height). Renders `h-auto p-0` with `muted-foreground` → `foreground` on hover. Use for "Vis alle", "Nullstill", "Tilbake", "Legg til punkt" — actions that read as text inside a card/row, not as a pill. Size prop still controls font-size (`xs` for `text-xs`, `sm` for `text-sm`). Do not reach for this when a real button is warranted.
+
+  **Size decision tree:**
+  - `xs` (h-6) → dense toolbars, chip-adjacent actions.
+  - `sm` (h-8) → default for in-table / in-card actions.
+  - `default` (h-9) → standard page actions.
+  - `lg` (h-10) → rare, emphasised actions.
+  - `cta` (h-11) → **full-width CTA in auth forms / modal primary / hero**. Replaces ad-hoc `className="h-11"` — always use this size.
+  - `icon` / `icon-xs` / `icon-sm` / `icon-lg` → square icon-only buttons.
+
+  **Shape rule:** `shape="pill"` is permitted on `src/pages/public/**` and marketing-adjacent contexts for hero CTAs. Everywhere else stays default rect so buttons visually pair with inputs/fields. **Never mix pill and rect in the same form, toolbar, or action group.**
+
+  **AlertDialog confirmations:** `AlertDialogAction` accepts `variant` + `size` props that flow to the underlying Button. For a destructive confirmation, use `<AlertDialogAction variant="destructive">` — **do not** hand-roll `className="bg-destructive text-destructive-foreground"`.
+
+  **Anti-patterns:**
+  - ❌ `<Button className="h-11 w-full">` → ✅ `<Button size="cta" className="w-full">`
+  - ❌ `<Button className="bg-destructive text-destructive-foreground">` → ✅ `<Button variant="destructive">`
+  - ❌ `<Button className="rounded-full">` → ✅ `<Button shape="pill">`
+  - ❌ `<Button className="active:scale-[0.95]">` — press feedback via className is inconsistent; the primitive already provides subtle `active:translate-y-px`. Don't add more.
+  - ❌ Icon-only buttons with `className="size-8"` → ✅ `<Button size="icon-sm">`
+  - ❌ `<Button variant="ghost" className="h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground">` → ✅ `<Button variant="plain" size="xs">` (or `size="sm"` for `text-sm`)
+
 - **Spacing inside cards:** stick to three values, applied consistently:
   - Title → subtitle: `mt-0.5` (single-line descriptions) or `mt-1` (two-line descriptions)
   - Header → content: `CardHeader` + `CardContent` already handle this — don't hand-add margins
   - Row → row in dense lists: `space-y-1` (activity, signups) or `space-y-3` (upcoming classes with visual chunks)
+- **Card padding tiers** — surface determines the tier, not designer preference. No `p-5`, no `p-7`.
+
+  | Tier | Padding | Use for |
+  |------|---------|---------|
+  | Compact | `p-3` | Inline mini-panels (notification bubble, small decorative tiles) |
+  | Dense dashboard | `p-4` | In-Card-primitive panels, chat bubbles, inline edit panels, small forms |
+  | Standard | `p-6` | Default dashboard cards (collapsible panels, empty states, standard public cards like course signup) |
+  | Form hero | `p-6 sm:p-8` | Primary page forms (create-course, welcome-flow onboarding) |
+  | Marketing card | `p-8` | Landing feature cards |
+  | Mega hero | `p-8 md:p-12` | Full-bleed landing hero cards |
+
+  The `<Card>` primitive itself bakes in `py-6 px-6` (default) or `py-4 px-4` (`size="sm"`) via its sub-components — consumers of `<Card>` don't need to hand-add padding. These tiers apply to **hand-rolled card-like surfaces** (`<div className="rounded-lg border bg-card ...">`).
+
+- **Row padding tiers** — two valid patterns, pick by container:
+
+  | Container | Row padding | Rationale |
+  |-----------|-------------|-----------|
+  | `<Card>` primitive (already has `px-6`) or hand-rolled card with its own padding | `px-4 py-3` | Card provides outer gutter; rows are dense. Used in MessagesList, RegistrationsList, ConversationList. |
+  | Zero-padded card (`<Card className="p-0">` or hand-rolled without `p-*`) | `px-6 py-4` | Rows own the gutter. Used in PaymentsPage transactions, TeacherProfilePage settings rows. |
+
+  Don't invent `py-3.5`, `py-2.5`, `px-5` — if you need denser rows, drop to the compact chip size (`px-3 py-2.5` for tight nested metadata rows); if you need roomier, step up the card's tier instead of hand-tuning the row.
+
+- **Stack gap scale** — use `0.5 / 1 / 2 / 3 / 4 / 6 / 8 / 10` on `space-y-*` and `gap-*`. **Skip 5 and 7** — they signal hand-tuning. If `space-y-4` feels too tight and `space-y-6` feels too loose, the answer is usually that the content tiers are off, not the gap.
+  - `space-y-1` / `space-y-2` — tight meta rows, dense activity lists
+  - `space-y-3` / `space-y-4` — default list and form field stacks
+  - `space-y-6` — card sections inside a page
+  - `space-y-8` — top-level page sections (dashboard page → standard)
+  - `space-y-10` — public marketing-style sections only
+
+- **Page container scale** — pick the pattern by surface:
+
+  | Surface | Pattern |
+  |---------|---------|
+  | Dashboard page | `<div className="mx-auto max-w-5xl space-y-8">` (or `max-w-6xl` for data-heavy pages like CoursesPage, SignupsPage) |
+  | Public content page (course detail, docs) | `<main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">` |
+  | Public listing | `<main className="mx-auto max-w-4xl px-6 py-8 sm:py-12">` |
+  | Prose / terms / legal | `<main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">` + `space-y-10` inside |
+
+  `CourseDetailPage` is the deliberate exception — full-width layout with its own sidebar framing, no `mx-auto max-w-*`. Don't use it as a template for normal pages.
 - The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance.
 - If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing.

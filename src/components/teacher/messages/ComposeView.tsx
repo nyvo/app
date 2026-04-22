@@ -108,7 +108,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
                 </DropdownMenu>
               </div>
               <Button
-                size="compact"
+                size="sm"
                 className="gap-2"
                 onClick={handleSend}
                 disabled={!recipient.trim() || !body.trim() || sending}

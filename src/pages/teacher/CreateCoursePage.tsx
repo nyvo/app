@@ -408,7 +408,7 @@ const CreateCoursePage = () => {
             />
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6 sm:p-8">
+          <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
             <div className="pb-2">
                 {currentStep === 0 && (
               <motion.div
@@ -905,11 +905,10 @@ const CreateCoursePage = () => {
                       ))}
                       {customBullets.length < CUSTOM_BULLETS_MAX_COUNT && (
                         <Button
-                          variant="ghost"
+                          variant="plain"
                           size="sm"
                           type="button"
                           onClick={() => setCustomBullets([...customBullets, ''])}
-                          className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                         >
                           <Plus className="size-3.5" />
                           Legg til punkt
@@ -944,7 +943,7 @@ const CreateCoursePage = () => {
                     size="icon-sm"
                     type="button"
                     onClick={() => setSubmitError(null)}
-                    className="text-destructive/60 hover:text-destructive hover:bg-transparent shrink-0"
+                    className="text-muted-foreground hover:text-destructive hover:bg-transparent shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="size-4" />
@@ -956,7 +955,7 @@ const CreateCoursePage = () => {
               <Button
                 type="button"
                 variant="ghost"
-                size="compact"
+                size="sm"
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
@@ -966,7 +965,7 @@ const CreateCoursePage = () => {
                     <Button
                       type="button"
                       variant="outline-soft"
-                      size="compact"
+                      size="sm"
                       onClick={handleBack}
                       disabled={isSubmitting}
                     >
@@ -977,7 +976,7 @@ const CreateCoursePage = () => {
                   {currentStep < 2 && (
                     <Button
                       type="button"
-                      size="compact"
+                      size="sm"
                       onClick={handleNext}
                       disabled={isSubmitting}
                     >
@@ -988,7 +987,7 @@ const CreateCoursePage = () => {
                   {currentStep === 2 && (
                     <Button
                       type="button"
-                      size="compact"
+                      size="sm"
                       onClick={handlePublish}
                       disabled={isSubmitting}
                       loading={isSubmitting}

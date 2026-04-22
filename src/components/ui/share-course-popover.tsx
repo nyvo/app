@@ -42,7 +42,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         {children || (
-          <Button variant="outline-soft" size="compact">
+          <Button variant="outline-soft" size="sm">
             <Share2 className="size-3.5" />
             Del kurs
           </Button>

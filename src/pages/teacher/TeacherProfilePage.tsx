@@ -463,7 +463,7 @@ const TeacherProfilePage = () => {
                                   </div>
                                   <Button
                                       variant={passwordExpanded ? 'ghost' : 'outline-soft'}
-                                      size="compact"
+                                      size="sm"
                                       onClick={() => {
                                           setPasswordExpanded(!passwordExpanded);
                                           setPasswordErrors({});
@@ -552,7 +552,7 @@ const TeacherProfilePage = () => {
                                       <div className="flex justify-end gap-3 pt-2">
                                           <Button
                                               variant="ghost"
-                                              size="compact"
+                                              size="sm"
                                               onClick={() => {
                                                   setPasswordExpanded(false);
                                                   setPasswordErrors({});
@@ -564,7 +564,7 @@ const TeacherProfilePage = () => {
                                               Avbryt
                                           </Button>
                                           <Button
-                                              size="compact"
+                                              size="sm"
                                               onClick={handleChangePassword}
                                               disabled={isChangingPassword}
                                           >
@@ -585,7 +585,7 @@ const TeacherProfilePage = () => {
                                   <AlertDialogTrigger asChild>
                                       <Button
                                           variant="outline-soft"
-                                          size="compact"
+                                          size="sm"
                                           className="ml-4 shrink-0"
                                       >
                                           Logg ut alle
@@ -676,8 +676,8 @@ const TeacherProfilePage = () => {
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>
                                       <Button
-                                          variant="destructive-outline"
-                                          size="compact"
+                                          variant="destructive"
+                                          size="sm"
                                           className="ml-4 shrink-0"
                                       >
                                           Slett konto
@@ -704,9 +704,9 @@ const TeacherProfilePage = () => {
                                       <AlertDialogFooter>
                                           <AlertDialogCancel>Avbryt</AlertDialogCancel>
                                           <AlertDialogAction
+                                              variant="destructive"
                                               onClick={handleDeleteAccount}
                                               disabled={deleteConfirmText !== 'SLETT'}
-                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                           >
                                               Slett
                                           </AlertDialogAction>
@@ -721,9 +721,9 @@ const TeacherProfilePage = () => {
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (
               <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-3 border-t border-border bg-surface-elevated p-4 backdrop-blur-md md:static md:mt-8 md:border-none md:bg-transparent md:p-0 md:backdrop-blur-none">
-                  <Button variant="ghost" size="compact" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
+                  <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
                   <Button
-                    size="compact"
+                    size="sm"
                     className="flex-1 md:flex-none justify-center"
                     onClick={handleSave}
                     disabled={isSaving}

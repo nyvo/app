@@ -422,11 +422,10 @@ export const CourseSettingsTab = ({
               ))}
               {settingsCustomBullets.length < CUSTOM_BULLETS_MAX_COUNT && (
                 <Button
-                  variant="ghost"
+                  variant="plain"
                   size="sm"
                   type="button"
                   onClick={() => onCustomBulletsChange([...settingsCustomBullets, ''])}
-                  className="text-sm text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
                 >
                   <Plus className="size-3.5" />
                   Legg til punkt
@@ -454,8 +453,8 @@ export const CourseSettingsTab = ({
               </p>
             </div>
             <Button
-              variant="destructive-outline"
-              size="compact"
+              variant="destructive"
+              size="sm"
               className="shrink-0 whitespace-nowrap"
               onClick={onCancelCourse}
             >
@@ -474,14 +473,14 @@ export const CourseSettingsTab = ({
 
         <Button
           variant="ghost"
-          size="compact"
+          size="sm"
           onClick={onCancel}
           disabled={isSaving}
         >
           Avbryt
         </Button>
         <Button
-          size="compact"
+          size="sm"
           onClick={() => {
             commitParticipantsInput();
             onSave();

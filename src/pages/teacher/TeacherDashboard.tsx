@@ -363,7 +363,7 @@ const TeacherDashboard = () => {
                   <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
                   <Button
                     variant="outline-soft"
-                    size="compact"
+                    size="sm"
                     onClick={() => window.location.reload()}
                   >
                     <RefreshCw className="size-3.5" />

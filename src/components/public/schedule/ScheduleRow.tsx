@@ -54,7 +54,7 @@ export function ScheduleRow({ course, studioSlug, displayDate }: ScheduleRowProp
       state={{ backgroundLocation: location }}
       className={cn(
         'group flex items-center gap-4 px-3 py-3 smooth-transition',
-        'hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
+        'hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
         (isFull || isCancelled) && 'opacity-70',
       )}
       aria-label={`${course.title}${time ? `, kl. ${time}` : ''}`}

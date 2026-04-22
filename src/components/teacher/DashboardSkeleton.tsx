@@ -58,7 +58,7 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
               <Skeleton className="h-3 w-12" />
             </div>
             <SkeletonCard className="p-3">
-              <div className="space-y-0 divide-y divide-border/30">
+              <div className="space-y-0 divide-y divide-border">
                 {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center gap-3 px-1 py-2.5">
                     <Skeleton className="size-8 rounded-full shrink-0" />

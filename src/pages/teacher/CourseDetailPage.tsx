@@ -642,7 +642,7 @@ const CourseDetailPage = () => {
                 {courseData?.status === 'draft' ? (
                   <>
                     <Button
-                      size="compact"
+                      size="sm"
                       onClick={handlePublish}
                       loading={isPublishing}
                       loadingText="Publiserer …"
@@ -668,7 +668,7 @@ const CourseDetailPage = () => {
                     />
                     <Button
                       variant="outline-soft"
-                      size="compact"
+                      size="sm"
                       onClick={() => currentOrganization?.slug && window.open(`/studio/${currentOrganization.slug}/${id}`, '_blank')}
                       disabled={!currentOrganization?.slug}
                     >
@@ -677,7 +677,7 @@ const CourseDetailPage = () => {
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline-soft" size="compact" className="px-2">
+                        <Button variant="outline-soft" size="sm" className="px-2">
                           <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -880,7 +880,7 @@ const CourseDetailPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <Button
-              variant="destructive-outline"
+              variant="destructive"
               onClick={handleUnpublish}
               loading={isUnpublishing}
               loadingText="Lagrer …"
@@ -935,7 +935,7 @@ const CourseDetailPage = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Avbryt</AlertDialogCancel>
             <Button
-              variant="destructive-outline"
+              variant="destructive"
               onClick={(e) => {
                 e.preventDefault();
                 handleDeleteCourse();

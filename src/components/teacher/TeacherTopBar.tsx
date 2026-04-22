@@ -133,7 +133,7 @@ export function TeacherTopBar() {
         </Breadcrumb>
         <div className="flex shrink-0 items-center gap-1">
           {action && (
-            <Button asChild size="compact" className="gap-2">
+            <Button asChild size="sm" className="gap-2">
               <Link to={action.to}>{action.label}</Link>
             </Button>
           )}

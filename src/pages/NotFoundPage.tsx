@@ -42,7 +42,7 @@ const NotFoundPage = () => {
           </p>
 
           {/* Back Button */}
-          <Button asChild className="h-11 px-8">
+          <Button asChild size="cta" className="px-8">
             <Link to="/">
               <ArrowLeft className="size-4 mr-2" />
               Til forsiden

@@ -73,7 +73,7 @@ export function ChatInput({
 
           <Button
             disabled={disabled || !value.trim() || sending}
-            size="compact"
+            size="sm"
             className="gap-2"
             onClick={onSend}
             aria-label={sending ? 'Sender melding' : 'Send melding'}

@@ -51,13 +51,13 @@ export function PublishCourseDialog({
         <DialogFooter>
           <Button
             variant="outline-soft"
-            size="compact"
+            size="sm"
             onClick={() => onOpenChange(false)}
           >
             Ikke nå
           </Button>
           <Button
-            size="compact"
+            size="sm"
             onClick={handleConnect}
             loading={connecting}
             loadingText="Sender deg til Stripe …"

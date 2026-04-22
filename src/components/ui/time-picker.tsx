@@ -126,9 +126,8 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
           {value ? (
             <Button
               type="button"
-              variant="ghost"
+              variant="plain"
               size="sm"
-              className="h-auto px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
               onClick={() => onChange?.("")}
             >
               Nullstill

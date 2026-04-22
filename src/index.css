@@ -46,6 +46,7 @@
   --color-surface-elevated: var(--surface-elevated);
   --color-primary-muted-foreground: var(--primary-muted-foreground);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
@@ -147,6 +148,7 @@
   --surface-elevated: oklch(0.985 0 0 / 0.8);
   --primary-muted-foreground: oklch(0.985 0 0 / 0.7);
   --border: oklch(0.922 0 0);
+  --border-subtle: oklch(0.95 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --selection: oklch(0.546 0.245 262.881);
@@ -195,6 +197,7 @@
   --surface-elevated: oklch(0.205 0 0 / 0.8);
   --primary-muted-foreground: oklch(0.205 0 0 / 0.7);
   --border: oklch(1 0 0 / 10%);
+  --border-subtle: oklch(1 0 0 / 6%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --selection: oklch(0.623 0.214 259.815);

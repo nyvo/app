@@ -35,7 +35,7 @@ export function ConversationList({
       <div className="border-b border-border px-6 py-4 lg:px-8">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-foreground">Samtaler</h2>
-          <Button onClick={onNewMessage} size="compact" className="gap-2">
+          <Button onClick={onNewMessage} size="sm" className="gap-2">
             <Plus className="size-3.5" />
             Ny melding
           </Button>

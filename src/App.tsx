@@ -33,6 +33,7 @@ const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPag
 const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
 
 type RouterState = { backgroundLocation?: Location } | null;
 
@@ -74,6 +75,9 @@ function AppRoutes() {
           <Route path="payments" element={<PaymentsPage />} />
         </Route>
         <Route path="/teacher/stripe-callback" element={<ProtectedRoute><StripeCallbackPage /></ProtectedRoute>} />
+
+        {/* Dev preview (no auth, direct-URL only) */}
+        <Route path="/dev/token-preview" element={<TokenPreview />} />
 
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFoundPage />} />

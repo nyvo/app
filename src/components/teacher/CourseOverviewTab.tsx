@@ -173,7 +173,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
           <div className="flex flex-col gap-2 pt-6 sm:flex-row">
             <Button
               variant="outline-soft"
-              size="compact"
+              size="sm"
               className="justify-start"
               disabled={course.enrolled === 0}
               onClick={onMessageParticipants}
@@ -203,7 +203,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               ) : (
                 <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg bg-muted lg:aspect-square">
-                  <Image className="mx-auto mb-2 size-5 text-muted-foreground/40" />
+                  <Image className="mx-auto mb-2 size-5 text-disabled-foreground" />
                 </div>
               )}
             </div>

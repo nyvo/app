@@ -109,10 +109,10 @@ export const ResetPasswordView = () => {
         </div>
 
         <div className="w-full space-y-3">
-          <Button asChild className="w-full h-11">
+          <Button asChild size="cta" className="w-full">
             <Link to={routes.forgotPassword}>Be om ny lenke</Link>
           </Button>
-          <Button asChild variant="outline-soft" className="w-full h-11">
+          <Button asChild variant="outline-soft" size="cta" className="w-full">
             <Link to={routes.login}>Til innlogging</Link>
           </Button>
         </div>
@@ -137,7 +137,7 @@ export const ResetPasswordView = () => {
         </div>
 
         <div className="w-full">
-          <Button asChild className="w-full h-11">
+          <Button asChild size="cta" className="w-full">
             <Link to={routes.login}>Gå til innlogging</Link>
           </Button>
         </div>
@@ -197,7 +197,7 @@ export const ResetPasswordView = () => {
           type="submit"
           loading={isSubmitting}
           loadingText="Oppdaterer"
-          className="w-full h-11 mt-2"
+          size="cta" className="w-full mt-2"
         >
           Oppdater passord
         </Button>

@@ -19,7 +19,7 @@ export function DayColumn({ isToday: _isToday, events, selectedEventId, onSelect
       {/* Background grid lines */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
         {TIME_SLOTS.map((time) => (
-          <div key={time} className="h-[100px] border-b border-border/60" />
+          <div key={time} className="h-[100px] border-b border-border-subtle" />
         ))}
       </div>
 

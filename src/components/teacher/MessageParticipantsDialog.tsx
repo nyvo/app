@@ -56,12 +56,12 @@ export function MessageParticipantsDialog({
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #44403C; }
+    body { font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #18181b; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: 600; color: #354F41; }
-    .message-box { background: #F5F5F4; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #78716C; font-size: 14px; }
+    .logo { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+    .message-box { background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .footer { margin-top: 40px; text-align: center; color: #737373; font-size: 14px; }
   </style>
 </head>
 <body>

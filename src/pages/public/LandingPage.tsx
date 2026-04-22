@@ -44,7 +44,7 @@ const LandingPage = () => {
             <Link to="/login" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               Logg inn
             </Link>
-            <Button asChild size="sm">
+            <Button asChild size="sm" shape="pill">
               <Link to="/signup">Start gratis</Link>
             </Button>
           </div>
@@ -66,7 +66,8 @@ const LandingPage = () => {
 
             <Button
               asChild
-              size="lg"
+              size="cta"
+              shape="pill"
             >
               <Link to="/signup">Start gratis</Link>
             </Button>
@@ -466,8 +467,9 @@ const LandingPage = () => {
 
           <Button
             asChild
-            size="lg"
+            size="cta"
             variant="secondary"
+            shape="pill"
           >
             <Link to="/signup">Kom i gang</Link>
           </Button>

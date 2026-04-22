@@ -69,13 +69,13 @@ export const ConfirmEmailView = () => {
             loading={isResending}
             loadingText="Sender"
             variant="outline-soft"
-            className="w-full h-11"
+            size="cta" className="w-full"
           >
             Send på nytt
           </Button>
         )}
 
-        <Button asChild className="w-full h-11">
+        <Button asChild size="cta" className="w-full">
           <Link to={AUTH_ROUTES.login}>Logg inn</Link>
         </Button>
       </div>

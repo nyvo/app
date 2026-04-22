@@ -349,7 +349,7 @@ export const SchedulePage = () => {
 
                     <div className="flex flex-col bg-white dark:bg-background">
                       {TIME_SLOTS.map((time) => (
-                        <div key={time} className="h-[100px] border-b border-border/60 px-2 py-1">
+                        <div key={time} className="h-[100px] border-b border-border-subtle px-2 py-1">
                           <span className="text-xs font-mono tabular-nums text-tertiary-foreground">{time.replace(':00', '')}</span>
                         </div>
                       ))}

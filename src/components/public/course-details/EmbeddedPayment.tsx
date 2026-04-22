@@ -86,12 +86,12 @@ function PaymentForm({
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Back button */}
       <Button
-        variant="ghost"
-        size="sm"
+        variant="plain"
+        size="xs"
         type="button"
         onClick={onBack}
         disabled={processing}
-        className="text-xs font-medium text-muted-foreground h-auto p-0 hover:bg-transparent hover:text-foreground"
+        className="font-medium"
       >
         <ChevronLeft className="size-3.5" />
         Tilbake
@@ -140,7 +140,7 @@ function PaymentForm({
       {/* Submit button */}
       <Button
         type="submit"
-        size="compact"
+        size="sm"
         className="w-full"
         disabled={!stripe || processing}
         loading={processing}
@@ -189,16 +189,16 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
     if (isMobile) {
       return {
         '.Tab': {
-          border: '1px solid #E7E5E4',
+          border: '1px solid #e5e5e5',
           borderRadius: '8px',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: '#ffffff',
         },
         '.Tab:hover': {
-          border: '1px solid #D6D3D1',
+          border: '1px solid #a3a3a3',
         },
         '.Tab--selected': {
-          border: '1px solid #354F41',
-          boxShadow: '0 0 0 1px #354F41',
+          border: '1px solid #1a1a1a',
+          boxShadow: '0 0 0 1px #1a1a1a',
         },
         '.Error': {
           fontSize: '12px',
@@ -208,37 +208,37 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
 
     return {
       '.Input': {
-        border: '1px solid #E7E5E4',
+        border: '1px solid #e5e5e5',
         padding: '10px 16px',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#ffffff',
       },
       '.Input:hover': {
-        border: '1px solid #D6D3D1',
+        border: '1px solid #a3a3a3',
       },
       '.Input:focus': {
-        border: '1px solid #D6D3D1',
-        backgroundColor: '#FFFFFF',
-        boxShadow: '0 0 0 2px rgba(214, 211, 209, 0.5)',
+        border: '1px solid #a3a3a3',
+        backgroundColor: '#ffffff',
+        boxShadow: '0 0 0 2px rgba(163, 163, 163, 0.5)',
         outline: 'none',
       },
       '.Label': {
         fontSize: '12px',
         fontWeight: '500',
-        color: '#78716C',
+        color: '#737373',
         marginBottom: '6px',
       },
       '.Tab': {
-        border: '1px solid #E7E5E4',
+        border: '1px solid #e5e5e5',
         borderRadius: '8px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#ffffff',
       },
       '.Tab:hover': {
-        border: '1px solid #D6D3D1',
+        border: '1px solid #a3a3a3',
       },
       '.Tab--selected': {
-        border: '1px solid #354F41',
-        boxShadow: '0 0 0 1px #354F41',
+        border: '1px solid #1a1a1a',
+        boxShadow: '0 0 0 1px #1a1a1a',
       },
       '.Error': {
         fontSize: '12px',
@@ -256,18 +256,18 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
         appearance: {
           theme: 'flat',
           variables: {
-            colorPrimary: '#354F41',
-            colorBackground: '#FFFFFF',
-            colorText: '#44403C',
-            colorTextSecondary: '#78716C',
-            colorTextPlaceholder: '#A8A29E',
-            colorDanger: '#EF4444',
+            colorPrimary: '#1a1a1a',
+            colorBackground: '#ffffff',
+            colorText: '#18181b',
+            colorTextSecondary: '#737373',
+            colorTextPlaceholder: '#a3a3a3',
+            colorDanger: '#dc2626',
             fontFamily: 'Geist Sans, system-ui, -apple-system, sans-serif',
             fontSizeBase: '14px',
             fontSizeSm: '12px',
             borderRadius: '8px',
             spacingUnit: '4px',
-            focusBoxShadow: '0 0 0 2px rgba(214, 211, 209, 0.5)',
+            focusBoxShadow: '0 0 0 2px rgba(163, 163, 163, 0.5)',
             focusOutline: 'none',
           },
           rules: appearanceRules as Record<string, Record<string, string>>,

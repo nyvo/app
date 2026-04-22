@@ -164,7 +164,7 @@ const PaymentsPage = () => {
                       {hasStripeAccount && (
                         <Button
                           variant="ghost"
-                          size="compact"
+                          size="sm"
                           onClick={handleCheckStatus}
                           loading={checkingStatus}
                           loadingText="Sjekker"
@@ -265,7 +265,7 @@ const PaymentsPage = () => {
                     </div>
                   ) : (
                     transactions.map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between px-6 py-3.5">
+                      <div key={tx.id} className="flex items-center justify-between px-6 py-4">
                         <div className="min-w-0 flex-1">
                           <span className="text-sm font-medium block text-foreground truncate">{tx.participant_name}</span>
                           <span className="text-xs block text-muted-foreground truncate">
@@ -320,7 +320,7 @@ const PaymentsPage = () => {
                     </div>
                     <Button
                       variant="outline-soft"
-                      size="compact"
+                      size="sm"
                       onClick={handleOpenDashboard}
                       loading={stripeLoading}
                       loadingText="Åpner"
@@ -341,7 +341,7 @@ const PaymentsPage = () => {
                       </div>
                       <Button
                         variant="outline-soft"
-                        size="compact"
+                        size="sm"
                         onClick={handleSetupStripe}
                         loading={stripeLoading}
                         loadingText="Åpner"
@@ -401,7 +401,7 @@ function PayoutRow({
   };
 
   return (
-    <div className="flex items-center justify-between px-6 py-3.5">
+    <div className="flex items-center justify-between px-6 py-4">
       <div className="min-w-0 flex-1">
         <span className="text-sm font-medium font-mono tabular-nums block text-foreground">
           {formatKroner(oreToKroner(payout.amount))}
@@ -422,7 +422,7 @@ function SkeletonRows({ count }: { count: number }) {
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between px-6 py-3.5">
+        <div key={i} className="flex items-center justify-between px-6 py-4">
           <div className="space-y-1.5">
             <div className="h-4 w-28 animate-pulse rounded bg-muted" />
             <div className="h-3 w-20 animate-pulse rounded bg-muted" />

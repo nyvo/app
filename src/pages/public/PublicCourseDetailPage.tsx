@@ -193,7 +193,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
 
   if (isCancelled) {
     return (
-      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="rounded-lg border border-border bg-card p-6 space-y-4">
         {PriceHeader}
         <Alert variant="warning" size="sm">
           <AlertDescription>Kurset er avlyst.</AlertDescription>
@@ -204,9 +204,9 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
 
   if (isFull) {
     return (
-      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="rounded-lg border border-border bg-card p-6 space-y-4">
         {PriceHeader}
-        <div className="rounded-md bg-muted/60 px-3 py-2.5 text-center">
+        <div className="rounded-md bg-muted px-3 py-2.5 text-center">
           <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
           <p className="text-xs mt-0.5 text-muted-foreground">Ingen ledige plasser igjen.</p>
         </div>
@@ -216,7 +216,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
 
   if (clientSecret) {
     return (
-      <div className="rounded-lg border border-border bg-card p-5">
+      <div className="rounded-lg border border-border bg-card p-6">
         <EmbeddedPayment
           clientSecret={clientSecret}
           courseName={course.title}
@@ -232,7 +232,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-5 space-y-5">
+    <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-6 space-y-5">
       {PriceHeader}
 
       <div className="space-y-3.5">
@@ -402,7 +402,7 @@ function HeroImage({ course }: { course: PublicCourseWithDetails }) {
   if (!src) {
     return (
       <div className="flex aspect-[16/9] sm:aspect-[21/9] w-full items-center justify-center bg-muted rounded-lg">
-        <ImageIcon className="size-10 text-muted-foreground/40" />
+        <ImageIcon className="size-10 text-disabled-foreground" />
       </div>
     );
   }

@@ -56,7 +56,7 @@ export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: 
       onClick={handleClick}
       loading={isLoading}
       loadingText={label}
-      className="w-full h-11 gap-3"
+      size="cta" className="w-full gap-3"
     >
       <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
         <path

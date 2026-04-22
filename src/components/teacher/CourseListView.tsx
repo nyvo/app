@@ -70,7 +70,7 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
 
   return (
     <div className={`rounded-lg bg-muted flex items-center justify-center shrink-0 ${className}`}>
-      <ImageIcon className="size-5 text-muted-foreground/40" />
+      <ImageIcon className="size-5 text-disabled-foreground" />
     </div>
   );
 }

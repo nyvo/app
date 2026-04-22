@@ -197,7 +197,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           <AlertDialogFooter>
             <AlertDialogCancel>Avbryt</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/92"
+              variant="destructive"
               onClick={() => {
                 const hasRefund = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
                 setConfirmDialog(null);

@@ -40,7 +40,7 @@ export const ErrorState = React.memo(function ErrorState({
       {onRetry && (
         <Button
           variant="outline-soft"
-          size="compact"
+          size="sm"
           onClick={onRetry}
         >
           <RefreshCw className="size-3.5" aria-hidden="true" />

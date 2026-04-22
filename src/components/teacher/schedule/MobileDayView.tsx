@@ -86,7 +86,7 @@ export function MobileDayView({
               ? 'Opprett et kurs for å komme i gang.'
               : 'Ingen planlagte timer denne uken.'}
             action={
-              <Button asChild size="compact" className="gap-2">
+              <Button asChild size="sm" className="gap-2">
                 <Link to="/teacher/new-course">
                   <CalendarPlus className="size-3.5" />
                   Opprett kurs

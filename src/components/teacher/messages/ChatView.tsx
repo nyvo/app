@@ -69,7 +69,7 @@ export function ChatView({
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground rounded-full" aria-label="Flere handlinger">
+              <Button variant="ghost" shape="pill" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label="Flere handlinger">
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>

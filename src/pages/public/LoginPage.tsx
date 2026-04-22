@@ -157,7 +157,7 @@ const LoginPage = () => {
           type="submit"
           loading={isSubmitting}
           loadingText="Logger inn"
-          className="w-full h-11 mt-2"
+          size="cta" className="w-full mt-2"
         >
           Logg inn
         </Button>
