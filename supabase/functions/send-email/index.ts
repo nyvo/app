@@ -149,7 +149,7 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
 
     <p>Hei,</p>
 
-    <p>Vi beklager, men din påmelding til <strong>${courseName}</strong> kunne ikke fullføres.</p>
+    <p>Påmeldingen til <strong>${courseName}</strong> ble ikke fullført.</p>
 
     <p>${reason}</p>
 
@@ -374,18 +374,18 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
 
     <div class="alert-box">
       <p class="alert-title">Kurset er avlyst</p>
-      <p>Vi må dessverre informere om at <strong>${courseName}</strong> er avlyst.</p>
+      <p><strong>${courseName}</strong> er dessverre avlyst.</p>
       ${reason ? `<p><em>Årsak: ${reason}</em></p>` : ''}
     </div>
 
     ${showRefund && refundAmount ? `
     <div class="refund-box">
       <p class="refund-title">Refusjon</p>
-      <p>${formatKr(refundAmount)} vil bli tilbakebetalt til din betalingsmetode innen 5-10 virkedager.</p>
+      <p>${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5–10 virkedager.</p>
     </div>
     ` : ''}
 
-    <p>Vi beklager ulempene.</p>
+    <p>Ta kontakt med oss hvis du har spørsmål.</p>
 
     <div class="footer">
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
@@ -394,7 +394,7 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
 </body>
 </html>
     `,
-    text: `Hei ${participantName || ''}, vi må dessverre informere om at ${courseName} er avlyst.${showRefund && refundAmount ? ` ${formatKr(refundAmount)} vil bli tilbakebetalt innen 5-10 virkedager.` : ''} Vi beklager eventuelle ulemper.${reason ? ` Årsak: ${reason}` : ''}`
+    text: `Hei ${participantName || ''}, ${courseName} er dessverre avlyst.${showRefund && refundAmount ? ` ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5–10 virkedager.` : ''}${reason ? ` Årsak: ${reason}` : ''} Har du spørsmål, ta kontakt med oss.`
   }
 }
 
@@ -443,9 +443,9 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
 
     <div class="details-box">
       ${canGetRefund && refundAmount ? `
-        <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} vil bli refundert til betalingskortet ditt innen 5\u201310 virkedager.</p>
+        <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.</p>
       ` : `
-        <p><strong>Merk:</strong> Avbestillingen var mindre enn 24 timer f\u00f8r kursstart, og kvalifiserer ikke for refusjon.</p>
+        <p><strong>Merk:</strong> Avbestillingen var mindre enn 24 timer f\u00f8r kursstart, og gir ikke rett til refusjon.</p>
       `}
     </div>
 
@@ -457,8 +457,8 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
 </html>
     `,
     text: canGetRefund
-      ? `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Refusjon på ${formatKr(refundAmount || 0)} vil bli refundert innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Siden avbestillingen skjedde mindre enn 24 timer f\u00f8r kursstart, kan vi dessverre ikke tilby refusjon.`
+      ? `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
+      : `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Avbestillingen skjedde mindre enn 24 timer f\u00f8r kursstart, og gir ikke rett til refusjon.`
   }
 }
 

@@ -34,9 +34,9 @@ interface UseSetupProgressResult {
 
 function getMotivationalSubtitle(completedCount: number, totalCount: number): string {
   const remaining = totalCount - completedCount
-  if (remaining === 0) return 'Du er klar til å ta imot bookinger og betaling'
+  if (remaining === 0) return 'Du er klar til å ta imot påmeldinger og betaling'
   if (remaining === 1) return 'Nesten der — ett steg igjen'
-  return `${remaining} steg igjen før du kan ta imot bookinger`
+  return `${remaining} steg igjen før du kan ta imot påmeldinger`
 }
 
 export function useSetupProgress({

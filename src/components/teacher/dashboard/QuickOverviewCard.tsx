@@ -83,7 +83,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
               <div className="mb-1">
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">12 400 kr</p>
+                  <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">{formatKroner(12400)}</p>
                 </div>
               </div>
               <ChartContainer config={chartConfig} className="aspect-auto h-40 w-full">

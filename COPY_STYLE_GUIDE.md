@@ -307,7 +307,7 @@ Si hva som mangler + neste steg.
 
 ### Setup-sjekkliste (instruktør)
 - "Fullfør offentlig profil" → "Legg til by så elevene finner deg." → CTA: **Fullfør profil**
-- "Sett opp betalinger" → "Knytt kontoen din til Stripe, så du kan motta betaling fra elever." → CTA: **Sett opp**
+- "Sett opp betalinger" → "Koble til en betalingsløsning så du kan motta betaling fra elever." → CTA: **Sett opp**
 - "Opprett ditt første kurs" → "Publiser et kurs så elevene kan melde seg på." → CTA: **Opprett kurs**
 - Progresjon: "{n} av {total} fullført"
 
