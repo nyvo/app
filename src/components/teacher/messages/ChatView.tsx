@@ -54,7 +54,6 @@ export function ChatView({
               email={conversation.participant?.email}
               src={conversation.participant?.avatar_url}
               size="lg"
-              ringClassName="ring-2 ring-white"
             />
           </div>
           <div className="min-w-0">

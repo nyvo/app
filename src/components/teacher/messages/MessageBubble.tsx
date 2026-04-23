@@ -29,7 +29,7 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
           email={participant?.email}
           src={participant?.avatar_url}
           size="sm"
-          className="mb-1 opacity-80 group-hover:opacity-100 transition-opacity"
+          className="mb-1"
         />
       )}
 
@@ -37,15 +37,11 @@ export function MessageBubble({ message, participant }: MessageBubbleProps) {
         <div
           className={`rounded-lg px-4 py-3 ${
             isOutgoing
-              ? 'bg-muted text-foreground rounded-br-sm'
-              : 'bg-muted rounded-bl-sm'
+              ? 'bg-primary text-primary-foreground rounded-br-sm'
+              : 'bg-card border border-border text-foreground rounded-bl-sm'
           }`}
         >
-          <p
-            className={`text-sm ${
-              isOutgoing ? '' : 'text-foreground'
-            }`}
-          >
+          <p className="text-sm">
             {message.content}
           </p>
         </div>

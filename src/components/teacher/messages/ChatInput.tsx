@@ -51,7 +51,7 @@ export function ChatInput({
         <div className="flex items-center justify-between px-2 pb-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Velg emoji">
+              <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label="Velg emoji">
                 <Smile />
               </Button>
             </DropdownMenuTrigger>

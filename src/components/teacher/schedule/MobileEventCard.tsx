@@ -17,11 +17,7 @@ export function MobileEventCard({ event }: MobileEventCardProps) {
       to={`/teacher/courses/${event.courseId}`}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
       className={`block rounded-lg border border-border p-4 smooth-transition cursor-pointer ${
-        isCompleted
-          ? 'bg-muted'
-          : isActive
-          ? 'bg-background ring-2 ring-primary/20 ring-offset-1'
-          : 'bg-background hover:bg-muted/50'
+        isCompleted ? 'bg-muted' : 'bg-background hover:bg-muted/50'
       }`}
     >
       {/* Title row — most scannable */}

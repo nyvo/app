@@ -61,64 +61,59 @@ export function ConversationList({
             className="mt-8"
           />
         ) : (
-          conversations.map((conversation) => (
-            <button
-              key={conversation.id}
-              onClick={() => onSelect(conversation)}
-              className={`group relative flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left ios-ease outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 ${
-                activeConversationId === conversation.id && !isComposing
-                  ? 'border-border bg-muted'
-                  : conversation.is_read
-                  ? 'border-transparent hover:bg-muted opacity-70 hover:opacity-100'
-                  : 'border-transparent hover:bg-muted'
-              }`}
-            >
-              <div className="relative shrink-0">
-                <UserAvatar
-                  name={conversation.participant?.name}
-                  email={conversation.participant?.email}
-                  src={conversation.participant?.avatar_url}
-                  size="lg"
-                  className={activeConversationId !== conversation.id && conversation.unread_count === 0 ? 'opacity-90 group-hover:opacity-100' : ''}
-                />
-                {conversation.unread_count > 0 && (
-                  <Badge className="absolute -top-1 -right-1 size-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
-                    {conversation.unread_count}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span
-                    className={`text-sm font-medium truncate ${
-                      activeConversationId === conversation.id && !isComposing
-                        ? 'text-foreground'
-                        : conversation.is_read ? 'text-muted-foreground' : 'text-foreground'
+          conversations.map((conversation) => {
+            const isSelected = activeConversationId === conversation.id && !isComposing;
+            const isUnread = conversation.unread_count > 0;
+            return (
+              <button
+                key={conversation.id}
+                onClick={() => onSelect(conversation)}
+                className={`group relative flex w-full items-start gap-3 rounded-lg px-4 py-3 text-left ios-ease outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50 ${
+                  isSelected
+                    ? 'bg-muted ring-1 ring-inset ring-border'
+                    : 'hover:bg-muted/50'
+                }`}
+              >
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    name={conversation.participant?.name}
+                    email={conversation.participant?.email}
+                    src={conversation.participant?.avatar_url}
+                    size="lg"
+                  />
+                  {isUnread && (
+                    <Badge className="absolute -top-1 -right-1 size-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
+                      {conversation.unread_count}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span
+                      className={`text-sm truncate text-foreground ${
+                        isUnread ? 'font-semibold' : 'font-medium'
+                      }`}
+                    >
+                      {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
+                    </span>
+                    <span className="text-xs tabular-nums text-tertiary-foreground">
+                      {formatMessageTimestamp(conversation.updated_at)}
+                    </span>
+                  </div>
+                  <p
+                    className={`truncate text-sm ${
+                      isUnread ? 'font-medium text-foreground' : 'text-muted-foreground'
                     }`}
                   >
-                    {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
-                  </span>
-                  <span className="text-xs tabular-nums text-tertiary-foreground">
-                    {formatMessageTimestamp(conversation.updated_at)}
-                  </span>
+                    {conversation.last_message?.content || 'Ingen meldinger'}
+                  </p>
                 </div>
-                <p
-                  className={`truncate ${
-                    conversation.unread_count > 0
-                      ? 'text-sm font-medium text-foreground'
-                      : activeConversationId === conversation.id
-                      ? 'text-sm font-medium text-muted-foreground'
-                      : 'text-sm text-muted-foreground'
-                  }`}
-                >
-                  {conversation.last_message?.content || 'Ingen meldinger'}
-                </p>
-              </div>
-              {conversation.unread_count > 0 && (
-                <div className="size-2 rounded-full bg-accent shrink-0 mt-2" role="img" aria-label="Ulest" />
-              )}
-            </button>
-          ))
+                {isUnread && (
+                  <div className="size-2 rounded-full bg-chart-2 shrink-0 mt-2" role="img" aria-label="Ulest" />
+                )}
+              </button>
+            );
+          })
         )}
       </div>
     </div>

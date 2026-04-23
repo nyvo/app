@@ -73,7 +73,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
 
         <div className="space-y-3">
           <label htmlFor="compose-message-body" className="text-xs font-medium ml-1 text-muted-foreground">Melding</label>
-          <div className="rounded-lg border border-border bg-muted p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
+          <div className="rounded-lg border border-input bg-transparent p-3 focus-within:ring-2 focus-within:ring-ring/50 ios-ease">
             <Textarea
               id="compose-message-body"
               rows={8}
@@ -87,7 +87,7 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
               <div className="flex items-center gap-1">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-muted-foreground" aria-label="Velg emoji">
+                    <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label="Velg emoji">
                       <Smile />
                     </Button>
                   </DropdownMenuTrigger>

@@ -22,10 +22,10 @@ export function EventCard({ event, isSelected, onSelect, columnIndex = 0, column
   const isSeries = event.courseType !== 'event';
 
   const accentColor = isCompleted
-    ? { stripe: 'bg-muted-foreground/30', bg: 'bg-muted/50', border: 'border-border' }
+    ? { stripe: 'bg-muted-foreground/30', bg: 'bg-muted/50', border: 'border-border', ring: 'ring-foreground/20' }
     : isSeries
-      ? { stripe: 'bg-chart-3', bg: 'bg-chart-3/8', border: 'border-chart-3/25' }
-      : { stripe: 'bg-success', bg: 'bg-success/8', border: 'border-success/25' };
+      ? { stripe: 'bg-chart-3', bg: 'bg-chart-3/8', border: 'border-chart-3/25', ring: 'ring-chart-3' }
+      : { stripe: 'bg-success', bg: 'bg-success/8', border: 'border-success/25', ring: 'ring-success' };
 
   return (
     <button
@@ -33,9 +33,7 @@ export function EventCard({ event, isSelected, onSelect, columnIndex = 0, column
       onClick={() => onSelect?.(event)}
       aria-label={`${event.title}, ${formatTime(event.startTime)}–${formatTime(event.endTime)}`}
       className={`group absolute overflow-hidden rounded-lg p-0 text-left smooth-transition cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
-        isSelected
-          ? 'ring-1 ring-primary/20'
-          : ''
+        isSelected ? `ring-2 ${accentColor.ring}` : ''
       }`}
       style={positionStyle}
     >
