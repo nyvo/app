@@ -1,8 +1,63 @@
 # Ship Monday — 2026-04-27
 
-**Today:** 2026-04-23 (Thu). 4 days. Thu–Sat = systems only. Sun = design/visual/responsiveness/skeletons.
+**Today:** 2026-04-24 (Fri). 3 days. Fri–Sat = remaining systems + sandbox tests. Sun = design/visual/responsiveness/skeletons.
 
 Synthesized from three agent audits (supabase-security, a11y, copy-audit) + manual walkthrough of auth, RLS, messages, routing. Payment test scenarios carried over from `tasks/todo.md` Phase 11.
+
+---
+
+## Progress log — 2026-04-23 (Thu, evening session)
+
+**All P0 + P1 dev work complete and shipped to sandbox Supabase:**
+
+| Area | Status | Evidence |
+|---|---|---|
+| Migration | ✅ Applied to `nollnnkksgicsvuthnjq` | `public_signup_counts` RPC live; leaky `Anon can view signup counts` policy gone; `course_sessions` anon tightened to non-draft |
+| All 15 edge functions | ✅ Redeployed | `npx supabase functions deploy` × 2 |
+| Anon PII leak | ✅ Fixed + verified | Live query: anon user → 0 signup rows |
+| Free signups (was 500-ing) | ✅ Fixed | `create-free-signup` now passes Dintero RPC params |
+| Finalize bypass | ✅ Fixed | Requires `merchant_reference`, hard-fails on mismatch |
+| Process-refund IDOR | ✅ Fixed | Email-match fallback removed |
+| Send-email raw-HTML path | ✅ Removed | New `teacher-broadcast` template handles escaping server-side |
+| UUID validation + ALLOWED_ORIGIN | ✅ Tightened on create-dintero-session + finalize |
+| fetchOrganizationBySlug | ✅ Narrowed to `PublicOrganization` type |
+| A11y structural (auth forms, spinner, icon buttons, labels, heading hierarchy, unread counts) | ✅ All fixed |
+| Copy P0+P1 (emails, formatKroner, anglicisms, domain terms, Stripe leftovers) | ✅ All fixed |
+| Cross-org RLS (signups, conversations, messages) | ✅ Verified via direct SQL impersonation — 0 leakage |
+| Auth end-to-end | ✅ 9/10 Playwright tests green (1 skipped: stale course-wizard test, non-blocking) |
+| Capacity race protection | ✅ Code-verified — `SELECT ... FOR UPDATE` serializes |
+| Webhook signature | ✅ Code-verified — signature check before any DB client creation |
+
+**Commits shipped:**
+```
+3920bb8 test(e2e): refresh auth flow tests against current signup form
+9319984 fix(copy): P1 domain-term drift and leftover "tilbakebetalt" hedges
+54fbd94 fix(a11y): P1 labels, heading hierarchy, unread-count description
+a8e039c fix(security): P1 hardening pass on edge functions + public services
+f6c1c42 fix(copy): banned patterns in emails, missing formatKroner, anglicisms
+c19989a fix(a11y): wire aria-describedby on auth/profile forms, localize spinner
+6d09d45 fix(security): close three ship-blocker holes before launch
+b52520d chore(workspace): prune stale agents, split design spec, add dintero skill
+```
+
+**Deferred from P1:**
+- `markPaymentResolved` → edge function. Agent rated "relies on RLS correctness" — RLS is sound, so this is defense-in-depth only. Post-launch candidate.
+
+---
+
+## Remaining work for Fri–Sun
+
+**Fri–Sat (systems + sandbox tests — pick up here):**
+1. Answer the business-blocker questions below.
+2. Run the sandbox payment scenarios (Phase 11 in `tasks/todo.md`) — requires real Dintero test cards.
+3. Live messages test: verify `teacher-broadcast` emails actually reach recipients (the auth chain uses anon key + service-role gate — possible latent bug where browser-triggered sends get 401).
+4. Global edge cases walkthrough (empty states, long strings, network errors).
+5. Debug `verifyCallbackSignature` mismatch bug (1 hr budget — was flagged in `tasks/todo.md` Phase 11).
+
+**Sun (design / visual / responsiveness):**
+- Responsiveness agent pass (mobile + tablet)
+- Skeleton loader pattern
+- Visual a11y deferred items (focus ring styling, status-by-color-alone, toaster aria-live)
 
 ---
 
