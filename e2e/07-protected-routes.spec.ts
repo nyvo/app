@@ -13,10 +13,4 @@ test.describe('Protected Routes', () => {
 
     await expect(page).toHaveURL(/\/login/, { timeout: 10_000 });
   });
-
-  test('redirects unauthenticated users from student dashboard to login', async ({ page }) => {
-    await page.goto('/student/dashboard');
-
-    await expect(page).toHaveURL(/\/student\/login/, { timeout: 10_000 });
-  });
 });

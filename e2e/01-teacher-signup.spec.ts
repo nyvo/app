@@ -5,11 +5,16 @@ test.describe('Teacher Signup', () => {
   test('can create a new teacher account and reach the dashboard', async ({ page }) => {
     await signupTeacher(page);
 
-    // Should be on the teacher dashboard
+    // Should be on a teacher-area route
     await expect(page).toHaveURL(/\/teacher/);
 
-    // Dashboard should have the sidebar
-    await expect(page.locator('[data-sidebar="sidebar"]')).toBeVisible();
+    // New accounts land on the WelcomeFlow onboarding; established accounts see
+    // the sidebar. Either proves auth + routing succeeded.
+    await expect(
+      page
+        .getByRole('heading', { name: 'Først litt om deg' })
+        .or(page.locator('[data-sidebar="sidebar"]')),
+    ).toBeVisible();
   });
 
   test('shows error for duplicate email', async ({ browser }) => {
@@ -18,7 +23,6 @@ test.describe('Teacher Signup', () => {
     const page = await context.newPage();
 
     await page.goto('/signup');
-    await page.getByLabel('Navn på studio eller virksomhet').fill('Another Studio');
     await page.getByLabel('E-post').fill(TEST_TEACHER.email);
     await page.locator('#password').fill(TEST_TEACHER.password);
     await page.getByRole('button', { name: 'Opprett konto' }).click();

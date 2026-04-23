@@ -5,14 +5,12 @@ import type { Page } from '@playwright/test';
 const timestamp = process.env.TEST_RUN_ID || String(Date.now());
 
 export const TEST_TEACHER = {
-  studioName: 'Test Studio',
   email: `teacher-${timestamp}@test.example.com`,
   password: 'testpass123',
 };
 
 export async function signupTeacher(page: Page) {
   await page.goto('/signup');
-  await page.getByLabel('Navn på studio eller virksomhet').fill(TEST_TEACHER.studioName);
   await page.getByLabel('E-post').fill(TEST_TEACHER.email);
   await page.locator('#password').fill(TEST_TEACHER.password);
   await page.getByRole('button', { name: 'Opprett konto' }).click();
