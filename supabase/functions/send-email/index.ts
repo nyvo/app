@@ -547,7 +547,7 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 
     <p>Hei ${participantName || ''},</p>
 
-    <p>Din påmelding til <strong>${courseName}</strong> har blitt avbestilt av ${organizationName || 'studiet'}.</p>
+    <p>Din påmelding til <strong>${courseName}</strong> har blitt avbestilt av ${organizationName || 'studioet'}.</p>
 
     <div class="details-box">
       <p><strong>Kurs:</strong> ${courseName}</p>
@@ -557,7 +557,7 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 
     ${refunded && refundAmount ? `
     <div class="info-box">
-      <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} vil bli tilbakebetalt til din betalingsmetode innen 5\u201310 virkedager.</p>
+      <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.</p>
     </div>
     ` : ''}
 
@@ -571,8 +571,8 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 </html>
     `,
     text: refunded
-      ? `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studiet'}. Refusjon på ${formatKr(refundAmount || 0)} vil bli tilbakebetalt innen 5-10 virkedager.`
-      : `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studiet'}. Ta kontakt med oss hvis du har spørsmål.`
+      ? `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studioet'}. ${formatKr(refundAmount || 0)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.`
+      : `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studioet'}. Ta kontakt med oss hvis du har spørsmål.`
   }
 }
 

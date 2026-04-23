@@ -306,7 +306,7 @@ const TeacherProfilePage = () => {
   // Delete account handler (deferred — signs out + instructs to contact support)
   const handleDeleteAccount = async () => {
     await supabase.auth.signOut();
-    toast('Kontoen din vil bli slettet. Kontakt oss på hei@ease.no om du ombestemmer deg.');
+    toast.info('Kontoen slettes. Kontakt hei@ease.no for å angre.');
   };
 
   // Notification toggle with auto-save

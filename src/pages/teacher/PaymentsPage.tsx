@@ -213,7 +213,7 @@ const PaymentsPage = () => {
       >
         <div className="mb-10 border-b border-border pt-6 pb-8 lg:pt-8">
           <h1 className="text-3xl font-semibold text-foreground">Betalinger</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Oversikt over utbetalinger og transaksjoner.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Oversikt over utbetalinger og betalinger.</p>
         </div>
 
         <div className="mx-auto max-w-5xl space-y-8">
@@ -536,7 +536,7 @@ function TransferRow({
     pending: 'Venter',
     in_transit: 'Underveis',
     failed: 'Feilet',
-    canceled: 'Kansellert',
+    canceled: 'Avlyst',
   };
 
   return (
