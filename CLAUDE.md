@@ -70,6 +70,14 @@
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+## Integrations & External APIs
+
+- **Don't guess API shapes, field names, or endpoint paths.** Before recommending or writing integration code: (1) grep the codebase for existing usage, (2) consult the official docs for the integration, (3) if both are silent, ask before committing to a shape.
+- **Cite the source** when recommending integration details — "per `supabase/functions/_shared/dintero.ts`" or "per Dintero docs `/v1/sessions-profile`". An uncited API fact is a guess.
+- **Don't reach for patterns from superseded integrations.** Stripe Connect was replaced by Dintero in April 2026. `stripe_*` columns, `create-payment-intent`, `stripe-webhook`, and `@stripe/*` SDKs no longer exist — if you're about to import or reference any of these, stop.
+- **Prefer reading over running** for investigation. A focused `Grep` or `Read` on the integration module beats spinning up the integration to observe behavior.
+- For Dintero specifically, see the `dintero-payments` skill.
+
 ## Design System
 
 - The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the single source of truth for colors, radius, and font. `components.json` pins style to `radix-vega` and `iconLibrary` to `lucide`.
@@ -167,40 +175,16 @@
 
   **Ring vs border — one decision tree.** A ring doesn't shift layout — use it for *state chrome* (selection, hover-deepen, focus). A border is structural — use it for permanent visual boundaries. The `<Card>` primitive already uses `ring-1 ring-foreground/10` so it reads in dark mode where `--card == --background`; don't override.
 
-  **Whole-card-clickable tiles** (course tiles, event cards) deepen the ring instead of swapping fill — their elevation is part of the identity:
-  - Hover: `ring-1 ring-foreground/20`
-  - Selected: `ring-2 ring-foreground/20` (neutral — default for editor/calendar selections) or `ring-2 ring-selection` (brand, only for genuine commitment-style picks)
-  - Inactive: fill becomes `bg-muted` instead of `bg-card`, ring thins to `ring-foreground/5`
-
-  **Category-tinted cards — selection ring matches the card's color family.** When a card body is already tinted with a category color (schedule events: `bg-chart-3/8` series, `bg-success/8` single events, `bg-muted/50` completed), a neutral `ring-foreground/20` selection ring looks alien against the tint. Instead, the ring uses the solid category color:
-
-  | Card category | Body | Selected ring |
-  |---------------|------|---------------|
-  | Series / chart-3 tinted | `bg-chart-3/8 border-chart-3/25` | `ring-2 ring-chart-3` |
-  | Single event / success tinted | `bg-success/8 border-success/25` | `ring-2 ring-success` |
-  | Completed / neutral | `bg-muted/50 border-border` | `ring-2 ring-foreground/20` |
-
-  Solid (no opacity) on a 2px ring gives a crisp "THIS is selected" signal that still reads as part of the card's color family. This is a sanctioned deviation from the default opacity vocabulary because a tinted card beneath the ring already absorbs intensity — /20 or /50 on the ring would sit weaker than the card's own border.
+  **Whole-card-clickable tiles** (course tiles, event cards) deepen the ring instead of swapping fill. **Category-tinted cards** (schedule events, success-tinted tiles) use a solid-colour selection ring that matches the card's colour family — sanctioned opacity deviation because the tint already absorbs intensity. Full state tables for both → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#whole-card-clickable-tiles--deepen-ring-pattern).
 
   **Inactive card is a `bg-muted` shift, not `opacity-60`.** Opacity reads as a loading skeleton and kills text contrast for screen readers. Pattern for archived / cancelled / draft: `bg-muted/50` fill + `text-muted-foreground` title + hover suppressed, but the item remains clickable. Reserve `opacity-60 pointer-events-none cursor-not-allowed` for genuinely *unavailable controls* ("Send" mid-submit, a radio option gated by a prior answer).
 
-  **Focus ring — one pattern + three sanctioned deviations.** Default is `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` (use the `.focus-ring` utility on custom surfaces). Deviations:
-  - **Dense list rows** (conversation list, command menu, message rows): `ring-2 ring-inset ring-ring/50` — inset avoids overlapping neighbors in a tight stack.
-  - **Form inputs** keep the shadcn pattern (`ring-3 ring-ring/50` without offset). Muscle memory — don't touch.
-  - **Menu items** (dropdown, combobox, select popover) use `focus:bg-accent` with no visible ring — that's the Radix/shadcn convention.
+  **Focus ring** — default is the `.focus-ring` utility (offset-2, `ring-ring`). Three sanctioned deviations for dense list rows, form inputs, and menu items — [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#focus-ring--one-pattern--three-sanctioned-deviations).
 
   **Status ≠ selection.** "Live now", "currently being processed", "last saved" are *status* concepts — use a `<Badge>` or dot indicator, never a ring. Rings are reserved for interaction state (hover/selected/focus). Mixing them confuses users into thinking an in-progress item is selected.
 
 - **Status colors are signals, not decoration.** Four semantic tokens exist: `success` (positive state, delta up, payout sent), `destructive` (error, refund, delete), `warning` (caution, pending, under review), `info` (neutral notification, non-urgent). Never use raw Tailwind colour utilities (`bg-green-100`, `text-red-700`, `text-amber-500`, `bg-blue-100`) for semantic state — always use the token. Rule: max 1 chromatic color per card body (DeltaChip is its own element and doesn't count).
-- **Accent colour (`chart-2`, blue-violet)** — the app's *one* chromatic accent for non-semantic emphasis. Five canonical uses, nothing else:
-  1. **Data viz** — line/area/bar strokes and fills in recharts. Use `var(--color-chart-2)` in SVG / chart config.
-  2. **Tinted icon container** (`bg-chart-2/10 text-chart-2` on a rounded square, size-9/10) — the icon is the chart-2-coloured element on a faint chart-2 wash. Used for "this row represents X" glyphs (activity icons, location pin).
-  3. **Tinted interactive chip/toggle** — same tinted surface plus `border-chart-2/20` for button-like chrome, `hover:bg-chart-2/20 hover:text-chart-2` on hover. Used for favourite-toggles and accent chips.
-  4. **Full-row tint** (`bg-chart-2/10`) where the content on top is **normal** `text-foreground` / `text-tertiary-foreground`, not chart-2. The blue is ambient emphasis ("next up"), not the content colour. Used sparingly — one highlighted row per list.
-  5. **Solid live-indicator dot** (`bg-chart-2` + `animate-ping`) for "happening now" signals in dense lists. Never solid chart-2 elsewhere.
-  - **Badge consumers:** don't hand-roll the tinted surface. Use `<Badge variant="accent">` — it bakes in `bg-chart-2/10 text-chart-2 border-transparent`.
-  - **Don't mix with semantic state.** If a row is `success` (paid), don't also tint it chart-2. The accent is for category/emphasis, not state. Status tokens win.
-  - **Opacity rule reminder:** stick to `/10` bg + `/20` border / hover. No `/15`, `/30`, `/25`, etc.
+- **Accent colour (`chart-2`, blue-violet)** — the app's *one* chromatic accent for non-semantic emphasis. Consume via `<Badge variant="accent">` or a `bg-chart-2/10 text-chart-2` tinted container; never hand-roll the surface. Don't mix with semantic state — if a row is `success`, it doesn't also get tinted chart-2. Five canonical uses only (data viz, tinted icon container, tinted chip, full-row tint, live-indicator dot) — [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#chart-2-accent--five-canonical-uses).
 - **Form validation errors** use `text-xs font-medium text-destructive`. Keep 500 weight (colour alone isn't enough for colour-blind users) but DO NOT add `tracking-wide` — errors are sentences, not labels. Matches shadcn's own `<FormMessage>` convention.
 - **Sentences vs labels at `text-xs` size** — the single biggest inconsistency to watch for.
   - **Label** (short, scannable, sits above a value or in a table header): `text-xs font-medium tracking-wide text-muted-foreground`. Examples: KPI labels ("Inntekter", "Kapasitet"), table column headers ("Navn", "Status"), dropdown menu section labels ("Betaling feilet"), chips ("Valgfritt", "per person"), short status tags.
@@ -228,53 +212,8 @@
 - **Opacity on colour tokens** — only three allowed values: `/10` for tinted card/badge backgrounds, `/20` for borders on tinted surfaces, `/50` for subtle hover surfaces on `bg-muted`. Do NOT invent other percentages (`/40`, `/60`, `/70`, `/90`) — they read as arbitrary. If none of the three fit the case, the answer is either a dedicated token or the solid token (no opacity).
   - **Translucent glass bars** (sticky footers, floating topbars with backdrop-blur): use the `bg-surface-elevated` token, which has opacity pre-baked. Pair with `backdrop-blur-md` (default) or `backdrop-blur-xl` (heavier glass). Don't use `bg-background/80` — that's the pattern this token replaces.
   - **Muted text on a `bg-primary` surface** (dark CTA sections, stat cards on primary): use `text-primary-muted-foreground` instead of `text-muted-foreground`. Regular `muted-foreground` is tuned for white backgrounds and fails contrast on dark primary. The token is pre-baked at 70% primary-foreground so it reads correctly on the primary bg without random `/70` opacity noise.
-- **Icon sizing matched to text** — icons inside a text row should match the line-box so nothing looks offset:
-
-  | Text size | Icon size class | Notes |
-  |-----------|-----------------|-------|
-  | `text-xxs` / `text-xs` | `size-3.5` | 14px — meta rows, chip icons |
-  | `text-sm` | `size-4` | 16px — standard button/label icons |
-  | `text-base` | `size-4` or `size-5` | 16–20px |
-  | `text-lg` | `size-5` | 20px |
-  | `text-xl` / `text-2xl` | `size-6` | 24px — card title icons, stat card icons |
-
-  Decorative/hero icons (empty state, onboarding) can go larger (`size-8` etc.) — this table is specifically for icons sitting next to text.
-- **Data tables** — use the `<Table>` primitive set in `@/components/ui/table`:
-
-  ```tsx
-  import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-
-  <Table>
-    <TableHeader>
-      <tr>
-        <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
-        <TableHead className="w-40">Status</TableHead>
-        <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
-      </tr>
-    </TableHeader>
-    <TableBody>
-      {rows.map(row => (
-        <TableRow key={row.id}>
-          <TableCell>…</TableCell>
-          …
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-  ```
-
-  **The primitives bake in** the wrapper overflow, `w-full` sizing, header styling, body dividers, row hover, cell padding. **Width constraint is the page's job, not the table's** — the primitive fills its parent; if the page should cap dashboard content at e.g. `max-w-6xl` on ultra-wide screens, set that on the page's `<main>` or wrapper div (PaymentsPage already does this with `<div className="mx-auto max-w-5xl">`). Don't re-declare any of the baked-in properties on raw `<table>` / `<th>` / `<td>`.
-
-  **Column-width rule — prevents the "columns clumped on the right" problem:**
-  - **Identity column** (avatar + name + email block) — `className="min-w-[220px] max-w-[360px] w-[40%]"`. The `max-w` is critical; without it the column sprawls on wide screens and pushes everything else into a strip on the right.
-  - **Fixed-content columns** (status, counts, actions) — fixed width: `w-40`, `w-12`, etc.
-  - **Secondary-text columns** (email-as-a-column, course name, etc.) — `w-40` fixed or `hidden sm:table-cell` for mobile hiding.
-  - **Action column** (menu trigger) — `w-12` or `w-16`, always last.
-  - If columns total less than the container, the identity column absorbs the slack (up to its max-w). Past the max-w, the table stops growing — `max-w-6xl` on the `<Table>` itself caps the outer bound.
-
-  **Responsive hiding** — use `hidden sm:table-cell` (show from sm up) or `hidden md:table-cell` (show from md up) on optional columns. Mobile collapses to identity + status + actions.
-
-  **Don't skip the primitive.** Writing raw `<table>` or a plain `<div className="grid">` for a "simple" table is the reason this app had two near-identical hand-rolled tables. Every data table goes through `<Table>`.
+- **Icon size matches text line-box.** Quick map: `text-xs` → `size-3.5`; `text-sm` → `size-4`; `text-lg` → `size-5`; `text-xl`/`text-2xl` → `size-6`. Decorative/hero icons can go larger (`size-8+`). Full table → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#icon-size--text-size-table).
+- **Data tables** — always use the `<Table>` primitive set in `@/components/ui/table`. The primitives bake in wrapper overflow, `w-full`, header styling, dividers, hover, cell padding. Width constraint is the *page's* job (e.g. `<main className="mx-auto max-w-6xl">`), not the table's. Identity column needs `min-w-[220px] max-w-[360px] w-[40%]` (the `max-w` prevents "columns clumped on the right" on wide screens); fixed columns use `w-40`/`w-12`; optional columns use `hidden sm:table-cell` or `hidden md:table-cell`. **Never hand-roll a `<table>` or `<div className="grid">` for data.** Full template + column-width rules → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#table--canonical-template--column-width-rule).
 
 - **Badges and pills** — one primitive (`<Badge>`) with three dimensions:
 
@@ -291,20 +230,11 @@
   4. KPI delta (+12 %, −5 %) → **`<DeltaChip>`**.
   5. Anything else (counts, meta, decorative, tags) → **`<Badge>`** directly, picking variant + shape + size.
 
-  **Canonical status → variant map** (baked into the typed wrappers — don't reinvent it per-usage):
+  **Don't hand-roll status pills.** Never write `<Badge variant="secondary" className="bg-success/10 text-success ring-success/20">` — that's `<Badge variant="success" shape="rect" size="sm">`. The primitive owns the colour/shape mapping. Reach for `className` overrides on a status badge and something is wrong.
 
-  | State | Variant | Example |
-  |-------|---------|---------|
-  | Positive, ongoing | `success` | Betalt, Påmeldt, Pågår, Kommende, Fullført (success badge in schedule) |
-  | Attention needed | `warning` | Venter betaling, Kurs avlyst, Få plasser igjen |
-  | Action required | `destructive` | Betaling feilet |
-  | Informational | `info` | Generic notifications, unread count dot, "Gjesteinstruktør" |
-  | Resolved / archived / neutral fact | `neutral` | Avbestilt, Refundert, Utkast, Fullt, "Neste" session marker |
-  | Category / feature accent (not a state) | `accent` | Course type/progress chips ("Uke 6 av 8", "Arrangement"). Blue-violet via `chart-2`. Use sparingly — one accent moment per surface, not on every chip. |
+  **Shape-by-context:** card meta like "Denne måneden" / "Siste 7 dager" / "{N} av {M}" uses `shape="pill"` + `variant="secondary"`. Status in a table/list — anything rendered via the typed wrappers — uses `shape="rect"`. Don't mix.
 
-  **Rule: don't hand-roll status pills.** Never write `<Badge variant="secondary" className="bg-success/10 text-success ring-success/20">` — that's `<Badge variant="success" shape="rect" size="sm">`. The primitive owns the colour/shape mapping. If you reach for `className` overrides on a status badge, something is wrong.
-
-  **Shape-by-context rule:** card meta like "Denne måneden" / "Siste 7 dager" / "{N} av {M}" uses the default `pill` shape with `variant="secondary"`. Status in a table row / list — anything rendered via the typed wrappers — always uses `shape="rect"`. Don't mix.
+  Full status → variant lookup table → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#badge--canonical-status--variant-map).
 
   **Silence-on-success pattern:** `PaymentBadge` with default `visibility="exceptions"` renders NOTHING for `paid`. Use this in dense admin lists where the success state is the expected happy path — the badge should only appear when there's a problem to flag. Applied analogously: if you're tempted to show "Active" on every row of a list, consider whether silence on the happy path is clearer.
 
@@ -316,61 +246,23 @@
   | `shape` | `default` (rect, `rounded-md`) · `pill` (`rounded-full`) | **`pill` only on hero CTAs in marketing / landing contexts.** Dashboard + forms always use rect so buttons share geometry with adjacent inputs. |
   | `size` | `xs` · `sm` · `default` · `lg` · `cta` · `icon` · `icon-xs` · `icon-sm` · `icon-lg` | Density |
 
-  **Variant decision tree:**
-  - `default` → **primary** action per section. Max 1–2 per screen. Solid primary-colour fill.
-  - `secondary` → alternative action (e.g. "Avbryt" paired with a default). Subtle gray fill.
-  - `outline` → secondary action with more chrome (toolbars, filter buttons). Border + full text colour.
-  - `outline-soft` → tertiary / cancel in dialogs. Same shape as `outline` but text is `muted-foreground` — softer than `outline`.
-  - `ghost` → icon buttons, nav items, close buttons, hover-revealed actions.
-  - `destructive` → destructive action (delete, cancel-with-refund, remove). **Solid red** — use in both menus/inline AND AlertDialog confirmations. Don't pair two destructive buttons in the same action row.
-  - `link` → inline text link styled as button (rare).
-  - `plain` → **inline text action** with button semantics but no chrome (no background, no border, no height). Renders `h-auto p-0` with `muted-foreground` → `foreground` on hover. Use for "Vis alle", "Nullstill", "Tilbake", "Legg til punkt" — actions that read as text inside a card/row, not as a pill. Size prop still controls font-size (`xs` for `text-xs`, `sm` for `text-sm`). Do not reach for this when a real button is warranted.
+  **Variant quick map:** `default` (primary, 1–2/screen) · `secondary` (paired alternative) · `outline` (toolbar/filter) · `outline-soft` (dialog cancel) · `ghost` (icon, nav) · `destructive` (solid red, used in menus AND AlertDialogs) · `link` (rare inline) · `plain` (inline text action with button semantics — `h-auto p-0`, for "Vis alle"/"Nullstill"/"Tilbake" inside a card).
 
-  **Size decision tree:**
-  - `xs` (h-6) → dense toolbars, chip-adjacent actions.
-  - `sm` (h-8) → default for in-table / in-card actions.
-  - `default` (h-9) → standard page actions.
-  - `lg` (h-10) → rare, emphasised actions.
-  - `cta` (h-11) → **full-width CTA in auth forms / modal primary / hero**. Replaces ad-hoc `className="h-11"` — always use this size.
-  - `icon` / `icon-xs` / `icon-sm` / `icon-lg` → square icon-only buttons.
+  **Size quick map:** `xs` (h-6, dense toolbar) · `sm` (h-8, in-table/in-card default) · `default` (h-9, page action) · `lg` (h-10, rare) · `cta` (h-11, full-width form/modal/hero primary) · `icon*` (square icon-only). **Never** use `className="h-11"` — use `size="cta"`.
 
-  **Shape rule:** `shape="pill"` is permitted on `src/pages/public/**` and marketing-adjacent contexts for hero CTAs. Everywhere else stays default rect so buttons visually pair with inputs/fields. **Never mix pill and rect in the same form, toolbar, or action group.**
+  **Shape rule:** `shape="pill"` only on `src/pages/public/**` hero CTAs. Dashboard + forms stay rect so buttons pair with inputs. Never mix pill and rect in the same form/toolbar/action group.
 
-  **AlertDialog confirmations:** `AlertDialogAction` accepts `variant` + `size` props that flow to the underlying Button. For a destructive confirmation, use `<AlertDialogAction variant="destructive">` — **do not** hand-roll `className="bg-destructive text-destructive-foreground"`.
+  **AlertDialog:** `<AlertDialogAction variant="destructive">` — don't hand-roll `className="bg-destructive..."`.
 
-  **Anti-patterns:**
-  - ❌ `<Button className="h-11 w-full">` → ✅ `<Button size="cta" className="w-full">`
-  - ❌ `<Button className="bg-destructive text-destructive-foreground">` → ✅ `<Button variant="destructive">`
-  - ❌ `<Button className="rounded-full">` → ✅ `<Button shape="pill">`
-  - ❌ `<Button className="active:scale-[0.95]">` — press feedback via className is inconsistent; the primitive already provides subtle `active:translate-y-px`. Don't add more.
-  - ❌ Icon-only buttons with `className="size-8"` → ✅ `<Button size="icon-sm">`
-  - ❌ `<Button variant="ghost" className="h-auto p-0 text-muted-foreground hover:bg-transparent hover:text-foreground">` → ✅ `<Button variant="plain" size="xs">` (or `size="sm"` for `text-sm`)
+  **Never reach for `className` when a prop exists:** `rounded-full`→`shape="pill"`; `bg-destructive`→`variant="destructive"`; `size-8` on icon button→`size="icon-sm"`; `h-auto p-0 text-muted-foreground hover:text-foreground`→`variant="plain"`; `active:scale-[0.95]`→primitive already does `active:translate-y-px`. Full variant/size reference + anti-pattern examples → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#button--full-variantsize-spec).
 
 - **Spacing inside cards:** stick to three values, applied consistently:
   - Title → subtitle: `mt-0.5` (single-line descriptions) or `mt-1` (two-line descriptions)
   - Header → content: `CardHeader` + `CardContent` already handle this — don't hand-add margins
   - Row → row in dense lists: `space-y-1` (activity, signups) or `space-y-3` (upcoming classes with visual chunks)
-- **Card padding tiers** — surface determines the tier, not designer preference. No `p-5`, no `p-7`.
+- **Card padding:** `<Card>` primitive bakes in `py-6 px-6` (or `py-4 px-4` for `size="sm"`) — consumers don't add padding. For hand-rolled card surfaces (`<div className="rounded-lg border bg-card ...">`), pick from the fixed tier set: `p-3` (compact mini-panels), `p-4` (dense dashboard panels), `p-6` (standard), `p-6 sm:p-8` (form hero), `p-8` (marketing), `p-8 md:p-12` (mega hero). **No `p-5`, no `p-7`.** Full table → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#card-padding-tiers).
 
-  | Tier | Padding | Use for |
-  |------|---------|---------|
-  | Compact | `p-3` | Inline mini-panels (notification bubble, small decorative tiles) |
-  | Dense dashboard | `p-4` | In-Card-primitive panels, chat bubbles, inline edit panels, small forms |
-  | Standard | `p-6` | Default dashboard cards (collapsible panels, empty states, standard public cards like course signup) |
-  | Form hero | `p-6 sm:p-8` | Primary page forms (create-course, welcome-flow onboarding) |
-  | Marketing card | `p-8` | Landing feature cards |
-  | Mega hero | `p-8 md:p-12` | Full-bleed landing hero cards |
-
-  The `<Card>` primitive itself bakes in `py-6 px-6` (default) or `py-4 px-4` (`size="sm"`) via its sub-components — consumers of `<Card>` don't need to hand-add padding. These tiers apply to **hand-rolled card-like surfaces** (`<div className="rounded-lg border bg-card ...">`).
-
-- **Row padding tiers** — two valid patterns, pick by container:
-
-  | Container | Row padding | Rationale |
-  |-----------|-------------|-----------|
-  | `<Card>` primitive (already has `px-6`) or hand-rolled card with its own padding | `px-4 py-3` | Card provides outer gutter; rows are dense. Used in MessagesList, RegistrationsList, ConversationList. |
-  | Zero-padded card (`<Card className="p-0">` or hand-rolled without `p-*`) | `px-6 py-4` | Rows own the gutter. Used in PaymentsPage transactions, TeacherProfilePage settings rows. |
-
-  Don't invent `py-3.5`, `py-2.5`, `px-5` — if you need denser rows, drop to the compact chip size (`px-3 py-2.5` for tight nested metadata rows); if you need roomier, step up the card's tier instead of hand-tuning the row.
+- **Row padding** — pick by container: rows inside a padded card (Card primitive or hand-rolled with its own `px-*`) → `px-4 py-3` (MessagesList, RegistrationsList pattern). Rows inside a zero-padded card (`<Card className="p-0">`) → `px-6 py-4` (PaymentsPage pattern). Don't invent `py-3.5`/`px-5` — if denser, drop to `px-3 py-2.5`; if roomier, step up the card tier. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#row-padding-tiers).
 
 - **Stack gap scale** — use `0.5 / 1 / 2 / 3 / 4 / 6 / 8 / 10` on `space-y-*` and `gap-*`. **Skip 5 and 7** — they signal hand-tuning. If `space-y-4` feels too tight and `space-y-6` feels too loose, the answer is usually that the content tiers are off, not the gap.
   - `space-y-1` / `space-y-2` — tight meta rows, dense activity lists
@@ -379,15 +271,6 @@
   - `space-y-8` — top-level page sections (dashboard page → standard)
   - `space-y-10` — public marketing-style sections only
 
-- **Page container scale** — pick the pattern by surface:
-
-  | Surface | Pattern |
-  |---------|---------|
-  | Dashboard page | `<div className="mx-auto max-w-5xl space-y-8">` (or `max-w-6xl` for data-heavy pages like CoursesPage, SignupsPage) |
-  | Public content page (course detail, docs) | `<main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">` |
-  | Public listing | `<main className="mx-auto max-w-4xl px-6 py-8 sm:py-12">` |
-  | Prose / terms / legal | `<main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">` + `space-y-10` inside |
-
-  `CourseDetailPage` is the deliberate exception — full-width layout with its own sidebar framing, no `mx-auto max-w-*`. Don't use it as a template for normal pages.
+- **Page containers:** dashboard page → `mx-auto max-w-5xl space-y-8` (bump to `max-w-6xl` for data-heavy pages). Public content → `max-w-5xl`. Public listing → `max-w-4xl`. Prose/legal → `max-w-3xl` + `space-y-10`. `CourseDetailPage` is the deliberate full-width exception — don't template from it. Full patterns → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#page-container-scale).
 - The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance.
 - If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing.

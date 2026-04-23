@@ -47,7 +47,7 @@ For every violation found:
 
 - Always use `formatKroner()` from `@/lib/utils` to display NOK amounts
 - Never write `${amount} kr` or `amount + " kr"` inline
-- `formatKroner()` returns `"Gratis"` for 0/null, otherwise `"1 200 kr"` with `nb-NO` locale
+- `formatKroner()` returns `"0 kr"` for 0/null/undefined, otherwise `"1 200 kr"` with `nb-NO` locale
 - In Supabase Edge Functions: use `formatKr()` from `send-email/index.ts`
 
 Search patterns to find violations:
