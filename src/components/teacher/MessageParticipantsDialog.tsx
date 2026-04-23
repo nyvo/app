@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { sendEmail } from '@/services/emails';
+import { sendTeacherBroadcast } from '@/services/emails';
 
 interface Participant {
   name: string;
@@ -42,49 +42,14 @@ export function MessageParticipantsDialog({
 
     setIsSending(true);
 
-    const subject = `Melding fra ${organizationName}: ${courseName}`;
-    const escapedMessage = trimmed
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
-
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #18181b; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: 600; color: #1a1a1a; }
-    .message-box { background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #737373; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-    <p>Hei,</p>
-    <p>Du har mottatt en melding om <strong>${courseName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</strong>:</p>
-    <div class="message-box">
-      <p>${escapedMessage}</p>
-    </div>
-    <div class="footer">
-      <p>Hilsen,<br>${organizationName}</p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    const text = `Hei,\n\nDu har mottatt en melding om ${courseName}:\n\n${trimmed}\n\nHilsen,\n${organizationName}`;
-
     const results = await Promise.allSettled(
-      participants.map((p) => sendEmail(p.email, subject, html, { text }))
+      participants.map((p) =>
+        sendTeacherBroadcast(p.email, {
+          courseName,
+          message: trimmed,
+          organizationName,
+        }),
+      ),
     );
 
     const failed = results.filter(

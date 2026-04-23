@@ -45,7 +45,7 @@ interface SendEmailRequest {
   text?: string
   replyTo?: string
   // Template-based emails
-  template?: 'new-message' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'student-cancellation' | 'teacher-cancellation' | 'payment-link'
+  template?: 'new-message' | 'teacher-broadcast' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'student-cancellation' | 'teacher-cancellation' | 'payment-link'
   templateData?: Record<string, string>
 }
 
@@ -113,6 +113,50 @@ Svar her: ${conversationUrl}
 Hilsen,
 ${organizationName || 'Ease'}
     `.trim()
+  }
+}
+
+function getTeacherBroadcastTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
+  const courseName = escapeHtml(data.courseName)
+  const organizationName = escapeHtml(data.organizationName)
+  // Preserve newlines in the user-typed message by escaping HTML first, then
+  // converting \n → <br>. escapeHtml ensures no raw tags get through.
+  const escapedBody = escapeHtml(data.message).replace(/\n/g, '<br>')
+
+  return {
+    subject: `Melding fra ${organizationName}: ${courseName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #18181b; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .logo { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+    .message-box { background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .footer { margin-top: 40px; text-align: center; color: #737373; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Ease</div>
+    </div>
+    <p>Hei,</p>
+    <p>Du har mottatt en melding om <strong>${courseName}</strong>:</p>
+    <div class="message-box">
+      <p>${escapedBody}</p>
+    </div>
+    <div class="footer">
+      <p>Hilsen,<br>${organizationName}</p>
+    </div>
+  </div>
+</body>
+</html>`,
+    text: `Hei,\n\nDu har mottatt en melding om ${data.courseName}:\n\n${data.message}\n\nHilsen,\n${data.organizationName}`
   }
 }
 
@@ -640,52 +684,49 @@ Deno.serve(async (req: Request) => {
 
     let emailContent: { subject: string; html: string; text?: string }
 
-    // Check if using a template
-    if (body.template && body.templateData) {
-      switch (body.template) {
-        case 'new-message':
-          emailContent = getNewMessageTemplate(body.templateData)
-          break
-        case 'signup-confirmation':
-          emailContent = getSignupConfirmationTemplate(body.templateData)
-          break
-        case 'booking-failed':
-          emailContent = getBookingFailedTemplate(body.templateData)
-          break
-        case 'course-reminder':
-          emailContent = getCourseReminderTemplate(body.templateData)
-          break
-        case 'course-cancelled':
-          emailContent = getCourseCancelledTemplate(body.templateData)
-          break
-        case 'student-cancellation':
-          emailContent = getStudentCancellationTemplate(body.templateData)
-          break
-        case 'teacher-cancellation':
-          emailContent = getTeacherCancellationTemplate(body.templateData)
-          break
-        case 'payment-link':
-          emailContent = getPaymentLinkTemplate(body.templateData)
-          break
-        default:
-          return new Response(
-            JSON.stringify({ error: `Unknown template: ${body.template}` }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          )
-      }
-    } else {
-      // Direct email content
-      if (!body.to || !body.subject || !body.html) {
+    // Template is required — raw HTML path was removed to prevent arbitrary
+    // HTML emails from being sent if the service-role key ever leaks. All
+    // templates escape user input server-side.
+    if (!body.template || !body.templateData) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: template, templateData' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    switch (body.template) {
+      case 'new-message':
+        emailContent = getNewMessageTemplate(body.templateData)
+        break
+      case 'teacher-broadcast':
+        emailContent = getTeacherBroadcastTemplate(body.templateData)
+        break
+      case 'signup-confirmation':
+        emailContent = getSignupConfirmationTemplate(body.templateData)
+        break
+      case 'booking-failed':
+        emailContent = getBookingFailedTemplate(body.templateData)
+        break
+      case 'course-reminder':
+        emailContent = getCourseReminderTemplate(body.templateData)
+        break
+      case 'course-cancelled':
+        emailContent = getCourseCancelledTemplate(body.templateData)
+        break
+      case 'student-cancellation':
+        emailContent = getStudentCancellationTemplate(body.templateData)
+        break
+      case 'teacher-cancellation':
+        emailContent = getTeacherCancellationTemplate(body.templateData)
+        break
+      case 'payment-link':
+        emailContent = getPaymentLinkTemplate(body.templateData)
+        break
+      default:
         return new Response(
-          JSON.stringify({ error: 'Missing required fields: to, subject, html' }),
+          JSON.stringify({ error: `Unknown template: ${body.template}` }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
-      }
-      emailContent = {
-        subject: body.subject,
-        html: body.html,
-        text: body.text
-      }
     }
 
     // Send email via Resend

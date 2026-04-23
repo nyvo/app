@@ -69,6 +69,18 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Missing required fields', 400)
     }
 
+    // Validate UUID-shaped inputs before they flow into .eq() queries.
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(courseId)) {
+      return errorResponse('Invalid courseId', 400)
+    }
+    if (sessionId !== undefined && sessionId !== null && !uuidRegex.test(sessionId)) {
+      return errorResponse('Invalid sessionId', 400)
+    }
+    if (signupPackageId !== undefined && signupPackageId !== null && !uuidRegex.test(signupPackageId)) {
+      return errorResponse('Invalid signupPackageId', 400)
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(customerEmail)) {
       return errorResponse('Invalid email format', 400)

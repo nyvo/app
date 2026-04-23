@@ -8,8 +8,8 @@ import { BookOpen } from '@/lib/icons';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ScheduleDayList } from '@/components/public/schedule/ScheduleDayList';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchOrganizationBySlug } from '@/services/organizations';
-import type { Organization, CourseType } from '@/types/database';
+import { fetchOrganizationBySlug, type PublicOrganization } from '@/services/organizations';
+import type { CourseType } from '@/types/database';
 
 type TypeFilter = 'all' | CourseType;
 
@@ -35,7 +35,7 @@ function isVisible(course: PublicCourseWithDetails): boolean {
 
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [organization, setOrganization] = useState<PublicOrganization | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -8,39 +8,38 @@ interface SendEmailResult {
   error?: string
 }
 
-// Send a raw email (for custom content)
-export async function sendEmail(
+// Send a broadcast from a teacher to course participants (e.g. announcements,
+// schedule changes). Uses the server-side teacher-broadcast template so the
+// message body is escaped on the edge function — no raw HTML from the client.
+export async function sendTeacherBroadcast(
   to: string,
-  subject: string,
-  html: string,
-  options?: {
-    text?: string
-    replyTo?: string
-  }
+  data: {
+    courseName: string
+    message: string
+    organizationName: string
+  },
 ): Promise<SendEmailResult> {
   if (!isValidEmail(to)) {
     return { success: false, error: `Ugyldig e-postadresse: ${to}` }
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('send-email', {
+    const { data: resp, error } = await supabase.functions.invoke('send-email', {
       body: {
         to,
-        subject,
-        html,
-        text: options?.text,
-        replyTo: options?.replyTo,
+        template: 'teacher-broadcast',
+        templateData: data,
       },
     })
 
     if (error) {
-      logger.error('Email send error:', error)
+      logger.error('Teacher broadcast error:', error)
       return { success: false, error: error.message }
     }
 
-    return { success: true, messageId: data?.messageId }
+    return { success: true, messageId: resp?.messageId }
   } catch (err) {
-    logger.error('Email send exception:', err)
+    logger.error('Teacher broadcast exception:', err)
     return { success: false, error: err instanceof Error ? err.message : 'Ukjent feil' }
   }
 }

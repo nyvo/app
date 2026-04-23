@@ -60,13 +60,13 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup not found', 404)
     }
 
-    // Verify ownership by user_id only (email match would be spoofable)
-    const { data: { user: authUser } } = await supabase.auth.admin.getUserById(authResult.userId!)
-    const isOwner =
-      signup.user_id === authResult.userId ||
-      (signup.user_id === null && authUser?.email === signup.participant_email)
-
-    if (!isOwner) {
+    // Ownership check: require authenticated user to match signup.user_id.
+    // Email-match fallback for guest bookings was removed — an authenticated
+    // user whose email happens to match a guest booking's participant_email
+    // could otherwise cancel a booking they never made (e.g. someone booked
+    // in their name before they created an account). Guest bookings can be
+    // cancelled by the teacher via the dashboard.
+    if (signup.user_id !== authResult.userId) {
       return errorResponse('You can only cancel your own signups', 403)
     }
 
