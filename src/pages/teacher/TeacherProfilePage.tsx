@@ -372,9 +372,10 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
                                 onBlur={() => handleBlur('firstName')}
                                 aria-invalid={!!errors.firstName}
+                                aria-describedby={errors.firstName && touched.firstName ? 'profile-firstname-error' : undefined}
                             />
                             {errors.firstName && touched.firstName && (
-                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.firstName}</p>
+                              <p id="profile-firstname-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.firstName}</p>
                             )}
                         </div>
 
@@ -387,9 +388,10 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
                                 onBlur={() => handleBlur('lastName')}
                                 aria-invalid={!!errors.lastName}
+                                aria-describedby={errors.lastName && touched.lastName ? 'profile-lastname-error' : undefined}
                             />
                             {errors.lastName && touched.lastName && (
-                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.lastName}</p>
+                              <p id="profile-lastname-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.lastName}</p>
                             )}
                         </div>
 
@@ -402,11 +404,12 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
                                 onBlur={() => handleBlur('email')}
                                 aria-invalid={!!errors.email}
+                                aria-describedby={errors.email && touched.email ? 'profile-email-error' : 'profile-email-hint'}
                             />
                             {errors.email && touched.email ? (
-                              <p className="text-xs font-medium mt-1.5 text-destructive">{errors.email}</p>
+                              <p id="profile-email-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.email}</p>
                             ) : (
-                              <p className="text-xs mt-1.5 text-muted-foreground">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              <p id="profile-email-hint" className="text-xs mt-1.5 text-muted-foreground">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
@@ -432,12 +435,13 @@ const TeacherProfilePage = () => {
                                 onBlur={() => handleBlur('studioDescription')}
                                 placeholder="Fortell litt om deg"
                                 aria-invalid={!!errors.studioDescription}
+                                aria-describedby={errors.studioDescription && touched.studioDescription ? 'profile-description-error' : 'profile-description-hint'}
                             />
                             <div className="mt-1.5 flex justify-between">
                                 {errors.studioDescription && touched.studioDescription ? (
-                                  <span className="text-xs font-medium text-destructive">{errors.studioDescription}</span>
+                                  <span id="profile-description-error" role="alert" className="text-xs font-medium text-destructive">{errors.studioDescription}</span>
                                 ) : (
-                                  <span className="text-xs text-muted-foreground">Vises på din offentlige side.</span>
+                                  <span id="profile-description-hint" className="text-xs text-muted-foreground">Vises på din offentlige side.</span>
                                 )}
                                 <span className={`text-xs tabular-nums ${studioDescription.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>{studioDescription.length}/500</span>
                             </div>
@@ -491,6 +495,7 @@ const TeacherProfilePage = () => {
                                                   value={currentPassword}
                                                   onChange={(e) => { setCurrentPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.currentPassword; return n; }); }}
                                                   aria-invalid={!!passwordErrors.currentPassword}
+                                                  aria-describedby={passwordErrors.currentPassword ? 'current-password-error' : undefined}
                                                   autoComplete="current-password"
                                               />
                                               <button
@@ -503,7 +508,7 @@ const TeacherProfilePage = () => {
                                               </button>
                                           </div>
                                           {passwordErrors.currentPassword && (
-                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.currentPassword}</p>
+                                              <p id="current-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.currentPassword}</p>
                                           )}
                                       </div>
 
@@ -516,6 +521,7 @@ const TeacherProfilePage = () => {
                                                   value={newPassword}
                                                   onChange={(e) => { setNewPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.newPassword; return n; }); }}
                                                   aria-invalid={!!passwordErrors.newPassword}
+                                                  aria-describedby={passwordErrors.newPassword ? 'new-password-error' : 'new-password-hint'}
                                                   autoComplete="new-password"
                                               />
                                               <button
@@ -528,9 +534,9 @@ const TeacherProfilePage = () => {
                                               </button>
                                           </div>
                                           {passwordErrors.newPassword ? (
-                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
+                                              <p id="new-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p className="text-xs mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
+                                              <p id="new-password-hint" className="text-xs mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
                                           )}
                                       </div>
 
@@ -542,10 +548,11 @@ const TeacherProfilePage = () => {
                                               value={confirmPassword}
                                               onChange={(e) => { setConfirmPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.confirmPassword; return n; }); }}
                                               aria-invalid={!!passwordErrors.confirmPassword}
+                                              aria-describedby={passwordErrors.confirmPassword ? 'confirm-password-error' : undefined}
                                               autoComplete="new-password"
                                           />
                                           {passwordErrors.confirmPassword && (
-                                              <p className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.confirmPassword}</p>
+                                              <p id="confirm-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.confirmPassword}</p>
                                           )}
                                       </div>
 
@@ -691,10 +698,11 @@ const TeacherProfilePage = () => {
                                           </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <div className="py-2">
-                                          <label className="text-sm font-medium mb-1.5 block text-foreground">
+                                          <label htmlFor="delete-confirm" className="text-sm font-medium mb-1.5 block text-foreground">
                                               Skriv SLETT for å bekrefte
                                           </label>
                                           <Input
+                                              id="delete-confirm"
                                               value={deleteConfirmText}
                                               onChange={(e) => setDeleteConfirmText(e.target.value)}
                                               placeholder="SLETT"

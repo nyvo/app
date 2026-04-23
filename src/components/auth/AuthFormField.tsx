@@ -69,6 +69,7 @@ export function AuthFormField({
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? `${id}-error` : hint ? `${id}-hint` : undefined}
           placeholder={placeholder}
           className={isPassword ? 'pr-10' : undefined}
         />
@@ -90,9 +91,9 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p role="alert" className="text-xs font-medium text-destructive">{error}</p>
+        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-destructive">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-muted-foreground flex items-center gap-1 transition-colors duration-200">
+        <p id={`${id}-hint`} className="text-xs text-muted-foreground flex items-center gap-1 transition-colors duration-200">
           {hintMet && <Check className="size-3.5" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>
