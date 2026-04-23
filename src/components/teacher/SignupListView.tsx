@@ -155,7 +155,7 @@ function CompactPastSignupItem({
 }) {
   const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
   const hasActions = !!actionHandlers && (
-    !isCancelled || !!signup.stripePaymentIntentId || !!signup.exceptionType
+    !isCancelled || !!signup.dinteroTransactionId || !!signup.exceptionType
   );
 
   return (

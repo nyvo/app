@@ -41,7 +41,7 @@ export interface SignupDisplay {
   paymentStatus: PaymentStatus;
   note?: string;
   amountPaid?: number | null;
-  stripePaymentIntentId?: string | null;
+  dinteroTransactionId?: string | null;
   receiptUrl?: string | null;
   organizationId?: string;
   exceptionType?: ExceptionType | null;
@@ -65,8 +65,11 @@ export interface Database {
           address: string | null
           city: string | null
           postal_code: string | null
-          stripe_account_id: string | null
-          stripe_onboarding_complete: boolean | null
+          dintero_seller_id: string | null
+          dintero_approval_id: string | null
+          dintero_contract_url: string | null
+          dintero_onboarding_status: string | null
+          dintero_onboarding_complete: boolean | null
           studio_shared_at: string | null
           settings: Json | null
           default_course_image_url: string | null
@@ -84,8 +87,11 @@ export interface Database {
           address?: string | null
           city?: string | null
           postal_code?: string | null
-          stripe_account_id?: string | null
-          stripe_onboarding_complete?: boolean | null
+          dintero_seller_id?: string | null
+          dintero_approval_id?: string | null
+          dintero_contract_url?: string | null
+          dintero_onboarding_status?: string | null
+          dintero_onboarding_complete?: boolean | null
           studio_shared_at?: string | null
           settings?: Json | null
           default_course_image_url?: string | null
@@ -103,8 +109,11 @@ export interface Database {
           address?: string | null
           city?: string | null
           postal_code?: string | null
-          stripe_account_id?: string | null
-          stripe_onboarding_complete?: boolean | null
+          dintero_seller_id?: string | null
+          dintero_approval_id?: string | null
+          dintero_contract_url?: string | null
+          dintero_onboarding_status?: string | null
+          dintero_onboarding_complete?: boolean | null
           studio_shared_at?: string | null
           settings?: Json | null
           default_course_image_url?: string | null
@@ -291,9 +300,9 @@ export interface Database {
           class_time: string | null
           note: string | null
           payment_status: PaymentStatus | null
-          stripe_payment_intent_id: string | null
-          stripe_checkout_session_id: string | null
-          stripe_receipt_url: string | null
+          dintero_transaction_id: string | null
+          dintero_session_id: string | null
+          dintero_merchant_reference: string | null
           amount_paid: number | null
           refund_amount: number | null
           refunded_at: string | null
@@ -317,9 +326,9 @@ export interface Database {
           class_time?: string | null
           note?: string | null
           payment_status?: PaymentStatus | null
-          stripe_payment_intent_id?: string | null
-          stripe_checkout_session_id?: string | null
-          stripe_receipt_url?: string | null
+          dintero_transaction_id?: string | null
+          dintero_session_id?: string | null
+          dintero_merchant_reference?: string | null
           amount_paid?: number | null
           refund_amount?: number | null
           refunded_at?: string | null
@@ -343,9 +352,9 @@ export interface Database {
           class_time?: string | null
           note?: string | null
           payment_status?: PaymentStatus | null
-          stripe_payment_intent_id?: string | null
-          stripe_checkout_session_id?: string | null
-          stripe_receipt_url?: string | null
+          dintero_transaction_id?: string | null
+          dintero_session_id?: string | null
+          dintero_merchant_reference?: string | null
           amount_paid?: number | null
           refund_amount?: number | null
           refunded_at?: string | null
@@ -611,10 +620,10 @@ export interface Database {
       }
     }
     Functions: {
-      get_signup_by_stripe_id: {
+      get_signup_by_dintero_id: {
         Args: {
-          p_session_id?: string | null
-          p_payment_intent_id?: string | null
+          p_transaction_id?: string | null
+          p_merchant_reference?: string | null
         }
         Returns: Json
       }
@@ -635,9 +644,9 @@ export interface Database {
           p_participant_name: string
           p_participant_email: string
           p_participant_phone: string
-          p_stripe_checkout_session_id: string
-          p_stripe_payment_intent_id: string
-          p_stripe_receipt_url: string
+          p_dintero_transaction_id: string
+          p_dintero_session_id: string
+          p_dintero_merchant_reference: string
           p_amount_paid: number
           p_is_drop_in?: boolean
           p_class_date?: string

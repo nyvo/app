@@ -241,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganizations(orgs)
 
     if (currentOrgRef.current) {
-      // Update currentOrganization with fresh data (e.g. after Stripe onboarding)
+      // Update currentOrganization with fresh data (e.g. after Dintero onboarding)
       const freshOrg = orgs.find((o) => o.id === currentOrgRef.current?.id)
       if (freshOrg) {
         setCurrentOrganization(freshOrg)
@@ -363,8 +363,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       address: null,
       city: null,
       postal_code: null,
-      stripe_account_id: null,
-      stripe_onboarding_complete: false,
+      dintero_seller_id: null,
+      dintero_approval_id: null,
+      dintero_contract_url: null,
+      dintero_onboarding_status: null,
+      dintero_onboarding_complete: false,
       studio_shared_at: null,
       settings: {},
       default_course_image_url: null,

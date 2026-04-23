@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, XCircle, Send, ExternalLink } from '@/lib/icons';
+import { MoreHorizontal, CheckCircle, XCircle, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -33,7 +33,7 @@ export interface ActionableParticipant {
   amountPaid?: number | null;
   exceptionType?: ExceptionType | null;
   status?: string;
-  stripePaymentIntentId?: string | null;
+  dinteroTransactionId?: string | null;
 }
 
 export interface ParticipantActionHandlers {
@@ -67,10 +67,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
   const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
   const hasExceptionActions = !!exceptionType;
   const hasBaseActions = !isCancelled;
-  const hasStripeLink = !!signup.stripePaymentIntentId;
-
   // Don't render menu if there are no actions to show
-  if (!hasExceptionActions && !hasBaseActions && !hasStripeLink) return null;
+  if (!hasExceptionActions && !hasBaseActions) return null;
 
   return (
     <>
@@ -151,22 +149,6 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             </DropdownMenuItem>
           )}
 
-          {/* Stripe link — for signups with a payment intent */}
-          {signup.stripePaymentIntentId && (
-            <>
-              {hasBaseActions && <DropdownMenuSeparator />}
-              <DropdownMenuItem asChild>
-                <a
-                  href={`https://dashboard.stripe.com/payments/${signup.stripePaymentIntentId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="size-4 mr-2" />
-                  Se i Stripe
-                </a>
-              </DropdownMenuItem>
-            </>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -188,7 +170,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-                    ? 'Deltakeren har betalt og får refusjon via Stripe.'
+                    ? 'Deltakeren har betalt og får refusjon automatisk.'
                     : 'Dette kan ikke angres.'}
                 </p>
               </div>
@@ -216,7 +198,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           <AlertDialogHeader>
             <AlertDialogTitle>Merk som betalt?</AlertDialogTitle>
             <AlertDialogDescription>
-              Betalingen for {signup.participantName} merkes som mottatt utenom Stripe (kontant, Vipps, e.l.).
+              Betalingen for {signup.participantName} merkes som mottatt utenom betalingsløsningen (kontant, Vipps, e.l.).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

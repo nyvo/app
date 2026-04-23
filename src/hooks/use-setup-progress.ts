@@ -5,7 +5,7 @@ import type { Organization } from '@/types/database'
 import type { Profile } from '@/types/database'
 
 export interface SetupStep {
-  id: 'profile' | 'stripe' | 'course'
+  id: 'profile' | 'payments' | 'course'
   title: string
   description: string
   isComplete: boolean
@@ -20,7 +20,7 @@ interface UseSetupProgressParams {
   currentOrganization: Organization | null
   profile: Profile | null
   hasCourses: boolean
-  onConnectStripe: () => void
+  onConnectPayments: () => void
 }
 
 interface UseSetupProgressResult {
@@ -43,7 +43,7 @@ export function useSetupProgress({
   currentOrganization,
   profile,
   hasCourses,
-  onConnectStripe,
+  onConnectPayments,
 }: UseSetupProgressParams): UseSetupProgressResult {
   return useMemo(() => {
     const org = currentOrganization
@@ -61,12 +61,12 @@ export function useSetupProgress({
         icon: User,
       },
       {
-        id: 'stripe',
+        id: 'payments',
         title: 'Aktiver betalinger',
         description: 'Koble til en betalingsløsning så du kan motta betaling fra elever. Trygt og sikkert.',
-        isComplete: !!org?.stripe_onboarding_complete,
+        isComplete: !!org?.dintero_onboarding_complete,
         actionLabel: 'Aktiver',
-        actionOnClick: onConnectStripe,
+        actionOnClick: onConnectPayments,
         icon: CreditCard,
       },
       {
@@ -94,5 +94,5 @@ export function useSetupProgress({
       nextStep,
       motivationalSubtitle,
     }
-  }, [currentOrganization, profile, hasCourses, onConnectStripe])
+  }, [currentOrganization, profile, hasCourses, onConnectPayments])
 }

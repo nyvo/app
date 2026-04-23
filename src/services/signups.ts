@@ -141,7 +141,7 @@ export async function checkCourseAvailability(
   return { available, total, error: null }
 }
 
-// Teacher-initiated cancellation with optional Stripe refund
+// Teacher-initiated cancellation with optional Dintero refund
 export async function teacherCancelSignup(
   signupId: string,
   options?: { refund?: boolean; reason?: string }
@@ -224,7 +224,7 @@ export async function sendPaymentLink(
   }
 }
 
-// Mark a signup's payment as resolved (received outside Stripe)
+// Mark a signup's payment as resolved (received outside the payment provider)
 export async function markPaymentResolved(
   signupId: string
 ): Promise<{ error: Error | null }> {

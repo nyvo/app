@@ -17,11 +17,11 @@ interface SignupRowProps {
 export function SignupRow({ signup, actionHandlers, hideCourse = false }: SignupRowProps) {
   const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
   const hasActions = !!actionHandlers && (
-    !isCancelled || !!signup.stripePaymentIntentId || !!signup.exceptionType
+    !isCancelled || !!signup.dinteroTransactionId || !!signup.exceptionType
   );
 
   return (
-    <TableRow className={cn(isCancelled && 'hover:bg-transparent')}>
+    <TableRow className={cn(isCancelled && 'bg-muted/50 hover:bg-muted/50')}>
       {/* Navn */}
       <TableCell>
         <div className="flex min-w-0 items-center gap-3">

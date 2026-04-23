@@ -18,7 +18,7 @@ import {
 } from '@/services/publicCourses';
 import { fetchCourseSessions } from '@/services/courses';
 import { checkCourseAvailability, createFreeSignup, sendSignupConfirmationEmail } from '@/services/signups';
-import { createPaymentIntent } from '@/services/checkout';
+import { createDinteroSession } from '@/services/checkout';
 import { friendlyError } from '@/lib/error-messages';
 import { formatKroner, isValidEmail, cn } from '@/lib/utils';
 import type { CourseSession } from '@/types/database';
@@ -57,7 +57,7 @@ function formatDuration(duration: number | null): string {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Booking card — price header, form, inline Stripe payment
+// Booking card — price header, form, inline Dintero payment
 // ────────────────────────────────────────────────────────────────────────────
 
 interface BookingFormState {
@@ -71,7 +71,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
   const [form, setForm] = useState<BookingFormState>({ name: '', email: '', phone: '', terms: false });
   const [errors, setErrors] = useState<Partial<Record<keyof BookingFormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [dinteroSid, setDinteroSid] = useState<string | null>(null);
 
   const isFull = course.max_participants !== null && course.spots_available <= 0;
   const isFree = !course.price || course.price <= 0;
@@ -137,7 +137,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
       return;
     }
 
-    const { data: paymentData, error: paymentError } = await createPaymentIntent({
+    const { data: paymentData, error: paymentError } = await createDinteroSession({
       courseId: course.id,
       organizationSlug: studioSlug,
       customerEmail: form.email.trim(),
@@ -149,7 +149,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
       setSubmitting(false);
       return;
     }
-    setClientSecret(paymentData.clientSecret);
+    setDinteroSid(paymentData.sid);
     setSubmitting(false);
   }
 
@@ -214,18 +214,20 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
     );
   }
 
-  if (clientSecret) {
+  if (dinteroSid) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
         <EmbeddedPayment
-          clientSecret={clientSecret}
+          sid={dinteroSid}
           courseName={course.title}
           price={course.price || 0}
-          onPaymentSuccess={(paymentIntentId) => {
-            window.location.href = `/checkout/success?payment_intent_id=${paymentIntentId}&org=${studioSlug}`;
+          onPaymentSuccess={(transactionId) => {
+            window.location.href = `/checkout/success?transaction_id=${transactionId}&org=${studioSlug}`;
           }}
-          onPaymentError={(err) => console.error('Payment error:', err)}
-          onBack={() => setClientSecret(null)}
+          onPaymentError={() => {
+            // Error is displayed in the EmbeddedPayment component; keep the iframe mounted.
+          }}
+          onBack={() => setDinteroSid(null)}
         />
       </div>
     );

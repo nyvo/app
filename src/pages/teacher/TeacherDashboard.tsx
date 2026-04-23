@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check, Shield } from '@/lib/icons';
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check } from '@/lib/icons';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -16,21 +15,12 @@ import { fetchMonthStats, fetchWeekStats, type MonthStats, type WeekStats } from
 import { getTimeBasedGreeting } from '@/utils/timeGreeting';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { getShowEmptyState } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { typedFrom } from '@/lib/supabase';
 import { useSetupProgress } from '@/hooks/use-setup-progress';
-import { createStripeConnectLink, checkStripeStatus } from '@/services/stripe-connect';
 import { fetchCourses, fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
@@ -62,8 +52,6 @@ function mapSessionForDashboard(session: CourseSession, course: CourseDB, signup
 }
 
 
-const STRIPE_CHECK_THROTTLE_MS = 30 * 60 * 1000; // 30 minutes
-
 const sectionTransition = {
   duration: 0.18,
   delay: 0.06,
@@ -72,7 +60,8 @@ const sectionTransition = {
 
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
-  const { currentOrganization, profile, refreshOrganizations } = useAuth();
+  const navigate = useNavigate();
+  const { currentOrganization, profile } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
   const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
@@ -87,44 +76,16 @@ const TeacherDashboard = () => {
 
 
 
-  // Refresh org data when arriving from Stripe callback
-  const [searchParams, setSearchParams] = useSearchParams();
-  useEffect(() => {
-    if (searchParams.get('stripe') === 'success') {
-      refreshOrganizations();
-      // Clean up the query param
-      searchParams.delete('stripe');
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Stripe Connect handler — show explainer dialog first, then redirect
-  const [connectingStripe, setConnectingStripe] = useState(false);
-  const [showStripeExplainer, setShowStripeExplainer] = useState(false);
-
-  const openStripeExplainer = useCallback(() => {
-    setShowStripeExplainer(true);
-  }, []);
-
-  const handleConnectStripe = useCallback(async () => {
-    if (!currentOrganization?.id) return;
-    setConnectingStripe(true);
-    const { data, error } = await createStripeConnectLink(currentOrganization.id);
-    if (error || !data?.url) {
-      logger.error('Failed to create Stripe Connect link:', error);
-      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-      setConnectingStripe(false);
-      return;
-    }
-    window.location.href = data.url;
-  }, [currentOrganization?.id]);
+  const goToPaymentsSetup = useCallback(() => {
+    navigate('/teacher/payments');
+  }, [navigate]);
 
   // Setup progress
   const { steps, completedCount, totalCount, isSetupComplete, motivationalSubtitle } = useSetupProgress({
     currentOrganization,
     profile,
     hasCourses,
-    onConnectStripe: openStripeExplainer,
+    onConnectPayments: goToPaymentsSetup,
   });
 
   // One-time "setup done" banner — shown once, then marked as seen in DB
@@ -139,27 +100,6 @@ const TeacherDashboard = () => {
         .then();
     }
   }, [isSetupComplete, profile?.id, profile?.setup_complete_seen_at]);
-
-  // Stripe auto-check (self-heal for missed callbacks)
-  useEffect(() => {
-    const org = currentOrganization;
-    if (!org?.id || !org.stripe_account_id || org.stripe_onboarding_complete) return;
-
-    const lastCheck = sessionStorage.getItem('lastStripeCheck');
-    if (lastCheck && Date.now() - Number(lastCheck) < STRIPE_CHECK_THROTTLE_MS) return;
-
-    let isActive = true;
-    (async () => {
-      const { data } = await checkStripeStatus(org.id);
-      if (!isActive) return;
-      sessionStorage.setItem('lastStripeCheck', Date.now().toString());
-      if (data?.onboardingComplete) {
-        await refreshOrganizations();
-      }
-    })();
-
-    return () => { isActive = false; };
-  }, [currentOrganization?.id, currentOrganization?.stripe_account_id, currentOrganization?.stripe_onboarding_complete, refreshOrganizations]);
 
   function processDashboardResults(
     coursesResult: Awaited<ReturnType<typeof fetchCourses>>,
@@ -382,7 +322,6 @@ const TeacherDashboard = () => {
                     completedCount={completedCount}
                     totalCount={totalCount}
                     motivationalSubtitle={motivationalSubtitle}
-                    loadingStepId={connectingStripe ? 'stripe' : undefined}
                   />
                   <QuickOverviewCard stats={monthStats} />
                   <UpcomingClassesCard courses={dashboardCourses} />
@@ -435,63 +374,6 @@ const TeacherDashboard = () => {
             </motion.div>
           </div>
           <EmptyStateToggle />
-
-          {/* Stripe pre-redirect explainer */}
-          <Dialog open={showStripeExplainer} onOpenChange={(open) => { if (!connectingStripe) setShowStripeExplainer(open) }}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Slik fungerer betalinger</DialogTitle>
-                <DialogDescription>
-                  Vi bruker Stripe for å håndtere betalinger — samme løsning som brukes av over 1 million virksomheter i Europa.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-3 py-2">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-lg border border-border bg-muted p-2">
-                    <Shield className="size-4 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Trygt og sikkert</p>
-                    <p className="text-xs mt-0.5 text-muted-foreground">
-                      Pengene fra påmeldinger overføres direkte til din konto. Ease tar ingen del av betalingen.
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <p className="text-xs font-medium tracking-wide mb-2 text-foreground">Du trenger</p>
-                  <ul className="text-xs flex flex-col gap-1.5 text-muted-foreground">
-                    <li className="flex items-center gap-2">
-                      <span className="size-1 rounded-full bg-muted-foreground shrink-0" />
-                      Bankkonto for utbetalinger
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="size-1 rounded-full bg-muted-foreground shrink-0" />
-                      Organisasjonsnummer (valgfritt)
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 pt-2">
-                <Button onClick={handleConnectStripe} loading={connectingStripe} loadingText="Kobler til">
-                  Gå videre til oppsett
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowStripeExplainer(false)}
-                  disabled={connectingStripe}
-                  className="text-muted-foreground w-full"
-                >
-                  Jeg gjør dette senere
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
   );
 };

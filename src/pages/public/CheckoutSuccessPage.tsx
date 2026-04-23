@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
+import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 
@@ -31,11 +32,11 @@ interface SignupDetails {
 
 const CheckoutSuccessPage = () => {
   const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get('session_id');
-  const paymentIntentId = searchParams.get('payment_intent_id');
+  const transactionId = searchParams.get('transaction_id');
+  const merchantReference = searchParams.get('ref');
   const orgSlugFromUrl = searchParams.get('org');
   const isFreeSignup = searchParams.get('free') === 'true';
-  const lookupId = sessionId || paymentIntentId;
+  const lookupId = transactionId || merchantReference;
 
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState<SignupDetails | null>(null);
@@ -56,10 +57,23 @@ const CheckoutSuccessPage = () => {
         return;
       }
 
-      // Retry fetching signup details with exponential backoff
-      // Webhook may take a moment to process; total wait ~55s
+      // Client-driven finalization: tell the server to capture + create the signup.
+      // Idempotent — short-circuits if already processed. This is the primary path;
+      // the polling loop below is a safety net in case the call fails mid-flight.
+      if (transactionId) {
+        const { error: finalizeError } = await finalizeDinteroTransaction(
+          transactionId,
+          merchantReference,
+        );
+        if (finalizeError) {
+          logger.warn('Finalize call failed, falling back to poll:', finalizeError.message);
+        }
+      }
+
+      // Poll for the signup (fast on the happy path since finalize already created it).
+      // Keeps a safety net for webhook-driven deliveries and retries.
       const maxRetries = 12;
-      const delays = [1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000, 8000];
+      const delays = [500, 1000, 2000, 2000, 4000, 4000, 4000, 8000, 8000, 8000, 8000, 8000];
 
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         setAttemptCount(attempt + 1);
@@ -71,10 +85,10 @@ const CheckoutSuccessPage = () => {
         // all paid signups through a broad SELECT RLS policy.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error: fetchError } = await (supabase.rpc as any)(
-          'get_signup_by_stripe_id',
+          'get_signup_by_dintero_id',
           {
-            p_session_id: paymentIntentId ? null : lookupId,
-            p_payment_intent_id: paymentIntentId,
+            p_transaction_id: transactionId,
+            p_merchant_reference: merchantReference,
           }
         );
 
@@ -109,7 +123,7 @@ const CheckoutSuccessPage = () => {
     }
 
     fetchSignupDetails();
-  }, [lookupId, paymentIntentId, isFreeSignup]);
+  }, [lookupId, transactionId, merchantReference, isFreeSignup]);
 
   // Format date for display
   const formatDate = (dateString: string | null): string => {

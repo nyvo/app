@@ -15,7 +15,7 @@ interface PublicCourseInstructor {
 interface PublicCourseOrganization {
   name: string
   slug: string
-  stripe_onboarding_complete: boolean
+  dintero_onboarding_complete: boolean
   default_course_image_url: string | null
 }
 
@@ -151,7 +151,7 @@ export async function fetchPublicCourses(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, stripe_onboarding_complete, default_course_image_url),
+      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url),
       course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
@@ -331,7 +331,7 @@ export async function fetchPublicCourseById(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, stripe_onboarding_complete, default_course_image_url),
+      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url),
       course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `)
     .eq('id', courseId)

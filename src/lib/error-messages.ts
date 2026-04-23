@@ -40,7 +40,7 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
     'Du har ikke tilgang. Prøv å logge inn på nytt.'],
   [/JWT expired|invalid token/i,
     'Økten din har utløpt. Logg inn på nytt.'],
-  // Stripe payment errors
+  // Card payment errors
   [/card_declined|Your card was declined/i,
     'Kortet ble avvist. Prøv et annet kort.'],
   [/insufficient_funds/i,

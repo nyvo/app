@@ -398,7 +398,7 @@ export function AddParticipantDialog({
                 <ToggleGroupItem value="pending" className="flex-1">Venter betaling</ToggleGroupItem>
                 <ToggleGroupItem value="paid" className="flex-1">Betalt</ToggleGroupItem>
               </ToggleGroup>
-              <p className="text-xs mt-1.5 text-muted-foreground">Registreres utenfor Stripe</p>
+              <p className="text-xs mt-1.5 text-muted-foreground">Registreres utenfor betalingsløsningen</p>
             </div>
 
             <DialogFooter>

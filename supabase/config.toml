@@ -1,2 +1,14 @@
-[functions.stripe-webhook]
+[functions.dintero-webhook]
+verify_jwt = false
+
+[functions.create-dintero-session]
+verify_jwt = false
+
+[functions.sync-dintero-seller-statuses]
+verify_jwt = false
+
+[functions.finalize-dintero-transaction]
+verify_jwt = false
+
+[functions.sweep-pending-payments]
 verify_jwt = false

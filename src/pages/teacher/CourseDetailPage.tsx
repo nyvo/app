@@ -40,7 +40,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { createStripeConnectLink } from '@/services/stripe-connect';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
@@ -65,7 +64,6 @@ const CourseDetailPage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(new Date());
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const kursplanRef = useRef<HTMLDivElement>(null);
-  const [connectingStripe, setConnectingStripe] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
@@ -325,7 +323,7 @@ const CourseDetailPage = () => {
   // Handle publish draft course
   const handlePublish = async () => {
     if (!id) return;
-    if (!currentOrganization?.stripe_onboarding_complete) {
+    if (!currentOrganization?.dintero_onboarding_complete) {
       setShowPublishDialog(true);
       return;
     }
@@ -457,7 +455,7 @@ const CourseDetailPage = () => {
     paymentStatus: signup.payment_status as PaymentStatus,
     amountPaid: signup.amount_paid ?? null,
     notes: signup.note || undefined,
-    receiptUrl: signup.stripe_receipt_url || undefined,
+    receiptUrl: undefined,
   })), [participants]);
 
 
@@ -569,7 +567,7 @@ const CourseDetailPage = () => {
             <div className="mx-auto w-full max-w-6xl">
 
             {/* Alert Banners */}
-            {courseData?.status === 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+            {courseData?.status === 'draft' && !currentOrganization?.dintero_onboarding_complete && (
               <Alert variant="warning" className="mb-6">
                 <div>
                   <AlertTitle variant="warning">Kurset er ikke publisert</AlertTitle>
@@ -579,30 +577,18 @@ const CourseDetailPage = () => {
                 </div>
               </Alert>
             )}
-            {courseData?.status !== 'draft' && !currentOrganization?.stripe_onboarding_complete && (
+            {courseData?.status !== 'draft' && !currentOrganization?.dintero_onboarding_complete && (
               <Alert variant="warning" className="mb-6">
                 <div>
-                  <AlertTitle variant="warning">Koble til Stripe for å motta betalinger</AlertTitle>
+                  <AlertTitle variant="warning">Sett opp utbetalinger for å motta betalinger</AlertTitle>
                   <AlertDescription variant="warning">
-                    Kurset er aktivt, men du kan ikke motta kortbetalinger før Stripe-kontoen din er ferdig satt opp.
+                    Kurset er aktivt, men du kan ikke motta kortbetalinger før oppsettet hos Dintero er fullført.
                   </AlertDescription>
                   <div className="mt-3">
                     <Button
                       variant="outline"
                       size="xs"
-                      loading={connectingStripe}
-                      loadingText="Sender deg til Stripe …"
-                      onClick={async () => {
-                        if (!currentOrganization?.id) return;
-                        setConnectingStripe(true);
-                        const { data, error } = await createStripeConnectLink(currentOrganization.id);
-                        if (error || !data?.url) {
-                          toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-                          setConnectingStripe(false);
-                          return;
-                        }
-                        window.location.href = data.url;
-                      }}
+                      onClick={() => navigate('/teacher/payments')}
                     >
                       Gjør ferdig oppsett
                     </Button>
@@ -649,7 +635,7 @@ const CourseDetailPage = () => {
                     >
                       Publiser kurs
                     </Button>
-                    {currentOrganization?.stripe_onboarding_complete && (
+                    {currentOrganization?.dintero_onboarding_complete && (
                       <Alert variant="info" size="sm" className="max-w-sm">
                         <div>
                           <AlertTitle variant="info">Kurset er et utkast</AlertTitle>
@@ -858,12 +844,11 @@ const CourseDetailPage = () => {
         organizationName={currentOrganization?.name}
       />
 
-      {/* Publish Course Dialog (Stripe not connected) */}
+      {/* Publish Course Dialog (payments not connected) */}
       {currentOrganization?.id && (
         <PublishCourseDialog
           open={showPublishDialog}
           onOpenChange={setShowPublishDialog}
-          organizationId={currentOrganization.id}
           courseTitle={courseData?.title}
         />
       )}

@@ -5,7 +5,7 @@
  * charged to the student. It covers platform costs.
  *
  * This rate must match the backend edge function
- * (supabase/functions/create-payment-intent/index.ts).
+ * (supabase/functions/create-dintero-session/index.ts).
  */
 
 const SERVICE_FEE_RATE = 0.05 // 5%

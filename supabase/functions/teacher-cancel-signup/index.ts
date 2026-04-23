@@ -1,10 +1,16 @@
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { createStripeClient } from '../_shared/stripe.ts'
-import { verifyAuth, verifyOrgMembership, handleCors, getCorsHeaders, errorResponse, successResponse } from '../_shared/auth.ts'
+// Teacher-initiated single-signup cancellation with optional Dintero refund.
+// Replaces the Stripe-based implementation.
 
-const stripe = createStripeClient()
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+import {
+  verifyAuth,
+  verifyOrgMembership,
+  handleCors,
+  errorResponse,
+  successResponse,
+} from '../_shared/auth.ts'
+import { refundTransaction } from '../_shared/dintero.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -16,25 +22,22 @@ interface TeacherCancelRequest {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
 
   try {
-    // Verify authentication
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
       return errorResponse(authResult.error || 'Unauthorized', 401)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const body: TeacherCancelRequest = await req.json()
+    const body = (await req.json()) as TeacherCancelRequest
 
     if (!body.signup_id) {
       return errorResponse('Missing signup_id', 400)
     }
 
-    // Get signup with course details
     const { data: signup, error: signupError } = await supabase
       .from('signups')
       .select(`
@@ -57,57 +60,51 @@ Deno.serve(async (req: Request) => {
       organization_id: string
     }
 
-    // Verify teacher is authorized (must be org member with appropriate role)
-    const authzResult = await verifyOrgMembership(
-      authResult.userId!,
-      course.organization_id,
-      ['owner', 'admin', 'teacher']
-    )
+    const authzResult = await verifyOrgMembership(authResult.userId!, course.organization_id, [
+      'owner',
+      'admin',
+      'teacher',
+    ])
     if (!authzResult.authorized) {
       return errorResponse('You do not have permission to cancel signups for this organization', 403)
     }
 
-    // Validate signup is not already cancelled
     if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
       return errorResponse('Signup is already cancelled', 400)
     }
 
-    let refundResult = null
-    let refundError = null
-    const refundRequested = body.refund && !!signup.stripe_payment_intent_id && signup.payment_status === 'paid'
+    const refundRequested =
+      body.refund && !!signup.dintero_transaction_id && signup.payment_status === 'paid'
 
-    // Process Stripe refund if requested and applicable
+    let refundSucceeded = false
+    let refundError: string | null = null
+
     if (refundRequested) {
+      const amountOre = Math.round(Number(signup.amount_paid || 0) * 100)
       try {
-        refundResult = await stripe.refunds.create({
-          payment_intent: signup.stripe_payment_intent_id,
-          reason: 'requested_by_customer',
-        })
-        console.log(`Refund created: ${refundResult.id}`)
-      } catch (stripeError) {
-        console.error('Stripe refund error:', stripeError)
-        refundError = stripeError instanceof Error ? stripeError.message : 'Stripe refund failed'
+        await refundTransaction(signup.dintero_transaction_id, amountOre, 'requested_by_customer')
+        refundSucceeded = true
+      } catch (err) {
+        refundError = err instanceof Error ? err.message : 'Dintero refund failed'
       }
     }
 
-    // If a refund was requested but failed, do NOT cancel the signup.
-    // The participant keeps their spot so the teacher can retry.
-    if (refundRequested && !refundResult) {
-      return errorResponse(`Refusjon feilet: ${refundError}. Påmeldingen er ikke endret – prøv igjen.`, 500)
+    if (refundRequested && !refundSucceeded) {
+      return errorResponse(
+        `Refusjon feilet: ${refundError}. Påmeldingen er ikke endret – prøv igjen.`,
+        500,
+      )
     }
 
-    // Update signup status — only reach here if refund succeeded or was not requested
     const updateData: Record<string, unknown> = {
       status: 'cancelled',
       updated_at: new Date().toISOString(),
     }
-
-    if (refundResult) {
+    if (refundSucceeded) {
       updateData.payment_status = 'refunded'
       updateData.refund_amount = signup.amount_paid || 0
       updateData.refunded_at = new Date().toISOString()
     }
-
     if (body.reason) {
       const existingNote = typeof signup.note === 'string' ? signup.note : ''
       updateData.note = existingNote
@@ -121,29 +118,29 @@ Deno.serve(async (req: Request) => {
       .eq('id', body.signup_id)
 
     if (updateError) {
-      console.error('Error updating signup:', updateError)
       return errorResponse('Failed to update signup status', 500)
     }
 
-    // Get organization name for email
     const { data: org } = await supabase
       .from('organizations')
       .select('name')
       .eq('id', course.organization_id)
       .single()
 
-    // Send cancellation notification email to participant
     try {
-      const refunded = body.refund && !!refundResult
       const courseDate = course.start_date
-        ? new Date(course.start_date).toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'long' })
+        ? new Date(course.start_date).toLocaleDateString('nb-NO', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })
         : ''
 
       await fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`
+          Authorization: `Bearer ${supabaseServiceKey}`,
         },
         body: JSON.stringify({
           to: signup.participant_email,
@@ -154,25 +151,24 @@ Deno.serve(async (req: Request) => {
             courseDate: courseDate || '',
             courseTime: course.time_schedule || '',
             organizationName: org?.name || '',
-            refunded: refunded.toString(),
+            refunded: refundSucceeded.toString(),
             refundAmount: signup.amount_paid?.toString() || '',
-          }
-        })
+          },
+        }),
       })
-    } catch (emailError) {
-      console.error('Error sending cancellation email:', emailError)
+    } catch {
+      // Non-fatal
     }
 
     return successResponse({
       success: true,
-      refunded: !!refundResult,
-      refund_amount: refundResult && signup.amount_paid ? signup.amount_paid : 0,
-      message: refundResult
+      refunded: refundSucceeded,
+      refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
+      message: refundSucceeded
         ? 'Påmelding avmeldt. Refusjon vil bli behandlet.'
         : 'Påmelding avmeldt.',
     })
   } catch (error) {
-    console.error('Teacher cancel signup error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return errorResponse(message, 500)
   }

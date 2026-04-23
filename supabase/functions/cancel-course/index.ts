@@ -1,14 +1,19 @@
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { createStripeClient } from '../_shared/stripe.ts'
-import { verifyAuth, verifyOrgMembership, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
+// Teacher-initiated course cancellation with bulk Dintero refunds.
+// Replaces the Stripe-based implementation.
 
-const stripe = createStripeClient()
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
+import {
+  verifyAuth,
+  verifyOrgMembership,
+  handleCors,
+  getCorsHeaders,
+  errorResponse,
+} from '../_shared/auth.ts'
+import { refundTransaction } from '../_shared/dintero.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
 const corsHeaders = getCorsHeaders()
 
 interface CancelCourseRequest {
@@ -35,25 +40,22 @@ interface CancellationResult {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
 
   try {
-    // Verify authentication
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
       return errorResponse(authResult.error || 'Unauthorized', 401)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    const body: CancelCourseRequest = await req.json()
+    const body = (await req.json()) as CancelCourseRequest
 
     if (!body.course_id) {
       return errorResponse('Missing course_id', 400)
     }
 
-    // Get course details
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select('id, title, organization_id, status')
@@ -64,29 +66,25 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course not found', 404)
     }
 
-    // Verify user is authorized to cancel this course (must be org member with appropriate role)
-    const authzResult = await verifyOrgMembership(
-      authResult.userId!,
-      course.organization_id,
-      ['owner', 'admin', 'teacher']
-    )
+    const authzResult = await verifyOrgMembership(authResult.userId!, course.organization_id, [
+      'owner',
+      'admin',
+      'teacher',
+    ])
     if (!authzResult.authorized) {
       return errorResponse('You do not have permission to cancel this course', 403)
     }
 
-    // Check if already cancelled
     if (course.status === 'cancelled') {
       return errorResponse('Course is already cancelled', 400)
     }
 
-    // Get organization name for emails
     const { data: org } = await supabase
       .from('organizations')
       .select('name')
       .eq('id', course.organization_id)
       .single()
 
-    // Get all confirmed signups for this course
     const { data: signups, error: signupsError } = await supabase
       .from('signups')
       .select('*')
@@ -94,7 +92,6 @@ Deno.serve(async (req: Request) => {
       .eq('status', 'confirmed')
 
     if (signupsError) {
-      console.error('Error fetching signups:', signupsError)
       return errorResponse('Failed to fetch signups', 500)
     }
 
@@ -105,44 +102,35 @@ Deno.serve(async (req: Request) => {
       failed_refund_details: [],
       notifications_sent: 0,
       total_refunded: 0,
-      message: ''
+      message: '',
     }
 
-    // Cancel the course FIRST to prevent new signups during refund processing
+    // Cancel the course first so no new signups slip in during refund processing
     const { error: updateError } = await supabase
       .from('courses')
-      .update({
-        status: 'cancelled',
-        updated_at: new Date().toISOString()
-      })
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
       .eq('id', body.course_id)
 
     if (updateError) {
-      console.error('Error updating course status:', updateError)
       return errorResponse('Failed to cancel course', 500)
     }
 
-    // Process refunds in parallel (not sequentially)
     const refundPromises = (signups || []).map(async (signup) => {
       let refunded = false
       let refundErrorMsg = ''
-      const shouldRefund = signup.stripe_payment_intent_id && signup.payment_status === 'paid'
+      const shouldRefund =
+        !!signup.dintero_transaction_id && signup.payment_status === 'paid'
 
       if (shouldRefund) {
+        const amountOre = Math.round(Number(signup.amount_paid || 0) * 100)
         try {
-          const refund = await stripe.refunds.create({
-            payment_intent: signup.stripe_payment_intent_id,
-            reason: 'requested_by_customer',
-          })
-          console.log(`Refund created for signup ${signup.id}: ${refund.id}`)
+          await refundTransaction(signup.dintero_transaction_id, amountOre, 'requested_by_customer')
           refunded = true
         } catch (refundError) {
-          console.error(`Refund failed for signup ${signup.id}:`, refundError)
-          refundErrorMsg = refundError instanceof Error ? refundError.message : 'Stripe refund failed'
+          refundErrorMsg = refundError instanceof Error ? refundError.message : 'Dintero refund failed'
         }
       }
 
-      // Update signup status
       const signupUpdate: Record<string, unknown> = {
         status: 'course_cancelled',
         payment_status: refunded ? 'refunded' : signup.payment_status,
@@ -152,14 +140,11 @@ Deno.serve(async (req: Request) => {
         signupUpdate.refund_amount = signup.amount_paid || 0
         signupUpdate.refunded_at = new Date().toISOString()
       }
-      await supabase
-        .from('signups')
-        .update(signupUpdate)
-        .eq('id', signup.id)
+      await supabase.from('signups').update(signupUpdate).eq('id', signup.id)
 
       return {
         refunded,
-        amount: refunded ? (signup.amount_paid || 0) : 0,
+        amount: refunded ? signup.amount_paid || 0 : 0,
         shouldRefund: !!shouldRefund,
         refundErrorMsg,
         signup_id: signup.id,
@@ -194,17 +179,16 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Send notification emails AFTER all refunds are processed (non-blocking)
     if (body.notify_participants !== false) {
       const emailPromises = (signups || [])
-        .filter(s => s.participant_email)
+        .filter((s) => s.participant_email)
         .map(async (signup) => {
           try {
-            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+            const resp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`
+                Authorization: `Bearer ${supabaseServiceKey}`,
               },
               body: JSON.stringify({
                 to: signup.participant_email,
@@ -216,19 +200,18 @@ Deno.serve(async (req: Request) => {
                   organizationName: org?.name || '',
                   showRefund: (signup.payment_status === 'paid' && !!signup.amount_paid).toString(),
                   refundAmount: signup.amount_paid?.toString() || '',
-                }
-              })
+                },
+              }),
             })
-            return emailResponse.ok
-          } catch (emailError) {
-            console.error(`Email failed for ${signup.participant_email}:`, emailError)
+            return resp.ok
+          } catch {
             return false
           }
         })
 
       const emailResults = await Promise.allSettled(emailPromises)
       results.notifications_sent = emailResults.filter(
-        r => r.status === 'fulfilled' && r.value
+        (r) => r.status === 'fulfilled' && r.value,
       ).length
     }
 
@@ -239,16 +222,15 @@ Deno.serve(async (req: Request) => {
       results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
     }
 
-    return new Response(
-      JSON.stringify(results),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return new Response(JSON.stringify(results), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   } catch (error) {
-    console.error('Cancel course error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 })

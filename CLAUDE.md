@@ -146,6 +146,51 @@
   - `border-border` — default for cards, inputs, row separators. Use for anything that needs visible structure. `<Separator />` uses this too.
   - `border-border-subtle` — only for **repeating structural lines** where `border-border` would accumulate into visual noise: schedule gridlines (100px time-slot rows stacked), calendar grids, skeleton dividers in loading states. If you're tempted to reach for this on a single separator, use `border-border` instead — the subtle tier is earned by repetition, not by one-off preference.
   - Do not introduce one-off border colors and do not reach for `border-muted-foreground` to "make it visible" — that's a hierarchy smell, usually the right answer is a `<Separator />` or different spacing.
+- **Surface states — how rows, tiles, and cards handle hover / active / selected / disabled.** The three interactive states must look visibly different. The #1 bug in the system was "hover and selected both use `bg-muted`, so you can't tell them apart." The fix is a three-tier fill ladder:
+
+  | State | Meaning | Fill + chrome |
+  |-------|---------|---------------|
+  | Rest | Default | none |
+  | **Hover** | "About to act" | `hover:bg-muted/50` |
+  | **Active** (current) | "What I'm viewing" — open conversation, current tab, expanded section | `bg-muted` (+ `ring-1 ring-inset ring-border` if parent is `bg-background`) |
+  | **Selected** (chosen) | "I've committed" — multi-selected rows, picked date, chosen radio card | `bg-selection-light` + `ring-1 ring-inset ring-selection/20` |
+  | **Disabled / inactive** | Archived, cancelled, draft | `bg-muted/50` + `text-muted-foreground`; hover suppressed |
+  | **Focus-visible** | Keyboard focus | `ring-2 ring-ring ring-offset-2 ring-offset-background` (overrides other rings) |
+
+  **Active vs Selected — how to choose.** Most of the dashboard is *Active* (navigation — which conversation is open, which tab is on, which day is viewed). Reserve *Selected* for genuine user-authored commitments (multi-select for bulk actions, a picked date that applies on submit, a chosen radio card). If unsure, it's Active → `bg-muted`.
+
+  **Active on low-contrast parents.** When an active row sits directly on `bg-background` (the page canvas, not an elevated `bg-card`), `bg-muted` alone is only a ~1.5% lightness delta and reads flat. Add `ring-1 ring-inset ring-border` for edge definition. On an elevated `bg-card` parent, `bg-muted` reads by itself — the white→gray delta is much more visible, skip the ring. Canonical pattern: the messages conversation list (rows on `bg-background`) uses the ring; table rows inside a `<Card>` do not.
+
+  **Sidebar nav keeps its own tokens** (`bg-sidebar-accent`) — that surface has a dedicated palette, don't swap to `bg-muted` there.
+
+  **Hover fill is always `bg-muted/50`.** One opacity, whether the row sits on `bg-background` or on a white `bg-card`. Don't invent `/40` or `/60` — the difference with /50 is below the just-noticeable threshold.
+
+  **Ring vs border — one decision tree.** A ring doesn't shift layout — use it for *state chrome* (selection, hover-deepen, focus). A border is structural — use it for permanent visual boundaries. The `<Card>` primitive already uses `ring-1 ring-foreground/10` so it reads in dark mode where `--card == --background`; don't override.
+
+  **Whole-card-clickable tiles** (course tiles, event cards) deepen the ring instead of swapping fill — their elevation is part of the identity:
+  - Hover: `ring-1 ring-foreground/20`
+  - Selected: `ring-2 ring-foreground/20` (neutral — default for editor/calendar selections) or `ring-2 ring-selection` (brand, only for genuine commitment-style picks)
+  - Inactive: fill becomes `bg-muted` instead of `bg-card`, ring thins to `ring-foreground/5`
+
+  **Category-tinted cards — selection ring matches the card's color family.** When a card body is already tinted with a category color (schedule events: `bg-chart-3/8` series, `bg-success/8` single events, `bg-muted/50` completed), a neutral `ring-foreground/20` selection ring looks alien against the tint. Instead, the ring uses the solid category color:
+
+  | Card category | Body | Selected ring |
+  |---------------|------|---------------|
+  | Series / chart-3 tinted | `bg-chart-3/8 border-chart-3/25` | `ring-2 ring-chart-3` |
+  | Single event / success tinted | `bg-success/8 border-success/25` | `ring-2 ring-success` |
+  | Completed / neutral | `bg-muted/50 border-border` | `ring-2 ring-foreground/20` |
+
+  Solid (no opacity) on a 2px ring gives a crisp "THIS is selected" signal that still reads as part of the card's color family. This is a sanctioned deviation from the default opacity vocabulary because a tinted card beneath the ring already absorbs intensity — /20 or /50 on the ring would sit weaker than the card's own border.
+
+  **Inactive card is a `bg-muted` shift, not `opacity-60`.** Opacity reads as a loading skeleton and kills text contrast for screen readers. Pattern for archived / cancelled / draft: `bg-muted/50` fill + `text-muted-foreground` title + hover suppressed, but the item remains clickable. Reserve `opacity-60 pointer-events-none cursor-not-allowed` for genuinely *unavailable controls* ("Send" mid-submit, a radio option gated by a prior answer).
+
+  **Focus ring — one pattern + three sanctioned deviations.** Default is `focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background` (use the `.focus-ring` utility on custom surfaces). Deviations:
+  - **Dense list rows** (conversation list, command menu, message rows): `ring-2 ring-inset ring-ring/50` — inset avoids overlapping neighbors in a tight stack.
+  - **Form inputs** keep the shadcn pattern (`ring-3 ring-ring/50` without offset). Muscle memory — don't touch.
+  - **Menu items** (dropdown, combobox, select popover) use `focus:bg-accent` with no visible ring — that's the Radix/shadcn convention.
+
+  **Status ≠ selection.** "Live now", "currently being processed", "last saved" are *status* concepts — use a `<Badge>` or dot indicator, never a ring. Rings are reserved for interaction state (hover/selected/focus). Mixing them confuses users into thinking an in-progress item is selected.
+
 - **Status colors are signals, not decoration.** Four semantic tokens exist: `success` (positive state, delta up, payout sent), `destructive` (error, refund, delete), `warning` (caution, pending, under review), `info` (neutral notification, non-urgent). Never use raw Tailwind colour utilities (`bg-green-100`, `text-red-700`, `text-amber-500`, `bg-blue-100`) for semantic state — always use the token. Rule: max 1 chromatic color per card body (DeltaChip is its own element and doesn't count).
 - **Accent colour (`chart-2`, blue-violet)** — the app's *one* chromatic accent for non-semantic emphasis. Five canonical uses, nothing else:
   1. **Data viz** — line/area/bar strokes and fills in recharts. Use `var(--color-chart-2)` in SVG / chart config.

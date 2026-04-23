@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, type Location } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PageLoader } from './components/ui/page-loader';
 
@@ -20,7 +19,6 @@ const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const LocationsPage = lazy(() => import('./pages/teacher/LocationsPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
-const StripeCallbackPage = lazy(() => import('./pages/teacher/StripeCallbackPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
@@ -74,8 +72,6 @@ function AppRoutes() {
           <Route path="locations" element={<LocationsPage />} />
           <Route path="payments" element={<PaymentsPage />} />
         </Route>
-        <Route path="/teacher/stripe-callback" element={<ProtectedRoute><StripeCallbackPage /></ProtectedRoute>} />
-
         {/* Dev preview (no auth, direct-URL only) */}
         <Route path="/dev/token-preview" element={<TokenPreview />} />
 

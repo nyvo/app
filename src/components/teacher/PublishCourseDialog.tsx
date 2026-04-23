@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from '@/lib/icons';
 import {
   Dialog,
@@ -10,32 +9,22 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { createStripeConnectLink } from '@/services/stripe-connect';
 
 interface PublishCourseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  organizationId: string;
   courseTitle?: string;
 }
 
 export function PublishCourseDialog({
   open,
   onOpenChange,
-  organizationId,
   courseTitle,
 }: PublishCourseDialogProps) {
-  const [connecting, setConnecting] = useState(false);
+  const navigate = useNavigate();
 
-  const handleConnect = async () => {
-    setConnecting(true);
-    const { data, error } = await createStripeConnectLink(organizationId);
-    if (error || !data?.url) {
-      toast.error(error?.message || 'Kunne ikke opprette Stripe-tilkobling');
-      setConnecting(false);
-      return;
-    }
-    window.location.href = data.url;
+  const handleGoToPayments = () => {
+    navigate('/teacher/payments');
   };
 
   return (
@@ -45,7 +34,7 @@ export function PublishCourseDialog({
           <DialogTitle>Sett opp betalinger for å publisere</DialogTitle>
           <DialogDescription>
             {courseTitle && <span className="text-sm font-medium text-foreground">{courseTitle}</span>}
-            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp. Du kobles til Stripe — det tar bare noen minutter.
+            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp. Du kobles til Dintero — det tar bare noen minutter.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -56,12 +45,7 @@ export function PublishCourseDialog({
           >
             Ikke nå
           </Button>
-          <Button
-            size="sm"
-            onClick={handleConnect}
-            loading={connecting}
-            loadingText="Sender deg til Stripe …"
-          >
+          <Button size="sm" onClick={handleGoToPayments}>
             Sett opp betalinger
             <ArrowRight className="size-3.5" />
           </Button>
