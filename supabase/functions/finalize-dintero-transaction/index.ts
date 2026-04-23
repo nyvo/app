@@ -127,6 +127,15 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'Missing transaction_id' }, 400)
     }
 
+    // Require merchant_reference alongside transaction_id. Caller must attest to the
+    // payment_attempt it expects to finalize; server verifies the attestation matches
+    // what Dintero has. Without this, an attacker with a leaked transaction_id could
+    // finalize someone else's payment by omitting the field and letting the server
+    // trust Dintero's echoed reference unilaterally.
+    if (!merchantReference) {
+      return json({ error: 'Missing merchant_reference' }, 400)
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Short-circuit: if a signup already exists for this transaction, return it.
@@ -151,14 +160,13 @@ Deno.serve(async (req: Request) => {
     }
 
     const dinteroMerchantRef = transaction.merchant_reference ?? null
-    const resolvedMerchantRef = merchantReference || dinteroMerchantRef
 
-    if (!resolvedMerchantRef) {
+    if (!dinteroMerchantRef) {
       return json({ error: 'Transaction has no merchant_reference' }, 400)
     }
 
-    // Verify that the merchant_reference the client asserts matches what Dintero has.
-    if (merchantReference && dinteroMerchantRef && merchantReference !== dinteroMerchantRef) {
+    // Client must attest to the same merchant_reference Dintero has on the transaction.
+    if (merchantReference !== dinteroMerchantRef) {
       return json({ error: 'merchant_reference mismatch' }, 400)
     }
 
@@ -166,7 +174,7 @@ Deno.serve(async (req: Request) => {
     const { data: attempt } = await supabase
       .from('payment_attempts')
       .select('*')
-      .eq('id', resolvedMerchantRef)
+      .eq('id', merchantReference)
       .maybeSingle()
 
     if (!attempt) {
@@ -220,7 +228,7 @@ Deno.serve(async (req: Request) => {
         .update({
           dintero_transaction_id: transactionId,
           dintero_session_id: attempt.dintero_session_id ?? null,
-          dintero_merchant_reference: resolvedMerchantRef,
+          dintero_merchant_reference: merchantReference,
           payment_status: 'paid',
           amount_paid: amountNok,
           status: 'confirmed',
@@ -254,7 +262,7 @@ Deno.serve(async (req: Request) => {
       p_participant_phone: attempt.participant_phone,
       p_dintero_transaction_id: transactionId,
       p_dintero_session_id: attempt.dintero_session_id,
-      p_dintero_merchant_reference: resolvedMerchantRef,
+      p_dintero_merchant_reference: merchantReference,
       p_amount_paid: amountNok,
       p_is_drop_in: attempt.is_drop_in,
       p_class_date: attempt.class_date,

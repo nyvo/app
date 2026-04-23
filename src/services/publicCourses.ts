@@ -207,15 +207,12 @@ export async function fetchPublicCourses(
   const courses = coursesData as unknown as CourseQueryResult[]
   const courseIds = courses.map(c => c.id)
 
-  // Batch fetch signups and sessions in parallel (2 queries instead of 4)
+  // Batch fetch signup counts (aggregate RPC) and sessions in parallel.
+  // RPC returns only (course_id, confirmed_count) — no row data exposed to anon.
+  // Cast: generated types regenerated after the migration is deployed.
   const [signupsResult, sessionsResult] = await Promise.all([
-    // Query 1: Get all confirmed signups for these courses
-    supabase
-      .from('signups')
-      .select('course_id')
-      .in('course_id', courseIds)
-      .eq('status', 'confirmed'),
-    // Query 2: Get all sessions for these courses (both for next session and total count)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
     supabase
       .from('course_sessions')
       .select('course_id, session_date, session_number, status')
@@ -233,10 +230,10 @@ export async function fetchPublicCourses(
     return { data: null, error: sessionsResult.error as Error }
   }
 
-  // Build signup count map
+  // Build signup count map from RPC rows
   const signupCountMap: Record<string, number> = {}
-  for (const signup of (signupsResult.data || []) as unknown as { course_id: string }[]) {
-    signupCountMap[signup.course_id] = (signupCountMap[signup.course_id] || 0) + 1
+  for (const row of (signupsResult.data || []) as unknown as { course_id: string; confirmed_count: number }[]) {
+    signupCountMap[row.course_id] = Number(row.confirmed_count)
   }
 
   // Build session maps (total count + next upcoming session per course)
@@ -348,18 +345,19 @@ export async function fetchPublicCourseById(
 
   const typedCourse = course as unknown as CourseQueryResult
 
-  // Get signup count for this course
-  const { count, error: countError } = await supabase
-    .from('signups')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('status', 'confirmed')
+  // Get signup count for this course via the aggregate RPC (anon-safe).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: countRows, error: countError } = await (supabase.rpc as any)(
+    'public_signup_counts',
+    { p_course_ids: [courseId] },
+  )
 
   if (countError) {
     return { data: null, error: countError as Error }
   }
 
-  const confirmedCount = count || 0
+  const countRow = (countRows as { course_id: string; confirmed_count: number }[] | null)?.[0]
+  const confirmedCount = countRow ? Number(countRow.confirmed_count) : 0
   const maxParticipants = typedCourse.max_participants || 0
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
 

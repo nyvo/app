@@ -64,9 +64,9 @@ Deno.serve(async (req: Request) => {
       p_participant_name: participantName.trim(),
       p_participant_email: participantEmail.trim(),
       p_participant_phone: participantPhone.trim(),
-      p_stripe_checkout_session_id: null,
-      p_stripe_payment_intent_id: null,
-      p_stripe_receipt_url: null,
+      p_dintero_transaction_id: null,
+      p_dintero_session_id: null,
+      p_dintero_merchant_reference: null,
       p_amount_paid: 0,
       p_is_drop_in: false,
     })

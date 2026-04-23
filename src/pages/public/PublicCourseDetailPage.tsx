@@ -71,7 +71,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
   const [form, setForm] = useState<BookingFormState>({ name: '', email: '', phone: '', terms: false });
   const [errors, setErrors] = useState<Partial<Record<keyof BookingFormState, boolean>>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [dinteroSid, setDinteroSid] = useState<string | null>(null);
+  const [dinteroSession, setDinteroSession] = useState<{ sid: string; merchantReference: string } | null>(null);
 
   const isFull = course.max_participants !== null && course.spots_available <= 0;
   const isFree = !course.price || course.price <= 0;
@@ -149,7 +149,7 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
       setSubmitting(false);
       return;
     }
-    setDinteroSid(paymentData.sid);
+    setDinteroSession({ sid: paymentData.sid, merchantReference: paymentData.merchantReference });
     setSubmitting(false);
   }
 
@@ -214,20 +214,21 @@ function BookingCard({ course, studioSlug }: { course: PublicCourseWithDetails; 
     );
   }
 
-  if (dinteroSid) {
+  if (dinteroSession) {
     return (
       <div className="rounded-lg border border-border bg-card p-6">
         <EmbeddedPayment
-          sid={dinteroSid}
+          sid={dinteroSession.sid}
           courseName={course.title}
           price={course.price || 0}
           onPaymentSuccess={(transactionId) => {
-            window.location.href = `/checkout/success?transaction_id=${transactionId}&org=${studioSlug}`;
+            const ref = encodeURIComponent(dinteroSession.merchantReference);
+            window.location.href = `/checkout/success?transaction_id=${transactionId}&ref=${ref}&org=${studioSlug}`;
           }}
           onPaymentError={() => {
             // Error is displayed in the EmbeddedPayment component; keep the iframe mounted.
           }}
-          onBack={() => setDinteroSid(null)}
+          onBack={() => setDinteroSession(null)}
         />
       </div>
     );
