@@ -127,8 +127,9 @@ export const SessionList: React.FC<SessionListProps> = ({
                     <div className="space-y-4 rounded-lg border border-border bg-card p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
+                          <label id={`session-${session.id}-date-label`} className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
                           <DatePicker
+                            aria-labelledby={`session-${session.id}-date-label`}
                             value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
                             onChange={(date) => {
                               if (date) onSessionEditChange(session.id, 'date', date);
@@ -137,8 +138,9 @@ export const SessionList: React.FC<SessionListProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
+                          <label id={`session-${session.id}-time-label`} className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
                           <TimePicker
+                            aria-labelledby={`session-${session.id}-time-label`}
                             value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
                             onChange={(time) => onSessionEditChange(session.id, 'time', time)}
                           />

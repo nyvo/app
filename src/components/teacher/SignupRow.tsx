@@ -91,7 +91,7 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
         {hasActions && actionHandlers ? (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
         ) : (
-          <div className="flex size-8 items-center justify-center">
+          <div className="flex size-8 items-center justify-center" aria-hidden="true">
             <MoreHorizontal className="size-4 text-disabled-foreground" />
           </div>
         )}

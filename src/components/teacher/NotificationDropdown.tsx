@@ -102,10 +102,10 @@ export function NotificationDropdown() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative size-8 text-muted-foreground">
+        <Button variant="ghost" size="icon" aria-label="Varsler" className="relative size-8 text-muted-foreground">
           <Bell className="size-4" />
           {hasNotifications && (
-            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent" />
+            <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-accent" aria-hidden="true" />
           )}
         </Button>
       </PopoverTrigger>

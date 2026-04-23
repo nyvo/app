@@ -238,15 +238,16 @@ export const CourseSettingsTab = ({
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
+            <label id="settings-date-label" className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
             <DatePicker
+              aria-labelledby="settings-date-label"
               value={settingsDate}
               onChange={onDateChange}
               placeholder="Velg dato"
             />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
+            <label id="settings-time-label" className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
             <div className="flex items-center gap-2">
               <Select
                 value={settingsTime}

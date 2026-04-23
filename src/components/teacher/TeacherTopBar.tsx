@@ -138,7 +138,7 @@ export function TeacherTopBar() {
             </Button>
           )}
           <NotificationDropdown />
-          <Button asChild variant="ghost" size="icon" className="size-8 text-muted-foreground">
+          <Button asChild variant="ghost" size="icon" aria-label="Innstillinger" className="size-8 text-muted-foreground">
             <Link to="/teacher/profile">
               <Settings className="size-4" />
             </Link>

@@ -33,7 +33,7 @@ export function ScheduleHeader({
               variant="ghost"
               size="icon-sm"
               onClick={onPreviousWeek}
-              aria-label="Forrige"
+              aria-label="Forrige uke"
               disabled={!hasCourses}
             >
               <ChevronLeft className="size-4" />
@@ -55,7 +55,7 @@ export function ScheduleHeader({
               variant="ghost"
               size="icon-sm"
               onClick={onNextWeek}
-              aria-label="Neste"
+              aria-label="Neste uke"
               disabled={!hasCourses}
             >
               <ChevronRight className="size-4" />

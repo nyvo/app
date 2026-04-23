@@ -299,7 +299,7 @@ const TeacherDashboard = () => {
                   <div className="mb-4 rounded-full bg-muted p-4">
                     <AlertCircle className="size-8 text-destructive" />
                   </div>
-                  <h3 className="text-base font-semibold mb-1 text-foreground">Kunne ikke laste oversikten</h3>
+                  <h2 className="text-base font-semibold mb-1 text-foreground">Kunne ikke laste oversikten</h2>
                   <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
                   <Button
                     variant="outline-soft"

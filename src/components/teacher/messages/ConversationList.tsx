@@ -82,8 +82,11 @@ export function ConversationList({
                     size="lg"
                   />
                   {isUnread && (
-                    <Badge className="absolute -top-1 -right-1 size-4 justify-center rounded-full px-0 text-xxs border-2 border-background">
-                      {conversation.unread_count}
+                    <Badge
+                      aria-label={`${conversation.unread_count} uleste meldinger`}
+                      className="absolute -top-1 -right-1 size-4 justify-center rounded-full px-0 text-xxs border-2 border-background"
+                    >
+                      <span aria-hidden="true">{conversation.unread_count}</span>
                     </Badge>
                   )}
                 </div>
@@ -109,7 +112,7 @@ export function ConversationList({
                   </p>
                 </div>
                 {isUnread && (
-                  <div className="size-2 rounded-full bg-chart-2 shrink-0 mt-2" role="img" aria-label="Ulest" />
+                  <div className="size-2 rounded-full bg-chart-2 shrink-0 mt-2" aria-hidden="true" />
                 )}
               </button>
             );
