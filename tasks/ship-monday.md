@@ -53,11 +53,12 @@ b52520d chore(workspace): prune stale agents, split design spec, add dintero ski
 3. ✅ Free-signup confirmation email — DONE
 4. ✅ Service fee as distinct Dintero order item — DONE
 5. ✅ CORS per-request origin echo (canonical pattern threaded through every function) — DONE
-6. Debug `verifyCallbackSignature` mismatch bug (1 hr budget) — PENDING
-7. Sandbox payment scenarios beyond happy path (refund in/out of window, capacity race, webhook tamper/replay) — PENDING
-8. Global edge cases walkthrough (empty states, long strings, network errors) — PENDING
+6. ✅ Debug `verifyCallbackSignature` — root cause: Supabase strips `/functions/v1/` from req.url; reconstruct public URL before HMAC. Verified via `?__selftest=1`.
+7. Sandbox payment scenarios beyond happy path — IN PROGRESS (capacity race, webhook tamper/replay I can drive; refund, cancel-course, failed card need your test-card session).
 
 **All email flows, domain verification, and end-to-end email testing → scoped to Sunday along with the prod flip.** Dev-side wiring is complete; Resend domain auth is the gating blocker and is a 1-hour ops task handled with the rest of prod bringup.
+
+**Global edge-state walkthrough (empty/loading/error states on every teacher page) → scoped to the end of Saturday's design rework.** Design churn may reshape these anyway; walk them after the design freeze.
 
 **Sat — design day:**
 - Responsiveness agent pass (mobile + tablet)
