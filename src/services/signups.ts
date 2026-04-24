@@ -1,5 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
-import type { Signup, SignupInsert, Profile, Course, PaymentStatus } from '@/types/database'
+import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
 // Signup with joined course and profile data
 export interface SignupWithDetails extends Signup {
@@ -224,14 +224,26 @@ export async function sendPaymentLink(
   }
 }
 
-// Mark a signup's payment as resolved (received outside the payment provider)
+// Mark a signup's payment as resolved (received outside Dintero — cash,
+// bank transfer, Vipps direct). Routed through an edge function so the
+// org-membership check + current-state guard run server-side instead of
+// relying solely on RLS.
 export async function markPaymentResolved(
   signupId: string
 ): Promise<{ error: Error | null }> {
-  const { error } = await typedFrom('signups')
-    .update({ payment_status: 'paid' as PaymentStatus })
-    .eq('id', signupId)
-
-  return { error: error ? (error as Error) : null }
+  try {
+    const { data, error } = await supabase.functions.invoke('mark-payment-resolved', {
+      body: { signup_id: signupId },
+    })
+    if (error) {
+      return { error: new Error(error.message || 'Kunne ikke oppdatere betalingsstatus') }
+    }
+    if (data?.error) {
+      return { error: new Error(data.error) }
+    }
+    return { error: null }
+  } catch (err) {
+    return { error: err instanceof Error ? err : new Error('Ukjent feil') }
+  }
 }
 
