@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, Calendar, ChevronDown, FileText } from '@/lib/icons';
+import { Search, Calendar, ChevronDown } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -178,18 +178,6 @@ function CompactPastSignupItem({
         className="shrink-0"
       />
       <div className="flex items-center gap-1 shrink-0">
-        {signup.receiptUrl && (
-          <a
-            href={signup.receiptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
-            aria-label="Åpne kvittering"
-            title="Åpne kvittering"
-          >
-            <FileText className="size-4" />
-          </a>
-        )}
         <NotePopover note={signup.note} />
         {hasActions && actionHandlers && (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />

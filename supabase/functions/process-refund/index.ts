@@ -14,21 +14,6 @@ interface ProcessRefundRequest {
   reason?: string
 }
 
-function norwegianDateToUTC(dateStr: string, timeStr: string): Date {
-  const rough = new Date(`${dateStr}T${timeStr}:00Z`)
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Oslo',
-    timeZoneName: 'shortOffset',
-  })
-  const parts = formatter.formatToParts(rough)
-  const tzPart = parts.find((p) => p.type === 'timeZoneName')
-  const offsetMatch = tzPart?.value?.match(/GMT([+-]\d+)/)
-  const offsetHours = offsetMatch ? parseInt(offsetMatch[1], 10) : 1
-  const sign = offsetHours >= 0 ? '+' : '-'
-  const absOffset = String(Math.abs(offsetHours)).padStart(2, '0')
-  return new Date(`${dateStr}T${timeStr}:00${sign}${absOffset}:00`)
-}
-
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
@@ -50,7 +35,7 @@ Deno.serve(async (req: Request) => {
       .from('signups')
       .select(`
         *,
-        course:courses(title, start_date, time_schedule, location, organization_id)
+        course:courses(title, organization_id)
       `)
       .eq('id', body.signup_id)
       .single()
@@ -79,33 +64,13 @@ Deno.serve(async (req: Request) => {
 
     const course = signup.course as {
       title: string
-      start_date: string
-      time_schedule: string
-      location: string
       organization_id: string
     } | null
 
-    // Determine event date/time for 24h cancellation policy
-    let eventDate: Date | null = null
-    if (signup.is_drop_in && signup.class_date) {
-      const timeStr = signup.class_time || '09:00'
-      eventDate = norwegianDateToUTC(signup.class_date, timeStr)
-    } else if (course?.start_date) {
-      let timeStr = '09:00'
-      if (course.time_schedule) {
-        const match = course.time_schedule.match(/(\d{1,2}:\d{2})/)
-        if (match) timeStr = match[1]
-      }
-      eventDate = norwegianDateToUTC(course.start_date, timeStr)
-    }
-
-    const now = new Date()
-    const hoursUntilEvent = eventDate ? (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60) : 999
-    const CANCELLATION_DEADLINE_HOURS = 24
-    const canGetRefund = hoursUntilEvent >= CANCELLATION_DEADLINE_HOURS
-
-    const refundAttempted =
-      canGetRefund && !!signup.dintero_transaction_id && signup.payment_status === 'paid'
+    // No platform-level cancellation window: any captured signup is eligible
+    // for refund when the cancel flow runs. The teacher's dashboard offers
+    // an explicit "cancel without refund" option for off-policy cases.
+    const refundAttempted = !!signup.dintero_transaction_id && signup.payment_status === 'paid'
 
     let refundSucceeded = false
     let refundError: string | null = null
@@ -171,7 +136,7 @@ Deno.serve(async (req: Request) => {
             participantName: signup.participant_name || '',
             courseName: course?.title || '',
             organizationName: org?.name || '',
-            canGetRefund: canGetRefund.toString(),
+            refunded: refundSucceeded.toString(),
             refundAmount: signup.amount_paid?.toString() || '',
           },
         }),
@@ -184,10 +149,9 @@ Deno.serve(async (req: Request) => {
       success: true,
       refunded: refundSucceeded,
       refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
-      message:
-        canGetRefund && refundSucceeded
-          ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
-          : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 24 timer før kursstart.',
+      message: refundSucceeded
+        ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
+        : 'Avbestilling bekreftet.',
     }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'

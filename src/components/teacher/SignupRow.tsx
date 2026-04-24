@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileText, MoreHorizontal } from '@/lib/icons';
+import { MoreHorizontal } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
@@ -63,22 +63,6 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
       {/* Status (derived from signup + payment) */}
       <TableCell>
         <SignupStatusBadge status={signup.status} paymentStatus={signup.paymentStatus} />
-      </TableCell>
-
-      {/* Kvittering */}
-      <TableCell className="hidden md:table-cell">
-        {signup.receiptUrl && (
-          <a
-            href={signup.receiptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
-            aria-label="Åpne kvittering"
-            title="Åpne kvittering"
-          >
-            <FileText className="size-4" />
-          </a>
-        )}
       </TableCell>
 
       {/* Notater */}

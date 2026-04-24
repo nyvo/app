@@ -1,8 +1,5 @@
 import { useState, useMemo } from 'react';
-import {
-  Plus,
-  FileText,
-} from '@/lib/icons';
+import { Plus } from '@/lib/icons';
 import { SkeletonTableRow } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
@@ -25,7 +22,6 @@ export interface DisplayParticipant {
   paymentStatus: PaymentStatus;
   amountPaid?: number | null;
   notes?: string;
-  receiptUrl?: string;
 }
 
 interface CourseParticipantsTabProps {
@@ -152,7 +148,6 @@ export const CourseParticipantsTab = ({
           <tr>
             <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
             <TableHead className="w-40">Status</TableHead>
-            <TableHead className="hidden w-20 md:table-cell">Kvittering</TableHead>
             <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
             <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
           </tr>
@@ -160,14 +155,14 @@ export const CourseParticipantsTab = ({
         <TableBody>
           {participantsLoading ? (
             <>
-              <SkeletonTableRow columns={5} hasAvatar={true} />
-              <SkeletonTableRow columns={5} hasAvatar={true} />
-              <SkeletonTableRow columns={5} hasAvatar={true} />
-              <tr className="sr-only"><td colSpan={5}>Laster deltakere</td></tr>
+              <SkeletonTableRow columns={4} hasAvatar={true} />
+              <SkeletonTableRow columns={4} hasAvatar={true} />
+              <SkeletonTableRow columns={4} hasAvatar={true} />
+              <tr className="sr-only"><td colSpan={4}>Laster deltakere</td></tr>
             </>
           ) : filteredParticipants.length === 0 ? (
             <tr>
-              <td colSpan={5}>
+              <td colSpan={4}>
                 <div className="flex flex-col items-center gap-1 py-8 text-center">
                   <p className="text-sm font-medium text-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
                   <p className="text-xs text-muted-foreground">
@@ -197,21 +192,6 @@ export const CourseParticipantsTab = ({
                 {/* Status (derived from signup + payment) */}
                 <TableCell>
                   <SignupStatusBadge status={participant.status} paymentStatus={participant.paymentStatus} />
-                </TableCell>
-                {/* Kvittering (receipt) */}
-                <TableCell className="hidden md:table-cell">
-                  {participant.receiptUrl && (
-                    <a
-                      href={participant.receiptUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground smooth-transition hover:bg-muted hover:text-foreground"
-                      aria-label="Åpne kvittering"
-                      title="Åpne kvittering"
-                    >
-                      <FileText className="size-4" />
-                    </a>
-                  )}
                 </TableCell>
                 {/* Notater */}
                 <TableCell className="hidden sm:table-cell">

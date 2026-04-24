@@ -171,7 +171,6 @@ export const SignupsPage = () => {
         note: signup.note || undefined,
         amountPaid: signup.amount_paid ?? null,
         dinteroTransactionId: signup.dintero_transaction_id || null,
-        receiptUrl: null,
         organizationId: signup.organization_id,
         courseEnded,
         courseEndDate: courseEndDate ?? courseStartDate ?? null,

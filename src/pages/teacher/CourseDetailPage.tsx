@@ -474,7 +474,6 @@ const CourseDetailPage = () => {
     paymentStatus: signup.payment_status as PaymentStatus,
     amountPaid: signup.amount_paid ?? null,
     notes: signup.note || undefined,
-    receiptUrl: undefined,
   })), [participants]);
 
 

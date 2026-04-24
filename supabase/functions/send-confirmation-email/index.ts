@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
     const { courseId, signupId } = await req.json()
 
     if (!courseId || !signupId) {
-      return errorResponse('Missing required fields: courseId, signupId', 400)
+      return errorResponse('Missing required fields: courseId, signupId', 400, req)
     }
 
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey)
@@ -30,7 +30,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return errorResponse('Signup not found', 404)
+      return errorResponse('Signup not found', 404, req)
     }
 
     const { data: course, error: courseError } = await serviceClient
@@ -40,7 +40,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return errorResponse('Course not found', 404)
+      return errorResponse('Course not found', 404, req)
     }
 
     // Look up organization name
@@ -88,13 +88,13 @@ Deno.serve(async (req: Request) => {
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text()
       console.error('Failed to send confirmation email:', errorText)
-      return errorResponse('Failed to send email', 500)
+      return errorResponse('Failed to send email', 500, req)
     }
 
-    return successResponse({ success: true })
+    return successResponse({ success: true }, 200, req)
   } catch (error) {
     console.error('send-confirmation-email error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return errorResponse(message, 500)
+    return errorResponse(message, 500, req)
   }
 })

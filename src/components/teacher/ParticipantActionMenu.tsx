@@ -48,7 +48,7 @@ interface ParticipantActionMenuProps {
   handlers: ParticipantActionHandlers;
 }
 
-type ConfirmDialog = 'cancel' | 'resolve' | null;
+type ConfirmDialog = 'cancel-no-refund' | 'cancel-with-refund' | 'resolve' | null;
 
 export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMenuProps) {
   const [loading, setLoading] = useState(false);
@@ -138,25 +138,40 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           )}
 
           {/* Base actions — available for all active (non-cancelled) participants */}
-          {signup.status !== 'cancelled' && signup.status !== 'course_cancelled' && (
-            <DropdownMenuItem
-              onClick={() => setConfirmDialog('cancel')}
-              disabled={loading}
-              className="text-primary focus:text-primary"
-            >
-              <XCircle className="size-4 mr-2" />
-              Avbestill påmelding
-            </DropdownMenuItem>
-          )}
+          {signup.status !== 'cancelled' && signup.status !== 'course_cancelled' && (() => {
+            const isPaid = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
+            return (
+              <>
+                <DropdownMenuItem
+                  onClick={() => setConfirmDialog('cancel-no-refund')}
+                  disabled={loading}
+                  className="text-primary focus:text-primary"
+                >
+                  <XCircle className="size-4 mr-2" />
+                  Avbestill uten refusjon
+                </DropdownMenuItem>
+                {isPaid && (
+                  <DropdownMenuItem
+                    onClick={() => setConfirmDialog('cancel-with-refund')}
+                    disabled={loading}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <XCircle className="size-4 mr-2" />
+                    Avbestill med refusjon
+                  </DropdownMenuItem>
+                )}
+              </>
+            );
+          })()}
 
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Cancel enrollment confirmation dialog */}
-      <AlertDialog open={confirmDialog === 'cancel'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+      {/* Cancel WITHOUT refund */}
+      <AlertDialog open={confirmDialog === 'cancel-no-refund'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
+            <AlertDialogTitle>Avbestill uten refusjon?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-1">
@@ -170,8 +185,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-                    ? 'Deltakeren har betalt og får refusjon automatisk.'
-                    : 'Dette kan ikke angres.'}
+                    ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt senere om nødvendig.'
+                    : 'Deltakeren mister plassen sin. Dette kan ikke angres.'}
                 </p>
               </div>
             </AlertDialogDescription>
@@ -181,12 +196,48 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                const hasRefund = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
                 setConfirmDialog(null);
-                runAction(() => handlers.onCancelEnrollment(signup.id, hasRefund));
+                runAction(() => handlers.onCancelEnrollment(signup.id, false));
               }}
             >
               Avbestill
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel WITH refund (only for paid signups) */}
+      <AlertDialog open={confirmDialog === 'cancel-with-refund'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avbestill med refusjon?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-1">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
+                    <p className="text-xs font-mono text-muted-foreground truncate">{signup.participantEmail}</p>
+                  </div>
+                  {signup.amountPaid != null && signup.amountPaid > 0 && (
+                    <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Hele beløpet refunderes til betalingskortet. Refusjonen tar vanligvis 5–10 virkedager.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                setConfirmDialog(null);
+                runAction(() => handlers.onCancelEnrollment(signup.id, true));
+              }}
+            >
+              Avbestill og refunder
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

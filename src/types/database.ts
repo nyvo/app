@@ -42,7 +42,6 @@ export interface SignupDisplay {
   note?: string;
   amountPaid?: number | null;
   dinteroTransactionId?: string | null;
-  receiptUrl?: string | null;
   organizationId?: string;
   exceptionType?: ExceptionType | null;
   courseEnded?: boolean;

@@ -498,10 +498,10 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
   const courseName = escapeHtml(data.courseName)
   const organizationName = escapeHtml(data.organizationName)
   const refundAmount = Number(data.refundAmount) || 0
-  const canGetRefund = data.canGetRefund === 'true'
+  const refunded = data.refunded === 'true'
 
   return {
-    subject: canGetRefund ? 'Avbestilling bekreftet – Refusjon behandlet' : 'Avbestilling bekreftet',
+    subject: refunded ? 'Avbestilling bekreftet – Refusjon behandlet' : 'Avbestilling bekreftet',
     html: `
 <!DOCTYPE html>
 <html>
@@ -515,7 +515,6 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
     .logo { font-size: 24px; font-weight: bold; color: #10b981; }
     .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 500; margin-bottom: 20px; }
     .refunded { background: #dcfce7; color: #166534; }
-    .no-refund { background: #fef3c7; color: #92400e; }
     .details-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
     .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
   </style>
@@ -526,23 +525,21 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
       <div class="logo">Ease</div>
     </div>
 
-    <p style="text-align: center;">
-      <span class="status-badge ${canGetRefund ? 'refunded' : 'no-refund'}">
-        ${canGetRefund ? 'Avbestilling med refusjon' : 'Avbestilling uten refusjon'}
-      </span>
-    </p>
+    ${refunded ? `
+      <p style="text-align: center;">
+        <span class="status-badge refunded">Refusjon behandlet</span>
+      </p>
+    ` : ''}
 
     <p>Hei ${participantName || ''},</p>
 
-    <p>Din avbestilling fra <strong>${courseName || 'kurset'}</strong> er bekreftet.</p>
+    <p>Avbestillingen fra <strong>${courseName || 'kurset'}</strong> er bekreftet.</p>
 
-    <div class="details-box">
-      ${canGetRefund && refundAmount ? `
+    ${refunded && refundAmount ? `
+      <div class="details-box">
         <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.</p>
-      ` : `
-        <p><strong>Merk:</strong> Avbestillingen var mindre enn 24 timer f\u00f8r kursstart, og gir ikke rett til refusjon.</p>
-      `}
-    </div>
+      </div>
+    ` : ''}
 
     <div class="footer">
       <p>Hilsen,<br>${organizationName || 'Ease'}</p>
@@ -551,9 +548,9 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
 </body>
 </html>
     `,
-    text: canGetRefund
-      ? `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, din avbestilling fra ${courseName || 'kurset'} er bekreftet. Avbestillingen skjedde mindre enn 24 timer f\u00f8r kursstart, og gir ikke rett til refusjon.`
+    text: refunded
+      ? `Hei ${participantName || ''}, avbestillingen fra ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
+      : `Hei ${participantName || ''}, avbestillingen fra ${courseName || 'kurset'} er bekreftet.`
   }
 }
 
