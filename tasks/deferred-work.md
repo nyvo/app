@@ -79,51 +79,36 @@ Commits `6a6343c`, `6f231e7`, `613a3c6` removed student account flows in Phases 
 
 ---
 
-## 6. Multi-member studio orgs + freelancer/studio archetype
+## 6. Multi-member studio orgs — the "Club" model
 
-**Status:** Out of v1 scope. The DB model already supports it; the UI just assumes single-member orgs for now.
+**Status:** Out of v1 scope. Scope refined 2026-04-24: simpler than originally sketched.
 
-**Scenario:** A studio (Bob's Yoga Studio) has a regular instructor (Alice, who also teaches freelance under her own Alice Yoga brand). Bob wants Alice listed on studio courses, wants the studio's Dintero to collect the money, and wants to see the full schedule across all instructors. Alice wants to keep her own freelance business separate.
+**Shape:** a studio admin sets up one org. Other teachers can join that org via invite. No org switcher; each user belongs to **one org at a time**. If a studio's guest teacher refuses to use the app at all, the admin writes their name free-text on the course — no account, no DB membership.
 
-**What's already in place (no DB changes needed):**
-- `organizations` — one row per money-collecting business entity.
-- `org_members(org_id, user_id, role)` — many-to-many, composite PK on `(org_id, user_id)`. A user can belong to multiple orgs today.
-- `course_instructors(course_id, profile_id, role='primary'|'guest')` — multi-instructor per course, already used for public display.
-- `currentOrganizationId` in localStorage — seed of an org-switcher mechanism, just no visible UI for it yet.
+**Three cases this covers:**
 
-**Freelancer vs studio is a data distinction, not an account type:**
-- Org has 1 member → freelancer context → hide team management.
-- Org has >1 member → studio context → show team management.
-- User has >1 membership → show org switcher in the top bar.
+| Case | How it's handled |
+|---|---|
+| Freelancer running their own small business | Existing single-member org. No change. |
+| Studio with multiple teachers who all use the app | Admin invites them to the studio's org via token/code. Everyone shares the studio dashboard + Dintero. |
+| One-off guest teacher who doesn't want the app | Admin types the teacher's name in a free-text field on the course. No account, no login, no DB user. |
 
-No onboarding toggle needed. No new flag in the DB.
+**What's already in place:**
+- `organizations`, `org_members`, `course_instructors` — all modeled correctly.
+- `currentOrganizationId` in localStorage — reused to identify the user's single active org (no dropdown UI needed).
 
-**What it'd take (post-launch, ~3–4 days of UI work):**
+**What needs building (~1.5 days total):**
 
-1. **Invite flow (~1–2 days):** new `org_invites` table (`id`, `org_id`, `email` or `code`, `role`, `invited_by`, `expires_at`, `accepted_at`). Admin generates invite → emails or shares code. Accept endpoint creates the `org_members` row with the invited role.
-2. **Org switcher UI (~0.5 day):** sidebar or top-bar dropdown listing the user's memberships; swaps `currentOrganizationId`; existing page data re-scopes automatically.
-3. **Role-scoped views (~1 day):** `teacher` role in a multi-member org sees their own courses + messages by default; `owner`/`admin` see all. Tweak RLS + page query filters.
-4. **Instructor filter/column (~0.5 day):** on `/teacher/courses`, a studio admin can filter "show only Alice's classes."
+1. **`org_invites` table + flow (~1 day).** New table: `id`, `org_id`, `code` (short shareable), `email` (optional), `role`, `invited_by`, `expires_at`, `accepted_at`. Admin UI: "Inviter teammedlem" → generates a code/link. Accept endpoint: validates, creates `org_members` row, marks invite accepted. Cleanest pattern: share-a-link (tokenised URL) or enter-a-code.
 
-**Money stays simple:** one org = one Dintero seller. Studio collects payment; pays instructors offline (invoice / Vipps / cash). Don't try to do per-instructor Dintero split payouts — adds per-guest KYC complexity no small studio wants.
+2. **`courses.guest_instructor_name TEXT NULL` column + form + public display (~3–4 hrs).** Migration adds the column. Create-course form gains a "Instruktørens navn" field for guest teachers without an account. Public course page shows `Instruert av: {guest_instructor_name ?? primary_instructor.name}`. Covers the workshop/guest-teacher case without touching auth.
 
-**Trigger to pick up:** first real studio with multiple active instructors onboards.
+3. **Invite-accept "you already have an org" rejection (~30 min).** If the accepting user already has any row in `org_members`, return a friendly error: *"Du har allerede en konto knyttet til et annet studio. Kontakt studioet eller bruk en ny e-postadresse."* MVP-simple; we can add merge flows later if anyone asks.
 
----
+**Explicitly NOT building in v1:**
+- Org switcher UI — one-user-one-org means there's nothing to switch.
+- Role-scoped views (`teacher` sees only their courses etc.) — all members see the full dashboard. They're invited, they're trusted. Revisit when a studio has 10+ instructors and one complains.
+- Cross-org federation — not needed under the one-user-one-org model.
+- Per-instructor Dintero splits — money stays with the studio's one Dintero seller. Studio pays teachers externally (Vipps / invoice / cash).
 
-## 7. Guest instructor access (single-course, no onboarding)
-
-**Status:** Out of v1 scope. Sub-case of item 6.
-
-**Scenario:** A studio hosts a one-off guest teacher (workshop, retreat) for 1–2 sessions. The guest doesn't want to go through Dintero onboarding or create a persistent account just for this. Studio admin needs to share signup info and let the guest message participants.
-
-**Options, ranked by complexity:**
-
-1. **Do nothing (ship-it reality).** Studio admin forwards signup info out-of-band. Works today, zero dev cost.
-2. **Read-only share link per course (~2–3 hrs).** Tokenized URL, opens a read-only view of signups for one course. No auth, no messaging. Cheap but dead-end — skip in favour of option 3.
-3. **Passwordless guest role (~1–2 days, recommended).** Magic-link login. New value `guest_instructor` in the `org_members.role` enum. Admin invites guest by email → creates/reuses auth user → inserts `org_members(role='guest_instructor')` → Supabase `signInWithOtp` sends the magic link. Guest dashboard is scoped: shows only courses where they're a `course_instructors` primary/guest; hides payments, other courses, org settings. No Dintero onboarding required.
-4. **Cross-org federation.** Overkill. Only for power users with multiple studio relationships.
-
-**Money:** studio's Dintero collects. Guest never enters the money flow. Admin handles their cut externally.
-
-**Trigger to pick up:** first scheduled guest workshop with a studio that has onboarded.
+**Trigger to pick up:** first real studio asks for team members, or the first admin tries to list a guest teacher by name.
