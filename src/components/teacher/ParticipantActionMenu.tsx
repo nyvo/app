@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, XCircle, Send, Undo2 } from '@/lib/icons';
+import { MoreHorizontal, CheckCircle, Send, UserMinus, CreditCard } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -146,16 +146,15 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                   onClick={() => setConfirmDialog('cancel-no-refund')}
                   disabled={loading}
                 >
-                  <XCircle className="size-4 mr-2" />
+                  <UserMinus className="size-4 mr-2" />
                   Avbestill
                 </DropdownMenuItem>
                 {isPaid && (
                   <DropdownMenuItem
                     onClick={() => setConfirmDialog('cancel-with-refund')}
                     disabled={loading}
-                    className="text-destructive focus:text-destructive"
                   >
-                    <Undo2 className="size-4 mr-2" />
+                    <CreditCard className="size-4 mr-2" />
                     Avbestill med refusjon
                   </DropdownMenuItem>
                 )}

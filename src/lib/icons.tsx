@@ -124,6 +124,7 @@ export {
   Undo2,
   User,
   UserCheck,
+  UserMinus,
   UserPlus,
   Users,
   Wallet,
