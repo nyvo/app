@@ -163,8 +163,36 @@ Deno.serve(async (req: Request) => {
 
     const merchantReference = attempt.id
 
-    const teacherShare = basePriceInOre - (platformFee - serviceFeeInOre)
-    const platformShare = priceInOre - teacherShare
+    // Two-line breakdown — see create-dintero-session/index.ts for rationale.
+    const platformShareOnCourse = platformFee - serviceFeeInOre // = basePriceInOre * 0.05
+    const teacherShareOnCourse = basePriceInOre - platformShareOnCourse // = basePriceInOre * 0.95
+
+    const orderItems = [
+      {
+        id: course.id,
+        line_id: '1',
+        description: `${productName} — ${productDescription}`,
+        quantity: 1,
+        amount: basePriceInOre,
+        splits: [
+          { payout_destination_id: org.dintero_seller_id, amount: teacherShareOnCourse },
+          { payout_destination_id: 'platform', amount: platformShareOnCourse },
+        ],
+      },
+    ]
+
+    if (serviceFeeInOre > 0) {
+      orderItems.push({
+        id: 'service-fee',
+        line_id: '2',
+        description: 'Servicegebyr',
+        quantity: 1,
+        amount: serviceFeeInOre,
+        splits: [
+          { payout_destination_id: 'platform', amount: serviceFeeInOre },
+        ],
+      })
+    }
 
     const sessionRequest: DinteroSessionRequest = {
       url: {
@@ -175,19 +203,7 @@ Deno.serve(async (req: Request) => {
         amount: priceInOre,
         currency: 'NOK',
         merchant_reference: merchantReference,
-        items: [
-          {
-            id: course.id,
-            line_id: '1',
-            description: `${productName} — ${productDescription}`,
-            quantity: 1,
-            amount: priceInOre,
-            splits: [
-              { payout_destination_id: org.dintero_seller_id, amount: teacherShare },
-              { payout_destination_id: 'platform', amount: platformShare },
-            ],
-          },
-        ],
+        items: orderItems,
       },
       configuration: { auto_capture: false },
       profile_id: getProfileId(),

@@ -215,9 +215,44 @@ Deno.serve(async (req: Request) => {
         ? `Drop-in: ${course.title}`
         : course.title
 
-    // Splits: teacher receives base price minus 5% platform cut; platform keeps the rest (service fee + platform fee).
-    const teacherShare = basePriceInOre - (platformFee - serviceFeeInOre) // = basePriceInOre * (1 - 0.05)
-    const platformShare = priceInOre - teacherShare
+    // Two-line breakdown so the student sees the service fee as a distinct
+    // item at checkout (transparency + aligns with Norwegian consumer
+    // disclosure norms).
+    //
+    //  Line 1 — Course: base price, split 95% teacher / 5% platform.
+    //  Line 2 — Servicegebyr: 5% of base added on top, 100% platform.
+    //
+    // Total = basePriceInOre + serviceFeeInOre = priceInOre.
+    // Per-item split sums must equal the item's amount (Dintero requirement).
+    const platformShareOnCourse = platformFee - serviceFeeInOre // = basePriceInOre * 0.05
+    const teacherShareOnCourse = basePriceInOre - platformShareOnCourse // = basePriceInOre * 0.95
+
+    const orderItems = [
+      {
+        id: courseId,
+        line_id: '1',
+        description,
+        quantity: 1,
+        amount: basePriceInOre,
+        splits: [
+          { payout_destination_id: org.dintero_seller_id, amount: teacherShareOnCourse },
+          { payout_destination_id: 'platform', amount: platformShareOnCourse },
+        ],
+      },
+    ]
+
+    if (serviceFeeInOre > 0) {
+      orderItems.push({
+        id: 'service-fee',
+        line_id: '2',
+        description: 'Servicegebyr',
+        quantity: 1,
+        amount: serviceFeeInOre,
+        splits: [
+          { payout_destination_id: 'platform', amount: serviceFeeInOre },
+        ],
+      })
+    }
 
     const sessionRequest: DinteroSessionRequest = {
       url: {
@@ -228,19 +263,7 @@ Deno.serve(async (req: Request) => {
         amount: priceInOre,
         currency: 'NOK',
         merchant_reference: merchantReference,
-        items: [
-          {
-            id: courseId,
-            line_id: '1',
-            description,
-            quantity: 1,
-            amount: priceInOre,
-            splits: [
-              { payout_destination_id: org.dintero_seller_id, amount: teacherShare },
-              { payout_destination_id: 'platform', amount: platformShare },
-            ],
-          },
-        ],
+        items: orderItems,
       },
       configuration: {
         auto_capture: false,
