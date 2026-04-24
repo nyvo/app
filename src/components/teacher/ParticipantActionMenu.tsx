@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, XCircle, Send } from '@/lib/icons';
+import { MoreHorizontal, CheckCircle, XCircle, Send, Undo2 } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -145,10 +145,9 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <DropdownMenuItem
                   onClick={() => setConfirmDialog('cancel-no-refund')}
                   disabled={loading}
-                  className="text-destructive focus:text-destructive"
                 >
                   <XCircle className="size-4 mr-2" />
-                  Avbestill uten refusjon
+                  Avbestill
                 </DropdownMenuItem>
                 {isPaid && (
                   <DropdownMenuItem
@@ -156,7 +155,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                     disabled={loading}
                     className="text-destructive focus:text-destructive"
                   >
-                    <XCircle className="size-4 mr-2" />
+                    <Undo2 className="size-4 mr-2" />
                     Avbestill med refusjon
                   </DropdownMenuItem>
                 )}
@@ -171,7 +170,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
       <AlertDialog open={confirmDialog === 'cancel-no-refund'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Avbestill uten refusjon?</AlertDialogTitle>
+            <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-1">
