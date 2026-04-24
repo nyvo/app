@@ -16,9 +16,11 @@ interface SignupRowProps {
 
 export function SignupRow({ signup, actionHandlers, hideCourse = false }: SignupRowProps) {
   const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
-  const hasActions = !!actionHandlers && (
-    !isCancelled || !!signup.dinteroTransactionId || !!signup.exceptionType
-  );
+  // Cancelled signups are terminal — no actions, the row shows a disabled
+  // placeholder instead of an active trigger. (Before, refunded signups
+  // had dinteroTransactionId set which kept hasActions=true, so the trigger
+  // rendered but ParticipantActionMenu returned null → empty cell.)
+  const hasActions = !!actionHandlers && !isCancelled;
 
   return (
     <TableRow className={cn(isCancelled && 'bg-muted/50 hover:bg-muted/50')}>
