@@ -47,13 +47,13 @@ Deno.serve(async (req) => {
     const body = (await req.json()) as SellerRequest
 
     if (!body.organizationId) {
-      return errorResponse('organizationId is required', 400)
+      return errorResponse('organizationId is required', 400, req)
     }
     if (!body.organizationNumber || !body.businessName || !body.contactEmail) {
-      return errorResponse('Missing required fields: organizationNumber, businessName, contactEmail', 400)
+      return errorResponse('Missing required fields: organizationNumber, businessName, contactEmail', 400, req)
     }
     if (!body.bankAccountNumber || !body.bankName) {
-      return errorResponse('Missing required fields: bankAccountNumber, bankName', 400)
+      return errorResponse('Missing required fields: bankAccountNumber, bankName', 400, req)
     }
 
     // Strip formatting from bank account (Norwegian BBAN commonly written as 1234.56.78901)
@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
       ?? (normalizedBankAccount.startsWith('NO') ? 'iban' : 'bban')
 
     const auth = await verifyAuthAndOrgMembership(req, body.organizationId, ['owner', 'admin'])
-    if (!auth.authenticated) return errorResponse(auth.error || 'Not authenticated', 401)
-    if (!auth.authorized) return errorResponse(auth.error || 'Not authorized', 403)
+    if (!auth.authenticated) return errorResponse(auth.error || 'Not authenticated', 401, req)
+    if (!auth.authorized) return errorResponse(auth.error || 'Not authorized', 403, req)
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (orgError || !org) {
-      return errorResponse('Organization not found', 404)
+      return errorResponse('Organization not found', 404, req)
     }
 
     // Already active — nothing to do
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         sellerId: org.dintero_seller_id,
         contractUrl: null,
         alreadyOnboarded: true,
-      })
+      }, 200, req)
     }
 
     // Already submitted — return the stored contract URL so the teacher can resume
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
         approvalId: org.dintero_approval_id,
         contractUrl: org.dintero_contract_url,
         resumed: true,
-      })
+      }, 200, req)
     }
 
     // Use the org id as our platform-side seller id — stable and easy to reconcile.
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       .eq('id', body.organizationId)
 
     if (updateError) {
-      return errorResponse('Failed to persist Dintero seller record', 500)
+      return errorResponse('Failed to persist Dintero seller record', 500, req)
     }
 
     return successResponse({
@@ -152,9 +152,9 @@ Deno.serve(async (req) => {
       sellerId,
       approvalId: approval.id,
       contractUrl,
-    })
+    }, 200, req)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return errorResponse(message, 500)
+    return errorResponse(message, 500, req)
   }
 })

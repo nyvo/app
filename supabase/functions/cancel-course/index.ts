@@ -7,14 +7,13 @@ import {
   verifyAuth,
   verifyOrgMembership,
   handleCors,
-  getCorsHeaders,
   errorResponse,
+  successResponse,
 } from '../_shared/auth.ts'
 import { refundTransaction } from '../_shared/dintero.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const corsHeaders = getCorsHeaders()
 
 interface CancelCourseRequest {
   course_id: string
@@ -46,14 +45,14 @@ Deno.serve(async (req: Request) => {
   try {
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
-      return errorResponse(authResult.error || 'Unauthorized', 401)
+      return errorResponse(authResult.error || 'Unauthorized', 401, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body = (await req.json()) as CancelCourseRequest
 
     if (!body.course_id) {
-      return errorResponse('Missing course_id', 400)
+      return errorResponse('Missing course_id', 400, req)
     }
 
     const { data: course, error: courseError } = await supabase
@@ -63,7 +62,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return errorResponse('Course not found', 404)
+      return errorResponse('Course not found', 404, req)
     }
 
     const authzResult = await verifyOrgMembership(authResult.userId!, course.organization_id, [
@@ -72,11 +71,11 @@ Deno.serve(async (req: Request) => {
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to cancel this course', 403)
+      return errorResponse('You do not have permission to cancel this course', 403, req)
     }
 
     if (course.status === 'cancelled') {
-      return errorResponse('Course is already cancelled', 400)
+      return errorResponse('Course is already cancelled', 400, req)
     }
 
     const { data: org } = await supabase
@@ -92,7 +91,7 @@ Deno.serve(async (req: Request) => {
       .eq('status', 'confirmed')
 
     if (signupsError) {
-      return errorResponse('Failed to fetch signups', 500)
+      return errorResponse('Failed to fetch signups', 500, req)
     }
 
     const results: CancellationResult = {
@@ -112,7 +111,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', body.course_id)
 
     if (updateError) {
-      return errorResponse('Failed to cancel course', 500)
+      return errorResponse('Failed to cancel course', 500, req)
     }
 
     const refundPromises = (signups || []).map(async (signup) => {
@@ -222,15 +221,9 @@ Deno.serve(async (req: Request) => {
       results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
     }
 
-    return new Response(JSON.stringify(results), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return successResponse(results, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return errorResponse(message, 500, req)
   }
 })

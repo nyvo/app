@@ -28,14 +28,14 @@ Deno.serve(async (req: Request) => {
   try {
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
-      return errorResponse(authResult.error || 'Unauthorized', 401)
+      return errorResponse(authResult.error || 'Unauthorized', 401, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body = (await req.json()) as TeacherCancelRequest
 
     if (!body.signup_id) {
-      return errorResponse('Missing signup_id', 400)
+      return errorResponse('Missing signup_id', 400, req)
     }
 
     const { data: signup, error: signupError } = await supabase
@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return errorResponse('Signup not found', 404)
+      return errorResponse('Signup not found', 404, req)
     }
 
     const course = signup.course as {
@@ -66,11 +66,11 @@ Deno.serve(async (req: Request) => {
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to cancel signups for this organization', 403)
+      return errorResponse('You do not have permission to cancel signups for this organization', 403, req)
     }
 
     if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
-      return errorResponse('Signup is already cancelled', 400)
+      return errorResponse('Signup is already cancelled', 400, req)
     }
 
     const refundRequested =
@@ -93,6 +93,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse(
         `Refusjon feilet: ${refundError}. Påmeldingen er ikke endret – prøv igjen.`,
         500,
+        req,
       )
     }
 
@@ -118,7 +119,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', body.signup_id)
 
     if (updateError) {
-      return errorResponse('Failed to update signup status', 500)
+      return errorResponse('Failed to update signup status', 500, req)
     }
 
     const { data: org } = await supabase
@@ -167,9 +168,9 @@ Deno.serve(async (req: Request) => {
       message: refundSucceeded
         ? 'Påmelding avmeldt. Refusjon vil bli behandlet.'
         : 'Påmelding avmeldt.',
-    })
+    }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return errorResponse(message, 500)
+    return errorResponse(message, 500, req)
   }
 })

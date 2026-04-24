@@ -39,14 +39,14 @@ Deno.serve(async (req: Request) => {
   try {
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
-      return errorResponse(authResult.error || 'Unauthorized', 401)
+      return errorResponse(authResult.error || 'Unauthorized', 401, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body = (await req.json()) as SendPaymentLinkRequest
 
     if (!body.signup_id) {
-      return errorResponse('Missing signup_id', 400)
+      return errorResponse('Missing signup_id', 400, req)
     }
 
     const { data: signup, error: signupError } = await supabase
@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return errorResponse('Signup not found', 404)
+      return errorResponse('Signup not found', 404, req)
     }
 
     const course = signup.course as {
@@ -91,19 +91,19 @@ Deno.serve(async (req: Request) => {
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to send payment links for this organization', 403)
+      return errorResponse('You do not have permission to send payment links for this organization', 403, req)
     }
 
     if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
-      return errorResponse('Cannot send payment link for a cancelled signup', 400)
+      return errorResponse('Cannot send payment link for a cancelled signup', 400, req)
     }
     if (signup.payment_status === 'paid') {
-      return errorResponse('Signup is already paid', 400)
+      return errorResponse('Signup is already paid', 400, req)
     }
 
     const org = course.organization
     if (!org.dintero_seller_id || !org.dintero_onboarding_complete) {
-      return errorResponse('Payment is not set up for this organization', 400)
+      return errorResponse('Payment is not set up for this organization', 400, req)
     }
 
     // Resolve price
@@ -128,7 +128,7 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!price || price <= 0) {
-      return errorResponse('Course has no valid price', 400)
+      return errorResponse('Course has no valid price', 400, req)
     }
 
     const { serviceFeeNok, totalPrice, priceInOre, basePriceInOre, serviceFeeInOre, platformFee } =
@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (attemptError || !attempt) {
-      return errorResponse('Failed to record payment attempt', 500)
+      return errorResponse('Failed to record payment attempt', 500, req)
     }
 
     const merchantReference = attempt.id
@@ -254,9 +254,9 @@ Deno.serve(async (req: Request) => {
       success: true,
       message: 'Betalingslenke sendt til deltaker',
       checkout_url: session.url,
-    })
+    }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return errorResponse(message, 500)
+    return errorResponse(message, 500, req)
   }
 })

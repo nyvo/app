@@ -26,12 +26,12 @@ Deno.serve(async (req: Request) => {
     const { courseId, participantName, participantEmail, participantPhone } = body
 
     if (!courseId || !participantName || !participantEmail || !participantPhone) {
-      return errorResponse('Missing required fields', 400)
+      return errorResponse('Missing required fields', 400, req)
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(participantEmail)) {
-      return errorResponse('Invalid email format', 400)
+      return errorResponse('Invalid email format', 400, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -44,16 +44,16 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return errorResponse('Course not found', 404)
+      return errorResponse('Course not found', 404, req)
     }
 
     if (course.status === 'draft' || course.status === 'cancelled') {
-      return errorResponse('Course is not available for booking', 400)
+      return errorResponse('Course is not available for booking', 400, req)
     }
 
     // Enforce "free" server-side: price must be null or <= 0
     if (course.price != null && course.price > 0) {
-      return errorResponse('Course is not free — use the paid checkout flow', 400)
+      return errorResponse('Course is not free — use the paid checkout flow', 400, req)
     }
 
     // Call the atomic capacity RPC. It serialises by locking the course row,
@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
 
     if (rpcError) {
       console.error('create_signup_if_available failed:', rpcError)
-      return errorResponse('Kunne ikke fullføre påmelding', 500)
+      return errorResponse('Kunne ikke fullføre påmelding', 500, req)
     }
 
     const rpcResult = result as { success: boolean; signup_id?: string; error?: string; message?: string }
@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
         : rpcResult.error === 'already_signed_up' ? 409
         : rpcResult.error === 'course_not_found' ? 404
         : 400
-      return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status)
+      return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status, req)
     }
 
     // Send confirmation email. Parallel to the paid-flow finalize path — same
@@ -125,9 +125,9 @@ Deno.serve(async (req: Request) => {
       // Email failures are non-fatal — signup already succeeded.
     }
 
-    return successResponse({ signupId: rpcResult.signup_id }, 200)
+    return successResponse({ signupId: rpcResult.signup_id }, 200, req)
   } catch (err) {
     console.error('create-free-signup error:', err)
-    return errorResponse('Internal error', 500)
+    return errorResponse('Internal error', 500, req)
   }
 })

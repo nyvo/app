@@ -46,14 +46,14 @@ Deno.serve(async (req: Request) => {
   try {
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
-      return errorResponse(authResult.error || 'Unauthorized', 401)
+      return errorResponse(authResult.error || 'Unauthorized', 401, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body = (await req.json()) as NotifyScheduleChangeRequest
 
     if (!body.session_id || !body.new_date || !body.new_time) {
-      return errorResponse('Missing required fields', 400)
+      return errorResponse('Missing required fields', 400, req)
     }
 
     // Load the session + course + org — also the authorization anchor.
@@ -68,12 +68,12 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (sessionError || !session) {
-      return errorResponse('Session not found', 404)
+      return errorResponse('Session not found', 404, req)
     }
 
     const course = session.course as { id: string; title: string; organization_id: string } | null
     if (!course) {
-      return errorResponse('Course not found', 404)
+      return errorResponse('Course not found', 404, req)
     }
 
     // Only org members (owner/admin/teacher) can trigger schedule-change notifications.
@@ -83,7 +83,7 @@ Deno.serve(async (req: Request) => {
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to notify this course', 403)
+      return errorResponse('You do not have permission to notify this course', 403, req)
     }
 
     const { data: org } = await supabase
@@ -102,7 +102,7 @@ Deno.serve(async (req: Request) => {
     const recipients = (signups || []).filter((s) => s.participant_email)
 
     if (recipients.length === 0) {
-      return successResponse({ notifications_sent: 0, total_recipients: 0 }, 200)
+      return successResponse({ notifications_sent: 0, total_recipients: 0 }, 200, req)
     }
 
     const oldDate = formatDateNo(body.old_date)
@@ -140,9 +140,10 @@ Deno.serve(async (req: Request) => {
     return successResponse(
       { notifications_sent: sent, total_recipients: recipients.length },
       200,
+      req,
     )
   } catch (err) {
     console.error('notify-schedule-change error:', err)
-    return errorResponse('Internal error', 500)
+    return errorResponse('Internal error', 500, req)
   }
 })

@@ -2,7 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { Resend } from 'npm:resend@4.0.0'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { escapeHtml } from '../_shared/auth.ts'
+import { escapeHtml, getCorsHeaders } from '../_shared/auth.ts'
 
 const resendKey = Deno.env.get('RESEND_API_KEY')
 if (!resendKey) {
@@ -19,13 +19,6 @@ const resend = new Resend(resendKey || '')
 // Configure your domain - update this after verifying domain in Resend
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') || 'onboarding@resend.dev'
 const FROM_NAME = Deno.env.get('RESEND_FROM_NAME') || 'Ease'
-
-const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || '*'
-const corsHeaders = {
-  'Access-Control-Allow-Origin': allowedOrigin,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 /** Validate URL scheme to prevent javascript: / data: injection in href attributes */
 function safeUrl(url: string): string {
@@ -740,6 +733,10 @@ async function verifyCaller(req: Request): Promise<Caller> {
 }
 
 Deno.serve(async (req: Request) => {
+  // Resolve CORS per-request so ALLOWED_ORIGIN whitelist + localhost dev
+  // origins are both honoured. Used for preflight and every response below.
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'))
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })

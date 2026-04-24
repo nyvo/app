@@ -122,14 +122,25 @@ export async function verifyAuthAndOrgMembership(
 const LOCAL_DEV_ORIGIN_PATTERN =
   /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
 
+// Built-in defaults so the function works sanely even when ALLOWED_ORIGIN
+// is unset or misconfigured. Covers prod + typical Vite dev ports.
+const DEFAULT_WHITELIST = [
+  'https://www.framio.no',
+  'https://framio.no',
+]
+
 export function getCorsHeaders(origin?: string | null): Record<string, string> {
-  const envValue = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.framio.no'
-  const whitelist = envValue
+  const envValue = Deno.env.get('ALLOWED_ORIGIN') || ''
+  const envEntries = envValue
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
 
-  let allowedOrigin = whitelist[0] || 'https://www.framio.no'
+  // Union the env whitelist with the built-in defaults. Env additions take
+  // precedence in iteration order; dedupe to keep it tidy.
+  const whitelist = Array.from(new Set([...envEntries, ...DEFAULT_WHITELIST]))
+
+  let allowedOrigin = whitelist[0]
   if (origin) {
     if (whitelist.includes(origin) || LOCAL_DEV_ORIGIN_PATTERN.test(origin)) {
       allowedOrigin = origin

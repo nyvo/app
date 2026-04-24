@@ -12,15 +12,13 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
+import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 import { calculatePricing } from '../_shared/pricing.ts'
 import {
   createSession,
   getProfileId,
   type DinteroSessionRequest,
 } from '../_shared/dintero.ts'
-
-const corsHeaders = getCorsHeaders()
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -36,13 +34,6 @@ interface SessionRequestBody {
   sessionId?: string
   signupPackageId?: string
   packageWeeks?: number
-}
-
-function jsonError(error: string, status: number): Response {
-  return new Response(JSON.stringify({ error }), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
 }
 
 Deno.serve(async (req: Request) => {
@@ -66,24 +57,24 @@ Deno.serve(async (req: Request) => {
     } = body
 
     if (!courseId || !organizationSlug || !customerEmail || !customerName) {
-      return errorResponse('Missing required fields', 400)
+      return errorResponse('Missing required fields', 400, req)
     }
 
     // Validate UUID-shaped inputs before they flow into .eq() queries.
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(courseId)) {
-      return errorResponse('Invalid courseId', 400)
+      return errorResponse('Invalid courseId', 400, req)
     }
     if (sessionId !== undefined && sessionId !== null && !uuidRegex.test(sessionId)) {
-      return errorResponse('Invalid sessionId', 400)
+      return errorResponse('Invalid sessionId', 400, req)
     }
     if (signupPackageId !== undefined && signupPackageId !== null && !uuidRegex.test(signupPackageId)) {
-      return errorResponse('Invalid signupPackageId', 400)
+      return errorResponse('Invalid signupPackageId', 400, req)
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(customerEmail)) {
-      return errorResponse('Invalid email format', 400)
+      return errorResponse('Invalid email format', 400, req)
     }
 
     // Load course + organization
@@ -103,7 +94,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (courseError || !course) {
-      return errorResponse('Course not found', 404)
+      return errorResponse('Course not found', 404, req)
     }
 
     const org = course.organization as {
@@ -115,15 +106,15 @@ Deno.serve(async (req: Request) => {
     } | null
 
     if (!org || org.slug !== organizationSlug) {
-      return errorResponse('Course not found for this organization', 404)
+      return errorResponse('Course not found for this organization', 404, req)
     }
 
     if (course.status === 'draft' || course.status === 'cancelled') {
-      return errorResponse('Course is not available for booking', 400)
+      return errorResponse('Course is not available for booking', 400, req)
     }
 
     if (!org.dintero_seller_id || !org.dintero_onboarding_complete) {
-      return errorResponse('Payment is not set up for this organization', 400)
+      return errorResponse('Payment is not set up for this organization', 400, req)
     }
 
     // Resolve package pricing if applicable
@@ -136,7 +127,7 @@ Deno.serve(async (req: Request) => {
         .eq('course_id', courseId)
         .single()
       if (packageError || !packageData) {
-        return errorResponse('Invalid signup package', 400)
+        return errorResponse('Invalid signup package', 400, req)
       }
       selectedPackage = packageData
     }
@@ -148,7 +139,7 @@ Deno.serve(async (req: Request) => {
         : course.price
 
     if (!price || price <= 0) {
-      return errorResponse('Course has no valid price', 400)
+      return errorResponse('Course has no valid price', 400, req)
     }
 
     // Soft capacity check. Hard guard is in create_signup_if_available RPC at webhook time.
@@ -159,7 +150,7 @@ Deno.serve(async (req: Request) => {
         .eq('course_id', courseId)
         .eq('status', 'confirmed')
       if ((currentSignups || 0) >= course.max_participants) {
-        return errorResponse('Course is full', 400)
+        return errorResponse('Course is full', 400, req)
       }
     }
 
@@ -205,7 +196,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (attemptError || !attempt) {
-      return errorResponse('Failed to record payment attempt', 500)
+      return errorResponse('Failed to record payment attempt', 500, req)
     }
 
     const merchantReference = attempt.id
@@ -279,16 +270,17 @@ Deno.serve(async (req: Request) => {
       .update({ dintero_session_id: session.id })
       .eq('id', merchantReference)
 
-    return new Response(
-      JSON.stringify({
+    return successResponse(
+      {
         sid: session.id,
         url: session.url,
         merchantReference,
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      },
+      200,
+      req,
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonError(message, 500)
+    return errorResponse(message, 500, req)
   }
 })

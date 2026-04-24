@@ -3,12 +3,11 @@
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { verifyAuth, handleCors, getCorsHeaders, errorResponse } from '../_shared/auth.ts'
+import { verifyAuth, handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 import { refundTransaction } from '../_shared/dintero.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const corsHeaders = getCorsHeaders()
 
 interface ProcessRefundRequest {
   signup_id: string
@@ -37,14 +36,14 @@ Deno.serve(async (req: Request) => {
   try {
     const authResult = await verifyAuth(req)
     if (!authResult.authenticated) {
-      return errorResponse(authResult.error || 'Unauthorized', 401)
+      return errorResponse(authResult.error || 'Unauthorized', 401, req)
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const body = (await req.json()) as ProcessRefundRequest
 
     if (!body.signup_id) {
-      return errorResponse('Missing signup_id', 400)
+      return errorResponse('Missing signup_id', 400, req)
     }
 
     const { data: signup, error: signupError } = await supabase
@@ -57,7 +56,7 @@ Deno.serve(async (req: Request) => {
       .single()
 
     if (signupError || !signup) {
-      return errorResponse('Signup not found', 404)
+      return errorResponse('Signup not found', 404, req)
     }
 
     // Ownership check: require authenticated user to match signup.user_id.
@@ -67,15 +66,15 @@ Deno.serve(async (req: Request) => {
     // in their name before they created an account). Guest bookings can be
     // cancelled by the teacher via the dashboard.
     if (signup.user_id !== authResult.userId) {
-      return errorResponse('You can only cancel your own signups', 403)
+      return errorResponse('You can only cancel your own signups', 403, req)
     }
 
     if (signup.status === 'cancelled') {
-      return errorResponse('Signup is already cancelled', 400)
+      return errorResponse('Signup is already cancelled', 400, req)
     }
 
     if (signup.payment_status === 'refunded') {
-      return errorResponse('Signup has already been refunded', 400)
+      return errorResponse('Signup has already been refunded', 400, req)
     }
 
     const course = signup.course as {
@@ -123,16 +122,13 @@ Deno.serve(async (req: Request) => {
 
     // If refund was attempted but failed, do not cancel the signup.
     if (refundAttempted && !refundSucceeded) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          refunded: false,
-          refund_amount: 0,
-          message: 'Refusjonen mislyktes. Påmeldingen er ikke endret.',
-          error: refundError,
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      )
+      return successResponse({
+        success: false,
+        refunded: false,
+        refund_amount: 0,
+        message: 'Refusjonen mislyktes. Påmeldingen er ikke endret.',
+        error: refundError,
+      }, 200, req)
     }
 
     const updateData: Record<string, unknown> = {
@@ -151,7 +147,7 @@ Deno.serve(async (req: Request) => {
       .eq('id', body.signup_id)
 
     if (updateError) {
-      return errorResponse('Failed to update signup status', 500)
+      return errorResponse('Failed to update signup status', 500, req)
     }
 
     // Cancellation email (non-blocking)
@@ -184,23 +180,17 @@ Deno.serve(async (req: Request) => {
       // Non-fatal
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        refunded: refundSucceeded,
-        refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
-        message:
-          canGetRefund && refundSucceeded
-            ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
-            : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 24 timer før kursstart.',
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+    return successResponse({
+      success: true,
+      refunded: refundSucceeded,
+      refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
+      message:
+        canGetRefund && refundSucceeded
+          ? 'Avbestilling bekreftet. Refusjon vil bli behandlet.'
+          : 'Avbestilling bekreftet. Ingen refusjon – avbestillingen skjedde under 24 timer før kursstart.',
+    }, 200, req)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return errorResponse(message, 500, req)
   }
 })
