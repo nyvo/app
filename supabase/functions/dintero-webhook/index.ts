@@ -22,7 +22,8 @@ import {
   captureTransaction,
   getTransaction,
   voidTransaction,
-  verifyCallbackSignature,
+  verifyCallbackSignatureDetailed,
+  signCallbackForTest,
   type DinteroTransaction,
 } from '../_shared/dintero.ts'
 
@@ -192,21 +193,108 @@ async function sendBookingFailedEmail(
   }
 }
 
+/**
+ * Supabase's edge runtime rewrites the request URL before handing it to
+ * the function — the `/functions/v1/` prefix is stripped. But Dintero
+ * signs its callback against the **public** URL it called (which includes
+ * the prefix). Reconstruct the public URL so our canonical string matches
+ * Dintero's.
+ *
+ * E.g. req.url = `http://nollnnkksgicsvuthnjq.supabase.co/dintero-webhook?x=1`
+ *   →  public = `https://nollnnkksgicsvuthnjq.supabase.co/functions/v1/dintero-webhook?x=1`
+ *
+ * The scheme is also forced back to https — req.url shows http because the
+ * edge runtime sits behind the TLS-terminating proxy.
+ */
+function publicCallbackUrl(reqUrl: string): URL {
+  const raw = new URL(reqUrl)
+  const pathname = raw.pathname.startsWith('/functions/v1/')
+    ? raw.pathname
+    : `/functions/v1${raw.pathname}`
+  return new URL(`https://${raw.host}${pathname}${raw.search}`)
+}
+
 Deno.serve(async (req: Request) => {
-  const url = new URL(req.url)
+  const url = publicCallbackUrl(req.url)
+
+  // Diagnostics endpoint: round-trip sign+verify using the real deployed
+  // webhook secret. Confirms the verify logic is internally consistent.
+  // If this returns ok:true but real Dintero callbacks still fail, the
+  // canonical string inputs (hostname/pathname/query/method) diverge
+  // between what Dintero signs and what req.url gives us.
+  if (url.searchParams.get('__selftest') === '1') {
+    const testTimestamp = String(Math.floor(Date.now() / 1000))
+    // Use the *reconstructed* public URL (https + /functions/v1/ prefix
+    // restored), minus the selftest flag — so the canonical string
+    // matches what a real Dintero callback would produce.
+    const testUrl = new URL(url.toString())
+    testUrl.searchParams.delete('__selftest')
+    const header = await signCallbackForTest({
+      method: 'POST',
+      url: testUrl,
+      timestamp: testTimestamp,
+      secret: webhookSecret,
+    })
+    const roundtrip = await verifyCallbackSignatureDetailed({
+      method: 'POST',
+      url: testUrl,
+      header,
+      secret: webhookSecret,
+    })
+    return new Response(
+      JSON.stringify({
+        roundtrip_ok: roundtrip.ok,
+        reason: roundtrip.reason,
+        inputs: {
+          rawReqUrl: req.url,
+          signedUrl: testUrl.toString(),
+          hostname: testUrl.hostname,
+          pathname: testUrl.pathname,
+          search: testUrl.search,
+          timestamp: testTimestamp,
+          secretConfigured: !!webhookSecret,
+          accountIdConfigured: !!Deno.env.get('DINTERO_ACCOUNT_ID'),
+        },
+        diagnostics: roundtrip.ok ? undefined : {
+          canonical: roundtrip.canonical,
+          computedHex: roundtrip.computedHex,
+          providedHex: roundtrip.providedHex,
+        },
+      }, null, 2),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   const signatureHeader = req.headers.get('dintero-signature') || req.headers.get('Dintero-Signature')
 
   if (!signatureHeader) {
     return new Response('Missing Dintero-Signature header', { status: 400 })
   }
 
-  const signatureValid = await verifyCallbackSignature({
+  const sigResult = await verifyCallbackSignatureDetailed({
     method: req.method,
     url,
     header: signatureHeader,
     secret: webhookSecret,
   })
-  if (!signatureValid) {
+  if (!sigResult.ok) {
+    // Log the full diagnostics (sans secret). These are the exact bytes we
+    // HMAC'd — diffing against Dintero's side is the way to find the
+    // inevitable hostname/pathname/query-encoding drift.
+    console.warn('dintero-webhook: signature rejected', {
+      reason: sigResult.reason,
+      timestamp: sigResult.timestamp,
+      accountId: sigResult.accountId,
+      method: sigResult.method,
+      hostname: sigResult.hostname,
+      pathname: sigResult.pathname,
+      query: sigResult.query,
+      canonical: sigResult.canonical,
+      computedHex: sigResult.computedHex,
+      providedHex: sigResult.providedHex,
+      // Also log the raw req.url so we can see what Supabase's runtime gave us.
+      rawReqUrl: req.url,
+    })
     return new Response('Invalid signature', { status: 401 })
   }
 

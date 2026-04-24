@@ -393,11 +393,40 @@ function sortQueryString(query: string): string {
 }
 
 /**
+ * Structured result for callback signature verification. When the boolean
+ * `ok` is false, `reason` and the other diagnostics explain why — safe to
+ * log (no secrets included, only the computed + provided hashes).
+ */
+export interface CallbackSignatureResult {
+  ok: boolean
+  reason?: string
+  /** Canonical string that was HMAC-signed (sans secret). Safe to log. */
+  canonical?: string
+  /** Our computed HMAC hex. Safe to log. */
+  computedHex?: string
+  /** The HMAC the caller claims they signed. Safe to log. */
+  providedHex?: string
+  /** Timestamp from the header (epoch seconds). */
+  timestamp?: string
+  /** Echoed inputs for post-mortem diffing. */
+  accountId?: string
+  method?: string
+  hostname?: string
+  pathname?: string
+  query?: string
+}
+
+/**
  * Verify a Dintero session `callback_url` signature.
  *
  * The Dintero-Signature header looks like: `t=1738231234,v0-hmac-sha256=abcdef...`.
  * Verifies the HMAC-SHA256 over the canonical string and rejects timestamps older
  * than 5 minutes (replay protection).
+ *
+ * Returns a boolean by default. Use `verifyCallbackSignatureDetailed` if you
+ * need diagnostics on why a verification failed — useful when Supabase's
+ * edge runtime rewrites hostname/pathname and the signature computed by the
+ * client no longer matches.
  */
 export async function verifyCallbackSignature(params: {
   method: string
@@ -405,22 +434,37 @@ export async function verifyCallbackSignature(params: {
   header: string | null
   secret: string
 }): Promise<boolean> {
-  if (!params.header) return false
-  if (!params.secret) return false
+  return (await verifyCallbackSignatureDetailed(params)).ok
+}
+
+export async function verifyCallbackSignatureDetailed(params: {
+  method: string
+  url: URL
+  header: string | null
+  secret: string
+}): Promise<CallbackSignatureResult> {
+  if (!params.header) return { ok: false, reason: 'missing_header' }
+  if (!params.secret) return { ok: false, reason: 'missing_secret' }
 
   const parts = params.header.split(',')
   const tPart = parts.find((p) => p.trim().startsWith('t='))
   const sigPart = parts.find((p) => p.trim().startsWith('v0-hmac-sha256='))
-  if (!tPart || !sigPart) return false
+  if (!tPart || !sigPart) return { ok: false, reason: 'malformed_header' }
 
   const timestamp = tPart.trim().slice(2)
   const provided = sigPart.trim().slice('v0-hmac-sha256='.length)
 
   const tsNum = parseInt(timestamp, 10)
-  if (!Number.isFinite(tsNum)) return false
+  if (!Number.isFinite(tsNum)) {
+    return { ok: false, reason: 'invalid_timestamp', timestamp }
+  }
   const nowSec = Math.floor(Date.now() / 1000)
   if (Math.abs(nowSec - tsNum) > 5 * 60) {
-    return false
+    return {
+      ok: false,
+      reason: 'timestamp_outside_replay_window',
+      timestamp,
+    }
   }
 
   const query = sortQueryString(params.url.search)
@@ -440,7 +484,51 @@ export async function verifyCallbackSignature(params: {
   const providedBytes = hexToBytes(provided)
   const computedBytes = hexToBytes(computedHex)
 
-  return timingSafeEqual(providedBytes, computedBytes)
+  const match = timingSafeEqual(providedBytes, computedBytes)
+  if (match) {
+    return { ok: true }
+  }
+  return {
+    ok: false,
+    reason: 'hmac_mismatch',
+    canonical,
+    computedHex,
+    providedHex: provided,
+    timestamp,
+    accountId,
+    method: params.method,
+    hostname: params.url.hostname,
+    pathname: params.url.pathname,
+    query,
+  }
+}
+
+/**
+ * Roundtrip selftest. Signs a synthetic canonical string with the given
+ * secret, then verifies it back via the same code path. Proves the
+ * sign-side and verify-side agree on every byte. Use in a smoke test to
+ * isolate "our code is broken" from "the caller's canonical string
+ * doesn't match ours".
+ */
+export async function signCallbackForTest(params: {
+  method: string
+  url: URL
+  timestamp: string
+  secret: string
+}): Promise<string> {
+  const query = sortQueryString(params.url.search)
+  const canonical = buildCanonicalString(
+    params.timestamp,
+    accountId,
+    params.method,
+    params.url.hostname,
+    params.url.pathname,
+    query,
+  )
+  const encoder = new TextEncoder()
+  const digest = await hmac('SHA-256', params.secret, encoder.encode(canonical))
+  const sig = bytesToHex(digest)
+  return `t=${params.timestamp},v0-hmac-sha256=${sig}`
 }
 
 /**
