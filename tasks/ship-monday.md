@@ -60,6 +60,8 @@ b52520d chore(workspace): prune stale agents, split design spec, add dintero ski
 
 **Global edge-state walkthrough (empty/loading/error states on every teacher page) → scoped to the end of Saturday's design rework.** Design churn may reshape these anyway; walk them after the design freeze.
 
+**Token-link cancel flow → decided: NOT shipping for Monday.** Students contact the studio to cancel; teacher handles via the existing two-option cancel menu (with or without refund). Copy on `PublicCourseDetailPage` and `TermsPage` already directs students to the studio. Post-launch improvement if adoption signals demand.
+
 **Sat — design day:**
 - Responsiveness agent pass (mobile + tablet)
 - Skeleton loader pattern
