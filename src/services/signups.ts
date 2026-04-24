@@ -1,4 +1,5 @@
 import { supabase, typedFrom } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
 // Signup with joined course and profile data
@@ -59,7 +60,7 @@ export async function sendSignupConfirmationEmail(courseId: string, signupId: st
     })
   } catch (err) {
     // Non-blocking — don't fail the signup if email fails
-    console.error('Failed to send confirmation email:', err)
+    logger.error('Failed to send confirmation email:', err)
   }
 }
 
