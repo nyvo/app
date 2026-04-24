@@ -51,7 +51,6 @@ function SignupTableHead({ hideCourse = false }: { hideCourse?: boolean }) {
           <TableHead className="hidden w-40 sm:table-cell">Kurs</TableHead>
         )}
         <TableHead className="w-40">Status</TableHead>
-        <TableHead className="hidden w-20 md:table-cell">Kvittering</TableHead>
         <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
         <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
       </tr>

@@ -163,7 +163,7 @@ function getCourseScheduleChangeTemplate(data: Record<string, string>): { subjec
   </div>
 </body>
 </html>`,
-    text: `Hei ${participantName || ''}, tidspunktet for ${data.courseName} er endret fra ${data.oldDate} ${data.oldTime} til ${data.newDate} ${data.newTime}. Ta kontakt med oss hvis du ikke kan møte.\n\nHilsen,\n${data.organizationName || 'Ease'}`
+    text: `Hei ${participantName || ''}, tidspunktet for ${courseName} er endret fra ${oldDate} ${oldTime} til ${newDate} ${newTime}. Ta kontakt med oss hvis du ikke kan møte.\n\nHilsen,\n${organizationName || 'Ease'}`
   }
 }
 
@@ -264,7 +264,7 @@ function getBookingFailedTemplate(data: Record<string, string>): { subject: stri
     text: `
 Hei,
 
-Vi beklager, men din påmelding til ${courseName} kunne ikke fullføres.
+Påmeldingen til ${courseName} ble ikke fullført.
 
 ${reason}
 
@@ -469,7 +469,7 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
 
     <div class="alert-box">
       <p class="alert-title">Kurset er avlyst</p>
-      <p><strong>${courseName}</strong> er dessverre avlyst.</p>
+      <p><strong>${courseName}</strong> er avlyst.</p>
       ${reason ? `<p><em>Årsak: ${reason}</em></p>` : ''}
     </div>
 
@@ -489,7 +489,7 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
 </body>
 </html>
     `,
-    text: `Hei ${participantName || ''}, ${courseName} er dessverre avlyst.${showRefund && refundAmount ? ` ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5–10 virkedager.` : ''}${reason ? ` Årsak: ${reason}` : ''} Har du spørsmål, ta kontakt med oss.`
+    text: `Hei ${participantName || ''}, ${courseName} er avlyst.${showRefund && refundAmount ? ` ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5–10 virkedager.` : ''}${reason ? ` Årsak: ${reason}` : ''} Har du spørsmål, ta kontakt med oss.`
   }
 }
 
@@ -501,7 +501,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
   const refunded = data.refunded === 'true'
 
   return {
-    subject: refunded ? 'Avbestilling bekreftet – Refusjon behandlet' : 'Avbestilling bekreftet',
+    subject: refunded ? 'Avbestilling bekreftet: Refusjon behandlet' : 'Avbestilling bekreftet',
     html: `
 <!DOCTYPE html>
 <html>
@@ -533,7 +533,7 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
 
     <p>Hei ${participantName || ''},</p>
 
-    <p>Avbestillingen fra <strong>${courseName || 'kurset'}</strong> er bekreftet.</p>
+    <p>Avbestillingen for <strong>${courseName || 'kurset'}</strong> er bekreftet.</p>
 
     ${refunded && refundAmount ? `
       <div class="details-box">
@@ -549,8 +549,8 @@ function getStudentCancellationTemplate(data: Record<string, string>): { subject
 </html>
     `,
     text: refunded
-      ? `Hei ${participantName || ''}, avbestillingen fra ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, avbestillingen fra ${courseName || 'kurset'} er bekreftet.`
+      ? `Hei ${participantName || ''}, avbestillingen for ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
+      : `Hei ${participantName || ''}, avbestillingen for ${courseName || 'kurset'} er bekreftet.`
   }
 }
 
@@ -595,7 +595,7 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 
     <p>Hei ${participantName || ''},</p>
 
-    <p>Din påmelding til <strong>${courseName}</strong> har blitt avbestilt av ${organizationName || 'studioet'}.</p>
+    <p>${organizationName || 'Studioet'} har avbestilt påmeldingen din til <strong>${courseName}</strong>.</p>
 
     <div class="details-box">
       <p><strong>Kurs:</strong> ${courseName}</p>
@@ -619,8 +619,8 @@ function getTeacherCancellationTemplate(data: Record<string, string>): { subject
 </html>
     `,
     text: refunded
-      ? `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studioet'}. ${formatKr(refundAmount || 0)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, din påmelding til ${courseName} har blitt avbestilt av ${organizationName || 'studioet'}. Ta kontakt med oss hvis du har spørsmål.`
+      ? `Hei ${participantName || ''}, ${organizationName || 'studioet'} har avbestilt påmeldingen din til ${courseName}. ${formatKr(refundAmount || 0)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.`
+      : `Hei ${participantName || ''}, ${organizationName || 'studioet'} har avbestilt påmeldingen din til ${courseName}. Ta kontakt med oss hvis du har spørsmål.`
   }
 }
 
@@ -708,6 +708,119 @@ type Caller =
   | { kind: 'user'; userId: string }
   | { kind: 'unauthorized' }
 
+/**
+ * For authenticated-user callers, verify they have a legitimate relationship
+ * to the recipient for the chosen template. Closes the domain-abuse hole
+ * where any authed Supabase user could otherwise spam arbitrary emails
+ * from the verified sending domain.
+ *
+ * teacher-broadcast: caller must be an org member of the course whose
+ *   participants they're emailing, AND `to` must match a confirmed signup
+ *   in that course.
+ * new-message: caller must be a participant in the conversation, AND `to`
+ *   must match the OTHER party's address.
+ */
+async function verifyRecipientAllowed(
+  userId: string,
+  template: string,
+  templateData: Record<string, string>,
+  to: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const admin = createClient(supabaseUrl, supabaseServiceKey)
+
+  if (template === 'teacher-broadcast') {
+    const courseId = templateData.courseId
+    if (!courseId) {
+      return { ok: false, reason: 'teacher-broadcast requires templateData.courseId' }
+    }
+    const { data: course } = await admin
+      .from('courses')
+      .select('organization_id')
+      .eq('id', courseId)
+      .single()
+    if (!course) return { ok: false, reason: 'Course not found' }
+
+    const { data: membership } = await admin
+      .from('org_members')
+      .select('user_id')
+      .eq('organization_id', course.organization_id)
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (!membership) {
+      return { ok: false, reason: 'Caller is not a member of this course organization' }
+    }
+
+    const { data: signup } = await admin
+      .from('signups')
+      .select('id')
+      .eq('course_id', courseId)
+      .eq('participant_email', to)
+      .eq('status', 'confirmed')
+      .maybeSingle()
+    if (!signup) {
+      return { ok: false, reason: 'Recipient is not a confirmed participant of this course' }
+    }
+    return { ok: true }
+  }
+
+  if (template === 'new-message') {
+    const conversationId = templateData.conversationId
+    if (!conversationId) {
+      return { ok: false, reason: 'new-message requires templateData.conversationId' }
+    }
+    const { data: conv } = await admin
+      .from('conversations')
+      .select('id, user_id, organization_id, participant_email')
+      .eq('id', conversationId)
+      .maybeSingle()
+    if (!conv) return { ok: false, reason: 'Conversation not found' }
+
+    // Caller must be either the student-side user or an org member on the
+    // teacher side. AND the recipient must be the OPPOSITE side.
+    const isStudent = conv.user_id === userId
+    let isOrgMember = false
+    if (!isStudent) {
+      const { data: membership } = await admin
+        .from('org_members')
+        .select('user_id')
+        .eq('organization_id', conv.organization_id)
+        .eq('user_id', userId)
+        .maybeSingle()
+      isOrgMember = !!membership
+    }
+    if (!isStudent && !isOrgMember) {
+      return { ok: false, reason: 'Caller is not a participant in this conversation' }
+    }
+
+    if (isStudent) {
+      // Student is notifying the teacher side — recipient must be an
+      // organization member's email for this conversation's org.
+      // Accept any member email from that org as valid.
+      const { data: memberEmails } = await admin
+        .from('profiles')
+        .select('email, user_id')
+        .in(
+          'user_id',
+          (await admin.from('org_members').select('user_id').eq('organization_id', conv.organization_id)).data?.map(r => r.user_id) || [],
+        )
+      const allowed = (memberEmails || []).some((p) => p.email === to)
+      if (!allowed) {
+        return { ok: false, reason: 'Recipient is not a member of the recipient organization' }
+      }
+    } else {
+      // Org member is notifying the student side — recipient must match the
+      // conversation's participant_email.
+      if (conv.participant_email !== to) {
+        return { ok: false, reason: 'Recipient is not the participant of this conversation' }
+      }
+    }
+    return { ok: true }
+  }
+
+  // Unknown user-triggerable template — reject.
+  return { ok: false, reason: `No recipient policy defined for template: ${template}` }
+}
+
 async function verifyCaller(req: Request): Promise<Caller> {
   const authHeader = req.headers.get('authorization')
   if (!authHeader) return { kind: 'unauthorized' }
@@ -778,6 +891,25 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: `Users cannot trigger template: ${body.template}` }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // For user-triggered templates, verify the caller has a legitimate
+    // relationship to the recipient. Prevents an authenticated account
+    // from sending arbitrary email to arbitrary addresses from the
+    // verified domain (domain reputation / phishing-enablement).
+    if (caller.kind === 'user') {
+      const recipientCheck = await verifyRecipientAllowed(
+        caller.userId,
+        body.template,
+        body.templateData,
+        body.to,
+      )
+      if (!recipientCheck.ok) {
+        return new Response(
+          JSON.stringify({ error: recipientCheck.reason }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     switch (body.template) {

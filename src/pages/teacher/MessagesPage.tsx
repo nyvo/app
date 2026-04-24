@@ -148,6 +148,7 @@ const MessagesPage = () => {
           senderName,
           messageText.trim(),
           conversationUrl,
+          activeConversation.id,
           organizationName
         ).catch(err => {
           logger.error('Failed to send email notification:', err);
@@ -193,6 +194,7 @@ const MessagesPage = () => {
       senderName,
       body,
       conversationUrl,
+      conversation.id,
       organizationName
     ).catch(err => {
       logger.error('Failed to send email notification:', err);

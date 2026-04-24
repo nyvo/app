@@ -145,7 +145,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <DropdownMenuItem
                   onClick={() => setConfirmDialog('cancel-no-refund')}
                   disabled={loading}
-                  className="text-primary focus:text-primary"
+                  className="text-destructive focus:text-destructive"
                 >
                   <XCircle className="size-4 mr-2" />
                   Avbestill uten refusjon
@@ -185,7 +185,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-                    ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt senere om nødvendig.'
+                    ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt via betalingsoversikten.'
                     : 'Deltakeren mister plassen sin. Dette kan ikke angres.'}
                 </p>
               </div>

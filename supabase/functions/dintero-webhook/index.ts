@@ -218,15 +218,19 @@ Deno.serve(async (req: Request) => {
   const url = publicCallbackUrl(req.url)
 
   // Diagnostics endpoint: round-trip sign+verify using the real deployed
-  // webhook secret. Confirms the verify logic is internally consistent.
-  // If this returns ok:true but real Dintero callbacks still fail, the
-  // canonical string inputs (hostname/pathname/query/method) diverge
-  // between what Dintero signs and what req.url gives us.
-  if (url.searchParams.get('__selftest') === '1') {
+  // webhook secret. Gated by SELFTEST_TOKEN env var — set it when you
+  // want to exercise the endpoint, unset it when done. Callers must pass
+  // `?__selftest=<token>` (not just `1`). Response is intentionally
+  // minimal — only the inputs that help diagnose URL-reconstruction
+  // drift. No hex digests or canonical strings are ever returned.
+  const selftestParam = url.searchParams.get('__selftest')
+  if (selftestParam) {
+    const selftestToken = Deno.env.get('SELFTEST_TOKEN') || ''
+    if (!selftestToken || selftestParam !== selftestToken) {
+      return new Response('Not found', { status: 404 })
+    }
+
     const testTimestamp = String(Math.floor(Date.now() / 1000))
-    // Use the *reconstructed* public URL (https + /functions/v1/ prefix
-    // restored), minus the selftest flag — so the canonical string
-    // matches what a real Dintero callback would produce.
     const testUrl = new URL(url.toString())
     testUrl.searchParams.delete('__selftest')
     const header = await signCallbackForTest({
@@ -246,19 +250,9 @@ Deno.serve(async (req: Request) => {
         roundtrip_ok: roundtrip.ok,
         reason: roundtrip.reason,
         inputs: {
-          rawReqUrl: req.url,
           signedUrl: testUrl.toString(),
           hostname: testUrl.hostname,
           pathname: testUrl.pathname,
-          search: testUrl.search,
-          timestamp: testTimestamp,
-          secretConfigured: !!webhookSecret,
-          accountIdConfigured: !!Deno.env.get('DINTERO_ACCOUNT_ID'),
-        },
-        diagnostics: roundtrip.ok ? undefined : {
-          canonical: roundtrip.canonical,
-          computedHex: roundtrip.computedHex,
-          providedHex: roundtrip.providedHex,
         },
       }, null, 2),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -278,21 +272,17 @@ Deno.serve(async (req: Request) => {
     secret: webhookSecret,
   })
   if (!sigResult.ok) {
-    // Log the full diagnostics (sans secret). These are the exact bytes we
-    // HMAC'd — diffing against Dintero's side is the way to find the
-    // inevitable hostname/pathname/query-encoding drift.
+    // Log only enough to diagnose URL drift. No canonical string, no hex
+    // digests — both are useful only to someone who also has the secret
+    // (which Dintero + Supabase already do). Keeping logs terse prevents
+    // anyone with dashboard access from reverse-engineering the signing
+    // surface without the secret.
     console.warn('dintero-webhook: signature rejected', {
       reason: sigResult.reason,
       timestamp: sigResult.timestamp,
-      accountId: sigResult.accountId,
       method: sigResult.method,
       hostname: sigResult.hostname,
       pathname: sigResult.pathname,
-      query: sigResult.query,
-      canonical: sigResult.canonical,
-      computedHex: sigResult.computedHex,
-      providedHex: sigResult.providedHex,
-      // Also log the raw req.url so we can see what Supabase's runtime gave us.
       rawReqUrl: req.url,
     })
     return new Response('Invalid signature', { status: 401 })

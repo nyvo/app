@@ -21,6 +21,7 @@ interface Participant {
 interface MessageParticipantsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  courseId: string;
   courseName: string;
   participants: Participant[];
   organizationName?: string;
@@ -29,6 +30,7 @@ interface MessageParticipantsDialogProps {
 export function MessageParticipantsDialog({
   open,
   onOpenChange,
+  courseId,
   courseName,
   participants,
   organizationName = 'Ease',
@@ -45,6 +47,7 @@ export function MessageParticipantsDialog({
     const results = await Promise.allSettled(
       participants.map((p) =>
         sendTeacherBroadcast(p.email, {
+          courseId,
           courseName,
           message: trimmed,
           organizationName,

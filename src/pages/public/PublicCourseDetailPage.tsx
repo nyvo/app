@@ -457,7 +457,7 @@ export default function PublicCourseDetailPage() {
   const backUrl = slug ? `/studio/${slug}` : '/';
 
   const cancellationCopy = useMemo(
-    () => 'Gratis avbestilling inntil 24 timer før kursstart. Senere avbestilling eller uteblivelse refunderes ikke.',
+    () => 'Ta kontakt med studioet hvis du trenger å avbestille. Refusjon avgjøres av studioet fra sak til sak.',
     [],
   );
 

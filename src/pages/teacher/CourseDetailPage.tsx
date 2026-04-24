@@ -857,6 +857,7 @@ const CourseDetailPage = () => {
       <MessageParticipantsDialog
         open={messageDialogOpen}
         onOpenChange={setMessageDialogOpen}
+        courseId={id!}
         courseName={course.title}
         participants={confirmedParticipants}
         organizationName={currentOrganization?.name}

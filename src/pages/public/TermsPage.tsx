@@ -54,15 +54,12 @@ const TermsPage = () => {
               </section>
 
               <section className="space-y-4">
-                <h2 className="text-base font-semibold text-foreground">2. Avbestilling</h2>
+                <h2 className="text-base font-semibold text-foreground">2. Avbestilling og refusjon</h2>
                 <p className="text-base text-muted-foreground leading-relaxed">
-                  Du kan avbestille din påmelding inntil 24 timer før kursstart for full refusjon.
+                  Trenger du å avbestille, ta kontakt med studioet du har meldt deg på hos. Refusjon avgjøres av studioet fra sak til sak.
                 </p>
                 <p className="text-base text-muted-foreground leading-relaxed">
-                  Ved avbestilling senere enn 24 timer før kursstart, eller ved uteblivelse, refunderes ikke kursavgiften.
-                </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  Instruktøren forbeholder seg retten til å avlyse kurset ved for få påmeldte. Ved avlysning fra instruktørens side refunderes hele kursavgiften.
+                  Instruktøren forbeholder seg retten til å avlyse kurset ved for få påmeldte. Ved avlysning fra instruktørens side refunderes hele kursavgiften automatisk.
                 </p>
               </section>
 

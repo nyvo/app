@@ -14,6 +14,7 @@ interface SendEmailResult {
 export async function sendTeacherBroadcast(
   to: string,
   data: {
+    courseId: string
     courseName: string
     message: string
     organizationName: string
@@ -50,6 +51,7 @@ export async function sendNewMessageNotification(
   senderName: string,
   messagePreview: string,
   conversationUrl: string,
+  conversationId: string,
   organizationName?: string,
   replyTo?: string
 ): Promise<SendEmailResult> {
@@ -63,6 +65,7 @@ export async function sendNewMessageNotification(
         to: recipientEmail,
         template: 'new-message',
         templateData: {
+          conversationId,
           senderName,
           messagePreview: messagePreview.slice(0, 150), // Limit preview length
           conversationUrl,
