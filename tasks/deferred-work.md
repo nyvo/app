@@ -79,36 +79,55 @@ Commits `6a6343c`, `6f231e7`, `613a3c6` removed student account flows in Phases 
 
 ---
 
-## 6. Multi-member studio orgs — the "Club" model
+## 6. Venues + Org unified studio model — **LOCKED SPEC** (2026-04-24)
 
-**Status:** Out of v1 scope. Scope refined 2026-04-24: simpler than originally sketched.
+**Status:** Locked as final architecture. Migration applied; public venue page shipping for Monday's Inspire MVP.
 
-**Shape:** a studio admin sets up one org. Other teachers can join that org via invite. No org switcher; each user belongs to **one org at a time**. If a studio's guest teacher refuses to use the app at all, the admin writes their name free-text on the course — no account, no DB membership.
+### Core primitives
 
-**Three cases this covers:**
+```
+Org      = economic entity. Owns courses, Dintero, revenue. Members have roles.
+Role     = owner | admin | teacher. Scopes what a member can do INSIDE their org.
+Venue    = marketing grouping. Groups orgs via venue_members. No money. No courses.
+```
 
-| Case | How it's handled |
-|---|---|
-| Freelancer running their own small business | Existing single-member org. No change. |
-| Studio with multiple teachers who all use the app | Admin invites them to the studio's org via token/code. Everyone shares the studio dashboard + Dintero. |
-| One-off guest teacher who doesn't want the app | Admin types the teacher's name in a free-text field on the course. No account, no login, no DB user. |
+**Invariant:** every course belongs to exactly one org (the one that gets paid). Venues never own courses or Dintero sellers. Role-based UI branching IS correct and expected; there is NO "studio type" discriminator anywhere in code.
 
-**What's already in place:**
-- `organizations`, `org_members`, `course_instructors` — all modeled correctly.
-- `currentOrganizationId` in localStorage — reused to identify the user's single active org (no dropdown UI needed).
+### Schema
 
-**What needs building (~1.5 days total):**
+Applied in migration `20260424010000_add_venues.sql`.
 
-1. **`org_invites` table + flow (~1 day).** New table: `id`, `org_id`, `code` (short shareable), `email` (optional), `role`, `invited_by`, `expires_at`, `accepted_at`. Admin UI: "Inviter teammedlem" → generates a code/link. Accept endpoint: validates, creates `org_members` row, marks invite accepted. Cleanest pattern: share-a-link (tokenised URL) or enter-a-code.
+- `venues(id, slug, name, description, address, city, cover_image_url, created_at, updated_at)` — pure graph node, no ownership column.
+- `venue_members(venue_id, organization_id, role, joined_at, visible)` with `role IN ('tenant', 'admin')`.
+- `is_venue_admin(p_venue_id, p_user_id)` SECURITY DEFINER function: returns true if user is owner/admin of some org that has `venue_members.role='admin'` on the target venue.
+- RLS: public read on venues and visible venue_members; writes gated through `is_venue_admin` (service role seeds the first admin row atomically; chicken-and-egg is accepted).
 
-2. **`courses.guest_instructor_name TEXT NULL` column + form + public display (~3–4 hrs).** Migration adds the column. Create-course form gains a "Instruktørens navn" field for guest teachers without an account. Public course page shows `Instruert av: {guest_instructor_name ?? primary_instructor.name}`. Covers the workshop/guest-teacher case without touching auth.
+### How each real-world setup maps
 
-3. **Invite-accept "you already have an org" rejection (~30 min).** If the accepting user already has any row in `org_members`, return a friendly error: *"Du har allerede en konto knyttet til et annet studio. Kontakt studioet eller bruk en ny e-postadresse."* MVP-simple; we can add merge flows later if anyone asks.
+| Setup | Org layer | Venue layer |
+|---|---|---|
+| Freelancer (own brand) | 1 org, 1 member (`owner`), own Dintero | None required |
+| Rental studio (Inspire) | Each teacher has their own org + Dintero | One venue. Teacher orgs link as `venue_members(role='tenant')`. Founder's org links as `venue_members(role='admin')`. |
+| Employer studio (payroll) | 1 org, multiple members (`owner` + `admin` + `teacher`), one Dintero | Optional. Venue can be used just for a public-facing page even if only one org is a member. |
+| One-off guest teacher | `courses.guest_instructor_name` free-text (TODO below) | N/A |
 
-**Explicitly NOT building in v1:**
-- Org switcher UI — one-user-one-org means there's nothing to switch.
-- Role-scoped views (`teacher` sees only their courses etc.) — all members see the full dashboard. They're invited, they're trusted. Revisit when a studio has 10+ instructors and one complains.
-- Cross-org federation — not needed under the one-user-one-org model.
-- Per-instructor Dintero splits — money stays with the studio's one Dintero seller. Studio pays teachers externally (Vipps / invoice / cash).
+### Public routing (explicit, no disambiguation)
 
-**Trigger to pick up:** first real studio asks for team members, or the first admin tries to list a guest teacher by name.
+- `/studio/:slug` → single OrgPage (existing behavior, unchanged).
+- `/venue/:slug` → new VenuePage. Aggregates published courses across all orgs in `venue_members` WHERE visible=true.
+
+Both pages use the same `<CourseCard>` component. Booking flow always reads `course.organization_id` → `organizations.dintero_seller_id` → Dintero split. Venue never enters the transaction path.
+
+### Monday MVP scope
+
+- ✅ Migration applied.
+- ⏳ `/venue/:slug` route + VenuePage + course aggregation query + course card subtitle for org name.
+- ⏳ Manual seed: Inspire venue + venue_members rows inserted via MCP once each Inspire teacher is onboarded.
+
+### Post-launch TODO (not scoped for Monday)
+
+- Venue admin UI (edit metadata, add/remove members, toggle `visible`).
+- Teacher-initiated "request to join venue" flow.
+- `org_invites` table + accept flow for Model-2 employer studios.
+- `courses.guest_instructor_name` column for guest teachers who refuse to use the app at all.
+- Role-based dashboard scoping for multi-member orgs (a `teacher` in a studio org sees a smaller surface than the `owner`). This is accepted as the right pattern, not avoided.
