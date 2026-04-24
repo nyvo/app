@@ -106,43 +106,76 @@ export async function verifyAuthAndOrgMembership(
 }
 
 /**
- * Get CORS headers with configurable origin
+ * Get CORS headers. Supports a whitelist of allowed origins — ALLOWED_ORIGIN
+ * can be a comma-separated list, e.g.
+ *   "https://www.framio.no,https://app.framio.no,http://localhost:5173"
+ *
+ * When the request's Origin matches any entry in the list, it's echoed back
+ * in Access-Control-Allow-Origin. Local dev origins (localhost + 127.0.0.1
+ * on common Vite ports) are always accepted, even when ALLOWED_ORIGIN is set
+ * to a prod-only value — keeps staging/dev productive without loosening
+ * prod behavior.
+ *
+ * Fallback when no origin is provided or no match: the first entry in
+ * ALLOWED_ORIGIN, or https://www.framio.no.
  */
-export function getCorsHeaders(): Record<string, string> {
-  const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.framio.no'
+const LOCAL_DEV_ORIGIN_PATTERN =
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/
+
+export function getCorsHeaders(origin?: string | null): Record<string, string> {
+  const envValue = Deno.env.get('ALLOWED_ORIGIN') || 'https://www.framio.no'
+  const whitelist = envValue
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  let allowedOrigin = whitelist[0] || 'https://www.framio.no'
+  if (origin) {
+    if (whitelist.includes(origin) || LOCAL_DEV_ORIGIN_PATTERN.test(origin)) {
+      allowedOrigin = origin
+    }
+  }
+
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    // Vary: Origin so caches don't serve the wrong ACAO to a different origin.
+    Vary: 'Origin',
   }
 }
 
 /**
- * Create an error response with proper CORS headers
+ * Create an error response with proper CORS headers.
+ * Pass the Request to echo the caller's origin (required for localhost dev
+ * and any non-primary allowed origin). Falls back to the primary origin
+ * when called without a Request.
  */
-export function errorResponse(message: string, status: number): Response {
+export function errorResponse(message: string, status: number, req?: Request): Response {
   return new Response(
     JSON.stringify({ error: message }),
-    { status, headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' } }
+    { status, headers: { ...getCorsHeaders(req?.headers.get('origin')), 'Content-Type': 'application/json' } }
   )
 }
 
 /**
- * Create a success response with proper CORS headers
+ * Create a success response with proper CORS headers. See errorResponse for
+ * the Request-threading rationale.
  */
-export function successResponse(data: unknown, status: number = 200): Response {
+export function successResponse(data: unknown, status: number = 200, req?: Request): Response {
   return new Response(
     JSON.stringify(data),
-    { status, headers: { ...getCorsHeaders(), 'Content-Type': 'application/json' } }
+    { status, headers: { ...getCorsHeaders(req?.headers.get('origin')), 'Content-Type': 'application/json' } }
   )
 }
 
 /**
- * Handle CORS preflight request
+ * Handle CORS preflight request. Echoes the caller's origin if it's in the
+ * whitelist (see getCorsHeaders).
  */
 export function handleCors(req: Request): Response | null {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: getCorsHeaders() })
+    return new Response('ok', { headers: getCorsHeaders(req.headers.get('origin')) })
   }
   return null
 }

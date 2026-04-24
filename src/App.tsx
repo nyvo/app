@@ -84,9 +84,13 @@ function AppRoutes() {
           passes state.backgroundLocation so the schedule never unmounts —
           back-button returns to its exact scroll position. Direct URL visits
           still work (no backgroundLocation → schedule renders behind via the
-          fallback route above, detail renders on top). */}
+          fallback route above, detail renders on top).
+
+          The no-op wildcard silences react-router's "no routes matched"
+          warning when the current path is not a studio-course URL. */}
       <Routes>
         <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
+        <Route path="*" element={null} />
       </Routes>
     </>
   );

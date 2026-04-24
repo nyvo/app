@@ -26,17 +26,10 @@ import {
   voidTransaction,
   type DinteroTransaction,
 } from '../_shared/dintero.ts'
+import { getCorsHeaders, handleCors } from '../_shared/auth.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-// CORS: reuse the shared helper so ALLOWED_ORIGIN handling matches every
-// other edge function. Falls back to a safe default, never to '*'.
-const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') || 'https://www.framio.no',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
 
 interface FinalizeRequest {
   transaction_id: string
@@ -48,11 +41,13 @@ interface FinalizeResult {
   status: 'confirmed' | 'already_processed'
 }
 
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+function jsonFor(req: Request) {
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'))
+  return (body: unknown, status: number): Response =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
 }
 
 async function sendConfirmationEmail(
@@ -116,9 +111,9 @@ async function sendConfirmationEmail(
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsResponse = handleCors(req)
+  if (corsResponse) return corsResponse
+  const json = jsonFor(req)
 
   try {
     const body = (await req.json()) as FinalizeRequest
