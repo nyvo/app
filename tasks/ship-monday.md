@@ -48,12 +48,16 @@ b52520d chore(workspace): prune stale agents, split design spec, add dintero ski
 ## Remaining work for Fri–Sun
 
 **Fri (today) — must-fix systems + write-ups:**
-1. **Fix `send-email` auth for browser callers** — confirmed broken 2026-04-24: `MessageParticipantsDialog` (teacher-broadcast) and `sendNewMessageNotification` (message-reply alerts) both 401 silently. `verifyServiceRole` rejects user JWTs. Fix: allow authenticated-user callers for the user-facing templates (`teacher-broadcast`, `new-message`); keep service-role-only for all other templates. **Redeploy.**
-2. **Add schedule-change email path** — `updateCourseSession` just writes the DB row. `SessionList` UI Alert promises "Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere" but no email actually fires. Either: (a) wire it to `send-email` with a new `course-schedule-change` template, or (b) remove the UI promise. Pick (a) for consistency with cancel flow.
-3. **Add booking-confirmation + booking-failed emails on free signups** — `create-free-signup` currently skips email. `signup-confirmation` template already exists; call it after successful RPC.
-4. Run sandbox payment scenarios (Phase 11 in `tasks/todo.md`) — requires real Dintero test cards.
-5. Global edge cases walkthrough (empty states, long strings, network errors).
-6. Debug `verifyCallbackSignature` mismatch bug (1 hr budget).
+1. ✅ `send-email` auth fix (broadcast + new-message) — DONE
+2. ✅ Schedule-change email path (template + notify-schedule-change fn + client wiring) — DONE
+3. ✅ Free-signup confirmation email — DONE
+4. ✅ Service fee as distinct Dintero order item — DONE
+5. ✅ CORS per-request origin echo (canonical pattern threaded through every function) — DONE
+6. Debug `verifyCallbackSignature` mismatch bug (1 hr budget) — PENDING
+7. Sandbox payment scenarios beyond happy path (refund in/out of window, capacity race, webhook tamper/replay) — PENDING
+8. Global edge cases walkthrough (empty states, long strings, network errors) — PENDING
+
+**All email flows, domain verification, and end-to-end email testing → scoped to Sunday along with the prod flip.** Dev-side wiring is complete; Resend domain auth is the gating blocker and is a 1-hour ops task handled with the rest of prod bringup.
 
 **Sat — design day:**
 - Responsiveness agent pass (mobile + tablet)
