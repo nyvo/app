@@ -6,7 +6,6 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface ScheduleRowProps {
   course: PublicCourseWithDetails;
-  studioSlug: string;
   /** The session date we're displaying this row under — used to compute week-of-N badge */
   displayDate: string;
 }
@@ -36,10 +35,14 @@ function spotsLabel(spotsAvailable: number, max: number | null): string | null {
   return null;
 }
 
-export function ScheduleRow({ course, studioSlug, displayDate }: ScheduleRowProps) {
+export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
   const location = useLocation();
   const time = extractTime(course.time_schedule);
   const instructorName = course.instructors[0]?.name || course.instructor?.name || null;
+  // Link target is always the owning org's slug, regardless of whether this row
+  // is rendered on an org page or an aggregated venue page. Every course belongs
+  // to exactly one org; the booking flow must always return to that org's URL.
+  const studioSlug = course.organization?.slug ?? '';
   const spots = spotsLabel(course.spots_available, course.max_participants);
   const isFull = spots === 'Fullt';
   const isCancelled = course.status === 'cancelled';

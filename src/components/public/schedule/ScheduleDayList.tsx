@@ -4,7 +4,6 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface ScheduleDayListProps {
   courses: PublicCourseWithDetails[];
-  studioSlug: string;
 }
 
 const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
@@ -43,7 +42,7 @@ interface DayBucket {
   courses: PublicCourseWithDetails[];
 }
 
-export function ScheduleDayList({ courses, studioSlug }: ScheduleDayListProps) {
+export function ScheduleDayList({ courses }: ScheduleDayListProps) {
   const buckets = useMemo<DayBucket[]>(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
     for (const c of courses) {
@@ -74,7 +73,6 @@ export function ScheduleDayList({ courses, studioSlug }: ScheduleDayListProps) {
               <ScheduleRow
                 key={course.id}
                 course={course}
-                studioSlug={studioSlug}
                 displayDate={bucket.dateStr}
               />
             ))}

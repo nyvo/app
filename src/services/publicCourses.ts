@@ -117,6 +117,12 @@ export interface PublicCoursesFilters {
   level?: string
   fromDate?: string
   organizationSlug?: string
+  /**
+   * Restrict to courses owned by any of these orgs. Used by venue pages,
+   * which aggregate courses across multiple tenant orgs. Takes precedence
+   * over `organizationSlug` when both are set.
+   */
+  organizationIds?: string[]
   limit?: number
   offset?: number
   includePast?: boolean // If true, returns only past courses (archive)
@@ -164,7 +170,12 @@ export async function fetchPublicCourses(
   if (filters?.fromDate) {
     query = query.gte('start_date', filters.fromDate)
   }
-  if (filters?.organizationSlug) {
+  if (filters?.organizationIds && filters.organizationIds.length > 0) {
+    // Short-circuit: if the caller supplied zero org IDs, skip the query entirely.
+    // Otherwise Supabase's .in() on empty list becomes "always false" at the SQL
+    // layer anyway, but we avoid the round trip.
+    query = query.in('organization_id', filters.organizationIds)
+  } else if (filters?.organizationSlug) {
     query = query.eq('organization.slug', filters.organizationSlug)
   }
 

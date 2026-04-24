@@ -1,14 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Leaf } from '@/lib/icons';
+import { MapPin, Leaf, BookOpen } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { BookOpen } from '@/lib/icons';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ScheduleDayList } from '@/components/public/schedule/ScheduleDayList';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchOrganizationBySlug, type PublicOrganization } from '@/services/organizations';
+import { fetchVenueBySlug, type PublicVenue } from '@/services/venues';
 import type { CourseType } from '@/types/database';
 
 type TypeFilter = 'all' | CourseType;
@@ -22,6 +21,11 @@ const TYPE_LABELS: Record<TypeFilter, string> = {
 
 const CANCELLED_GRACE_DAYS = 30;
 
+/**
+ * Same visibility rule as the single-org page — active/upcoming always,
+ * recently-cancelled courses for up to 30 days so participants who've
+ * already booked can still find them.
+ */
 function isVisible(course: PublicCourseWithDetails): boolean {
   if (course.status === 'cancelled') {
     if (!course.start_date) return false;
@@ -33,9 +37,20 @@ function isVisible(course: PublicCourseWithDetails): boolean {
   return course.status === 'active' || course.status === 'upcoming';
 }
 
-const PublicCoursesPage = () => {
+/**
+ * Aggregated marketing page for a Venue. Shows every course owned by every
+ * member org of this venue (where venue_members.visible = true). Identical
+ * shape to PublicCoursesPage — the only difference is the query scope:
+ * courses are filtered by a set of org IDs instead of a single org slug.
+ *
+ * Each course card in the list still links to its own owning org's booking
+ * flow (ScheduleRow derives that from course.organization.slug), so the
+ * payment routes to the org that owns the course. Venue is purely a
+ * grouping, never a transaction party.
+ */
+const VenuePage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [organization, setOrganization] = useState<PublicOrganization | null>(null);
+  const [venue, setVenue] = useState<PublicVenue | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,21 +66,30 @@ const PublicCoursesPage = () => {
       setLoading(true);
       setError(null);
 
-      const { data: orgData, error: orgError } = await fetchOrganizationBySlug(slug);
-      if (orgError || !orgData) {
+      const { data: venueData, error: venueError } = await fetchVenueBySlug(slug);
+      if (venueError || !venueData) {
         setError('Fant ikke studioet');
         setLoading(false);
         return;
       }
-      setOrganization(orgData);
+      setVenue(venueData.venue);
 
-      const activeResult = await fetchPublicCourses({ organizationSlug: slug });
-      if (activeResult.error) {
+      // No member orgs yet → empty schedule, not an error.
+      if (venueData.memberOrganizationIds.length === 0) {
+        setCourses([]);
+        setLoading(false);
+        return;
+      }
+
+      const coursesResult = await fetchPublicCourses({
+        organizationIds: venueData.memberOrganizationIds,
+      });
+      if (coursesResult.error) {
         setError('Kunne ikke laste kurs');
         setLoading(false);
         return;
       }
-      setCourses(activeResult.data || []);
+      setCourses(coursesResult.data || []);
       setLoading(false);
     }
     loadData();
@@ -95,11 +119,11 @@ const PublicCoursesPage = () => {
   const availableTypes = (Object.keys(TYPE_LABELS) as TypeFilter[])
     .filter(t => t === 'all' || typeCounts[t] > 0);
 
-  const showTypeFilter = availableTypes.length > 2; // >1 real type + 'all'
+  const showTypeFilter = availableTypes.length > 2;
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
-      {/* Minimal navbar */}
+      {/* Minimal navbar — matches the single-org public page */}
       <nav className="sticky top-0 z-50 w-full bg-surface-elevated backdrop-blur-md border-b border-border">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2 group">
@@ -113,7 +137,7 @@ const PublicCoursesPage = () => {
 
       <main className="mx-auto max-w-4xl px-6 py-8 sm:py-12">
         {loading && (
-          <div className="flex items-center justify-center py-24">
+          <div className="flex items-center justify-center py-24" role="status" aria-label="Laster">
             <Spinner size="lg" />
           </div>
         )}
@@ -127,27 +151,25 @@ const PublicCoursesPage = () => {
           </div>
         )}
 
-        {organization && !loading && !error && (
+        {venue && !loading && !error && (
           <>
-            {/* Tight studio header — no hero */}
             <header className="mb-8">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                {organization.name}
+                {venue.name}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                {organization.city && (
+                {venue.city && (
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="size-3.5" />
-                    {organization.city}
+                    {venue.city}
                   </span>
                 )}
-                {organization.description && (
-                  <span className="max-w-prose">{organization.description}</span>
+                {venue.description && (
+                  <span className="max-w-prose">{venue.description}</span>
                 )}
               </div>
             </header>
 
-            {/* Type filter */}
             {showTypeFilter && (
               <div className="mb-4">
                 <ToggleGroup
@@ -166,7 +188,6 @@ const PublicCoursesPage = () => {
               </div>
             )}
 
-            {/* Schedule */}
             {filtered.length > 0 ? (
               <ScheduleDayList courses={filtered} />
             ) : (
@@ -188,4 +209,4 @@ const PublicCoursesPage = () => {
   );
 };
 
-export default PublicCoursesPage;
+export default VenuePage;

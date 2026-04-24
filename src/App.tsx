@@ -21,6 +21,7 @@ const LocationsPage = lazy(() => import('./pages/teacher/LocationsPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
+const VenuePage = lazy(() => import('./pages/public/VenuePage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const SignupPage = lazy(() => import('./pages/public/SignupPage'));
 const LoginPage = lazy(() => import('./pages/public/LoginPage'));
@@ -58,6 +59,11 @@ function AppRoutes() {
             the drawer is layered on top for /studio/:slug/:courseId (see below). */}
         <Route path="/studio/:slug" element={<PublicCoursesPage />} />
         <Route path="/studio/:slug/:courseId" element={<PublicCoursesPage />} />
+
+        {/* Venue public page — aggregated schedule across all member orgs of a venue.
+            Explicit /venue/ prefix (not overloaded on /studio/) so slug collisions
+            between an org and a venue can't cause ambiguity. */}
+        <Route path="/venue/:slug" element={<VenuePage />} />
 
         {/* Teacher Routes (Protected, persistent sidebar layout) */}
         <Route path="/teacher" element={<TeacherLayout />}>
