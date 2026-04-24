@@ -1,6 +1,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { Resend } from 'npm:resend@4.0.0'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { escapeHtml } from '../_shared/auth.ts'
 
 const resendKey = Deno.env.get('RESEND_API_KEY')
@@ -647,13 +648,38 @@ function getPaymentLinkTemplate(data: Record<string, string>): { subject: string
   }
 }
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-function verifyServiceRole(req: Request): boolean {
+// Templates that authenticated users (not just service-role callers) may trigger.
+// Every other template is server-initiated only (signup confirmation, refund, etc.)
+// and would never legitimately be triggered by a client-side call.
+const USER_TRIGGERABLE_TEMPLATES = new Set<string>(['teacher-broadcast', 'new-message'])
+
+type Caller =
+  | { kind: 'service-role' }
+  | { kind: 'user'; userId: string }
+  | { kind: 'unauthorized' }
+
+async function verifyCaller(req: Request): Promise<Caller> {
   const authHeader = req.headers.get('authorization')
-  if (!authHeader) return false
-  const token = authHeader.replace('Bearer ', '')
-  return token === supabaseServiceKey
+  if (!authHeader) return { kind: 'unauthorized' }
+  const token = authHeader.replace('Bearer ', '').trim()
+  if (!token) return { kind: 'unauthorized' }
+
+  // Service-role bypass: internal server-to-server calls.
+  if (token === supabaseServiceKey) return { kind: 'service-role' }
+
+  // Otherwise: resolve as a user JWT via Supabase Auth. A plain anon key returns
+  // no user, so it falls through to unauthorized.
+  try {
+    const client = createClient(supabaseUrl, supabaseServiceKey)
+    const { data, error } = await client.auth.getUser(token)
+    if (error || !data.user) return { kind: 'unauthorized' }
+    return { kind: 'user', userId: data.user.id }
+  } catch {
+    return { kind: 'unauthorized' }
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -662,8 +688,8 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  // This is an internal-only function - require service role key
-  if (!verifyServiceRole(req)) {
+  const caller = await verifyCaller(req)
+  if (caller.kind === 'unauthorized') {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -691,6 +717,15 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: template, templateData' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Authenticated users can only trigger the user-facing templates; everything
+    // else is server-initiated (signup confirmation, refund, cancellation, etc.).
+    if (caller.kind === 'user' && !USER_TRIGGERABLE_TEMPLATES.has(body.template)) {
+      return new Response(
+        JSON.stringify({ error: `Users cannot trigger template: ${body.template}` }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 

@@ -47,17 +47,79 @@ b52520d chore(workspace): prune stale agents, split design spec, add dintero ski
 
 ## Remaining work for Fri–Sun
 
-**Fri–Sat (systems + sandbox tests — pick up here):**
-1. Answer the business-blocker questions below.
-2. Run the sandbox payment scenarios (Phase 11 in `tasks/todo.md`) — requires real Dintero test cards.
-3. Live messages test: verify `teacher-broadcast` emails actually reach recipients (the auth chain uses anon key + service-role gate — possible latent bug where browser-triggered sends get 401).
-4. Global edge cases walkthrough (empty states, long strings, network errors).
-5. Debug `verifyCallbackSignature` mismatch bug (1 hr budget — was flagged in `tasks/todo.md` Phase 11).
+**Fri (today) — must-fix systems + write-ups:**
+1. **Fix `send-email` auth for browser callers** — confirmed broken 2026-04-24: `MessageParticipantsDialog` (teacher-broadcast) and `sendNewMessageNotification` (message-reply alerts) both 401 silently. `verifyServiceRole` rejects user JWTs. Fix: allow authenticated-user callers for the user-facing templates (`teacher-broadcast`, `new-message`); keep service-role-only for all other templates. **Redeploy.**
+2. **Add schedule-change email path** — `updateCourseSession` just writes the DB row. `SessionList` UI Alert promises "Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere" but no email actually fires. Either: (a) wire it to `send-email` with a new `course-schedule-change` template, or (b) remove the UI promise. Pick (a) for consistency with cancel flow.
+3. **Add booking-confirmation + booking-failed emails on free signups** — `create-free-signup` currently skips email. `signup-confirmation` template already exists; call it after successful RPC.
+4. Run sandbox payment scenarios (Phase 11 in `tasks/todo.md`) — requires real Dintero test cards.
+5. Global edge cases walkthrough (empty states, long strings, network errors).
+6. Debug `verifyCallbackSignature` mismatch bug (1 hr budget).
 
-**Sun (design / visual / responsiveness):**
+**Sat — design day:**
 - Responsiveness agent pass (mobile + tablet)
 - Skeleton loader pattern
 - Visual a11y deferred items (focus ring styling, status-by-color-alone, toaster aria-live)
+- Freeze end of day.
+
+**Sun — prod flip:**
+- Prod Supabase project: migrations applied, edge functions deployed, env vars set.
+- Domain + SSL.
+- Answer business blockers.
+- Smoke test every flow on prod.
+
+**Mon — public launch.**
+
+---
+
+## Refund + cancel + payout mechanics (current state, verified from code)
+
+### Refund flow
+- **Student-initiated** ([process-refund/index.ts](../supabase/functions/process-refund/index.ts)) — auth required, user_id match only (guest email-match removed in P1). If within 24h cancellation window: refund request rejected server-side. Otherwise `refundTransaction()` → signup updated → `student-cancellation` email sent via server-to-server service-role call. ✅
+- **Teacher-initiated per signup** ([teacher-cancel-signup/index.ts](../supabase/functions/teacher-cancel-signup/index.ts)) — org-member check, optional refund flag, `teacher-cancellation` email sent. ✅
+- **Teacher cancels whole course** ([cancel-course/index.ts](../supabase/functions/cancel-course/index.ts)) — org-member check, atomic course status flip → parallel refund + email per confirmed signup → `course-cancelled` template. Returns summary with refunds_processed / refunds_failed / failed_refund_details. ✅
+- **Refund execution**: all paths call Dintero's `POST /v1/transactions/{id}/refund` with amount in øre. Partial refunds supported by amount parameter. No platform-side bookkeeping tax — Dintero handles the refund split automatically based on the original session's splits.
+
+### Platform cut (verified: [_shared/pricing.ts](../supabase/functions/_shared/pricing.ts))
+Two-layer fee, resolved via Dintero splits at session creation — **not** post-processed in our app:
+- **Service fee** — 5% added on top of base price, paid by student. Stays with platform.
+- **Platform fee** — 5% taken from teacher's base revenue. Stays with platform.
+- **Teacher receives** — 95% of base price (one split to `payout_destination_id: <seller_id>`).
+- **Platform receives** — service fee + platform fee (one split to `payout_destination_id: "platform"`).
+- Refunds mirror the split proportionally (Dintero behavior).
+
+No app-side reconciliation required — settlements land directly into each party's Dintero account per the split ledger. Platform's cut arrives in the account tied to `DINTERO_ACCOUNT_ID`.
+
+### Email triggers — current state
+
+| Event | Template | Status |
+|---|---|---|
+| Successful paid signup (embedded / payment-link) | `signup-confirmation` | ✅ Sent via finalize + webhook |
+| Successful free signup | `signup-confirmation` | ❌ **NOT SENT** — add this |
+| Payment declined / failed | `booking-failed` | ⚠️ Sent from webhook on capacity failures; NOT sent from finalize on card decline (user sees iframe error; no email) |
+| Teacher sends broadcast to participants | `teacher-broadcast` | ❌ **BROKEN** — browser call 401s on send-email. Fix auth. |
+| Message-reply notification | `new-message` | ❌ **BROKEN** — same 401 issue |
+| Student cancels their signup | `student-cancellation` | ✅ |
+| Teacher cancels a single signup | `teacher-cancellation` | ✅ |
+| Teacher cancels whole course | `course-cancelled` (bulk) | ✅ |
+| Teacher edits session date/time | (no template) | ❌ **NOT SENT** — UI promises it. Add `course-schedule-change` template. |
+| Payment link sent | `payment-link` | ✅ (from send-payment-link edge function) |
+| Course reminder | `course-reminder` | ✅ (available; verify cron triggers exist) |
+
+**Email provider**: Resend via the `send-email` edge function (`RESEND_API_KEY` env).
+
+### 🔴 Resend domain — NOT VERIFIED (confirmed 2026-04-24 via live test)
+
+Live test against the deployed `send-email` function with a valid user JWT and an allowed template returned:
+
+> *"You can only send testing emails to your own email address (hei@framio.no). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain."*
+
+**Impact:** every email currently goes nowhere except `hei@framio.no`. Signup confirmations, refund emails, cancellation emails, payment links, message notifications — all blocked at the Resend gate until a domain is verified. This is a silent failure; nothing errors in our app UI because each call-site swallows email errors as non-fatal.
+
+**Required before prod (1 hr of paperwork):**
+1. Verify a domain at https://resend.com/domains (DNS TXT + DKIM records).
+2. Set the `from` address in `send-email/index.ts` (currently `${FROM_NAME} <${FROM_EMAIL}>`) to use that verified domain.
+3. Ensure `FROM_EMAIL` / `FROM_NAME` env vars are set on the Supabase project.
+4. Re-test one of each template path.
 
 ---
 
