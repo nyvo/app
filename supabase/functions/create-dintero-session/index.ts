@@ -72,6 +72,19 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Invalid signupPackageId', 400, req)
     }
 
+    // Length caps on user-provided strings. Prevents outsized values from
+    // flowing into payment_attempts rows and Dintero session fields.
+    if (customerName.length > 200) {
+      return errorResponse('customerName exceeds 200 characters', 400, req)
+    }
+    if (customerPhone && customerPhone.length > 30) {
+      return errorResponse('customerPhone exceeds 30 characters', 400, req)
+    }
+    // Slugs follow a strict format: lowercase alphanumerics + hyphens, 1–64 chars.
+    if (!/^[a-z0-9-]{1,64}$/.test(organizationSlug)) {
+      return errorResponse('Invalid organizationSlug', 400, req)
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(customerEmail)) {
       return errorResponse('Invalid email format', 400, req)

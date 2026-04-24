@@ -135,19 +135,11 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Short-circuit: if a signup already exists for this transaction, return it.
-    {
-      const { data: existing } = await supabase
-        .from('signups')
-        .select('id')
-        .eq('dintero_transaction_id', transactionId)
-        .maybeSingle()
-      if (existing) {
-        return json({ signup_id: existing.id, status: 'already_processed' } satisfies FinalizeResult, 200)
-      }
-    }
-
-    // Fetch the live transaction from Dintero (source of truth for status + merchant_ref).
+    // Fetch the live transaction from Dintero FIRST so we can validate the
+    // caller's claimed merchant_reference against Dintero's source of truth
+    // before doing any DB reads. Prevents a caller who knows a transaction_id
+    // but not the matching merchant_reference from learning signup state via
+    // the "already processed" short-circuit below.
     let transaction: DinteroTransaction
     try {
       transaction = await getTransaction(transactionId)
@@ -165,6 +157,20 @@ Deno.serve(async (req: Request) => {
     // Client must attest to the same merchant_reference Dintero has on the transaction.
     if (merchantReference !== dinteroMerchantRef) {
       return json({ error: 'merchant_reference mismatch' }, 400)
+    }
+
+    // Short-circuit: if a signup already exists for this transaction, return
+    // it. Safe to run here because the mismatch check above has already
+    // confirmed the caller's merchant_reference matches reality.
+    {
+      const { data: existing } = await supabase
+        .from('signups')
+        .select('id')
+        .eq('dintero_transaction_id', transactionId)
+        .maybeSingle()
+      if (existing) {
+        return json({ signup_id: existing.id, status: 'already_processed' } satisfies FinalizeResult, 200)
+      }
     }
 
     // Look up the payment_attempt row (our pre-payment context).
