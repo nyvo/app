@@ -309,10 +309,13 @@ export const SignupsPage = () => {
                 <ToggleGroupItem value="followup">
                   Til oppfølging
                   {followupCount > 0 && (
-                    <span aria-hidden className="relative ml-1.5 inline-flex size-1.5 align-middle">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-2 opacity-75 [animation-duration:1.6s]" />
-                      <span className="relative inline-flex size-1.5 rounded-full bg-chart-2" />
-                    </span>
+                    <>
+                      <span aria-hidden className="relative ml-1.5 inline-flex size-1.5 align-middle">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-2 opacity-75 [animation-duration:1.6s]" />
+                        <span className="relative inline-flex size-1.5 rounded-full bg-chart-2" />
+                      </span>
+                      <span className="sr-only"> ({followupCount} trenger oppfølging)</span>
+                    </>
                   )}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="past">Fullførte</ToggleGroupItem>

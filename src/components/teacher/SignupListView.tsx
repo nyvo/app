@@ -28,7 +28,11 @@ interface SignupListViewProps {
 export const SIGNUPS_INITIAL_VISIBLE = 20;
 export const SIGNUPS_LOAD_MORE_INCREMENT = 20;
 export const SIGNUPS_SHOW_ALL_THRESHOLD = 5;
-const COLUMN_COUNT = 6;
+// Matches the SignupTableHead render: Navn + Kurs (optional) + Status + Notater + Handlinger.
+// When hideCourse is true we render 4 columns; with Kurs shown, 5.
+function columnCount(hideCourse: boolean): number {
+  return hideCourse ? 4 : 5;
+}
 
 function emptyCopy(viewTab: SignupsViewTab | undefined, hasFilters: boolean, isEmptyOrg: boolean) {
   if (isEmptyOrg && !hasFilters) {
@@ -75,7 +79,7 @@ export function SignupListView({
           <SignupTableHead />
           <TableBody>
             {[1, 2, 3, 4, 5].map(i => (
-              <SkeletonTableRow key={i} columns={COLUMN_COUNT} hasAvatar />
+              <SkeletonTableRow key={i} columns={columnCount(false)} hasAvatar />
             ))}
           </TableBody>
         </Table>
@@ -255,7 +259,7 @@ export function PastSignupsList({
                 }))
               }
               aria-expanded={s.expanded}
-              aria-controls={sectionId}
+              aria-controls={s.expanded ? sectionId : undefined}
               className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
             >
               <div className="flex items-center gap-2 min-w-0">

@@ -86,7 +86,12 @@ export const ResetPasswordView = () => {
 
   if (isValidSession === null) {
     return (
-      <div className="min-h-screen w-full bg-background text-foreground antialiased flex items-center justify-center">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label="Laster"
+        className="min-h-screen w-full bg-background text-foreground antialiased flex items-center justify-center"
+      >
         <Spinner size="xl" />
       </div>
     )

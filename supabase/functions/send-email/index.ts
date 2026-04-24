@@ -39,7 +39,7 @@ interface SendEmailRequest {
   text?: string
   replyTo?: string
   // Template-based emails
-  template?: 'new-message' | 'teacher-broadcast' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'course-schedule-change' | 'student-cancellation' | 'teacher-cancellation' | 'payment-link'
+  template?: 'new-message' | 'teacher-broadcast' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'course-schedule-change' | 'teacher-cancellation' | 'payment-link'
   templateData?: Record<string, string>
 }
 
@@ -493,67 +493,6 @@ function getCourseCancelledTemplate(data: Record<string, string>): { subject: st
   }
 }
 
-function getStudentCancellationTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
-  const participantName = escapeHtml(data.participantName)
-  const courseName = escapeHtml(data.courseName)
-  const organizationName = escapeHtml(data.organizationName)
-  const refundAmount = Number(data.refundAmount) || 0
-  const refunded = data.refunded === 'true'
-
-  return {
-    subject: refunded ? 'Avbestilling bekreftet: Refusjon behandlet' : 'Avbestilling bekreftet',
-    html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 24px; font-weight: bold; color: #10b981; }
-    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 500; margin-bottom: 20px; }
-    .refunded { background: #dcfce7; color: #166534; }
-    .details-box { background: #f9fafb; border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 14px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">Ease</div>
-    </div>
-
-    ${refunded ? `
-      <p style="text-align: center;">
-        <span class="status-badge refunded">Refusjon behandlet</span>
-      </p>
-    ` : ''}
-
-    <p>Hei ${participantName || ''},</p>
-
-    <p>Avbestillingen for <strong>${courseName || 'kurset'}</strong> er bekreftet.</p>
-
-    ${refunded && refundAmount ? `
-      <div class="details-box">
-        <p><strong>Refusjon:</strong> ${formatKr(refundAmount)} refunderes til betalingskortet ditt innen 5\u201310 virkedager.</p>
-      </div>
-    ` : ''}
-
-    <div class="footer">
-      <p>Hilsen,<br>${organizationName || 'Ease'}</p>
-    </div>
-  </div>
-</body>
-</html>
-    `,
-    text: refunded
-      ? `Hei ${participantName || ''}, avbestillingen for ${courseName || 'kurset'} er bekreftet. ${formatKr(refundAmount || 0)} refunderes innen 5\u201310 virkedager.`
-      : `Hei ${participantName || ''}, avbestillingen for ${courseName || 'kurset'} er bekreftet.`
-  }
-}
-
 function getTeacherCancellationTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
   const participantName = escapeHtml(data.participantName)
   const courseName = escapeHtml(data.courseName)
@@ -933,9 +872,6 @@ Deno.serve(async (req: Request) => {
         break
       case 'course-schedule-change':
         emailContent = getCourseScheduleChangeTemplate(body.templateData)
-        break
-      case 'student-cancellation':
-        emailContent = getStudentCancellationTemplate(body.templateData)
         break
       case 'teacher-cancellation':
         emailContent = getTeacherCancellationTemplate(body.templateData)
