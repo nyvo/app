@@ -75,9 +75,13 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
   );
 }
 
-function formatSignups(signups: number, max: number | null): string {
+function formatSignupCount(signups: number, max: number | null): string {
   if (!max) return `${signups} påmeldte`;
-  return signups >= max ? 'Fullt' : `${signups}/${max}`;
+  return `${signups}/${max}`;
+}
+
+function isCourseFull(signups: number, max: number | null): boolean {
+  return max !== null && signups >= max;
 }
 
 export function CourseCard({ course }: { course: SessionScheduleRow }) {
@@ -106,15 +110,25 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
             Left-edge aligned top-down: title → date.
             Right-edge aligned top-down: capacity → chip. */}
         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-          {/* Row 1: Title (left) + Capacity (right) — primary tier, equal importance. */}
+          {/* Row 1: Title (left) + Capacity (right) — primary tier, equal importance.
+              Full-course pill uses the success token so a teacher scanning the list
+              picks up "this one hit capacity" in one visual hit instead of reading
+              "Fullt" next to every row's users icon. */}
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
               {course.courseTitle}
             </h3>
-            <span className="flex items-center gap-1.5 text-sm font-medium tabular-nums text-foreground whitespace-nowrap shrink-0">
-              <Users className="size-4 shrink-0" />
-              {formatSignups(course.signupsCount, course.maxParticipants)}
-            </span>
+            {isCourseFull(course.signupsCount, course.maxParticipants) ? (
+              <Badge variant="success" shape="rect" size="sm" className="gap-1 shrink-0">
+                <Check className="size-3.5" />
+                Fullt
+              </Badge>
+            ) : (
+              <span className="flex items-center gap-1.5 text-sm font-medium tabular-nums text-foreground whitespace-nowrap shrink-0">
+                <Users className="size-4 shrink-0" />
+                {formatSignupCount(course.signupsCount, course.maxParticipants)}
+              </span>
+            )}
           </div>
 
           {/* Row 2: Date (left, under title) + chips (right, under capacity) — meta tier. */}
