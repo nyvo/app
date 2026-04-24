@@ -432,6 +432,44 @@ export async function updateCourseSession(
   return { data: data as CourseSession, error: null }
 }
 
+/**
+ * Notify confirmed participants that a session's date or time has changed.
+ * The DB update happens via updateCourseSession (RLS-protected); this sends
+ * the follow-up email batch via the notify-schedule-change edge function.
+ *
+ * Best-effort: a failure here should not roll back the schedule change.
+ */
+export async function notifyScheduleChange(params: {
+  sessionId: string
+  oldDate: string
+  oldTime: string
+  newDate: string
+  newTime: string
+}): Promise<{ notificationsSent: number; totalRecipients: number } | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('notify-schedule-change', {
+      body: {
+        session_id: params.sessionId,
+        old_date: params.oldDate,
+        old_time: params.oldTime,
+        new_date: params.newDate,
+        new_time: params.newTime,
+      },
+    })
+    if (error || !data) {
+      logger.warn('notify-schedule-change failed:', error?.message || 'no response')
+      return null
+    }
+    return {
+      notificationsSent: data.notifications_sent ?? 0,
+      totalRecipients: data.total_recipients ?? 0,
+    }
+  } catch (err) {
+    logger.warn('notify-schedule-change exception:', err)
+    return null
+  }
+}
+
 
 // Fetch the next N upcoming sessions (future only, no week limit)
 export async function fetchNextSessions(organizationId: string, limit = 3): Promise<{

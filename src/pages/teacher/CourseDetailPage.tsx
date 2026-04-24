@@ -12,7 +12,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Button } from '@/components/ui/button';
 import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
-import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession } from '@/services/courses';
+import { updateCourse, cancelCourse, publishCourse, unpublishCourse, fetchCourseSessions, updateCourseSession, notifyScheduleChange } from '@/services/courses';
 import { teacherCancelSignup, sendPaymentLink, markPaymentResolved } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
@@ -191,6 +191,11 @@ const CourseDetailPage = () => {
     const edits = sessionEdits[sessionId];
     if (!edits || savingSessionId) return;
 
+    // Capture old values BEFORE the update so we can send a diff email.
+    const prior = sessions.find(s => s.id === sessionId);
+    const oldDate = prior?.session_date ?? '';
+    const oldTime = prior?.start_time ?? '';
+
     setSavingSessionId(sessionId);
 
     const updateData: { session_date?: string; start_time?: string } = {};
@@ -219,6 +224,20 @@ const CourseDetailPage = () => {
       delete newEdits[sessionId];
       return newEdits;
     });
+
+    // Fire-and-forget notification. Failure must not roll back the save —
+    // schedule-change email is best-effort.
+    const newDate = updateData.session_date ?? oldDate;
+    const newTime = updateData.start_time ?? oldTime;
+    if (newDate !== oldDate || newTime !== oldTime) {
+      notifyScheduleChange({
+        sessionId,
+        oldDate,
+        oldTime,
+        newDate,
+        newTime,
+      });
+    }
   };
 
   // Handle save settings

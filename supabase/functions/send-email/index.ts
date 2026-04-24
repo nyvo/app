@@ -46,7 +46,7 @@ interface SendEmailRequest {
   text?: string
   replyTo?: string
   // Template-based emails
-  template?: 'new-message' | 'teacher-broadcast' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'student-cancellation' | 'teacher-cancellation' | 'payment-link'
+  template?: 'new-message' | 'teacher-broadcast' | 'signup-confirmation' | 'course-reminder' | 'booking-failed' | 'course-cancelled' | 'course-schedule-change' | 'student-cancellation' | 'teacher-cancellation' | 'payment-link'
   templateData?: Record<string, string>
 }
 
@@ -114,6 +114,63 @@ Svar her: ${conversationUrl}
 Hilsen,
 ${organizationName || 'Ease'}
     `.trim()
+  }
+}
+
+function getCourseScheduleChangeTemplate(data: Record<string, string>): { subject: string; html: string; text: string } {
+  const participantName = escapeHtml(data.participantName)
+  const courseName = escapeHtml(data.courseName)
+  const oldDate = escapeHtml(data.oldDate)
+  const oldTime = escapeHtml(data.oldTime)
+  const newDate = escapeHtml(data.newDate)
+  const newTime = escapeHtml(data.newTime)
+  const organizationName = escapeHtml(data.organizationName)
+
+  return {
+    subject: `Endret tidspunkt: ${data.courseName}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #18181b; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .logo { font-size: 24px; font-weight: 600; color: #1a1a1a; }
+    .info-box { background: #f5f5f5; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .change-row { display: block; margin: 6px 0; }
+    .label { color: #737373; font-size: 14px; }
+    .old-value { color: #737373; text-decoration: line-through; }
+    .new-value { color: #18181b; font-weight: 600; }
+    .footer { margin-top: 40px; text-align: center; color: #737373; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Ease</div>
+    </div>
+
+    <p>Hei ${participantName || ''},</p>
+
+    <p>Tidspunktet for <strong>${courseName}</strong> er endret.</p>
+
+    <div class="info-box">
+      <p class="change-row"><span class="label">Dato:</span> <span class="old-value">${oldDate}</span> → <span class="new-value">${newDate}</span></p>
+      <p class="change-row"><span class="label">Tidspunkt:</span> <span class="old-value">${oldTime}</span> → <span class="new-value">${newTime}</span></p>
+    </div>
+
+    <p>Ta kontakt med oss hvis du ikke kan møte på det nye tidspunktet.</p>
+
+    <div class="footer">
+      <p>Hilsen,<br>${organizationName || 'Ease'}</p>
+    </div>
+  </div>
+</body>
+</html>`,
+    text: `Hei ${participantName || ''}, tidspunktet for ${data.courseName} er endret fra ${data.oldDate} ${data.oldTime} til ${data.newDate} ${data.newTime}. Ta kontakt med oss hvis du ikke kan møte.\n\nHilsen,\n${data.organizationName || 'Ease'}`
   }
 }
 
@@ -747,6 +804,9 @@ Deno.serve(async (req: Request) => {
         break
       case 'course-cancelled':
         emailContent = getCourseCancelledTemplate(body.templateData)
+        break
+      case 'course-schedule-change':
+        emailContent = getCourseScheduleChangeTemplate(body.templateData)
         break
       case 'student-cancellation':
         emailContent = getStudentCancellationTemplate(body.templateData)
