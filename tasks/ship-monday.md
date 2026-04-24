@@ -2,7 +2,7 @@
 
 **Today:** 2026-04-24 (Fri). 3 days. Fri–Sat = remaining systems + sandbox tests. Sun = design/visual/responsiveness/skeletons.
 
-Synthesized from three agent audits (supabase-security, a11y, copy-audit) + manual walkthrough of auth, RLS, messages, routing. Payment test scenarios carried over from `tasks/todo.md` Phase 11.
+Synthesized from three agent audits (supabase-security, a11y, copy-audit) + manual walkthrough of auth, RLS, messages, routing. Payment test scenarios carried over from the archived Stripe→Dintero migration plan Phase 11 at `tasks/archive/2026-04-stripe-dintero-migration.md`.
 
 ---
 
@@ -47,14 +47,25 @@ b52520d chore(workspace): prune stale agents, split design spec, add dintero ski
 
 ## Remaining work for Fri–Sun
 
-**Fri (today) — must-fix systems + write-ups:**
-1. ✅ `send-email` auth fix (broadcast + new-message) — DONE
-2. ✅ Schedule-change email path (template + notify-schedule-change fn + client wiring) — DONE
-3. ✅ Free-signup confirmation email — DONE
-4. ✅ Service fee as distinct Dintero order item — DONE
-5. ✅ CORS per-request origin echo (canonical pattern threaded through every function) — DONE
-6. ✅ Debug `verifyCallbackSignature` — root cause: Supabase strips `/functions/v1/` from req.url; reconstruct public URL before HMAC. Verified via `?__selftest=1`.
-7. Sandbox payment scenarios beyond happy path — IN PROGRESS (capacity race, webhook tamper/replay I can drive; refund, cancel-course, failed card need your test-card session).
+**Fri (today) — completed:**
+1. ✅ `send-email` auth fix (broadcast + new-message) + recipient-ownership check against spam abuse.
+2. ✅ Schedule-change email path (new `course-schedule-change` template + `notify-schedule-change` edge function + client wiring in `CourseDetailPage`).
+3. ✅ Free-signup confirmation email via `create-free-signup`.
+4. ✅ Service fee as distinct Dintero order item (checkout shows `Servicegebyr` as its own line).
+5. ✅ CORS canonical pattern: whitelist + localhost echo + `Vary: Origin`, threaded `req` through every response helper across all edge functions.
+6. ✅ `verifyCallbackSignature` debugged — root cause: Supabase strips `/functions/v1/` from `req.url`; reconstructed via `publicCallbackUrl()`. Gated `?__selftest=1` behind `SELFTEST_TOKEN`.
+7. ✅ Two-option cancel menu (Avbestill / Avbestill med refusjon) with proper icons + neutral colour.
+8. ✅ Kvittering column + `receiptUrl` field removed (Stripe-era zombie).
+9. ✅ 24h cancellation window logic removed. Student copy updated to direct to studio.
+10. ✅ `markPaymentResolved` routed through a proper edge function (deferred P1 hardening).
+11. ✅ `finalize-dintero-transaction` early-exit reordered + `create-dintero-session` input caps.
+12. ✅ `process-refund` deleted entirely (function + student-cancellation template) — unused under the no-token-link decision.
+13. ✅ Fresh security + copy + a11y audit passes — all findings resolved or explicitly deferred.
+14. ✅ Cancelled-signups menu bug fixed (was leaking exception actions + empty-cell trigger).
+15. ✅ Sandbox edge-case tests driven via SQL + curl: webhook tamper (401), capacity-gate race (course_full on attempt 2), webhook idempotency (duplicate event_id blocked), sweep cron filter.
+
+**Still needed from you (sandbox test-card scenarios):**
+See the "Manual sandbox scenarios" section below — 5 items that require a real Dintero test-card session.
 
 **All email flows, domain verification, and end-to-end email testing → scoped to Sunday along with the prod flip.** Dev-side wiring is complete; Resend domain auth is the gating blocker and is a 1-hour ops task handled with the rest of prod bringup.
 
