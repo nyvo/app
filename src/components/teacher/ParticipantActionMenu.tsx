@@ -64,11 +64,10 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
   };
 
   const { exceptionType } = signup;
-  const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
-  const hasExceptionActions = !!exceptionType;
-  const hasBaseActions = !isCancelled;
-  // Don't render menu if there are no actions to show
-  if (!hasExceptionActions && !hasBaseActions) return null;
+  // Cancelled signups are terminal: no actions, no menu — regardless of any
+  // lingering exceptionType from the source data. Belt-and-suspenders alongside
+  // each caller's detectException cancelled-guard.
+  if (signup.status === 'cancelled' || signup.status === 'course_cancelled') return null;
 
   return (
     <>
@@ -137,8 +136,9 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
             </>
           )}
 
-          {/* Base actions — available for all active (non-cancelled) participants */}
-          {signup.status !== 'cancelled' && signup.status !== 'course_cancelled' && (() => {
+          {/* Base cancel actions — the early return above guarantees the signup
+              isn't already cancelled, so these always render. */}
+          {(() => {
             const isPaid = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
             return (
               <>

@@ -63,6 +63,9 @@ function formatRelativeDate(dateString: string): string {
 
 // Detect payment exception for action menu context
 function detectException(signup: SignupDisplay): ExceptionType | null {
+  // Cancelled signups are terminal — no exception actions even if the
+  // underlying payment_status is still 'failed' or 'pending'.
+  if (signup.status === 'cancelled' || signup.status === 'course_cancelled') return null;
   if (signup.paymentStatus === 'failed') return 'payment_failed';
   if (signup.paymentStatus === 'pending' && signup.status === 'confirmed') return 'pending_payment';
   return null;
