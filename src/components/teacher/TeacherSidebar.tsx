@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   Leaf,
   Home,
   UserPlus,
-  Inbox,
   CalendarDays,
   Calendar,
   CalendarPlus,
   MapPin,
   Wallet,
+  Building,
   Settings,
   HelpCircle,
   LogOut,
@@ -18,7 +18,12 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUnreadCount } from '@/services/messages';
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add `Inbox` to the icons import,
+// re-import `getUnreadCount`, restore the unreadMessages state + polling effect,
+// and uncomment the Meldinger nav item below.
+// import { Inbox } from '@/lib/icons';
+// import { getUnreadCount } from '@/services/messages';
+// import { useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -54,9 +59,11 @@ const navSections = [
     items: [
       { icon: Calendar, label: 'Kurs', href: '/teacher/courses' },
       { icon: UserPlus, label: 'Påmeldinger', href: '/teacher/signups' },
-      { icon: Inbox, label: 'Meldinger', href: '/teacher/messages' },
-      { icon: MapPin, label: 'Steder', href: '/teacher/locations' },
+      // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-enable when the messages page ships.
+      // { icon: Inbox, label: 'Meldinger', href: '/teacher/messages' },
+      { icon: MapPin, label: 'Adresser', href: '/teacher/locations' },
       { icon: Wallet, label: 'Betalinger', href: '/teacher/payments' },
+      { icon: Building, label: 'Studio', href: '/teacher/studio' },
     ],
   },
 ];
@@ -67,7 +74,6 @@ export const TeacherSidebar = () => {
   const { signOut, profile, userRole, currentOrganization } = useAuth();
   const { isMobile, toggleSidebar, setOpenMobile, state } = useSidebar();
   const isCollapsed = state === 'collapsed';
-  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Close mobile sidebar on navigation
   useEffect(() => {
@@ -76,16 +82,10 @@ export const TeacherSidebar = () => {
     }
   }, [location.pathname, isMobile, setOpenMobile]);
 
-  useEffect(() => {
-    if (!currentOrganization?.id) return;
-    const load = async () => {
-      const { data } = await getUnreadCount(currentOrganization.id);
-      setUnreadMessages(data);
-    };
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [currentOrganization?.id]);
+  // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): unread-message polling removed.
+  // Restore by re-adding `currentOrganization` to useAuth() destructuring and
+  // re-introducing the useState + useEffect that calls getUnreadCount on a
+  // 30-second interval.
 
   const handleLogout = async () => {
     await signOut();
@@ -178,14 +178,8 @@ export const TeacherSidebar = () => {
                       <Link to={item.href}>
                         <item.icon />
                         <span>{item.label}</span>
-                        {item.href === '/teacher/messages' && unreadMessages > 0 && (
-                          <span
-                            className="ml-auto flex size-5 items-center justify-center rounded-full bg-primary text-xxs font-medium text-primary-foreground"
-                            aria-label={`${unreadMessages > 9 ? 'Mer enn 9' : unreadMessages} uleste meldinger`}
-                          >
-                            <span aria-hidden="true">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
-                          </span>
-                        )}
+                        {/* MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): unread-messages
+                            badge removed. Restore the conditional+span when re-enabling. */}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -234,7 +228,7 @@ export const TeacherSidebar = () => {
                     />
                     <div className="grid flex-1 text-left leading-tight">
                       <span className="text-sm font-medium truncate text-foreground">{profile?.name || currentOrganization?.name}</span>
-                      <span className="text-xs font-mono truncate text-muted-foreground">{profile?.email}</span>
+                      <span className="text-xs truncate text-muted-foreground">{profile?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { ScheduleDayList } from '@/components/public/schedule/ScheduleDayList';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchVenueBySlug, type PublicVenue } from '@/services/venues';
+import { fetchSpaceBySlug, type PublicSpace } from '@/services/spaces';
 import type { CourseType } from '@/types/database';
 
 type TypeFilter = 'all' | CourseType;
@@ -16,7 +16,7 @@ const TYPE_LABELS: Record<TypeFilter, string> = {
   all: 'Alle',
   'course-series': 'Kursrekker',
   event: 'Arrangementer',
-  online: 'Nett',
+  online: 'Nettkurs',
 };
 
 const CANCELLED_GRACE_DAYS = 30;
@@ -38,19 +38,19 @@ function isVisible(course: PublicCourseWithDetails): boolean {
 }
 
 /**
- * Aggregated marketing page for a Venue. Shows every course owned by every
- * member org of this venue (where venue_members.visible = true). Identical
+ * Aggregated marketing page for a Space. Shows every course owned by every
+ * member org of this space (where space_members.visible = true). Identical
  * shape to PublicCoursesPage — the only difference is the query scope:
  * courses are filtered by a set of org IDs instead of a single org slug.
  *
  * Each course card in the list still links to its own owning org's booking
  * flow (ScheduleRow derives that from course.organization.slug), so the
- * payment routes to the org that owns the course. Venue is purely a
+ * payment routes to the org that owns the course. Space is purely a
  * grouping, never a transaction party.
  */
-const VenuePage = () => {
+const SpacePage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [venue, setVenue] = useState<PublicVenue | null>(null);
+  const [space, setSpace] = useState<PublicSpace | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,23 +66,23 @@ const VenuePage = () => {
       setLoading(true);
       setError(null);
 
-      const { data: venueData, error: venueError } = await fetchVenueBySlug(slug);
-      if (venueError || !venueData) {
+      const { data: spaceData, error: spaceError } = await fetchSpaceBySlug(slug);
+      if (spaceError || !spaceData) {
         setError('Fant ikke studioet');
         setLoading(false);
         return;
       }
-      setVenue(venueData.venue);
+      setSpace(spaceData.space);
 
       // No member orgs yet → empty schedule, not an error.
-      if (venueData.memberOrganizationIds.length === 0) {
+      if (spaceData.memberOrganizationIds.length === 0) {
         setCourses([]);
         setLoading(false);
         return;
       }
 
       const coursesResult = await fetchPublicCourses({
-        organizationIds: venueData.memberOrganizationIds,
+        organizationIds: spaceData.memberOrganizationIds,
       });
       if (coursesResult.error) {
         setError('Kunne ikke laste kurs');
@@ -151,21 +151,21 @@ const VenuePage = () => {
           </div>
         )}
 
-        {venue && !loading && !error && (
+        {space && !loading && !error && (
           <>
             <header className="mb-8">
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                {venue.name}
+                {space.name}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                {venue.city && (
+                {space.city && (
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="size-3.5" />
-                    {venue.city}
+                    {space.city}
                   </span>
                 )}
-                {venue.description && (
-                  <span className="max-w-prose">{venue.description}</span>
+                {space.description && (
+                  <span className="max-w-prose">{space.description}</span>
                 )}
               </div>
             </header>
@@ -209,4 +209,4 @@ const VenuePage = () => {
   );
 };
 
-export default VenuePage;
+export default SpacePage;

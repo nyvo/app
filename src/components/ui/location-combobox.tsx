@@ -58,7 +58,7 @@ export function LocationCombobox({
     );
   }, [allOptions, search]);
 
-  // Group options by venue
+  // Group options by space
   const grouped = useMemo(() => {
     const groups: Record<string, LocationOption[]> = {};
     const standalone: LocationOption[] = [];
@@ -129,7 +129,7 @@ export function LocationCombobox({
           />
         </div>
         <div className="max-h-60 overflow-y-auto border-t border-border/50 p-1">
-          {/* Standalone venues */}
+          {/* Standalone spaces */}
           {grouped.standalone.map((opt) => (
             <button
               key={opt.value}
@@ -146,10 +146,10 @@ export function LocationCombobox({
             </button>
           ))}
 
-          {/* Grouped venues with rooms */}
+          {/* Grouped spaces with rooms */}
           {Object.entries(grouped.groups).map(([groupName, rooms]) => (
             <div key={groupName} className="mt-1">
-              {/* Venue header — selectable as a location itself */}
+              {/* Space header — selectable as a location itself */}
               {!grouped.standalone.some((s) => s.value === groupName) && (
                 <button
                   key={groupName}
@@ -165,7 +165,7 @@ export function LocationCombobox({
                   {value === groupName && <Check className="size-3.5 shrink-0" />}
                 </button>
               )}
-              {/* Rooms indented under venue */}
+              {/* Rooms indented under space */}
               <div className="ml-5 border-l border-border pl-3">
                 {rooms.map((opt) => (
                   <button

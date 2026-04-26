@@ -12,16 +12,22 @@ import TeacherLayout from './layouts/TeacherLayout';
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const SignupsPage = lazy(() => import('./pages/teacher/SignupsPage'));
-const MessagesPage = lazy(() => import('./pages/teacher/MessagesPage'));
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): Messages feature is hidden
+// for MVP launch. Re-enable by uncommenting this line + the route below,
+// plus the entry in TeacherSidebar, the breadcrumb in TeacherTopBar, the
+// quick-action in TeacherDashboard, and the "Send melding" button in
+// CourseOverviewTab. Search MESSAGES_DISABLED_PRE_LAUNCH for all sites.
+// const MessagesPage = lazy(() => import('./pages/teacher/MessagesPage'));
 const CreateCoursePage = lazy(() => import('./pages/teacher/CreateCoursePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const LocationsPage = lazy(() => import('./pages/teacher/LocationsPage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
+const SpacesPage = lazy(() => import('./pages/teacher/SpacesPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
-const VenuePage = lazy(() => import('./pages/public/VenuePage'));
+const SpacePage = lazy(() => import('./pages/public/SpacePage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const SignupPage = lazy(() => import('./pages/public/SignupPage'));
 const LoginPage = lazy(() => import('./pages/public/LoginPage'));
@@ -55,15 +61,22 @@ function AppRoutes() {
         <Route path="/confirm-email" element={<ConfirmEmailPage />} />
 
         {/* Studio/Organization Public Routes.
-            Both the list and the detail URL render the schedule page as the base;
-            the drawer is layered on top for /studio/:slug/:courseId (see below). */}
+            With backgroundLocation set (in-app nav from a card), the first
+            Routes block uses the backgroundLocation, so /studio/:slug
+            matches and PublicCoursesPage renders underneath the overlay.
+            On direct visits, the real URL `/studio/:slug/:courseId` matches
+            here and PublicCourseDetailPage renders as a normal page. */}
         <Route path="/studio/:slug" element={<PublicCoursesPage />} />
-        <Route path="/studio/:slug/:courseId" element={<PublicCoursesPage />} />
+        <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
 
-        {/* Venue public page — aggregated schedule across all member orgs of a venue.
-            Explicit /venue/ prefix (not overloaded on /studio/) so slug collisions
-            between an org and a venue can't cause ambiguity. */}
-        <Route path="/venue/:slug" element={<VenuePage />} />
+        {/* Shared-studio (grouped) public page — aggregated schedule across
+            all member orgs of a Space. `/space/:slug` is a distinct word from
+            `/studio/:slug` (singular = individual org's booking page),
+            eliminating the visual `/studio/` vs `/studios/` confusion and
+            preventing slug-namespace collisions. UI labels everywhere read
+            "Studio" (controlled ambiguity); the URL path is purely a routing
+            identifier. Internal model is `spaces` + `space_members`. */}
+        <Route path="/space/:slug" element={<SpacePage />} />
 
         {/* Teacher Routes (Protected, persistent sidebar layout) */}
         <Route path="/teacher" element={<TeacherLayout />}>
@@ -72,11 +85,13 @@ function AppRoutes() {
           <Route path="courses/:id" element={<CourseDetailPage />} />
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="signups" element={<SignupsPage />} />
-          <Route path="messages" element={<MessagesPage />} />
+          {/* MESSAGES_DISABLED_PRE_LAUNCH */}
+          {/* <Route path="messages" element={<MessagesPage />} /> */}
           <Route path="new-course" element={<CreateCoursePage />} />
           <Route path="profile" element={<TeacherProfilePage />} />
           <Route path="locations" element={<LocationsPage />} />
           <Route path="payments" element={<PaymentsPage />} />
+          <Route path="studio" element={<SpacesPage />} />
         </Route>
         {/* Dev preview (no auth, direct-URL only) */}
         <Route path="/dev/token-preview" element={<TokenPreview />} />
@@ -85,19 +100,19 @@ function AppRoutes() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
-      {/* Overlay route — renders the course detail page on top of the schedule
-          when URL matches /studio/:slug/:courseId. In-app nav from the schedule
-          passes state.backgroundLocation so the schedule never unmounts —
-          back-button returns to its exact scroll position. Direct URL visits
-          still work (no backgroundLocation → schedule renders behind via the
-          fallback route above, detail renders on top).
-
-          The no-op wildcard silences react-router's "no routes matched"
-          warning when the current path is not a studio-course URL. */}
-      <Routes>
-        <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
-        <Route path="*" element={null} />
-      </Routes>
+      {/* Overlay layer — only mounted when navigating from a studio card
+          (which passes state.backgroundLocation). Renders the course detail
+          page as a fixed overlay on top of the studio overview that's
+          mounted underneath via the first Routes block, so the back button
+          returns to the exact studio-page scroll position. Direct URL
+          visits skip this layer entirely — the first Routes block already
+          rendered the detail page as a normal scrollable document. */}
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/studio/:slug/:courseId" element={<PublicCourseDetailPage />} />
+          <Route path="*" element={null} />
+        </Routes>
+      )}
     </>
   );
 }

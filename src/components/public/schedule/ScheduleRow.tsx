@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { MapPin, User } from '@/lib/icons';
-import { cn, formatKroner } from '@/lib/utils';
+import { cn, formatCoursePrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -40,7 +40,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
   const time = extractTime(course.time_schedule);
   const instructorName = course.instructors[0]?.name || course.instructor?.name || null;
   // Link target is always the owning org's slug, regardless of whether this row
-  // is rendered on an org page or an aggregated venue page. Every course belongs
+  // is rendered on an org page or an aggregated space page. Every course belongs
   // to exactly one org; the booking flow must always return to that org's URL.
   const studioSlug = course.organization?.slug ?? '';
   const spots = spotsLabel(course.spots_available, course.max_participants);
@@ -100,7 +100,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
       {/* Right: price + spots */}
       <div className="shrink-0 flex flex-col items-end gap-0.5">
         <span className="text-sm font-medium text-foreground whitespace-nowrap tabular-nums">
-          {formatKroner(course.price)}
+          {formatCoursePrice(course.price)}
         </span>
         {spots && (
           <span className={cn(

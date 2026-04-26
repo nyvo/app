@@ -65,7 +65,7 @@ export function ScheduleDayList({ courses }: ScheduleDayListProps) {
     <div className="flex flex-col gap-8">
       {buckets.map(bucket => (
         <section key={bucket.dateStr}>
-          <h3 className="mb-2 text-xs font-medium tracking-wide uppercase text-muted-foreground">
+          <h3 className="mb-2 text-sm font-medium text-foreground">
             {formatDayHeading(bucket.dateStr)}
           </h3>
           <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
