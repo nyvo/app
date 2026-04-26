@@ -1,15 +1,16 @@
 import { supabase } from '@/lib/supabase'
+import { extractEdgeError } from '@/lib/edge-errors'
 
 interface CreateSessionParams {
   courseId: string
   organizationSlug: string
+  /** Ticket type chosen on the booking page. Required. */
+  ticketTypeId: string
   customerEmail: string
   customerName: string
   customerPhone?: string
-  isDropIn?: boolean
+  /** Required only when the picked ticket type is a drop-in. */
   sessionId?: string
-  signupPackageId?: string
-  packageWeeks?: number
 }
 
 interface DinteroSessionResult {
@@ -21,26 +22,40 @@ interface DinteroSessionResult {
 /**
  * Create a Dintero checkout session via edge function.
  * Returns the session id for the embedded checkout widget.
+ *
+ * `status` is the HTTP status when the function returned a non-2xx response
+ * (e.g. 409 = duplicate signup, course full). 0 means no HTTP error (network
+ * failure, etc.). Callers can branch on it to decide whether to surface the
+ * error inline (expected validation rejection) or as a toast (unexpected).
  */
 export async function createDinteroSession(
   params: CreateSessionParams,
-): Promise<{ data: DinteroSessionResult | null; error: Error | null }> {
+): Promise<{ data: DinteroSessionResult | null; error: Error | null; status: number }> {
   try {
     const { data, error } = await supabase.functions.invoke('create-dintero-session', {
       body: params,
     })
 
     if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke opprette betaling') }
+      const { status, message } = await extractEdgeError(error)
+      return {
+        data: null,
+        error: new Error(message || 'Kunne ikke opprette betaling'),
+        status,
+      }
     }
 
     if (data?.error) {
-      return { data: null, error: new Error(data.error) }
+      return { data: null, error: new Error(data.error), status: 0 }
     }
 
-    return { data: data as DinteroSessionResult, error: null }
+    return { data: data as DinteroSessionResult, error: null, status: 200 }
   } catch (err) {
-    return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
+    return {
+      data: null,
+      error: err instanceof Error ? err : new Error('Ukjent feil'),
+      status: 0,
+    }
   }
 }
 

@@ -24,7 +24,12 @@ import { typedFrom } from '@/lib/supabase';
 /**
  * Maps a Course to a SessionScheduleRow shape for display in the table.
  */
-function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: string): SessionScheduleRow {
+function mapCourseToRow(
+  course: Course,
+  signupsCount: number,
+  nextSessionDate: string | undefined,
+  allowsDropIn: boolean,
+): SessionScheduleRow {
   const timeMatch = course.time_schedule?.match(/(\d{2}:\d{2})/);
   const startTime = timeMatch ? timeMatch[1] : '';
 
@@ -57,7 +62,7 @@ function mapCourseToRow(course: Course, signupsCount: number, nextSessionDate?: 
     totalWeeks: course.total_weeks,
     timeSchedule: course.time_schedule || null,
     imageUrl: course.image_url || null,
-    allowsDropIn: course.allows_drop_in,
+    allowsDropIn,
   };
 }
 
@@ -82,6 +87,9 @@ const CoursesPage = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
+  // Course IDs that have at least one ACTIVE drop-in ticket type. Replaces
+  // the dropped courses.allows_drop_in column.
+  const [dropInCourseIds, setDropInCourseIds] = useState<Set<string>>(() => new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -137,6 +145,19 @@ const CoursesPage = () => {
           }
         });
         setNextSessionDates(nextDates);
+
+        // Drop-in availability lives on tier rows now. A course "allows drop-in"
+        // iff it has at least one active drop-in ticket type.
+        const { data: dropInTiers } = await typedFrom('course_signup_packages')
+          .select('course_id')
+          .in('course_id', courseIds)
+          .eq('ticket_kind', 'drop_in')
+          .eq('is_active', true);
+
+        const dropInIds = new Set<string>(
+          (dropInTiers as { course_id: string }[] | null)?.map(t => t.course_id) ?? []
+        );
+        setDropInCourseIds(dropInIds);
       }
     } catch {
       setError('Kunne ikke hente kurs. Prøv på nytt.');
@@ -151,10 +172,10 @@ const CoursesPage = () => {
 
   const allRows = useMemo(() => {
     return courses.map(c => ({
-      row: mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id]),
+      row: mapCourseToRow(c, signupsCounts[c.id] || 0, nextSessionDates[c.id], dropInCourseIds.has(c.id)),
       course: c,
     }));
-  }, [courses, signupsCounts, nextSessionDates]);
+  }, [courses, signupsCounts, nextSessionDates, dropInCourseIds]);
 
   const draftCount = useMemo(
     () => allRows.reduce((n, { course }) => n + (course.status === 'draft' ? 1 : 0), 0),

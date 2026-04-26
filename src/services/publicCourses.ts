@@ -38,8 +38,6 @@ interface CourseQueryResult {
   duration: number | null
   max_participants: number | null
   price: number | null
-  allows_drop_in: boolean | null
-  drop_in_price: number | null
   total_weeks: number | null
   start_date: string | null
   end_date: string | null
@@ -118,7 +116,7 @@ export interface PublicCoursesFilters {
   fromDate?: string
   organizationSlug?: string
   /**
-   * Restrict to courses owned by any of these orgs. Used by venue pages,
+   * Restrict to courses owned by any of these orgs. Used by space pages,
    * which aggregate courses across multiple tenant orgs. Takes precedence
    * over `organizationSlug` when both are set.
    */
@@ -149,8 +147,6 @@ export async function fetchPublicCourses(
       duration,
       max_participants,
       price,
-      allows_drop_in,
-      drop_in_price,
       total_weeks,
       start_date,
       end_date,
@@ -221,17 +217,23 @@ export async function fetchPublicCourses(
   // Batch fetch signup counts (aggregate RPC) and sessions in parallel.
   // RPC returns only (course_id, confirmed_count) — no row data exposed to anon.
   // Cast: generated types regenerated after the migration is deployed.
-  const [signupsResult, sessionsResult] = await Promise.all([
+  const [signupsResult, sessionsResult, dropInTiersResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
     supabase
       .from('course_sessions')
       .select('course_id, session_date, session_number, status')
       .in('course_id', courseIds)
-      .order('session_date', { ascending: true })
+      .order('session_date', { ascending: true }),
+    // Drop-in availability + price now lives on tier rows.
+    supabase
+      .from('course_signup_packages')
+      .select('course_id, price')
+      .in('course_id', courseIds)
+      .eq('ticket_kind', 'drop_in')
+      .eq('is_active', true),
   ])
 
-  // Check for batch query errors — if signups query failed, spots_available would be wrong
   if (signupsResult.error) {
     logger.error('Error fetching signup counts:', signupsResult.error)
     return { data: null, error: signupsResult.error as Error }
@@ -239,6 +241,15 @@ export async function fetchPublicCourses(
   if (sessionsResult.error) {
     logger.error('Error fetching sessions:', sessionsResult.error)
     return { data: null, error: sessionsResult.error as Error }
+  }
+
+  // Course-id → drop-in price (only present when an active drop-in tier exists).
+  // Per-course there should be at most one active drop-in tier; first match wins.
+  const dropInPriceMap: Record<string, number> = {}
+  for (const tier of (dropInTiersResult.data ?? []) as { course_id: string; price: number }[]) {
+    if (!(tier.course_id in dropInPriceMap)) {
+      dropInPriceMap[tier.course_id] = Number(tier.price)
+    }
   }
 
   // Build signup count map from RPC rows
@@ -281,6 +292,7 @@ export async function fetchPublicCourses(
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
     const instructors = flattenInstructors(course.course_instructors)
+    const dropInPrice = dropInPriceMap[course.id] ?? null
 
     return {
       id: course.id,
@@ -294,8 +306,9 @@ export async function fetchPublicCourses(
       duration: course.duration,
       max_participants: course.max_participants,
       price: course.price,
-      allows_drop_in: course.allows_drop_in,
-      drop_in_price: course.drop_in_price,
+      // Derived from active drop-in tier rows — see dropInTiersResult above.
+      allows_drop_in: dropInPrice !== null,
+      drop_in_price: dropInPrice,
       total_weeks: course.total_weeks,
       start_date: course.start_date,
       end_date: course.end_date,
@@ -331,8 +344,6 @@ export async function fetchPublicCourseById(
       duration,
       max_participants,
       price,
-      allows_drop_in,
-      drop_in_price,
       total_weeks,
       start_date,
       end_date,
@@ -356,21 +367,32 @@ export async function fetchPublicCourseById(
 
   const typedCourse = course as unknown as CourseQueryResult
 
-  // Get signup count for this course via the aggregate RPC (anon-safe).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: countRows, error: countError } = await (supabase.rpc as any)(
-    'public_signup_counts',
-    { p_course_ids: [courseId] },
-  )
+  // Get signup count for this course via the aggregate RPC (anon-safe) and
+  // the active drop-in tier (if any) in parallel.
+  const [countResult, dropInResult] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.rpc as any)('public_signup_counts', { p_course_ids: [courseId] }),
+    supabase
+      .from('course_signup_packages')
+      .select('price')
+      .eq('course_id', courseId)
+      .eq('ticket_kind', 'drop_in')
+      .eq('is_active', true)
+      .maybeSingle(),
+  ])
 
-  if (countError) {
-    return { data: null, error: countError as Error }
+  if (countResult.error) {
+    return { data: null, error: countResult.error as Error }
   }
 
-  const countRow = (countRows as { course_id: string; confirmed_count: number }[] | null)?.[0]
+  const countRow = (countResult.data as { course_id: string; confirmed_count: number }[] | null)?.[0]
   const confirmedCount = countRow ? Number(countRow.confirmed_count) : 0
   const maxParticipants = typedCourse.max_participants || 0
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
+
+  // Drop-in tier may be missing — that just means no active drop-in offer.
+  const dropInTier = dropInResult.data as { price: number } | null
+  const dropInPrice = dropInTier ? Number(dropInTier.price) : null
 
   const instructors = flattenInstructors(typedCourse.course_instructors)
 
@@ -386,8 +408,8 @@ export async function fetchPublicCourseById(
     duration: typedCourse.duration,
     max_participants: typedCourse.max_participants,
     price: typedCourse.price,
-    allows_drop_in: typedCourse.allows_drop_in,
-    drop_in_price: typedCourse.drop_in_price,
+    allows_drop_in: dropInPrice !== null,
+    drop_in_price: dropInPrice,
     total_weeks: typedCourse.total_weeks,
     start_date: typedCourse.start_date,
     end_date: typedCourse.end_date,

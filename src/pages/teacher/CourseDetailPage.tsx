@@ -44,13 +44,14 @@ import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
+import { CoursePricingTab } from '@/components/teacher/CoursePricingTab';
 import { AddParticipantDialog } from '@/components/teacher/AddParticipantDialog';
 import { MessageParticipantsDialog } from '@/components/teacher/MessageParticipantsDialog';
 import type { AudienceLevel, EquipmentInfo, PracticalInfo } from '@/types/practicalInfo';
 import type { Json } from '@/types/database';
 import { ARRIVAL_MINUTES_MAX, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
 
-type Tab = 'overview' | 'participants' | 'settings';
+type Tab = 'overview' | 'participants' | 'pricing' | 'settings';
 
 const CourseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -700,6 +701,7 @@ const CourseDetailPage = () => {
               <ToggleGroup type="single" value={activeTab} onValueChange={(v) => { if (v) setActiveTab(v as Tab); }} variant="pill" spacing={1} className="gap-1.5">
                 <ToggleGroupItem value="overview">Oversikt</ToggleGroupItem>
                 <ToggleGroupItem value="participants">Deltakere ({course.enrolled})</ToggleGroupItem>
+                <ToggleGroupItem value="pricing">Priser</ToggleGroupItem>
                 <ToggleGroupItem value="settings">Innstillinger</ToggleGroupItem>
               </ToggleGroup>
             </div>
@@ -781,7 +783,24 @@ const CourseDetailPage = () => {
               </motion.div>
             )}
 
-            {/* TAB 3: INNSTILLINGER (Settings) */}
+            {/* TAB 3: PRISER (Pricing — ticket types) */}
+            {activeTab === 'pricing' && (
+              <motion.div
+                key="pricing"
+                variants={tabVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={tabTransition}
+              >
+                <CoursePricingTab
+                  courseId={id!}
+                  courseTotalWeeks={courseData?.totalWeeks ?? null}
+                />
+              </motion.div>
+            )}
+
+            {/* TAB 4: INNSTILLINGER (Settings) */}
             {activeTab === 'settings' && (
               <motion.div
                 key="settings"
@@ -923,7 +942,7 @@ const CourseDetailPage = () => {
                       )}
                     >
                       <span className="text-sm font-medium text-foreground">{p.participant_name || p.participant_email}</span>
-                      <span className="text-sm font-mono tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
+                      <span className="text-sm tabular-nums text-muted-foreground">{formatKroner(p.amount_paid)}</span>
                     </div>
                   ))}
                 </div>
@@ -931,7 +950,7 @@ const CourseDetailPage = () => {
 
               <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
                 <span className="text-xs font-medium tracking-wide text-muted-foreground">Total refusjon</span>
-                <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(refundPreview.totalAmount)}</span>
               </div>
             </div>
           )}

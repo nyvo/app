@@ -146,11 +146,15 @@ export const SignupsPage = () => {
     const mapped = signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
       const courseId = signup.course?.id || signup.course_id;
-      const displayDate = signup.class_date
+      // For drop-ins, use the linked session's date/time. For package buyers,
+      // fall back to the next upcoming session of their course (purely cosmetic
+      // — package buyers don't have a single "their class" in the way drop-ins do).
+      const displayDate = signup.course_session?.session_date
         || nextSessionDates[courseId]
         || signup.course?.start_date
         || null;
-      const rawTime = signup.class_time || extractTime(signup.course?.time_schedule || null);
+      const rawTime = signup.course_session?.start_time
+        || extractTime(signup.course?.time_schedule || null);
       const displayTime = rawTime ? rawTime.slice(0, 5) : '';
 
       const courseEndDate = signup.course?.end_date;
@@ -291,13 +295,13 @@ export const SignupsPage = () => {
           transition={pageTransition}
           className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
         >
-          <div className="mx-auto max-w-6xl mb-8">
+          <div className="mb-8">
             <h1 className="text-3xl font-semibold text-foreground">Påmeldinger</h1>
             <p className="text-sm mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
           </div>
         </motion.header>
 
-        <div className="flex-1 mx-auto max-w-6xl w-full px-6 lg:px-8 pb-6 lg:pb-8">
+        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
           {/* Toolbar — always its own card. For non-past tabs the table renders inside it; for Fullførte the cards render outside, below. */}
           <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
             <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">

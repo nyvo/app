@@ -2,12 +2,13 @@ import { supabase, typedFrom } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
-// Signup with joined course and profile data
+// Signup with joined course, profile, and (for drop-ins) session data.
+// `course_session` is populated from the FK on signups.course_session_id —
+// only set for drop-in signups; package buyers have it null.
 export interface SignupWithDetails extends Signup {
   course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
-  // Exception detection fields (already on Signup, explicitly noted here)
-  // payment_status is inherited from Signup
+  course_session: { session_date: string; start_time: string } | null
 }
 
 // Signup with profile for participants list
@@ -24,7 +25,8 @@ export async function fetchRecentSignups(
     .select(`
       *,
       course:courses!inner(id, title, course_type, time_schedule, start_date),
-      profile:profiles(id, name, email, avatar_url)
+      profile:profiles(id, name, email, avatar_url),
+      course_session:course_sessions(session_date, start_time)
     `)
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
@@ -37,11 +39,83 @@ export async function fetchRecentSignups(
   return { data: data as unknown as SignupWithDetails[], error: null }
 }
 
+/**
+ * Insert a signup. Manually-added participants (teacher-side) skip the
+ * payment-aware RPC, so we resolve the course's default ticket tier here
+ * and populate the required ticket_type_id + 3 snapshot fields. The caller
+ * doesn't need to know about ticket types — they just supply participant
+ * data + status. If the caller already specifies ticket_type_id, we trust
+ * them and only fill in snapshots they didn't provide.
+ */
 export async function createSignup(
-  signupData: SignupInsert
+  signupData: Omit<SignupInsert,
+    'ticket_type_id' | 'ticket_label_snapshot' | 'ticket_audience_snapshot' | 'ticket_kind_snapshot'>
+    & Partial<Pick<SignupInsert,
+      'ticket_type_id' | 'ticket_label_snapshot' | 'ticket_audience_snapshot' | 'ticket_kind_snapshot'>>
 ): Promise<{ data: Signup | null; error: Error | null }> {
+  let resolved: SignupInsert
+
+  if (signupData.ticket_type_id) {
+    // Caller knows what they're doing — only backfill missing snapshots.
+    if (!signupData.ticket_label_snapshot
+        || !signupData.ticket_audience_snapshot
+        || !signupData.ticket_kind_snapshot) {
+      const { data: tier, error: tierErr } = await supabase
+        .from('course_signup_packages')
+        .select('label, audience, ticket_kind')
+        .eq('id', signupData.ticket_type_id)
+        .maybeSingle()
+
+      if (tierErr || !tier) {
+        return { data: null, error: new Error('Fant ikke billettypen') }
+      }
+
+      resolved = {
+        ...signupData,
+        ticket_type_id: signupData.ticket_type_id,
+        ticket_label_snapshot: signupData.ticket_label_snapshot ?? (tier as { label: string }).label,
+        ticket_audience_snapshot: signupData.ticket_audience_snapshot
+          ?? (tier as { audience: SignupInsert['ticket_audience_snapshot'] }).audience!,
+        ticket_kind_snapshot: signupData.ticket_kind_snapshot
+          ?? (tier as { ticket_kind: SignupInsert['ticket_kind_snapshot'] }).ticket_kind!,
+      }
+    } else {
+      resolved = signupData as SignupInsert
+    }
+  } else {
+    // No tier specified — pick the course's default. This is the manual-add
+    // path (teacher fills in a participant who paid by other means).
+    const { data: defaultTier, error: defaultErr } = await supabase
+      .from('course_signup_packages')
+      .select('id, label, audience, ticket_kind')
+      .eq('course_id', signupData.course_id)
+      .eq('is_default', true)
+      .maybeSingle()
+
+    if (defaultErr || !defaultTier) {
+      return {
+        data: null,
+        error: new Error('Kurset mangler en standard billettype. Opprett en før du legger til deltakere manuelt.'),
+      }
+    }
+
+    const tier = defaultTier as {
+      id: string
+      label: string
+      audience: NonNullable<SignupInsert['ticket_audience_snapshot']>
+      ticket_kind: NonNullable<SignupInsert['ticket_kind_snapshot']>
+    }
+    resolved = {
+      ...signupData,
+      ticket_type_id: tier.id,
+      ticket_label_snapshot: tier.label,
+      ticket_audience_snapshot: tier.audience,
+      ticket_kind_snapshot: tier.ticket_kind,
+    }
+  }
+
   const { data, error } = await typedFrom('signups')
-    .insert(signupData)
+    .insert(resolved)
     .select()
     .single()
 
@@ -180,7 +254,8 @@ export async function createFreeSignup(input: {
   courseId: string
   participantName: string
   participantEmail: string
-  participantPhone: string
+  /** Optional. Public signup form no longer collects phone (2026-04-25). */
+  participantPhone?: string
 }): Promise<{ data: { signupId: string } | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke('create-free-signup', {

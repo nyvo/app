@@ -19,7 +19,6 @@ import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import { isValidEmail } from '@/lib/utils';
 
-import type { SignupInsert } from '@/types/database';
 
 interface AddParticipantDialogProps {
   open: boolean;
@@ -162,7 +161,9 @@ export function AddParticipantDialog({
         return;
       }
 
-      const signupData: SignupInsert = {
+      // ticket_type_id + the 3 snapshots are auto-resolved inside createSignup
+      // from the course's default tier — manual adds don't need to pick one.
+      const { error } = await createSignup({
         organization_id: organizationId,
         course_id: courseId,
         participant_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
@@ -171,9 +172,7 @@ export function AddParticipantDialog({
         note: formData.note.trim() || null,
         status: 'confirmed',
         payment_status: paymentMarked,
-      };
-
-      const { error } = await createSignup(signupData);
+      });
 
       if (error) {
         setSubmitError(friendlyError(error, 'Kunne ikke legge til deltaker'));
@@ -239,7 +238,6 @@ export function AddParticipantDialog({
                   value={formData.firstName}
                   onChange={handleInputChange}
                   onBlur={() => handleBlur('firstName')}
-                  placeholder="Ola"
                   aria-invalid={!!errors.firstName}
                   aria-describedby={
                     errors.firstName && touched.firstName ? 'firstName-error' : undefined
@@ -278,7 +276,6 @@ export function AddParticipantDialog({
                   value={formData.lastName}
                   onChange={handleInputChange}
                   onBlur={() => handleBlur('lastName')}
-                  placeholder="Nordmann"
                   aria-invalid={!!errors.lastName}
                   aria-describedby={
                     errors.lastName && touched.lastName ? 'lastName-error' : undefined
@@ -315,7 +312,6 @@ export function AddParticipantDialog({
                 value={formData.email}
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('email')}
-                placeholder="ola@eksempel.no"
                 aria-invalid={!!errors.email}
                 aria-describedby={errors.email && touched.email ? 'email-error' : 'email-hint'}
                 aria-required="true"
@@ -352,7 +348,7 @@ export function AddParticipantDialog({
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="+47 912 34 567"
+                placeholder="9xx xx xxx"
                 aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
@@ -371,7 +367,6 @@ export function AddParticipantDialog({
                 name="note"
                 value={formData.note}
                 onChange={handleInputChange}
-                placeholder="Skriv en beskjed"
                 rows={3}
                 disabled={isSubmitting}
               />
