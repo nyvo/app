@@ -90,7 +90,7 @@ export function ChatInput({
         </div>
       </div>
       <p className="text-xs mt-3 text-center text-muted-foreground">
-        Trykk <span className="font-mono text-foreground">Enter</span> for å sende
+        Trykk <span className="text-foreground">Enter</span> for å sende
       </p>
     </div>
   );

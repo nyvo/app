@@ -8,9 +8,16 @@ import { cn } from "@/lib/utils"
  * Badge — a single primitive for all pill/badge rendering in the app.
  *
  * Variant dimensions:
- *   variant : semantic colour + weight (success/warning/destructive/info/neutral + default/secondary/outline/ghost/link)
+ *   variant : semantic colour + weight
+ *     • semantic         — success / warning / destructive / info / neutral
+ *     • wellness pastels — sage / rose / lavender / sand / sky (sentence case, calm)
+ *     • emphasis         — default / secondary / outline / ghost / link / accent
  *   shape   : visual container rounding — "pill" (round, for card meta) or "rect" (slightly rounded, for status rows/tables)
  *   size    : xs / sm / md
+ *
+ * Pastels are pre-tinted via the --sage / --rose / --lavender / --sand / --sky
+ * tokens in `index.css`. Don't pair them with `uppercase` or `tracking-[0.12em]` —
+ * the whole point is the calmer treatment.
  *
  * The 3 typed wrappers (StatusBadge, PaymentBadge, SignupStatusBadge) pick variant + label
  * from a status enum and render <Badge/>. Do NOT render `<Badge variant="success">…</Badge>` ad-hoc
@@ -41,6 +48,16 @@ const badgeVariants = cva(
           "bg-muted text-muted-foreground border-transparent",
         accent:
           "bg-chart-2/10 text-chart-2 border-transparent",
+        sage:
+          "bg-sage text-sage-foreground border-transparent tracking-normal",
+        rose:
+          "bg-rose text-rose-foreground border-transparent tracking-normal",
+        lavender:
+          "bg-lavender text-lavender-foreground border-transparent tracking-normal",
+        sand:
+          "bg-sand text-sand-foreground border-transparent tracking-normal",
+        sky:
+          "bg-sky text-sky-foreground border-transparent tracking-normal",
         link:
           "bg-transparent border-transparent text-primary tracking-normal underline-offset-4 hover:underline",
       },

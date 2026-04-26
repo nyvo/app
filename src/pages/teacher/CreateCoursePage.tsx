@@ -461,7 +461,6 @@ const CreateCoursePage = () => {
                       ref={titleRef}
                       id="create-title"
                       type="text"
-                      placeholder="Morgenyoga for alle"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       onBlur={() => handleBlur('title')}
@@ -694,7 +693,6 @@ const CreateCoursePage = () => {
                         setTouched(prev => ({ ...prev, location: true }));
                       }}
                       locations={savedLocations}
-                      placeholder="Studioet, Grünerløkka"
                       aria-invalid={showError('location') ? 'true' : undefined}
                       className={cn(
                         "w-full",

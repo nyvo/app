@@ -1,39 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, AlertCircle } from '@/lib/icons';
+import { AlertCircle, Check, ExternalLink } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ErrorState } from '@/components/ui/error-state';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   createDinteroSeller,
   checkDinteroSellerStatus,
-  getDinteroSettlements,
-  type DinteroSettlementsResult,
-  type DinteroSettlementTransfer,
   type DinteroOnboardingStatus,
 } from '@/services/dintero-seller';
-import { typedFrom } from '@/lib/supabase';
-import { formatKroner } from '@/lib/utils';
 import { toast } from 'sonner';
-
-interface TransactionRow {
-  id: string;
-  participant_name: string;
-  amount_paid: number | null;
-  created_at: string;
-  course: { id: string; title: string } | null;
-}
 
 interface OnboardingFormState {
   businessName: string;
   organizationNumber: string;
   contactEmail: string;
-  contactName: string;
   bankAccountNumber: string;
   bankName: string;
 }
@@ -47,74 +32,39 @@ const STATUS_LABEL: Record<DinteroOnboardingStatus, string> = {
   TERMINATED: 'Avsluttet',
 };
 
+// Dintero's merchant backoffice. Generic landing — Dintero handles login and
+// routes the merchant to their account from there. We don't have a per-account
+// deep link in the wrapper as of 2026-04-25.
+const DINTERO_BACKOFFICE_URL = 'https://backoffice.dintero.com/';
+
+/**
+ * Payments page. Three states based on the org's Dintero onboarding flags:
+ *
+ *   1. !hasApproval && !isConnected → minimal onboarding form
+ *   2.  hasApproval && !isConnected → "fullfør hos Dintero" with status + buttons
+ *   3.  isConnected                → success state + link to Dintero backoffice
+ *
+ * No balance / settlements / transactions display — the merchant manages all of
+ * that on Dintero's own dashboard. Keeps this surface as small as possible.
+ */
 const PaymentsPage = () => {
   const { currentOrganization, user, refreshOrganizations } = useAuth();
 
-  const onboardingStatus = (currentOrganization?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
+  const onboardingStatus =
+    (currentOrganization?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
   const isConnected = !!currentOrganization?.dintero_onboarding_complete;
   const hasApproval = !!currentOrganization?.dintero_seller_id;
   const contractUrl = currentOrganization?.dintero_contract_url || null;
-
-  const [settlements, setSettlements] = useState<DinteroSettlementsResult | null>(null);
-  const [transactions, setTransactions] = useState<TransactionRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState<OnboardingFormState>({
     businessName: currentOrganization?.name || '',
     organizationNumber: '',
     contactEmail: user?.email || '',
-    contactName: '',
     bankAccountNumber: '',
     bankName: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
-
-  const fetchData = useCallback(async () => {
-    if (!currentOrganization?.id || !isConnected) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const [settlementsResult, txResult] = await Promise.all([
-      getDinteroSettlements(currentOrganization.id),
-      typedFrom('signups')
-        .select('id, participant_name, amount_paid, created_at, course:courses(id, title)')
-        .eq('organization_id', currentOrganization.id)
-        .eq('payment_status', 'paid')
-        .order('created_at', { ascending: false })
-        .limit(20),
-    ]);
-
-    if (settlementsResult.error) {
-      setError(settlementsResult.error.message);
-    } else {
-      setSettlements(settlementsResult.data);
-    }
-
-    if (!txResult.error && txResult.data) {
-      setTransactions(txResult.data as unknown as TransactionRow[]);
-    }
-
-    setLoading(false);
-  }, [currentOrganization?.id, isConnected]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Refresh when coming back from Dintero's hosted KYC
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('dintero_return') === '1' && currentOrganization?.id) {
-      void handleCheckStatus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrganization?.id]);
 
   const handleSubmitOnboarding = useCallback(
     async (e: React.FormEvent) => {
@@ -138,7 +88,6 @@ const PaymentsPage = () => {
         organizationNumber: form.organizationNumber.trim(),
         businessName: form.businessName.trim(),
         contactEmail: form.contactEmail.trim(),
-        contactName: form.contactName.trim() || undefined,
         bankAccountNumber: form.bankAccountNumber.trim(),
         bankName: form.bankName.trim(),
         sandboxAutoApprove: autoApprove,
@@ -191,14 +140,18 @@ const PaymentsPage = () => {
     window.open(contractUrl, '_blank', 'noopener,noreferrer');
   }, [contractUrl]);
 
-  const formatDate = (dateStr: string | number | null): string => {
-    if (!dateStr) return '—';
-    const date = typeof dateStr === 'number' ? new Date(dateStr * 1000) : new Date(dateStr);
-    return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
-  };
+  const handleOpenDintero = useCallback(() => {
+    window.open(DINTERO_BACKOFFICE_URL, '_blank', 'noopener,noreferrer');
+  }, []);
 
-  // Dintero amounts are in minor units (øre) — divide by 100 for kroner
-  const oreToKroner = (amount: number): number => Math.round(amount / 100);
+  // Refresh when coming back from Dintero's hosted KYC (?dintero_return=1).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('dintero_return') === '1' && currentOrganization?.id) {
+      void handleCheckStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrganization?.id]);
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
@@ -211,26 +164,33 @@ const PaymentsPage = () => {
         transition={pageTransition}
         className="px-6 pb-24 md:pb-8 lg:px-8"
       >
-        <div className="mb-10 border-b border-border pt-6 pb-8 lg:pt-8">
+        <div className="mb-10 pt-6 pb-8 lg:pt-8">
           <h1 className="text-3xl font-semibold text-foreground">Betalinger</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Oversikt over utbetalinger og betalinger.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sett opp utbetalinger via Dintero. Saldo og transaksjoner ser du på din Dintero-konto.
+          </p>
         </div>
 
-        <div className="mx-auto max-w-5xl space-y-8">
-          {/* Not started yet — show onboarding form */}
+        <div className="max-w-5xl space-y-8">
+          {/* ─── State 1: Not started — minimal onboarding form ─── */}
           {!hasApproval && !isConnected && (
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
-                <h2 className="text-base font-semibold text-foreground">Sett opp utbetaling</h2>
-                <p className="text-sm mt-1 text-muted-foreground">
-                  Vi trenger noen detaljer før Dintero kan godkjenne utbetaling til kontoen din.
+                <h2 className="text-base font-semibold text-foreground">Sett opp utbetalinger</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Du fyller ut signering og bekreftelse på Dinteros side. Det tar 5–10 minutter.
                 </p>
               </div>
               <Card className="md:col-span-2">
                 <CardContent>
                   <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
                     <div className="space-y-1.5">
-                      <label htmlFor="businessName" className="text-xs font-medium mb-1.5 block text-foreground">Selskapsnavn</label>
+                      <label
+                        htmlFor="businessName"
+                        className="text-xs font-medium mb-1.5 block text-foreground"
+                      >
+                        Selskapsnavn
+                      </label>
                       <Input
                         id="businessName"
                         value={form.businessName}
@@ -239,61 +199,77 @@ const PaymentsPage = () => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label htmlFor="organizationNumber" className="text-xs font-medium mb-1.5 block text-foreground">Organisasjonsnummer</label>
+                      <label
+                        htmlFor="organizationNumber"
+                        className="text-xs font-medium mb-1.5 block text-foreground"
+                      >
+                        Organisasjonsnummer
+                      </label>
                       <Input
                         id="organizationNumber"
                         inputMode="numeric"
                         pattern="\d{9}"
                         placeholder="9 siffer"
                         value={form.organizationNumber}
-                        onChange={(e) => setForm({ ...form, organizationNumber: e.target.value })}
+                        onChange={(e) =>
+                          setForm({ ...form, organizationNumber: e.target.value })
+                        }
                         required
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="space-y-1.5">
-                        <label htmlFor="contactEmail" className="text-xs font-medium mb-1.5 block text-foreground">Kontakt e-post</label>
-                        <Input
-                          id="contactEmail"
-                          type="email"
-                          value={form.contactEmail}
-                          onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label htmlFor="contactName" className="text-xs font-medium mb-1.5 block text-foreground">Kontaktperson (valgfritt)</label>
-                        <Input
-                          id="contactName"
-                          value={form.contactName}
-                          onChange={(e) => setForm({ ...form, contactName: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="space-y-1.5">
-                        <label htmlFor="bankAccountNumber" className="text-xs font-medium mb-1.5 block text-foreground">Kontonummer</label>
+                        <label
+                          htmlFor="bankAccountNumber"
+                          className="text-xs font-medium mb-1.5 block text-foreground"
+                        >
+                          Kontonummer
+                        </label>
                         <Input
                           id="bankAccountNumber"
                           inputMode="numeric"
                           placeholder="11 siffer"
                           value={form.bankAccountNumber}
-                          onChange={(e) => setForm({ ...form, bankAccountNumber: e.target.value })}
+                          onChange={(e) =>
+                            setForm({ ...form, bankAccountNumber: e.target.value })
+                          }
                           required
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label htmlFor="bankName" className="text-xs font-medium mb-1.5 block text-foreground">Banknavn</label>
+                        <label
+                          htmlFor="bankName"
+                          className="text-xs font-medium mb-1.5 block text-foreground"
+                        >
+                          Banknavn
+                        </label>
                         <Input
                           id="bankName"
-                          placeholder="f.eks. DNB, Nordea"
                           value={form.bankName}
                           onChange={(e) => setForm({ ...form, bankName: e.target.value })}
                           required
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-end">
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="contactEmail"
+                        className="text-xs font-medium mb-1.5 block text-foreground"
+                      >
+                        Kontakt-e-post
+                      </label>
+                      <Input
+                        id="contactEmail"
+                        type="email"
+                        value={form.contactEmail}
+                        onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Dintero sender signering og oppdateringer hit.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-end pt-2">
                       <Button type="submit" loading={submitting} loadingText="Oppretter">
                         Fortsett til Dintero
                       </Button>
@@ -304,12 +280,12 @@ const PaymentsPage = () => {
             </section>
           )}
 
-          {/* Approval in progress */}
+          {/* ─── State 2: Approval in progress ─── */}
           {hasApproval && !isConnected && (
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Fullfør hos Dintero</h2>
-                <p className="text-sm mt-1 text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Status: {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Venter'}.
                 </p>
               </div>
@@ -327,8 +303,8 @@ const PaymentsPage = () => {
                   ) : (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm text-foreground">
-                        Sjekk e-posten fra Dintero og signer avtalen. Når det er godkjent aktiverer
-                        vi utbetalinger automatisk.
+                        Sjekk e-posten fra Dintero og signer avtalen. Når den er godkjent
+                        aktiverer vi utbetalinger automatisk.
                       </p>
                       <div className="flex items-center gap-2 shrink-0">
                         <Button
@@ -354,222 +330,43 @@ const PaymentsPage = () => {
             </section>
           )}
 
-          {/* Active — settlements + transactions */}
+          {/* ─── State 3: Active — success card with Dintero link ─── */}
           {isConnected && (
-            <>
-              {settlements?.notice && (
-                <Alert variant="info" size="sm">
-                  <AlertDescription>{settlements.notice}</AlertDescription>
-                </Alert>
-              )}
-
-              <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Oversikt</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Saldo og kommende utbetalinger.</p>
-                </div>
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <BalanceCard
-                    label="Tilgjengelig"
-                    value={
-                      settlements?.balance.available[0]
-                        ? formatKroner(oreToKroner(settlements.balance.available[0].amount))
-                        : undefined
-                    }
-                    loading={loading}
-                  />
-                  <BalanceCard
-                    label="Til utbetaling"
-                    value={
-                      settlements?.balance.pending[0]
-                        ? formatKroner(oreToKroner(settlements.balance.pending[0].amount))
-                        : undefined
-                    }
-                    loading={loading}
-                  />
-                  <BalanceCard
-                    label="Neste utbetaling"
-                    value={
-                      settlements?.transfers.find((t) => t.status === 'pending' || t.status === 'in_transit')
-                        ? formatDate(
-                            settlements.transfers.find(
-                              (t) => t.status === 'pending' || t.status === 'in_transit',
-                            )!.arrival_date,
-                          )
-                        : settlements
-                          ? 'Ingen planlagt'
-                          : undefined
-                    }
-                    loading={loading}
-                  />
-                </div>
-              </section>
-
-              <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Siste utbetalinger</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Utbetalinger til bankkontoen din.</p>
-                </div>
-                <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
-                  {loading ? (
-                    <SkeletonRows count={3} />
-                  ) : error ? (
-                    <ErrorState
-                      variant="inline"
-                      message={error}
-                      onRetry={fetchData}
-                      retryLabel="Prøv igjen"
-                    />
-                  ) : !settlements?.transfers.length ? (
-                    <div className="flex flex-col items-center gap-1 py-8 text-center">
-                      <p className="text-sm font-medium text-foreground">Ingen utbetalinger ennå</p>
-                      <p className="text-xs text-muted-foreground">Utbetalinger vises her når de er klare.</p>
-                    </div>
-                  ) : (
-                    settlements.transfers.map((t) => (
-                      <TransferRow key={t.id} transfer={t} formatDate={formatDate} oreToKroner={oreToKroner} />
-                    ))
-                  )}
-                </Card>
-              </section>
-
-              <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Siste transaksjoner</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Betalinger fra deltakere.</p>
-                </div>
-                <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
-                  {loading ? (
-                    <SkeletonRows count={4} />
-                  ) : !transactions.length ? (
-                    <div className="flex flex-col items-center gap-1 py-8 text-center">
-                      <p className="text-sm font-medium text-foreground">Ingen transaksjoner ennå</p>
-                      <p className="text-xs text-muted-foreground">Påmeldinger fra deltakere vises her.</p>
-                    </div>
-                  ) : (
-                    transactions.map((tx) => (
-                      <div key={tx.id} className="flex items-center justify-between px-6 py-4">
-                        <div className="min-w-0 flex-1">
-                          <span className="text-sm font-medium block text-foreground truncate">
-                            {tx.participant_name}
-                          </span>
-                          <span className="text-xs block text-muted-foreground truncate">
-                            {tx.course?.title || '—'}
-                          </span>
-                        </div>
-                        <div className="text-right ml-4 shrink-0">
-                          <span className="text-sm font-medium font-mono tabular-nums text-foreground">
-                            {formatKroner(tx.amount_paid)}
-                          </span>
-                          <span className="text-xs tabular-nums block text-muted-foreground">
-                            {formatDate(tx.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </Card>
-              </section>
-
-              <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                <div>
-                  <h2 className="text-base font-semibold text-foreground">Kontostatus</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Dintero-konto og innstillinger.</p>
-                </div>
-                <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
-                  <div className="flex items-center justify-between px-6 py-4">
-                    <div>
-                      <span className="text-sm font-medium block text-foreground">Status</span>
-                      <span className="text-xs block text-muted-foreground">
-                        {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Aktiv'}
-                        {settlements?.sandbox ? ' · Testmiljø' : ''}
-                      </span>
-                    </div>
-                    <div className="size-2 rounded-full bg-success" />
+            <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Utbetalinger er aktive</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Avtalen med Dintero er på plass.
+                </p>
+              </div>
+              <Card className="md:col-span-2">
+                <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+                    <Check className="size-5" />
                   </div>
-                </Card>
-              </section>
-            </>
+                  <div className="flex-1">
+                    <p className="text-base font-semibold text-foreground">
+                      Utbetalinger er klare
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Dintero håndterer utbetalingene direkte til bankkontoen din. Saldo,
+                      transaksjoner og innstillinger ser du på din Dintero-konto.
+                    </p>
+                    <div className="mt-4">
+                      <Button onClick={handleOpenDintero}>
+                        Åpne Dintero-konto
+                        <ExternalLink className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
           )}
         </div>
       </motion.div>
     </main>
   );
 };
-
-function BalanceCard({ label, value, loading }: { label: string; value?: string; loading: boolean }) {
-  return (
-    <Card>
-      <CardContent className="py-4 px-5">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground">{label}</span>
-        {loading ? (
-          <div className="mt-1 h-7 w-24 animate-pulse rounded bg-muted" />
-        ) : (
-          <p className="mt-1 text-2xl font-semibold font-mono tabular-nums text-foreground">
-            {value || '—'}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function TransferRow({
-  transfer,
-  formatDate,
-  oreToKroner,
-}: {
-  transfer: DinteroSettlementTransfer;
-  formatDate: (d: string | number | null) => string;
-  oreToKroner: (a: number) => number;
-}) {
-  const statusColor: Record<string, string> = {
-    paid: 'text-success',
-    pending: 'text-muted-foreground',
-    in_transit: 'text-muted-foreground',
-    failed: 'text-destructive',
-    canceled: 'text-destructive',
-  };
-
-  const statusLabel: Record<string, string> = {
-    paid: 'Utbetalt',
-    pending: 'Venter',
-    in_transit: 'Underveis',
-    failed: 'Feilet',
-    canceled: 'Avlyst',
-  };
-
-  return (
-    <div className="flex items-center justify-between px-6 py-4">
-      <div className="min-w-0 flex-1">
-        <span className="text-sm font-medium font-mono tabular-nums block text-foreground">
-          {formatKroner(oreToKroner(transfer.amount))}
-        </span>
-        <span className="text-xs tabular-nums block text-muted-foreground">
-          {formatDate(transfer.arrival_date)}
-        </span>
-      </div>
-      <span className={`text-xs font-medium ${statusColor[transfer.status] || 'text-muted-foreground'}`}>
-        {statusLabel[transfer.status] || transfer.status}
-      </span>
-    </div>
-  );
-}
-
-function SkeletonRows({ count }: { count: number }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between px-6 py-4">
-          <div className="space-y-1.5">
-            <div className="h-4 w-28 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-          </div>
-          <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-        </div>
-      ))}
-    </>
-  );
-}
 
 export default PaymentsPage;

@@ -65,7 +65,7 @@ export function MobileDayView({
               }`}
             >
               <span className="text-xs font-medium tracking-wide">{day.name.slice(0, 3)}</span>
-              <span className="text-base font-mono font-medium tabular-nums mt-0.5">{day.date}</span>
+              <span className="text-base font-medium tabular-nums mt-0.5">{day.date}</span>
             </button>
           ))}
         </div>

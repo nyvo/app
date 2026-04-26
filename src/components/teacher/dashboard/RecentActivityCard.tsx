@@ -99,7 +99,7 @@ function ActivityBody({
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-1 py-8">
+      <div className="flex flex-col items-center gap-1 py-8 text-center">
         <p className="text-sm font-medium text-foreground">Ingen aktivitet ennå</p>
         <p className="text-xs text-muted-foreground">Nye påmeldinger og meldinger vises her</p>
       </div>

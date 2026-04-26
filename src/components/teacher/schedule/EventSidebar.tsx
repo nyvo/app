@@ -70,7 +70,7 @@ export function EventSidebar({ event, sessionDate, onClose }: EventSidebarProps)
             <Clock className="size-4 text-muted-foreground shrink-0" />
             <div>
               <p className="text-xs font-medium tracking-wide text-muted-foreground">Tidspunkt</p>
-              <p className="text-sm font-mono tabular-nums text-foreground">
+              <p className="text-sm tabular-nums text-foreground">
                 {formatTime(event.startTime)} – {formatTime(event.endTime)}
               </p>
             </div>

@@ -171,7 +171,7 @@ function CompactPastSignupItem({
         )}>
           {signup.participantName}
         </p>
-        <p className="text-xs font-mono truncate text-muted-foreground">
+        <p className="text-xs truncate text-muted-foreground">
           {signup.participantEmail}
         </p>
       </div>

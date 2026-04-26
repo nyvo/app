@@ -64,7 +64,6 @@ export function ComposeView({ onCancel, onSend, sending }: ComposeViewProps) {
               type="text"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              placeholder="f.eks. navn@eksempel.no"
               autoFocus
               className="pl-10"
             />

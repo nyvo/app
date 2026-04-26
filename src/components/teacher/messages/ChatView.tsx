@@ -60,7 +60,7 @@ export function ChatView({
             <h3 className="text-base font-semibold truncate text-foreground">
               {conversation.participant?.name || conversation.participant?.email || 'Ukjent'}
             </h3>
-            <p className="text-xs font-mono truncate text-muted-foreground">
+            <p className="text-xs truncate text-muted-foreground">
               {conversation.participant?.email || 'Elev'}
             </p>
           </div>

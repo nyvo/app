@@ -36,6 +36,16 @@ export function formatKroner(amount: number | null | undefined): string {
   return `${(amount ?? 0).toLocaleString('nb-NO')} kr`;
 }
 
+/**
+ * Course-aware price formatter. Renders `Gratis` for free courses (price 0,
+ * null, or undefined) per the copy style guide; otherwise delegates to
+ * `formatKroner`. Use this on any public price display so the "0 kr" anti-pattern
+ * never reaches a user.
+ */
+export function formatCoursePrice(amount: number | null | undefined): string {
+  return amount && amount > 0 ? formatKroner(amount) : 'Gratis';
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function isValidEmail(email: string): boolean {

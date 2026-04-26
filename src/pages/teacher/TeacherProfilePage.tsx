@@ -353,7 +353,7 @@ const TeacherProfilePage = () => {
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
           </div>
-          <div className="mx-auto max-w-5xl space-y-8">
+          <div className="max-w-5xl space-y-8">
                   {/* Personlig informasjon */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>

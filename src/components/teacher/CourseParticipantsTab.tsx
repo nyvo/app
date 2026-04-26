@@ -185,7 +185,7 @@ export const CourseParticipantsTab = ({
                     <UserAvatar name={participant.name} email={participant.email} size="sm" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate text-foreground">{participant.name}</p>
-                      <p className="text-xs font-mono truncate text-muted-foreground">{participant.email}</p>
+                      <p className="text-xs truncate text-muted-foreground">{participant.email}</p>
                     </div>
                   </div>
                 </TableCell>

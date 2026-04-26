@@ -156,7 +156,14 @@ export const ResetPasswordView = () => {
       subtitle="Velg et nytt passord."
       footer={
         <p className="text-xs text-muted-foreground">
-          Trenger du hjelp?
+          Trenger du hjelp? Send en e-post til{' '}
+          <a
+            href="mailto:hei@ease.no"
+            className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
+          >
+            hei@ease.no
+          </a>
+          .
         </p>
       }
     >

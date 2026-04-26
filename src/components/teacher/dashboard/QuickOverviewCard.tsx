@@ -83,7 +83,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
               <div className="mb-1">
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
                 <div className="mt-1 flex items-baseline gap-2">
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">{formatKroner(12400)}</p>
+                  <p className="text-2xl font-semibold tabular-nums text-foreground">{formatKroner(12400)}</p>
                 </div>
               </div>
               <ChartContainer config={chartConfig} className="aspect-auto h-40 w-full">
@@ -101,7 +101,6 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
             <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:order-2 sm:grid-cols-1 sm:gap-4 sm:min-w-36">
               <Kpi label="Nye elever" value="8" delta={null} />
               <Kpi label="Påmeldinger" value="14" delta={null} />
-              <Kpi label="Førstegangsbesøk" value="3" delta={null} />
             </div>
           </div>
         </div>
@@ -120,7 +119,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
         <div className="mb-1">
           <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
           <div className="mt-1 flex items-baseline gap-2">
-            <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">{formatKroner(stats.revenue)}</p>
+            <p className="text-2xl font-semibold tabular-nums text-foreground">{formatKroner(stats.revenue)}</p>
             <DeltaChip delta={stats.deltas.revenue} />
           </div>
         </div>
@@ -162,7 +161,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:order-2 sm:grid-cols-1 sm:gap-4 sm:min-w-36">
         <Kpi label="Nye elever" value={stats.newCustomers.toString()} delta={<DeltaChip delta={stats.deltas.newCustomers} />} />
         <Kpi label="Påmeldinger" value={stats.totalSignups.toString()} delta={<DeltaChip delta={stats.deltas.totalSignups} />} />
-        <Kpi label="Førstegangsbesøk" value="—" delta={null} />
+        {/* Førstegangsbesøk hidden until the metric is wired up — was rendering as a permanent dash. */}
       </div>
     </div>
   )
@@ -177,7 +176,7 @@ function QuickOverviewSkeleton() {
         <Skeleton className="mt-3 h-40 w-full" />
       </div>
       <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:grid-cols-1 sm:gap-4 sm:min-w-36">
-        {Array.from({ length: 4 }).map((_, i) => (
+        {Array.from({ length: 2 }).map((_, i) => (
           <div key={i}>
             <Skeleton className="h-3 w-20" />
             <Skeleton className="mt-2 h-7 w-24" />
@@ -201,7 +200,7 @@ function Kpi({
     <div>
       <p className="text-xs font-medium tracking-wide text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-semibold font-mono tabular-nums text-foreground">{value}</p>
+        <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
         {delta}
       </div>
     </div>

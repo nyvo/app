@@ -141,7 +141,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
               type="text"
               value={courseUrl}
               readOnly
-              className="bg-transparent border-none text-xs text-muted-foreground w-full focus:ring-0 px-1 py-1 font-mono truncate select-all outline-none"
+              className="bg-transparent border-none text-xs text-muted-foreground w-full focus:ring-0 px-1 py-1 truncate select-all outline-none"
             />
             <button
               onClick={handleCopy}

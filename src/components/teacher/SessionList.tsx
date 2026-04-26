@@ -105,7 +105,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           </Badge>
                         ) : null}
                       </div>
-                      <p className="text-xs tabular-nums mt-0.5 text-muted-foreground">{session.date} <span className="font-mono">{session.time}</span></p>
+                      <p className="text-xs tabular-nums mt-0.5 text-muted-foreground">{session.date} <span className="">{session.time}</span></p>
                     </div>
                   </div>
                   {!isPast && (

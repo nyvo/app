@@ -12,6 +12,10 @@ export interface PublicOrganization {
   slug: string
   city: string | null
   description: string | null
+  logo_url: string | null
+  email: string | null
+  address: string | null
+  postal_code: string | null
   default_course_image_url: string | null
   dintero_onboarding_complete: boolean
 }
@@ -21,7 +25,7 @@ export async function fetchOrganizationBySlug(
 ): Promise<{ data: PublicOrganization | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('organizations')
-    .select('id, name, slug, city, description, default_course_image_url, dintero_onboarding_complete')
+    .select('id, name, slug, city, description, logo_url, email, address, postal_code, default_course_image_url, dintero_onboarding_complete')
     .eq('slug', slug)
     .maybeSingle()
 

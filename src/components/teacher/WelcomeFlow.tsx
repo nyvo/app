@@ -296,7 +296,6 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           id="welcome-first-name"
                           value={firstName}
                           onChange={(e) => { setFirstName(e.target.value); if (firstNameError) setFirstNameError('') }}
-                          placeholder="Ola"
                           autoFocus
                           required
                           aria-invalid={!!firstNameError || undefined}
@@ -314,7 +313,6 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           id="welcome-last-name"
                           value={lastName}
                           onChange={(e) => { setLastName(e.target.value); if (lastNameError) setLastNameError('') }}
-                          placeholder="Nordmann"
                           required
                           aria-invalid={!!lastNameError || undefined}
                           aria-describedby={lastNameError ? 'welcome-last-name-error' : undefined}
@@ -333,7 +331,6 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                         id="welcome-city"
                         value={city}
                         onChange={(e) => { setCity(e.target.value); if (cityError) setCityError('') }}
-                        placeholder="Oslo"
                         required
                         aria-invalid={!!cityError || undefined}
                         aria-describedby={cityError ? 'welcome-city-error' : 'welcome-city-hint'}
@@ -385,7 +382,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           id="welcome-org-nr"
                           value={orgNumber}
                           onChange={(e) => handleOrgNumberChange(e.target.value)}
-                          placeholder="123 456 789"
+                          placeholder="9 siffer"
                           inputMode="numeric"
                           autoFocus
                           className="pr-10"
@@ -430,7 +427,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs font-mono tabular-nums mt-1 text-muted-foreground">
+                            <p className="text-xs tabular-nums mt-1 text-muted-foreground">
                               Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
                             </p>
                           </div>
@@ -453,7 +450,6 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                           setStudioName(e.target.value)
                           if (studioError) setStudioError('')
                         }}
-                        placeholder="Yoga med Ola"
                         aria-invalid={!!studioError || undefined}
                         aria-describedby={studioError ? 'welcome-studio-error' : undefined}
                       />

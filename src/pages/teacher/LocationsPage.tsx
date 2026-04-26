@@ -49,7 +49,7 @@ const LocationsPage = () => {
   useEffect(() => {
     setBreadcrumbs([
       { label: 'Hjem', to: '/teacher' },
-      { label: 'Steder' },
+      { label: 'Adresser' },
     ]);
     return () => setBreadcrumbs(null);
   }, [setBreadcrumbs]);
@@ -74,7 +74,7 @@ const LocationsPage = () => {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Steder" />
+      <MobileTeacherHeader title="Adresser" />
 
       <motion.div
         variants={pageVariants}
@@ -84,7 +84,7 @@ const LocationsPage = () => {
         className="px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-8 pt-6 lg:pt-8">
-          <h1 className="text-3xl font-semibold text-foreground">Steder</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Adresser</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Lagre steder du bruker ofte, så kan du velge dem raskt når du oppretter kurs.
           </p>

@@ -115,15 +115,27 @@ export async function fetchMonthStats(organizationId: string, now: Date = new Da
       revenueByKey.set(key, (revenueByKey.get(key) ?? 0) + (s.amount_paid ?? 0))
     }
   }
+  // Cumulative series capped at today. Each point = running total from the
+  // 1st of the month up to and including that day. Cumulative because the
+  // headline KPI ("Inntekter denne måneden") is a running total — the chart
+  // should illustrate how that number was reached. Capped at today because
+  // future days would otherwise plot as a flat-at-the-final-value tail that
+  // reads like "revenue stalled" instead of "those days haven't happened".
   const daysInMonth = new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth() + 1, 0).getDate()
+  const todayKey = formatLocalDateKey(now)
+  let runningRevenue = 0
+  let runningSignups = 0
   const series: DailyPoint[] = []
   for (let i = 0; i < daysInMonth; i++) {
     const d = addDays(thisMonthStart, i)
     const key = formatLocalDateKey(d)
+    if (key > todayKey) break
+    runningRevenue += revenueByKey.get(key) ?? 0
+    runningSignups += signupsByKey.get(key) ?? 0
     series.push({
       date: key,
-      revenue: revenueByKey.get(key) ?? 0,
-      signups: signupsByKey.get(key) ?? 0,
+      revenue: runningRevenue,
+      signups: runningSignups,
     })
   }
 

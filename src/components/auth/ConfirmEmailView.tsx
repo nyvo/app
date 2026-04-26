@@ -53,7 +53,7 @@ export const ConfirmEmailView = () => {
           {email ? (
             <>
               Vi har sendt en bekreftelseslenke til{' '}
-              <span className="font-mono text-foreground">{email}</span>.
+              <span className="text-foreground">{email}</span>.
               Du må bekrefte e-posten før du kan logge inn.
             </>
           ) : (

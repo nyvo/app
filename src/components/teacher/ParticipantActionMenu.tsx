@@ -175,10 +175,10 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs font-mono text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                    <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
+                    <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -214,10 +214,10 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs font-mono text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.amountPaid != null && signup.amountPaid > 0 && (
-                    <span className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
+                    <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">

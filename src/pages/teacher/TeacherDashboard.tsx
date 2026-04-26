@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, MessageSquare, Users, X, Check } from '@/lib/icons';
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add `MessageSquare` to the icons import when re-enabling.
+import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, Users, X, Check } from '@/lib/icons';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -138,16 +139,23 @@ const TeacherDashboard = () => {
   const refetchDashboardData = useCallback(async () => {
     if (!currentOrganization?.id) return;
 
-    const [coursesResult, nextSessionsResult, signupsResult, messagesResult, month, week] = await Promise.all([
+    // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations fetch + subscription
+    // suppressed. Restore by re-adding `fetchRecentConversations` to the Promise.all
+    // and re-introducing the conversations subscription tuple below.
+    const [coursesResult, nextSessionsResult, signupsResult, month, week] = await Promise.all([
       fetchCourses(currentOrganization.id),
       fetchNextSessions(currentOrganization.id, 3),
       fetchRecentSignups(currentOrganization.id, 4),
-      fetchRecentConversations(currentOrganization.id, 4),
       fetchMonthStats(currentOrganization.id),
       fetchWeekStats(currentOrganization.id),
     ]);
 
-    processDashboardResults(coursesResult, nextSessionsResult, signupsResult, messagesResult);
+    processDashboardResults(
+      coursesResult,
+      nextSessionsResult,
+      signupsResult,
+      { data: [], error: null }, // empty conversations
+    );
     setMonthStats(month);
     setWeekStats(week);
   }, [currentOrganization?.id]);
@@ -156,7 +164,8 @@ const TeacherDashboard = () => {
     [
       { table: 'signups', filter: `organization_id=eq.${currentOrganization?.id}` },
       { table: 'courses', filter: `organization_id=eq.${currentOrganization?.id}` },
-      { table: 'conversations', filter: `organization_id=eq.${currentOrganization?.id}` },
+      // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations subscription removed.
+      // { table: 'conversations', filter: `organization_id=eq.${currentOrganization?.id}` },
     ],
     refetchDashboardData,
     !!currentOrganization?.id,
@@ -180,11 +189,12 @@ const TeacherDashboard = () => {
       setLoadError(null);
 
       try {
-        const [coursesResult, nextSessionsResult, signupsResult, messagesResult, month, week] = await Promise.all([
+        // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations fetch suppressed
+        // (see refetchDashboardData above for the matching dormant pattern).
+        const [coursesResult, nextSessionsResult, signupsResult, month, week] = await Promise.all([
           fetchCourses(currentOrganization.id),
           fetchNextSessions(currentOrganization.id, 3),
           fetchRecentSignups(currentOrganization.id, 4),
-          fetchRecentConversations(currentOrganization.id, 4),
           fetchMonthStats(currentOrganization.id),
           fetchWeekStats(currentOrganization.id),
         ]);
@@ -196,7 +206,12 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        processDashboardResults(coursesResult, nextSessionsResult, signupsResult, messagesResult);
+        processDashboardResults(
+          coursesResult,
+          nextSessionsResult,
+          signupsResult,
+          { data: [], error: null },
+        );
         setMonthStats(month);
         setWeekStats(week);
       } catch (err) {
@@ -259,19 +274,21 @@ const TeacherDashboard = () => {
                         Påmeldinger
                       </Link>
                     </Button>
+                    {/* MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-enable when shipping messages.
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
                       <Link to="/teacher/messages">
                         <MessageSquare className="size-3.5" />
                         Meldinger
                       </Link>
                     </Button>
+                    */}
                   </div>
                 )}
               </header>
 
 
               {showSetupBanner && !isLoading && (
-                <Card className="mb-6 flex items-center justify-between gap-3 px-4 py-3">
+                <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 shadow-xs ring-1 ring-foreground/10">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="size-3" />
@@ -289,7 +306,7 @@ const TeacherDashboard = () => {
                   >
                     <X className="size-3.5" />
                   </Button>
-                </Card>
+                </div>
               )}
 
               {isLoading ? (

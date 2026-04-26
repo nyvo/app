@@ -235,7 +235,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                     !s.expanded && '-rotate-90',
                   )}
                 />
-                <span className="text-sm font-medium font-mono tabular-nums text-foreground">{g.year}</span>
+                <span className="text-sm font-medium tabular-nums text-foreground">{g.year}</span>
               </div>
               <span className="text-xs tabular-nums text-muted-foreground shrink-0">
                 {g.rows.length} kurs

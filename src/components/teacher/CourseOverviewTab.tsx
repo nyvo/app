@@ -1,9 +1,9 @@
 import React from 'react';
-import {
-  Image,
-  Send,
-} from '@/lib/icons';
-import { Button } from '@/components/ui/button';
+import { Image } from '@/lib/icons';
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add `Send` icon + `Button`
+// import + the trigger block in the body when re-enabling messages.
+// import { Send } from '@/lib/icons';
+// import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { Badge } from '@/components/ui/badge';
@@ -97,6 +97,8 @@ interface CourseOverviewTabProps {
   totalParticipantCount: number;
 
   // Callbacks
+  /** MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): handler kept on the prop interface so
+   * CourseDetailPage can keep passing it; the trigger button in this component is hidden. */
   onMessageParticipants: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
@@ -111,7 +113,8 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   generatedCourseWeeks,
   hasRealSessions,
   sessionEditHandlers,
-  onMessageParticipants,
+  // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): handler still received but unused.
+  onMessageParticipants: _onMessageParticipants,
   recentParticipants,
   totalParticipantCount: _totalParticipantCount,
   kursplanRef,
@@ -147,7 +150,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               </div>
               <div>
                 <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Pris</p>
-                <p className="text-sm font-medium font-mono tabular-nums text-foreground">{formatKroner(course.price)}</p>
+                <p className="text-sm font-medium tabular-nums text-foreground">{formatKroner(course.price)}</p>
               </div>
             </div>
 
@@ -170,6 +173,10 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             </div>
           </div>
 
+          {/* MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): "Send melding til påmeldte"
+              hidden until messages page ships. The MessageParticipantsDialog is
+              still mounted in CourseDetailPage but unreachable via this button. */}
+          {/*
           <div className="flex flex-col gap-2 pt-6 sm:flex-row">
             <Button
               variant="outline-soft"
@@ -182,6 +189,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               Send melding til påmeldte
             </Button>
           </div>
+          */}
         </CardContent>
       </Card>
 
@@ -269,7 +277,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                    <p className="text-xs font-mono truncate text-muted-foreground">{p.email}</p>
+                    <p className="text-xs truncate text-muted-foreground">{p.email}</p>
                   </div>
                   <SignupStatusBadge status={p.status} paymentStatus={p.paymentStatus} size="sm" />
                 </div>

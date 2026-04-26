@@ -142,7 +142,7 @@ function Samples() {
       {/* Text hierarchy */}
       <div className="space-y-2 rounded-lg border border-border bg-card p-6">
         <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Inntekter</p>
-        <p className="text-3xl font-semibold font-mono tabular-nums text-foreground">42 800 kr</p>
+        <p className="text-3xl font-semibold tabular-nums text-foreground">42 800 kr</p>
         <p className="text-sm text-muted-foreground">Denne måneden</p>
         <p className="text-xs text-tertiary-foreground">Oppdatert for 2 minutter siden</p>
       </div>
@@ -171,7 +171,7 @@ function Samples() {
       {/* Form field */}
       <div className="space-y-1.5">
         <label htmlFor="preview-input" className="text-sm font-medium text-foreground">Kursnavn</label>
-        <Input id="preview-input" placeholder="F.eks. Morgen Vinyasa" />
+        <Input id="preview-input" />
       </div>
 
       {/* Row list with dividers */}
@@ -184,7 +184,7 @@ function Samples() {
           <div key={row.name} className="flex items-center justify-between px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{row.name}</p>
-              <p className="text-xs font-mono text-muted-foreground">{row.meta}</p>
+              <p className="text-xs text-muted-foreground">{row.meta}</p>
             </div>
             <span className="text-xs font-medium tracking-wide text-muted-foreground">{row.status}</span>
           </div>

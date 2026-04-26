@@ -25,13 +25,16 @@ export const AUTH_ERRORS = {
   rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
 } as const
 
+// Placeholder rule (CLAUDE.md): default to no placeholder; only allow format
+// hints. Most fields below are intentionally empty — the visible label does
+// the job. `passwordMin` is the one earned exception (length-format hint).
 export const AUTH_PLACEHOLDERS = {
-  email: 'navn@eksempel.no',
-  password: 'Skriv inn passord',
+  email: '',
+  password: '',
   passwordMin: 'Minst 10 tegn',
-  confirmPassword: 'Gjenta passordet',
-  studioName: 'F.eks. Yoga med Ola',
-  fullName: 'Ola Nordmann',
+  confirmPassword: '',
+  studioName: '',
+  fullName: '',
 } as const
 
 export const AUTH_HINTS = {
