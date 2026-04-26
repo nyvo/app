@@ -2,30 +2,51 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, Leaf, AlertCircle, Home, Calendar, Clock, MapPin, CreditCard, Mail } from '@/lib/icons';
+import { Leaf, AlertCircle, Home, CircleCheck, ImageIcon } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
+
+const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
+const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
+const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+
+// Today, Norwegian short form: "26. apr 2026". Used in the receipt footer.
+function formatBookingDate(d: Date): string {
+  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Short reference derived from the signup UUID — first 8 hex chars uppercase
+// with a dash for readability ("A3F4-C2D8"). Stable for support lookups.
+function shortRef(id: string): string {
+  const hex = id.replace(/-/g, '').toUpperCase();
+  return `${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+}
 
 interface SignupDetails {
   id: string;
   participant_name: string;
   participant_email: string;
   amount_paid: number;
+  // The next four fields are filled by migration 20260426010000.
+  // Older RPC deploys return undefined; the page renders graceful fallbacks.
+  created_at?: string | null;
   course: {
     id: string;
     title: string;
     start_date: string | null;
     time_schedule: string | null;
     location: string | null;
+    image_url?: string | null;
     organization: {
       slug: string;
       name: string;
+      email?: string | null;
+      logo_url?: string | null;
     };
   };
 }
@@ -125,13 +146,13 @@ const CheckoutSuccessPage = () => {
     fetchSignupDetails();
   }, [lookupId, transactionId, merchantReference, isFreeSignup]);
 
-  // Format date for display
-  const formatDate = (dateString: string | null): string => {
-    if (!dateString) return 'Ikke angitt';
+  // Format a YYYY-MM-DD date as "Mandag 2. februar". Returns null on bad input
+  // so callers can fall back gracefully instead of rendering "Ikke angitt".
+  const formatDate = (dateString: string | null): string | null => {
+    if (!dateString) return null;
     const date = new Date(dateString);
-    const days = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
-    const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
-    return `${days[date.getDay()]} ${date.getDate()}. ${months[date.getMonth()]}`;
+    if (isNaN(date.getTime())) return null;
+    return `${WEEKDAYS[date.getDay()]} ${date.getDate()}. ${MONTHS[date.getMonth()]}`;
   };
 
 
@@ -249,100 +270,131 @@ const CheckoutSuccessPage = () => {
       </header>
 
       <main className="pt-24 px-4 sm:px-6 pb-24">
-        <div className="mx-auto max-w-4xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+        <div className="mx-auto max-w-xl">
+          {(() => {
+            const dateLong = formatDate(signup?.course.start_date ?? null);
+            const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
+            const orgName = signup?.course.organization?.name ?? null;
+            const orgLogo = signup?.course.organization?.logo_url ?? null;
+            const orgEmail = signup?.course.organization?.email ?? null;
+            const courseImage = signup?.course.image_url ?? null;
+            const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
+            const bookedAt = signup?.created_at ? new Date(signup.created_at) : new Date();
+            const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
 
-            {/* Left Column: Success Message */}
-            <div className="flex flex-col justify-center text-center md:text-left pt-4 md:pt-8">
-              <div className="mx-auto md:mx-0 mb-6 flex size-16 items-center justify-center rounded-full bg-success/10">
-                <CheckCircle2 className="size-8 text-success" />
-              </div>
-
-              <h1 className="text-3xl font-semibold tracking-tight mb-4 text-foreground">
-                {isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført'}
-              </h1>
-
-              <div className="text-base text-muted-foreground mb-6">
-                {signup ? (
-                  <p>Du er påmeldt <span className="font-medium text-foreground">{signup.course.title}</span>.</p>
-                ) : (
-                  <p>{isFreeSignup ? 'Du er nå påmeldt.' : 'Betalingen er bekreftet.'}</p>
-                )}
-              </div>
-
-              {/* Email confirmation notice */}
-              <Alert variant="info" icon={Mail} className="mb-8 text-left">
-                <div>
-                  <AlertTitle variant="info" className="text-base font-medium">Bekreftelse sendt</AlertTitle>
-                  <AlertDescription variant="info">
-                    {signup ? (
-                      <>Kvittering sendt til <span className="font-mono text-muted-foreground">{signup.participant_email}</span>.</>
+            return (
+              <>
+                {/* Studio brand chip — centered above the success card, tells the
+                    user "this confirmation is from {studio}". Falls back to a
+                    monogram tile when the studio has no uploaded logo. */}
+                {orgName && (
+                  <div className="flex items-center justify-center gap-2.5 pt-4 sm:pt-8">
+                    {orgLogo ? (
+                      <img
+                        src={orgLogo}
+                        alt=""
+                        className="size-8 rounded-md object-cover bg-muted"
+                      />
                     ) : (
-                      <>Kvittering sendt til e-postadressen du oppga.</>
-                    )}
-                  </AlertDescription>
-                </div>
-              </Alert>
-
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <Button asChild variant="default" size="default" className="w-full sm:w-auto">
-                  <Link to={studioUrl}>Se flere kurs</Link>
-                </Button>
-              </div>
-            </div>
-
-            {/* Right Column: Order Details */}
-            {signup && (
-              <Card className="p-6 md:p-8">
-                <div className="space-y-5">
-                  <div className="pb-5 border-b border-border">
-                    <span className="text-xs font-medium tracking-wide mb-1 block text-muted-foreground">Kurs</span>
-                    <span className="text-base font-medium block text-foreground">{signup.course.title}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {signup.course.start_date && (
-                      <div>
-                        <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
-                          <Calendar className="size-3.5" /> Dato
-                        </span>
-                        <span className="text-base font-medium text-foreground">
-                          {formatDate(signup.course.start_date)}
-                        </span>
+                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">
+                        {orgName.charAt(0).toUpperCase()}
                       </div>
                     )}
+                    <span className="text-base font-semibold text-foreground">{orgName}</span>
+                  </div>
+                )}
 
-                    {signup.course.time_schedule && (
-                      <div>
-                        <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
-                          <Clock className="size-3.5" /> Tid
-                        </span>
-                        <span className="text-base font-medium text-foreground tabular-nums">
-                          kl. {extractTimeFromSchedule(signup.course.time_schedule)?.time ?? ''}
-                        </span>
-                      </div>
-                    )}
+                {/* Success card — single centered surface, Uvodo-shaped. */}
+                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-card p-7 sm:p-10 ring-1 ring-foreground/[0.04] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.14)]">
+                  {/* Soft success indicator */}
+                  <div className="flex size-12 items-center justify-center rounded-full bg-success/10">
+                    <CircleCheck className="size-6 text-success" />
                   </div>
 
-                  {signup.course.location && (
-                    <div>
-                      <span className="text-xs font-medium tracking-wide mb-1 flex items-center gap-1.5 text-muted-foreground">
-                        <MapPin className="size-3.5" /> Sted
-                      </span>
-                      <span className="text-base font-medium text-foreground">{signup.course.location}</span>
-                    </div>
+                  {/* Hero copy — warm, single-color subline */}
+                  <h1 className="mt-6 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+                    Du er påmeldt.
+                  </h1>
+                  <p className="mt-3 text-base text-muted-foreground">
+                    {signup
+                      ? `Du er påmeldt. Vi har sendt en bekreftelse til ${signup.participant_email}.`
+                      : isFreeSignup
+                        ? 'Du er påmeldt. Vi har sendt en bekreftelse til e-posten din.'
+                        : 'Betalingen er bekreftet. Vi har sendt en bekreftelse til e-posten din.'}
+                  </p>
+
+                  {signup && (
+                    <>
+                      {/* Course card — image + title + date/time. Nested card-in-card. */}
+                      <div className="mt-7 flex items-center gap-4 rounded-lg border border-border bg-background p-3.5">
+                        <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                          {courseImage ? (
+                            <img
+                              src={courseImage}
+                              alt=""
+                              className="absolute inset-0 size-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex size-full items-center justify-center text-muted-foreground">
+                              <ImageIcon className="size-5" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">{signup.course.title}</p>
+                          {whenLine && (
+                            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{whenLine}</p>
+                          )}
+                          {signup.course.location && (
+                            <p className="mt-0.5 text-xs text-muted-foreground truncate">{signup.course.location}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Discreet meta row — booking date + paid amount */}
+                      <div className="mt-6 border-t border-border pt-5 space-y-2.5 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Påmeldt</span>
+                          <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">{isFree ? 'Pris' : 'Betalt'}</span>
+                          <span className="font-medium text-foreground tabular-nums">
+                            {isFree ? 'Gratis' : formatKroner(signup.amount_paid)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Referanse</span>
+                          <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>
+                        </div>
+                      </div>
+                    </>
                   )}
 
-                  <div className="pt-2 flex items-center justify-between">
-                    <span className="text-xs font-medium tracking-wide flex items-center gap-1.5 text-muted-foreground">
-                      <CreditCard className="size-3.5" /> Betalt
-                    </span>
-                    <span className="text-xl font-semibold tracking-tight text-foreground font-mono tabular-nums">{formatKroner(signup.amount_paid)}</span>
-                  </div>
+                  {/* Support — contact studio if anything's off */}
+                  {orgEmail && (
+                    <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
+                      Trenger du hjelp? Send en e-post til{' '}
+                      <a
+                        href={`mailto:${orgEmail}`}
+                        className="text-foreground underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground"
+                      >
+                        {orgEmail}
+                      </a>
+                      .
+                    </div>
+                  )}
                 </div>
-              </Card>
-            )}
-          </div>
+
+                {/* Single calm CTA below the card */}
+                <div className="mt-8 flex justify-center">
+                  <Button asChild size="default">
+                    <Link to={studioUrl}>Se flere kurs</Link>
+                  </Button>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </main>
     </div>

@@ -55,7 +55,7 @@ const LandingPage = () => {
       <section className="relative pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-5xl font-semibold mb-5 text-foreground md:text-6xl">
+            <h1 className="font-serif text-5xl font-medium tracking-tight mb-5 text-foreground md:text-6xl">
               Påmelding og betaling <br className="hidden md:block" />
               for yogastudioer.
             </h1>
@@ -109,7 +109,7 @@ const LandingPage = () => {
             Hvordan det fungerer
           </h2>
           <p className="text-base text-muted-foreground">
-            Fra planlegging til utbetaling på 1-2-3.
+            Fra planlegging til utbetaling i tre steg.
           </p>
         </motion.div>
 
@@ -187,7 +187,7 @@ const LandingPage = () => {
               </h3>
             </div>
             <p className="text-base mb-8 text-muted-foreground">
-              Del én lenke med elevene. De melder seg på og betaler selv. Ingen
+              Del én lenke med deltakerne. De melder seg på og betaler selv. Ingen
               meldinger frem og tilbake.
             </p>
             {/* Mini course page mockup */}
@@ -313,7 +313,7 @@ const LandingPage = () => {
                   <CreditCard className="size-3.5" /> Betaling
                 </div>
                 <h3 className="text-lg font-semibold mb-4 text-foreground">
-                  Inntekter på autopilot.
+                  Inntekter uten manuelt arbeid.
                 </h3>
                 <p className="text-base text-muted-foreground mb-8">
                   Slipp fakturaer og manuell oppfølging. Pengene kommer inn når
@@ -453,11 +453,11 @@ const LandingPage = () => {
           >
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">100 %</p>
-              <p className="text-base mt-1 text-primary-muted-foreground">Norsk</p>
+              <p className="text-base mt-1 text-primary-muted-foreground">Laget i Norge</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">Gratis</p>
-              <p className="text-base mt-1 text-primary-muted-foreground">Ingen månedskostnad</p>
+              <p className="text-base mt-1 text-primary-muted-foreground">Ingen abonnement</p>
             </motion.div>
             <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">Fiken</p>
@@ -534,7 +534,7 @@ const LandingPage = () => {
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3.5 text-foreground" />
                 </div>
-                <span>Ubegrenset antall kurs og elever</span>
+                <span>Ubegrenset antall kurs og deltakere</span>
               </li>
               <li className="text-base flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
@@ -546,7 +546,7 @@ const LandingPage = () => {
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                   <Check className="size-3.5 text-foreground" />
                 </div>
-                <span>Automatiske påminnelser til elever</span>
+                <span>Automatiske påminnelser til deltakere</span>
               </li>
               <li className="text-base flex items-start gap-3 text-muted-foreground">
                 <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">

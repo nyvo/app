@@ -1,15 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MapPin, Leaf } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { BookOpen } from '@/lib/icons';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { ScheduleDayList } from '@/components/public/schedule/ScheduleDayList';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { BookOpen, ArrowUpDown } from '@/lib/icons';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchOrganizationBySlug, type PublicOrganization } from '@/services/organizations';
+import { PublicNav } from '@/components/public/marketing/PublicNav';
+import { PublicFooter } from '@/components/public/marketing/PublicFooter';
+import { StudioHero } from '@/components/public/studio/StudioHero';
+import { FeaturedCourse } from '@/components/public/studio/FeaturedCourse';
+import { CourseCard } from '@/components/public/studio/CourseCard';
 import type { CourseType } from '@/types/database';
+
+const CANCELLED_GRACE_DAYS = 30;
+const PAGE_SIZE = 12;
 
 type TypeFilter = 'all' | CourseType;
 
@@ -17,10 +24,17 @@ const TYPE_LABELS: Record<TypeFilter, string> = {
   all: 'Alle',
   'course-series': 'Kursrekker',
   event: 'Arrangementer',
-  online: 'Nett',
+  online: 'Nettkurs',
 };
 
-const CANCELLED_GRACE_DAYS = 30;
+type SortKey = 'soonest' | 'price-asc' | 'price-desc' | 'title';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  soonest: 'Snarest',
+  'price-asc': 'Lavest pris',
+  'price-desc': 'Høyest pris',
+  title: 'Tittel A–Å',
+};
 
 function isVisible(course: PublicCourseWithDetails): boolean {
   if (course.status === 'cancelled') {
@@ -33,6 +47,13 @@ function isVisible(course: PublicCourseWithDetails): boolean {
   return course.status === 'active' || course.status === 'upcoming';
 }
 
+function getDisplayDateMs(course: PublicCourseWithDetails): number {
+  const d = course.next_session?.session_date ?? course.start_date;
+  if (!d) return Number.POSITIVE_INFINITY;
+  const t = new Date(d).getTime();
+  return isNaN(t) ? Number.POSITIVE_INFINITY : t;
+}
+
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [organization, setOrganization] = useState<PublicOrganization | null>(null);
@@ -40,6 +61,14 @@ const PublicCoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [sortKey, setSortKey] = useState<SortKey>('soonest');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Reset pagination when the filter or sort changes — user always lands on
+  // the first page after re-narrowing.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [typeFilter, sortKey]);
 
   useEffect(() => {
     async function loadData() {
@@ -71,56 +100,77 @@ const PublicCoursesPage = () => {
     loadData();
   }, [slug]);
 
-  const visibleCourses = useMemo(
-    () => courses.filter(isVisible),
-    [courses],
+  const visible = useMemo(() => courses.filter(isVisible), [courses]);
+
+  const sorted = useMemo(
+    () => visible.slice().sort((a, b) => getDisplayDateMs(a) - getDisplayDateMs(b)),
+    [visible],
+  );
+
+  const featured = useMemo(
+    () => sorted.find(c => c.status !== 'cancelled') ?? null,
+    [sorted],
+  );
+
+  // Everything except the featured course goes in the grid
+  const gridSource = useMemo(
+    () => sorted.filter(c => c !== featured),
+    [sorted, featured],
   );
 
   const typeCounts = useMemo(() => {
     const counts: Record<TypeFilter, number> = {
-      all: visibleCourses.length,
+      all: gridSource.length,
       'course-series': 0,
       event: 0,
       online: 0,
     };
-    for (const c of visibleCourses) counts[c.course_type]++;
+    for (const c of gridSource) counts[c.course_type]++;
     return counts;
-  }, [visibleCourses]);
+  }, [gridSource]);
+
+  const availableTypes = (Object.keys(TYPE_LABELS) as TypeFilter[]).filter(
+    t => t === 'all' || typeCounts[t] > 0,
+  );
+  const showTypeFilter = availableTypes.length > 1;
 
   const filtered = useMemo(
-    () => typeFilter === 'all' ? visibleCourses : visibleCourses.filter(c => c.course_type === typeFilter),
-    [visibleCourses, typeFilter],
+    () =>
+      typeFilter === 'all'
+        ? gridSource
+        : gridSource.filter(c => c.course_type === typeFilter),
+    [gridSource, typeFilter],
   );
 
-  const availableTypes = (Object.keys(TYPE_LABELS) as TypeFilter[])
-    .filter(t => t === 'all' || typeCounts[t] > 0);
-
-  const showTypeFilter = availableTypes.length > 2; // >1 real type + 'all'
+  const filteredSorted = useMemo(() => {
+    const arr = filtered.slice();
+    switch (sortKey) {
+      case 'price-asc':
+        return arr.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+      case 'price-desc':
+        return arr.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+      case 'title':
+        return arr.sort((a, b) => a.title.localeCompare(b.title, 'nb'));
+      case 'soonest':
+      default:
+        return arr.sort((a, b) => getDisplayDateMs(a) - getDisplayDateMs(b));
+    }
+  }, [filtered, sortKey]);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
-      {/* Minimal navbar */}
-      <nav className="sticky top-0 z-50 w-full bg-surface-elevated backdrop-blur-md border-b border-border">
-        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-background border border-border group-hover:border-ring transition-colors">
-              <Leaf className="size-4 text-foreground" />
-            </div>
-            <span className="text-base font-medium text-foreground">Ease</span>
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden flex flex-col">
+      <PublicNav />
 
-      <main className="mx-auto max-w-4xl px-6 py-8 sm:py-12">
+      <main className="flex-1">
         {loading && (
-          <div className="flex items-center justify-center py-24">
+          <div className="flex items-center justify-center py-32">
             <Spinner size="lg" />
           </div>
         )}
 
         {error && !loading && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-xl font-semibold mb-2 text-foreground">{error}</h3>
+          <div className="flex flex-col items-center justify-center py-32 text-center px-6">
+            <h3 className="text-2xl font-semibold mb-2 tracking-tight text-foreground">{error}</h3>
             <Button asChild variant="link" className="text-muted-foreground">
               <Link to="/">Gå til forsiden</Link>
             </Button>
@@ -128,62 +178,126 @@ const PublicCoursesPage = () => {
         )}
 
         {organization && !loading && !error && (
-          <>
-            {/* Tight studio header — no hero */}
-            <header className="mb-8">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                {organization.name}
-              </h1>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                {organization.city && (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" />
-                    {organization.city}
-                  </span>
-                )}
-                {organization.description && (
-                  <span className="max-w-prose">{organization.description}</span>
-                )}
-              </div>
-            </header>
+          <div className="mx-auto max-w-6xl px-5 sm:px-8">
+            <StudioHero organization={organization} />
 
-            {/* Type filter */}
-            {showTypeFilter && (
-              <div className="mb-4">
-                <ToggleGroup
-                  type="single"
-                  value={typeFilter}
-                  onValueChange={(v) => { if (v) setTypeFilter(v as TypeFilter); }}
-                  variant="segmented"
-                  aria-label="Filtrer kurstyper"
-                >
-                  {availableTypes.map(t => (
-                    <ToggleGroupItem key={t} value={t}>
-                      {TYPE_LABELS[t]}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+            {visible.length === 0 ? (
+              <div className="py-12">
+                <EmptyState
+                  icon={BookOpen}
+                  title="Ingen planlagte kurs"
+                  description="Det er ingen planlagte kurs akkurat nå. Kom tilbake snart."
+                  variant="public"
+                />
               </div>
-            )}
-
-            {/* Schedule */}
-            {filtered.length > 0 ? (
-              <ScheduleDayList courses={filtered} />
             ) : (
-              <EmptyState
-                icon={BookOpen}
-                title="Ingen planlagte kurs"
-                description={
-                  typeFilter === 'all'
-                    ? 'Det er ingen planlagte kurs akkurat nå.'
-                    : 'Ingen kurs i denne kategorien.'
-                }
-                variant="public"
-              />
+              <div className="space-y-12 pb-20">
+                {featured && <FeaturedCourse course={featured} />}
+
+                {gridSource.length > 0 && (
+                  <section className="space-y-6">
+                    <header className="space-y-4">
+                      <div className="space-y-1">
+                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                          Timer og kurs
+                        </h2>
+                        <p className="text-sm text-muted-foreground max-w-md">
+                          Alle kurs, sortert etter hva som starter snarest.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        {showTypeFilter ? (
+                          <div role="group" aria-label="Filtrer kurstyper" className="flex flex-wrap gap-2">
+                            {availableTypes.map(t => {
+                              const active = typeFilter === t;
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setTypeFilter(t)}
+                                  aria-pressed={active}
+                                  className={cn(
+                                    'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium',
+                                    'border transition-all duration-200 outline-none',
+                                    'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                                    active
+                                      ? 'bg-foreground text-background border-foreground'
+                                      : 'bg-background text-foreground border-border hover:border-foreground/40 hover:bg-muted/50',
+                                  )}
+                                >
+                                  {TYPE_LABELS[t]}
+                                  {t !== 'all' && (
+                                    <span
+                                      className={cn(
+                                        'tabular-nums text-xs',
+                                        active ? 'text-background/60' : 'text-muted-foreground',
+                                      )}
+                                    >
+                                      {typeCounts[t]}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : <span />}
+
+                        <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
+                          <SelectTrigger size="sm" aria-label="Sorter kurs" className="min-w-[200px] gap-1.5">
+                            <ArrowUpDown className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+                            <span className="text-muted-foreground">Sorter etter:</span>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
+                              <SelectItem key={k} value={k}>
+                                {SORT_LABELS[k]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </header>
+
+                    {filteredSorted.length === 0 ? (
+                      <p className="py-12 text-center text-sm text-muted-foreground">
+                        Ingen kurs i denne kategorien.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+                          {filteredSorted.slice(0, visibleCount).map(course => (
+                            <CourseCard key={course.id} course={course} ratio="portrait" />
+                          ))}
+                        </div>
+
+                        {filteredSorted.length > visibleCount && (
+                          <div className="flex flex-col items-center gap-2 pt-8">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="default"
+                              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+                            >
+                              Vis flere
+                            </Button>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              Viser {visibleCount} av {filteredSorted.length} kurs
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </section>
+                )}
+              </div>
             )}
-          </>
+          </div>
         )}
       </main>
+
+      <PublicFooter studioName={organization?.name} studioCity={organization?.city ?? null} />
     </div>
   );
 };

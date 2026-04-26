@@ -1,24 +1,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Lock, ChevronLeft } from '@/lib/icons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 
 export interface EmbeddedPaymentProps {
   sid: string;
   courseName: string;
+  courseMeta: string | null;
+  ticketLabel: string;
+  customerName: string;
+  customerEmail: string;
   price: number;
   onPaymentSuccess: (transactionId: string) => void;
   onPaymentError: (error: string) => void;
   onBack: () => void;
 }
 
+/**
+ * Step 2 — receipt summary + Dintero iframe in one folded-receipt card.
+ * Mirrors the step-1 panel structure (course title + meta, then price
+ * breakdown) so the user sees the same receipt they confirmed in step 1,
+ * now locked. "Endre" returns to step 1 to edit name/email.
+ */
 export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
   sid,
   courseName,
+  courseMeta,
+  ticketLabel,
+  customerName,
+  customerEmail,
   price,
   onPaymentSuccess,
   onPaymentError,
@@ -69,63 +81,63 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
     };
   }, [sid, onPaymentSuccess, onPaymentError]);
 
-  return (
-    <div className="space-y-5">
-      <Button
-        variant="plain"
-        size="xs"
-        type="button"
-        onClick={onBack}
-        className="font-medium"
-      >
-        <ChevronLeft className="size-3.5" />
-        Tilbake
-      </Button>
+  const fee = calculateServiceFee(price);
+  const total = calculateTotalPrice(price);
 
-      <div className="space-y-3 rounded-lg bg-muted p-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-foreground">{courseName}</span>
-          <span className="text-sm font-mono tabular-nums text-foreground">{formatKroner(price)}</span>
+  return (
+    <div className="rounded-lg border border-border bg-card p-6 ring-1 ring-foreground/[0.04] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.12)]">
+      {/* Customer row — inline "Endre" replaces the detached "Tilbake" link */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{customerName}</p>
+          <p className="text-sm text-muted-foreground truncate mt-0.5">{customerEmail}</p>
         </div>
-        {calculateServiceFee(price) > 0 && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Servicegebyr</span>
-            <span className="text-sm font-mono tabular-nums text-muted-foreground">
-              {formatKroner(calculateServiceFee(price))}
-            </span>
+        <Button variant="plain" size="xs" type="button" onClick={onBack}>
+          Endre
+        </Button>
+      </div>
+
+      {/* Course block */}
+      <div className="mt-4 border-t border-border pt-4">
+        <p className="text-sm font-medium text-foreground">{courseName}</p>
+        {courseMeta && <p className="text-sm text-muted-foreground mt-0.5">{courseMeta}</p>}
+      </div>
+
+      {/* Price breakdown — same shape as step 1, locked */}
+      <div className="mt-4 border-t border-border pt-4 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-foreground">{ticketLabel}</span>
+          <span className="tabular-nums text-foreground">{formatKroner(price)}</span>
+        </div>
+        {fee > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Servicegebyr</span>
+            <span className="tabular-nums text-muted-foreground">{formatKroner(fee)}</span>
           </div>
         )}
-        <Separator />
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium text-foreground">Totalt</span>
-          <span className="text-sm font-mono font-medium tabular-nums text-foreground">
-            {formatKroner(calculateTotalPrice(price))}
-          </span>
+        <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
+          <span className="text-foreground">Totalt</span>
+          <span className="tabular-nums text-foreground">{formatKroner(total)}</span>
         </div>
       </div>
 
+      {/* Dintero iframe — same continuous card surface */}
       <div
         ref={containerRef}
-        className="min-h-[420px] w-full overflow-hidden rounded-lg border border-border"
+        className="mt-5 min-h-[420px] w-full overflow-hidden rounded-md border border-border"
       />
 
       {cancelled && (
-        <Alert variant="info" size="sm">
+        <Alert variant="info" size="sm" className="mt-4">
           <AlertDescription>Betalingen ble avbrutt. Du kan starte på nytt.</AlertDescription>
         </Alert>
       )}
 
       {error && (
-        <Alert variant="error" size="sm">
+        <Alert variant="error" size="sm" className="mt-4">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-
-      <p className="text-xs flex items-center justify-center gap-1 text-center text-muted-foreground">
-        <Lock className="size-3.5" />
-        <CreditCard className="size-3.5" />
-        Sikker betaling via Dintero
-      </p>
     </div>
   );
 };
