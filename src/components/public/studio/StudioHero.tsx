@@ -37,7 +37,7 @@ export function StudioHero({ organization }: StudioHeroProps) {
             {organization.name}
           </h1>
           {organization.description && (
-            <p className="mt-4 max-w-2xl text-base sm:text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-4 max-w-[580px] text-[17px] leading-[1.55] text-muted-foreground">
               {organization.description}
             </p>
           )}
@@ -67,14 +67,14 @@ export function StudioHero({ organization }: StudioHeroProps) {
           )}
 
           {address && (
-            <div className="flex items-start gap-2.5 text-sm text-foreground leading-snug">
+            <div className="flex items-start gap-2.5 text-[13px] text-foreground leading-[1.45]">
               <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
               <span>{address}</span>
             </div>
           )}
 
           {organization.email && (
-            <div className="flex items-start gap-2.5 text-sm text-foreground leading-snug">
+            <div className="flex items-start gap-2.5 text-[13px] text-foreground leading-[1.45]">
               <Mail className="size-3.5 mt-0.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
               <a
                 href={`mailto:${organization.email}`}
@@ -92,7 +92,7 @@ export function StudioHero({ organization }: StudioHeroProps) {
                 href={mapsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline decoration-disabled-foreground underline-offset-[3px] hover:decoration-foreground"
+                className="inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground underline decoration-disabled-foreground underline-offset-[3px] hover:decoration-foreground"
               >
                 Få veibeskrivelse
                 <ArrowRight className="size-3" strokeWidth={2} />

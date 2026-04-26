@@ -196,7 +196,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
 
         {/* Title */}
         <h3 className={cn(
-          'text-[15px] sm:text-base font-semibold leading-snug tracking-tight line-clamp-2',
+          'text-[15px] font-semibold leading-[1.3] line-clamp-2',
           isDisabled ? 'text-muted-foreground' : 'text-foreground',
         )}>
           <Link

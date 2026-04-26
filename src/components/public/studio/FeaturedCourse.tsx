@@ -94,7 +94,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
         <div className="space-y-5">
           {/* When line — single tier, sentence case, tabular */}
           {longDate && (
-            <div className="inline-flex items-center gap-2 text-sm font-medium text-foreground tabular-nums">
+            <div className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground tabular-nums">
               <span className="size-1.5 rounded-full bg-success" />
               {longDate}
               {time && (
@@ -107,19 +107,19 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
           )}
 
           {/* Display title */}
-          <h3 className="font-semibold tracking-tight text-foreground text-3xl sm:text-4xl md:text-[2.75rem] leading-[1.05]">
+          <h3 className="font-semibold text-foreground text-[clamp(1.875rem,3vw,2.5rem)] leading-[1.05]">
             {course.title}
           </h3>
 
           {/* Subtitle */}
           {course.description && (
-            <p className="text-base text-muted-foreground leading-relaxed line-clamp-3 max-w-prose">
+            <p className="text-base text-muted-foreground leading-[1.55] line-clamp-3 max-w-prose">
               {course.description}
             </p>
           )}
 
           {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground pt-2">
+          <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-sm text-muted-foreground pt-2">
             {instructor && (
               <span className="inline-flex items-center gap-1.5">
                 <User className="size-3.5" strokeWidth={1.75} />
@@ -144,7 +144,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
         {/* CTA / price row */}
         <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
           <div className="space-y-0.5">
-            <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+            <div className="text-2xl font-semibold text-foreground tabular-nums">
               {formatCoursePrice(course.price)}
             </div>
             {isSeries && course.total_weeks && (

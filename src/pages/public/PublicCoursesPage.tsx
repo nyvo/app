@@ -197,8 +197,8 @@ const PublicCoursesPage = () => {
                 {gridSource.length > 0 && (
                   <section className="space-y-6">
                     <header className="space-y-4">
-                      <div className="space-y-1">
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                      <div className="space-y-1.5">
+                        <h2 className="text-xl font-semibold text-foreground">
                           Timer og kurs
                         </h2>
                         <p className="text-sm text-muted-foreground max-w-md">

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { formatKroner } from '@/lib/utils';
+import { formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface MobilePriceBarProps {
@@ -13,7 +13,6 @@ interface MobilePriceBarProps {
 export function MobilePriceBar({ course }: MobilePriceBarProps) {
   const isFull = course.max_participants !== null && course.spots_available <= 0;
   const isCancelled = course.status === 'cancelled';
-  const isFree = !course.price || course.price <= 0;
   const lowSpots =
     course.max_participants !== null &&
     course.spots_available > 0 &&
@@ -35,10 +34,10 @@ export function MobilePriceBar({ course }: MobilePriceBarProps) {
       <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between gap-4">
         <div className="min-w-0">
           <div className="text-xl font-semibold tracking-tight tabular-nums text-foreground">
-            {isFree ? 'Gratis' : formatKroner(course.price)}
+            {formatCoursePrice(course.price)}
           </div>
           {lowSpots && !isFull && (
-            <div className="text-[11px] font-medium tracking-wide uppercase text-warning">
+            <div className="text-xs font-medium text-warning">
               {course.spots_available} plasser igjen
             </div>
           )}

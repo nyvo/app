@@ -17,6 +17,9 @@ interface PublicCourseOrganization {
   slug: string
   dintero_onboarding_complete: boolean
   default_course_image_url: string | null
+  address: string | null
+  postal_code: string | null
+  city: string | null
 }
 
 // Internal type for the joined course query result
@@ -153,7 +156,7 @@ export async function fetchPublicCourses(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url),
+      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url, address, postal_code, city),
       course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
@@ -350,7 +353,7 @@ export async function fetchPublicCourseById(
       image_url,
       organization_id,
       practical_info,
-      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url),
+      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url, address, postal_code, city),
       course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
     `)
     .eq('id', courseId)

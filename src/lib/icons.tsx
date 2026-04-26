@@ -105,6 +105,7 @@ export {
   MapPinPlus,
   MessageCircle,
   MessageSquare,
+  Minus,
   MoreHorizontal,
   PanelLeft,
   Paperclip,

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Plus, Minus } from '@/lib/icons';
 import { EmbeddedPayment } from '@/components/public/course-details/EmbeddedPayment';
 import { friendlyError } from '@/lib/error-messages';
 import { formatKroner, isValidEmail } from '@/lib/utils';
@@ -17,19 +18,18 @@ import type { AvailableTicketType } from '@/types/database';
 
 const SHORT_WEEKDAYS = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'] as const;
 
-// Builds the muted line under the course title in the booking summary:
-// "Kursrekke · 6 ganger · ons. kl. 18:00".
+// Builds the meta line above the course title in the booking summary:
+// "Kursrekke · ons. kl. 18:00". Count ("X ganger") is intentionally NOT
+// here — it lives next to the price as `for X ganger`, anchoring the
+// total to what the buyer is paying for.
 function buildBookingMeta(course: PublicCourseWithDetails): string | null {
   const parts: string[] = [];
   const typeLabel =
     course.course_type === 'course-series' ? 'Kursrekke'
-    : course.course_type === 'online' ? 'Online'
+    : course.course_type === 'online' ? 'Nettkurs'
     : course.course_type === 'event' ? 'Arrangement'
     : null;
   if (typeLabel) parts.push(typeLabel);
-  if (course.course_type === 'course-series' && course.total_weeks) {
-    parts.push(`${course.total_weeks} ganger`);
-  }
   const m = course.time_schedule?.match(/(\d{1,2}:\d{2})/);
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
@@ -326,19 +326,20 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
     );
   }
 
-  // Shared chrome — `rounded-lg` per design-system rule (cards never `rounded-xl`).
-  const panelClass =
-    'rounded-lg border border-border bg-card p-6 ring-1 ring-foreground/[0.04] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.12)]';
+  // Shared chrome — single hairline border, no shadow, overflow-hidden so
+  // the rounded corners clip the bottom disclosure cleanly.
+  const panelClass = 'rounded-lg border border-border bg-card p-6 overflow-hidden';
 
-  // Reused header — course title + meta + spots badge. Anchors the receipt.
+  // Reused header — meta line above title (12px tabular muted), then 16px
+  // semibold title. Spots badge floats top-right.
   const courseHeader = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h3 className="text-base font-semibold text-foreground">{course.title}</h3>
-        {meta && <p className="text-sm text-muted-foreground mt-0.5">{meta}</p>}
+        {meta && <p className="text-xs text-muted-foreground tabular-nums">{meta}</p>}
+        <h3 className="mt-0.5 text-base font-semibold leading-snug text-foreground">{course.title}</h3>
       </div>
       {spotsState === 'low' && (
-        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-relaxed bg-warning/15 text-warning">
+        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-relaxed bg-warning/15 text-warning shrink-0">
           {spotsLabel}
         </span>
       )}
@@ -382,7 +383,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
           session picker below. */}
       {!isFree && tiers.length > 1 && (
         <div className="mt-5 border-t border-border pt-4 space-y-2">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground">Velg billett</p>
+          <p className="text-sm font-medium text-foreground">Velg billett</p>
           <div className="space-y-2">
             {tiers.map(tier => {
               const selected = tier.id === selectedTierId;
@@ -555,6 +556,21 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
       >
         {isFree ? 'Meld på' : 'Fortsett til betaling'}
       </Button>
+
+      {/* Fine print — collapsible disclosure for cancellation + terms.
+          Native <details> so we have full control over icons (+/−) and
+          the edge-to-edge border. Negative margins extend it to the
+          panel edges; overflow-hidden on the form clips the rounded corners. */}
+      <details className="group/disc -mx-6 -mb-6 mt-5 border-t border-border">
+        <summary className="flex items-center justify-between px-6 py-3 cursor-pointer text-xs font-medium text-foreground list-none [&::-webkit-details-marker]:hidden">
+          <span>Avbestilling og vilkår</span>
+          <Plus className="size-3.5 text-muted-foreground group-open/disc:hidden" strokeWidth={2} />
+          <Minus className="size-3.5 text-muted-foreground hidden group-open/disc:block" strokeWidth={2} />
+        </summary>
+        <p className="px-6 pb-4 text-xs leading-relaxed text-muted-foreground">
+          Trenger du å avbestille, ta kontakt med studioet. Refusjon avgjøres av studioet fra sak til sak.
+        </p>
+      </details>
 
     </form>
     {lockBooking && (

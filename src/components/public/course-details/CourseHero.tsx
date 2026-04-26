@@ -1,5 +1,15 @@
-import { ImageIcon, User, Clock, Calendar } from '@/lib/icons';
+import { Link } from 'react-router-dom';
+import { ImageIcon, Clock, Calendar } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
+import type { CourseLevel } from '@/types/database';
+
+const LEVEL_LABELS: Record<CourseLevel, string> = {
+  alle: 'Alle nivåer',
+  nybegynner: 'Nybegynner',
+  viderekommen: 'Viderekommen',
+};
 
 const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -12,7 +22,7 @@ function formatShortDate(dateStr: string | null): string | null {
   return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
-function formatLongDate(dateStr: string | null): string {
+function formatRelativeDate(dateStr: string | null): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return '';
@@ -32,46 +42,44 @@ function extractTime(timeSchedule: string | null): string {
   return m ? m[1] : '';
 }
 
-function formatDuration(duration: number | null): string {
-  if (!duration) return '';
-  if (duration < 60) return `${duration} min`;
-  const h = Math.floor(duration / 60);
-  const m = duration % 60;
-  return m === 0 ? `${h} t` : `${h} t ${m} min`;
-}
-
 interface CourseHeroProps {
   course: PublicCourseWithDetails;
 }
 
 /**
- * Editorial hero — image lives inside the page container at a fixed
- * aspect ratio (16:10 mobile, 21:9 desktop), title + meta drop below as
- * dark text on the page surface. Image never stretches past container
- * width, so quality stays consistent at any viewport size.
+ * Hero — image, quiet studio link subtitle, oversized title, then a
+ * three-item meta strip (date range, next session + duration, level chip).
+ * Typography follows the editorial scale documented in tasks/preview/course-detail.html.
  */
 export function CourseHero({ course }: CourseHeroProps) {
   const img = resolveCourseImage(course);
+  const studio = course.organization;
+  const instructor = course.instructors[0] ?? course.instructor ?? null;
   const date = course.next_session?.session_date ?? course.start_date;
   const time = extractTime(course.time_schedule);
-  const longDate = formatLongDate(date);
-  const instructor = course.instructors[0]?.name ?? course.instructor?.name ?? null;
+  const relativeDate = formatRelativeDate(date);
   const isSeries = course.course_type === 'course-series';
 
-  // Date range for series / online — bounds the commitment window.
+  // Date range — only meaningful for bounded series / online runs.
   const startShort = formatShortDate(course.start_date);
   const endShort = formatShortDate(course.end_date);
   const dateRange =
-    isSeries || course.course_type === 'online'
-      ? startShort && endShort
-        ? `${startShort} – ${endShort}`
-        : null
+    (isSeries || course.course_type === 'online') && startShort && endShort
+      ? `${startShort} – ${endShort}`
       : null;
+
+  // Combined "I dag · kl. 17:30 (60 min)" — single home for next-session info
+  // plus duration. "per gang" wording removed.
+  let whenLabel = '';
+  if (relativeDate && time) whenLabel = `${relativeDate} · kl. ${time}`;
+  else if (relativeDate) whenLabel = relativeDate;
+  else if (time) whenLabel = `kl. ${time}`;
+  if (whenLabel && course.duration) whenLabel += ` (${course.duration} min)`;
 
   return (
     <header className="mx-auto max-w-6xl px-5 sm:px-8 pt-6 sm:pt-10">
-      {/* Image */}
-      <div className="relative aspect-[16/10] sm:aspect-[21/9] w-full overflow-hidden rounded-2xl bg-muted">
+      {/* Image — rounded-lg, 16:10 (cards are surfaces, not overlays) */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
         {img ? (
           <img
             src={img}
@@ -85,56 +93,54 @@ export function CourseHero({ course }: CourseHeroProps) {
         )}
       </div>
 
-      {/* Title block */}
       <div className="mt-8 sm:mt-10 max-w-3xl">
-        {/* Eyebrow */}
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium tracking-[0.14em] uppercase text-muted-foreground">
-          {course.organization && (
-            <span className="text-foreground">{course.organization.name}</span>
-          )}
-          {longDate && (
-            <>
-              <span className="text-disabled-foreground">/</span>
-              <span>
-                {longDate}
-                {time && (
-                  <>
-                    <span className="text-disabled-foreground mx-1.5">·</span>
-                    <span className="tabular-nums">kl. {time}</span>
-                  </>
-                )}
-              </span>
-            </>
-          )}
-        </div>
+        {/* Quiet subtitle — studio link only */}
+        {studio && (
+          <p className="mb-3 text-sm text-muted-foreground">
+            <Link
+              to={`/studio/${studio.slug}`}
+              className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
+            >
+              {studio.name}
+            </Link>
+          </p>
+        )}
 
-        {/* Title */}
-        <h1 className="font-semibold tracking-tight text-foreground text-[clamp(1.75rem,5vw,3.5rem)] leading-[1.05]">
+        {/* Title — capped slightly tamer than before */}
+        <h1 className="font-semibold tracking-tight text-foreground text-[clamp(1.75rem,4.5vw,3.25rem)] leading-[1.05]">
           {course.title}
         </h1>
 
-        {/* Meta strip */}
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          {instructor && (
-            <span className="inline-flex items-center gap-1.5">
-              <User className="size-3.5" strokeWidth={1.75} />
-              {instructor}
-            </span>
-          )}
+        {/* Meta strip — date range, when + duration, instructor, level */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           {dateRange && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="size-3.5" strokeWidth={1.75} />
               {dateRange}
             </span>
           )}
-          {(isSeries && course.total_weeks) || course.duration ? (
-            <span className="inline-flex items-center gap-1.5">
+          {whenLabel && (
+            <span className="inline-flex items-center gap-1.5 tabular-nums">
               <Clock className="size-3.5" strokeWidth={1.75} />
-              {isSeries && course.total_weeks
-                ? `${course.total_weeks} uker`
-                : formatDuration(course.duration)}
+              {whenLabel}
             </span>
-          ) : null}
+          )}
+          {(instructor?.name || studio?.name) && (
+            <span className="inline-flex items-center gap-2">
+              <UserAvatar
+                size="xs"
+                name={instructor?.name ?? studio?.name ?? null}
+                src={instructor?.avatar_url ?? null}
+                className="shrink-0"
+              />
+              <span>{instructor?.name ?? studio?.name}</span>
+            </span>
+          )}
+          {course.level && (
+            <Badge variant="sage" shape="pill" size="sm">
+              {LEVEL_LABELS[course.level]}
+            </Badge>
+          )}
         </div>
       </div>
     </header>
