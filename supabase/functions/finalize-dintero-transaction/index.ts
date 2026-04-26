@@ -6,9 +6,9 @@
 // Idempotent. Safe to call multiple times. State machine:
 //
 //   transaction.status = AUTHORIZED
-//     → create_signup_if_available
+//     → create_signup_if_available (ticket-type-aware, advisory-locked)
 //         success → captureTransaction → status=captured, signup=confirmed
-//         failure (capacity) → voidTransaction → status=voided
+//         failure (capacity / sold out / expired) → voidTransaction → status=voided
 //   transaction.status = CAPTURED
 //     → ensure signup exists (best-effort create; unique_violation is fine)
 //   transaction.status = FAILED | DECLINED
@@ -50,23 +50,39 @@ function jsonFor(req: Request) {
     })
 }
 
+/**
+ * Send the confirmation email. Date/time come from the linked course_session
+ * for drop-ins; for package buyers we fall back to the course's own start_date
+ * + time_schedule. Email failures are non-fatal — payment is the source of
+ * truth, the email is a courtesy.
+ */
 async function sendConfirmationEmail(
   supabase: SupabaseClient,
   courseId: string,
   organizationId: string,
   participantEmail: string,
-  classDate: string | null,
-  classTime: string | null,
+  courseSessionId: string | null,
 ): Promise<void> {
   try {
-    const [{ data: course }, { data: org }] = await Promise.all([
+    const [courseQuery, orgQuery, sessionQuery] = await Promise.all([
       supabase
         .from('courses')
         .select('title, location, time_schedule, start_date')
         .eq('id', courseId)
         .single(),
       supabase.from('organizations').select('name').eq('id', organizationId).single(),
+      courseSessionId
+        ? supabase
+            .from('course_sessions')
+            .select('session_date, start_time')
+            .eq('id', courseSessionId)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ])
+
+    const course = courseQuery.data
+    const org = orgQuery.data
+    const session = (sessionQuery as { data: { session_date: string; start_time: string } | null }).data
 
     const formatDate = (dateStr: string | null): string => {
       if (!dateStr) return ''
@@ -84,8 +100,11 @@ async function sendConfirmationEmail(
       return match ? match[1] : ''
     }
 
-    const emailDate = classDate || course?.start_date || null
-    const emailTime = classTime || extractTime(course?.time_schedule ?? null)
+    // Drop-in buyers see their picked session's date/time.
+    // Package buyers see the course's start date + scheduled time.
+    const emailDate = session?.session_date ?? course?.start_date ?? null
+    const emailTime = session?.start_time?.slice(0, 5)
+      ?? extractTime(course?.time_schedule ?? null)
 
     await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
@@ -249,29 +268,35 @@ Deno.serve(async (req: Request) => {
         attempt.course_id,
         attempt.organization_id,
         attempt.participant_email,
-        attempt.class_date ?? null,
-        attempt.class_time ?? null,
+        attempt.course_session_id ?? null,
       )
 
       return json({ signup_id: attempt.existing_signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
     }
 
-    // Embedded flow: atomic capacity check via RPC.
+    // Embedded flow: ticket-type-aware atomic capacity check via RPC.
+    // The RPC handles per-session capacity for drop-ins, multi-session
+    // capacity for packages, sales window re-check, and per-tier quota,
+    // all serialised by an advisory lock keyed on (course, session) for
+    // drop-ins or (course) for packages.
+    if (!attempt.ticket_type_id) {
+      // Should not happen post-2026-04-26: every new payment_attempts row is
+      // created with a ticket_type_id. Defensive — refuse to fall through.
+      return json({ error: 'attempt_missing_ticket_type' }, 500)
+    }
+
     const { data: signupResult } = await supabase.rpc('create_signup_if_available', {
-      p_course_id: attempt.course_id,
       p_organization_id: attempt.organization_id,
+      p_course_id: attempt.course_id,
+      p_ticket_type_id: attempt.ticket_type_id,
       p_participant_name: attempt.participant_name,
       p_participant_email: attempt.participant_email,
       p_participant_phone: attempt.participant_phone,
+      p_amount_paid: amountNok,
       p_dintero_transaction_id: transactionId,
       p_dintero_session_id: attempt.dintero_session_id,
       p_dintero_merchant_reference: merchantReference,
-      p_amount_paid: amountNok,
-      p_is_drop_in: attempt.is_drop_in,
-      p_class_date: attempt.class_date,
-      p_class_time: attempt.class_time,
-      p_signup_package_id: attempt.signup_package_id,
-      p_package_weeks: attempt.package_weeks,
+      p_course_session_id: attempt.course_session_id,
     })
 
     if (!signupResult || !signupResult.success) {
@@ -289,7 +314,7 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // Capacity loss → void (if still authorized).
+      // Capacity loss / sales window expired / tier sold out → void (if still authorized).
       if (transaction.status === 'AUTHORIZED') {
         try {
           await voidTransaction(transactionId)
@@ -339,8 +364,7 @@ Deno.serve(async (req: Request) => {
       attempt.course_id,
       attempt.organization_id,
       attempt.participant_email,
-      attempt.class_date ?? null,
-      attempt.class_time ?? null,
+      attempt.course_session_id ?? null,
     )
 
     return json({ signup_id: signupResult.signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)

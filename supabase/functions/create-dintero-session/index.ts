@@ -1,14 +1,26 @@
 // Create a Dintero checkout session for the embedded payment flow.
-// Replaces the Stripe create-payment-intent function.
+//
+// Ticket-type model (post-2026-04-26):
+//   * Caller passes ticketTypeId, which must reference a row in
+//     course_signup_packages owned by the same course. The tier carries
+//     ticket_kind, audience, price, weeks, and sales-window data.
+//   * For ticket_kind = 'drop_in', sessionId is required (the specific session
+//     the buyer is purchasing). The session row is looked up server-side.
+//   * For other kinds, sessionId is forbidden.
+//   * Price is sourced from the tier row, never from courses.price /
+//     courses.drop_in_price (the latter no longer exists).
 //
 // Flow:
-//  1. Validate course + org + Dintero seller status.
-//  2. Insert a payment_attempts row that holds the full context.
-//  3. Create a Dintero session with:
-//       - configuration.auto_capture = false  (we capture from the webhook after capacity check)
-//       - splits per item: teacher share + platform fee
-//       - merchant_reference = payment_attempts.id (our lookup key on webhook)
-//  4. Return { sid, url } so the client can embed or redirect.
+//   1. Validate course + org + Dintero seller status.
+//   2. Validate the ticket type (active, in sales window, owned by course).
+//   3. For drop-ins: validate the session exists for this course.
+//   4. Block duplicate non-drop-in signups before opening Dintero.
+//   5. Insert a payment_attempts row that holds the full context, including
+//      ticket_type_id + 3 write-once snapshots so refund/recovery paths have
+//      ticket context even after the tier row is edited.
+//   6. Create a Dintero session with auto_capture=false; capture happens after
+//      the capacity check inside finalize-dintero-transaction or the webhook.
+//   7. Return { sid, url, merchantReference } so the client can embed.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -27,13 +39,30 @@ const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 interface SessionRequestBody {
   courseId: string
   organizationSlug: string
+  ticketTypeId: string
   customerEmail: string
   customerName: string
   customerPhone?: string
-  isDropIn?: boolean
+  /** Required only when the ticket's kind is 'drop_in'. */
   sessionId?: string
-  signupPackageId?: string
-  packageWeeks?: number
+}
+
+type TicketKind = 'package' | 'drop_in' | 'pass'
+type TicketAudience = 'standard' | 'student' | 'senior' | 'staff'
+
+interface TicketTypeRow {
+  id: string
+  course_id: string
+  label: string
+  description: string | null
+  price: number
+  weeks: number | null
+  ticket_kind: TicketKind
+  audience: TicketAudience
+  is_active: boolean
+  sales_starts_at: string | null
+  sales_ends_at: string | null
+  max_quantity: number | null
 }
 
 Deno.serve(async (req: Request) => {
@@ -47,16 +76,14 @@ Deno.serve(async (req: Request) => {
     const {
       courseId,
       organizationSlug,
+      ticketTypeId,
       customerEmail,
       customerName,
       customerPhone,
-      isDropIn = false,
       sessionId,
-      signupPackageId,
-      packageWeeks,
     } = body
 
-    if (!courseId || !organizationSlug || !customerEmail || !customerName) {
+    if (!courseId || !organizationSlug || !ticketTypeId || !customerEmail || !customerName) {
       return errorResponse('Missing required fields', 400, req)
     }
 
@@ -65,22 +92,20 @@ Deno.serve(async (req: Request) => {
     if (!uuidRegex.test(courseId)) {
       return errorResponse('Invalid courseId', 400, req)
     }
+    if (!uuidRegex.test(ticketTypeId)) {
+      return errorResponse('Invalid ticketTypeId', 400, req)
+    }
     if (sessionId !== undefined && sessionId !== null && !uuidRegex.test(sessionId)) {
       return errorResponse('Invalid sessionId', 400, req)
     }
-    if (signupPackageId !== undefined && signupPackageId !== null && !uuidRegex.test(signupPackageId)) {
-      return errorResponse('Invalid signupPackageId', 400, req)
-    }
 
-    // Length caps on user-provided strings. Prevents outsized values from
-    // flowing into payment_attempts rows and Dintero session fields.
+    // Length caps on user-provided strings.
     if (customerName.length > 200) {
       return errorResponse('customerName exceeds 200 characters', 400, req)
     }
     if (customerPhone && customerPhone.length > 30) {
       return errorResponse('customerPhone exceeds 30 characters', 400, req)
     }
-    // Slugs follow a strict format: lowercase alphanumerics + hyphens, 1–64 chars.
     if (!/^[a-z0-9-]{1,64}$/.test(organizationSlug)) {
       return errorResponse('Invalid organizationSlug', 400, req)
     }
@@ -94,7 +119,7 @@ Deno.serve(async (req: Request) => {
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select(`
-        *,
+        id, title, status, max_participants,
         organization:organizations(
           id,
           name,
@@ -130,62 +155,111 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Payment is not set up for this organization', 400, req)
     }
 
-    // Resolve package pricing if applicable
-    let selectedPackage: { id: string; price: number; weeks: number; label: string } | null = null
-    if (signupPackageId) {
-      const { data: packageData, error: packageError } = await supabase
-        .from('course_signup_packages')
-        .select('id, price, weeks, label')
-        .eq('id', signupPackageId)
-        .eq('course_id', courseId)
-        .single()
-      if (packageError || !packageData) {
-        return errorResponse('Invalid signup package', 400, req)
-      }
-      selectedPackage = packageData
+    // Load + validate the ticket type. Re-checking the sales window server-side
+    // matters because the tier row may have flipped to inactive or expired
+    // between the booking page render and the form submission.
+    const { data: tier, error: tierError } = await supabase
+      .from('course_signup_packages')
+      .select('id, course_id, label, description, price, weeks, ticket_kind, audience, is_active, sales_starts_at, sales_ends_at, max_quantity')
+      .eq('id', ticketTypeId)
+      .eq('course_id', courseId)
+      .maybeSingle()
+
+    if (tierError || !tier) {
+      return errorResponse('Billettypen finnes ikke', 404, req)
+    }
+    const typedTier = tier as TicketTypeRow
+
+    if (!typedTier.is_active) {
+      return errorResponse('Denne billetten er ikke lenger tilgjengelig', 400, req)
+    }
+    const now = new Date()
+    if (typedTier.sales_starts_at && new Date(typedTier.sales_starts_at) > now) {
+      return errorResponse('Denne billetten er ikke i salg ennå', 400, req)
+    }
+    if (typedTier.sales_ends_at && new Date(typedTier.sales_ends_at) <= now) {
+      return errorResponse('Tilbudet er utløpt', 400, req)
     }
 
-    const price = selectedPackage
-      ? selectedPackage.price
-      : isDropIn && course.drop_in_price
-        ? course.drop_in_price
-        : course.price
-
-    if (!price || price <= 0) {
+    if (typedTier.price <= 0) {
       return errorResponse('Course has no valid price', 400, req)
     }
 
-    // Soft capacity check. Hard guard is in create_signup_if_available RPC at webhook time.
-    if (course.max_participants) {
-      const { count: currentSignups } = await supabase
+    const isDropIn = typedTier.ticket_kind === 'drop_in'
+
+    // sessionId presence must match ticket kind. Reject early — the RPC will
+    // reject too, but we'd rather not spin up a Dintero session in that case.
+    if (isDropIn && !sessionId) {
+      return errorResponse('Drop-in krever at du velger en time', 400, req)
+    }
+    if (!isDropIn && sessionId) {
+      return errorResponse('Pakke-billetter kan ikke knyttes til en enkelt time', 400, req)
+    }
+
+    // Duplicate-signup short-circuit. Drop-ins are exempt: each drop-in is a
+    // fresh class signup, and the unique index is on (course_id, email) only
+    // for non-drop-in confirmed signups (well, for all confirmed signups —
+    // we re-check carefully here). With ticket types, the right semantic is:
+    // for the same (course, email), a customer can have at most one active
+    // package signup but unlimited drop-ins.
+    if (!isDropIn) {
+      const normalizedEmail = customerEmail.trim().toLowerCase()
+      const { data: existingSignup } = await supabase
         .from('signups')
-        .select('*', { count: 'exact', head: true })
+        .select('id, ticket_kind_snapshot')
         .eq('course_id', courseId)
         .eq('status', 'confirmed')
-      if ((currentSignups || 0) >= course.max_participants) {
-        return errorResponse('Course is full', 400, req)
+        .ilike('participant_email', normalizedEmail)
+      const existingPackage = (existingSignup ?? []).find(
+        s => s.ticket_kind_snapshot !== 'drop_in',
+      )
+      if (existingPackage) {
+        return errorResponse('Du er allerede påmeldt dette kurset.', 409, req)
       }
     }
 
-    // Resolve drop-in session date/time
-    let classDate: string | null = null
-    let classTime: string | null = null
+    // Resolve drop-in session up-front. We need its date/time for the soft
+    // capacity check and the order item description, and the FK on payment_attempts.
+    let courseSession: { id: string; session_date: string; start_time: string } | null = null
     if (isDropIn && sessionId) {
-      const { data: courseSession } = await supabase
+      const { data: cs, error: csError } = await supabase
         .from('course_sessions')
-        .select('session_date, start_time')
+        .select('id, session_date, start_time, course_id, status')
         .eq('id', sessionId)
-        .single()
-      if (courseSession) {
-        classDate = courseSession.session_date
-        classTime = courseSession.start_time
+        .maybeSingle()
+      if (csError || !cs) {
+        return errorResponse('Timen finnes ikke', 404, req)
+      }
+      if ((cs as { course_id: string }).course_id !== courseId) {
+        return errorResponse('Timen tilhører ikke dette kurset', 400, req)
+      }
+      if ((cs as { status: string | null }).status === 'cancelled') {
+        return errorResponse('Timen er avlyst', 400, req)
+      }
+      courseSession = cs as { id: string; session_date: string; start_time: string }
+    }
+
+    // Soft capacity check. The hard guard is the advisory-locked RPC at finalize
+    // time — this is just to avoid wasting a Dintero auth on a sale that
+    // can't possibly succeed. For drop-ins we check the chosen session;
+    // for packages we'd need to scan all sessions in window, which is expensive,
+    // so we trust the RPC and skip the soft check.
+    if (isDropIn && courseSession && course.max_participants) {
+      const { data: countResult } = await supabase.rpc('count_signups_for_session', {
+        p_course_session_id: courseSession.id,
+      })
+      const sessionCount = typeof countResult === 'number' ? countResult : 0
+      if (sessionCount >= course.max_participants) {
+        return errorResponse('Timen er full', 400, req)
       }
     }
 
     const { serviceFeeNok, totalPrice, priceInOre, basePriceInOre, serviceFeeInOre, platformFee } =
-      calculatePricing(price)
+      calculatePricing(typedTier.price)
 
-    // Persist the attempt. Its id becomes merchant_reference on the Dintero session.
+    // Persist the attempt. Its id becomes merchant_reference on the Dintero
+    // session, and the ticket-type snapshot fields are write-once context for
+    // refund/recovery paths.
     const { data: attempt, error: attemptError } = await supabase
       .from('payment_attempts')
       .insert({
@@ -194,13 +268,12 @@ Deno.serve(async (req: Request) => {
         participant_name: customerName,
         participant_email: customerEmail,
         participant_phone: customerPhone ?? null,
-        is_drop_in: isDropIn,
-        course_session_id: sessionId ?? null,
-        class_date: classDate,
-        class_time: classTime,
-        signup_package_id: signupPackageId ?? null,
-        package_weeks: packageWeeks ?? null,
-        base_price_nok: price,
+        course_session_id: courseSession?.id ?? null,
+        ticket_type_id: typedTier.id,
+        ticket_label_snapshot: typedTier.label,
+        ticket_audience_snapshot: typedTier.audience,
+        ticket_kind_snapshot: typedTier.ticket_kind,
+        base_price_nok: typedTier.price,
         service_fee_nok: serviceFeeNok,
         total_price_nok: totalPrice,
         status: 'pending',
@@ -213,11 +286,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const merchantReference = attempt.id
-    const description = selectedPackage
-      ? `${course.title} - ${selectedPackage.label}`
-      : isDropIn
-        ? `Drop-in: ${course.title}`
-        : course.title
+
+    // Description shown on Dintero's order item line. Mirrors what the buyer
+    // saw on the booking page — the tier label is the source of truth.
+    const description = isDropIn
+      ? `Drop-in: ${course.title} – ${typedTier.label}`
+      : `${course.title} – ${typedTier.label}`
 
     // Two-line breakdown so the student sees the service fee as a distinct
     // item at checkout (transparency + aligns with Norwegian consumer
@@ -225,11 +299,8 @@ Deno.serve(async (req: Request) => {
     //
     //  Line 1 — Course: base price, split 95% teacher / 5% platform.
     //  Line 2 — Servicegebyr: 5% of base added on top, 100% platform.
-    //
-    // Total = basePriceInOre + serviceFeeInOre = priceInOre.
-    // Per-item split sums must equal the item's amount (Dintero requirement).
-    const platformShareOnCourse = platformFee - serviceFeeInOre // = basePriceInOre * 0.05
-    const teacherShareOnCourse = basePriceInOre - platformShareOnCourse // = basePriceInOre * 0.95
+    const platformShareOnCourse = platformFee - serviceFeeInOre
+    const teacherShareOnCourse = basePriceInOre - platformShareOnCourse
 
     const orderItems = [
       {

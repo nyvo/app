@@ -56,19 +56,33 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course is not free — use the paid checkout flow', 400, req)
     }
 
-    // Call the atomic capacity RPC. It serialises by locking the course row,
-    // so concurrent free signups cannot overbook.
+    // Resolve the course's default ticket tier — every course has exactly one
+    // (created in the 20260426020000 migration). For free courses, the default
+    // tier price will be 0, matching course.price.
+    const { data: defaultTier, error: tierError } = await supabase
+      .from('course_signup_packages')
+      .select('id')
+      .eq('course_id', course.id)
+      .eq('is_default', true)
+      .maybeSingle()
+
+    if (tierError || !defaultTier) {
+      return errorResponse('Course has no default ticket type', 500, req)
+    }
+
+    // Call the atomic capacity RPC. The advisory lock inside it serialises
+    // concurrent free signups so the capacity check + insert can't oversell.
     const { data: result, error: rpcError } = await supabase.rpc('create_signup_if_available', {
-      p_course_id: course.id,
       p_organization_id: course.organization_id,
+      p_course_id: course.id,
+      p_ticket_type_id: (defaultTier as { id: string }).id,
       p_participant_name: participantName.trim(),
       p_participant_email: participantEmail.trim(),
       p_participant_phone: participantPhone.trim(),
+      p_amount_paid: 0,
       p_dintero_transaction_id: null,
       p_dintero_session_id: null,
       p_dintero_merchant_reference: null,
-      p_amount_paid: 0,
-      p_is_drop_in: false,
     })
 
     if (rpcError) {

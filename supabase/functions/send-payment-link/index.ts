@@ -49,12 +49,18 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Missing signup_id', 400, req)
     }
 
+    // The signup carries ticket_type_id + 3 snapshots — those are the source
+     // of truth for what was bought, not course.price / course.drop_in_price
+     // (the latter no longer exists). The tier row is loaded separately to
+     // get the current price (in case it shifted since the signup was created;
+     // the snapshot label is what the email/UI shows, but we charge today's
+     // tier price — same as if the buyer were going through checkout fresh).
     const { data: signup, error: signupError } = await supabase
       .from('signups')
       .select(`
         *,
         course:courses(
-          id, title, description, price, drop_in_price, start_date, time_schedule, location,
+          id, title, description, start_date, time_schedule, location,
           organization_id,
           organization:organizations(id, name, slug, dintero_seller_id, dintero_onboarding_complete)
         )
@@ -70,8 +76,6 @@ Deno.serve(async (req: Request) => {
       id: string
       title: string
       description: string | null
-      price: number
-      drop_in_price: number | null
       start_date: string
       time_schedule: string
       location: string
@@ -106,26 +110,28 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Payment is not set up for this organization', 400, req)
     }
 
-    // Resolve price
-    let price = course.price
-    let productName = course.title
-    let productDescription = course.description || `Betaling for ${course.title}`
-
-    if (signup.signup_package_id) {
-      const { data: packageData } = await supabase
-        .from('course_signup_packages')
-        .select('id, price, weeks, label')
-        .eq('id', signup.signup_package_id)
-        .single()
-      if (packageData) {
-        price = packageData.price
-        productName = `${course.title} - ${packageData.label}`
-        productDescription = `${packageData.label} - ${course.title}`
-      }
-    } else if (signup.is_drop_in && course.drop_in_price) {
-      price = course.drop_in_price
-      productDescription = `Drop-in: ${course.title}`
+    // Resolve price + label from the signup's linked ticket type. Every
+    // post-2026-04-26 signup has a ticket_type_id; legacy rows that don't
+    // can't have a payment link sent (they were paid via other channels).
+    if (!signup.ticket_type_id) {
+      return errorResponse('Signup has no linked ticket type', 400, req)
     }
+
+    const { data: tierRow, error: tierError } = await supabase
+      .from('course_signup_packages')
+      .select('id, price, label, ticket_kind')
+      .eq('id', signup.ticket_type_id)
+      .maybeSingle()
+
+    if (tierError || !tierRow) {
+      return errorResponse('Ticket type not found', 404, req)
+    }
+
+    const tier = tierRow as { id: string; price: number; label: string; ticket_kind: string }
+    const price = tier.price
+    const isDropIn = tier.ticket_kind === 'drop_in'
+    const productName = isDropIn ? `Drop-in: ${course.title}` : `${course.title} – ${tier.label}`
+    const productDescription = tier.label
 
     if (!price || price <= 0) {
       return errorResponse('Course has no valid price', 400, req)
@@ -134,7 +140,9 @@ Deno.serve(async (req: Request) => {
     const { serviceFeeNok, totalPrice, priceInOre, basePriceInOre, serviceFeeInOre, platformFee } =
       calculatePricing(price)
 
-    // Create payment attempt row pointing to existing signup
+    // Create payment attempt row pointing to existing signup. Snapshots come
+    // from the signup itself (write-once), not the live tier — preserves
+    // historical accuracy if the tier was renamed/edited after the signup.
     const { data: attempt, error: attemptError } = await supabase
       .from('payment_attempts')
       .insert({
@@ -143,11 +151,11 @@ Deno.serve(async (req: Request) => {
         participant_name: signup.participant_name,
         participant_email: signup.participant_email,
         participant_phone: signup.participant_phone,
-        is_drop_in: signup.is_drop_in || false,
-        class_date: signup.class_date,
-        class_time: signup.class_time,
-        signup_package_id: signup.signup_package_id,
-        package_weeks: signup.package_weeks,
+        course_session_id: signup.course_session_id,
+        ticket_type_id: signup.ticket_type_id,
+        ticket_label_snapshot: signup.ticket_label_snapshot,
+        ticket_audience_snapshot: signup.ticket_audience_snapshot,
+        ticket_kind_snapshot: signup.ticket_kind_snapshot,
         base_price_nok: price,
         service_fee_nok: serviceFeeNok,
         total_price_nok: totalPrice,
