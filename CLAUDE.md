@@ -57,6 +57,11 @@
 - **Domain terms**: Kurs, deltaker, påmelding, avbestilling, instruktør
 - **Emojis**: Never use emojis in the UI
 - **Banned copy**: "Vennligst", exclamation marks, translated English patterns
+- **Placeholders**: default to **no placeholder**. The visible label above the input is the primary signal — placeholder is only allowed when it adds something the label can't convey.
+  - **Forbidden**: `F.eks. X` prefixes, example data (`ola@eksempel.no`, `Ola Nordmann`, `Inspire Yogastudio`), placeholder-as-label (input with no visible label, only ghost text), redundant instructions (`Skriv inn navn` when the label already says `Navn`).
+  - **Allowed**: format hints when the format isn't obvious (`9xx xx xxx`, `X4P-7K9`, `dd.mm.åååå`, `MM / ÅÅ`); action prompts in genuine search/action inputs (`Søk …`, `Skriv en melding …`, `Skriv en kort begrunnelse …`).
+  - **Why**: example-data placeholders look like the field is already filled, get confused with real data on scan, fail accessibility (low-contrast ghost text + screen readers), and strain short-term memory (label vanishes on focus). Modern SaaS (Stripe, Linear, Vercel, Notion) avoid `e.g. …` placeholders entirely.
+  - **Test**: read the label out loud, then read the placeholder. If the placeholder repeats or paraphrases the label, drop it. If it adds a format constraint or a verb the label can't carry, keep it.
 
 ## Git
 
@@ -84,18 +89,8 @@
 - Use shadcn primitives from `@/components/ui/` over custom UI.
 - Icons: **always import from `@/lib/icons`** (never from `lucide-react` directly). The barrel re-exports the set of lucide icons the app uses and inlines a few brand marks (`Facebook`, `Linkedin`, `Twitter`) that lucide dropped. If you need an icon that isn't exported, add it to `src/lib/icons.tsx` rather than importing `lucide-react` elsewhere.
 - Typography: use raw Tailwind utilities (`text-sm font-medium`, `text-3xl font-semibold tracking-tight`, etc.) — no `type-*` classes. Line-height and letter-spacing are baked into the `--text-*` tokens in `src/index.css`; don't hand-tune `leading-*` or `tracking-*` unless you deliberately need to break the scale.
-- **Font families:**
-  - **Geist** (`font-sans`, default) — everything. Body, headings, UI labels, form fields, prose.
-  - **Geist Mono** (`font-mono`) — use *sparingly*. Only where visual weight or column alignment actually benefits the reader. Over-applying mono makes a consumer product feel like a dev tool.
-  - **Apply `font-mono` when:**
-    - The value is prominent (`text-sm` 14px or larger) AND the content is clearly data a user copy-pastes or scans column-wise. Canonical: big KPI values (`42 800 kr`, `148`, `82%`), dialog price totals, payments-page transaction/payout amounts in a list.
-    - The content is a long alphanumeric identifier regardless of size: emails, Stripe IDs (`pi_...`, `py_...`), org numbers, course codes, reference numbers, file paths. Identifiers are always mono — humans don't read them as sentences.
-    - Code blocks, shell commands, inline technical tokens.
-  - **Do NOT apply `font-mono` when:**
-    - The value is small (`text-xs` 12px) meta — timestamps in activity rows (`2m`, `14m`, `1t`), inline dates in cards, delta chips inside coloured pills, character counters. Use `tabular-nums` alone for digit alignment.
-    - The value is inline in a sentence where mono would interrupt reading flow.
-    - The label describes the number (`Revenue`, `Fill rate`) — only the number itself gets mono, never the label.
-  - **Rule of thumb:** "small data = sans + `tabular-nums`; big data or identifiers = `font-mono` + `tabular-nums`." Mono should feel earned, not default.
+- **Font family:** **Geist** (`font-sans`, default) — used for *everything*. Body, headings, UI labels, form fields, prose, KPI values, identifiers, codes, prices. There is no monospace font in the app (Geist Mono was removed 2026-04-25 to keep the visual register consistent). Don't reach for `font-mono` — Tailwind's `font-mono` utility no longer maps to a custom token.
+- **Digit alignment**: when numeric values need to align across rows (KPI cards, table cells, prices, time columns), add `tabular-nums` to the containing element. This works on Geist sans and gives column-stable digits without switching font family.
 - **Surface context — how to know whether you're in "landing" or "dashboard" when editing:**
 
   | Path | Surface | Body size | Notes |
@@ -136,7 +131,7 @@
   Don't use `opacity-*` on text to fake a tier — pick the right token.
 - **Meta rows sit on one tier, not two.** If a card/row has multiple lines of metadata under a primary title (e.g. "type + location" on one line, "next session date" on the next), they're equal-weight information — both go on `text-muted-foreground`. Don't drop one line to `text-tertiary-foreground` just because it contains a timestamp. Tertiary is for meta that's genuinely *less* important than the line above it (e.g. a timestamp in the corner of an activity row, next to a primary+secondary pair).
 - **Weight discipline:** `font-medium` (500) for UI labels, chips, button text. `font-semibold` (600) for headings and emphasised body. **Never `font-bold` (700)** — it reads marketing at dashboard sizes and breaks the calm feel. If you need more emphasis, step up the size token before reaching for a heavier weight.
-- **Inline numbers in sans copy:** if a number appears inside a sentence where `font-mono` would look out of place (e.g. "12 av 14 påmeldte"), add `tabular-nums` to the containing element so digits still align across rows.
+- **Inline numbers in sentences:** for numbers that appear inside copy ("12 av 14 påmeldte"), add `tabular-nums` to the containing element so digits align across rows even though the surrounding text is variable-width.
 - **Corner radius convention** — four tiers:
 
   | Radius | Where | Use for |
@@ -185,6 +180,12 @@
 
 - **Status colors are signals, not decoration.** Four semantic tokens exist: `success` (positive state, delta up, payout sent), `destructive` (error, refund, delete), `warning` (caution, pending, under review), `info` (neutral notification, non-urgent). Never use raw Tailwind colour utilities (`bg-green-100`, `text-red-700`, `text-amber-500`, `bg-blue-100`) for semantic state — always use the token. Rule: max 1 chromatic color per card body (DeltaChip is its own element and doesn't count).
 - **Accent colour (`chart-2`, blue-violet)** — the app's *one* chromatic accent for non-semantic emphasis. Consume via `<Badge variant="accent">` or a `bg-chart-2/10 text-chart-2` tinted container; never hand-roll the surface. Don't mix with semantic state — if a row is `success`, it doesn't also get tinted chart-2. Five canonical uses only (data viz, tinted icon container, tinted chip, full-row tint, live-indicator dot) — [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#chart-2-accent--five-canonical-uses).
+- **Wellness pastel palette** — five categorical tones for the public/booking flow only: `sage` (neutral category), `rose` (lively positive), `lavender` (premium/featured), `sand` (calm fallback / generic info container), `sky` (info / "ny"). Each has a tinted variant (default, for inline badges and panel surfaces) and a `*-solid` companion (for image overlays only — never on panel backgrounds). Consume via `<Badge variant="sage|rose|lavender|sand|sky">` or `bg-{tone} text-{tone}-foreground` for panels.
+  - **Sentence case only** — never paired with `uppercase` or `tracking-[0.12em]`. The whole point is the calmer treatment.
+  - **Max 1 tone per section.** Adjacent info panels share one tone (e.g. all sand) so the eye reads them as a related family. Never stack three different pastel panels next to each other — that's fruit salad.
+  - **Never colour both a badge and a panel inside the same card.** Same-coloured badge + panel reads as "they mean the same thing"; different colours read as competing for attention. Pick one element per card to carry the pastel.
+  - **Solid variants are overlay-only.** `bg-rose-solid`, `bg-sand-solid`, etc. exist for image overlays where tints disappear against photos. They'd read as alarming at panel scale — never use them for backgrounds.
+  - **Dashboard surfaces stay neutral.** This palette is wellness-themed, intended for public and booking surfaces. Inside `src/pages/teacher/**` and `src/components/teacher/**`, keep using `bg-muted` / semantic tokens — the dashboard density doesn't tolerate categorical pastels well.
 - **Form validation errors** use `text-xs font-medium text-destructive`. Keep 500 weight (colour alone isn't enough for colour-blind users) but DO NOT add `tracking-wide` — errors are sentences, not labels. Matches shadcn's own `<FormMessage>` convention.
 - **Sentences vs labels at `text-xs` size** — the single biggest inconsistency to watch for.
   - **Label** (short, scannable, sits above a value or in a table header): `text-xs font-medium tracking-wide text-muted-foreground`. Examples: KPI labels ("Inntekter", "Kapasitet"), table column headers ("Navn", "Status"), dropdown menu section labels ("Betaling feilet"), chips ("Valgfritt", "per person"), short status tags.
@@ -271,6 +272,6 @@
   - `space-y-8` — top-level page sections (dashboard page → standard)
   - `space-y-10` — public marketing-style sections only
 
-- **Page containers:** dashboard page → `mx-auto max-w-5xl space-y-8` (bump to `max-w-6xl` for data-heavy pages). Public content → `max-w-5xl`. Public listing → `max-w-4xl`. Prose/legal → `max-w-3xl` + `space-y-10`. `CourseDetailPage` is the deliberate full-width exception — don't template from it. Full patterns → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#page-container-scale).
+- **Page containers:** dashboard page content uses `max-w-5xl space-y-8` (left-aligned, NOT `mx-auto`-centered — the heading sits at the left edge of the page padding, and the content cards align directly under it). Bump to `max-w-6xl` for data-heavy pages. Public content → `mx-auto max-w-5xl` (centered is correct on landing/booking surfaces). Public listing → `mx-auto max-w-4xl`. Prose/legal → `mx-auto max-w-3xl space-y-10`. `CourseDetailPage` is the deliberate full-width exception — don't template from it. Full patterns → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#page-container-scale).
 - The **shadcn skill** is the #1 authority on component patterns — never overwrite its guidance.
 - If there is a conflict between existing code and shadcn skill recommendations, ask for user approval before changing.
