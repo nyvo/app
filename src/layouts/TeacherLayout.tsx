@@ -7,7 +7,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { WelcomeFlow } from '@/components/teacher/WelcomeFlow';
 import { useAuth } from '@/contexts/AuthContext';
 
-const FULL_WIDTH_ROUTES = ['/teacher/schedule', '/teacher/messages'];
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add '/teacher/messages' here when enabling.
+const FULL_WIDTH_ROUTES = ['/teacher/schedule'];
 
 export default function TeacherLayout() {
   const { profile, refreshOrganizations } = useAuth();

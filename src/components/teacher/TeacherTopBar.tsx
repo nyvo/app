@@ -1,8 +1,6 @@
 import { Fragment } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
-import { Settings } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { NotificationDropdown } from '@/components/teacher/NotificationDropdown';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,7 +12,8 @@ import {
 import { useTeacherShell, type TeacherShellCrumb } from '@/components/teacher/TeacherShellContext';
 import { cn } from '@/lib/utils';
 
-const FULL_WIDTH_ROUTES = ['/teacher/schedule', '/teacher/messages'];
+// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add '/teacher/messages' here when enabling.
+const FULL_WIDTH_ROUTES = ['/teacher/schedule'];
 
 const teacherBreadcrumbs: Array<{
   path: string;
@@ -64,18 +63,26 @@ const teacherBreadcrumbs: Array<{
       { label: 'Påmeldinger' },
     ],
   },
-  {
-    path: '/teacher/messages',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Meldinger' },
-    ],
-  },
+  // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add the messages crumb when re-enabling.
+  // {
+  //   path: '/teacher/messages',
+  //   crumbs: [
+  //     { label: 'Hjem', to: '/teacher' },
+  //     { label: 'Meldinger' },
+  //   ],
+  // },
   {
     path: '/teacher/locations',
     crumbs: [
       { label: 'Hjem', to: '/teacher' },
-      { label: 'Steder' },
+      { label: 'Adresser' },
+    ],
+  },
+  {
+    path: '/teacher/studio',
+    crumbs: [
+      { label: 'Hjem', to: '/teacher' },
+      { label: 'Studio' },
     ],
   },
   {
@@ -97,7 +104,7 @@ function getBreadcrumbs(pathname: string) {
 
 export function TeacherTopBar() {
   const location = useLocation();
-  const { breadcrumbs, action } = useTeacherShell();
+  const { breadcrumbs, action, topBarSlot } = useTeacherShell();
   const crumbs = breadcrumbs ?? getBreadcrumbs(location.pathname);
   const isFullWidth = FULL_WIDTH_ROUTES.some((route) => location.pathname.startsWith(route));
 
@@ -131,18 +138,16 @@ export function TeacherTopBar() {
             })}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-3">
+          {topBarSlot}
           {action && (
             <Button asChild size="sm" className="gap-2">
               <Link to={action.to}>{action.label}</Link>
             </Button>
           )}
-          <NotificationDropdown />
-          <Button asChild variant="ghost" size="icon" aria-label="Innstillinger" className="size-8 text-muted-foreground">
-            <Link to="/teacher/profile">
-              <Settings className="size-4" />
-            </Link>
-          </Button>
+          {/* Notification bell + Settings icon removed 2026-04-25 — updates now
+              live on the dashboard activity card. Profile/settings reachable
+              via the user-avatar dropdown in the sidebar footer. */}
         </div>
       </div>
     </div>
