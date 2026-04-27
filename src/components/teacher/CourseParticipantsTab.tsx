@@ -1,18 +1,35 @@
 import { useState, useMemo } from 'react';
-import { Plus } from '@/lib/icons';
-import { SkeletonTableRow } from '@/components/ui/skeleton';
+import { Plus, FileText } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/ui/search-input';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn, formatKroner } from '@/lib/utils';
+import { getInitials } from '@/utils/stringUtils';
 import type { PaymentStatus } from '@/components/ui/payment-badge';
 import type { SignupStatus } from '@/components/ui/status-badge';
-import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
-import { NotePopover } from '@/components/ui/note-popover';
-import { Card } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { ParticipantActionMenu, type ParticipantActionHandlers, type ActionableParticipant } from './ParticipantActionMenu';
 import { SignupFilterDropdown, type CombinedFilter } from './SignupFilterDropdown';
-import type { ExceptionType } from '@/types/database';
+import type { ExceptionType, TicketAudience, TicketKind } from '@/types/database';
+
+const AVATAR_TONES = [
+  '#6B7280', '#4F6CB0', '#A66B4F', '#5C7E5A',
+  '#8B6A8F', '#B07B4F', '#707070', '#6E6E84',
+] as const;
+
+function avatarToneFor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return AVATAR_TONES[hash % AVATAR_TONES.length];
+}
+
+const AUDIENCE_LABEL: Record<TicketAudience, string> = {
+  standard: 'Standard',
+  student: 'Student / ufør',
+  senior: 'Senior',
+  staff: 'Personale',
+};
 
 export interface DisplayParticipant {
   id: string;
@@ -22,6 +39,13 @@ export interface DisplayParticipant {
   paymentStatus: PaymentStatus;
   amountPaid?: number | null;
   notes?: string;
+  // Optional ticket info — when present, surfaces in the row meta line.
+  ticketKind?: TicketKind;
+  ticketAudience?: TicketAudience;
+  /** Pre-formatted "uke 3 av 13" / "3. mai · 17:30" — what the participant committed to. */
+  ticketContext?: string;
+  /** Pre-formatted "2 timer siden" / "i går" / "5 dager siden" — relative signup time. */
+  registeredAgo?: string;
 }
 
 interface CourseParticipantsTabProps {
@@ -54,6 +78,129 @@ function toActionable(p: DisplayParticipant, courseName: string): ActionablePart
   };
 }
 
+type PillKind = 'confirmed' | 'pending' | 'failed' | 'refunded' | 'cancelled';
+
+function pillFor(p: DisplayParticipant): { kind: PillKind; label: string } {
+  if (p.status === 'cancelled' || p.status === 'course_cancelled') {
+    if (p.paymentStatus === 'refunded') return { kind: 'refunded', label: 'Refundert' };
+    return { kind: 'cancelled', label: 'Avbestilt' };
+  }
+  if (p.paymentStatus === 'failed') return { kind: 'failed', label: 'Betaling feilet' };
+  if (p.paymentStatus === 'pending') return { kind: 'pending', label: 'Venter' };
+  return { kind: 'confirmed', label: 'Påmeldt' };
+}
+
+function ParticipantRow({
+  p,
+  courseName,
+  actionHandlers,
+}: {
+  p: DisplayParticipant;
+  courseName: string;
+  actionHandlers: ParticipantActionHandlers;
+}) {
+  const tone = avatarToneFor(p.name || p.email || '?');
+  const pill = pillFor(p);
+  const isCancelled = p.status === 'cancelled' || p.status === 'course_cancelled';
+
+  // Meta line: ticket label · context (uke X av Y / session date)
+  const ticketTag = p.ticketKind === 'drop_in'
+    ? 'Drop-in'
+    : (p.ticketAudience ? AUDIENCE_LABEL[p.ticketAudience] : 'Standard');
+  const metaParts: string[] = [ticketTag];
+  if (p.ticketContext) metaParts.push(p.ticketContext);
+
+  return (
+    <div className={cn(
+      'grid items-center gap-4 px-4 py-3.5',
+      'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_160px_32px]',
+      'transition-colors duration-100 hover:bg-muted/50',
+    )}>
+      <div
+        className="size-8 shrink-0 rounded-full inline-flex items-center justify-center text-white text-[11px] font-semibold tracking-tight"
+        style={{ background: tone }}
+        aria-label={p.name || p.email || 'Bruker'}
+      >
+        {getInitials(p.name || p.email || null)}
+      </div>
+
+      <div className="min-w-0 flex flex-col gap-0.5">
+        <p className={cn(
+          'text-sm font-medium leading-[1.3] truncate',
+          isCancelled ? 'text-muted-foreground' : 'text-foreground',
+        )}>
+          <span>{p.name}</span>
+          {p.notes && (
+            <span
+              className="ml-1.5 inline-flex items-center align-middle text-muted-foreground"
+              title={p.notes}
+            >
+              <FileText className="size-3" strokeWidth={1.75} />
+            </span>
+          )}
+        </p>
+        <p className="text-xs leading-[1.4] text-muted-foreground tabular-nums truncate">
+          {metaParts.map((part, i) => (
+            <span key={i}>
+              {i > 0 && <span className="text-disabled-foreground mx-1.5">·</span>}
+              {part}
+            </span>
+          ))}
+        </p>
+        <p className="text-xs leading-[1.4] text-muted-foreground truncate">{p.email}</p>
+      </div>
+
+      <div className="hidden md:flex flex-col items-end justify-center gap-1 self-center">
+        <span className={cn(
+          'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
+          pill.kind === 'failed' && 'bg-foreground text-background',
+          pill.kind === 'confirmed' && 'bg-muted text-foreground',
+          pill.kind === 'pending' && 'bg-muted text-muted-foreground',
+          pill.kind === 'refunded' && 'bg-muted text-muted-foreground',
+          pill.kind === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+        )}>
+          {pill.label}
+        </span>
+        {p.amountPaid != null && (
+          <span className="text-[13px] font-medium text-foreground tabular-nums leading-none">
+            {p.amountPaid > 0 ? formatKroner(p.amountPaid) : 'Gratis'}
+          </span>
+        )}
+        {p.registeredAgo && (
+          <span className="text-[11px] text-muted-foreground tabular-nums leading-none">
+            {p.registeredAgo}
+          </span>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <ParticipantActionMenu
+          signup={toActionable(p, courseName)}
+          handlers={actionHandlers}
+        />
+      </div>
+    </div>
+  );
+}
+
+function RowSkeleton() {
+  return (
+    <div className="grid grid-cols-[32px_minmax(0,1fr)_160px_32px] items-center gap-4 px-4 py-3.5">
+      <Skeleton className="size-8 rounded-full" />
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-4 w-40 max-w-full" />
+        <Skeleton className="h-3 w-56 max-w-full" />
+        <Skeleton className="h-3 w-32 max-w-full" />
+      </div>
+      <div className="hidden md:flex flex-col items-end gap-1.5">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+      <Skeleton className="size-8 rounded-md" />
+    </div>
+  );
+}
+
 export const CourseParticipantsTab = ({
   searchQuery,
   onSearchQueryChange,
@@ -65,7 +212,6 @@ export const CourseParticipantsTab = ({
 }: CourseParticipantsTabProps) => {
   const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all');
 
-  // Count participants per filter option
   const filterCounts = useMemo((): Record<CombinedFilter, number> => {
     const counts: Record<CombinedFilter, number> = {
       all: participants.length,
@@ -82,11 +228,8 @@ export const CourseParticipantsTab = ({
     return counts;
   }, [participants]);
 
-  // Apply combined filter + search
   const filteredParticipants = useMemo(() => {
     let result = participants;
-
-    // Combined filter
     switch (combinedFilter) {
       case 'payment_issues':
         result = result.filter(p => (p.paymentStatus === 'pending' && p.status === 'confirmed') || p.paymentStatus === 'failed');
@@ -99,12 +242,11 @@ export const CourseParticipantsTab = ({
         break;
     }
 
-    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p =>
         p.name.toLowerCase().includes(q) ||
-        p.email.toLowerCase().includes(q)
+        p.email.toLowerCase().includes(q),
       );
     }
 
@@ -119,96 +261,62 @@ export const CourseParticipantsTab = ({
   };
 
   return (
-    <Card className="overflow-hidden gap-0 py-0 divide-y divide-border">
-      {/* Toolbar */}
-      <div className="flex flex-col justify-between gap-3 p-3 md:flex-row md:items-center">
-        <div className="flex flex-1 flex-col gap-3 md:flex-row md:items-center">
+    <>
+      {/* Toolbar — OUTSIDE the frame */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+        <SignupFilterDropdown
+          value={combinedFilter}
+          onChange={setCombinedFilter}
+          counts={filterCounts}
+        />
+        <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
           <SearchInput
             value={searchQuery}
             onChange={onSearchQueryChange}
             placeholder="Søk etter deltaker"
             aria-label="Søk etter deltaker"
-            className="flex-1 max-w-xs"
+            className="flex-1 md:max-w-xs"
           />
-          <SignupFilterDropdown
-            value={combinedFilter}
-            onChange={setCombinedFilter}
-            counts={filterCounts}
-          />
+          <Button size="sm" onClick={onOpenAddDialog}>
+            <Plus className="size-4" />
+            Legg til
+          </Button>
         </div>
-        <Button size="sm" onClick={onOpenAddDialog}>
-          <Plus className="size-4" />
-          Legg til deltaker
-        </Button>
       </div>
 
-      {/* Table */}
-      <Table>
-        <TableHeader>
-          <tr>
-            <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
-            <TableHead className="w-40">Status</TableHead>
-            <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
-            <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
-          </tr>
-        </TableHeader>
-        <TableBody>
-          {participantsLoading ? (
-            <>
-              <SkeletonTableRow columns={4} hasAvatar={true} />
-              <SkeletonTableRow columns={4} hasAvatar={true} />
-              <SkeletonTableRow columns={4} hasAvatar={true} />
-              <tr className="sr-only"><td colSpan={4}>Laster deltakere</td></tr>
-            </>
-          ) : filteredParticipants.length === 0 ? (
-            <tr>
-              <td colSpan={4}>
-                <div className="flex flex-col items-center gap-1 py-8 text-center">
-                  <p className="text-sm font-medium text-foreground">{hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {hasActiveFilters ? 'Prøv å justere filtrene.' : 'Deltakere vises her når de melder seg på.'}
-                  </p>
-                  {hasActiveFilters && (
-                    <Button variant="link" size="sm" onClick={clearFilters} className="mt-2 text-xs font-medium tracking-wide text-primary">
-                      Nullstill filter
-                    </Button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ) : (
-            filteredParticipants.map((participant) => (
-              <TableRow key={participant.id}>
-                {/* Navn */}
-                <TableCell>
-                  <div className="flex min-w-0 items-center gap-3">
-                    <UserAvatar name={participant.name} email={participant.email} size="sm" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate text-foreground">{participant.name}</p>
-                      <p className="text-xs truncate text-muted-foreground">{participant.email}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                {/* Status (derived from signup + payment) */}
-                <TableCell>
-                  <SignupStatusBadge status={participant.status} paymentStatus={participant.paymentStatus} />
-                </TableCell>
-                {/* Notater */}
-                <TableCell className="hidden sm:table-cell">
-                  <NotePopover note={participant.notes} />
-                </TableCell>
-                {/* Handlinger */}
-                <TableCell>
-                  <ParticipantActionMenu
-                    signup={toActionable(participant, courseName)}
-                    handlers={actionHandlers}
-                  />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </Card>
+      {/* Frame — rows + footer */}
+      <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        {participantsLoading ? (
+          <>
+            <RowSkeleton />
+            <RowSkeleton />
+            <RowSkeleton />
+          </>
+        ) : filteredParticipants.length === 0 ? (
+          <div className="flex flex-col items-center gap-1 py-12 text-center">
+            <p className="text-sm font-medium text-foreground">
+              {hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {hasActiveFilters ? 'Prøv å justere filtrene.' : 'Deltakere vises her når de melder seg på.'}
+            </p>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="mt-2">
+                Nullstill filter
+              </Button>
+            )}
+          </div>
+        ) : (
+          filteredParticipants.map(p => (
+            <ParticipantRow
+              key={p.id}
+              p={p}
+              courseName={courseName}
+              actionHandlers={actionHandlers}
+            />
+          ))
+        )}
+      </div>
+    </>
   );
 };

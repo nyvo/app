@@ -3,11 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { pageVariants, pageTransition, tabVariants, tabTransition } from '@/lib/motion';
-import { ExternalLink, MoreHorizontal, EyeOff, Calendar } from '@/lib/icons';
+import { ExternalLink, MoreHorizontal, EyeOff } from '@/lib/icons';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatKroner } from '@/lib/utils';
@@ -42,6 +41,7 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
+import type { CourseDetailKpis } from '@/components/teacher/CourseDetailKpiStrip';
 import { CourseParticipantsTab } from '@/components/teacher/CourseParticipantsTab';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 import { CoursePricingTab } from '@/components/teacher/CoursePricingTab';
@@ -467,15 +467,105 @@ const CourseDetailPage = () => {
   );
 
   // Map participants from database to display format
-  const displayParticipants = useMemo(() => participants.map(signup => ({
-    id: signup.id,
-    name: signup.participant_name || signup.profile?.name || 'Ukjent',
-    email: signup.participant_email || signup.profile?.email || '',
-    status: signup.status as SignupStatus,
-    paymentStatus: signup.payment_status as PaymentStatus,
-    amountPaid: signup.amount_paid ?? null,
-    notes: signup.note || undefined,
-  })), [participants]);
+  const displayParticipants = useMemo(() => participants.map(signup => {
+    // Relative signup time — "2 timer siden", "i går", "5 dager siden", etc.
+    let registeredAgo: string | undefined;
+    if (signup.created_at) {
+      const created = new Date(signup.created_at);
+      const now = new Date();
+      const diffMs = now.getTime() - created.getTime();
+      const diffMin = Math.floor(diffMs / (1000 * 60));
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffMin < 60) registeredAgo = diffMin <= 1 ? 'akkurat nå' : `${diffMin} min siden`;
+      else if (diffHrs < 24) registeredAgo = diffHrs === 1 ? '1 time siden' : `${diffHrs} timer siden`;
+      else if (diffDays === 1) registeredAgo = 'i går';
+      else if (diffDays < 7) registeredAgo = `${diffDays} dager siden`;
+      else {
+        const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+        registeredAgo = `${created.getDate()}. ${months[created.getMonth()]}`;
+      }
+    }
+
+    return {
+      id: signup.id,
+      name: signup.participant_name || signup.profile?.name || 'Ukjent',
+      email: signup.participant_email || signup.profile?.email || '',
+      status: signup.status as SignupStatus,
+      paymentStatus: signup.payment_status as PaymentStatus,
+      amountPaid: signup.amount_paid ?? null,
+      notes: signup.note || undefined,
+      ticketKind: signup.ticket_kind_snapshot,
+      ticketAudience: signup.ticket_audience_snapshot,
+      registeredAgo,
+    };
+  }), [participants]);
+
+  // KPIs for the Oversikt tab — must be declared BEFORE any conditional
+  // return below, otherwise the hook order changes between renders (early
+  // return on isLoading vs. ready). Returns null while data is still loading.
+  const kpis: CourseDetailKpis | null = useMemo(() => {
+    if (!courseData) return null;
+    const paidSignups = participants.filter(p => p.payment_status === 'paid');
+    const pendingSignups = participants.filter(p => p.payment_status === 'pending' || p.payment_status === 'failed');
+    const revenue = paidSignups.reduce((sum, p) => sum + (p.amount_paid || 0), 0);
+
+    // Pågår nå — a session whose start ≤ now ≤ end (today only).
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    let active: CourseDetailKpis['active'] = null;
+    let next: CourseDetailKpis['next'] = null;
+
+    const upcoming = sessions
+      .filter(s => s.session_date >= todayStr)
+      .sort((a, b) => a.session_date.localeCompare(b.session_date) || (a.start_time || '').localeCompare(b.start_time || ''));
+
+    for (const s of upcoming) {
+      if (s.session_date !== todayStr || !s.start_time) continue;
+      const [sh, sm] = s.start_time.slice(0, 5).split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const dur = courseData.durationMinutes || 60;
+      const endMin = startMin + dur;
+      if (nowMinutes >= startMin && nowMinutes <= endMin) {
+        const endH = Math.floor(endMin / 60);
+        const endM = endMin % 60;
+        const sessionNum = sessions.findIndex(x => x.id === s.id) + 1;
+        active = {
+          label: `${courseData.title}${sessions.length > 1 ? ` (${sessionNum}/${sessions.length})` : ''}`,
+          sub: `slutter kl. ${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
+        };
+        break;
+      }
+    }
+
+    const nextSession = upcoming.find(s => {
+      if (!active) return true;
+      const [sh, sm] = (s.start_time || '00:00').slice(0, 5).split(':').map(Number);
+      return s.session_date !== todayStr || (sh * 60 + sm) > nowMinutes;
+    });
+    if (nextSession && !active) {
+      const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
+      const d = new Date(nextSession.session_date);
+      const time = nextSession.start_time ? nextSession.start_time.slice(0, 5) : '';
+      const diffDays = Math.round((d.getTime() - now.setHours(0, 0, 0, 0)) / (1000 * 60 * 60 * 24));
+      const sub = diffDays === 0 ? 'i dag' : diffDays === 1 ? 'i morgen' : `om ${diffDays} dager`;
+      next = {
+        label: `${d.getDate()}. ${months[d.getMonth()]}${time ? ` · ${time}` : ''}`,
+        sub,
+      };
+    }
+
+    return {
+      enrolled: courseData.enrolled,
+      capacity: courseData.capacity > 0 ? courseData.capacity : null,
+      revenue,
+      paid: paidSignups.length,
+      pending: pendingSignups.length,
+      active,
+      next,
+    };
+  }, [courseData, participants, sessions]);
 
 
   if (isLoading) {
@@ -489,11 +579,11 @@ const CourseDetailPage = () => {
                 <Skeleton className="h-4 w-32" />
               </div>
               <div className="mb-8">
-                <ToggleGroup type="single" value="overview" onValueChange={() => {}} variant="pill" spacing={1} className="gap-1.5">
-                  <ToggleGroupItem value="overview">Oversikt</ToggleGroupItem>
-                  <ToggleGroupItem value="participants">Deltakere</ToggleGroupItem>
-                  <ToggleGroupItem value="settings">Innstillinger</ToggleGroupItem>
-                </ToggleGroup>
+                <div className="inline-flex rounded-lg bg-muted p-0.5 gap-0.5">
+                  <span className="px-3 py-1.5 text-sm font-medium bg-background text-foreground rounded-md shadow-[0_1px_2px_rgba(0,0,0,0.04)]">Oversikt</span>
+                  <span className="px-3 py-1.5 text-sm font-medium text-muted-foreground rounded-md">Deltakere</span>
+                  <span className="px-3 py-1.5 text-sm font-medium text-muted-foreground rounded-md">Innstillinger</span>
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
@@ -548,6 +638,17 @@ const CourseDetailPage = () => {
     return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time;
   };
 
+  // Compute end time = start + courseData.durationMinutes.
+  const computeEndTime = (startHHMM: string, durationMinutes: number | null | undefined): string | undefined => {
+    if (!startHHMM || !durationMinutes) return undefined;
+    const [h, m] = startHHMM.split(':').map(Number);
+    if (Number.isNaN(h) || Number.isNaN(m)) return undefined;
+    const total = h * 60 + m + durationMinutes;
+    const eh = Math.floor(total / 60) % 24;
+    const em = total % 60;
+    return `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+  };
+
   // Map sessions from database to display format
   const generatedCourseWeeks = isMultiDayCourse
     ? sessions.map((session, index) => ({
@@ -558,6 +659,7 @@ const CourseDetailPage = () => {
         isNext: index === firstUpcomingIndex, // First upcoming session is "next"
         date: formatDateNorwegian(new Date(session.session_date)),
         time: formatTime(session.start_time),
+        endTime: computeEndTime(formatTime(session.start_time), courseData.durationMinutes),
         // Store original data for editing
         originalDate: session.session_date,
         originalTime: formatTime(session.start_time),
@@ -617,31 +719,48 @@ const CourseDetailPage = () => {
             )}
 
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-3xl font-semibold text-foreground">
-                  {course.title}
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
+              <div className="min-w-0">
+                <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold text-foreground">
+                  <span>{course.title}</span>
+                  {/* Monochrome status pill — inline with title */}
+                  <span className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
+                    courseData?.status === 'active' && 'bg-foreground text-background',
+                    courseData?.status === 'upcoming' && 'bg-muted text-foreground',
+                    courseData?.status === 'draft' && 'bg-muted text-muted-foreground',
+                    courseData?.status === 'completed' && 'bg-muted text-muted-foreground',
+                    courseData?.status === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+                  )}>
+                    {courseData?.status === 'active' && 'Pågår'}
+                    {courseData?.status === 'upcoming' && 'Kommende'}
+                    {courseData?.status === 'draft' && 'Utkast'}
+                    {courseData?.status === 'completed' && 'Fullført'}
+                    {courseData?.status === 'cancelled' && 'Avlyst'}
+                  </span>
                 </h1>
-                <div className="text-sm mt-1 flex items-center gap-3 text-muted-foreground">
-                  {courseData?.status === 'draft' && (
-                    <StatusBadge status="draft" size="sm" />
-                  )}
-                  {courseData?.status === 'upcoming' && (
-                    <StatusBadge status="upcoming" size="sm" />
-                  )}
-                  {courseData?.status === 'active' && (
-                    <StatusBadge status="active" size="sm" />
-                  )}
-                  {courseData?.status === 'completed' && (
-                    <StatusBadge status="completed" size="sm" />
-                  )}
-                  {course.createdAt && (
-                    <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
-                      <Calendar className="size-3.5" />
-                      Opprettet {formatDateNorwegian(new Date(course.createdAt), 'd. MMM')}
-                    </span>
-                  )}
-                </div>
+                {/* Meta strip — single quiet line. Same shape as the public detail meta. */}
+                <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+                  {[
+                    course.timeSchedule && course.durationMinutes
+                      ? `${course.timeSchedule} (${course.durationMinutes} min)`
+                      : course.timeSchedule || null,
+                    course.location || null,
+                    course.courseType === 'kursrekke' && courseData?.totalWeeks
+                      ? `${courseData.totalWeeks} uker`
+                      : null,
+                    course.price > 0 ? formatKroner(course.price) : null,
+                  ]
+                    .filter(Boolean)
+                    .map((part, i, arr) => (
+                      <span key={i}>
+                        {part}
+                        {i < arr.length - 1 && (
+                          <span className="text-disabled-foreground mx-2">·</span>
+                        )}
+                      </span>
+                    ))}
+                </p>
               </div>
               <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
                 {courseData?.status === 'draft' ? (
@@ -698,12 +817,17 @@ const CourseDetailPage = () => {
               </div>
             </div>
             <div className="pb-4">
-              <ToggleGroup type="single" value={activeTab} onValueChange={(v) => { if (v) setActiveTab(v as Tab); }} variant="pill" spacing={1} className="gap-1.5">
-                <ToggleGroupItem value="overview">Oversikt</ToggleGroupItem>
-                <ToggleGroupItem value="participants">Deltakere ({course.enrolled})</ToggleGroupItem>
-                <ToggleGroupItem value="pricing">Priser</ToggleGroupItem>
-                <ToggleGroupItem value="settings">Innstillinger</ToggleGroupItem>
-              </ToggleGroup>
+              <SegmentedTabs<Tab>
+                value={activeTab}
+                onChange={setActiveTab}
+                ariaLabel="Kursvisning"
+                tabs={[
+                  { key: 'overview', label: 'Oversikt' },
+                  { key: 'participants', label: 'Deltakere', count: course.enrolled },
+                  { key: 'pricing', label: 'Priser' },
+                  { key: 'settings', label: 'Innstillinger' },
+                ]}
+              />
             </div>
             </div>
           </div>
@@ -755,6 +879,9 @@ const CourseDetailPage = () => {
                   onMessageParticipants={() => setMessageDialogOpen(true)}
                   recentParticipants={displayParticipants.slice(0, 5)}
                   totalParticipantCount={displayParticipants.length}
+                  kpis={kpis}
+                  kpisLoading={isLoading}
+                  onJumpToParticipants={() => setActiveTab('participants')}
                   kursplanRef={kursplanRef}
                 />
               </motion.div>

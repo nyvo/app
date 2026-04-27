@@ -3,14 +3,10 @@ import { Search, Calendar, ChevronDown } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { SkeletonTableRow } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Table, TableHeader, TableBody, TableHead } from '@/components/ui/table';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
-import { NotePopover } from '@/components/ui/note-popover';
 import { SignupRow } from './SignupRow';
-import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
+import { type ParticipantActionHandlers } from './ParticipantActionMenu';
 import type { SignupDisplay } from '@/types/database';
 
 export type SignupsViewTab = 'active' | 'followup' | 'past';
@@ -28,11 +24,6 @@ interface SignupListViewProps {
 export const SIGNUPS_INITIAL_VISIBLE = 20;
 export const SIGNUPS_LOAD_MORE_INCREMENT = 20;
 export const SIGNUPS_SHOW_ALL_THRESHOLD = 5;
-// Matches the SignupTableHead render: Navn + Kurs (optional) + Status + Notater + Handlinger.
-// When hideCourse is true we render 4 columns; with Kurs shown, 5.
-function columnCount(hideCourse: boolean): number {
-  return hideCourse ? 4 : 5;
-}
 
 function emptyCopy(viewTab: SignupsViewTab | undefined, hasFilters: boolean, isEmptyOrg: boolean) {
   if (isEmptyOrg && !hasFilters) {
@@ -46,19 +37,22 @@ function emptyCopy(viewTab: SignupsViewTab | undefined, hasFilters: boolean, isE
   return { title: 'Ingen aktive påmeldinger', description: 'Nye påmeldinger dukker opp her.' };
 }
 
-function SignupTableHead({ hideCourse = false }: { hideCourse?: boolean }) {
+function SignupRowSkeleton() {
   return (
-    <TableHeader>
-      <tr>
-        <TableHead className="min-w-[220px] max-w-[360px] w-[40%]">Navn</TableHead>
-        {!hideCourse && (
-          <TableHead className="hidden w-40 sm:table-cell">Kurs</TableHead>
-        )}
-        <TableHead className="w-40">Status</TableHead>
-        <TableHead className="hidden w-36 sm:table-cell">Notater</TableHead>
-        <TableHead className="w-12"><span className="sr-only">Handlinger</span></TableHead>
-      </tr>
-    </TableHeader>
+    <div className="grid grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_160px_32px] items-center gap-4 px-4 py-3.5">
+      <Skeleton className="size-8 rounded-full" />
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-4 w-40 max-w-full" />
+        <Skeleton className="h-3 w-56 max-w-full" />
+        <Skeleton className="h-3 w-32 max-w-full" />
+      </div>
+      <div className="hidden md:flex flex-col items-end gap-1.5">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-3 w-12" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+      <Skeleton className="size-8 rounded-md" />
+    </div>
   );
 }
 
@@ -73,16 +67,9 @@ export function SignupListView({
 }: SignupListViewProps) {
   if (isLoading) {
     return (
-      <div role="status" aria-live="polite">
+      <div role="status" aria-live="polite" className="divide-y divide-border">
         <span className="sr-only">Henter påmeldinger</span>
-        <Table>
-          <SignupTableHead />
-          <TableBody>
-            {[1, 2, 3, 4, 5].map(i => (
-              <SkeletonTableRow key={i} columns={columnCount(false)} hasAvatar />
-            ))}
-          </TableBody>
-        </Table>
+        {[1, 2, 3, 4, 5].map(i => <SignupRowSkeleton key={i} />)}
       </div>
     );
   }
@@ -99,7 +86,6 @@ export function SignupListView({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-xs font-medium tracking-wide underline underline-offset-2"
           >
             Nullstill filter
           </Button>
@@ -110,18 +96,15 @@ export function SignupListView({
   }
 
   return (
-    <Table>
-      <SignupTableHead />
-      <TableBody>
-        {signups.map(signup => (
-          <SignupRow
-            key={signup.id}
-            signup={signup}
-            actionHandlers={actionHandlers}
-          />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="divide-y divide-border">
+      {signups.map(signup => (
+        <SignupRow
+          key={signup.id}
+          signup={signup}
+          actionHandlers={actionHandlers}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -143,62 +126,10 @@ function formatEndDate(dateStr: string | null): string {
   return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-/**
- * Compact one-line view of a signup, used inside the expanded body of a
- * completed-course card. Drops the per-column table chrome — the surrounding
- * card already provides the course context, so this row only needs identity +
- * status + actions.
- */
-function CompactPastSignupItem({
-  signup,
-  actionHandlers,
-}: {
-  signup: SignupDisplay;
-  actionHandlers?: ParticipantActionHandlers;
-}) {
-  const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
-  const hasActions = !!actionHandlers && (
-    !isCancelled || !!signup.dinteroTransactionId || !!signup.exceptionType
-  );
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-2.5 smooth-transition hover:bg-muted/50">
-      <UserAvatar name={signup.participantName} email={signup.participantEmail} size="sm" />
-      <div className="min-w-0 flex-1">
-        <p className={cn(
-          'text-sm font-medium truncate',
-          isCancelled ? 'text-muted-foreground' : 'text-foreground',
-        )}>
-          {signup.participantName}
-        </p>
-        <p className="text-xs truncate text-muted-foreground">
-          {signup.participantEmail}
-        </p>
-      </div>
-      <SignupStatusBadge
-        status={signup.status}
-        paymentStatus={signup.paymentStatus}
-        className="shrink-0"
-      />
-      <div className="flex items-center gap-1 shrink-0">
-        <NotePopover note={signup.note} />
-        {hasActions && actionHandlers && (
-          <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Builds a "5 påmeldte · 1 refundert · 2 avbestilt" summary string so teachers
- * can see at-a-glance whether a course had anomalies, without expanding it.
- */
 function summarizeGroup(signups: SignupDisplay[]): string {
   const total = signups.length;
   const refunded = signups.filter(s => s.paymentStatus === 'refunded').length;
   const cancelled = signups.filter(s => s.status === 'cancelled' || s.status === 'course_cancelled').length;
-
   const parts = [`${total} ${total === 1 ? 'påmeldt' : 'påmeldte'}`];
   if (refunded > 0) parts.push(`${refunded} refundert`);
   if (cancelled > 0) parts.push(`${cancelled} avbestilt`);
@@ -230,7 +161,6 @@ export function PastSignupsList({
     return Array.from(map.values()).sort((a, b) => (b.endDate || '').localeCompare(a.endDate || ''));
   }, [signups]);
 
-  // All groups default to collapsed — keeps initial view scannable.
   const [state, setState] = useState<Record<string, GroupState>>({});
 
   if (groups.length === 0) return null;
@@ -288,10 +218,11 @@ export function PastSignupsList({
             {s.expanded && (
               <div id={sectionId} className="border-t border-border divide-y divide-border">
                 {visible.map(signup => (
-                  <CompactPastSignupItem
+                  <SignupRow
                     key={signup.id}
                     signup={signup}
                     actionHandlers={actionHandlers}
+                    hideCourse
                   />
                 ))}
                 {hasMore && (

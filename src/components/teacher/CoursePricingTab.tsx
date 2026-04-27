@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Star, Copy, Archive, ArchiveRestore, Pencil, Trash2 as Trash } from '@/lib/icons'
+import { Plus, Star, Copy, Archive, ArchiveRestore, Pencil, Trash2 as Trash, MoreHorizontal } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -269,93 +276,120 @@ function TicketTypeRow({
   const salesEnds = tier.sales_ends_at ? new Date(tier.sales_ends_at) : null
   const salesStarts = tier.sales_starts_at ? new Date(tier.sales_starts_at) : null
   const now = new Date()
-  const expired = salesEnds && salesEnds <= now
-  const upcoming = salesStarts && salesStarts > now
+  const expired = !!salesEnds && salesEnds <= now
+  const upcoming = !!salesStarts && salesStarts > now
+
+  // Fold descriptive badges into the muted meta line as text fragments.
+  const metaParts: { text: string; tone?: 'foreground' | 'muted' | 'warning' }[] = [
+    { text: formatKroner(tier.price), tone: 'foreground' },
+  ]
+  if (isDropIn) metaParts.push({ text: 'per gang', tone: 'muted' })
+  if (!isDropIn && tier.weeks) metaParts.push({ text: `${tier.weeks} uker`, tone: 'muted' })
+  if (audienceLabel) metaParts.push({ text: audienceLabel, tone: 'muted' })
+  if (tier.max_quantity != null) metaParts.push({ text: `Maks ${tier.max_quantity}`, tone: 'muted' })
+  if (expired) metaParts.push({ text: `Utløpt ${salesEnds!.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`, tone: 'warning' })
+  else if (salesEnds) metaParts.push({ text: `T.o.m. ${salesEnds.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`, tone: 'muted' })
+  if (upcoming) metaParts.push({ text: 'Ikke i salg ennå', tone: 'warning' })
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between ${archived ? 'bg-muted/50' : ''}`}
+      className={cn(
+        'flex items-start gap-3 rounded-lg border border-border p-4',
+        archived && 'bg-muted/50',
+      )}
     >
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-foreground">{tier.label}</p>
+        <div className="flex items-center gap-1.5">
           {tier.is_default && (
-            <Badge variant="accent" shape="rect" size="xs">
-              Standardvalg
-            </Badge>
+            <span
+              className="text-foreground shrink-0"
+              title="Standardvalg"
+              aria-label="Standardvalg"
+            >
+              <Star className="size-3.5" fill="currentColor" strokeWidth={0} />
+            </span>
           )}
-          {isDropIn && (
-            <Badge variant="secondary" shape="rect" size="xs">
-              Drop-in
-            </Badge>
-          )}
-          {audienceLabel && (
-            <Badge variant="secondary" shape="rect" size="xs">
-              {audienceLabel}
-            </Badge>
-          )}
-          {expired && (
-            <Badge variant="warning" shape="rect" size="xs">
-              Utløpt
-            </Badge>
-          )}
-          {upcoming && (
-            <Badge variant="info" shape="rect" size="xs">
-              Ikke i salg ennå
-            </Badge>
-          )}
+          <p className={cn(
+            'text-[15px] font-semibold',
+            archived ? 'text-muted-foreground' : 'text-foreground',
+          )}>
+            {tier.label}
+          </p>
         </div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-          <span className="tabular-nums font-medium text-foreground">{formatKroner(tier.price)}</span>
-          {!isDropIn && tier.weeks ? <span>{tier.weeks} uker</span> : null}
-          {tier.max_quantity != null && <span>Maks {tier.max_quantity}</span>}
-          {salesEnds && !expired && (
-            <span>T.o.m. {salesEnds.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}</span>
-          )}
-        </div>
+        <p className="mt-1 text-[13px] tabular-nums text-muted-foreground">
+          {metaParts.map((part, i) => (
+            <span key={i}>
+              {i > 0 && <span className="text-disabled-foreground mx-1.5">·</span>}
+              <span className={cn(
+                part.tone === 'foreground' && 'text-foreground font-medium',
+                part.tone === 'warning' && 'text-foreground font-medium',
+              )}>
+                {part.text}
+              </span>
+            </span>
+          ))}
+        </p>
         {tier.description && (
-          <p className="mt-1 text-xs text-muted-foreground">{tier.description}</p>
+          <p className="mt-1.5 text-xs text-muted-foreground leading-[1.45]">{tier.description}</p>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {!archived && onSetDefault && !tier.is_default && (
-          <Button variant="ghost" size="xs" onClick={onSetDefault} className="gap-1.5">
-            <Star className="size-3.5" />
-            Sett som standard
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Mer"
+            className="shrink-0 -mr-2 -mt-1"
+          >
+            <MoreHorizontal className="size-4" />
           </Button>
-        )}
-        {!archived && onDuplicate && (
-          <Button variant="ghost" size="xs" onClick={onDuplicate} className="gap-1.5">
-            <Copy className="size-3.5" />
-            Dupliser
-          </Button>
-        )}
-        {onEdit && (
-          <Button variant="ghost" size="xs" onClick={onEdit} className="gap-1.5">
-            <Pencil className="size-3.5" />
-            Rediger
-          </Button>
-        )}
-        {!archived && onArchive && (
-          <Button variant="ghost" size="xs" onClick={onArchive} className="gap-1.5">
-            <Archive className="size-3.5" />
-            Arkiver
-          </Button>
-        )}
-        {archived && onRestore && (
-          <Button variant="ghost" size="xs" onClick={onRestore} className="gap-1.5">
-            <ArchiveRestore className="size-3.5" />
-            Aktiver
-          </Button>
-        )}
-        {onDelete && (
-          <Button variant="ghost" size="xs" onClick={onDelete} className="gap-1.5 text-destructive hover:text-destructive">
-            <Trash className="size-3.5" />
-            Slett
-          </Button>
-        )}
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="size-3.5 mr-2" />
+              Rediger
+            </DropdownMenuItem>
+          )}
+          {!archived && onSetDefault && !tier.is_default && (
+            <DropdownMenuItem onClick={onSetDefault}>
+              <Star className="size-3.5 mr-2" />
+              Sett som standard
+            </DropdownMenuItem>
+          )}
+          {!archived && onDuplicate && (
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy className="size-3.5 mr-2" />
+              Dupliser
+            </DropdownMenuItem>
+          )}
+          {!archived && onArchive && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onArchive}>
+                <Archive className="size-3.5 mr-2" />
+                Arkiver
+              </DropdownMenuItem>
+            </>
+          )}
+          {archived && onRestore && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onRestore}>
+                <ArchiveRestore className="size-3.5 mr-2" />
+                Aktiver
+              </DropdownMenuItem>
+            </>
+          )}
+          {onDelete && (
+            <DropdownMenuItem onClick={onDelete} className="text-destructive">
+              <Trash className="size-3.5 mr-2" />
+              Slett permanent
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

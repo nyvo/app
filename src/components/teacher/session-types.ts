@@ -6,6 +6,8 @@ export interface CourseWeek {
   isNext: boolean;
   date: string;
   time: string;
+  /** Pre-formatted end time (HH:MM) — derived from start + duration in the parent. */
+  endTime?: string;
   originalDate: string;
   originalTime: string;
 }

@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { ChevronDown } from '@/lib/icons';
-import { DateBadge } from '@/components/ui/date-badge';
+import { ChevronDown, MoreHorizontal, Check, Pencil } from '@/lib/icons';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import type { CourseWeek, SessionEditHandlers } from './session-types';
 
 interface SessionListProps {
@@ -19,13 +24,58 @@ interface SessionListProps {
   sessionEditHandlers: SessionEditHandlers;
 }
 
-function isSessionPast(dateStr: string): boolean {
+const WEEKDAYS_LONG = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
+const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+
+function parseDate(dateStr: string): Date | null {
   const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-  const sessionDate = new Date(y, m - 1, d);
+  const date = new Date(y, m - 1, d);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function isSessionPast(dateStr: string): boolean {
+  const sessionDate = parseDate(dateStr);
+  if (!sessionDate) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   sessionDate.setHours(0, 0, 0, 0);
   return sessionDate < today;
+}
+
+function weekdayFromDate(dateStr: string): string {
+  const date = parseDate(dateStr);
+  return date ? WEEKDAYS_LONG[date.getDay()] : '';
+}
+
+/**
+ * Small custom date pill matching the mockup — 48×44, month abbreviation
+ * stacked on top of the day numeral. Past sessions get the muted fill.
+ */
+function DatePill({ dateStr, isPast }: { dateStr: string; isPast: boolean }) {
+  const date = parseDate(dateStr);
+  if (!date) return null;
+  const month = MONTHS_SHORT[date.getMonth()];
+  const day = date.getDate();
+  return (
+    <span
+      className={cn(
+        'inline-flex flex-col items-center justify-center w-12 h-11 rounded-md shrink-0',
+        isPast ? 'bg-muted border border-transparent' : 'bg-card border border-border',
+      )}
+    >
+      <span className="text-[9px] font-semibold tracking-wide uppercase text-muted-foreground leading-none">
+        {month}
+      </span>
+      <span
+        className={cn(
+          'text-base font-semibold tabular-nums leading-none mt-1',
+          isPast ? 'text-muted-foreground' : 'text-foreground',
+        )}
+      >
+        {day}
+      </span>
+    </span>
+  );
 }
 
 export const SessionList: React.FC<SessionListProps> = ({
@@ -69,7 +119,7 @@ export const SessionList: React.FC<SessionListProps> = ({
             variant="plain"
             size="xs"
             onClick={() => setShowAll((current) => !current)}
-            className="font-medium tracking-wide"
+            className="font-medium"
           >
             {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
             <ChevronDown className={`size-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
@@ -77,57 +127,85 @@ export const SessionList: React.FC<SessionListProps> = ({
         )}
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden p-0">
         <div className="divide-y divide-border">
           {visibleSessions.map((session) => {
             const isPast = isSessionPast(session.originalDate);
             const isEditing = editingSessionId === session.id && !isPast;
+            const weekday = weekdayFromDate(session.originalDate);
+            const timeRange = session.endTime
+              ? `${session.time} – ${session.endTime}`
+              : session.time;
 
             return (
               <div key={session.id}>
-                {/* Session row */}
+                {/* Session row — 4-column grid: pill | label | time | menu/check */}
                 <div
-                  className={`group flex items-center justify-between gap-4 px-6 py-4 smooth-transition ${
-                    isPast ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted'
-                  }`}
+                  className={cn(
+                    'grid grid-cols-[48px_minmax(0,1fr)_auto_24px] items-center gap-3.5 px-5 py-2.5 transition-colors duration-100',
+                    isPast ? 'bg-muted/40' : 'hover:bg-muted',
+                  )}
                 >
-                  <div className={`flex min-w-0 items-center gap-4 ${isPast ? 'opacity-60' : ''}`}>
-                    <DateBadge
-                      dateStr={session.originalDate?.split('T')[0]}
-                      className={isPast ? 'border-border bg-muted text-muted-foreground' : undefined}
-                    />
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className={`text-sm font-medium ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>{session.title}</p>
-                        {!isPast && session.isNext ? (
-                          <Badge variant="neutral" shape="rect" size="sm">
-                            Neste
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="text-xs tabular-nums mt-0.5 text-muted-foreground">{session.date} <span className="">{session.time}</span></p>
-                    </div>
-                  </div>
-                  {!isPast && (
-                    <Button
-                      variant="plain"
-                      size="xs"
-                      onClick={() => handleEditClick(session.id)}
-                      className="px-2 font-medium tracking-wide opacity-0 group-hover:opacity-100"
-                      aria-label={`Rediger ${session.title}`}
+                  <DatePill dateStr={session.originalDate} isPast={isPast} />
+
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'text-sm font-medium truncate',
+                        isPast ? 'text-muted-foreground' : 'text-foreground',
+                      )}
                     >
-                      Rediger
-                    </Button>
+                      {weekday}
+                    </span>
+                    {!isPast && session.isNext && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-foreground text-background text-[11px] font-medium leading-[1.5] shrink-0">
+                        Neste
+                      </span>
+                    )}
+                  </div>
+
+                  <span
+                    className={cn(
+                      'text-sm tabular-nums text-right',
+                      isPast ? 'text-muted-foreground' : 'text-muted-foreground',
+                    )}
+                  >
+                    {timeRange}
+                  </span>
+
+                  {/* Past = check icon, active = 3-dot menu */}
+                  {isPast ? (
+                    <span className="inline-flex items-center justify-center size-4 text-muted-foreground" aria-hidden>
+                      <Check className="size-3.5" strokeWidth={2} />
+                    </span>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center justify-center size-6 rounded text-muted-foreground hover:text-foreground hover:bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                          aria-label={`Mer for ${weekday} ${session.date}`}
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditClick(session.id)}>
+                          <Pencil className="size-3.5 mr-2" />
+                          Rediger
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
 
-                {/* Inline edit panel */}
+                {/* Inline edit panel — appears under the row when editing */}
                 {isEditing && (
-                  <div className="border-t border-border bg-muted/50 px-6 py-4">
+                  <div className="border-t border-border bg-muted/50 px-5 py-4">
                     <div className="space-y-4 rounded-lg border border-border bg-card p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label id={`session-${session.id}-date-label`} className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
+                          <label id={`session-${session.id}-date-label`} className="text-sm font-medium mb-1.5 block text-foreground">Dato</label>
                           <DatePicker
                             aria-labelledby={`session-${session.id}-date-label`}
                             value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
@@ -138,7 +216,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           />
                         </div>
                         <div>
-                          <label id={`session-${session.id}-time-label`} className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
+                          <label id={`session-${session.id}-time-label`} className="text-sm font-medium mb-1.5 block text-foreground">Tidspunkt</label>
                           <TimePicker
                             aria-labelledby={`session-${session.id}-time-label`}
                             value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}

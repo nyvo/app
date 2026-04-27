@@ -1,9 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Check, ChevronDown, ImageIcon, Users } from '@/lib/icons';
+import { ChevronDown, ImageIcon } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,13 +15,13 @@ const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 's
 const TYPE_LABEL: Record<CourseType, string> = {
   'course-series': 'Kursrekke',
   'event':         'Arrangement',
-  'online':        'Nett',
+  'online':        'Nettkurs',
 };
 
 function formatNextSession(sessionDate: string | null | undefined, startTime: string | null | undefined): string {
-  if (!sessionDate) return '—';
+  if (!sessionDate) return '';
   const date = new Date(sessionDate);
-  if (isNaN(date.getTime())) return '—';
+  if (isNaN(date.getTime())) return '';
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -30,7 +29,7 @@ function formatNextSession(sessionDate: string | null | undefined, startTime: st
   target.setHours(0, 0, 0, 0);
   const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-  const timePart = startTime ? ` kl. ${startTime}` : '';
+  const timePart = startTime ? ` · ${startTime}` : '';
 
   if (diffDays === 0) return `I dag${timePart}`;
   if (diffDays === 1) return `I morgen${timePart}`;
@@ -40,17 +39,19 @@ function formatNextSession(sessionDate: string | null | undefined, startTime: st
   return `${weekday} ${date.getDate()}. ${month}${timePart}`;
 }
 
-function formatSeriesProgress(totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
-  if (!totalWeeks || !courseStartDate) return null;
+function formatSeriesProgress(courseType: CourseType, totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
+  if (courseType !== 'course-series') {
+    return courseType === 'event' ? 'enkelttime' : null;
+  }
+  if (!totalWeeks) return null;
+  if (!courseStartDate) return totalWeeks === 1 ? '1 uke' : `${totalWeeks} uker`;
   const start = new Date(courseStartDate);
-  if (isNaN(start.getTime())) return null;
+  if (isNaN(start.getTime())) return `${totalWeeks} uker`;
   const today = new Date();
   const weeksElapsed = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-  // Course hasn't started yet — show total length so teacher sees the duration.
-  // The start date is already in the date row; "Starter uke 1" was tautological.
   if (weeksElapsed < 0) return totalWeeks === 1 ? '1 uke' : `${totalWeeks} uker`;
   const currentWeek = Math.min(weeksElapsed + 1, totalWeeks);
-  return `Uke ${currentWeek} av ${totalWeeks}`;
+  return `uke ${currentWeek} av ${totalWeeks}`;
 }
 
 function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: string; className?: string }) {
@@ -63,92 +64,141 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
         src={src}
         alt={alt}
         onError={handleError}
-        className={`rounded-lg object-cover shrink-0 bg-muted ${className}`}
+        className={`rounded-md object-cover shrink-0 bg-muted ${className}`}
       />
     );
   }
 
   return (
-    <div className={`rounded-lg bg-muted flex items-center justify-center shrink-0 ${className}`}>
+    <div className={`rounded-md bg-muted flex items-center justify-center shrink-0 ${className}`}>
       <ImageIcon className="size-5 text-disabled-foreground" />
     </div>
   );
 }
 
-function formatSignupCount(signups: number, max: number | null): string {
-  if (!max) return `${signups} påmeldte`;
-  return `${signups}/${max}`;
+type CourseCardStatus = 'active' | 'full' | 'draft' | 'cancelled';
+
+function deriveStatus(courseStatus: string, signups: number, max: number | null): CourseCardStatus {
+  if (courseStatus === 'draft') return 'draft';
+  if (courseStatus === 'cancelled') return 'cancelled';
+  if (max !== null && signups >= max) return 'full';
+  return 'active';
 }
 
-function isCourseFull(signups: number, max: number | null): boolean {
-  return max !== null && signups >= max;
+function statusLabel(status: CourseCardStatus): string {
+  switch (status) {
+    case 'full': return 'Fullt';
+    case 'draft': return 'Utkast';
+    case 'cancelled': return 'Avlyst';
+    default: return 'Aktiv';
+  }
+}
+
+/**
+ * Status pill — fully monochrome. `Fullt` is the only filled treatment
+ * (strongest signal) so a teacher scanning the list catches the row that's
+ * sold out. Other states use muted-on-muted.
+ */
+function StatusPill({ status }: { status: CourseCardStatus }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
+        status === 'full' && 'bg-foreground text-background',
+        status === 'active' && 'bg-muted text-foreground',
+        status === 'draft' && 'bg-muted text-muted-foreground',
+        status === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+      )}
+    >
+      {statusLabel(status)}
+    </span>
+  );
 }
 
 export function CourseCard({ course }: { course: SessionScheduleRow }) {
-  const nextSessionLabel = formatNextSession(course.sessionDate, course.startTime);
-  const seriesProgress = course.courseType === 'course-series'
-    ? formatSeriesProgress(course.totalWeeks, course.courseStartDate)
-    : null;
+  const status = deriveStatus(course.courseStatus, course.signupsCount, course.maxParticipants);
+  const sequence = formatSeriesProgress(course.courseType, course.totalWeeks, course.courseStartDate);
+  const nextSession = status === 'draft' ? '' : formatNextSession(course.sessionDate, course.startTime);
 
-  // Right-column chip always shows type-derived info for consistency across every row.
-  // Series → week progress ("Uke 6 av 8"); others → type label ("Arrangement", "Nett").
-  const chipLabel = seriesProgress ?? TYPE_LABEL[course.courseType] ?? 'Kursrekke';
+  // Meta line: date · time · location · sequence — single tier, muted.
+  // Drafts skip date+time; status pill carries that signal instead.
+  const metaParts: string[] = [];
+  if (nextSession) metaParts.push(nextSession);
+  if (course.location) metaParts.push(course.location);
+  if (sequence) metaParts.push(sequence);
+  if (metaParts.length === 0 && status === 'draft') {
+    metaParts.push(TYPE_LABEL[course.courseType] ?? '');
+  }
+
+  // Capacity readouts
+  const hasMax = course.maxParticipants !== null && course.maxParticipants > 0;
+  const pct = hasMax ? Math.min(100, Math.round((course.signupsCount / (course.maxParticipants as number)) * 100)) : 0;
+  const showBar = status !== 'draft' && status !== 'cancelled' && hasMax;
 
   return (
     <Link
       to={`/teacher/courses/${course.courseId}`}
       className="group block smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
     >
-      <div className="flex items-start gap-3 p-3 md:gap-4">
+      <div className="grid items-center gap-4 p-3 md:gap-5 md:p-4 grid-cols-[56px_1fr] md:grid-cols-[56px_minmax(0,1fr)_180px]">
         <CourseImage
           src={course.imageUrl}
           alt={course.courseTitle}
-          className="h-12 w-20 md:h-14 md:w-24 shrink-0"
+          className="h-14 w-14 md:h-14 md:w-14"
         />
 
-        {/* Two-column layout: title/date on the left, capacity/chip on the right.
-            Left-edge aligned top-down: title → date.
-            Right-edge aligned top-down: capacity → chip. */}
-        <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-          {/* Row 1: Title (left) + Capacity (right) — primary tier, equal importance.
-              Full-course pill uses the success token so a teacher scanning the list
-              picks up "this one hit capacity" in one visual hit instead of reading
-              "Fullt" next to every row's users icon. */}
-          <div className="flex items-center gap-3">
-            <h3 className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
+        {/* Identity cluster — title (+ drop-in marker inline) on top, muted meta line below */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-sm font-medium text-foreground leading-[1.35] truncate min-w-0">
               {course.courseTitle}
             </h3>
-            {isCourseFull(course.signupsCount, course.maxParticipants) ? (
-              <Badge variant="success" shape="rect" size="sm" className="gap-1 shrink-0">
-                <Check className="size-3.5" />
-                Fullt
-              </Badge>
-            ) : (
-              <span className="flex items-center gap-1.5 text-sm font-medium tabular-nums text-foreground whitespace-nowrap shrink-0">
-                <Users className="size-4 shrink-0" />
-                {formatSignupCount(course.signupsCount, course.maxParticipants)}
+            {course.allowsDropIn && (
+              <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-medium leading-[1.45] group-hover:bg-background">
+                Drop-in
               </span>
             )}
           </div>
+          {metaParts.length > 0 && (
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums truncate">
+              {metaParts.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="text-disabled-foreground"> · </span>}
+                  {p}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
 
-          {/* Row 2: Date (left, under title) + chips (right, under capacity) — meta tier. */}
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground flex-1 min-w-0">
-              <CalendarDays className="size-3.5 shrink-0" />
-              <span className="truncate">{nextSessionLabel}</span>
-            </span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {course.allowsDropIn && (
-                <Badge variant="accent" shape="rect" size="sm">
-                  <Check />
-                  Drop-in
-                </Badge>
-              )}
-              <Badge variant="secondary" shape="rect" size="sm">
-                {chipLabel}
-              </Badge>
-            </div>
+        {/* Status / capacity cluster — desktop only, vertically centered with the identity column */}
+        <div className="hidden md:flex flex-col justify-center gap-1.5 self-center w-full">
+          <div className="flex items-center justify-between gap-2 text-xs tabular-nums leading-none">
+            <StatusPill status={status} />
+            {status === 'draft' ? (
+              <span className="text-muted-foreground">Ikke publisert</span>
+            ) : status === 'cancelled' ? (
+              <span className="text-muted-foreground">Avlyst</span>
+            ) : hasMax ? (
+              <span>
+                <span className="text-foreground">{course.signupsCount}/{course.maxParticipants}</span>
+                <span className="text-muted-foreground"> · {pct} %</span>
+              </span>
+            ) : (
+              <span>
+                <span className="text-foreground">{course.signupsCount} påmeldte</span>
+                <span className="text-muted-foreground"> · ubegrenset</span>
+              </span>
+            )}
           </div>
+          {showBar && (
+            <div className="h-1 w-full rounded-full bg-muted overflow-hidden group-hover:bg-background">
+              <div
+                className="h-full rounded-full bg-muted-foreground"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </Link>
@@ -198,7 +248,6 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
       .sort((a, b) => b.year - a.year);
   }, [courses]);
 
-  // All years default to collapsed — matches PastSignupsList pattern; teacher clicks to drill in.
   const [state, setState] = useState<Record<number, YearState>>({});
 
   if (groups.length === 0) return null;
@@ -286,17 +335,18 @@ export function CourseListSkeleton() {
   return (
     <div className="divide-y divide-border">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-start gap-3 p-3 md:gap-4">
-          <Skeleton className="h-12 w-20 md:h-14 md:w-24 rounded-lg shrink-0" />
-          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-            <div className="flex items-baseline gap-3">
-              <Skeleton className="h-4 w-48 max-w-full flex-1" />
-              <Skeleton className="h-4 w-12 shrink-0" />
+        <div key={i} className="grid items-center gap-4 p-3 md:gap-5 md:p-4 grid-cols-[56px_1fr] md:grid-cols-[56px_minmax(0,1fr)_180px]">
+          <Skeleton className="h-14 w-14 rounded-md shrink-0" />
+          <div className="min-w-0 flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-48 max-w-full" />
+            <Skeleton className="h-3 w-56 max-w-full" />
+          </div>
+          <div className="hidden md:flex flex-col gap-1.5 self-center">
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-3 w-20" />
             </div>
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-3 w-32 flex-1" />
-              <Skeleton className="h-5 w-24 shrink-0" />
-            </div>
+            <Skeleton className="h-1 w-full" />
           </div>
         </div>
       ))}

@@ -16,8 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { AudienceLevel, EquipmentInfo } from '@/types/practicalInfo';
 import { AUDIENCE_LEVEL_OPTIONS, EQUIPMENT_OPTIONS, ARRIVAL_PRESET_OPTIONS, ARRIVAL_NONE_VALUE, CUSTOM_BULLET_PLACEHOLDERS, CUSTOM_BULLETS_MAX_COUNT, CUSTOM_BULLET_MAX_LENGTH } from '@/utils/practicalInfoUtils';
@@ -182,7 +182,7 @@ export const CourseSettingsTab = ({
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="space-y-4">
               <div>
-                <label htmlFor="settings-title" className="text-xs font-medium mb-1.5 block text-foreground">Navn på kurs</label>
+                <label htmlFor="settings-title" className="text-sm font-medium mb-1.5 block text-foreground">Navn på kurs</label>
                 <Input
                   id="settings-title"
                   type="text"
@@ -192,7 +192,7 @@ export const CourseSettingsTab = ({
               </div>
 
               <div>
-                <label htmlFor="settings-description" className="text-xs font-medium mb-1.5 block text-foreground">Beskrivelse</label>
+                <label htmlFor="settings-description" className="text-sm font-medium mb-1.5 block text-foreground">Beskrivelse</label>
                 <Textarea
                   id="settings-description"
                   rows={6}
@@ -238,7 +238,7 @@ export const CourseSettingsTab = ({
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <label id="settings-date-label" className="text-xs font-medium mb-1.5 block text-foreground">Dato</label>
+            <label id="settings-date-label" className="text-sm font-medium mb-1.5 block text-foreground">Dato</label>
             <DatePicker
               aria-labelledby="settings-date-label"
               value={settingsDate}
@@ -247,7 +247,7 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label id="settings-time-label" className="text-xs font-medium mb-1.5 block text-foreground">Tidspunkt</label>
+            <label id="settings-time-label" className="text-sm font-medium mb-1.5 block text-foreground">Tidspunkt</label>
             <div className="flex items-center gap-2">
               <Select
                 value={settingsTime}
@@ -289,7 +289,7 @@ export const CourseSettingsTab = ({
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1.5 block text-foreground">Kapasitet</label>
+            <label className="text-sm font-medium mb-1.5 block text-foreground">Kapasitet</label>
             <Input
               type="text"
               inputMode="numeric"
@@ -337,29 +337,37 @@ export const CourseSettingsTab = ({
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
           <div>
-            <label className="text-xs font-medium mb-2.5 block text-foreground">Nivå</label>
-            <ToggleGroup
-              type="single"
-              value={settingsAudienceLevel}
-              onValueChange={(value) => onAudienceLevelChange((value || '') as AudienceLevel | '')}
-              variant="pill"
-              spacing={1}
-              className="gap-1.5"
-              aria-label="Velg nivå"
-            >
-              {AUDIENCE_LEVEL_OPTIONS.map((opt) => (
-                <ToggleGroupItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            <label className="text-sm font-medium mb-2 block text-foreground">Nivå</label>
+            <div role="radiogroup" aria-label="Velg nivå" className="inline-flex flex-wrap gap-1.5">
+              {AUDIENCE_LEVEL_OPTIONS.map((opt) => {
+                const active = settingsAudienceLevel === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => onAudienceLevelChange(active ? '' : (opt.value as AudienceLevel))}
+                    className={cn(
+                      'inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors',
+                      'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                      active
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-muted-foreground border-border hover:text-foreground hover:border-foreground/40',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
             <p className="text-xs mt-1.5 text-muted-foreground">
               Velg det laveste nivået som passer.
             </p>
           </div>
 
           <div>
-            <label className="text-xs font-medium mb-2.5 block text-foreground">Utstyr</label>
+            <label className="text-sm font-medium mb-2 block text-foreground">Utstyr</label>
             <RadioGroup
               value={settingsEquipment}
               onValueChange={(val) => onEquipmentChange(val as EquipmentInfo)}
@@ -374,7 +382,7 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="text-xs font-medium mb-1.5 block text-foreground">Oppmøte før start</label>
+            <label className="text-sm font-medium mb-1.5 block text-foreground">Oppmøte før start</label>
             <Select
               value={settingsArrivalMinutes || ARRIVAL_NONE_VALUE}
               onValueChange={(val) => onArrivalMinutesChange(val === ARRIVAL_NONE_VALUE ? '' : val)}
@@ -393,7 +401,7 @@ export const CourseSettingsTab = ({
           </div>
 
           <div>
-            <label className="text-xs font-medium mb-1.5 block text-foreground">Egne punkter</label>
+            <label className="text-sm font-medium mb-1.5 block text-foreground">Egne punkter</label>
             <div className="space-y-2">
               {settingsCustomBullets.map((bullet, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -438,66 +446,76 @@ export const CourseSettingsTab = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Avlys kurs</CardTitle>
-          <CardDescription>Bruk dette bare hvis kurset ikke skal gjennomføres.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col justify-between gap-4 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-4 sm:flex-row sm:items-center">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Dette kan ikke angres.</p>
-              <p className="text-sm text-muted-foreground">
-                {refundPreview.count > 0
-                  ? <><span className="tabular-nums">{refundPreview.count}</span> {`deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet.`}</>
-                  : 'Kurset vil bli avlyst.'}
-              </p>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="shrink-0 whitespace-nowrap"
-              onClick={onCancelCourse}
-            >
-              Avlys kurs
-            </Button>
+      {/* Danger zone — visually separated from the calm save flow.
+          Uses destructive surface tones to signal "this is irreversible". */}
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-semibold text-foreground">Avlys kurs</h3>
+            <p className="text-sm text-muted-foreground">
+              {refundPreview.count > 0
+                ? <><span className="tabular-nums">{refundPreview.count}</span> {`deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet. Dette kan ikke angres.`}</>
+                : 'Kurset vil bli avlyst. Dette kan ikke angres.'}
+            </p>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-3 pt-2">
-        {saveError && (
-          <Alert variant="error" size="sm" icon={Info} className="mr-auto">
-            <span className="text-sm text-destructive">{saveError}</span>
-          </Alert>
-        )}
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCancel}
-          disabled={isSaving}
-        >
-          Avbryt
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => {
-            commitParticipantsInput();
-            onSave();
-          }}
-          disabled={isSaving || !isDirty}
-        >
-          {isSaving ? (
-            <>
-              <Spinner size="sm" />
-              Lagrer
-            </>
-          ) : (
-            'Lagre endringer'
-          )}
-        </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="shrink-0 whitespace-nowrap"
+            onClick={onCancelCourse}
+          >
+            Avlys kurs
+          </Button>
+        </div>
       </div>
+
+      {/* Sticky save bar — only visible when there are unsaved changes.
+          Sits at the bottom of the scrollable area with a backdrop blur. */}
+      {(isDirty || saveError) && (
+        <div className="sticky bottom-0 -mx-6 lg:-mx-8 mt-4 px-6 lg:px-8 py-3 bg-background/92 backdrop-blur-md border-t border-border z-20">
+          <div className="flex items-center justify-between gap-3 max-w-6xl mx-auto">
+            <div className="flex items-center gap-2 min-w-0">
+              {saveError ? (
+                <Alert variant="error" size="sm" icon={Info} className="py-1">
+                  <span className="text-sm text-destructive">{saveError}</span>
+                </Alert>
+              ) : (
+                <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-foreground" aria-hidden />
+                  Du har endringer som ikke er lagret
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancel}
+                disabled={isSaving}
+              >
+                Forkast
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  commitParticipantsInput();
+                  onSave();
+                }}
+                disabled={isSaving || !isDirty}
+              >
+                {isSaving ? (
+                  <>
+                    <Spinner size="sm" />
+                    Lagrer
+                  </>
+                ) : (
+                  'Lagre endringer'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

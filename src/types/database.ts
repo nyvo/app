@@ -56,6 +56,15 @@ export interface SignupDisplay {
   courseEnded?: boolean;
   courseEndDate?: string | null;
   courseCapacity?: number | null;
+  // Ticket-type info — what the participant actually bought.
+  ticketLabel?: string;
+  ticketKind?: TicketKind;
+  ticketAudience?: TicketAudience;
+  // Course shape, used for the meta line: drop-ins show session date+time,
+  // packages show "uke X av Y" or "X uker".
+  courseType?: CourseType;
+  courseStartDate?: string | null;
+  courseTotalWeeks?: number | null;
 }
 
 export interface Database {

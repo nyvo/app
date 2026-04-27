@@ -1,53 +1,24 @@
 import React from 'react';
-import { Image } from '@/lib/icons';
-// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add `Send` icon + `Button`
-// import + the trigger block in the body when re-enabling messages.
-// import { Send } from '@/lib/icons';
-// import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
-import { Badge } from '@/components/ui/badge';
+import { Image, ArrowRight } from '@/lib/icons';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
+import { CourseDetailKpiStrip, type CourseDetailKpis } from '@/components/teacher/CourseDetailKpiStrip';
 import { SessionList } from '@/components/teacher/SessionList';
-import { formatKroner } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
+import { getInitials } from '@/utils/stringUtils';
 import type { SignupStatus, PaymentStatus } from '@/types/database';
 import type { CourseWeek, SessionEditHandlers } from './session-types';
 
-// Format date range for display (e.g., "17. jan – 7. feb 2025")
-function formatDateRange(startDate?: string | null, endDate?: string | null): string | null {
-  if (!startDate) return null;
+const AVATAR_TONES = [
+  '#6B7280', '#4F6CB0', '#A66B4F', '#5C7E5A',
+  '#8B6A8F', '#B07B4F', '#707070', '#6E6E84',
+] as const;
 
-  const start = new Date(startDate);
-
-  if (isNaN(start.getTime())) return null;
-
-  const end = endDate ? new Date(endDate) : null;
-
-  if (end && isNaN(end.getTime())) return null;
-  if (end && end.getTime() < start.getTime()) return null;
-
-  const formatDay = (date: Date) => date.getDate();
-  const formatMonth = (date: Date) => date.toLocaleDateString('nb-NO', { month: 'short' }).replace('.', '');
-  const formatYear = (date: Date) => date.getFullYear();
-
-  if (!end) {
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
+function avatarToneFor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   }
-
-  const sameYear = start.getFullYear() === end.getFullYear();
-  const sameMonth = sameYear && start.getMonth() === end.getMonth();
-  const sameDay = sameMonth && start.getDate() === end.getDate();
-
-  if (sameDay) {
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)}`;
-  }
-
-  if (sameMonth) {
-    return `${formatDay(start)}. – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else if (sameYear) {
-    return `${formatDay(start)}. ${formatMonth(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  } else {
-    return `${formatDay(start)}. ${formatMonth(start)} ${formatYear(start)} – ${formatDay(end)}. ${formatMonth(end)} ${formatYear(end)}`;
-  }
+  return AVATAR_TONES[hash % AVATAR_TONES.length];
 }
 
 interface RecentParticipant {
@@ -89,24 +60,38 @@ interface CourseOverviewTabProps {
   generatedCourseWeeks: CourseWeek[];
   hasRealSessions: boolean;
 
-  // Session editing (grouped)
+  // Session editing
   sessionEditHandlers: SessionEditHandlers;
 
   // Recent participants
   recentParticipants: RecentParticipant[];
   totalParticipantCount: number;
 
-  // Callbacks
-  /** MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): handler kept on the prop interface so
-   * CourseDetailPage can keep passing it; the trigger button in this component is hidden. */
+  // KPIs (computed in parent from signups + course data)
+  kpis: CourseDetailKpis | null;
+  kpisLoading: boolean;
+
+  // Tab navigation — for the "Se alle X" shortcut on Nylige påmeldinger
+  onJumpToParticipants?: () => void;
+
+  /** MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): kept for back-compat. */
   onMessageParticipants: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
 }
 
+function statusLabel(s: SignupStatus, p: PaymentStatus): { label: string; tone: 'foreground' | 'muted' | 'failed' } {
+  if (s === 'cancelled' || s === 'course_cancelled') {
+    if (p === 'refunded') return { label: 'Refundert', tone: 'muted' };
+    return { label: 'Avbestilt', tone: 'muted' };
+  }
+  if (p === 'failed') return { label: 'Betaling feilet', tone: 'failed' };
+  if (p === 'pending') return { label: 'Venter', tone: 'muted' };
+  return { label: 'Påmeldt', tone: 'foreground' };
+}
+
 export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   course,
-  spotsLeft,
   isMultiDayCourse,
   sessionLabel,
   sessionLabelPlural,
@@ -116,83 +101,18 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): handler still received but unused.
   onMessageParticipants: _onMessageParticipants,
   recentParticipants,
-  totalParticipantCount: _totalParticipantCount,
+  totalParticipantCount,
+  kpis,
+  kpisLoading,
+  onJumpToParticipants,
   kursplanRef,
 }) => {
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Oversikt</CardTitle>
-          <CardDescription>De viktigste detaljene om kurset samlet på ett sted.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-10">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Dato</p>
-                <p className="text-sm font-medium text-foreground">
-                  {formatDateRange(course.startDate, course.endDate) || course.date || 'Ikke angitt'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Tidspunkt</p>
-                <p className="text-sm font-medium tabular-nums text-foreground">
-                  {course.timeSchedule || 'Ikke angitt'}
-                  {course.durationMinutes > 0 && (
-                    <span className="text-sm tabular-nums ml-1 text-muted-foreground">({course.durationMinutes} min)</span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Sted</p>
-                <p className="text-sm font-medium text-foreground">{course.location || 'Ikke angitt'}</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-0.5 text-muted-foreground">Pris</p>
-                <p className="text-sm font-medium tabular-nums text-foreground">{formatKroner(course.price)}</p>
-              </div>
-            </div>
+    <div className="space-y-5">
+      {/* KPI strip — replaces the old "Oversikt" meta-grid card */}
+      <CourseDetailKpiStrip kpis={kpis} loading={kpisLoading} />
 
-            <div className="min-w-0 xl:pl-10 xl:border-l xl:border-border">
-              <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kapasitet</p>
-              <p className="text-base font-medium tabular-nums mb-2 text-foreground">
-                {course.enrolled ?? 0} av {course.capacity} påmeldt
-              </p>
-              {course.capacity > 0 && (
-                course.enrolled >= course.capacity ? (
-                  <Badge variant="neutral" shape="rect" size="sm" className="mb-2">
-                    Fullt
-                  </Badge>
-                ) : (
-                  <Badge variant="neutral" shape="rect" size="sm" className="mb-2">
-                    {spotsLeft} {spotsLeft === 1 ? 'plass' : 'plasser'} igjen
-                  </Badge>
-                )
-              )}
-            </div>
-          </div>
-
-          {/* MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): "Send melding til påmeldte"
-              hidden until messages page ships. The MessageParticipantsDialog is
-              still mounted in CourseDetailPage but unreachable via this button. */}
-          {/*
-          <div className="flex flex-col gap-2 pt-6 sm:flex-row">
-            <Button
-              variant="outline-soft"
-              size="sm"
-              className="justify-start"
-              disabled={course.enrolled === 0}
-              onClick={onMessageParticipants}
-            >
-              <Send className="size-3.5" />
-              Send melding til påmeldte
-            </Button>
-          </div>
-          */}
-        </CardContent>
-      </Card>
-
+      {/* Om kurset — eyebrows dropped, lede paragraph emphasized */}
       <Card>
         <CardHeader>
           <CardTitle>Om kurset</CardTitle>
@@ -216,39 +136,42 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               )}
             </div>
 
-            <div className="min-w-0 flex-1 space-y-6">
-              <div>
-                <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Kort beskrivelse</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {course.description || 'Ingen beskrivelse lagt til'}
+            <div className="min-w-0 flex-1 space-y-4">
+              {course.description && (
+                <p className="text-[15px] leading-[1.55] text-foreground whitespace-pre-wrap">
+                  {course.description}
                 </p>
-              </div>
-
+              )}
               {course.description2 && (
-                <div>
-                  <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Utfyllende tekst</p>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {course.description2}
-                  </p>
+                <p className="text-sm leading-[1.55] text-muted-foreground whitespace-pre-wrap">
+                  {course.description2}
+                </p>
+              )}
+              {(course.level || course.courseType === 'kursrekke') && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {course.level && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px] font-medium leading-[1.5]">
+                      {course.level}
+                    </span>
+                  )}
+                  {course.courseType === 'kursrekke' && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px] font-medium leading-[1.5]">
+                      Voksne
+                    </span>
+                  )}
                 </div>
               )}
-
-              {course.level && (
-                <div>
-                  <p className="text-xs font-medium tracking-wide mb-1.5 text-muted-foreground">Målgruppe og nivå</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{course.level}</Badge>
-                    {course.courseType === 'kursrekke' && (
-                      <Badge variant="secondary">Voksne</Badge>
-                    )}
-                  </div>
-                </div>
+              {!course.description && !course.description2 && (
+                <p className="text-sm leading-relaxed text-muted-foreground italic">
+                  Ingen beskrivelse lagt til.
+                </p>
               )}
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Kursplan — same SessionList component, rendered when multi-day */}
       {isMultiDayCourse && generatedCourseWeeks.length > 0 && (
         <section ref={kursplanRef}>
           <SessionList
@@ -261,28 +184,62 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
         </section>
       )}
 
+      {/* Nylige påmeldinger — uses the colored-initials pattern from /signups */}
       {recentParticipants.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Nylige påmeldinger</CardTitle>
+            <CardDescription>De siste fem som meldte seg på dette kurset.</CardDescription>
+            {onJumpToParticipants && totalParticipantCount > 5 && (
+              <CardAction>
+                <button
+                  type="button"
+                  onClick={onJumpToParticipants}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:underline decoration-disabled-foreground underline-offset-2"
+                >
+                  Se alle {totalParticipantCount}
+                  <ArrowRight className="size-3.5" strokeWidth={1.75} />
+                </button>
+              </CardAction>
+            )}
           </CardHeader>
           <CardContent>
-            <div className="divide-y divide-border">
-              {recentParticipants.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted">
-                    <span className="text-xs font-medium tracking-wide text-muted-foreground">
-                      {p.name.charAt(0).toUpperCase()}
+            <div className="divide-y divide-border -my-2">
+              {recentParticipants.map((p) => {
+                const tone = avatarToneFor(p.name || p.email || '?');
+                const { label, tone: pillTone } = statusLabel(p.status, p.paymentStatus);
+                return (
+                  <div key={p.id} className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 py-2.5">
+                    <div
+                      className="size-8 rounded-full inline-flex items-center justify-center text-white text-[11px] font-semibold tracking-tight"
+                      style={{ background: tone }}
+                      aria-label={p.name}
+                    >
+                      {getInitials(p.name || p.email || null)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
+                      <p className="text-xs truncate text-muted-foreground">{p.email}</p>
+                    </div>
+                    <span className={cn(
+                      'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5] shrink-0',
+                      pillTone === 'failed' && 'bg-foreground text-background',
+                      pillTone === 'muted' && 'bg-muted text-muted-foreground',
+                      pillTone === 'foreground' && 'bg-muted text-foreground',
+                    )}>
+                      {label}
                     </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                    <p className="text-xs truncate text-muted-foreground">{p.email}</p>
-                  </div>
-                  <SignupStatusBadge status={p.status} paymentStatus={p.paymentStatus} size="sm" />
-                </div>
-              ))}
+                );
+              })}
             </div>
+            {/* Estimated revenue moved out of headline — surfaced as quiet meta */}
+            {course.estimatedRevenue > 0 && (
+              <p className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground tabular-nums">
+                Estimerte inntekter for denne kursrekken:{' '}
+                <span className="text-foreground font-medium">{formatKroner(course.estimatedRevenue)}</span>
+              </p>
+            )}
           </CardContent>
         </Card>
       )}

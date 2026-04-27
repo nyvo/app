@@ -8,14 +8,14 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, PastCoursesList, COURSES_PER_PAGE } from '@/components/teacher/CourseListView';
+import { CoursesKpiStrip, type CoursesKpis } from '@/components/teacher/CoursesKpiStrip';
 import { SearchInput } from '@/components/ui/search-input';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { getShowEmptyState } from '@/lib/utils';
+import { cn, getShowEmptyState } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course, CourseType } from '@/types/database';
@@ -69,6 +69,60 @@ function mapCourseToRow(
 type ViewTab = 'active' | 'past' | 'draft';
 type SortKey = 'next' | 'name' | 'signups' | 'updated';
 
+/**
+ * Inline segmented control — muted track with each option as a pill.
+ * The active pill flips to bg-background + a soft shadow so it reads as
+ * "lifted out of the track". Inline counts use tabular nums.
+ */
+function SegmentedTabs({
+  value,
+  onChange,
+  draftCount,
+}: {
+  value: ViewTab;
+  onChange: (v: ViewTab) => void;
+  draftCount: number;
+}) {
+  const tabs: { key: ViewTab; label: string; count?: number }[] = [
+    { key: 'active', label: 'Aktive' },
+    { key: 'past', label: 'Fullførte' },
+    { key: 'draft', label: 'Utkast', count: draftCount > 0 ? draftCount : undefined },
+  ];
+  return (
+    <div role="tablist" aria-label="Filtrer kurs" className="inline-flex rounded-lg bg-muted p-0.5 gap-0.5 w-fit">
+      {tabs.map(t => {
+        const active = value === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.key)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              active
+                ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+            {t.count !== undefined && (
+              <span className={cn(
+                'tabular-nums text-xs',
+                active ? 'text-foreground' : 'text-muted-foreground',
+              )}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // Default sort per tab — matches the most useful order for each view.
 const DEFAULT_SORT_FOR_TAB: Record<ViewTab, SortKey> = {
   active: 'next',
@@ -90,6 +144,7 @@ const CoursesPage = () => {
   // Course IDs that have at least one ACTIVE drop-in ticket type. Replaces
   // the dropped courses.allows_drop_in column.
   const [dropInCourseIds, setDropInCourseIds] = useState<Set<string>>(() => new Set());
+  const [kpis, setKpis] = useState<CoursesKpis | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,7 +172,7 @@ const CoursesPage = () => {
 
       if (courseIds.length > 0) {
         const { data: signupsData, error: signupsError } = await typedFrom('signups')
-          .select('course_id')
+          .select('course_id, created_at, amount_paid')
           .in('course_id', courseIds)
           .eq('status', 'confirmed');
 
@@ -125,8 +180,11 @@ const CoursesPage = () => {
           logger.error('Failed to fetch signups counts:', signupsError);
         }
 
+        type SignupRow = { course_id: string; created_at: string | null; amount_paid: number | null };
+        const signupRows = (signupsData as SignupRow[] | null) ?? [];
+
         const counts: Record<string, number> = {};
-        (signupsData as { course_id: string }[] | null)?.forEach(s => {
+        signupRows.forEach(s => {
           counts[s.course_id] = (counts[s.course_id] || 0) + 1;
         });
         setSignupsCounts(counts);
@@ -158,6 +216,55 @@ const CoursesPage = () => {
           (dropInTiers as { course_id: string }[] | null)?.map(t => t.course_id) ?? []
         );
         setDropInCourseIds(dropInIds);
+
+        // ── Compute KPIs ─────────────────────────────────────────────────
+        // Active courses: not draft / cancelled / completed AND not past end_date.
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isActive = (c: Course) => {
+          if (c.status === 'draft' || c.status === 'cancelled' || c.status === 'completed') return false;
+          const cutoff = c.end_date || c.start_date;
+          return !(cutoff != null && cutoff < todayStr);
+        };
+        const activeCourses = coursesData.filter(isActive);
+        const activeCount = activeCourses.length;
+
+        // Free spots: sum of (max - confirmed) for active courses with a max set.
+        const freeSpots = activeCourses.reduce((sum, c) => {
+          if (c.max_participants == null) return sum;
+          const taken = counts[c.id] ?? 0;
+          return sum + Math.max(0, c.max_participants - taken);
+        }, 0);
+
+        // This-week start (Monday 00:00 local)
+        const weekStart = new Date();
+        const day = weekStart.getDay(); // 0=Sun
+        const diffToMonday = day === 0 ? -6 : 1 - day;
+        weekStart.setDate(weekStart.getDate() + diffToMonday);
+        weekStart.setHours(0, 0, 0, 0);
+
+        // This-month start
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+
+        let signupsThisWeek = 0;
+        let monthRevenue = 0;
+        for (const s of signupRows) {
+          if (!s.created_at) continue;
+          const t = new Date(s.created_at).getTime();
+          if (Number.isNaN(t)) continue;
+          if (t >= weekStart.getTime()) signupsThisWeek++;
+          if (t >= monthStart.getTime()) monthRevenue += s.amount_paid ?? 0;
+        }
+
+        setKpis({
+          activeCourses: activeCount,
+          signupsThisWeek,
+          freeSpots,
+          monthRevenue,
+        });
+      } else {
+        setKpis({ activeCourses: 0, signupsThisWeek: 0, freeSpots: 0, monthRevenue: 0 });
       }
     } catch {
       setError('Kunne ikke hente kurs. Prøv på nytt.');
@@ -275,30 +382,20 @@ const CoursesPage = () => {
         </motion.header>
 
         <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+          {!showCoursesEmptyState && (
+            <CoursesKpiStrip kpis={kpis} loading={isLoading} />
+          )}
           {showCoursesEmptyState ? (
             <CoursesEmptyState />
           ) : (
-            <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
-              <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
-                <ToggleGroup
-                  type="single"
+            <>
+              {/* Toolbar — sits OUTSIDE the frame on the page background */}
+              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                <SegmentedTabs
                   value={viewTab}
-                  onValueChange={(v) => { if (v) setViewTab(v as ViewTab); }}
-                  variant="segmented"
-                  aria-label="Filtrer kurs"
-                >
-                  <ToggleGroupItem value="active">Aktive</ToggleGroupItem>
-                  <ToggleGroupItem value="past">Fullførte</ToggleGroupItem>
-                  <ToggleGroupItem value="draft">
-                    Utkast
-                    {draftCount > 0 && (
-                      <span aria-hidden className="relative ml-1.5 inline-flex size-1.5 align-middle">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-2 opacity-75 [animation-duration:1.6s]" />
-                        <span className="relative inline-flex size-1.5 rounded-full bg-chart-2" />
-                      </span>
-                    )}
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                  onChange={setViewTab}
+                  draftCount={draftCount}
+                />
                 <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
                   <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                     <SelectTrigger className="w-44" aria-label="Sorter kurs">
@@ -322,44 +419,53 @@ const CoursesPage = () => {
                 </div>
               </div>
 
-              {isLoading ? (
-                <div role="status" aria-live="polite" aria-label="Laster kurs">
-                  <span className="sr-only">Henter kurs</span>
-                  <CourseListSkeleton />
-                </div>
-              ) : error ? (
-                <ErrorState
-                  title="Kunne ikke hente kurs"
-                  message={error}
-                  onRetry={loadData}
-                  variant="card"
-                />
-              ) : filteredRows.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title={emptyTitle}
-                  description={emptyDescription}
-                  className="py-16"
-                />
-              ) : viewTab === 'past' && !searchQuery ? (
-                <div className="p-3">
-                  <PastCoursesList courses={filteredRows} />
-                </div>
-              ) : (
-                <CourseListView courses={visibleRows} />
-              )}
-            </div>
-          )}
-          {showLoadMore && (
-            <div className="mt-3 flex justify-center">
-              <Button
-                variant="outline-soft"
-                size="sm"
-                onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
-              >
-                Vis flere
-              </Button>
-            </div>
+              {/* Frame — rows + footer in one card */}
+              <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+                {isLoading ? (
+                  <div role="status" aria-live="polite" aria-label="Laster kurs">
+                    <span className="sr-only">Henter kurs</span>
+                    <CourseListSkeleton />
+                  </div>
+                ) : error ? (
+                  <ErrorState
+                    title="Kunne ikke hente kurs"
+                    message={error}
+                    onRetry={loadData}
+                    variant="card"
+                  />
+                ) : filteredRows.length === 0 ? (
+                  <EmptyState
+                    icon={Calendar}
+                    title={emptyTitle}
+                    description={emptyDescription}
+                    className="py-16"
+                  />
+                ) : viewTab === 'past' && !searchQuery ? (
+                  <div className="p-3">
+                    <PastCoursesList courses={filteredRows} />
+                  </div>
+                ) : (
+                  <CourseListView courses={visibleRows} />
+                )}
+
+                {/* Footer — single row inside the frame: support text left, button right.
+                    Lives BELOW the divide-y rows, separated by its own border. */}
+                {showLoadMore && (
+                  <div className="flex items-center justify-between gap-3 px-4 py-3 bg-background">
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      Viser {visibleCount} av {filteredRows.length} kurs
+                    </span>
+                    <Button
+                      variant="outline-soft"
+                      size="sm"
+                      onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
+                    >
+                      Vis flere
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
         <EmptyStateToggle />

@@ -22,7 +22,7 @@ export function formatTime(time: string): string {
  * Grid shows 06:00-22:00 at 100px per hour. Overlapping events are laid
  * out side-by-side by sharing the column width.
  */
-const PX_PER_HOUR = 100;
+export const PX_PER_HOUR = 60;
 const OUTER_PX = 6;
 const GAP_PX = 4;
 

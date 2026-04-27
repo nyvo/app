@@ -1,14 +1,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Search } from '@/lib/icons';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Calendar, Search, Filter } from '@/lib/icons';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 
 import { pageVariants, pageTransition } from '@/lib/motion';
 
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import type { SignupStatus, PaymentStatus, ExceptionType, SignupDisplay } from '@/types/database';
+import type { SignupStatus, PaymentStatus, ExceptionType, SignupDisplay, CourseType, TicketAudience, TicketKind } from '@/types/database';
 import { SearchInput } from '@/components/ui/search-input';
 import {
   SignupListView,
@@ -17,6 +16,8 @@ import {
   SIGNUPS_LOAD_MORE_INCREMENT,
   SIGNUPS_SHOW_ALL_THRESHOLD,
 } from '@/components/teacher/SignupListView';
+import { SignupsKpiStrip, type SignupsKpis } from '@/components/teacher/SignupsKpiStrip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { friendlyError } from '@/lib/error-messages';
@@ -30,8 +31,8 @@ import {
 import type { ParticipantActionHandlers } from '@/components/teacher/ParticipantActionMenu';
 import { useAuth } from '@/contexts/AuthContext';
 import { typedFrom } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
-// Format date for display
 function formatDate(dateString: string | null): string {
   if (!dateString) return '—';
   const date = new Date(dateString);
@@ -39,41 +40,31 @@ function formatDate(dateString: string | null): string {
   return `${date.getDate()}. ${months[date.getMonth()]}`;
 }
 
-// Format time from time_schedule
 function extractTime(timeSchedule: string | null): string {
   if (!timeSchedule) return '';
   const match = timeSchedule.match(/(\d{1,2}:\d{2})/);
   return match ? match[1] : '';
 }
 
-// Format relative date
 function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays === 0) return 'I dag';
   if (diffDays === 1) return 'I går';
   if (diffDays < 7) return `${diffDays} dager siden`;
-
   const months = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
   return `${date.getDate()}. ${months[date.getMonth()]}`;
 }
 
-// Detect payment exception for action menu context
 function detectException(signup: SignupDisplay): ExceptionType | null {
-  // Cancelled signups are terminal — no exception actions even if the
-  // underlying payment_status is still 'failed' or 'pending'.
   if (signup.status === 'cancelled' || signup.status === 'course_cancelled') return null;
   if (signup.paymentStatus === 'failed') return 'payment_failed';
   if (signup.paymentStatus === 'pending' && signup.status === 'confirmed') return 'pending_payment';
   return null;
 }
 
-// A signup is actionable ("Til oppfølging") when the teacher needs to do something.
-// Resolved states (refunded, participant cancelled) are excluded — they live in
-// their natural tab with row badges that carry the signal.
 function isFollowup(s: SignupDisplay): boolean {
   if (s.paymentStatus === 'pending' && s.status === 'confirmed') return true;
   if (s.paymentStatus === 'failed') return true;
@@ -83,18 +74,67 @@ function isFollowup(s: SignupDisplay): boolean {
 
 type ViewTab = 'active' | 'followup' | 'past';
 
+/**
+ * Inline segmented control — same shape as the one on /teacher/courses.
+ * Muted track, active pill flips to bg-background + soft shadow.
+ */
+function SegmentedTabs({
+  value,
+  onChange,
+  tabs,
+}: {
+  value: ViewTab;
+  onChange: (v: ViewTab) => void;
+  tabs: { key: ViewTab; label: string; count?: number }[];
+}) {
+  return (
+    <div role="tablist" aria-label="Filtrer påmeldinger" className="inline-flex rounded-lg bg-muted p-0.5 gap-0.5 w-fit">
+      {tabs.map(t => {
+        const active = value === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.key)}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              active
+                ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {t.label}
+            {t.count !== undefined && (
+              <span className={cn(
+                'tabular-nums text-xs',
+                active ? 'text-foreground' : 'text-muted-foreground',
+              )}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export const SignupsPage = () => {
   const { currentOrganization } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
+  const [kpis, setKpis] = useState<SignupsKpis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
+  const [courseFilter, setCourseFilter] = useState<string>('all');
   const [visibleCount, setVisibleCount] = useState(SIGNUPS_INITIAL_VISIBLE);
 
-  // Fetch signups from database
   const loadSignups = useCallback(async () => {
     if (!currentOrganization?.id) return;
 
@@ -112,7 +152,6 @@ export const SignupsPage = () => {
     const signupsData = data || [];
     setSignups(signupsData);
 
-    // Fetch next upcoming session date per course (for display)
     const courseIds = [...new Set(signupsData.map(s => s.course_id).filter(Boolean))];
     if (courseIds.length > 0) {
       const today = new Date().toISOString().split('T')[0];
@@ -134,21 +173,26 @@ export const SignupsPage = () => {
     setLoading(false);
   }, [currentOrganization?.id]);
 
-  // Initial load
-  useEffect(() => {
-    loadSignups();
-  }, [loadSignups]);
+  useEffect(() => { loadSignups(); }, [loadSignups]);
 
-  // Transform signups to display format, sorted by newest first
+  // Distinct courses on this org's signups — drives the course filter dropdown.
+  const courseOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const s of signups) {
+      const id = s.course?.id || s.course_id;
+      const title = s.course?.title || 'Ukjent kurs';
+      if (id && !seen.has(id)) seen.set(id, title);
+    }
+    return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
+  }, [signups]);
+
+  // Transform → display rows.
   const displaySignups: SignupDisplay[] = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
 
     const mapped = signups.map(signup => {
       const courseTitle = signup.course?.title || 'Ukjent kurs';
       const courseId = signup.course?.id || signup.course_id;
-      // For drop-ins, use the linked session's date/time. For package buyers,
-      // fall back to the next upcoming session of their course (purely cosmetic
-      // — package buyers don't have a single "their class" in the way drop-ins do).
       const displayDate = signup.course_session?.session_date
         || nextSessionDates[courseId]
         || signup.course?.start_date
@@ -182,19 +226,52 @@ export const SignupsPage = () => {
         courseEnded,
         courseEndDate: courseEndDate ?? courseStartDate ?? null,
         courseCapacity: signup.course?.max_participants ?? null,
+        ticketLabel: signup.ticket_label_snapshot,
+        ticketKind: signup.ticket_kind_snapshot as TicketKind | undefined,
+        ticketAudience: signup.ticket_audience_snapshot as TicketAudience | undefined,
+        courseType: signup.course?.course_type as CourseType | undefined,
+        courseStartDate: courseStartDate ?? null,
+        courseTotalWeeks: signup.course?.total_weeks ?? null,
       };
 
-      // Annotate with exception type for action menu
       display.exceptionType = detectException(display);
-
       return display;
     });
 
-    // Sort by newest signup first
     mapped.sort((a, b) => b.registeredAtDate.getTime() - a.registeredAtDate.getTime());
-
     return mapped;
   }, [signups, nextSessionDates]);
+
+  // ── Compute KPIs ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (loading) return;
+    const weekStart = new Date();
+    const day = weekStart.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    weekStart.setDate(weekStart.getDate() + diffToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    let newThisWeek = 0;
+    let monthRevenue = 0;
+    let cancellationsThisMonth = 0;
+    let followupCount = 0;
+
+    for (const s of displaySignups) {
+      if (isFollowup(s)) followupCount++;
+      const t = s.registeredAtDate.getTime();
+      const isConfirmed = s.status === 'confirmed';
+      const isCancelled = s.status === 'cancelled' || s.status === 'course_cancelled';
+      if (isConfirmed && t >= weekStart.getTime()) newThisWeek++;
+      if (isConfirmed && t >= monthStart.getTime()) monthRevenue += s.amountPaid ?? 0;
+      if (isCancelled && t >= monthStart.getTime()) cancellationsThisMonth++;
+    }
+
+    setKpis({ newThisWeek, followupCount, cancellationsThisMonth, monthRevenue });
+  }, [displaySignups, loading]);
 
   const followupCount = useMemo(
     () => displaySignups.reduce((n, s) => n + (isFollowup(s) ? 1 : 0), 0),
@@ -209,6 +286,10 @@ export const SignupsPage = () => {
       if (viewTab === 'past') return !!s.courseEnded && !isFollowup(s);
       return !s.courseEnded && !isFollowup(s);
     });
+
+    if (courseFilter !== 'all') {
+      result = result.filter(s => s.courseId === courseFilter);
+    }
 
     if (q) {
       result = result.filter(s =>
@@ -232,13 +313,13 @@ export const SignupsPage = () => {
       return b.registeredAtDate.getTime() - a.registeredAtDate.getTime();
     });
     return sorted;
-  }, [displaySignups, viewTab, searchQuery]);
+  }, [displaySignups, viewTab, searchQuery, courseFilter]);
 
   useEffect(() => {
     setVisibleCount(SIGNUPS_INITIAL_VISIBLE);
-  }, [viewTab, searchQuery]);
+  }, [viewTab, searchQuery, courseFilter]);
 
-  const usePastGrouping = viewTab === 'past' && !searchQuery && filteredSignups.length > 0;
+  const usePastGrouping = viewTab === 'past' && !searchQuery && courseFilter === 'all' && filteredSignups.length > 0;
   const effectiveVisible = (filteredSignups.length - visibleCount) <= SIGNUPS_SHOW_ALL_THRESHOLD
     ? filteredSignups.length
     : visibleCount;
@@ -251,9 +332,10 @@ export const SignupsPage = () => {
   const clearFilters = () => {
     setViewTab('active');
     setSearchQuery('');
+    setCourseFilter('all');
   };
 
-  const hasFilters = viewTab !== 'active' || searchQuery.trim() !== '';
+  const hasFilters = viewTab !== 'active' || searchQuery.trim() !== '' || courseFilter !== 'all';
 
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
     onSendPaymentLink: async (signupId: string) => {
@@ -284,114 +366,123 @@ export const SignupsPage = () => {
     },
   }), [loadSignups]);
 
+  const tabs: { key: ViewTab; label: string; count?: number }[] = [
+    { key: 'active', label: 'Påmeldinger' },
+    { key: 'followup', label: 'Til oppfølging', count: followupCount > 0 ? followupCount : undefined },
+    { key: 'past', label: 'Fullførte' },
+  ];
+
   return (
-      <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
-        <MobileTeacherHeader title="Påmeldinger" />
+    <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
+      <MobileTeacherHeader title="Påmeldinger" />
 
-        <motion.header
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-          className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
-        >
-          <div className="mb-8">
-            <h1 className="text-3xl font-semibold text-foreground">Påmeldinger</h1>
-            <p className="text-sm mt-1 text-muted-foreground">Oversikt over deltakere og påmeldinger.</p>
+      <motion.header
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        transition={pageTransition}
+        className="shrink-0 px-6 lg:px-8 pt-6 lg:pt-8 pb-0"
+      >
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-foreground">Påmeldinger</h1>
+          <p className="text-sm mt-1 text-muted-foreground">Hvem som er påmeldt, hva de kjøpte, og hva som trenger oppfølging.</p>
+        </div>
+      </motion.header>
+
+      <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
+        {/* KPI strip */}
+        <SignupsKpiStrip kpis={kpis} loading={loading} />
+
+        {/* Toolbar — OUTSIDE the frame */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+          <SegmentedTabs value={viewTab} onChange={setViewTab} tabs={tabs} />
+          <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
+            <Select value={courseFilter} onValueChange={setCourseFilter}>
+              <SelectTrigger className="w-44" aria-label="Filtrer kurs">
+                <Filter className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle kurs</SelectItem>
+                {courseOptions.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Søk etter navn eller e-post"
+              aria-label="Søk etter deltakere"
+              className="w-full md:w-auto md:max-w-xs"
+            />
           </div>
-        </motion.header>
+        </div>
 
-        <div className="flex-1 px-6 lg:px-8 pb-6 lg:pb-8">
-          {/* Toolbar — always its own card. For non-past tabs the table renders inside it; for Fullførte the cards render outside, below. */}
-          <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
-            <div className="flex flex-col md:flex-row md:items-center gap-3 p-3">
-              <ToggleGroup
-                type="single"
-                value={viewTab}
-                onValueChange={(v) => { if (v) setViewTab(v as ViewTab); }}
-                variant="segmented"
-                aria-label="Filtrer påmeldinger"
-              >
-                <ToggleGroupItem value="active">Påmeldinger</ToggleGroupItem>
-                <ToggleGroupItem value="followup">
-                  Til oppfølging
-                  {followupCount > 0 && (
-                    <>
-                      <span aria-hidden className="relative ml-1.5 inline-flex size-1.5 align-middle">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-chart-2 opacity-75 [animation-duration:1.6s]" />
-                        <span className="relative inline-flex size-1.5 rounded-full bg-chart-2" />
-                      </span>
-                      <span className="sr-only"> ({followupCount} trenger oppfølging)</span>
-                    </>
-                  )}
-                </ToggleGroupItem>
-                <ToggleGroupItem value="past">Fullførte</ToggleGroupItem>
-              </ToggleGroup>
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Søk etter navn"
-                aria-label="Søk etter deltakere"
-                className="w-full md:w-auto md:ml-auto md:max-w-xs"
+        {/* Frame */}
+        <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+          {error ? (
+            <ErrorState
+              title="Kunne ikke laste påmeldinger"
+              message={error}
+              onRetry={loadSignups}
+            />
+          ) : usePastGrouping ? (
+            loading ? null : filteredSignups.length === 0 ? (
+              <EmptyState
+                icon={hasFilters ? Search : Calendar}
+                title={hasFilters ? 'Ingen treff' : 'Ingen fullførte påmeldinger'}
+                description={hasFilters ? 'Prøv et annet søkeord eller bytt fane.' : 'Påmeldinger dukker opp her når kurs er ferdige.'}
+                className="py-16"
               />
-            </div>
-
-            {error ? (
-              <ErrorState
-                title="Kunne ikke laste påmeldinger"
-                message={error}
-                onRetry={loadSignups}
-              />
-            ) : usePastGrouping ? (
-              loading ? null : filteredSignups.length === 0 ? (
-                <EmptyState
-                  icon={hasFilters ? Search : Calendar}
-                  title={hasFilters ? 'Ingen treff' : 'Ingen fullførte påmeldinger'}
-                  description={hasFilters ? 'Prøv et annet søkeord eller bytt fane.' : 'Påmeldinger dukker opp her når kurs er ferdige.'}
-                  className="py-16"
-                />
-              ) : (
-                /* Padding so the inner cards don't sit flush against the outer card edges. */
-                <div className="p-3">
-                  <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
-                </div>
-              )
             ) : (
-              <SignupListView
-                signups={visibleSignups}
-                isLoading={loading}
-                isEmpty={displaySignups.length === 0}
-                hasFilters={hasFilters}
-                onClearFilters={clearFilters}
-                actionHandlers={actionHandlers}
-                viewTab={viewTab}
-              />
-            )}
-          </div>
+              <div className="p-3">
+                <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
+              </div>
+            )
+          ) : (
+            <SignupListView
+              signups={visibleSignups}
+              isLoading={loading}
+              isEmpty={displaySignups.length === 0}
+              hasFilters={hasFilters}
+              onClearFilters={clearFilters}
+              actionHandlers={actionHandlers}
+              viewTab={viewTab}
+            />
+          )}
+
+          {/* Footer — INSIDE frame, single row */}
           {showPagination && (
-            <div className="mt-3 flex justify-center gap-3">
-              {isTruncated && (
-                <Button
-                  variant="outline-soft"
-                  size="sm"
-                  onClick={() => setVisibleCount(prev => prev + SIGNUPS_LOAD_MORE_INCREMENT)}
-                >
-                  Vis {Math.min(remainingCount, SIGNUPS_LOAD_MORE_INCREMENT)} flere
-                </Button>
-              )}
-              {canCollapse && (
-                <Button
-                  variant="outline-soft"
-                  size="sm"
-                  onClick={() => setVisibleCount(SIGNUPS_INITIAL_VISIBLE)}
-                >
-                  Vis færre
-                </Button>
-              )}
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-background">
+              <span className="text-xs text-muted-foreground tabular-nums">
+                Viser {effectiveVisible} av {filteredSignups.length} påmeldinger
+              </span>
+              <div className="flex gap-2">
+                {canCollapse && (
+                  <Button
+                    variant="outline-soft"
+                    size="sm"
+                    onClick={() => setVisibleCount(SIGNUPS_INITIAL_VISIBLE)}
+                  >
+                    Vis færre
+                  </Button>
+                )}
+                {isTruncated && (
+                  <Button
+                    variant="outline-soft"
+                    size="sm"
+                    onClick={() => setVisibleCount(prev => prev + SIGNUPS_LOAD_MORE_INCREMENT)}
+                  >
+                    Vis {Math.min(remainingCount, SIGNUPS_LOAD_MORE_INCREMENT)} flere
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
+    </div>
   );
 };
 

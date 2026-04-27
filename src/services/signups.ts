@@ -6,7 +6,7 @@ import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 // `course_session` is populated from the FK on signups.course_session_id —
 // only set for drop-in signups; package buyers have it null.
 export interface SignupWithDetails extends Signup {
-  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants'> | null
+  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants' | 'total_weeks'> | null
   profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
   course_session: { session_date: string; start_time: string } | null
 }
@@ -166,7 +166,7 @@ export async function fetchAllSignups(
     .from('signups')
     .select(`
       *,
-      course:courses(id, title, course_type, time_schedule, start_date, end_date, status, max_participants),
+      course:courses(id, title, course_type, time_schedule, start_date, end_date, status, max_participants, total_weeks),
       profile:profiles(id, name, email, avatar_url)
     `)
     .eq('organization_id', organizationId)
