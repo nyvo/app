@@ -85,6 +85,10 @@
 
 ## Design System
 
+- **Two registers, by design.** The app has two visual surfaces with different calibration:
+  - **Public** (`src/pages/public/**`, `src/components/public/**`, `src/components/auth/**`) — calm, confident, marketing-leaning. `text-base` body. More breathing room. Up to four text tiers available. This register is **stable** — prospects validated it.
+  - **Dashboard** (`src/pages/teacher/**`, `src/components/teacher/**`) — calm and *readable*, **not dense**. `text-base` body. Two text tiers. Progressive disclosure for technical/admin detail (payment IDs, refund mechanics, raw timestamps) — keep them behind "Detaljer" expanders, not surface them by default. (This is post-feedback recalibration as of 2026-04-27 — see `tasks/post-mvp-feedback.md`. Pre-shift, dashboard was deliberately dense at `text-sm`. That direction was wrong for the actual user persona.)
+  - The rules below are tagged **(public)** or **(dashboard)** where they differ. Untagged rules apply to both.
 - The shadcn preset `b1Z5aAzb6` (radix-vega) in `src/index.css` is the single source of truth for colors, radius, and font. `components.json` pins style to `radix-vega` and `iconLibrary` to `lucide`.
 - Use shadcn primitives from `@/components/ui/` over custom UI.
 - Icons: **always import from `@/lib/icons`** (never from `lucide-react` directly). The barrel re-exports the set of lucide icons the app uses and inlines a few brand marks (`Facebook`, `Linkedin`, `Twitter`) that lucide dropped. If you need an icon that isn't exported, add it to `src/lib/icons.tsx` rather than importing `lucide-react` elsewhere.
@@ -97,8 +101,8 @@
   |------|---------|-----------|-------|
   | `src/pages/public/**` | Public / landing / booking | `text-base` (16px) | Marketing voice. More breathing room. Display tier allowed on hero. |
   | `src/components/public/**` | Public components | `text-base` (16px) | Same rules as public pages. |
-  | `src/pages/teacher/**` | Dashboard | `text-sm` (14px) | Dense, information-first. No display tier — max heading is `text-3xl`. |
-  | `src/components/teacher/**` | Dashboard components | `text-sm` (14px) | Same rules as dashboard pages. |
+  | `src/pages/teacher/**` | Dashboard | `text-base` (16px) | Calm and readable — **not dense**. Two text tiers in normal use. Progressive disclosure for admin detail. No display tier — max heading is `text-3xl`. |
+  | `src/components/teacher/**` | Dashboard components | `text-base` (16px) | Same rules as dashboard pages. |
   | `src/components/auth/**` | Auth (login, signup, reset) | `text-base` (16px) | Treat as public — users are not yet in the app shell. |
   | `src/components/ui/**` | Shadcn primitives | context-aware | Don't hardcode body sizes here; let consumers decide. |
 
@@ -114,22 +118,24 @@
   | **Card sub-section** | `text-base font-semibold` | 16px / 600 | `<h2>` / `<h3>` **inside** a `<CardContent>` or panel, stepping down from `<CardTitle>`. Never use `font-medium` here — the weight step is the visual cue that it's a heading, not bold body. |
   | Subsection (standalone) | `text-lg` | 18px | Subsection headings outside cards, prominent labels |
   | Body (landing/public) | `text-base` | 16px | Marketing prose, public-page body |
-  | Body (dashboard/app) | `text-sm` | 14px | Teacher-area body, form labels, list items |
-  | Meta | `text-xs` | 12px | Timestamps, table cells, captions, tertiary meta |
-  | Micro label | `text-xxs` | 11px | Uppercase tracked labels, KPI labels, indicators |
+  | Body (dashboard/app) | `text-base` | 16px | Teacher-area body, form labels, list items. **Was `text-sm` before the 2026-04-27 calibration shift** — see thesis at top of Design System. |
+  | Meta | `text-sm` (dashboard) / `text-xs` (public) | 14px / 12px | Timestamps, table cells, captions. Dashboard meta steps down to `text-sm` so it stays readable; public meta can drop further. |
+  | Micro label | `text-xs font-medium tracking-wide` (dashboard) / `text-xxs` (public) | 12px / 11px | Uppercase tracked labels, KPI labels, indicators. Dashboard avoids `text-xxs` (too small for the audience). |
 
   Pair with weight + tracking conventions: `font-medium` (500) for UI labels, `font-semibold` (600) for headings — never `font-bold` (700), that reads marketing-heavy.
-- **Text colour tiers** — four tiers, not two:
+- **Text colour tiers** — four tokens exist, but **dashboard uses two**, public can use up to four:
 
   | Token | Tailwind class | Use for |
   |-------|---------------|---------|
   | `--foreground` | `text-foreground` | Primary: headings, body |
-  | `--muted-foreground` | `text-muted-foreground` | Secondary: descriptions, form labels |
-  | `--tertiary-foreground` | `text-tertiary-foreground` | Tertiary: timestamps, row meta, helper text |
-  | `--disabled-foreground` | `text-disabled-foreground` | Disabled state, bullet separators, very muted meta |
+  | `--muted-foreground` | `text-muted-foreground` | Secondary: descriptions, form labels, row meta |
+  | `--tertiary-foreground` | `text-tertiary-foreground` | **(public only)** Tertiary timestamps, row meta on marketing surfaces |
+  | `--disabled-foreground` | `text-disabled-foreground` | Disabled state, bullet separators (any surface) |
 
-  Don't use `opacity-*` on text to fake a tier — pick the right token.
-- **Meta rows sit on one tier, not two.** If a card/row has multiple lines of metadata under a primary title (e.g. "type + location" on one line, "next session date" on the next), they're equal-weight information — both go on `text-muted-foreground`. Don't drop one line to `text-tertiary-foreground` just because it contains a timestamp. Tertiary is for meta that's genuinely *less* important than the line above it (e.g. a timestamp in the corner of an activity row, next to a primary+secondary pair).
+  - **(dashboard)** Stick to `text-foreground` + `text-muted-foreground`. Don't reach for `tertiary-foreground` — the calm-register direction calls for two clear tiers, not four. `disabled-foreground` is fine when a control is genuinely disabled.
+  - **(public)** All four tiers are available. Tertiary is fine on marketing pages where layered meta reads as polish.
+  - Don't use `opacity-*` on text to fake a tier — pick the right token.
+- **Meta rows sit on one tier, not two.** If a card/row has multiple lines of metadata under a primary title (e.g. "type + location" on one line, "next session date" on the next), they're equal-weight information — both go on `text-muted-foreground`. Don't drop one line to `text-tertiary-foreground` just because it contains a timestamp. **(public)** Tertiary is reserved for meta that's genuinely *less* important than the line above it (e.g. a timestamp in the corner of an activity row, next to a primary+secondary pair). **(dashboard)** This case rarely arises since dashboard avoids tertiary — keep meta on `text-muted-foreground`.
 - **Weight discipline:** `font-medium` (500) for UI labels, chips, button text. `font-semibold` (600) for headings and emphasised body. **Never `font-bold` (700)** — it reads marketing at dashboard sizes and breaks the calm feel. If you need more emphasis, step up the size token before reaching for a heavier weight.
 - **Inline numbers in sentences:** for numbers that appear inside copy ("12 av 14 påmeldte"), add `tabular-nums` to the containing element so digits align across rows even though the surrounding text is variable-width.
 - **Corner radius convention** — four tiers:
@@ -260,14 +266,14 @@
 - **Spacing inside cards:** stick to three values, applied consistently:
   - Title → subtitle: `mt-0.5` (single-line descriptions) or `mt-1` (two-line descriptions)
   - Header → content: `CardHeader` + `CardContent` already handle this — don't hand-add margins
-  - Row → row in dense lists: `space-y-1` (activity, signups) or `space-y-3` (upcoming classes with visual chunks)
-- **Card padding:** `<Card>` primitive bakes in `py-6 px-6` (or `py-4 px-4` for `size="sm"`) — consumers don't add padding. For hand-rolled card surfaces (`<div className="rounded-lg border bg-card ...">`), pick from the fixed tier set: `p-3` (compact mini-panels), `p-4` (dense dashboard panels), `p-6` (standard), `p-6 sm:p-8` (form hero), `p-8` (marketing), `p-8 md:p-12` (mega hero). **No `p-5`, no `p-7`.** Full table → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#card-padding-tiers).
+  - Row → row in lists: `space-y-2` is the new dashboard default (was `space-y-1` pre-calibration). Tight `space-y-1` is for genuinely dense activity feeds; `space-y-3` for upcoming-classes-style chunks; `space-y-4` for roomy lists where each row is a meaningful unit. **(dashboard) lean roomier** unless density actually serves the content.
+- **Card padding:** `<Card>` primitive bakes in `py-6 px-6` (or `py-4 px-4` for `size="sm"`) — consumers don't add padding. For hand-rolled card surfaces (`<div className="rounded-lg border bg-card ...">`), pick from the fixed tier set: `p-3` (compact mini-panels), `p-4` (dense dashboard panels — **(dashboard) avoid for primary surfaces post-calibration; use `p-6`**), `p-6` (standard, dashboard default), `p-6 sm:p-8` (form hero), `p-8` (marketing), `p-8 md:p-12` (mega hero). **No `p-5`, no `p-7`.** Full table → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#card-padding-tiers).
 
-- **Row padding** — pick by container: rows inside a padded card (Card primitive or hand-rolled with its own `px-*`) → `px-4 py-3` (MessagesList, RegistrationsList pattern). Rows inside a zero-padded card (`<Card className="p-0">`) → `px-6 py-4` (PaymentsPage pattern). Don't invent `py-3.5`/`px-5` — if denser, drop to `px-3 py-2.5`; if roomier, step up the card tier. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#row-padding-tiers).
+- **Row padding** — pick by container: rows inside a padded card → **(dashboard)** `px-4 py-3.5` is the new default (was `px-4 py-3`); the extra 2px lets `text-base` body breathe. Rows inside a zero-padded card (`<Card className="p-0">`) → `px-6 py-4`. Don't invent `py-3.5`/`px-5` (besides the sanctioned `py-3.5`); if denser, drop to `px-3 py-3`; if roomier, step up the card tier. See [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md#row-padding-tiers).
 
 - **Stack gap scale** — use `0.5 / 1 / 2 / 3 / 4 / 6 / 8 / 10` on `space-y-*` and `gap-*`. **Skip 5 and 7** — they signal hand-tuning. If `space-y-4` feels too tight and `space-y-6` feels too loose, the answer is usually that the content tiers are off, not the gap.
-  - `space-y-1` / `space-y-2` — tight meta rows, dense activity lists
-  - `space-y-3` / `space-y-4` — default list and form field stacks
+  - `space-y-1` / `space-y-2` — tight meta rows, dense activity feeds
+  - `space-y-3` / `space-y-4` — default list and form field stacks (**(dashboard)** lean toward `space-y-4`)
   - `space-y-6` — card sections inside a page
   - `space-y-8` — top-level page sections (dashboard page → standard)
   - `space-y-10` — public marketing-style sections only

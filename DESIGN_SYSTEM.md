@@ -4,6 +4,8 @@ Exhaustive lookup material for the shadcn preset `b1Z5aAzb6` (radix-vega). CLAUD
 
 If a rule here conflicts with CLAUDE.md, CLAUDE.md wins.
 
+> **Heads-up (2026-04-27):** The dashboard register shifted from "dense `text-sm`" to "calm `text-base`, two text tiers" — see CLAUDE.md's "Two registers, by design" thesis at the top of the Design System section, and `tasks/post-mvp-feedback.md` for context. Some tables below are still phrased for the pre-shift register (e.g. card padding, row padding, type scale). They get reconciled as the dashboard sweep lands surface-by-surface. Until then: **for dashboard work, follow CLAUDE.md, not this doc**. Public surfaces are unaffected.
+
 ---
 
 ## `<Button>` — full variant/size spec
