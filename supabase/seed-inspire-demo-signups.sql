@@ -6,13 +6,16 @@
 -- existing signups + payment_attempts for that org and inserts 64 fresh
 -- signups across 12 courses:
 --
---   • 59 confirmed + paid (the happy-path majority)
+--   • 74 confirmed + paid (the happy-path majority)
 --   • 6 of those are drop-in tickets linked to specific upcoming sessions
 --   • 5 faulty cases for the dashboard exception story:
 --       – 2 pending payment (signup placed, checkout abandoned)
 --       – 1 failed payment (Dintero declined the card)
 --       – 1 cancelled + refunded (someone backed out, money returned)
 --       – 1 cancelled + paid (no refund yet — admin still needs to handle)
+--   • 2 spots-state demo cases (visible on the public course list + booking):
+--       – Ashtanga Yoga (cap 10) is FULL (10/10) — booking shows "Kurset er fullt"
+--       – Gravid Yoga (cap 10) is LOW (8/10) — booking shows "2 plasser igjen"
 --
 -- created_at uses NOW() - INTERVAL offsets, so re-running 3 months later
 -- still produces "recent" timestamps. Most signups were placed Jan-Feb 2026
@@ -242,14 +245,23 @@ BEGIN
 
 
   -- ════════════════════════════════════════════════════════════════════════
-  -- ASHTANGA YOGA (10 cap; 1 signup)
+  -- ASHTANGA YOGA (10 cap; 10 signups → FULL)
+  -- Demo state: course shows "Kurset er fullt" on the booking page.
   -- ════════════════════════════════════════════════════════════════════════
   SELECT id INTO v_course FROM courses WHERE organization_id = v_org AND title = 'Ashtanga Yoga';
   SELECT id INTO v_tier   FROM course_signup_packages WHERE course_id = v_course AND label = 'Hele kurset' AND ticket_kind = 'package';
 
-  INSERT INTO signups (organization_id, course_id, ticket_type_id, ticket_label_snapshot, ticket_audience_snapshot, ticket_kind_snapshot, participant_name, participant_email, participant_phone, status, payment_status, amount_paid, package_end_date, dintero_transaction_id, dintero_session_id, dintero_merchant_reference, created_at, updated_at)
-  VALUES (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Mari Hansen', 'mari.hansen.2@gmail.com', '99884411', 'confirmed', 'paid', 2600, '2026-04-29',
-    'demo-tx-110', 'demo-sess-110', 'demo-ref-110', NOW() - INTERVAL '72 days', NOW() - INTERVAL '72 days');
+  INSERT INTO signups (organization_id, course_id, ticket_type_id, ticket_label_snapshot, ticket_audience_snapshot, ticket_kind_snapshot, participant_name, participant_email, participant_phone, status, payment_status, amount_paid, package_end_date, dintero_transaction_id, dintero_session_id, dintero_merchant_reference, created_at, updated_at) VALUES
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Mari Hansen',     'mari.hansen.2@gmail.com',    '99884411', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-110', 'demo-sess-110', 'demo-ref-110', NOW() - INTERVAL '72 days', NOW() - INTERVAL '72 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Marit Hansen',    'marit.hansen@gmail.com',     '92118844', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-111', 'demo-sess-111', 'demo-ref-111', NOW() - INTERVAL '85 days', NOW() - INTERVAL '85 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Sondre Berg',     'sondre.berg@gmail.com',      '40557788', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-112', 'demo-sess-112', 'demo-ref-112', NOW() - INTERVAL '80 days', NOW() - INTERVAL '80 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Hege Aas',        'hege.aas@gmail.com',         '99221177', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-113', 'demo-sess-113', 'demo-ref-113', NOW() - INTERVAL '75 days', NOW() - INTERVAL '75 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Aleksander Lie',  'aleksander.lie@gmail.com',   '47883322', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-114', 'demo-sess-114', 'demo-ref-114', NOW() - INTERVAL '68 days', NOW() - INTERVAL '68 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Kristine Holt',   'kristine.holt@gmail.com',    '92664433', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-115', 'demo-sess-115', 'demo-ref-115', NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Nils Hagen',      'nils.hagen@gmail.com',       '40998822', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-116', 'demo-sess-116', 'demo-ref-116', NOW() - INTERVAL '52 days', NOW() - INTERVAL '52 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Iver Olsen',      'iver.olsen@hotmail.com',     '99445566', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-117', 'demo-sess-117', 'demo-ref-117', NOW() - INTERVAL '40 days', NOW() - INTERVAL '40 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Synnøve Berg',    'synnove.berg@gmail.com',     '92117788', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-118', 'demo-sess-118', 'demo-ref-118', NOW() - INTERVAL '28 days', NOW() - INTERVAL '28 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Jakob Pedersen',  'jakob.pedersen@gmail.com',   '47221199', 'confirmed', 'paid', 2600, '2026-04-29', 'demo-tx-119', 'demo-sess-119', 'demo-ref-119', NOW() - INTERVAL '14 days', NOW() - INTERVAL '14 days');
 
 
   -- ════════════════════════════════════════════════════════════════════════
@@ -264,14 +276,21 @@ BEGIN
 
 
   -- ════════════════════════════════════════════════════════════════════════
-  -- GRAVID YOGA (10 cap; 2 signups)
+  -- GRAVID YOGA (10 cap; 8 signups → LOW: 2 plasser igjen)
+  -- Demo state: course shows the low-spots warning badge on the booking page.
   -- ════════════════════════════════════════════════════════════════════════
   SELECT id INTO v_course FROM courses WHERE organization_id = v_org AND title = 'Gravid Yoga';
   SELECT id INTO v_tier   FROM course_signup_packages WHERE course_id = v_course AND label = 'Hele kurset' AND ticket_kind = 'package';
 
   INSERT INTO signups (organization_id, course_id, ticket_type_id, ticket_label_snapshot, ticket_audience_snapshot, ticket_kind_snapshot, participant_name, participant_email, participant_phone, status, payment_status, amount_paid, package_end_date, dintero_transaction_id, dintero_session_id, dintero_merchant_reference, created_at, updated_at) VALUES
-  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Stine Olsen',    'stine.olsen@gmail.com',    '99776644', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-130', 'demo-sess-130', 'demo-ref-130', NOW() - INTERVAL '63 days', NOW() - INTERVAL '63 days'),
-  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Maria Pedersen', 'maria.pedersen@gmail.com', '47551144', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-131', 'demo-sess-131', 'demo-ref-131', NOW() - INTERVAL '48 days', NOW() - INTERVAL '48 days');
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Stine Olsen',    'stine.olsen@gmail.com',     '99776644', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-130', 'demo-sess-130', 'demo-ref-130', NOW() - INTERVAL '63 days', NOW() - INTERVAL '63 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Maria Pedersen', 'maria.pedersen@gmail.com',  '47551144', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-131', 'demo-sess-131', 'demo-ref-131', NOW() - INTERVAL '48 days', NOW() - INTERVAL '48 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Hege Olsen',     'hege.olsen@gmail.com',      '99117755', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-132', 'demo-sess-132', 'demo-ref-132', NOW() - INTERVAL '70 days', NOW() - INTERVAL '70 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Marte Strand',   'marte.strand@gmail.com',    '92885511', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-133', 'demo-sess-133', 'demo-ref-133', NOW() - INTERVAL '58 days', NOW() - INTERVAL '58 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Linda Pedersen', 'linda.pedersen@gmail.com',  '40443377', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-134', 'demo-sess-134', 'demo-ref-134', NOW() - INTERVAL '42 days', NOW() - INTERVAL '42 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Karin Berg',     'karin.berg@gmail.com',      '47339922', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-135', 'demo-sess-135', 'demo-ref-135', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Anne Olsen',     'anne.olsen@gmail.com',      '92774488', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-136', 'demo-sess-136', 'demo-ref-136', NOW() - INTERVAL '18 days', NOW() - INTERVAL '18 days'),
+  (v_org, v_course, v_tier, 'Hele kurset', 'standard', 'package', 'Tone Vik',       'tone.vik.gravid@gmail.com', '99553311', 'confirmed', 'paid', 2200, '2026-04-30', 'demo-tx-137', 'demo-sess-137', 'demo-ref-137', NOW() - INTERVAL '9 days',  NOW() - INTERVAL '9 days');
 
 
   -- ════════════════════════════════════════════════════════════════════════
