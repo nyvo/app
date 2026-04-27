@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Yin Yoga — Course detail redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css" />
+<style>
+  /* ─── Page container ─────────────────────────────────── */
+  .shell { max-width: 1200px; }
+
+  /* ─── Floating back button ───────────────────────────── */
+  .back-btn {
+    position: fixed;
+    top: 16px; left: 20px;
+    z-index: 50;
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.78);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,0,0,0.06);
+    font-size: 13px; font-weight: 500;
+    color: var(--foreground);
+  }
+  .back-btn:hover { background: var(--background); }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  /* ─── Hero ───────────────────────────────────────────── */
+  .hero { padding: 24px 0 0; }
+  .hero-image {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--muted);
+  }
+  .hero-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+  .hero-meta-line {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin: 32px 0 12px;
+    font-size: 14px; color: var(--muted-foreground);
+  }
+  .hero-meta-line a {
+    color: var(--foreground);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: var(--disabled-foreground);
+    text-underline-offset: 2px;
+  }
+  .hero-meta-line a:hover { text-decoration-color: var(--foreground); }
+  .hero-meta-line .live-dot {
+    width: 6px; height: 6px; border-radius: 999px; background: var(--success);
+  }
+
+  .hero-title {
+    font-size: clamp(1.75rem, 4.5vw, 3.25rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin: 0;
+    max-width: 880px;
+  }
+
+  .hero-meta {
+    margin-top: 20px;
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+    font-size: 14px; color: var(--muted-foreground);
+  }
+  .hero-meta .item { display: inline-flex; align-items: center; gap: 6px; }
+  .hero-meta svg { width: 14px; height: 14px; }
+
+  /* ─── Body grid ─────────────────────────────────────── */
+  .body {
+    margin-top: 56px;
+    padding-bottom: 80px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 64px;
+    align-items: start;
+  }
+  @media (max-width: 1000px) { .body { grid-template-columns: 1fr; gap: 32px; } }
+
+  /* Single column width — everything in the body-left (text, cards,
+     accordion, mini-shelf) shares one left-aligned width. Avoids the
+     width-jumping where narrow cards float next to a wider accordion. */
+  .body-left {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    min-width: 0;
+    max-width: 640px;
+  }
+
+  /* ─── Section headings ─────────────────────────────── */
+  /* Sentence-case h2, no tracked uppercase */
+  .body-left section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--foreground);
+    margin: 0 0 14px;
+  }
+  .body-left section h2 .count {
+    margin-left: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Description ──────────────────────────────────── */
+  .desc-text {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--foreground);
+    margin: 0 0 14px;
+    white-space: pre-wrap;
+  }
+  .desc-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #DEEAE0; /* sage */
+    color: #355945;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ─── Sessions grid ────────────────────────────────── */
+  .sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .session-tile {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  .session-tile .day {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    font-weight: 500;
+  }
+  .session-tile .date-row {
+    display: flex; align-items: baseline; gap: 4px;
+    margin-top: 2px;
+  }
+  .session-tile .num {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground);
+  }
+  .session-tile .month {
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+  .session-tile .time {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .session-tile.past, .session-tile.cancelled {
+    background: var(--muted);
+    border-color: transparent;
+  }
+  .session-tile.past .num,
+  .session-tile.cancelled .num { color: var(--muted-foreground); }
+  .session-tile .status {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+  }
+  .session-tile.cancelled .status { color: #8A4040; }
+
+  /* ─── Dates accordion ──────────────────────────────── */
+  .dates-accordion {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    overflow: hidden;
+  }
+  .dates-accordion summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--foreground);
+  }
+  .dates-accordion summary::-webkit-details-marker { display: none; }
+  .dates-accordion summary:hover { background: var(--muted); }
+  .dates-accordion summary .title { flex: 1; }
+  .dates-accordion summary .count {
+    font-size: 13px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .dates-accordion summary .chev {
+    width: 16px; height: 16px;
+    color: var(--muted-foreground);
+    transition: transform 200ms ease-out;
+  }
+  .dates-accordion[open] summary .chev { transform: rotate(180deg); }
+  .dates-accordion[open] summary { border-bottom: 1px solid var(--border); }
+  .dates-accordion .sessions-grid {
+    padding: 16px 18px 18px;
+  }
+
+  /* ─── Outlined info cards — instructor + sted are neutral outlined.
+       Praktisk gets the one sand-tinted card on the page (max 1 tone per
+       section per CLAUDE.md). ─── */
+  .info-card {
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    padding: 20px 22px;
+  }
+  .info-card.sand {
+    background: #F0E6D3;
+    border-color: transparent;
+  }
+  .info-card.sand .practical-list svg { color: #4a3a1f; }
+
+  /* Cluster the three info cards as one group — tight stack, not three
+     separate sections with editorial breathing room. */
+  .info-cluster {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Instructor card (icon = avatar) */
+  .instructor {
+    display: flex;
+    gap: 18px;
+  }
+  .instructor-avatar {
+    flex-shrink: 0;
+    width: 56px; height: 56px;
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px var(--border);
+    overflow: hidden;
+    background: var(--muted);
+  }
+  .instructor-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .instructor-body { min-width: 0; flex: 1; }
+  .instructor-body .name-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 6px;
+  }
+  .instructor-body h3 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+    margin: 0;
+  }
+  .instructor-body .bio {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+    max-width: 540px;
+    margin: 0;
+  }
+
+  /* Sted card (icon = map pin) */
+  .sted-row {
+    display: flex; align-items: flex-start; gap: 14px;
+    font-size: 15px;
+    color: var(--foreground);
+  }
+  .sted-row > svg {
+    width: 18px; height: 18px;
+    color: var(--foreground);
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+  .sted-row .where { display: block; }
+  .sted-row .where + .where {
+    color: var(--muted-foreground);
+    font-size: 13px;
+    margin-top: 1px;
+  }
+  .sted-row .maps-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px;
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--disabled-foreground);
+    text-underline-offset: 2px;
+    margin-top: 8px;
+  }
+  .sted-row .maps-link:hover { text-decoration-color: var(--foreground); }
+  .sted-row .maps-link svg { width: 11px; height: 11px; }
+
+  /* Praktisk list (icon = check) */
+  .practical-list { margin: 0; padding: 0; list-style: none; }
+  .practical-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 5px 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--foreground);
+  }
+  .practical-list svg {
+    width: 14px; height: 14px;
+    margin-top: 4px;
+    flex-shrink: 0;
+    color: var(--success);
+  }
+
+  /* ─── Mini shelf "Andre kurs" ─────────────────────── */
+  .shelf {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .shelf { grid-template-columns: 1fr; } }
+  .mini-card {
+    display: flex; flex-direction: column;
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .mini-card .cover {
+    aspect-ratio: 16 / 10;
+    background: var(--muted);
+    position: relative;
+    overflow: hidden;
+  }
+  .mini-card .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mini-card .body {
+    padding: 12px 14px 14px;
+    margin: 0;
+    display: flex; flex-direction: column; gap: 4px;
+    grid-template-columns: none;
+  }
+  .mini-card .when {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .mini-card .title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--foreground);
+    margin: 0;
+  }
+  .mini-card .price {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+  }
+
+  /* ─── Booking panel (compressed) ───────────────────── */
+  .booking-panel {
+    position: sticky;
+    top: 24px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel-header {
+    padding: 18px 20px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-header .course-meta {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .panel-header .course-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--foreground);
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  .panel-price-row {
+    padding: 18px 20px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px;
+  }
+  .panel-price {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .panel-price .num {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--foreground);
+    letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .panel-price .sub {
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+  .panel-spots {
+    display: inline-flex; align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(231,165,75,0.12);
+    color: #B07700;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .panel-cta {
+    padding: 0 20px 20px;
+  }
+  .panel-cta button {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--foreground);
+    color: var(--background);
+    font-size: 14px;
+    font-weight: 500;
+    border: 0;
+  }
+  .panel-cta button:hover { opacity: 0.92; }
+
+  .panel-fine-print {
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+  }
+  .panel-fine-print summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--foreground);
+    list-style: none;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-fine-print summary::after {
+    content: "+";
+    font-size: 16px;
+    color: var(--muted-foreground);
+  }
+  .panel-fine-print[open] summary::after { content: "−"; }
+  .panel-fine-print p {
+    margin: 8px 0 0;
+    max-width: 38ch;
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+      Ease
+    </a>
+    <nav class="nav-links">
+      <a href="#">Inspire Yogastudio</a>
+      <a href="#">Logg inn</a>
+    </nav>
+  </div>
+</header>
+
+<a href="#" class="back-btn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+  Tilbake
+</a>
+
+<!-- Hero -->
+<section class="shell hero">
+  <div class="hero-image">
+    <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=1600&q=70&auto=format&fit=crop" alt="" />
+  </div>
+
+  <div class="hero-meta-line">
+    <a href="#">Inspire Yogastudio</a>
+    <span style="color: var(--disabled-foreground);">·</span>
+    <span class="live-dot"></span>
+    <span>I dag · kl. 17:30</span>
+  </div>
+
+  <h1 class="hero-title">Yin Yoga — søndag kveld</h1>
+
+  <div class="hero-meta">
+    <span class="item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      27. apr – 27. jul
+    </span>
+    <span class="item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      60 min per gang
+    </span>
+    <span class="item">
+      <span class="desc-chip">Alle nivåer</span>
+    </span>
+  </div>
+</section>
+
+<!-- Body -->
+<main class="shell body">
+  <div class="body-left">
+
+    <!-- Om kurset — leads the body with a clear heading -->
+    <section>
+      <h2>Om kurset</h2>
+      <p class="desc-text">Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne dypere bindevev og leddvæske. Søndag kveld passer perfekt for en avsluttende time før uka begynner — du får tid til å puste, slippe spenninger og lande i kroppen igjen.</p>
+    </section>
+
+    <!-- Info-card cluster — instructor + sted + praktisk read as a group,
+         tight spacing inside, normal section gap before/after. -->
+    <section class="info-cluster">
+      <div class="info-card">
+        <div class="instructor">
+          <div class="instructor-avatar">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80&auto=format&fit=crop" alt="" />
+          </div>
+          <div class="instructor-body">
+            <div class="name-row">
+              <h3>Hilde Nordby</h3>
+            </div>
+            <p class="bio">Sertifisert yin- og kundalini-instruktør med over ti års erfaring. Hilde har en rolig, lyttende undervisningsstil og legger vekt på pust og kroppsbevissthet i hver time.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sted — no heading; the map pin icon self-identifies the card -->
+      <div class="info-card">
+        <div class="sted-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div>
+            <span class="where" style="font-weight: 500;">Inspire Yogastudio · Storesal</span>
+            <span class="where">Storgata 42, 9008 Tromsø</span>
+            <a href="#" class="maps-link">
+              Få veibeskrivelse
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Praktisk info — the one sand card on the page -->
+      <div class="info-card sand">
+        <ul class="practical-list">
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Møt opp 10 minutter før timen starter
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Ta med egen yogamatte og varme klær — Yin er stillesittende
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Ull-pledd og bolster låner du gratis i salen
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Garderobe og dusj i underetasjen
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Datoer (accordion, near the bottom — most users don't need this) -->
+    <section>
+      <details class="dates-accordion">
+        <summary>
+          <span class="title">Alle datoer</span>
+          <span class="count">13 ganger</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </summary>
+        <div class="sessions-grid">
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">27</span><span class="month">apr</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">04</span><span class="month">mai</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">11</span><span class="month">mai</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">18</span><span class="month">mai</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">25</span><span class="month">mai</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile cancelled"><span class="day">Søndag</span><div class="date-row"><span class="num">01</span><span class="month">jun</span></div><div class="status">Avlyst</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">08</span><span class="month">jun</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">15</span><span class="month">jun</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">22</span><span class="month">jun</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">29</span><span class="month">jun</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">06</span><span class="month">jul</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">13</span><span class="month">jul</span></div><div class="time">kl. 17:30</div></div>
+          <div class="session-tile"><span class="day">Søndag</span><div class="date-row"><span class="num">20</span><span class="month">jul</span></div><div class="time">kl. 17:30</div></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- Mini shelf — replaces the orphan "Mer fra studio" link -->
+    <section>
+      <h2>Andre kurs fra Inspire Yogastudio</h2>
+      <div class="shelf">
+        <a href="#" class="mini-card">
+          <div class="cover"><img src="https://images.unsplash.com/photo-1599447421416-3414500d18a5?w=600&q=70&auto=format&fit=crop" alt=""/></div>
+          <div class="body">
+            <span class="when">Man 28. apr · 19:30</span>
+            <h3 class="title">Mandagsyoga Fordypning</h3>
+            <span class="price">2 400 kr</span>
+          </div>
+        </a>
+        <a href="#" class="mini-card">
+          <div class="cover"><img src="https://images.unsplash.com/photo-1591291621060-89264b1da9e0?w=600&q=70&auto=format&fit=crop" alt=""/></div>
+          <div class="body">
+            <span class="when">Man 28. apr · 17:30</span>
+            <h3 class="title">Kundalini Yoga</h3>
+            <span class="price">2 200 kr</span>
+          </div>
+        </a>
+        <a href="#" class="mini-card">
+          <div class="cover"><img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=70&auto=format&fit=crop" alt=""/></div>
+          <div class="body">
+            <span class="when">Ons 30. apr · 19:00</span>
+            <h3 class="title">Power Vinyasa</h3>
+            <span class="price">2 400 kr</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Right rail booking panel (compressed) -->
+  <aside>
+    <div class="booking-panel">
+      <div class="panel-header">
+        <span class="course-meta">Kursrekke · søn. kl. 17:30</span>
+        <h3 class="course-title">Yin Yoga — søndag kveld</h3>
+      </div>
+      <div class="panel-price-row">
+        <div class="panel-price">
+          <span class="num">2 200 kr</span>
+          <span class="sub">for 13 ganger</span>
+        </div>
+        <span class="panel-spots">3 plasser igjen</span>
+      </div>
+      <div class="panel-cta">
+        <button type="button">Meld deg på</button>
+      </div>
+      <details class="panel-fine-print">
+        <summary>Avbestilling og vilkår</summary>
+        <p>Trenger du å avbestille, ta kontakt med studioet. Refusjon avgjøres av studioet fra sak til sak.</p>
+      </details>
+    </div>
+  </aside>
+</main>
+
+<footer class="footer">
+  <div class="shell footer-inner">
+    <div>
+      <div class="brand" style="margin-bottom: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+        Ease
+      </div>
+      <div>Påmeldingsplattform for kurs, timer og arrangementer.</div>
+    </div>
+    <div class="footer-links">
+      <a href="#">Inspire Yogastudio</a>
+      <a href="#">Vilkår</a>
+      <a href="#">Forsiden</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

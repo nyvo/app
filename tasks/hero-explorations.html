@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course-detail hero — layout explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    background: #fafafa;
+    color: #18181b;
+    -webkit-font-smoothing: antialiased;
+  }
+  :root {
+    --foreground: #18181b;
+    --muted-foreground: #71717a;
+    --tertiary-foreground: #a1a1aa;
+    --border: #e4e4e7;
+    --background: #fafafa;
+    --card: #ffffff;
+    --muted: #f4f4f5;
+  }
+
+  /* Page chrome */
+  .page-header {
+    padding: 32px 32px 28px;
+    border-bottom: 1px solid var(--border);
+    background: white;
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.85);
+  }
+  .page-header h1 {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .page-header p {
+    font-size: 14px; color: var(--muted-foreground);
+    max-width: 720px;
+  }
+  .page-header .legend {
+    margin-top: 12px; display: flex; gap: 16px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted-foreground);
+  }
+  .legend a { color: var(--foreground); text-decoration: none;
+    border-bottom: 1px solid transparent; padding-bottom: 2px; }
+  .legend a:hover { border-color: var(--foreground); }
+
+  .section-frame {
+    padding: 56px 0 0;
+  }
+  .section-frame > .section-meta {
+    max-width: 1280px;
+    margin: 0 auto 24px;
+    padding: 0 32px;
+  }
+  .section-meta .badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+  }
+  .section-meta h2 {
+    font-size: 24px; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .section-meta p {
+    font-size: 14px; color: var(--muted-foreground);
+    line-height: 1.55; max-width: 720px;
+  }
+  .section-meta ul {
+    margin-top: 14px;
+    list-style: none;
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .section-meta ul li::before {
+    content: "·"; margin-right: 8px;
+    color: var(--tertiary-foreground);
+  }
+
+  /* ──────────────── Layout 1: CURRENT (full-bleed) ──────────────── */
+  .hero-current {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    min-height: 480px;
+    max-height: 720px;
+    background: #d4d4d8;
+    overflow: hidden;
+  }
+  .hero-current img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .hero-current .scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.1) 100%);
+  }
+  .hero-current .content {
+    position: absolute; inset: auto 0 0 0;
+    padding: 56px 32px;
+    color: white;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .hero-current .eyebrow {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.18em; color: rgba(255,255,255,0.8);
+    margin-bottom: 20px;
+  }
+  .hero-current h1 {
+    font-size: clamp(2rem, 6vw, 4.25rem);
+    font-weight: 600; letter-spacing: -0.02em;
+    line-height: 1.02; max-width: 880px; color: white;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.35);
+  }
+  .hero-current .meta {
+    margin-top: 24px;
+    font-size: 14px; color: rgba(255,255,255,0.85);
+    display: flex; flex-wrap: wrap; gap: 24px;
+  }
+
+  /* ──────────────── Layout A: EDITORIAL CONTAINED ──────────────── */
+  .hero-editorial {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+  .hero-editorial .image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #d4d4d8;
+  }
+  .hero-editorial img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hero-editorial .content {
+    padding: 32px 0 0;
+    max-width: 720px;
+  }
+  .hero-editorial .eyebrow {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--muted-foreground);
+    margin-bottom: 12px;
+  }
+  .hero-editorial h1 {
+    font-size: clamp(1.75rem, 5vw, 3.5rem);
+    font-weight: 600; letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .hero-editorial .description {
+    margin-top: 16px;
+    font-size: clamp(16px, 1.4vw, 18px);
+    color: var(--muted-foreground); line-height: 1.6;
+    max-width: 640px;
+  }
+  .hero-editorial .meta {
+    margin-top: 20px; font-size: 14px;
+    color: var(--muted-foreground);
+    display: flex; flex-wrap: wrap; gap: 24px;
+  }
+
+  /* ──────────────── Layout B: ASYMMETRIC SPLIT ──────────────── */
+  .hero-split {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .hero-split .image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/5;
+    max-width: 560px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #d4d4d8;
+  }
+  .hero-split img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .hero-split .content { max-width: 540px; }
+  .hero-split .eyebrow {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--muted-foreground);
+    margin-bottom: 16px;
+  }
+  .hero-split h1 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 600; letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .hero-split .description {
+    margin-top: 20px; font-size: 18px;
+    color: var(--muted-foreground); line-height: 1.6;
+  }
+  .hero-split .meta {
+    margin-top: 32px;
+    font-size: 14px; color: var(--muted-foreground);
+    display: flex; flex-wrap: wrap; gap: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .hero-split {
+      grid-template-columns: 1fr;
+      padding: 16px;
+      gap: 24px;
+    }
+    .hero-split .image-wrapper { aspect-ratio: 4/5; max-width: 100%; }
+    .hero-current { height: 56vh; min-height: 400px; }
+    .hero-current .content { padding: 32px 16px; }
+    .hero-editorial { padding: 0 16px; }
+    .section-frame > .section-meta { padding: 0 16px; }
+  }
+
+  .below-page {
+    max-width: 1280px;
+    margin: 64px auto 120px;
+    padding: 0 32px;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 64px;
+  }
+  .below-page p { color: var(--muted-foreground); font-size: 15px; line-height: 1.6; max-width: 60ch; }
+  .below-page aside {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    height: fit-content;
+  }
+  .below-page aside .ticket {
+    background: var(--muted);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .below-page aside .price {
+    font-size: 24px; font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .below-page aside .price-sub {
+    font-size: 13px; color: var(--muted-foreground);
+    margin-top: 2px;
+  }
+  .below-page aside button {
+    width: 100%; padding: 12px;
+    background: var(--foreground); color: white;
+    border: 0; border-radius: 8px;
+    font-family: inherit; font-size: 15px; font-weight: 500;
+    cursor: pointer;
+  }
+  @media (max-width: 900px) {
+    .below-page { grid-template-columns: 1fr; }
+    .below-page aside { order: -1; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <h1>Course-detail hero — layout explorations</h1>
+  <p>Three side-by-side variants of the course-detail hero. Resize the browser (or open DevTools device toolbar) to test mobile (~375px), tablet (~768px), desktop (~1280px), and ultrawide (~2000px+). Scroll to compare.</p>
+  <nav class="legend">
+    <a href="#current">1 · Current (full-bleed)</a>
+    <a href="#editorial">A · Editorial contained</a>
+    <a href="#split">B · Asymmetric split</a>
+  </nav>
+</header>
+
+<!-- ───────────────── 1 · CURRENT ───────────────── -->
+<div id="current" class="section-frame">
+  <div class="section-meta">
+    <div class="badge">Layout 1 · live today</div>
+    <h2>Full-bleed cinematic</h2>
+    <p>Image fills the viewport at 60vh. Title overlaid bottom-left on a dark scrim.</p>
+    <ul>
+      <li>Pros: dramatic, marketing-feel</li>
+      <li>Cons: image stretches edge-to-edge — quality degrades on ultrawide; takes 60% of the viewport regardless of screen size; title set in white so it depends on hero darkness</li>
+    </ul>
+  </div>
+</div>
+<section class="hero-current">
+  <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=2400&q=85&auto=format" alt="">
+  <div class="scrim"></div>
+  <div class="content">
+    <div class="eyebrow">Inspire Yogastudio &nbsp;·&nbsp; I dag &nbsp;·&nbsp; kl. 17:30</div>
+    <h1>Yin Yoga — søndag kveld</h1>
+    <div class="meta">
+      <span>Sara Olsen</span>
+      <span>Inspire Yogastudio — Storesal</span>
+      <span>13 uker</span>
+      <span>Nybegynner</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────────────── A · EDITORIAL ───────────────── -->
+<div id="editorial" class="section-frame" style="background: white; padding-top: 64px;">
+  <div class="section-meta">
+    <div class="badge">Layout A · proposed</div>
+    <h2>Editorial — contained image, title below</h2>
+    <p>Image confined to the page container with a fixed 21:9 aspect ratio. Title and meta drop below the image like a magazine feature.</p>
+    <ul>
+      <li>Image never stretches past 1280px — quality stays consistent on ultrawide</li>
+      <li>Title is dark text on light bg, so it doesn't depend on the image being dark</li>
+      <li>Hero takes less vertical space — the booking panel arrives sooner on mobile</li>
+      <li>Loses some of the "cinematic" punch of full-bleed</li>
+    </ul>
+  </div>
+</div>
+<section class="hero-editorial" style="background: white; padding-bottom: 24px;">
+  <div class="image-wrapper">
+    <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=1600&q=85&auto=format" alt="">
+  </div>
+  <div class="content">
+    <div class="eyebrow">Inspire Yogastudio &nbsp;·&nbsp; I dag &nbsp;·&nbsp; kl. 17:30</div>
+    <h1>Yin Yoga — søndag kveld</h1>
+    <p class="description">Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne bindevev, ledd og fascia.</p>
+    <div class="meta">
+      <span>Sara Olsen</span>
+      <span>Inspire Yogastudio — Storesal</span>
+      <span>13 uker</span>
+      <span>Nybegynner</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────────────── B · SPLIT ───────────────── -->
+<div id="split" class="section-frame">
+  <div class="section-meta">
+    <div class="badge">Layout B · proposed</div>
+    <h2>Asymmetric split — image left, content right</h2>
+    <p>Portrait-aspect image on the left, title and meta on the right. Image keeps a fixed aspect inside its column, content sits at a comfortable reading width even on huge displays. Stacks vertically on mobile.</p>
+    <ul>
+      <li>Most scalable of the three — no full-width imagery anywhere, content has a hard reading-width cap</li>
+      <li>Image stays high-fidelity at any viewport because its container width is bounded</li>
+      <li>Content and image share equal weight — feels more like a product page than a marketing hero</li>
+      <li>Less dramatic than full-bleed</li>
+    </ul>
+  </div>
+</div>
+<section class="hero-split">
+  <div class="image-wrapper">
+    <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=1200&q=85&auto=format" alt="">
+  </div>
+  <div class="content">
+    <div class="eyebrow">Inspire Yogastudio &nbsp;·&nbsp; I dag &nbsp;·&nbsp; kl. 17:30</div>
+    <h1>Yin Yoga — søndag kveld</h1>
+    <p class="description">Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne bindevev, ledd og fascia.</p>
+    <div class="meta">
+      <span>Sara Olsen</span>
+      <span>13 uker</span>
+      <span>Nybegynner</span>
+    </div>
+  </div>
+</section>
+
+<div class="below-page">
+  <div>
+    <p>Below the hero, every layout flows into the same page body — description, instructor, practical info, etc. The booking panel on the right is the same in all three. So the only thing this preview is testing is how the hero handles the image at different widths.</p>
+    <p style="margin-top:16px"><strong>Tip:</strong> open Chrome DevTools, toggle device toolbar (Cmd/Ctrl + Shift + M), and switch between iPhone, iPad, Desktop 1280, and Desktop 1920 to compare.</p>
+  </div>
+  <aside>
+    <div class="ticket">
+      <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.14em;color:var(--muted-foreground);margin-bottom:8px">Billettype</div>
+      <div style="font-size:15px;font-weight:500">Standard</div>
+      <div class="price-sub" style="margin-top:2px">Kursrekke · 13 uker · 3. feb – 3. mai</div>
+      <div class="price" style="margin-top:8px">2 400 kr</div>
+    </div>
+    <button>Fortsett til betaling</button>
+  </aside>
+</div>
+
+</body>
+</html>

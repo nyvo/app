@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mine kurs — teacher dashboard redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css" />
+<style>
+  /* ─── Dashboard shell ──────────────────────────────────── */
+  body { background: var(--background); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* Sidebar (illustrative, simplified) */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--background);
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  @media (max-width: 900px) { .sidebar { display: none; } }
+  .sidebar .org {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .sidebar .org .chip {
+    width: 28px; height: 28px;
+    background: var(--foreground);
+    color: var(--background);
+    border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .sidebar .org .name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+  .sidebar .org .role { font-size: 11px; color: var(--muted-foreground); }
+  .sidebar .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+  }
+  .sidebar .nav-item:hover { background: var(--muted); color: var(--foreground); }
+  .sidebar .nav-item.active { background: var(--muted); color: var(--foreground); font-weight: 500; }
+  .sidebar .nav-item svg { width: 14px; height: 14px; }
+  .sidebar .nav-section {
+    font-size: 11px;
+    color: var(--tertiary-foreground);
+    padding: 14px 10px 6px;
+    font-weight: 500;
+  }
+
+  /* Main content */
+  main {
+    padding: 32px 36px 40px;
+    max-width: 1280px;
+    width: 100%;
+  }
+  @media (max-width: 900px) { main { padding: 20px; } }
+
+  /* ─── Page header ──────────────────────────────────── */
+  .page-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .page-head h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--foreground);
+    margin: 0;
+    line-height: 1.15;
+  }
+  .page-head p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: var(--muted-foreground);
+  }
+
+  /* ─── KPI strip ────────────────────────────────────── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 720px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: var(--card);
+  }
+  .kpi .label {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-bottom: 4px;
+  }
+  .kpi .value {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .kpi .delta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+
+  /* ─── Toolbar ──────────────────────────────────────── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .tabs {
+    display: inline-flex;
+    background: var(--muted);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    border: 0;
+    background: transparent;
+  }
+  .tab:hover { color: var(--foreground); }
+  .tab.active {
+    background: var(--background);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .tab .count {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .tab.active .count { color: var(--foreground); }
+
+  .toolbar-right { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+  .search {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--background);
+    width: 240px;
+  }
+  .search svg { width: 14px; height: 14px; color: var(--muted-foreground); }
+  .search input {
+    border: 0; outline: 0; background: transparent;
+    flex: 1;
+    font-size: 13px;
+    color: var(--foreground);
+    font-family: inherit;
+  }
+  .search input::placeholder { color: var(--muted-foreground); }
+  .sort-select {
+    height: 34px;
+    padding: 0 32px 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    font-size: 13px;
+    color: var(--foreground);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='1.75'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ─── List card — TWO-COLUMN ROW: identity left, status/capacity right ── */
+  .list {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    overflow: hidden;
+  }
+  .list-row {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) 180px 32px;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 100ms ease-out;
+    position: relative;
+  }
+  .list-row:last-child { border-bottom: 0; }
+  .list-row:hover { background: var(--muted); }
+
+  .row-thumb {
+    width: 56px; height: 56px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--muted);
+    position: relative;
+  }
+  .row-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .list-row:hover .row-thumb { background: var(--background); }
+
+  /* Identity cluster — title + drop-in marker on top, muted meta line below.
+     Title takes natural width (truncating if needed) so the marker sits
+     immediately after the title with a small gap, not pushed to the far right. */
+  .row-identity { min-width: 0; }
+  .row-title-line {
+    display: flex; align-items: center; gap: 8px;
+    min-width: 0;
+  }
+  .row-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--foreground);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  /* Single-tier muted sub line — date · time · location · sequence */
+  .row-meta {
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .row-meta .sep { color: var(--disabled-foreground); margin: 0 6px; }
+
+  /* Status / capacity cluster — compressed to two visual rows so it
+     vertically aligns with the two-line identity column on its left. */
+  .row-cluster {
+    display: flex; flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    width: 100%;
+    align-self: center;
+  }
+  .row-cluster .status-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .row-cluster .status-row .nums { color: var(--foreground); }
+  .row-cluster .status-row .pct { color: var(--muted-foreground); }
+
+  /* Status pill — fully monochrome */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .pill.active { background: var(--muted); color: var(--foreground); }
+  .pill.draft { background: var(--muted); color: var(--muted-foreground); }
+  .pill.full { background: var(--foreground); color: var(--background); }
+  .pill.cancelled {
+    background: var(--muted); color: var(--muted-foreground);
+    text-decoration: line-through;
+  }
+
+  /* Soft monochrome progress bar — medium gray on light gray, zen feel. */
+  .bar {
+    width: 100%;
+    height: 4px;
+    background: var(--muted);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .list-row:hover .bar { background: var(--background); }
+  .bar-fill {
+    position: absolute; inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: var(--muted-foreground);
+  }
+  .bar-fill.empty { display: none; }
+  /* Unlimited capacity has no finish line — the bar is hidden entirely. */
+  .bar.hidden { display: none; }
+
+  /* Action menu */
+  .menu-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    opacity: 0;
+    transition: opacity 100ms ease-out;
+  }
+  .list-row:hover .menu-btn { opacity: 1; }
+  .menu-btn:hover { background: var(--background); color: var(--foreground); }
+  .menu-btn svg { width: 14px; height: 14px; }
+
+  /* Drop-in marker on the row title */
+  .row-marker {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--muted);
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.45;
+    flex-shrink: 0;
+  }
+  .list-row:hover .row-marker { background: var(--background); }
+
+  /* Pagination footer */
+  .list-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--background);
+  }
+  .list-footer .count {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Mobile — collapse the right cluster to numeric only */
+  @media (max-width: 760px) {
+    .list-row {
+      grid-template-columns: 48px 1fr 24px;
+      gap: 12px;
+    }
+    .row-thumb { width: 48px; height: 48px; }
+    .row-cluster { display: none; }
+    .menu-btn { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="org">
+      <span class="chip">IY</span>
+      <div>
+        <div class="name">Inspire Yogastudio</div>
+        <div class="role">Studio</div>
+      </div>
+    </div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Oversikt
+    </a>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Kurs
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Timeplan
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Påmeldte
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Meldinger
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Betalinger
+    </a>
+
+    <div class="nav-section">Innstillinger</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Studio
+    </a>
+  </aside>
+
+  <main>
+    <!-- Page header -->
+    <div class="page-head">
+      <div>
+        <h1>Mine kurs</h1>
+        <p>Oversikt over kursene dine — påmelding, neste økt, status.</p>
+      </div>
+      <button class="btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Lag nytt kurs
+      </button>
+    </div>
+
+    <!-- KPI strip — quick "this week" glance for the teacher -->
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="label">Aktive kurs</div>
+        <div class="value">11</div>
+        <div class="delta">2 nye denne uken</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Påmeldte denne uken</div>
+        <div class="value">38</div>
+        <div class="delta">+6 fra forrige uke</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Ledige plasser</div>
+        <div class="value">17</div>
+        <div class="delta">i kommende timer</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Inntekter (mnd)</div>
+        <div class="value">42 800 kr</div>
+        <div class="delta">+12 % fra mars</div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="tabs" role="tablist">
+        <button class="tab active">Aktive <span class="count">11</span></button>
+        <button class="tab">Fullførte <span class="count">23</span></button>
+        <button class="tab">
+          Utkast <span class="count">2</span>
+          <span style="width:6px; height:6px; border-radius:999px; background:var(--foreground); margin-left:4px;"></span>
+        </button>
+      </div>
+      <div class="toolbar-right">
+        <select class="sort-select">
+          <option>Sorter — neste økt først</option>
+          <option>Navn (A–Å)</option>
+          <option>Påmeldte (mest fullt)</option>
+          <option>Sist endret</option>
+        </select>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Søk etter kurs eller sal" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Course list -->
+    <div class="list">
+
+      <!-- Row 1: imminent + nearly full -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Yin Yoga — søndag kveld</h3>
+            <span class="row-marker">Drop-in</span>
+          </div>
+          <p class="row-meta">I dag · 17:30<span class="sep">·</span>Storesal<span class="sep">·</span>uke 6 av 13</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill active">Aktiv</span>
+            <span><span class="nums">10/12</span> <span class="pct">· 83 %</span></span>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 83%"></div></div>
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Row 2: full -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1599447421416-3414500d18a5?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Mandagsyoga Fordypning</h3>
+          </div>
+          <p class="row-meta">Man 28. apr · 19:30<span class="sep">·</span>Storesal<span class="sep">·</span>uke 3 av 8</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill full">Fullt</span>
+            <span><span class="nums">12/12</span> <span class="pct">· 100 %</span></span>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 100%"></div></div>
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Row 3: healthy -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1591291621060-89264b1da9e0?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Kundalini Yoga</h3>
+            <span class="row-marker">Drop-in</span>
+          </div>
+          <p class="row-meta">Tir 29. apr · 17:30<span class="sep">·</span>Lillesal<span class="sep">·</span>8 uker</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill active">Aktiv</span>
+            <span><span class="nums">6/12</span> <span class="pct">· 50 %</span></span>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 50%"></div></div>
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Row 4: low signups -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1599447292011-dec7080e3f49?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Ashtanga Yoga (samarbeid med VÆR)</h3>
+          </div>
+          <p class="row-meta">Ons 30. apr · 18:00<span class="sep">·</span>Storesal<span class="sep">·</span>enkelttime</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill active">Aktiv</span>
+            <span><span class="nums">3/16</span> <span class="pct">· 19 %</span></span>
+          </div>
+          <div class="bar"><div class="bar-fill" style="width: 19%"></div></div>
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Row 5: unlimited cap -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Power Vinyasa</h3>
+            <span class="row-marker">Drop-in</span>
+          </div>
+          <p class="row-meta">Tor 1. mai · 19:00<span class="sep">·</span>Storesal<span class="sep">·</span>10 uker</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill active">Aktiv</span>
+            <span><span class="nums">14 påmeldte</span> <span class="pct">· ubegrenset</span></span>
+          </div>
+          <!-- No bar — there's no finish line to show. -->
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Row 6: draft -->
+      <a href="#" class="list-row">
+        <div class="row-thumb">
+          <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=200&q=70&auto=format&fit=crop" alt="" />
+        </div>
+        <div class="row-identity">
+          <div class="row-title-line">
+            <h3 class="row-title">Gravid Yoga — våren 2026</h3>
+          </div>
+          <p class="row-meta">Sist endret 24. apr<span class="sep">·</span>Lillesal<span class="sep">·</span>6 uker</p>
+        </div>
+        <div class="row-cluster">
+          <div class="status-row">
+            <span class="pill draft">Utkast</span>
+            <span class="pct">Ikke publisert</span>
+          </div>
+          <!-- No bar — drafts aren't published yet, no enrollment to track. -->
+        </div>
+        <button class="menu-btn" aria-label="Mer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+        </button>
+      </a>
+
+      <!-- Footer -->
+      <div class="list-footer">
+        <span class="count">Viser 6 av 11 kurs</span>
+        <button class="btn btn-outline btn-sm">Vis flere</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

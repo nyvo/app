@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inspire Yogastudio — Essentials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css" />
+<style>
+  /* ─── Hero — eyebrow removed, sidecar info card ─────────── */
+  .hero { padding: 56px 0 40px; }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 56px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+  }
+  .hero h1 {
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.04;
+    margin: 0 0 16px;
+  }
+  .hero p {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+    max-width: 540px;
+    margin: 0;
+  }
+
+  /* Sidecar info card */
+  .info-card {
+    background: var(--muted);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .logo-chip {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: var(--background);
+    box-shadow: 0 0 0 1px var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    flex-shrink: 0;
+  }
+  .logo-chip svg, .logo-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .logo-chip.initials {
+    background: var(--foreground);
+    color: var(--background);
+    box-shadow: none;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding: 0;
+  }
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--foreground);
+    line-height: 1.45;
+  }
+  .info-row svg {
+    width: 14px; height: 14px;
+    color: var(--muted-foreground);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .info-row .sub {
+    display: block;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    margin-top: 1px;
+  }
+  .info-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2px 0;
+  }
+  .info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+    text-decoration: underline;
+    text-decoration-color: var(--disabled-foreground);
+    text-underline-offset: 3px;
+  }
+  .info-link:hover { text-decoration-color: var(--foreground); }
+  .info-link svg { width: 12px; height: 12px; }
+
+  /* Variant label strip */
+  .variant-label {
+    display: flex; align-items: center; gap: 12px;
+    margin: 32px 0 12px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .variant-label::after {
+    content: ""; flex: 1; height: 1px; background: var(--border);
+  }
+  .variant-label .tag {
+    padding: 2px 8px; border-radius: 4px;
+    background: var(--foreground); color: var(--background);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── Featured (kept) ───────────────────────────────────── */
+  .featured {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    transition: box-shadow 200ms ease-out;
+    position: relative;
+  }
+  .featured-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--lavender);
+    color: var(--lavender-foreground);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .featured-badge .star {
+    width: 11px; height: 11px;
+  }
+  .featured:hover { box-shadow: 0 0 0 1px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.04); }
+  @media (max-width: 720px) { .featured { grid-template-columns: 1fr; } }
+  .featured-img { position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--muted); }
+  @media (min-width: 720px) { .featured-img { aspect-ratio: auto; min-height: 440px; } }
+  .featured-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .featured-body { padding: 32px 40px; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; }
+  @media (max-width: 640px) { .featured-body { padding: 24px; } }
+  .when-line {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .when-line .dot { width: 6px; height: 6px; background: var(--success); border-radius: 999px; display: inline-block; }
+  .when-line .sep { color: var(--disabled-foreground); }
+  .featured h3 {
+    font-size: clamp(1.875rem, 3vw, 2.5rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin: 16px 0;
+  }
+  .featured .desc {
+    font-size: 16px;
+    color: var(--muted-foreground);
+    line-height: 1.55;
+    margin: 0 0 16px;
+    max-width: 52ch;
+  }
+  .featured .meta {
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+    font-size: 14px; color: var(--muted-foreground);
+  }
+  .featured .meta .item { display: inline-flex; align-items: center; gap: 6px; }
+  .featured-cta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .featured-price .num {
+    font-size: 24px; font-weight: 600; letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+  .featured-price .sub { font-size: 12px; color: var(--muted-foreground); }
+
+  /* ─── Section ────────────────────────────────────────────── */
+  .section { margin-top: 40px; }
+  .sec-head { margin-bottom: 18px; }
+  .sec-head h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
+  }
+  .sec-head p {
+    font-size: 14px;
+    color: var(--muted-foreground);
+    margin: 0;
+    max-width: 480px;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--foreground);
+    transition: all 150ms ease-out;
+  }
+  .chip:hover { border-color: var(--foreground); }
+  .chip .count {
+    font-size: 11px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .chip.active {
+    background: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
+  }
+  .chip.active .count { color: rgba(255,255,255,0.6); }
+
+  .sort-select {
+    height: 32px;
+    padding: 0 32px 0 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    font-size: 13px;
+    color: var(--foreground);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='1.75'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  /* ─── Cards ──────────────────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 18px; } }
+  @media (max-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+    overflow: hidden;
+    transition: all 200ms ease-out;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.16), 0 6px 20px rgba(0,0,0,0.05);
+  }
+  .card-cover {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    background: var(--muted);
+    overflow: hidden;
+  }
+  .card-cover img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 700ms ease-out;
+  }
+  .card:hover .card-cover img { transform: scale(1.04); }
+
+  .card-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .badge-full { background: rgba(0,0,0,0.78); color: white; backdrop-filter: blur(8px); }
+  .badge-urgent { background: var(--warning); color: white; }
+
+  /* CHANGE #1: no per-card button. CHANGE #2: weekday-led chip + avatar.
+     CHANGE #3: price demoted to inline meta line. */
+  .card-body { padding: 14px 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+
+  .card-when {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-when .sep { color: var(--disabled-foreground); }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--foreground);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-title:hover { text-decoration: underline; text-decoration-color: rgba(0,0,0,0.3); text-underline-offset: 2px; }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-top: 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-meta .sep { color: var(--disabled-foreground); }
+  .card-meta .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--foreground);
+    color: var(--background);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 200ms ease-out;
+  }
+  .card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+
+  .card.disabled .card-cover { filter: saturate(0.4); }
+  .card.disabled { background: var(--muted); }
+  .card.disabled .card-title,
+  .card.disabled .card-when .day,
+  .card.disabled .card-when .time,
+  .card.disabled .card-meta .name { color: var(--muted-foreground); }
+  .card.disabled:hover { transform: none; }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 48px;
+  }
+  .pagination .count { font-size: 12px; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+      Ease
+    </a>
+    <nav class="nav-links">
+      <a href="#">Logg inn</a>
+    </nav>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="variant-label"><span class="tag">A</span> Studio with logo</div>
+</div>
+
+<section class="shell hero">
+  <div class="hero-grid">
+    <div>
+      <h1>Inspire Yogastudio</h1>
+      <p>Tromsøs varmeste yogasenter. Vi tilbyr vinyasa, ashtanga, yin, kundalini og spesialkurs for gravide og familier — alt under ett tak i Storesal og Lillesal.</p>
+    </div>
+    <aside class="info-card">
+      <div class="logo-chip" aria-label="Inspire Yogastudio logo">
+        <!-- A deliberately colored logo to test the chip's clash-containment -->
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 4 C12 10, 11 17, 16 24 C21 17, 20 10, 16 4Z" fill="#3E7D5F"/>
+          <path d="M6 14 C9 18, 13 22, 17 22 C15 16, 11 14, 6 14Z" fill="#5DA37B"/>
+          <path d="M26 14 C23 18, 19 22, 15 22 C17 16, 21 14, 26 14Z" fill="#5DA37B"/>
+          <circle cx="16" cy="22" r="2.4" fill="#E5B14A"/>
+        </svg>
+      </div>
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>
+          Storgata 42, 9008 Tromsø
+          <span class="sub">Storesal &amp; Lillesal</span>
+        </span>
+      </div>
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>kontakt@inspireyogastudio.no</span>
+      </div>
+      <div class="info-divider"></div>
+      <a href="#" class="info-link">
+        Få veibeskrivelse
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </aside>
+  </div>
+</section>
+
+<div class="shell">
+  <div class="variant-label"><span class="tag">B</span> Freelance teacher — no fixed venue</div>
+</div>
+
+<section class="shell hero">
+  <div class="hero-grid">
+    <div>
+      <h1>Lina Solheim</h1>
+      <p>Sertifisert kundalini- og yin-instruktør. Holder kurs i mindre grupper, privat og på utvalgte studioer i Nord-Norge.</p>
+    </div>
+    <aside class="info-card">
+      <div class="logo-chip initials" aria-label="Lina Solheim">LS</div>
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>
+          Underviser i Tromsø og Bodø
+          <span class="sub">Reiser også til andre studioer på forespørsel</span>
+        </span>
+      </div>
+      <div class="info-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        <span>lina@linayoga.no</span>
+      </div>
+      <div class="info-divider"></div>
+      <a href="#" class="info-link">
+        Se nettside
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </aside>
+  </div>
+</section>
+
+<main class="shell">
+
+  <!-- Featured (kept) -->
+  <a href="#" class="featured">
+    <span class="featured-badge">
+      <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61L12 2z"/></svg>
+      Fremhevet kurs
+    </span>
+    <div class="featured-img">
+      <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=1200&q=70&auto=format&fit=crop" alt="" />
+    </div>
+    <div class="featured-body">
+      <div>
+        <div class="when-line">
+          <span class="dot"></span>
+          I dag <span class="sep">·</span> <span class="time">kl. 17:30</span>
+        </div>
+        <h3>Yin Yoga — søndag kveld</h3>
+        <p class="desc">Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne…</p>
+        <div class="meta">
+          <span class="item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M20 10c0 7-8 13-8 13s-8-6-8-13a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            Inspire Yogastudio · Storesal
+          </span>
+          <span class="item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            13 uker
+          </span>
+        </div>
+      </div>
+      <div class="featured-cta-row">
+        <div class="featured-price">
+          <div class="num">2 200 kr</div>
+          <div class="sub">for hele rekken</div>
+        </div>
+        <span class="btn btn-pill">
+          Se kurset
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Grid section -->
+  <section class="section">
+    <header class="sec-head">
+      <h2>Timer og kurs</h2>
+      <p>Bla gjennom uken — eller filtrer på stil og type.</p>
+    </header>
+
+    <div class="filter-bar">
+      <div class="filter-chips">
+        <button class="chip active">Alle <span class="count">12</span></button>
+        <button class="chip">Kursrekker <span class="count">10</span></button>
+        <button class="chip">Arrangementer <span class="count">2</span></button>
+      </div>
+      <select class="sort-select">
+        <option>Sorter etter — først ut</option>
+        <option>Lavest pris</option>
+        <option>Høyest pris</option>
+        <option>Tittel A–Å</option>
+      </select>
+    </div>
+
+    <div class="grid">
+
+      <!-- Card 1 — Mandagsyoga -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1599447421416-3414500d18a5?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">3 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Man</span><span class="date">28. apr</span><span class="sep">·</span><span class="time">19:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Mandagsyoga Fordypning</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-2">MS</span>
+            <span class="name">Maria Strand</span>
+            <span class="sep">·</span>
+            <span class="price">2 400 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 2 — Vinyasa Flow morgen — FULL -->
+      <article class="card disabled">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1588286840104-8957b019727f?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-full">Fullt</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Man</span><span class="date">28. apr</span><span class="sep">·</span><span class="time">07:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Vinyasa Flow — morgen</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-3">SJ</span>
+            <span class="name">Sara Johansen</span>
+            <span class="sep">·</span>
+            <span class="price">1 800 kr</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3 — Barsel Yoga -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">3 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Man</span><span class="date">28. apr</span><span class="sep">·</span><span class="time">10:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Barsel Yoga</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-4">IB</span>
+            <span class="name">Ingrid Berg</span>
+            <span class="sep">·</span>
+            <span class="price">1 800 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 4 — Kundalini -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1591291621060-89264b1da9e0?w=600&q=70&auto=format&fit=crop" alt="" />
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Man</span><span class="date">28. apr</span><span class="sep">·</span><span class="time">17:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Kundalini Yoga</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-5">LS</span>
+            <span class="name">Lina Solheim</span>
+            <span class="sep">·</span>
+            <span class="price">2 200 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 5 — Ashtanga VÆR -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1593810451137-9f49ed68c5b1?w=600&q=70&auto=format&fit=crop" alt="" />
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Tir</span><span class="date">29. apr</span><span class="sep">·</span><span class="time">18:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Ashtanga Yoga (samarbeid med VÆR)</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-6">PO</span>
+            <span class="name">Per Olsen</span>
+            <span class="sep">·</span>
+            <span class="price">4 500 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 6 — Yin onsdag -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1506629905607-c7d93bd5dd7e?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">2 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Tir</span><span class="date">29. apr</span><span class="sep">·</span><span class="time">11:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Yin Yoga — onsdag</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-1">HN</span>
+            <span class="name">Hilde Nordby</span>
+            <span class="sep">·</span>
+            <span class="price">2 200 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 7 — Ashtanga -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1599447292011-dec7080e3f49?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">3 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Tir</span><span class="date">29. apr</span><span class="sep">·</span><span class="time">18:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Ashtanga Yoga</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-2">AV</span>
+            <span class="name">Anders Vik</span>
+            <span class="sep">·</span>
+            <span class="price">2 600 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 8 — Vinyasa onsdag -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">3 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Tir</span><span class="date">29. apr</span><span class="sep">·</span><span class="time">19:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Vinyasa Yoga — onsdag kveld</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-3">SJ</span>
+            <span class="name">Sara Johansen</span>
+            <span class="sep">·</span>
+            <span class="price">2 200 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 9 — Gravid -->
+      <article class="card disabled">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-full">Fullt</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Ons</span><span class="date">30. apr</span><span class="sep">·</span><span class="time">17:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Gravid Yoga</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-4">IB</span>
+            <span class="name">Ingrid Berg</span>
+            <span class="sep">·</span>
+            <span class="price">2 200 kr</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 10 — Power Vinyasa -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=70&auto=format&fit=crop" alt="" />
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Ons</span><span class="date">30. apr</span><span class="sep">·</span><span class="time">19:00</span>
+          </div>
+          <h3 class="card-title"><a href="#">Power Vinyasa</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-2">MS</span>
+            <span class="name">Maria Strand</span>
+            <span class="sep">·</span>
+            <span class="price">2 400 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 11 — Familie Akro -->
+      <article class="card">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-urgent">2 igjen</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Lør</span><span class="date">10. mai</span><span class="sep">·</span><span class="time">10:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Familie Akro Yoga</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-6">PO</span>
+            <span class="name">Per Olsen</span>
+            <span class="sep">·</span>
+            <span class="price">2 400 kr</span>
+          </div>
+        </div>
+        <span class="card-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </article>
+
+      <!-- Card 12 — Inversjoner -->
+      <article class="card disabled">
+        <a href="#" class="card-cover">
+          <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=70&auto=format&fit=crop" alt="" />
+          <span class="card-badge badge-full">Fullt</span>
+        </a>
+        <div class="card-body">
+          <div class="card-when">
+            <span>Lør</span><span class="date">10. mai</span><span class="sep">·</span><span class="time">15:30</span>
+          </div>
+          <h3 class="card-title"><a href="#">Inversjoner og armbalanser</a></h3>
+          <div class="card-meta">
+            <span class="avatar av-2">AV</span>
+            <span class="name">Anders Vik</span>
+            <span class="sep">·</span>
+            <span class="price">3 000 kr</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <div class="pagination">
+      <button class="btn btn-outline">Vis flere</button>
+      <span class="count">Viser <span class="tabular">12</span> av <span class="tabular">13</span> kurs</span>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell footer-inner">
+    <div>
+      <div class="brand" style="margin-bottom: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+        Ease
+      </div>
+      <div>Bookingplattform for kurs, treningstimer og workshops.</div>
+      <div>Drevet av små studioer i Norge.</div>
+    </div>
+    <div class="footer-links">
+      <a href="#">Inspire Yogastudio</a>
+      <a href="#">Vilkår</a>
+      <a href="#">Forsiden</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

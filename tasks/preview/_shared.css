@@ -1,0 +1,132 @@
+/* Replicates the radix-vega tokens from src/index.css so the mockup
+   reads the same as the real app. Geist + EB Garamond loaded inline. */
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.12 0.01 250);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --tertiary-foreground: oklch(0.62 0 0);
+  --disabled-foreground: oklch(0.78 0 0);
+  --border: oklch(0.92 0 0);
+  --border-subtle: oklch(0.95 0 0);
+  --warning: oklch(0.58 0.15 65);
+  --warning-foreground: #fff;
+  --success: oklch(0.58 0.145 154);
+  --rose-solid: #E8B7C1;
+  --rose-solid-foreground: #4a2330;
+  --sand-solid: #DDC9A6;
+  --sand-solid-foreground: #4a3a1f;
+  --rose: #F7E5E8;
+  --rose-foreground: #8C3D55;
+  --lavender: #EFEAF7;
+  --lavender-foreground: #5A4A82;
+  --ring: oklch(0.55 0.18 250);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Geist', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11';
+}
+
+img { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Layout */
+.shell { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+@media (max-width: 640px) { .shell { padding: 0 20px; } }
+
+/* Top nav */
+.nav {
+  border-bottom: 1px solid var(--border);
+  height: 56px;
+  display: flex;
+  align-items: center;
+}
+.nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+.brand svg { width: 16px; height: 16px; }
+.nav-links { display: flex; gap: 24px; font-size: 14px; color: var(--muted-foreground); }
+
+/* Eyebrow */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: var(--foreground);
+  color: var(--background);
+  transition: all 150ms ease-out;
+}
+.btn:hover { opacity: 0.9; }
+.btn-outline {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.btn-outline:hover { background: var(--muted); opacity: 1; }
+.btn-pill { border-radius: 999px; padding: 0 22px; height: 44px; font-size: 15px; }
+.btn-sm { height: 32px; font-size: 13px; padding: 0 12px; }
+
+/* Footer */
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: 64px;
+  padding: 32px 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.footer-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.footer-links { display: flex; gap: 24px; font-size: 12px; letter-spacing: 0.06em; }
+.footer-links a { color: var(--muted-foreground); }
+.footer-links a:hover { color: var(--foreground); }
+
+/* Avatar */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: white;
+  flex-shrink: 0;
+}
+.avatar-md { width: 24px; height: 24px; font-size: 10px; }
+
+/* Color pool for avatars (stable per initials) */
+.av-1 { background: #6B7280; }
+.av-2 { background: #4F6CB0; }
+.av-3 { background: #A66B4F; }
+.av-4 { background: #5C7E5A; }
+.av-5 { background: #8B6A8F; }
+.av-6 { background: #B07B4F; }

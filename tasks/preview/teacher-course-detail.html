@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kursdetaljer — teacher dashboard redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="_shared.css" />
+<style>
+  body { background: var(--background); }
+
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  /* Sidebar (re-used from previous mockups) */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    background: var(--background);
+    padding: 20px 14px;
+    display: flex; flex-direction: column; gap: 4px;
+    height: 100vh; position: sticky; top: 0;
+  }
+  @media (max-width: 900px) { .sidebar { display: none; } }
+  .sidebar .org { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; margin-bottom: 12px; }
+  .sidebar .org .chip { width: 28px; height: 28px; background: var(--foreground); color: var(--background); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .sidebar .org .name { font-size: 13px; font-weight: 500; color: var(--foreground); }
+  .sidebar .org .role { font-size: 11px; color: var(--muted-foreground); }
+  .sidebar .nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; font-size: 13px; color: var(--muted-foreground); }
+  .sidebar .nav-item:hover { background: var(--muted); color: var(--foreground); }
+  .sidebar .nav-item.active { background: var(--muted); color: var(--foreground); font-weight: 500; }
+  .sidebar .nav-item svg { width: 14px; height: 14px; }
+
+  main { padding: 24px 36px 40px; max-width: 1280px; width: 100%; }
+  @media (max-width: 900px) { main { padding: 16px 20px; } }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 18px;
+    font-size: 13px; color: var(--muted-foreground);
+  }
+  .breadcrumb a { color: var(--muted-foreground); }
+  .breadcrumb a:hover { color: var(--foreground); }
+  .breadcrumb .current { color: var(--foreground); }
+  .breadcrumb svg { width: 12px; height: 12px; color: var(--disabled-foreground); }
+
+  /* Page header — title + status pill + meta strip + actions */
+  .page-head { margin-bottom: 18px; }
+  .page-head .row1 {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .page-head h1 {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 26px; font-weight: 600; letter-spacing: -0.015em;
+    color: var(--foreground); margin: 0;
+    line-height: 1.15;
+  }
+  .status-pill {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 500; line-height: 1.5;
+    background: var(--foreground); color: var(--background);
+  }
+  .status-pill.draft { background: var(--muted); color: var(--muted-foreground); }
+  .status-pill.upcoming { background: var(--muted); color: var(--foreground); }
+  .status-pill.cancelled { background: var(--muted); color: var(--muted-foreground); text-decoration: line-through; }
+
+  .page-actions { display: flex; gap: 6px; align-items: center; }
+  .page-actions .btn {
+    height: 32px; padding: 0 12px;
+    font-size: 13px; font-weight: 500;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--background); color: var(--foreground);
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+  }
+  .page-actions .btn:hover { background: var(--muted); }
+  .page-actions .btn svg { width: 13px; height: 13px; }
+  .page-actions .icon-btn {
+    width: 32px; height: 32px; padding: 0; justify-content: center;
+  }
+
+  /* Meta strip below title */
+  .meta-strip {
+    margin-top: 10px;
+    font-size: 13px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-strip .sep { color: var(--disabled-foreground); margin: 0 8px; }
+  .meta-strip a { color: var(--foreground); }
+  .meta-strip a:hover { text-decoration: underline; text-decoration-color: var(--disabled-foreground); text-underline-offset: 2px; }
+
+  /* Tabs — same SegmentedTabs as elsewhere */
+  .tabs {
+    display: inline-flex; background: var(--muted); border-radius: 8px;
+    padding: 3px; gap: 2px; margin-bottom: 22px;
+  }
+  .tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500;
+    color: var(--muted-foreground); border: 0; background: transparent; cursor: pointer;
+  }
+  .tab:hover { color: var(--foreground); }
+  .tab.active { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .tab .count {
+    font-size: 12px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .tab.active .count { color: var(--foreground); }
+
+  /* KPI strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+  @media (max-width: 720px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--card); }
+  .kpi .label { font-size: 12px; color: var(--muted-foreground); margin-bottom: 4px; }
+  .kpi .value {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--foreground); font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .kpi .sub { margin-top: 4px; font-size: 12px; color: var(--muted-foreground); }
+  .kpi .bar {
+    margin-top: 6px;
+    height: 3px; background: var(--muted); border-radius: 999px; overflow: hidden;
+  }
+  .kpi .bar > div { height: 100%; background: var(--muted-foreground); border-radius: 999px; }
+  .kpi.active .value::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 999px; background: var(--foreground);
+    margin-right: 8px; vertical-align: 3px;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* Card */
+  .card {
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card); margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card .head {
+    padding: 16px 20px 12px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .card .head h2 {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--foreground); margin: 0;
+  }
+  .card .head .desc {
+    font-size: 13px; color: var(--muted-foreground); margin-top: 2px;
+  }
+  .card .head .head-action {
+    font-size: 13px; font-weight: 500;
+    color: var(--foreground); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: transparent; border: 0;
+  }
+  .card .head .head-action:hover { text-decoration: underline; text-decoration-color: var(--disabled-foreground); text-underline-offset: 2px; }
+  .card .head .head-action svg { width: 12px; height: 12px; }
+  .card .body { padding: 12px 20px 20px; }
+
+  /* Om kurset */
+  .om-kurset {
+    display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px;
+  }
+  @media (max-width: 720px) { .om-kurset { grid-template-columns: 1fr; } }
+  .om-kurset .img {
+    aspect-ratio: 1/1;
+    border-radius: 8px; background: var(--muted); overflow: hidden;
+  }
+  .om-kurset .img img { width: 100%; height: 100%; object-fit: cover; }
+  .om-kurset .desc-block {
+    display: flex; flex-direction: column; gap: 14px;
+    min-width: 0;
+  }
+  .om-kurset .lede {
+    font-size: 15px; line-height: 1.55; color: var(--foreground);
+    margin: 0;
+  }
+  .om-kurset .body-text {
+    font-size: 14px; line-height: 1.55; color: var(--muted-foreground);
+    margin: 0;
+  }
+  .om-kurset .level {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .om-kurset .level .chip {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--muted); color: var(--foreground);
+  }
+
+  /* Kursplan list — compacted */
+  .kursplan-list {
+    margin: 0; padding: 0; list-style: none;
+    border-top: 1px solid var(--border);
+  }
+  .kursplan-list li {
+    display: grid; grid-template-columns: 56px 1fr 80px 16px;
+    align-items: center; gap: 14px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .kursplan-list li:last-child { border-bottom: 0; }
+  .kursplan-list li:hover { background: var(--muted); }
+  .kursplan-list .pill-date {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 48px; height: 44px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--card);
+  }
+  .kursplan-list .pill-date .month {
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  .kursplan-list .pill-date .day {
+    font-size: 16px; font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground);
+  }
+  .kursplan-list li.past .pill-date {
+    background: var(--muted); border-color: transparent;
+  }
+  .kursplan-list li.past .pill-date .day { color: var(--muted-foreground); }
+  .kursplan-list li.past .label { color: var(--muted-foreground); }
+  .kursplan-list .label {
+    font-size: 13px; color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .kursplan-list .time {
+    font-size: 13px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .kursplan-list .menu {
+    width: 16px; height: 16px;
+    color: var(--muted-foreground);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  /* Nylige påmeldinger list */
+  .signups-list { display: flex; flex-direction: column; }
+  .signups-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 90px;
+    align-items: center; gap: 14px;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .signups-row:hover { background: var(--muted); }
+  .av {
+    width: 32px; height: 32px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; font-size: 11px; font-weight: 600;
+  }
+  .av-1 { background: #6B7280; } .av-2 { background: #4F6CB0; }
+  .av-3 { background: #A66B4F; } .av-4 { background: #5C7E5A; }
+  .av-5 { background: #8B6A8F; } .av-6 { background: #B07B4F; }
+  .signups-row .name { font-size: 14px; font-weight: 500; color: var(--foreground); line-height: 1.3; margin: 0; }
+  .signups-row .email { font-size: 12px; color: var(--muted-foreground); line-height: 1.4; margin: 0; }
+  .signups-row .meta { font-size: 11px; color: var(--muted-foreground); text-align: right; font-variant-numeric: tabular-nums; }
+
+  .pill-mini {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 500; line-height: 1.5;
+    background: var(--muted); color: var(--foreground);
+  }
+  .pill-mini.failed { background: var(--foreground); color: var(--background); }
+  .pill-mini.pending { background: var(--muted); color: var(--muted-foreground); }
+
+  /* Tab panel toggling */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── Deltakere tab ─────────────────────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .toolbar-right { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+  .filter-select {
+    height: 34px; padding: 0 30px 0 12px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--background); font-size: 13px; color: var(--foreground);
+    appearance: none; min-width: 160px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='1.75'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .search {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 34px; padding: 0 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--background); width: 240px;
+  }
+  .search svg { width: 14px; height: 14px; color: var(--muted-foreground); }
+  .search input {
+    border: 0; outline: 0; background: transparent;
+    flex: 1; font-size: 13px; color: var(--foreground);
+    font-family: inherit;
+  }
+  .search input::placeholder { color: var(--muted-foreground); }
+
+  .frame { border: 1px solid var(--border); border-radius: 8px; background: var(--card); overflow: hidden; }
+
+  .deltaker-row {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 160px 32px;
+    align-items: center; gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .deltaker-row:last-of-type { border-bottom: 0; }
+  .deltaker-row:hover { background: var(--muted); }
+  .deltaker-identity { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .deltaker-identity p { margin: 0; }
+  .deltaker-name {
+    font-size: 14px; font-weight: 500; color: var(--foreground);
+    line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .deltaker-meta {
+    font-size: 12px; color: var(--muted-foreground); line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .deltaker-meta .sep { color: var(--disabled-foreground); margin: 0 5px; }
+  .deltaker-email {
+    font-size: 12px; color: var(--muted-foreground); line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .deltaker-cluster {
+    display: flex; flex-direction: column; align-items: flex-end;
+    justify-content: center; gap: 4px;
+  }
+  .deltaker-cluster .amount {
+    font-size: 13px; font-weight: 500; color: var(--foreground);
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .deltaker-cluster .ago {
+    font-size: 11px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .menu-btn {
+    width: 32px; height: 32px; border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; background: transparent;
+    color: var(--muted-foreground); cursor: pointer;
+    justify-self: end;
+  }
+  .menu-btn:hover { background: var(--background); color: var(--foreground); }
+  .menu-btn svg { width: 14px; height: 14px; }
+
+  .list-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: var(--background);
+    border-top: 1px solid var(--border);
+  }
+  .list-footer .count {
+    font-size: 12px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ─── Priser tab ────────────────────────────────────────── */
+  .pricing-card { padding: 18px 20px; }
+  .pricing-row {
+    display: grid;
+    grid-template-columns: 1fr 32px;
+    align-items: start; gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  .pricing-row:first-of-type { border-top: 0; padding-top: 4px; }
+  .pricing-row.archived { opacity: 0.7; }
+  .pricing-title-row {
+    display: flex; align-items: center; gap: 8px;
+    min-width: 0;
+  }
+  .pricing-title {
+    font-size: 15px; font-weight: 600; color: var(--foreground);
+    margin: 0;
+  }
+  .pricing-default-mark {
+    color: var(--foreground);
+  }
+  .pricing-default-mark svg { width: 14px; height: 14px; }
+  .pricing-meta {
+    margin-top: 3px; font-size: 13px; color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .pricing-meta .price { color: var(--foreground); font-weight: 500; }
+  .pricing-meta .sep { color: var(--disabled-foreground); margin: 0 6px; }
+  .pricing-meta .warning { color: var(--foreground); font-weight: 500; }
+  .pricing-desc {
+    margin-top: 6px; font-size: 12px; color: var(--muted-foreground);
+    line-height: 1.45;
+  }
+
+  /* Add tier button */
+  .add-tier-btn {
+    width: 100%; padding: 10px;
+    border: 1px dashed var(--border); border-radius: 8px;
+    background: transparent; color: var(--muted-foreground);
+    font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer;
+  }
+  .add-tier-btn:hover { border-color: var(--foreground); color: var(--foreground); background: var(--muted); }
+  .add-tier-btn svg { width: 13px; height: 13px; }
+
+  /* ─── Innstillinger tab ──────────────────────────────────── */
+  .form-grid {
+    display: grid; grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 24px;
+  }
+  @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .form-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .form-field label {
+    font-size: 13px; font-weight: 500; color: var(--foreground);
+  }
+  .form-field .helper {
+    font-size: 12px; color: var(--muted-foreground); margin-top: 2px;
+  }
+  .form-field input, .form-field textarea, .form-field select {
+    width: 100%;
+    height: 36px; padding: 0 12px;
+    font-size: 14px; color: var(--foreground);
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--background);
+    font-family: inherit;
+  }
+  .form-field textarea {
+    height: auto; padding: 10px 12px; min-height: 100px; resize: vertical;
+  }
+  .form-field-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  @media (max-width: 540px) { .form-field-row { grid-template-columns: 1fr; } }
+
+  .image-uploader {
+    aspect-ratio: 1/1;
+    border: 1px dashed var(--border); border-radius: 8px;
+    background: var(--muted); overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .image-uploader img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Pill-style segmented for level toggle inside settings */
+  .pill-tabs { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .pill-tab {
+    padding: 6px 14px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--background); color: var(--muted-foreground);
+    cursor: pointer;
+  }
+  .pill-tab:hover { color: var(--foreground); }
+  .pill-tab.active {
+    background: var(--foreground); color: var(--background); border-color: var(--foreground);
+  }
+
+  .danger-card {
+    border: 1px solid #E5C2C2;
+    background: #FBF6F6;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .danger-card h3 {
+    font-size: 14px; font-weight: 600; color: #883535; margin: 0;
+  }
+  .danger-card p {
+    font-size: 13px; color: #6B3838; margin: 4px 0 14px;
+    line-height: 1.5;
+  }
+  .danger-btn {
+    height: 32px; padding: 0 14px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid #C24747;
+    background: white; color: #883535;
+    border-radius: 6px; cursor: pointer;
+  }
+  .danger-btn:hover { background: #FBF1F1; }
+
+  /* Sticky save bar */
+  .save-bar {
+    position: sticky; bottom: 0;
+    margin: 16px -20px -20px;
+    padding: 12px 20px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 0 0 8px 8px;
+  }
+  .save-bar .dirty {
+    font-size: 13px; color: var(--muted-foreground);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .save-bar .dirty::before {
+    content: ''; width: 6px; height: 6px; border-radius: 999px; background: var(--foreground);
+  }
+  .save-bar .actions { display: flex; gap: 8px; }
+  .save-bar .btn-primary {
+    height: 32px; padding: 0 16px;
+    background: var(--foreground); color: var(--background);
+    border: 0; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="org">
+      <span class="chip">IY</span>
+      <div>
+        <div class="name">Inspire Yogastudio</div>
+        <div class="role">Studio</div>
+      </div>
+    </div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Oversikt
+    </a>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Kurs
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Timeplan
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Påmeldte
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Betalinger
+    </a>
+  </aside>
+
+  <main>
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="#">Hjem</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <a href="#">Kurs</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="current">Yin Yoga — søndag kveld</span>
+    </div>
+
+    <!-- Page header -->
+    <div class="page-head">
+      <div class="row1">
+        <h1>
+          Yin Yoga — søndag kveld
+          <span class="status-pill">Pågår</span>
+        </h1>
+        <div class="page-actions">
+          <button class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Del kurs
+          </button>
+          <button class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Vis side
+          </button>
+          <button class="btn icon-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="meta-strip">
+        Søndager 17:30 (75 min)<span class="sep">·</span>
+        <a href="#">Inspire Yogastudio — Storesal</a><span class="sep">·</span>
+        13 uker<span class="sep">·</span>
+        2 200 kr
+      </p>
+    </div>
+
+    <!-- Tabs -->
+    <div role="tablist" class="tabs" id="tabbar">
+      <button class="tab active" data-tab="oversikt">Oversikt</button>
+      <button class="tab" data-tab="deltakere">Deltakere <span class="count">12</span></button>
+      <button class="tab" data-tab="priser">Priser</button>
+      <button class="tab" data-tab="innstillinger">Innstillinger</button>
+    </div>
+
+    <!-- ═══════════════ OVERSIKT TAB ═══════════════ -->
+    <div class="tab-panel active" data-panel="oversikt">
+
+    <!-- KPI strip -->
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="label">Påmeldte</div>
+        <div class="value">12<span style="font-size: 14px; color: var(--muted-foreground); font-weight: 500;"> /18</span></div>
+        <div class="bar"><div style="width: 67%"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Inntekter</div>
+        <div class="value">26 400 kr</div>
+        <div class="sub">12 betalt · 0 venter</div>
+      </div>
+      <div class="kpi active">
+        <div class="label">Pågår nå</div>
+        <div class="value" style="font-size: 16px; font-weight: 500;">Yin Yoga (3/13)</div>
+        <div class="sub">slutter kl. 18:45</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Neste økt</div>
+        <div class="value" style="font-size: 18px;">3. mai · 17:30</div>
+        <div class="sub">om 6 dager</div>
+      </div>
+    </div>
+
+    <!-- Om kurset -->
+    <div class="card">
+      <div class="head">
+        <div>
+          <h2>Om kurset</h2>
+          <p class="desc">Dette er innholdet deltakerne ser når de vurderer å melde seg på.</p>
+        </div>
+        <button class="head-action">
+          Rediger
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z"/></svg>
+        </button>
+      </div>
+      <div class="body">
+        <div class="om-kurset">
+          <div class="img">
+            <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=600&q=70&auto=format&fit=crop" alt="" />
+          </div>
+          <div class="desc-block">
+            <p class="lede">Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne bindevev, ledd og fascia.</p>
+            <p class="body-text">Gjennom den rolige rytmen stimuleres energibanene (meridianene) i kroppen, noe som bidrar til bedre flyt av livsenergi (qi eller prana). Kurset tilbyr mental tilstedeværelse, pustebevissthet og dyp avspenning.</p>
+            <div class="level">
+              <span class="chip">Alle nivåer</span>
+              <span class="chip">Voksne</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kursplan compact -->
+    <div class="card">
+      <div class="head">
+        <div>
+          <h2>Kursplan</h2>
+          <p class="desc">13 ganger fra 8. feb til 3. mai. Uke 3 av 13 går nå.</p>
+        </div>
+        <button class="head-action">
+          Vis alle 13
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+      <ul class="kursplan-list">
+        <li class="past">
+          <span class="pill-date"><span class="month">Feb</span><span class="day">8</span></span>
+          <span class="label">Søndag</span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </li>
+        <li class="past">
+          <span class="pill-date"><span class="month">Feb</span><span class="day">15</span></span>
+          <span class="label">Søndag</span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        </li>
+        <li>
+          <span class="pill-date"><span class="month">Feb</span><span class="day">22</span></span>
+          <span class="label">Søndag <span style="color: var(--muted-foreground); font-weight: normal;">— uke 3 av 13</span></span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </span>
+        </li>
+        <li>
+          <span class="pill-date"><span class="month">Mar</span><span class="day">1</span></span>
+          <span class="label">Søndag</span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </span>
+        </li>
+        <li>
+          <span class="pill-date"><span class="month">Mar</span><span class="day">8</span></span>
+          <span class="label">Søndag</span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </span>
+        </li>
+        <li>
+          <span class="pill-date"><span class="month">Mar</span><span class="day">15</span></span>
+          <span class="label">Søndag</span>
+          <span class="time">17:30 – 18:45</span>
+          <span class="menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Nylige påmeldinger -->
+    <div class="card">
+      <div class="head">
+        <div>
+          <h2>Nylige påmeldinger</h2>
+          <p class="desc">De siste fem som meldte seg på dette kurset.</p>
+        </div>
+        <button class="head-action">
+          Se alle 12
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+      </div>
+      <div class="signups-list">
+        <div class="signups-row">
+          <span class="av av-1">HT</span>
+          <div>
+            <p class="name">Hanna Thomassen</p>
+            <p class="email">hanna.thomassen@gmail.com</p>
+          </div>
+          <div>
+            <span class="pill-mini">Påmeldt</span>
+            <p class="meta" style="margin-top: 3px;">2 timer siden</p>
+          </div>
+        </div>
+        <div class="signups-row">
+          <span class="av av-2">AE</span>
+          <div>
+            <p class="name">Aksel Eira</p>
+            <p class="email">aksel.eira@gmail.com</p>
+          </div>
+          <div>
+            <span class="pill-mini">Påmeldt</span>
+            <p class="meta" style="margin-top: 3px;">i går</p>
+          </div>
+        </div>
+        <div class="signups-row">
+          <span class="av av-3">SM</span>
+          <div>
+            <p class="name">Sigrid Moen</p>
+            <p class="email">sigrid.moen@hotmail.com</p>
+          </div>
+          <div>
+            <span class="pill-mini">Påmeldt</span>
+            <p class="meta" style="margin-top: 3px;">2 dager siden</p>
+          </div>
+        </div>
+        <div class="signups-row">
+          <span class="av av-4">VA</span>
+          <div>
+            <p class="name">Vilma Aas</p>
+            <p class="email">vilma.aas@gmail.com</p>
+          </div>
+          <div>
+            <span class="pill-mini">Påmeldt</span>
+            <p class="meta" style="margin-top: 3px;">3 dager siden</p>
+          </div>
+        </div>
+        <div class="signups-row">
+          <span class="av av-5">FB</span>
+          <div>
+            <p class="name">Frida Berg</p>
+            <p class="email">frida.berg@gmail.com</p>
+          </div>
+          <div>
+            <span class="pill-mini">Påmeldt</span>
+            <p class="meta" style="margin-top: 3px;">5 dager siden</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div><!-- /OVERSIKT panel -->
+
+    <!-- ═══════════════ DELTAKERE TAB ═══════════════ -->
+    <div class="tab-panel" data-panel="deltakere">
+
+      <!-- Toolbar OUTSIDE frame -->
+      <div class="toolbar">
+        <select class="filter-select">
+          <option>Alle deltakere</option>
+          <option>Til oppfølging (1)</option>
+          <option>Avbestilt</option>
+          <option>Refundert</option>
+        </select>
+        <div class="toolbar-right">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Søk etter navn eller e-post" />
+          </div>
+          <button class="btn" style="height: 34px; background: var(--foreground); color: var(--background); border-color: var(--foreground);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Legg til deltaker
+          </button>
+        </div>
+      </div>
+
+      <!-- Frame with rows + footer -->
+      <div class="frame">
+
+        <div class="deltaker-row">
+          <span class="av av-1">HT</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Hanna Thomassen</p>
+            <p class="deltaker-meta">Standard<span class="sep">·</span>uke 3 av 13</p>
+            <p class="deltaker-email">hanna.thomassen@gmail.com</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini">Påmeldt</span>
+            <span class="amount">2 200 kr</span>
+            <span class="ago">2 timer siden</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <div class="deltaker-row">
+          <span class="av av-2">AE</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Aksel Eira</p>
+            <p class="deltaker-meta">Drop-in<span class="sep">·</span>3. mai · 17:30</p>
+            <p class="deltaker-email">aksel.eira@gmail.com</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini">Påmeldt</span>
+            <span class="amount">250 kr</span>
+            <span class="ago">i går</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <div class="deltaker-row">
+          <span class="av av-3">SM</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Sigrid Moen</p>
+            <p class="deltaker-meta">Student / ufør<span class="sep">·</span>uke 3 av 13</p>
+            <p class="deltaker-email">sigrid.moen@hotmail.com</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini failed">Betaling feilet</span>
+            <span class="amount">1 800 kr</span>
+            <span class="ago">2 dager siden</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <div class="deltaker-row">
+          <span class="av av-4">VA</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Vilma Aas</p>
+            <p class="deltaker-meta">Standard<span class="sep">·</span>uke 3 av 13</p>
+            <p class="deltaker-email">vilma.aas@gmail.com</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini">Påmeldt</span>
+            <span class="amount">2 200 kr</span>
+            <span class="ago">3 dager siden</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <div class="deltaker-row">
+          <span class="av av-5">FB</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Frida Berg</p>
+            <p class="deltaker-meta">Standard<span class="sep">·</span>uke 3 av 13</p>
+            <p class="deltaker-email">frida.berg@gmail.com</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini">Påmeldt</span>
+            <span class="amount">2 200 kr</span>
+            <span class="ago">5 dager siden</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <div class="deltaker-row">
+          <span class="av av-6">IB</span>
+          <div class="deltaker-identity">
+            <p class="deltaker-name">Ingrid Berg</p>
+            <p class="deltaker-meta">Standard<span class="sep">·</span>uke 3 av 13</p>
+            <p class="deltaker-email">ingrid.berg@example.no</p>
+          </div>
+          <div class="deltaker-cluster">
+            <span class="pill-mini">Refundert</span>
+            <span class="amount">2 200 kr</span>
+            <span class="ago">1 uke siden</span>
+          </div>
+          <button class="menu-btn" aria-label="Mer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+        </div>
+
+        <!-- Footer inside frame -->
+        <div class="list-footer">
+          <span class="count">Viser 6 av 12 deltakere</span>
+          <button class="btn">Vis flere</button>
+        </div>
+      </div>
+
+    </div><!-- /DELTAKERE panel -->
+
+    <!-- ═══════════════ PRISER TAB ═══════════════ -->
+    <div class="tab-panel" data-panel="priser">
+
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Aktive billettyper</h2>
+            <p class="desc">Hva deltakerne kan kjøpe når de melder seg på dette kurset.</p>
+          </div>
+          <button class="btn" style="height: 32px; background: var(--foreground); color: var(--background); border-color: var(--foreground);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ny billettype
+          </button>
+        </div>
+        <div class="pricing-card" style="padding-top: 0;">
+
+          <!-- Default tier — quiet star marker, no chip pile -->
+          <div class="pricing-row">
+            <div>
+              <div class="pricing-title-row">
+                <span class="pricing-default-mark" title="Standardvalg">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.39 7.36H22l-6.18 4.49L18.21 22 12 17.27 5.79 22l2.39-8.15L2 9.36h7.61L12 2z"/></svg>
+                </span>
+                <h3 class="pricing-title">Standard</h3>
+              </div>
+              <p class="pricing-meta">
+                <span class="price">2 200 kr</span>
+                <span class="sep">·</span>13 uker
+                <span class="sep">·</span>14 solgte
+              </p>
+            </div>
+            <button class="menu-btn" aria-label="Mer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+
+          <div class="pricing-row">
+            <div>
+              <div class="pricing-title-row">
+                <h3 class="pricing-title">Drop-in</h3>
+              </div>
+              <p class="pricing-meta">
+                <span class="price">250 kr</span>
+                <span class="sep">·</span>per gang
+                <span class="sep">·</span>3 solgte
+              </p>
+              <p class="pricing-desc">Kjøp en enkeltime når det passer deg.</p>
+            </div>
+            <button class="menu-btn" aria-label="Mer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+
+          <div class="pricing-row">
+            <div>
+              <div class="pricing-title-row">
+                <h3 class="pricing-title">Student / ufør</h3>
+              </div>
+              <p class="pricing-meta">
+                <span class="price">1 800 kr</span>
+                <span class="sep">·</span>13 uker
+                <span class="sep">·</span>2 solgte
+                <span class="sep">·</span>Krever bekreftelse
+              </p>
+            </div>
+            <button class="menu-btn" aria-label="Mer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+
+          <div class="pricing-row">
+            <div>
+              <div class="pricing-title-row">
+                <h3 class="pricing-title">Tidlig fugl</h3>
+              </div>
+              <p class="pricing-meta">
+                <span class="price">1 900 kr</span>
+                <span class="sep">·</span>13 uker
+                <span class="sep">·</span>5 solgte
+                <span class="sep">·</span><span class="warning">Utløpt 1. feb</span>
+              </p>
+            </div>
+            <button class="menu-btn" aria-label="Mer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Arkiverte</h2>
+            <p class="desc">Tidligere billettyper som ikke lenger selges. Påmeldinger som brukte dem beholdes som historikk.</p>
+          </div>
+        </div>
+        <div class="pricing-card" style="padding-top: 0;">
+          <div class="pricing-row archived">
+            <div>
+              <div class="pricing-title-row">
+                <h3 class="pricing-title">Senior</h3>
+              </div>
+              <p class="pricing-meta">
+                <span class="price">1 900 kr</span>
+                <span class="sep">·</span>13 uker
+                <span class="sep">·</span>0 solgte
+                <span class="sep">·</span>Arkivert 12. jan
+              </p>
+            </div>
+            <button class="menu-btn" aria-label="Mer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /PRISER panel -->
+
+    <!-- ═══════════════ INNSTILLINGER TAB ═══════════════ -->
+    <div class="tab-panel" data-panel="innstillinger">
+
+      <!-- Generelt -->
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Generelt</h2>
+            <p class="desc">Navn, beskrivelse og forsidebilde for kurset.</p>
+          </div>
+        </div>
+        <div class="body">
+          <div class="form-grid">
+            <div>
+              <div class="form-field">
+                <label>Navn på kurs</label>
+                <input type="text" value="Yin Yoga — søndag kveld" />
+              </div>
+              <div class="form-field">
+                <label>Beskrivelse</label>
+                <textarea>Yin Yoga er en myk, rolig og terapeutisk form for yoga som fokuserer på å skape balanse i kropp og sinn. Praksisen innebærer at hver stilling holdes i 3–5 minutter for å åpne bindevev, ledd og fascia.
+
+Gjennom den rolige rytmen stimuleres energibanene (meridianene) i kroppen.</textarea>
+                <p class="helper">Vises på den offentlige kurssiden.</p>
+              </div>
+            </div>
+            <div>
+              <p style="font-size: 13px; font-weight: 500; color: var(--foreground); margin: 0 0 6px;">Kursbilde</p>
+              <p style="font-size: 12px; color: var(--muted-foreground); margin: 0 0 8px;">Vises på kurssiden og i oversikten.</p>
+              <div class="image-uploader">
+                <img src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&q=70&auto=format&fit=crop" alt="" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tid og kapasitet -->
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Tid og kapasitet</h2>
+            <p class="desc">Tidspunkt, varighet og hvor mange deltakere det er plass til.</p>
+          </div>
+        </div>
+        <div class="body">
+          <div class="form-field-row">
+            <div class="form-field">
+              <label>Dato</label>
+              <input type="text" value="08.02.2026" />
+            </div>
+            <div class="form-field">
+              <label>Tidspunkt</label>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="text" value="17:30" style="text-align: center;" />
+                <span style="color: var(--disabled-foreground);">–</span>
+                <input type="text" value="18:45" style="text-align: center;" />
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Kapasitet</label>
+              <input type="text" value="18" />
+              <p class="helper">12 påmeldte akkurat nå.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Praktisk info -->
+      <div class="card">
+        <div class="head">
+          <div>
+            <h2>Praktisk info</h2>
+            <p class="desc">Hjelp deltakerne å møte forberedt med tydelig informasjon.</p>
+          </div>
+        </div>
+        <div class="body">
+          <div class="form-field">
+            <label>Nivå</label>
+            <div class="pill-tabs">
+              <button class="pill-tab active">Alle nivåer</button>
+              <button class="pill-tab">Nybegynner</button>
+              <button class="pill-tab">Viderekommen</button>
+            </div>
+            <p class="helper">Velg det laveste nivået som passer.</p>
+          </div>
+          <div class="form-field">
+            <label>Utstyr</label>
+            <div class="pill-tabs">
+              <button class="pill-tab">Utstyr inkludert</button>
+              <button class="pill-tab active">Ta med egen matte</button>
+              <button class="pill-tab">Begrenset utstyr</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Møt opp før timen</label>
+            <div class="pill-tabs">
+              <button class="pill-tab">Ingen</button>
+              <button class="pill-tab active">10 min før</button>
+              <button class="pill-tab">15 min før</button>
+              <button class="pill-tab">20 min før</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Avbestilling — danger zone -->
+      <div class="danger-card">
+        <h3>Avbestill kurs</h3>
+        <p>Avbestilling er endelig. Alle påmeldte får automatisk e-post, og refusjoner sendes ut for de som har betalt. Kursrekken kan ikke gjenåpnes etter avbestilling.</p>
+        <button class="danger-btn">Avbestill kurs</button>
+      </div>
+
+      <!-- Sticky save bar — visible when dirty -->
+      <div class="card" style="margin-bottom: 0; overflow: visible;">
+        <div class="body" style="padding: 0;">
+          <div class="save-bar">
+            <span class="dirty">Du har endringer som ikke er lagret</span>
+            <div class="actions">
+              <button class="btn">Forkast</button>
+              <button class="btn-primary">Lagre endringer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /INNSTILLINGER panel -->
+
+  </main>
+</div>
+
+<script>
+  // Tab switching
+  const bar = document.getElementById('tabbar');
+  bar.addEventListener('click', e => {
+    const btn = e.target.closest('.tab');
+    if (!btn) return;
+    const target = btn.dataset.tab;
+    bar.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.dataset.panel === target);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+
+</body>
+</html>
