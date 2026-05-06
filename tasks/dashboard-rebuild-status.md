@@ -1,10 +1,45 @@
 # Post-MVP rebuild — status & next steps
 
-_Last updated: 2026-05-06 · commit `45c38f9` on `main`_
+_Last updated: 2026-05-06 · commit `685af1f` on `main`_
 
 This document is the persistent memory of the post-MVP rebuild work. It
 exists because conversation context doesn't sync across machines —
 re-read this before continuing, or hand it to a fresh Claude session.
+
+**Source of truth for direction:** [`tasks/post-mvp-feedback.md`](./post-mvp-feedback.md).
+That doc captures everything the prospect-feedback session decided. This
+doc tracks progress against it.
+
+---
+
+## Meeting checklist (against `post-mvp-feedback.md`)
+
+| § | Item | Status | Notes |
+|---|---|---|---|
+| 1 | Thesis: dashboard register shift (calmer, less dense) | 🔧 partial | Big-IA pieces done (drawer, vertical schedule, slim CourseDetailPage). Text-size sweep + color-tier reduction across components NOT yet swept. |
+| 2 | Dashboard calibration sweep — `text-sm` → `text-base`, drop tertiary/disabled tiers, padding tier-up, progressive disclosure | ❌ pending | This is the explicit multi-commit sweep across `src/pages/teacher/**` and `src/components/teacher/**`. Not started. |
+| 3 | Premade tier templates replacing `CoursePricingTab` + `TicketTypeForm` | ❌ pending | The toggle-able template panel (Hele kurset / Halvkurs / Drop-in / Early bird). Manual editor still in place. |
+| 4 | Unified studio model — drop `/space/` | ✅ shipped (different shape) | Implemented as `team_affiliations` + `course_team_listings` instead of the originally-proposed `studio_members`. Outcome is the same: one course can appear on multiple storefronts; canonical URL is the owner's. **Divergence from spec:** public team page is `/<team-slug>` (flat at root), not `/studio/<slug>`. Vocabulary went orgs→sellers + spaces→teams. The two-toggle onboarding flow is NOT implemented (welcome flow only asks Privatperson/Bedrift). See "Onboarding gap" below. |
+| 5 | Late-signup auto-prorate | ❌ pending | Schema column `package_start_date` not added; booking-page math not implemented; `Pågår` chip not added to public list. |
+| 6 | Multi-day events — verify "Add another day" affordance | ❓ unverified | `CreateCoursePage` flow needs auditing on Mac. |
+| 7 | Phone field on booking form | ❓ likely pending | `signups.participant_phone` exists in schema; `BookingPanel` doesn't collect it (last I read). Worth verifying. |
+| 8 | Course thumbnails on the list (`CourseListView`) | ❓ unverified | Check whether thumbnails appear on course rows. |
+| 9 | IA disambiguation — Påmeldinger as activity feed; persistent "Vis offentlig side" | 🔧 partial | Both views still exist. Päameldinger hasn't been reshaped into a cleaner chronological feed. "Vis offentlig side" exists on CourseDetailPage but isn't a persistent topbar/chrome affordance. |
+| 10 | Open questions | ✅ none open | Spec says all decisions for this round are answered. |
+| 11 | Suggested execution order | partial | Items 1, 4 (in modified form) done. Item 9 partial. Items 2, 3, 5, 6, 7, 8 still owed. |
+| 12 | Deferred (klippekort, gift cards, multi-org-per-user, online classes, etc.) | 📅 deferred | Explicitly post-launch. Skip. |
+
+### Onboarding gap (worth flagging)
+
+Spec §4 calls for a **two-toggle welcome flow** ("create your own studio?"
++ "join an existing studio?"). What's actually implemented is a single
+ENK/AS choice that always creates a seller + a team. There's no UI to
+*not* create a team, and no UI to enter an invite code at signup.
+
+For pure shared-studio renters (e.g. someone who only wants to teach at
+Inspire and not have their own brand), the current flow doesn't match
+spec. Affiliations now solve the "course on multiple storefronts"
+problem, but the onboarding question still needs to land.
 
 ---
 
@@ -87,31 +122,47 @@ a participant row lives:
 
 ## Pending / queued (priority order)
 
-### Real items
+### Meeting-driven (highest priority — these are the things the
+### post-MVP feedback explicitly asked for)
+
+| # | Item | Source | Effort | Notes |
+|---|---|---|---|---|
+| 1 | **Onboarding two-toggle flow** | §4 | 4-6 hr | Replace current "Privatperson/Bedrift" wizard with two independent toggles: "Create your own studio?" + "Join existing studio?" Pure shared-studio renters need to skip studio creation; affiliates need to enter invite code at signup. |
+| 2 | **Dashboard calibration sweep** | §1, §2 | multi-day | `text-sm` → `text-base` across `src/pages/teacher/**` + `src/components/teacher/**`. Drop `tertiary-foreground` / `disabled-foreground` in normal use. Increase row padding. Progressive disclosure for payment / Dintero / refund detail. Reduce KPI density. Plan as 4-6 commits, one surface per commit. |
+| 3 | **Premade tier templates** | §3 | 1-2 days | Replace `CoursePricingTab` + `TicketTypeForm` with toggle templates: Hele kurset, Halvkurs (only when total_weeks > 16), Drop-in, Early bird. Each card has active toggle + price. Audience tier UI goes away (column stays). |
+| 4 | **Late-signup auto-prorate** | §5 | 1 day | Add `package_start_date` to signups + payment_attempts. Course-level toggle `allow_late_signup` (default true). Pro-rate math in BookingPanel. `Pågår` chip on public course card. Update `count_signups_for_session` to filter by both start and end. |
+| 5 | **IA: reshape Påmeldinger as activity feed + persistent "Vis offentlig side"** | §9 | half day | Påmeldinger becomes chronological dated cards (not table). Persistent affordance in topbar/chrome to view public-facing surface. |
+| 6 | **Phone field on booking form** | §7 | 15 min | `signups.participant_phone` already exists. `customerPhone` already exists in `createDinteroSession`. Just plumb through `BookingPanel`. |
+| 7 | **Course thumbnails on `CourseListView`** | §8 | 30 min | Use `image_url` falling back to `default_course_image_url` from team. |
+| 8 | **Verify multi-day event affordance in CreateCoursePage** | §6 | unknown | Check whether "Add another day" is exposed in `CreateCoursePage`. Schema already supports it via `course_sessions`. |
+
+### Cleanup (low priority but real)
 
 | # | Item | Effort | Notes |
 |---|---|---|---|
-| 1 | **Drop `team_members` table** | 5 min | Zero application references. One-line: `DROP TABLE public.team_members CASCADE;` |
-| 2 | **Stub `team-actions` edge function with 410 Gone** | 5 min | Same pattern as the 11 other dead functions. Edge function still deployed, no callers in the app. |
-| 3 | **Public course detail redirect for syndicated URLs** | 30 min | If a buyer types `/inspire/<anna-course>` directly, currently 404. Could 302 to `/anna/<anna-course>`. Edge case; cards already link to owner URL. |
-| 4 | **OAuth post-login `state.from` redirect** | ~1 hr | Encode intended destination in the OAuth `redirectTo` URL. Currently OAuth drops you on `/overview` regardless. |
+| 9 | **Drop `team_members` table** | 5 min | Zero application references. One-line: `DROP TABLE public.team_members CASCADE;` |
+| 10 | **Stub `team-actions` edge function with 410 Gone** | 5 min | Same pattern as the 11 other dead functions. |
+| 11 | **Public course detail redirect for syndicated URLs** | 30 min | Direct `/inspire/<anna-course>` access currently 404s instead of redirecting to `/anna/<anna-course>`. Edge case. |
+| 12 | **OAuth post-login `state.from` redirect** | ~1 hr | Encode intended destination in OAuth `redirectTo` URL. Currently always lands on `/overview`. |
 
 ### Cosmetic / nice-to-haves
 
 | # | Item | Effort |
 |---|---|---|
-| 5 | Consolidate `SignupsPage` to use shared `toSignupDisplay` helper (~30 lines of dedup) | 5 min |
-| 6 | Show signup count per course in the affiliation toggle UI | 1 hr |
-| 7 | Bundle code-splitting (`index.js` is 783kb; warning on every build) | 1-2 hr |
+| 13 | Consolidate `SignupsPage` to use shared `toSignupDisplay` helper | 5 min |
+| 14 | Show signup count per course in the affiliation toggle UI | 1 hr |
+| 15 | Bundle code-splitting (index.js is 784kb) | 1-2 hr |
 
-### Future / explicitly deferred
+### Deferred (explicitly post-launch per §12)
 
-| # | Item | When |
-|---|---|---|
-| 8 | **Buyer dashboard** | Build when buyer flows are in scope. Same shell as seller (TeacherLayout reusable). Buyer URLs share the same namespace — `/schedule` for buyer = their bookings, `/schedule` for seller = their teaching schedule. Auth determines which. See "URL strategy" below. |
-| 9 | Settlements view (`/settlements`) | After Dintero settlement data is meaningful |
-| 10 | Dashboard redesign (you mentioned a different look is coming) | When ready |
-| 11 | Further `CourseDetailPage` slimming | Diminishing returns; current ~660 lines is reasonable |
+- Klippekort + student-buyer accounts (couples together)
+- Gift cards (Dintero supports natively)
+- Auto-prorate floor (per-course minimum-weeks rule)
+- Multi-org-per-user
+- Studio team display ("Lærere" section on multi-member studios)
+- Online classes (own scope; needs design pass)
+- Buyer dashboard build-out (will share TeacherLayout shell)
+- Settlements view (after Dintero settlement data is meaningful)
 
 ---
 
