@@ -20,14 +20,14 @@ import { OtherCoursesShelf } from '@/components/public/course-details/OtherCours
 import { BookingPanel } from '@/components/public/course-details/BookingPanel';
 import { MobilePriceBar } from '@/components/public/course-details/MobilePriceBar';
 import {
-  fetchPublicCourseById,
+  fetchPublicCourseBySlug,
   type PublicCourseWithDetails,
 } from '@/services/publicCourses';
 import { supabase } from '@/lib/supabase';
 import type { CourseSession } from '@/types/database';
 
 export default function PublicCourseDetailPage() {
-  const { slug, courseId } = useParams<{ slug: string; courseId: string }>();
+  const { slug, courseSlug } = useParams<{ slug: string; courseSlug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const asOverlay = !!(location.state as { backgroundLocation?: unknown } | null)?.backgroundLocation;
@@ -40,10 +40,10 @@ export default function PublicCourseDetailPage() {
   useEffect(() => {
     let active = true;
     async function load() {
-      if (!courseId) return;
+      if (!slug || !courseSlug) return;
       setLoading(true);
       setError(null);
-      const courseRes = await fetchPublicCourseById(courseId);
+      const courseRes = await fetchPublicCourseBySlug(slug, courseSlug);
       if (!active) return;
       if (courseRes.error || !courseRes.data) {
         setError('Kurset finnes ikke eller er ikke tilgjengelig.');
@@ -57,7 +57,7 @@ export default function PublicCourseDetailPage() {
       const { data: sessionRows } = await supabase
         .from('course_sessions')
         .select('*')
-        .eq('course_id', courseId)
+        .eq('course_id', courseRes.data.id)
         .order('session_date', { ascending: true });
       if (!active) return;
       setSessions((sessionRows ?? []) as CourseSession[]);
@@ -65,7 +65,7 @@ export default function PublicCourseDetailPage() {
     }
     load();
     return () => { active = false; };
-  }, [courseId]);
+  }, [slug, courseSlug]);
 
   // Lock the body scroll only when overlaying.
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function PublicCourseDetailPage() {
     return () => { document.body.style.overflow = previous; };
   }, [asOverlay]);
 
-  const backUrl = slug ? `/studio/${slug}` : '/';
+  const backUrl = slug ? `/${slug}` : '/';
   const handleBack = () => navigate(backUrl);
 
   // Show the dates accordion only when there's something useful in it —
@@ -96,7 +96,7 @@ export default function PublicCourseDetailPage() {
       )}
     >
       <div className="flex min-h-full flex-col">
-        <PublicNav studioName={course?.organization?.name} studioSlug={course?.organization?.slug} overlay />
+        <PublicNav studioName={course?.seller?.name} studioSlug={course?.seller?.slug} overlay />
 
         {asOverlay && (
           <div className="fixed top-3 left-3 sm:top-4 sm:left-5 z-50">
@@ -158,9 +158,9 @@ export default function PublicCourseDetailPage() {
                       {course.location && (
                         <LocationCard
                           location={course.location}
-                          address={course.organization?.address}
-                          postalCode={course.organization?.postal_code}
-                          city={course.organization?.city}
+                          address={course.seller?.address}
+                          postalCode={course.seller?.postal_code}
+                          city={course.seller?.city}
                         />
                       )}
                       <PracticalInfoSection info={course.practical_info} />
@@ -186,10 +186,10 @@ export default function PublicCourseDetailPage() {
                     )}
 
                     {/* Cross-sell shelf — only renders when there are other courses */}
-                    {course.organization && (
+                    {course.seller && (
                       <OtherCoursesShelf
-                        organizationSlug={course.organization.slug}
-                        organizationName={course.organization.name}
+                        organizationSlug={course.seller.slug}
+                        organizationName={course.seller.name}
                         excludeCourseId={course.id}
                       />
                     )}
@@ -205,7 +205,7 @@ export default function PublicCourseDetailPage() {
           )}
         </main>
 
-        <PublicFooter studioName={course?.organization?.name} />
+        <PublicFooter studioName={course?.seller?.name} />
 
         {!loading && !error && course && (
           <div className="lg:hidden h-20" aria-hidden />

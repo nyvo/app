@@ -160,7 +160,18 @@
       "Bash(tee /tmp/vite.log)",
       "Bash(kill %1)",
       "Bash(pkill -f \"vite\")",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(python3 -c \"import sys, json; print\\(json.dumps\\(sys.stdin.read\\(\\)\\)\\)\")",
+      "WebFetch(domain:www.time2book.me)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\krist\\\\.claude\\\\skills\\\\time2book-design\\\\references\")",
+      "Read(//c/Users/krist/.claude/skills/**)",
+      "Bash(tee /tmp/tsc.log)",
+      "Bash(npm test *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(rm -f .claude/agents/a11y.md .claude/agents/responsiveness.md .claude/agents/supabase-security.md)",
+      "Bash(rm -rf .claude/skills/dintero-payments .claude/skills/emil-design-eng .claude/skills/shadcn)",
+      "Bash(rm -f COPY_STYLE_GUIDE.md INSPIREYOGA_COPY_AUDIT.md .claude/agents/copy-audit.md)",
+      "Bash(rmdir .claude/agents)"
     ],
     "deny": [],
     "ask": []

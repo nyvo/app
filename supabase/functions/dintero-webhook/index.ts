@@ -94,118 +94,6 @@ async function markEventResult(
     .eq('event_id', eventId)
 }
 
-async function sendConfirmationEmail(
-  supabase: SupabaseClient,
-  courseId: string,
-  organizationId: string,
-  participantEmail: string,
-  courseSessionId: string | null,
-): Promise<void> {
-  try {
-    const [courseQuery, orgQuery, sessionQuery] = await Promise.all([
-      supabase
-        .from('courses')
-        .select('title, location, time_schedule, start_date')
-        .eq('id', courseId)
-        .single(),
-      supabase.from('organizations').select('name').eq('id', organizationId).single(),
-      courseSessionId
-        ? supabase
-            .from('course_sessions')
-            .select('session_date, start_time')
-            .eq('id', courseSessionId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ])
-
-    const course = courseQuery.data
-    const org = orgQuery.data
-    const session = (sessionQuery as { data: { session_date: string; start_time: string } | null }).data
-
-    const formatDate = (dateStr: string | null): string => {
-      if (!dateStr) return ''
-      return new Date(dateStr).toLocaleDateString('nb-NO', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    }
-
-    const extractTime = (schedule: string | null): string => {
-      if (!schedule) return ''
-      const match = schedule.match(/(\d{1,2}:\d{2})/)
-      return match ? match[1] : ''
-    }
-
-    // Drop-in buyers see their picked session's date/time. Package buyers
-    // fall back to the course's start date + scheduled time.
-    const emailDate = session?.session_date ?? course?.start_date ?? null
-    const emailTime = session?.start_time?.slice(0, 5)
-      ?? extractTime(course?.time_schedule ?? null)
-
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${supabaseServiceKey}`,
-      },
-      body: JSON.stringify({
-        to: participantEmail,
-        template: 'signup-confirmation',
-        templateData: {
-          courseName: course?.title || 'Kurs',
-          courseDate: formatDate(emailDate),
-          courseTime: emailTime,
-          location: course?.location || '',
-          organizationName: org?.name || 'Ease',
-        },
-      }),
-    })
-  } catch (_err) {
-    // Email failures are non-fatal
-  }
-}
-
-async function sendBookingFailedEmail(
-  supabase: SupabaseClient,
-  courseId: string,
-  participantEmail: string,
-  errorType: string,
-): Promise<void> {
-  try {
-    const { data: course } = await supabase
-      .from('courses')
-      .select('title')
-      .eq('id', courseId)
-      .single()
-
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${supabaseServiceKey}`,
-      },
-      body: JSON.stringify({
-        to: participantEmail,
-        template: 'booking-failed',
-        templateData: {
-          courseName: course?.title || 'Kurset',
-          reason:
-            errorType === 'course_full'
-              ? 'Kurset ble dessverre fullt før vi kunne bekrefte din påmelding.'
-              : errorType === 'already_signed_up'
-                ? 'Du er allerede påmeldt dette kurset.'
-                : 'Det oppstod en feil ved påmelding.',
-          wasCharged: 'false',
-        },
-      }),
-    })
-  } catch (_err) {
-    // Non-fatal
-  }
-}
-
 /**
  * Supabase's edge runtime rewrites the request URL before handing it to
  * the function — the `/functions/v1/` prefix is stripped. But Dintero
@@ -416,14 +304,6 @@ Deno.serve(async (req: Request) => {
             .update({ status: 'captured' })
             .eq('id', attempt.id)
 
-          await sendConfirmationEmail(
-            supabase,
-            attempt.course_id,
-            attempt.organization_id,
-            attempt.participant_email,
-            attempt.course_session_id ?? null,
-          )
-
           await markEventResult(supabase, transaction.id, status, {
             type: 'payment_link',
             signup_id: attempt.existing_signup_id,
@@ -450,7 +330,7 @@ Deno.serve(async (req: Request) => {
         }
 
         const { data: signupResult } = await supabase.rpc('create_signup_if_available', {
-          p_organization_id: attempt.organization_id,
+          p_seller_id: attempt.seller_id,
           p_course_id: attempt.course_id,
           p_ticket_type_id: attempt.ticket_type_id,
           p_participant_name: attempt.participant_name,
@@ -474,13 +354,6 @@ Deno.serve(async (req: Request) => {
             .from('payment_attempts')
             .update({ status: 'voided' })
             .eq('id', attempt.id)
-
-          await sendBookingFailedEmail(
-            supabase,
-            attempt.course_id,
-            attempt.participant_email,
-            errorType,
-          )
 
           await markEventResult(supabase, transaction.id, status, {
             type: 'embedded',
@@ -516,14 +389,6 @@ Deno.serve(async (req: Request) => {
           .from('payment_attempts')
           .update({ status: 'captured' })
           .eq('id', attempt.id)
-
-        await sendConfirmationEmail(
-          supabase,
-          attempt.course_id,
-          attempt.organization_id,
-          attempt.participant_email,
-          attempt.course_session_id ?? null,
-        )
 
         await markEventResult(supabase, transaction.id, status, {
           type: 'embedded',

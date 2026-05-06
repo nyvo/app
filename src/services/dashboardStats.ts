@@ -65,18 +65,18 @@ function addDays(date: Date, days: number): Date {
 }
 
 async function fetchSignupsInRange(
-  organizationId: string,
+  sellerId: string,
   fromIso: string,
   toIso: string
-): Promise<Array<Pick<Signup, 'id' | 'user_id' | 'participant_email' | 'status' | 'amount_paid' | 'payment_status' | 'refunded_at' | 'created_at'>>> {
+): Promise<Array<Pick<Signup, 'id' | 'buyer_id' | 'participant_email' | 'status' | 'amount_paid' | 'payment_status' | 'refunded_at' | 'created_at'>>> {
   const { data } = await supabase
     .from('signups')
-    .select('id, user_id, participant_email, status, amount_paid, payment_status, refunded_at, created_at')
-    .eq('organization_id', organizationId)
+    .select('id, buyer_id, participant_email, status, amount_paid, payment_status, refunded_at, created_at')
+    .eq('seller_id', sellerId)
     .gte('created_at', fromIso)
     .lt('created_at', toIso)
 
-  return (data ?? []) as unknown as Array<Pick<Signup, 'id' | 'user_id' | 'participant_email' | 'status' | 'amount_paid' | 'payment_status' | 'refunded_at' | 'created_at'>>
+  return (data ?? []) as unknown as Array<Pick<Signup, 'id' | 'buyer_id' | 'participant_email' | 'status' | 'amount_paid' | 'payment_status' | 'refunded_at' | 'created_at'>>
 }
 
 function aggregateMonth(signups: Awaited<ReturnType<typeof fetchSignupsInRange>>) {
@@ -86,20 +86,20 @@ function aggregateMonth(signups: Awaited<ReturnType<typeof fetchSignupsInRange>>
     if (s.status === 'confirmed' && s.payment_status === 'paid') {
       revenue += s.amount_paid ?? 0
     }
-    const identity = s.user_id ?? s.participant_email
+    const identity = s.buyer_id ?? s.participant_email
     if (identity) identities.add(identity)
   }
   return { revenue, newCustomers: identities.size, totalSignups: signups.length }
 }
 
-export async function fetchMonthStats(organizationId: string, now: Date = new Date()): Promise<MonthStats> {
+export async function fetchMonthStats(sellerId: string, now: Date = new Date()): Promise<MonthStats> {
   const thisMonthStart = startOfMonth(now)
   const nextMonthStart = addMonths(thisMonthStart, 1)
   const prevMonthStart = addMonths(thisMonthStart, -1)
 
   const [current, previous] = await Promise.all([
-    fetchSignupsInRange(organizationId, thisMonthStart.toISOString(), nextMonthStart.toISOString()),
-    fetchSignupsInRange(organizationId, prevMonthStart.toISOString(), thisMonthStart.toISOString()),
+    fetchSignupsInRange(sellerId, thisMonthStart.toISOString(), nextMonthStart.toISOString()),
+    fetchSignupsInRange(sellerId, prevMonthStart.toISOString(), thisMonthStart.toISOString()),
   ])
 
   const currentAgg = aggregateMonth(current)
@@ -153,7 +153,7 @@ export async function fetchMonthStats(organizationId: string, now: Date = new Da
 }
 
 async function aggregateWeek(
-  organizationId: string,
+  sellerId: string,
   fromIso: string,
   toIso: string
 ) {
@@ -161,19 +161,19 @@ async function aggregateWeek(
     supabase
       .from('signups')
       .select('id, status, payment_status, refunded_at, created_at')
-      .eq('organization_id', organizationId)
+      .eq('seller_id', sellerId)
       .gte('created_at', fromIso)
       .lt('created_at', toIso),
     supabase
       .from('course_sessions')
-      .select('id, course:courses!inner(organization_id)')
+      .select('id, course:courses!inner(seller_id)')
       .gte('session_date', fromIso.slice(0, 10))
       .lt('session_date', toIso.slice(0, 10))
-      .eq('course.organization_id', organizationId),
+      .eq('course.seller_id', sellerId),
     supabase
       .from('courses')
       .select('id, max_participants')
-      .eq('organization_id', organizationId)
+      .eq('seller_id', sellerId)
       .in('status', ['active', 'upcoming']),
   ])
 
@@ -201,14 +201,14 @@ async function aggregateWeek(
   }
 }
 
-export async function fetchWeekStats(organizationId: string, now: Date = new Date()): Promise<WeekStats> {
+export async function fetchWeekStats(sellerId: string, now: Date = new Date()): Promise<WeekStats> {
   const endExclusive = addDays(now, 1)
   const thisStart = addDays(endExclusive, -7)
   const prevStart = addDays(thisStart, -7)
 
   const [current, previous] = await Promise.all([
-    aggregateWeek(organizationId, thisStart.toISOString(), endExclusive.toISOString()),
-    aggregateWeek(organizationId, prevStart.toISOString(), thisStart.toISOString()),
+    aggregateWeek(sellerId, thisStart.toISOString(), endExclusive.toISOString()),
+    aggregateWeek(sellerId, prevStart.toISOString(), thisStart.toISOString()),
   ])
 
   return {

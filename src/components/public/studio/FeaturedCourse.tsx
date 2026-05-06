@@ -45,7 +45,7 @@ function formatDuration(duration: number | null): string {
  */
 export function FeaturedCourse({ course }: FeaturedCourseProps) {
   const location = useLocation();
-  const studioSlug = course.organization?.slug ?? '';
+  const studioSlug = course.seller?.slug ?? '';
   const img = resolveCourseImage(course);
   const date = course.next_session?.session_date ?? course.start_date;
   const time = extractTime(course.time_schedule);
@@ -56,7 +56,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
 
   return (
     <Link
-      to={`/studio/${studioSlug}/${course.id}`}
+      to={`/${studioSlug}/${course.slug}`}
       state={{ backgroundLocation: location }}
       className={cn(
         'group relative grid overflow-hidden rounded-lg bg-card outline-none',

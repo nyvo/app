@@ -12,8 +12,11 @@ interface PublicCourseInstructor {
   display_order: number
 }
 
-interface PublicCourseOrganization {
+interface PublicCourseSeller {
   name: string
+  // slug + default_course_image_url now live on the team owned by the seller —
+  // populated via a follow-up team query and merged into this shape on the
+  // returned PublicCourseWithDetails.
   slug: string
   dintero_onboarding_complete: boolean
   default_course_image_url: string | null
@@ -23,14 +26,25 @@ interface PublicCourseOrganization {
 }
 
 // Internal type for the joined course query result
-interface CourseInstructorJoinRow {
-  role: 'primary' | 'guest'
-  display_order: number
-  profile: { id: string; name: string | null; avatar_url: string | null; bio: string | null } | null
+interface InstructorProfileJoinRow {
+  id: string
+  name: string | null
+  avatar_url: string | null
+  bio: string | null
+}
+
+interface SellerJoinRow {
+  id: string
+  name: string
+  dintero_onboarding_complete: boolean
+  address: string | null
+  postal_code: string | null
+  city: string | null
 }
 
 interface CourseQueryResult {
   id: string
+  slug: string
   title: string
   description: string | null
   course_type: string
@@ -45,10 +59,10 @@ interface CourseQueryResult {
   start_date: string | null
   end_date: string | null
   image_url: string | null
-  organization_id: string
+  seller_id: string
   practical_info: Json | null
-  organization: PublicCourseOrganization | null
-  course_instructors: CourseInstructorJoinRow[] | null
+  seller: SellerJoinRow | null
+  instructor: InstructorProfileJoinRow | null
 }
 
 // Next session info for ongoing courses
@@ -61,6 +75,7 @@ export interface NextSessionInfo {
 // Public course with computed fields for display
 export interface PublicCourseWithDetails {
   id: string
+  slug: string
   title: string
   description: string | null
   course_type: CourseType
@@ -77,10 +92,11 @@ export interface PublicCourseWithDetails {
   start_date: string | null
   end_date: string | null
   image_url: string | null
-  organization_id: string
+  seller_id: string
   practical_info: PracticalInfo | null
   spots_available: number
-  organization: PublicCourseOrganization | null
+  /** Seller info enriched with slug + default_course_image_url from the seller's team. */
+  seller: PublicCourseSeller | null
   /** Legacy single-instructor field. Mirrors `instructors[0]` (primary). Kept for back-compat. */
   instructor: PublicCourseInstructor | null
   /** All instructors, primary first then guests in display_order. */
@@ -88,42 +104,69 @@ export interface PublicCourseWithDetails {
   next_session: NextSessionInfo | null
 }
 
-/** Flatten course_instructors join rows into a sorted PublicCourseInstructor array, primary first. */
-function flattenInstructors(rows: CourseInstructorJoinRow[] | null | undefined): PublicCourseInstructor[] {
-  if (!rows || rows.length === 0) return []
-  return rows
-    .filter(r => r.profile !== null)
-    .map(r => ({
-      id: r.profile!.id,
-      name: r.profile!.name,
-      avatar_url: r.profile!.avatar_url,
-      bio: r.profile!.bio,
-      role: r.role,
-      display_order: r.display_order,
-    }))
-    .sort((a, b) => {
-      if (a.role !== b.role) return a.role === 'primary' ? -1 : 1
-      return a.display_order - b.display_order
-    })
+/** Wrap the single primary instructor (from courses.instructor_id) as a PublicCourseInstructor array. */
+function flattenInstructors(profile: InstructorProfileJoinRow | null | undefined): PublicCourseInstructor[] {
+  if (!profile) return []
+  return [{
+    id: profile.id,
+    name: profile.name,
+    avatar_url: profile.avatar_url,
+    bio: profile.bio,
+    role: 'primary',
+    display_order: 0,
+  }]
 }
 
 /** Resolve the course hero image using the per-course value first, then the studio default. */
 export function resolveCourseImage(
-  course: Pick<PublicCourseWithDetails, 'image_url' | 'organization'>,
+  course: Pick<PublicCourseWithDetails, 'image_url' | 'seller'>,
 ): string | null {
-  return course.image_url ?? course.organization?.default_course_image_url ?? null
+  return course.image_url ?? course.seller?.default_course_image_url ?? null
+}
+
+/**
+ * Fetch the team-owned slug + default_course_image_url for a set of seller ids
+ * and return as a map keyed by seller_id. Each seller has at most one team
+ * (teams.owner_seller_id is the FK).
+ */
+async function fetchTeamMetaBySellerIds(
+  sellerIds: string[],
+): Promise<Record<string, { slug: string; default_course_image_url: string | null }>> {
+  const result: Record<string, { slug: string; default_course_image_url: string | null }> = {}
+  if (sellerIds.length === 0) return result
+
+  const { data, error } = await supabase
+    .from('teams')
+    .select('owner_seller_id, slug, default_course_image_url')
+    .in('owner_seller_id', sellerIds)
+
+  if (error) {
+    logger.error('Error fetching team meta:', error)
+    return result
+  }
+
+  for (const row of (data ?? []) as { owner_seller_id: string; slug: string; default_course_image_url: string | null }[]) {
+    if (!(row.owner_seller_id in result)) {
+      result[row.owner_seller_id] = {
+        slug: row.slug,
+        default_course_image_url: row.default_course_image_url,
+      }
+    }
+  }
+  return result
 }
 
 export interface PublicCoursesFilters {
   level?: string
   fromDate?: string
-  organizationSlug?: string
+  /** Filter to courses owned by the seller whose team has this slug. */
+  teamSlug?: string
   /**
-   * Restrict to courses owned by any of these orgs. Used by space pages,
-   * which aggregate courses across multiple tenant orgs. Takes precedence
-   * over `organizationSlug` when both are set.
+   * Restrict to courses owned by any of these sellers. Used by space pages,
+   * which aggregate courses across multiple seller members of a team. Takes
+   * precedence over `teamSlug` when both are set.
    */
-  organizationIds?: string[]
+  sellerIds?: string[]
   limit?: number
   offset?: number
   includePast?: boolean // If true, returns only past courses (archive)
@@ -136,10 +179,49 @@ export async function fetchPublicCourses(
   error: Error | null
   count?: number
 }> {
+  // If filtering by team slug, resolve to the owner seller_id first AND
+  // include any courses syndicated onto the team's storefront via the
+  // course_team_listings table (storefront syndication, 2026-04-29).
+  //
+  // Resulting predicate: courses WHERE seller_id = owner OR id IN (listed)
+  let sellerIdFilter: string[] | null = null
+  let extraListedCourseIds: string[] | null = null
+  if (filters?.sellerIds && filters.sellerIds.length > 0) {
+    sellerIdFilter = filters.sellerIds
+  } else if (filters?.teamSlug) {
+    const { data: team, error: teamError } = await supabase
+      .from('teams')
+      .select('id, owner_seller_id')
+      .eq('slug', filters.teamSlug)
+      .maybeSingle()
+    if (teamError) {
+      return { data: null, error: teamError as Error }
+    }
+    if (!team) {
+      return { data: [], error: null, count: 0 }
+    }
+    const teamRow = team as { id: string; owner_seller_id: string }
+    sellerIdFilter = [teamRow.owner_seller_id]
+
+    // Pull syndicated course ids — courses owned by OTHER sellers that an
+    // active team_affiliation lets appear on this team's storefront.
+    const { data: listingRows, error: listingError } = await supabase
+      .from('course_team_listings')
+      .select('course_id')
+      .eq('team_id', teamRow.id)
+    if (listingError) {
+      // Non-fatal — fall back to owner-only courses if listings can't load.
+      logger.warn('publicCourses: course_team_listings fetch failed', listingError)
+    } else if (listingRows && listingRows.length > 0) {
+      extraListedCourseIds = (listingRows as Array<{ course_id: string }>).map((r) => r.course_id)
+    }
+  }
+
   let query = supabase
     .from('courses')
     .select(`
       id,
+      slug,
       title,
       description,
       course_type,
@@ -154,28 +236,32 @@ export async function fetchPublicCourses(
       start_date,
       end_date,
       image_url,
-      organization_id,
+      seller_id,
       practical_info,
-      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url, address, postal_code, city),
-      course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
+      seller:sellers(id, name, dintero_onboarding_complete, address, postal_code, city),
+      instructor:profiles!instructor_id(id, name, avatar_url, bio)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
 
   // Apply filters
   if (filters?.level) {
-    query = query.eq('level', filters.level)
+    query = query.eq('level', filters.level as CourseLevel)
   }
   if (filters?.fromDate) {
     query = query.gte('start_date', filters.fromDate)
   }
-  if (filters?.organizationIds && filters.organizationIds.length > 0) {
-    // Short-circuit: if the caller supplied zero org IDs, skip the query entirely.
-    // Otherwise Supabase's .in() on empty list becomes "always false" at the SQL
-    // layer anyway, but we avoid the round trip.
-    query = query.in('organization_id', filters.organizationIds)
-  } else if (filters?.organizationSlug) {
-    query = query.eq('organization.slug', filters.organizationSlug)
+  if (sellerIdFilter) {
+    if (extraListedCourseIds && extraListedCourseIds.length > 0) {
+      // Courses owned by the team's seller, OR syndicated via listings.
+      // PostgREST `.in` inside `.or` needs comma-separated values in the
+      // group; the seller filter has at most one value here (set above).
+      const listedClause = `id.in.(${extraListedCourseIds.join(',')})`
+      const sellerClause = `seller_id.in.(${sellerIdFilter.join(',')})`
+      query = query.or(`${sellerClause},${listedClause}`)
+    } else {
+      query = query.in('seller_id', sellerIdFilter)
+    }
   }
 
   // Apply past/active date filter in the DB query (not client-side) so pagination works correctly
@@ -217,10 +303,15 @@ export async function fetchPublicCourses(
   const courses = coursesData as unknown as CourseQueryResult[]
   const courseIds = courses.map(c => c.id)
 
+  // Resolve seller → team meta (slug + default_course_image_url) for all the
+  // sellers in the result.
+  const uniqSellerIds = Array.from(new Set(courses.map(c => c.seller_id)))
+  const teamMetaPromise = fetchTeamMetaBySellerIds(uniqSellerIds)
+
   // Batch fetch signup counts (aggregate RPC) and sessions in parallel.
   // RPC returns only (course_id, confirmed_count) — no row data exposed to anon.
   // Cast: generated types regenerated after the migration is deployed.
-  const [signupsResult, sessionsResult, dropInTiersResult] = await Promise.all([
+  const [signupsResult, sessionsResult, dropInTiersResult, teamMetaMap] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase.rpc as any)('public_signup_counts', { p_course_ids: courseIds }),
     supabase
@@ -235,6 +326,7 @@ export async function fetchPublicCourses(
       .in('course_id', courseIds)
       .eq('ticket_kind', 'drop_in')
       .eq('is_active', true),
+    teamMetaPromise,
   ])
 
   if (signupsResult.error) {
@@ -294,11 +386,25 @@ export async function fetchPublicCourses(
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
-    const instructors = flattenInstructors(course.course_instructors)
+    const instructors = flattenInstructors(course.instructor)
     const dropInPrice = dropInPriceMap[course.id] ?? null
+    const teamMeta = teamMetaMap[course.seller_id]
+
+    const sellerEnriched: PublicCourseSeller | null = course.seller
+      ? {
+          name: course.seller.name,
+          slug: teamMeta?.slug ?? '',
+          dintero_onboarding_complete: course.seller.dintero_onboarding_complete,
+          default_course_image_url: teamMeta?.default_course_image_url ?? null,
+          address: course.seller.address,
+          postal_code: course.seller.postal_code,
+          city: course.seller.city,
+        }
+      : null
 
     return {
       id: course.id,
+      slug: course.slug,
       title: course.title,
       description: course.description,
       course_type: course.course_type as CourseType,
@@ -316,9 +422,9 @@ export async function fetchPublicCourses(
       start_date: course.start_date,
       end_date: course.end_date,
       image_url: course.image_url,
-      organization_id: course.organization_id,
+      seller_id: course.seller_id,
       practical_info: (course.practical_info as unknown as PracticalInfo) || null,
-      organization: course.organization as unknown as PublicCourseOrganization | null,
+      seller: sellerEnriched,
       instructor: instructors[0] ?? null,
       instructors,
       spots_available: spotsAvailable,
@@ -330,13 +436,22 @@ export async function fetchPublicCourses(
   return { data: publicCourses, error: null, count: publicCourses.length }
 }
 
-export async function fetchPublicCourseById(
-  courseId: string
+/**
+ * Look up a course by its slug, scoped to a specific team's public page.
+ * The team scope guards against routing the wrong course when two unrelated
+ * teams happen to surface a course with the same slug — practically impossible
+ * since slugs are globally unique, but we double-check via team membership so
+ * users can't probe arbitrary courses through unrelated team URLs.
+ */
+export async function fetchPublicCourseBySlug(
+  teamSlug: string,
+  courseSlug: string
 ): Promise<{ data: PublicCourseWithDetails | null; error: Error | null }> {
   const { data: course, error: courseError } = await supabase
     .from('courses')
     .select(`
       id,
+      slug,
       title,
       description,
       course_type,
@@ -351,14 +466,14 @@ export async function fetchPublicCourseById(
       start_date,
       end_date,
       image_url,
-      organization_id,
+      seller_id,
       practical_info,
-      organization:organizations(name, slug, dintero_onboarding_complete, default_course_image_url, address, postal_code, city),
-      course_instructors(role, display_order, profile:profiles(id, name, avatar_url, bio))
+      seller:sellers(id, name, dintero_onboarding_complete, address, postal_code, city),
+      instructor:profiles!instructor_id(id, name, avatar_url, bio)
     `)
-    .eq('id', courseId)
+    .eq('slug', courseSlug)
     .neq('status', 'cancelled')
-    .single()
+    .maybeSingle()
 
   if (courseError) {
     return { data: null, error: courseError as Error }
@@ -370,18 +485,45 @@ export async function fetchPublicCourseById(
 
   const typedCourse = course as unknown as CourseQueryResult
 
-  // Get signup count for this course via the aggregate RPC (anon-safe) and
-  // the active drop-in tier (if any) in parallel.
-  const [countResult, dropInResult] = await Promise.all([
+  // Verify the course actually belongs on the requested team's public page.
+  // Either the team owns the seller (canonical case) OR the seller is a
+  // tenant member of the team. Otherwise 404 — prevents probing courses
+  // through unrelated team URLs.
+  const { data: team, error: teamErr } = await supabase
+    .from('teams')
+    .select('id, owner_seller_id')
+    .eq('slug', teamSlug)
+    .maybeSingle()
+  if (teamErr || !team) {
+    return { data: null, error: new Error('Kurs ikke funnet') }
+  }
+  const teamRow = team as { id: string; owner_seller_id: string }
+  if (teamRow.owner_seller_id !== typedCourse.seller_id) {
+    // The course isn't owned by this team — check if it's syndicated here
+    // via the team_affiliations / course_team_listings model.
+    const { data: listing } = await supabase
+      .from('course_team_listings')
+      .select('course_id')
+      .eq('team_id', teamRow.id)
+      .eq('course_id', typedCourse.id)
+      .maybeSingle()
+    if (!listing) {
+      return { data: null, error: new Error('Kurs ikke funnet') }
+    }
+  }
+
+  // Get signup count, drop-in tier, and team meta in parallel.
+  const [countResult, dropInResult, teamMetaMap] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.rpc as any)('public_signup_counts', { p_course_ids: [courseId] }),
+    (supabase.rpc as any)('public_signup_counts', { p_course_ids: [typedCourse.id] }),
     supabase
       .from('course_signup_packages')
       .select('price')
-      .eq('course_id', courseId)
+      .eq('course_id', typedCourse.id)
       .eq('ticket_kind', 'drop_in')
       .eq('is_active', true)
       .maybeSingle(),
+    fetchTeamMetaBySellerIds([typedCourse.seller_id]),
   ])
 
   if (countResult.error) {
@@ -397,10 +539,24 @@ export async function fetchPublicCourseById(
   const dropInTier = dropInResult.data as { price: number } | null
   const dropInPrice = dropInTier ? Number(dropInTier.price) : null
 
-  const instructors = flattenInstructors(typedCourse.course_instructors)
+  const instructors = flattenInstructors(typedCourse.instructor)
+  const teamMeta = teamMetaMap[typedCourse.seller_id]
+
+  const sellerEnriched: PublicCourseSeller | null = typedCourse.seller
+    ? {
+        name: typedCourse.seller.name,
+        slug: teamMeta?.slug ?? '',
+        dintero_onboarding_complete: typedCourse.seller.dintero_onboarding_complete,
+        default_course_image_url: teamMeta?.default_course_image_url ?? null,
+        address: typedCourse.seller.address,
+        postal_code: typedCourse.seller.postal_code,
+        city: typedCourse.seller.city,
+      }
+    : null
 
   const publicCourse: PublicCourseWithDetails = {
     id: typedCourse.id,
+    slug: typedCourse.slug,
     title: typedCourse.title,
     description: typedCourse.description,
     course_type: typedCourse.course_type as CourseType,
@@ -417,9 +573,9 @@ export async function fetchPublicCourseById(
     start_date: typedCourse.start_date,
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
-    organization_id: typedCourse.organization_id,
+    seller_id: typedCourse.seller_id,
     practical_info: (typedCourse.practical_info as unknown as PracticalInfo) || null,
-    organization: typedCourse.organization,
+    seller: sellerEnriched,
     instructor: instructors[0] ?? null,
     instructors,
     spots_available: spotsAvailable,
@@ -428,4 +584,3 @@ export async function fetchPublicCourseById(
 
   return { data: publicCourse, error: null }
 }
-

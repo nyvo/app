@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseType } from '@/types/database';
+import { routes } from '@/lib/routes';
 
 const WEEKDAYS_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
@@ -137,7 +138,7 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
 
   return (
     <Link
-      to={`/teacher/courses/${course.courseId}`}
+      to={routes.course(course.courseId)}
       className="group block smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
     >
       <div className="grid items-center gap-4 p-3 md:gap-5 md:p-4 grid-cols-[56px_1fr] md:grid-cols-[56px_minmax(0,1fr)_180px]">

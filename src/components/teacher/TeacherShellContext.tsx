@@ -3,9 +3,6 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 // Removed 2026-04-25: in-app notification dropdown system (notifications +
 // notification_reads tables, useNotifications hook, NotificationDropdown
 // component). Updates are tracked on the dashboard's RecentActivityCard now.
-//
-// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): unreadMessages also stubbed to 0
-// with a no-op refresh; restore when messages page ships.
 
 export type TeacherShellCrumb = {
   label: string;
@@ -24,8 +21,6 @@ type TeacherShellContextValue = {
   setAction: (action: TeacherShellAction | null) => void;
   topBarSlot: ReactNode;
   setTopBarSlot: (slot: ReactNode) => void;
-  unreadMessages: number;
-  refreshUnreadMessages: () => void;
 };
 
 const TeacherShellContext = createContext<TeacherShellContextValue | null>(null);
@@ -35,9 +30,6 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
   const [action, setAction] = useState<TeacherShellAction | null>(null);
   const [topBarSlot, setTopBarSlot] = useState<ReactNode>(null);
 
-  const unreadMessages = 0;
-  const refreshUnreadMessages = () => {};
-
   const value = useMemo(
     () => ({
       breadcrumbs,
@@ -46,8 +38,6 @@ export function TeacherShellProvider({ children }: { children: ReactNode }) {
       setAction,
       topBarSlot,
       setTopBarSlot,
-      unreadMessages,
-      refreshUnreadMessages,
     }),
     [action, breadcrumbs, topBarSlot],
   );

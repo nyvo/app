@@ -53,7 +53,7 @@ interface CourseHeroProps {
  */
 export function CourseHero({ course }: CourseHeroProps) {
   const img = resolveCourseImage(course);
-  const studio = course.organization;
+  const studio = course.seller;
   const instructor = course.instructors[0] ?? course.instructor ?? null;
   const date = course.next_session?.session_date ?? course.start_date;
   const time = extractTime(course.time_schedule);
@@ -98,7 +98,7 @@ export function CourseHero({ course }: CourseHeroProps) {
         {studio && (
           <p className="mb-3 text-sm text-muted-foreground">
             <Link
-              to={`/studio/${studio.slug}`}
+              to={`/${studio.slug}`}
               className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
             >
               {studio.name}

@@ -6,12 +6,15 @@ import { TeacherTopBar } from '@/components/teacher/TeacherTopBar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { WelcomeFlow } from '@/components/teacher/WelcomeFlow';
 import { useAuth } from '@/contexts/AuthContext';
+import { SignupDrawerProvider } from '@/contexts/SignupDrawerContext';
 
-// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add '/teacher/messages' here when enabling.
-const FULL_WIDTH_ROUTES = ['/teacher/schedule'];
+// No teacher routes currently need full-width layout. Kept as an empty
+// array to preserve the existing isFullWidth conditional — easy to add a
+// route here later if a future page needs to escape the centered max-width.
+const FULL_WIDTH_ROUTES: string[] = [];
 
 export default function TeacherLayout() {
-  const { profile, refreshOrganizations } = useAuth();
+  const { profile, refreshSellers } = useAuth();
   const { pathname } = useLocation();
   const showWelcome = !!profile && !profile.onboarding_completed_at;
   const isFullWidth = FULL_WIDTH_ROUTES.some((route) => pathname.startsWith(route));
@@ -19,23 +22,25 @@ export default function TeacherLayout() {
   return (
     <ProtectedRoute>
       {showWelcome ? (
-        <WelcomeFlow onComplete={refreshOrganizations} />
+        <WelcomeFlow onComplete={refreshSellers} />
       ) : (
         <SidebarProvider>
           <TeacherShellProvider>
-            <TeacherSidebar />
-            <SidebarInset>
-              <TeacherTopBar />
-              <div className="min-h-0 flex-1">
-                {isFullWidth ? (
-                  <Outlet />
-                ) : (
-                  <div className="mx-auto w-full max-w-[1600px]">
+            <SignupDrawerProvider>
+              <TeacherSidebar />
+              <SidebarInset>
+                <TeacherTopBar />
+                <div className="min-h-0 flex-1">
+                  {isFullWidth ? (
                     <Outlet />
-                  </div>
-                )}
-              </div>
-            </SidebarInset>
+                  ) : (
+                    <div className="mx-auto w-full max-w-[1600px]">
+                      <Outlet />
+                    </div>
+                  )}
+                </div>
+              </SidebarInset>
+            </SignupDrawerProvider>
           </TeacherShellProvider>
         </SidebarProvider>
       )}

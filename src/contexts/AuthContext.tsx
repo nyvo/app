@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import type { Profile, Organization, OrgMemberRole } from '@/types/database'
+import type { Profile, Seller, SellerMemberRole, Team } from '@/types/database'
 import { logger } from '@/lib/logger'
+import { AUTH_ROUTES } from '@/lib/auth-routes'
 
-// Type for org membership with organization data
-interface OrgMembership {
-  role: OrgMemberRole
-  organization: Organization
+// Type for seller membership with seller data
+interface SellerMembership {
+  role: SellerMemberRole
+  seller: Seller
 }
 
 interface AuthContextType {
@@ -17,9 +18,10 @@ interface AuthContextType {
   isLoading: boolean
   isInitialized: boolean // true once initial auth check is complete
 
-  currentOrganization: Organization | null
-  organizations: Organization[]
-  userRole: OrgMemberRole | null
+  currentSeller: Seller | null
+  currentTeam: Team | null   // The team owned by currentSeller (1:1 in current model)
+  sellers: Seller[]
+  userRole: SellerMemberRole | null
 
   // Auth methods
   signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
@@ -30,10 +32,10 @@ interface AuthContextType {
   resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
 
-  // Organization methods
-  ensureOrganization: (name: string, slug: string) => Promise<{ organization: Organization | null; error: Error | null }>
-  switchOrganization: (organizationId: string) => void
-  refreshOrganizations: () => Promise<void>
+  // Seller methods
+  ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
+  switchSeller: (sellerId: string) => void
+  refreshSellers: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -54,24 +56,38 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
   return data
 }
 
-async function fetchOrganizationsData(userId: string): Promise<{ organizations: Organization[], memberships: OrgMembership[] }> {
+async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
   const { data: memberships, error: memberError } = await supabase
-    .from('org_members')
+    .from('seller_members')
     .select(`
       role,
-      organization:organizations(*)
+      seller:sellers(*)
     `)
     .eq('user_id', userId)
 
   if (memberError) {
-    logger.error('Error fetching organizations:', memberError)
-    return { organizations: [], memberships: [] }
+    logger.error('Error fetching sellers:', memberError)
+    return { sellers: [], memberships: [] }
   }
 
-  const typedMemberships = (memberships || []) as unknown as OrgMembership[]
-  const orgs = typedMemberships.map((m) => m.organization).filter(Boolean)
+  const typedMemberships = (memberships || []) as unknown as SellerMembership[]
+  const sellers = typedMemberships.map((m) => m.seller).filter(Boolean)
 
-  return { organizations: orgs, memberships: typedMemberships }
+  return { sellers, memberships: typedMemberships }
+}
+
+// Fetch teams owned by the given sellers. One row per seller (1:1 ownership).
+async function fetchTeamsForSellers(sellerIds: string[]): Promise<Team[]> {
+  if (sellerIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('teams')
+    .select('*')
+    .in('owner_seller_id', sellerIds)
+  if (error) {
+    logger.error('Error fetching teams:', error)
+    return []
+  }
+  return (data as Team[]) || []
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -81,21 +97,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
-  const [organizations, setOrganizations] = useState<Organization[]>([])
-  const [userRole, setUserRole] = useState<OrgMemberRole | null>(null)
+  const [currentSeller, setCurrentSeller] = useState<Seller | null>(null)
+  const [sellers, setSellers] = useState<Seller[]>([])
+  const [teamsBySellerId, setTeamsBySellerId] = useState<Record<string, Team>>({})
+  const [userRole, setUserRole] = useState<SellerMemberRole | null>(null)
 
   // Refs to track values without causing re-renders in callbacks
-  const currentOrgRef = useRef<Organization | null>(null)
-  currentOrgRef.current = currentOrganization
+  const currentSellerRef = useRef<Seller | null>(null)
+  currentSellerRef.current = currentSeller
 
   const userRef = useRef<User | null>(null)
   userRef.current = user
 
-  const organizationsRef = useRef<Organization[]>([])
-  organizationsRef.current = organizations
+  const sellersRef = useRef<Seller[]>([])
+  sellersRef.current = sellers
 
-  // Load user data (profile + organizations)
+  // Load user data (profile + sellers)
   // Returns false if the user no longer exists server-side (stale session)
   const loadUserData = useCallback(async (userId: string): Promise<boolean> => {
     // Verify user still exists server-side (getSession only reads cached JWT)
@@ -115,18 +132,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setProfile(userProfile)
 
-    const { organizations: orgs, memberships } = await fetchOrganizationsData(userId)
-    setOrganizations(orgs)
+    const { sellers: loadedSellers, memberships } = await fetchSellersData(userId)
+    setSellers(loadedSellers)
 
-    if (orgs.length > 0 && !currentOrgRef.current) {
-      const savedOrgId = localStorage.getItem('currentOrganizationId')
-      const savedOrg = orgs.find((o) => o.id === savedOrgId)
-      const orgToSet = savedOrg || orgs[0]
+    const loadedTeams = await fetchTeamsForSellers(loadedSellers.map((s) => s.id))
+    const teamMap: Record<string, Team> = {}
+    for (const t of loadedTeams) teamMap[t.owner_seller_id] = t
+    setTeamsBySellerId(teamMap)
 
-      setCurrentOrganization(orgToSet)
-      localStorage.setItem('currentOrganizationId', orgToSet.id)
+    if (loadedSellers.length > 0 && !currentSellerRef.current) {
+      const savedSellerId = localStorage.getItem('currentSellerId')
+      const savedSeller = loadedSellers.find((s) => s.id === savedSellerId)
+      const sellerToSet = savedSeller || loadedSellers[0]
 
-      const membership = memberships.find((m) => m.organization?.id === orgToSet.id)
+      setCurrentSeller(sellerToSet)
+      localStorage.setItem('currentSellerId', sellerToSet.id)
+
+      const membership = memberships.find((m) => m.seller?.id === sellerToSet.id)
       setUserRole(membership?.role || null)
     }
 
@@ -184,10 +206,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(null)
           setUser(null)
           setProfile(null)
-          setOrganizations([])
-          setCurrentOrganization(null)
+          setSellers([])
+          setCurrentSeller(null)
+          setTeamsBySellerId({})
           setUserRole(null)
-          localStorage.removeItem('currentOrganizationId')
+          localStorage.removeItem('currentSellerId')
           return
         }
 
@@ -224,29 +247,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadUserData])
 
-  // Refresh organizations
-  const refreshOrganizations = useCallback(async () => {
+  // Refresh sellers
+  const refreshSellers = useCallback(async () => {
     if (!userRef.current) return
 
-    // Refresh profile alongside orgs (e.g. after onboarding writes to profiles)
-    const [profileData, { organizations: orgs, memberships }] = await Promise.all([
+    // Refresh profile alongside sellers (e.g. after onboarding writes to profiles)
+    const [profileData, { sellers: loadedSellers, memberships }] = await Promise.all([
       fetchProfileData(userRef.current.id),
-      fetchOrganizationsData(userRef.current.id),
+      fetchSellersData(userRef.current.id),
     ])
 
     if (profileData) {
       setProfile(profileData)
     }
 
-    setOrganizations(orgs)
+    setSellers(loadedSellers)
 
-    if (currentOrgRef.current) {
-      // Update currentOrganization with fresh data (e.g. after Dintero onboarding)
-      const freshOrg = orgs.find((o) => o.id === currentOrgRef.current?.id)
-      if (freshOrg) {
-        setCurrentOrganization(freshOrg)
+    const loadedTeams = await fetchTeamsForSellers(loadedSellers.map((s) => s.id))
+    const teamMap: Record<string, Team> = {}
+    for (const t of loadedTeams) teamMap[t.owner_seller_id] = t
+    setTeamsBySellerId(teamMap)
+
+    if (currentSellerRef.current) {
+      // Update currentSeller with fresh data (e.g. after Dintero onboarding)
+      const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
+      if (freshSeller) {
+        setCurrentSeller(freshSeller)
       }
-      const membership = memberships.find((m) => m.organization?.id === currentOrgRef.current?.id)
+      const membership = memberships.find((m) => m.seller?.id === currentSellerRef.current?.id)
       setUserRole(membership?.role || null)
     }
   }, [])
@@ -272,7 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectTo || `${window.location.origin}/teacher`,
+        redirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.dashboard}`,
       },
     })
     return { error: error as Error | null }
@@ -283,7 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: redirectTo || `${window.location.origin}/teacher`,
+        emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.dashboard}`,
       },
     })
     return { error: error as Error | null }
@@ -310,53 +338,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setProfile(null)
     setSession(null)
-    setOrganizations([])
-    setCurrentOrganization(null)
+    setSellers([])
+    setCurrentSeller(null)
+    setTeamsBySellerId({})
     setUserRole(null)
-    localStorage.removeItem('currentOrganizationId')
+    localStorage.removeItem('currentSellerId')
 
     await supabase.auth.signOut()
   }, [])
 
-  // Ensure organization exists (idempotent — safe to call multiple times)
+  // Ensure seller exists (idempotent — safe to call multiple times)
   // No userRef guard — the RPC uses auth.uid() server-side, and the Supabase
   // client has the session JWT immediately after signUp(), even before React
   // state (userRef) is updated via onAuthStateChange.
-  const ensureOrganization = useCallback(async (name: string, slug: string) => {
+  const ensureSeller = useCallback(async (name: string, slug: string, sellerType: string = 'individual') => {
     // Call hardened RPC — no user_id param, uses auth.uid() server-side
     const { data, error } = await (supabase.rpc as unknown as (
       fn: string, args: Record<string, string>
-    ) => ReturnType<typeof supabase.rpc>)('ensure_organization_for_user', {
-      p_org_name: name,
-      p_org_slug: slug,
+    ) => ReturnType<typeof supabase.rpc>)('ensure_seller_for_user', {
+      p_seller_name: name,
+      p_team_slug: slug,
+      p_seller_type: sellerType,
     })
 
     if (error) {
-      return { organization: null, error: error as Error }
+      return { seller: null, error: error as Error }
     }
 
     // RPC returns TABLE rows as array
     const rows = data as Array<{
-      org_id: string
-      org_slug: string
-      org_name: string
-      member_role: OrgMemberRole
+      seller_id: string
+      team_id: string
+      team_slug: string
+      seller_name: string
+      member_role: SellerMemberRole
       was_created: boolean
     }>
 
     if (!rows || rows.length === 0) {
-      return { organization: null, error: new Error('Kunne ikke opprette studio. Prøv igjen.') }
+      return { seller: null, error: new Error('Kunne ikke opprette studio. Prøv igjen.') }
     }
 
     const row = rows[0]
 
-    // Build Organization object from RPC response
+    // Build Seller object from RPC response
     // Fields not returned by RPC get safe defaults — full data loads on next refresh
-    const org: Organization = {
-      id: row.org_id,
-      slug: row.org_slug,
-      name: row.org_name,
-      description: null,
+    const seller: Seller = {
+      id: row.seller_id,
+      name: row.seller_name,
       logo_url: null,
       email: null,
       phone: null,
@@ -368,55 +397,78 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       dintero_contract_url: null,
       dintero_onboarding_status: null,
       dintero_onboarding_complete: false,
-      studio_shared_at: null,
       settings: {},
-      default_course_image_url: null,
+      seller_type: sellerType,
+      organization_number: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }
 
-    setOrganizations((prev) => {
-      // Avoid duplicates if org already existed
-      if (prev.some((o) => o.id === org.id)) return prev
-      return [...prev, org]
+    setSellers((prev) => {
+      // Avoid duplicates if seller already existed
+      if (prev.some((s) => s.id === seller.id)) return prev
+      return [...prev, seller]
     })
-    setCurrentOrganization(org)
+    setCurrentSeller(seller)
     setUserRole(row.member_role)
-    localStorage.setItem('currentOrganizationId', org.id)
+    localStorage.setItem('currentSellerId', seller.id)
 
-    return { organization: org, error: null }
+    // Stub a Team entry so consumers (currentTeam) work immediately. Full team
+    // data loads on next refreshSellers/loadUserData call.
+    const stubTeam: Team = {
+      id: row.team_id,
+      slug: row.team_slug,
+      name: row.seller_name,
+      description: null,
+      address: null,
+      city: null,
+      cover_image_url: null,
+      default_course_image_url: null,
+      owner_seller_id: row.seller_id,
+      invite_code: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    setTeamsBySellerId((prev) => ({ ...prev, [seller.id]: stubTeam }))
+
+    return { seller, error: null }
   }, [])
 
-  // Switch organization
-  const switchOrganization = useCallback((organizationId: string) => {
-    const org = organizationsRef.current.find((o) => o.id === organizationId)
-    if (org && userRef.current?.id) {
-      setCurrentOrganization(org)
-      localStorage.setItem('currentOrganizationId', org.id)
+  // Switch seller
+  const switchSeller = useCallback((sellerId: string) => {
+    const seller = sellersRef.current.find((s) => s.id === sellerId)
+    if (seller && userRef.current?.id) {
+      setCurrentSeller(seller)
+      localStorage.setItem('currentSellerId', seller.id)
 
       supabase
-        .from('org_members')
+        .from('seller_members')
         .select('role')
-        .eq('organization_id', organizationId)
+        .eq('seller_id', sellerId)
         .eq('user_id', userRef.current.id)
         .single()
         .then(({ data, error: roleError }) => {
           if (roleError) {
-            logger.error('Error fetching org member role:', roleError)
+            logger.error('Error fetching seller member role:', roleError)
             setUserRole(null)
             return
           }
-          const memberData = data as { role: OrgMemberRole } | null
+          const memberData = data as { role: SellerMemberRole } | null
           setUserRole(memberData?.role || null)
         })
     }
   }, [])
 
-  // Stable organizations key to prevent unnecessary re-renders
-  const organizationsKey = useMemo(
-    () => organizations.map(o => o.id).sort().join(','),
-    [organizations]
+  // Stable sellers key to prevent unnecessary re-renders
+  const sellersKey = useMemo(
+    () => sellers.map(s => s.id).sort().join(','),
+    [sellers]
   );
+
+  const currentTeam = useMemo<Team | null>(
+    () => (currentSeller ? teamsBySellerId[currentSeller.id] ?? null : null),
+    [currentSeller, teamsBySellerId]
+  )
 
   const value = useMemo<AuthContextType>(() => ({
     user,
@@ -424,8 +476,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isLoading,
     isInitialized,
-    currentOrganization,
-    organizations,
+    currentSeller,
+    currentTeam,
+    sellers,
     userRole,
     signUp,
     signIn,
@@ -434,17 +487,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sendMagicLink,
     resetPassword,
     updatePassword,
-    ensureOrganization,
-    switchOrganization,
-    refreshOrganizations
+    ensureSeller,
+    switchSeller,
+    refreshSellers
   }), [
     user?.id,
     profile?.id,
     session?.access_token,
     isLoading,
     isInitialized,
-    currentOrganization,
-    organizationsKey,
+    currentSeller,
+    currentTeam,
+    sellersKey,
     userRole,
     signUp,
     signIn,
@@ -453,9 +507,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sendMagicLink,
     resetPassword,
     updatePassword,
-    ensureOrganization,
-    switchOrganization,
-    refreshOrganizations
+    ensureSeller,
+    switchSeller,
+    refreshSellers
   ])
 
   return (

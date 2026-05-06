@@ -23,15 +23,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateOrganization } from '@/services/organizations';
+import { updateSeller } from '@/services/sellers';
+import { updateTeam } from '@/services/teams';
 import type { Json } from '@/types/database';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { NotificationSettings, OrganizationSettings } from '@/types/database';
+import type { NotificationSettings, SellerSettings } from '@/types/database';
 
 const TeacherProfilePage = () => {
-  const { profile, currentOrganization, refreshOrganizations, updatePassword } = useAuth();
+  const { profile, currentSeller, currentTeam, refreshSellers, updatePassword } = useAuth();
 
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
@@ -47,11 +48,11 @@ const TeacherProfilePage = () => {
       setLastName(nameParts.slice(1).join(' ') || '');
       setEmail(profile.email || '');
     }
-    if (currentOrganization) {
-      setStudioDescription(currentOrganization.description || '');
-      setCity(currentOrganization.city || '');
+    if (currentSeller) {
+      setStudioDescription(currentTeam?.description || '');
+      setCity(currentSeller.city || '');
     }
-  }, [profile, currentOrganization]);
+  }, [profile, currentSeller, currentTeam]);
 
   // Dirty state tracking
   const isDirty = useMemo(() => {
@@ -60,8 +61,8 @@ const TeacherProfilePage = () => {
     const origFirst = nameParts[0] || '';
     const origLast = nameParts.slice(1).join(' ') || '';
     const origEmail = profile.email || '';
-    const origDesc = currentOrganization?.description || '';
-    const origCity = currentOrganization?.city || '';
+    const origDesc = currentTeam?.description || '';
+    const origCity = currentSeller?.city || '';
 
     return (
       firstName !== origFirst ||
@@ -70,7 +71,7 @@ const TeacherProfilePage = () => {
       studioDescription !== origDesc ||
       city !== origCity
     );
-  }, [profile, currentOrganization, firstName, lastName, email, studioDescription, city]);
+  }, [profile, currentSeller, currentTeam, firstName, lastName, email, studioDescription, city]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -160,9 +161,9 @@ const TeacherProfilePage = () => {
       setLastName(nameParts.slice(1).join(' ') || '');
       setEmail(profile.email || '');
     }
-    if (currentOrganization) {
-      setStudioDescription(currentOrganization.description || '');
-      setCity(currentOrganization.city || '');
+    if (currentSeller) {
+      setStudioDescription(currentTeam?.description || '');
+      setCity(currentSeller.city || '');
     }
     setErrors({});
     setTouched({});
@@ -179,7 +180,7 @@ const TeacherProfilePage = () => {
       return;
     }
 
-    if (!currentOrganization) {
+    if (!currentSeller) {
       toast.error('Fant ikke organisasjonen');
       return;
     }
@@ -200,19 +201,22 @@ const TeacherProfilePage = () => {
       }
     }
 
-    // Save organization data (description, city)
-    const { error: orgError } = await updateOrganization(currentOrganization.id, {
-      description: studioDescription || null,
-      city: city || null,
-    });
+    // Save seller-level data (city for legal/billing address) and
+    // team-level data (description, the public-facing studio bio).
+    const [{ error: orgError }, teamResult] = await Promise.all([
+      updateSeller(currentSeller.id, { city: city || null }),
+      currentTeam
+        ? updateTeam(currentTeam.id, { description: studioDescription || null })
+        : Promise.resolve({ data: null, error: null as Error | null }),
+    ]);
 
-    if (orgError) {
+    if (orgError || teamResult.error) {
       toast.error('Kunne ikke lagre endringene');
       setIsSaving(false);
       return;
     }
 
-    await refreshOrganizations();
+    await refreshSellers();
 
     toast.success('Endringer lagret');
     setIsSaving(false);
@@ -238,19 +242,18 @@ const TeacherProfilePage = () => {
   const defaultNotifications: NotificationSettings = {
     newSignups: true,
     cancellations: true,
-    messages: true,
     marketing: false,
   };
   const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
 
   useEffect(() => {
-    if (currentOrganization?.settings) {
-      const settings = currentOrganization.settings as unknown as OrganizationSettings;
+    if (currentSeller?.settings) {
+      const settings = currentSeller.settings as unknown as SellerSettings;
       if (settings.notifications) {
         setNotifications({ ...defaultNotifications, ...settings.notifications });
       }
     }
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   // Password change handler
   const handleChangePassword = async () => {
@@ -311,19 +314,19 @@ const TeacherProfilePage = () => {
 
   // Notification toggle with auto-save
   const handleNotificationToggle = async (key: keyof NotificationSettings) => {
-    if (!currentOrganization) return;
+    if (!currentSeller) return;
 
     const previous = { ...notifications };
     const updated = { ...notifications, [key]: !notifications[key] };
     setNotifications(updated);
 
-    const currentSettings = (currentOrganization.settings as unknown as OrganizationSettings) || {};
-    const newSettings: OrganizationSettings = {
+    const currentSettings = (currentSeller.settings as unknown as SellerSettings) || {};
+    const newSettings: SellerSettings = {
       ...currentSettings,
       notifications: updated,
     };
 
-    const { error } = await updateOrganization(currentOrganization.id, {
+    const { error } = await updateSeller(currentSeller.id, {
       settings: newSettings as unknown as Json,
     });
 
@@ -333,7 +336,7 @@ const TeacherProfilePage = () => {
       return;
     }
 
-    await refreshOrganizations();
+    await refreshSellers();
   };
 
   return (
@@ -653,18 +656,6 @@ const TeacherProfilePage = () => {
                               />
                           </div>
 
-                          <div className="flex items-center justify-between px-6 py-4">
-                              <div>
-                                  <span className="text-sm font-medium block text-foreground">Nye meldinger</span>
-                                  <span className="text-xs block text-muted-foreground">Få e-post når du mottar en ny melding.</span>
-                              </div>
-                              <Switch
-                                  size="sm"
-                                  checked={notifications.messages}
-                                  onCheckedChange={() => handleNotificationToggle('messages')}
-                                  aria-label="Nye meldinger"
-                              />
-                          </div>
                       </Card>
                   </section>
 

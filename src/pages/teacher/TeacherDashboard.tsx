@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useNavigate } from 'react-router-dom';
+import { routes } from '@/lib/routes';
 import { motion } from 'framer-motion';
-// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add `MessageSquare` to the icons import when re-enabling.
 import { Plus, AlertCircle, RefreshCw, CalendarPlus, Calendar, Users, X, Check } from '@/lib/icons';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -26,7 +26,6 @@ import { fetchCourses, fetchNextSessions } from '@/services/courses';
 import type { Course as CourseDB } from '@/types/database';
 import type { CourseSession } from '@/types/database';
 import { fetchRecentSignups, type SignupWithDetails } from '@/services/signups';
-import { fetchRecentConversations, type ConversationWithDetails } from '@/services/messages';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import { useMultiTableSubscription } from '@/hooks/use-realtime-subscription';
 import type {
@@ -62,11 +61,10 @@ const sectionTransition = {
 const TeacherDashboard = () => {
   const showEmptyState = getShowEmptyState();
   const navigate = useNavigate();
-  const { currentOrganization, profile } = useAuth();
+  const { currentSeller, profile } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
   const [dashboardCourses, setDashboardCourses] = useState<DashboardCourse[] | null>(null);
   const [recentSignupsRaw, setRecentSignupsRaw] = useState<SignupWithDetails[] | null>(null);
-  const [recentConversationsRaw, setRecentConversationsRaw] = useState<ConversationWithDetails[] | null>(null);
   const [monthStats, setMonthStats] = useState<MonthStats | null>(null);
   const [weekStats, setWeekStats] = useState<WeekStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,12 +76,12 @@ const TeacherDashboard = () => {
 
 
   const goToPaymentsSetup = useCallback(() => {
-    navigate('/teacher/payments');
+    navigate(routes.settingsPayouts);
   }, [navigate]);
 
   // Setup progress
   const { steps, completedCount, totalCount, isSetupComplete, motivationalSubtitle } = useSetupProgress({
-    currentOrganization,
+    currentSeller,
     profile,
     hasCourses,
     onConnectPayments: goToPaymentsSetup,
@@ -106,7 +104,6 @@ const TeacherDashboard = () => {
     coursesResult: Awaited<ReturnType<typeof fetchCourses>>,
     nextSessionsResult: Awaited<ReturnType<typeof fetchNextSessions>>,
     signupsResult: Awaited<ReturnType<typeof fetchRecentSignups>>,
-    messagesResult: Awaited<ReturnType<typeof fetchRecentConversations>>,
   ) {
     const hasAnyCourses = (coursesResult.data && coursesResult.data.length > 0) ||
       (nextSessionsResult.data && nextSessionsResult.data.length > 0);
@@ -121,55 +118,37 @@ const TeacherDashboard = () => {
     }
 
     if (signupsResult.data) {
-
       setRecentSignupsRaw(signupsResult.data);
     } else {
       setRecentSignupsRaw([]);
-    }
-
-    if (messagesResult.data) {
-
-      setRecentConversationsRaw(messagesResult.data);
-    } else {
-      setRecentConversationsRaw([]);
     }
   }
 
   // Refetch function for real-time updates (memoized to prevent subscription loops)
   const refetchDashboardData = useCallback(async () => {
-    if (!currentOrganization?.id) return;
+    if (!currentSeller?.id) return;
 
-    // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations fetch + subscription
-    // suppressed. Restore by re-adding `fetchRecentConversations` to the Promise.all
-    // and re-introducing the conversations subscription tuple below.
     const [coursesResult, nextSessionsResult, signupsResult, month, week] = await Promise.all([
-      fetchCourses(currentOrganization.id),
-      fetchNextSessions(currentOrganization.id, 3),
-      fetchRecentSignups(currentOrganization.id, 4),
-      fetchMonthStats(currentOrganization.id),
-      fetchWeekStats(currentOrganization.id),
+      fetchCourses(currentSeller.id),
+      fetchNextSessions(currentSeller.id, 3),
+      fetchRecentSignups(currentSeller.id, 4),
+      fetchMonthStats(currentSeller.id),
+      fetchWeekStats(currentSeller.id),
     ]);
 
-    processDashboardResults(
-      coursesResult,
-      nextSessionsResult,
-      signupsResult,
-      { data: [], error: null }, // empty conversations
-    );
+    processDashboardResults(coursesResult, nextSessionsResult, signupsResult);
     setMonthStats(month);
     setWeekStats(week);
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   useMultiTableSubscription(
     [
-      { table: 'signups', filter: `organization_id=eq.${currentOrganization?.id}` },
-      { table: 'courses', filter: `organization_id=eq.${currentOrganization?.id}` },
-      // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations subscription removed.
-      // { table: 'conversations', filter: `organization_id=eq.${currentOrganization?.id}` },
+      { table: 'signups', filter: `seller_id=eq.${currentSeller?.id}` },
+      { table: 'courses', filter: `seller_id=eq.${currentSeller?.id}` },
     ],
     refetchDashboardData,
-    !!currentOrganization?.id,
-    currentOrganization?.id
+    !!currentSeller?.id,
+    currentSeller?.id
   );
 
   // Initial data fetch
@@ -177,7 +156,7 @@ const TeacherDashboard = () => {
     let isActive = true;
 
     async function loadDashboardData() {
-      if (!currentOrganization?.id) {
+      if (!currentSeller?.id) {
         setIsLoading(false);
         return;
       }
@@ -189,14 +168,12 @@ const TeacherDashboard = () => {
       setLoadError(null);
 
       try {
-        // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): conversations fetch suppressed
-        // (see refetchDashboardData above for the matching dormant pattern).
         const [coursesResult, nextSessionsResult, signupsResult, month, week] = await Promise.all([
-          fetchCourses(currentOrganization.id),
-          fetchNextSessions(currentOrganization.id, 3),
-          fetchRecentSignups(currentOrganization.id, 4),
-          fetchMonthStats(currentOrganization.id),
-          fetchWeekStats(currentOrganization.id),
+          fetchCourses(currentSeller.id),
+          fetchNextSessions(currentSeller.id, 3),
+          fetchRecentSignups(currentSeller.id, 4),
+          fetchMonthStats(currentSeller.id),
+          fetchWeekStats(currentSeller.id),
         ]);
 
         if (!isActive) return;
@@ -206,12 +183,7 @@ const TeacherDashboard = () => {
           setLoadError('Kunne ikke laste kurs');
         }
 
-        processDashboardResults(
-          coursesResult,
-          nextSessionsResult,
-          signupsResult,
-          { data: [], error: null },
-        );
+        processDashboardResults(coursesResult, nextSessionsResult, signupsResult);
         setMonthStats(month);
         setWeekStats(week);
       } catch (err) {
@@ -232,14 +204,14 @@ const TeacherDashboard = () => {
     return () => {
       isActive = false;
     };
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   // Personal name (first word) if set, otherwise fall back to org name
-  const userName = profile?.name?.split(' ')[0] || currentOrganization?.name;
+  const userName = profile?.name?.split(' ')[0] || currentSeller?.name;
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: 'Hjem', to: '/teacher' },
+      { label: 'Hjem', to: routes.dashboard },
       { label: 'Oversikt' },
     ]);
     return () => setBreadcrumbs(null);
@@ -263,25 +235,17 @@ const TeacherDashboard = () => {
                 {!isLoading && !loadError && isSetupComplete && hasCourses && (
                   <div className="mt-4 flex flex-wrap items-center gap-2 md:hidden">
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
-                      <Link to="/teacher/schedule">
+                      <Link to={routes.schedule}>
                         <Calendar className="size-3.5" />
                         Timeplan
                       </Link>
                     </Button>
                     <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
-                      <Link to="/teacher/signups">
+                      <Link to={routes.signups}>
                         <Users className="size-3.5" />
                         Påmeldinger
                       </Link>
                     </Button>
-                    {/* MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-enable when shipping messages.
-                    <Button asChild variant="outline-soft" size="sm" className="gap-1.5">
-                      <Link to="/teacher/messages">
-                        <MessageSquare className="size-3.5" />
-                        Meldinger
-                      </Link>
-                    </Button>
-                    */}
                   </div>
                 )}
               </header>
@@ -363,14 +327,14 @@ const TeacherDashboard = () => {
                         Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din.
                       </p>
                       <Button asChild size="default" className="gap-2">
-                        <Link to="/teacher/new-course">
+                        <Link to={routes.newCourse}>
                           <CalendarPlus className="size-4" />
                           Opprett kurs
                         </Link>
                       </Button>
                     </CardContent>
                   </Card>
-                  <RecentActivityCard signups={recentSignupsRaw} conversations={recentConversationsRaw} />
+                  <RecentActivityCard signups={recentSignupsRaw} onMutate={refetchDashboardData} />
                   <QuickOverviewCard stats={monthStats} />
                   <UpcomingClassesCard courses={dashboardCourses} />
                   <BusinessGlanceCard stats={weekStats} />
@@ -382,7 +346,7 @@ const TeacherDashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={sectionTransition}
                 >
-                  <RecentActivityCard signups={recentSignupsRaw} conversations={recentConversationsRaw} />
+                  <RecentActivityCard signups={recentSignupsRaw} onMutate={refetchDashboardData} />
                   <QuickOverviewCard stats={monthStats} />
                   <UpcomingClassesCard courses={dashboardCourses} />
                   <BusinessGlanceCard stats={weekStats} />

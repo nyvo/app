@@ -32,7 +32,7 @@ export function OtherCoursesShelf({
   useEffect(() => {
     let active = true;
     async function load() {
-      const { data } = await fetchPublicCourses({ organizationSlug });
+      const { data } = await fetchPublicCourses({ teamSlug: organizationSlug });
       if (!active) return;
       const visible = (data ?? []).filter(c => {
         if (c.id === excludeCourseId) return false;

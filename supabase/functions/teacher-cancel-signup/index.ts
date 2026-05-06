@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
       .from('signups')
       .select(`
         *,
-        course:courses(id, title, start_date, time_schedule, location, organization_id)
+        course:courses(id, title, start_date, time_schedule, location, seller_id)
       `)
       .eq('id', body.signup_id)
       .single()
@@ -57,16 +57,16 @@ Deno.serve(async (req: Request) => {
       start_date: string
       time_schedule: string
       location: string
-      organization_id: string
+      seller_id: string
     }
 
-    const authzResult = await verifyOrgMembership(authResult.userId!, course.organization_id, [
+    const authzResult = await verifyOrgMembership(authResult.userId!, course.seller_id, [
       'owner',
       'admin',
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to cancel signups for this organization', 403, req)
+      return errorResponse('You do not have permission to cancel signups for this seller', 403, req)
     }
 
     if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
@@ -120,45 +120,6 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) {
       return errorResponse('Failed to update signup status', 500, req)
-    }
-
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('name')
-      .eq('id', course.organization_id)
-      .single()
-
-    try {
-      const courseDate = course.start_date
-        ? new Date(course.start_date).toLocaleDateString('nb-NO', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })
-        : ''
-
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          to: signup.participant_email,
-          template: 'teacher-cancellation',
-          templateData: {
-            participantName: signup.participant_name || '',
-            courseName: course.title,
-            courseDate: courseDate || '',
-            courseTime: course.time_schedule || '',
-            organizationName: org?.name || '',
-            refunded: refundSucceeded.toString(),
-            refundAmount: signup.amount_paid?.toString() || '',
-          },
-        }),
-      })
-    } catch {
-      // Non-fatal
     }
 
     return successResponse({

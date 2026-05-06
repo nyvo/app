@@ -74,9 +74,6 @@ interface CourseOverviewTabProps {
   // Tab navigation — for the "Se alle X" shortcut on Nylige påmeldinger
   onJumpToParticipants?: () => void;
 
-  /** MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): kept for back-compat. */
-  onMessageParticipants: () => void;
-
   kursplanRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -98,8 +95,6 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   generatedCourseWeeks,
   hasRealSessions,
   sessionEditHandlers,
-  // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): handler still received but unused.
-  onMessageParticipants: _onMessageParticipants,
   recentParticipants,
   totalParticipantCount,
   kpis,

@@ -46,7 +46,7 @@ export function PublicNav({ studioName, studioSlug, overlay = false }: PublicNav
 
         {studioName && studioSlug && (
           <Link
-            to={`/studio/${studioSlug}`}
+            to={`/${studioSlug}`}
             className="hidden sm:flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-muted-foreground hover:text-foreground transition-colors"
           >
             <span className="hidden md:inline text-disabled-foreground">studio /</span>

@@ -21,7 +21,7 @@ interface SessionWithCourseJoin {
   course: {
     id: string
     title: string
-    organization_id: string
+    seller_id: string
     duration: number
     status: string
   }
@@ -48,7 +48,7 @@ export interface PaginationOptions {
 }
 
 export async function fetchCourses(
-  organizationId: string,
+  sellerId: string,
   options?: PaginationOptions
 ): Promise<{
   data: Course[] | null
@@ -60,7 +60,7 @@ export async function fetchCourses(
     .select(`
       *
     `, { count: options?.limit || options?.offset ? 'exact' : undefined })
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false })
 
@@ -148,9 +148,9 @@ export interface ExistingSession {
   date: string
 }
 
-// Fetch existing sessions for given dates within an organization.
+// Fetch existing sessions for given dates within a seller's catalogue.
 export async function fetchExistingSessions(
-  organizationId: string,
+  sellerId: string,
   dates: string[]
 ): Promise<{ data: ExistingSession[]; error: Error | null }> {
   if (dates.length === 0) return { data: [], error: null }
@@ -162,13 +162,13 @@ export async function fetchExistingSessions(
       course:courses!inner(
         id,
         title,
-        organization_id,
+        seller_id,
         duration,
         status
       )
     `)
     .in('session_date', dates)
-    .eq('course.organization_id', organizationId)
+    .eq('course.seller_id', sellerId)
     .neq('course.status', 'cancelled')
     .neq('status', 'cancelled')
 
@@ -218,7 +218,7 @@ function parseStartTime(timeSchedule: string | null | undefined): string {
 // Returns an array of { date, startTime } objects that can be used both for
 // conflict checking and for inserting course_sessions rows.
 function generateSessionDates(
-  courseData: CourseInsert,
+  courseData: Omit<CourseInsert, 'slug'>,
   startTime: string,
   options?: {
     eventDays?: number
@@ -288,9 +288,25 @@ async function insertCourseSessionsOrRollback(
   return { error: null }
 }
 
-// Create a new course (and auto-generate sessions for course series)
+/**
+ * Generate a URL-safe slug from a course title using the same Norwegian-aware
+ * rules as `ensure_seller_for_user` and `create_course_idempotent` — keeps the
+ * client and server in sync on what a slug looks like.
+ */
+function slugifyTitle(title: string): string {
+  let s = title.toLowerCase()
+  s = s.replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a')
+  s = s.replace(/[^a-z0-9]+/g, '-')
+  s = s.replace(/^-+|-+$/g, '')
+  s = s.slice(0, 60)
+  return s
+}
+
+// Create a new course (and auto-generate sessions for course series).
+// The course slug is generated from the title inside this function; callers
+// don't pass it. On collision, retry with -2, -3, … suffixes. Globally unique.
 export async function createCourse(
-  courseData: CourseInsert,
+  courseData: Omit<CourseInsert, 'slug'>,
   options?: {
     eventDays?: number // Number of days for multi-day events
     sessionTimeOverrides?: SessionTimeOverride[] // Custom times for specific days
@@ -301,31 +317,53 @@ export async function createCourse(
   // Generate the session dates once — used below for insert
   const sessionEntries = generateSessionDates(courseData, startTime, options)
 
-  const { data, error } = await typedFrom('courses')
-    .insert(courseData)
-    .select()
-    .single()
+  const baseSlug = slugifyTitle(courseData.title) || courseData.title.slice(0, 8)
+  let data: Course | null = null
+  let lastError: { code?: string; message?: string } | null = null
 
-  if (error) {
-    // Check if it's an idempotency key collision (same course already exists)
+  for (let suffix = 0; suffix < 100; suffix++) {
+    const candidateSlug = suffix === 0
+      ? baseSlug
+      : `${baseSlug.slice(0, 60 - 1 - String(suffix).length)}-${suffix}`
+
+    const { data: inserted, error } = await typedFrom('courses')
+      .insert({ ...courseData, slug: candidateSlug })
+      .select()
+      .single()
+
+    if (!error) {
+      data = inserted as Course
+      break
+    }
+
     const pgError = error as { code?: string; message?: string }
+    lastError = pgError
+
+    // Idempotency-key collision → return the existing course.
     if (pgError.code === '23505' && pgError.message?.includes('idempotency_key')) {
-      // Fetch the existing course with this idempotency key
-      if (courseData.idempotency_key && courseData.organization_id) {
+      if (courseData.idempotency_key && courseData.seller_id) {
         const { data: existing } = await supabase
           .from('courses')
           .select('*')
-          .eq('organization_id', courseData.organization_id)
+          .eq('seller_id', courseData.seller_id)
           .eq('idempotency_key', courseData.idempotency_key)
           .single()
-
-        if (existing) {
-          // Return the existing course (idempotent behavior)
-          return { data: existing as Course, error: null }
-        }
+        if (existing) return { data: existing as Course, error: null }
       }
+      return { data: null, error: error as Error }
     }
+
+    // Slug-collision → retry with next suffix.
+    if (pgError.code === '23505' && pgError.message?.includes('courses_slug_unique')) {
+      continue
+    }
+
+    // Other error → bail.
     return { data: null, error: error as Error }
+  }
+
+  if (!data) {
+    return { data: null, error: new Error(lastError?.message || 'Kunne ikke opprette unik lenke for kurset') }
   }
 
   const course = data as Course
@@ -432,47 +470,8 @@ export async function updateCourseSession(
   return { data: data as CourseSession, error: null }
 }
 
-/**
- * Notify confirmed participants that a session's date or time has changed.
- * The DB update happens via updateCourseSession (RLS-protected); this sends
- * the follow-up email batch via the notify-schedule-change edge function.
- *
- * Best-effort: a failure here should not roll back the schedule change.
- */
-export async function notifyScheduleChange(params: {
-  sessionId: string
-  oldDate: string
-  oldTime: string
-  newDate: string
-  newTime: string
-}): Promise<{ notificationsSent: number; totalRecipients: number } | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('notify-schedule-change', {
-      body: {
-        session_id: params.sessionId,
-        old_date: params.oldDate,
-        old_time: params.oldTime,
-        new_date: params.newDate,
-        new_time: params.newTime,
-      },
-    })
-    if (error || !data) {
-      logger.warn('notify-schedule-change failed:', error?.message || 'no response')
-      return null
-    }
-    return {
-      notificationsSent: data.notifications_sent ?? 0,
-      totalRecipients: data.total_recipients ?? 0,
-    }
-  } catch (err) {
-    logger.warn('notify-schedule-change exception:', err)
-    return null
-  }
-}
-
-
 // Fetch the next N upcoming sessions (future only, no week limit)
-export async function fetchNextSessions(organizationId: string, limit = 3): Promise<{
+export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   data: Array<{
     session: CourseSession
     course: Course
@@ -488,7 +487,7 @@ export async function fetchNextSessions(organizationId: string, limit = 3): Prom
       *,
       course:courses!inner(*)
     `)
-    .eq('course.organization_id', organizationId)
+    .eq('course.seller_id', sellerId)
     .neq('course.status', 'cancelled')
     .neq('course.status', 'completed')
     .gte('session_date', today)

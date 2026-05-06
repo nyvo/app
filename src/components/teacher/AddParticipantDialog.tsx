@@ -164,7 +164,7 @@ export function AddParticipantDialog({
       // ticket_type_id + the 3 snapshots are auto-resolved inside createSignup
       // from the course's default tier — manual adds don't need to pick one.
       const { error } = await createSignup({
-        organization_id: organizationId,
+        seller_id: organizationId,
         course_id: courseId,
         participant_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         participant_email: formData.email.trim().toLowerCase(),

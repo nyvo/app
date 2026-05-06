@@ -19,6 +19,9 @@ interface SignupListViewProps {
   onClearFilters?: () => void;
   actionHandlers?: ParticipantActionHandlers;
   viewTab?: SignupsViewTab;
+  /** Forwarded to each row → triggered when the drawer mutates a signup
+   *  (cancel / mark paid). Page should refetch its list. */
+  onMutate?: () => void;
 }
 
 export const SIGNUPS_INITIAL_VISIBLE = 20;
@@ -64,6 +67,7 @@ export function SignupListView({
   onClearFilters,
   actionHandlers,
   viewTab,
+  onMutate,
 }: SignupListViewProps) {
   if (isLoading) {
     return (
@@ -102,6 +106,7 @@ export function SignupListView({
           key={signup.id}
           signup={signup}
           actionHandlers={actionHandlers}
+          onMutate={onMutate}
         />
       ))}
     </div>
@@ -139,9 +144,12 @@ function summarizeGroup(signups: SignupDisplay[]): string {
 export function PastSignupsList({
   signups,
   actionHandlers,
+  onMutate,
 }: {
   signups: SignupDisplay[];
   actionHandlers?: ParticipantActionHandlers;
+  /** Same as SignupListView.onMutate — forwarded to each row. */
+  onMutate?: () => void;
 }) {
   const groups = useMemo<CourseGroup[]>(() => {
     const map = new Map<string, CourseGroup>();
@@ -223,6 +231,7 @@ export function PastSignupsList({
                     signup={signup}
                     actionHandlers={actionHandlers}
                     hideCourse
+                    onMutate={onMutate}
                   />
                 ))}
                 {hasMore && (

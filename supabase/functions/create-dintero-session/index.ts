@@ -38,6 +38,7 @@ const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:5173'
 
 interface SessionRequestBody {
   courseId: string
+  /** Team slug from the public booking URL — looked up via teams.owner_seller_id. */
   organizationSlug: string
   ticketTypeId: string
   customerEmail: string
@@ -115,17 +116,19 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Invalid email format', 400, req)
     }
 
-    // Load course + organization
+    // Load course + seller. The slug now lives on the seller's owning team
+    // (teams.owner_seller_id), not on the seller itself — pull it through the
+    // nested team relation.
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select(`
         id, title, status, max_participants,
-        organization:organizations(
+        seller:sellers(
           id,
           name,
-          slug,
           dintero_seller_id,
-          dintero_onboarding_complete
+          dintero_onboarding_complete,
+          team:teams!owner_seller_id(slug)
         )
       `)
       .eq('id', courseId)
@@ -135,24 +138,24 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course not found', 404, req)
     }
 
-    const org = course.organization as {
+    const seller = course.seller as {
       id: string
       name: string
-      slug: string
       dintero_seller_id: string | null
       dintero_onboarding_complete: boolean
+      team: { slug: string } | null
     } | null
 
-    if (!org || org.slug !== organizationSlug) {
-      return errorResponse('Course not found for this organization', 404, req)
+    if (!seller || seller.team?.slug !== organizationSlug) {
+      return errorResponse('Course not found for this seller', 404, req)
     }
 
     if (course.status === 'draft' || course.status === 'cancelled') {
       return errorResponse('Course is not available for booking', 400, req)
     }
 
-    if (!org.dintero_seller_id || !org.dintero_onboarding_complete) {
-      return errorResponse('Payment is not set up for this organization', 400, req)
+    if (!seller.dintero_seller_id || !seller.dintero_onboarding_complete) {
+      return errorResponse('Payment is not set up for this seller', 400, req)
     }
 
     // Load + validate the ticket type. Re-checking the sales window server-side
@@ -264,7 +267,7 @@ Deno.serve(async (req: Request) => {
       .from('payment_attempts')
       .insert({
         course_id: courseId,
-        organization_id: org.id,
+        seller_id: seller.id,
         participant_name: customerName,
         participant_email: customerEmail,
         participant_phone: customerPhone ?? null,
@@ -310,7 +313,7 @@ Deno.serve(async (req: Request) => {
         quantity: 1,
         amount: basePriceInOre,
         splits: [
-          { payout_destination_id: org.dintero_seller_id, amount: teacherShareOnCourse },
+          { payout_destination_id: seller.dintero_seller_id, amount: teacherShareOnCourse },
           { payout_destination_id: 'platform', amount: platformShareOnCourse },
         ],
       },
@@ -331,7 +334,7 @@ Deno.serve(async (req: Request) => {
 
     const sessionRequest: DinteroSessionRequest = {
       url: {
-        return_url: `${siteUrl}/checkout/success?transaction_id={{transaction_id}}&ref=${merchantReference}&org=${org.slug}`,
+        return_url: `${siteUrl}/checkout/success?transaction_id={{transaction_id}}&ref=${merchantReference}&org=${seller.team?.slug ?? ''}`,
         callback_url: `${supabaseUrl}/functions/v1/dintero-webhook`,
       },
       order: {

@@ -56,6 +56,10 @@ interface CourseParticipantsTabProps {
   onOpenAddDialog: () => void;
   courseName: string;
   actionHandlers: ParticipantActionHandlers;
+  /** Optional — clicking a row triggers this with the participant id.
+   *  Parent typically opens THE signup drawer. If omitted, rows render
+   *  non-interactive (action menu still works). */
+  onRowClick?: (participantId: string) => void;
 }
 
 function detectException(paymentStatus: PaymentStatus, status: SignupStatus): ExceptionType | null {
@@ -94,10 +98,12 @@ function ParticipantRow({
   p,
   courseName,
   actionHandlers,
+  onRowClick,
 }: {
   p: DisplayParticipant;
   courseName: string;
   actionHandlers: ParticipantActionHandlers;
+  onRowClick?: (id: string) => void;
 }) {
   const tone = avatarToneFor(p.name || p.email || '?');
   const pill = pillFor(p);
@@ -110,12 +116,31 @@ function ParticipantRow({
   const metaParts: string[] = [ticketTag];
   if (p.ticketContext) metaParts.push(p.ticketContext);
 
+  const clickable = !!onRowClick;
+
   return (
-    <div className={cn(
-      'grid items-center gap-4 px-4 py-3.5',
-      'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_160px_32px]',
-      'transition-colors duration-100 hover:bg-muted/50',
-    )}>
+    <div
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? () => onRowClick(p.id) : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onRowClick(p.id);
+              }
+            }
+          : undefined
+      }
+      aria-label={clickable ? `Vis detaljer for ${p.name}` : undefined}
+      className={cn(
+        'grid items-center gap-4 px-4 py-3.5',
+        'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_160px_32px]',
+        'transition-colors duration-100 hover:bg-muted/50',
+        clickable && 'cursor-pointer text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
+      )}
+    >
       <div
         className="size-8 shrink-0 rounded-full inline-flex items-center justify-center text-white text-[11px] font-semibold tracking-tight"
         style={{ background: tone }}
@@ -173,7 +198,11 @@ function ParticipantRow({
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div
+        className="flex justify-end"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         <ParticipantActionMenu
           signup={toActionable(p, courseName)}
           handlers={actionHandlers}
@@ -209,6 +238,7 @@ export const CourseParticipantsTab = ({
   onOpenAddDialog,
   courseName,
   actionHandlers,
+  onRowClick,
 }: CourseParticipantsTabProps) => {
   const [combinedFilter, setCombinedFilter] = useState<CombinedFilter>('all');
 
@@ -313,6 +343,7 @@ export const CourseParticipantsTab = ({
               p={p}
               courseName={courseName}
               actionHandlers={actionHandlers}
+              onRowClick={onRowClick}
             />
           ))
         )}

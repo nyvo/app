@@ -15,6 +15,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 interface StatusRequest {
+  /** Seller UUID. External name kept for client compatibility. */
   organizationId: string
 }
 
@@ -40,39 +41,39 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
+    const { data: seller, error: sellerError } = await supabase
+      .from('sellers')
       .select(
         'id, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status, dintero_onboarding_complete',
       )
       .eq('id', body.organizationId)
       .single()
 
-    if (orgError || !org) {
-      return errorResponse('Organization not found', 404, req)
+    if (sellerError || !seller) {
+      return errorResponse('Seller not found', 404, req)
     }
 
-    if (!org.dintero_approval_id) {
+    if (!seller.dintero_approval_id) {
       return successResponse({ onboardingComplete: false, status: null }, 200, req)
     }
 
-    if (org.dintero_onboarding_status === 'ACTIVE') {
+    if (seller.dintero_onboarding_status === 'ACTIVE') {
       return successResponse({
         onboardingComplete: true,
         status: 'ACTIVE',
-        sellerId: org.dintero_seller_id,
+        sellerId: seller.dintero_seller_id,
       }, 200, req)
     }
 
-    const approval = await getSellerApproval(org.dintero_approval_id)
+    const approval = await getSellerApproval(seller.dintero_approval_id)
     const caseStatus: CaseStatus = approval.case_status
     const contractUrl =
-      approval.links?.find((l) => l.rel === 'contract_url')?.href ?? org.dintero_contract_url
+      approval.links?.find((l) => l.rel === 'contract_url')?.href ?? seller.dintero_contract_url
 
     const onboardingComplete = statusIsActive(caseStatus)
 
     await supabase
-      .from('organizations')
+      .from('sellers')
       .update({
         dintero_onboarding_status: caseStatus,
         dintero_onboarding_complete: onboardingComplete,
@@ -83,7 +84,7 @@ Deno.serve(async (req) => {
     return successResponse({
       onboardingComplete,
       status: caseStatus,
-      sellerId: org.dintero_seller_id,
+      sellerId: seller.dintero_seller_id,
       contractUrl,
     }, 200, req)
   } catch (err) {

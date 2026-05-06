@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { BookOpen, ArrowUpDown } from '@/lib/icons';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
-import { fetchOrganizationBySlug, type PublicOrganization } from '@/services/organizations';
+import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
 import { PublicNav } from '@/components/public/marketing/PublicNav';
 import { PublicFooter } from '@/components/public/marketing/PublicFooter';
 import { StudioHero } from '@/components/public/studio/StudioHero';
@@ -56,7 +56,7 @@ function getDisplayDateMs(course: PublicCourseWithDetails): number {
 
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [organization, setOrganization] = useState<PublicOrganization | null>(null);
+  const [organization, setOrganization] = useState<PublicSeller | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,15 +80,15 @@ const PublicCoursesPage = () => {
       setLoading(true);
       setError(null);
 
-      const { data: orgData, error: orgError } = await fetchOrganizationBySlug(slug);
-      if (orgError || !orgData) {
+      const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
+      if (sellerError || !sellerData) {
         setError('Fant ikke studioet');
         setLoading(false);
         return;
       }
-      setOrganization(orgData);
+      setOrganization(sellerData);
 
-      const activeResult = await fetchPublicCourses({ organizationSlug: slug });
+      const activeResult = await fetchPublicCourses({ teamSlug: slug });
       if (activeResult.error) {
         setError('Kunne ikke laste kurs');
         setLoading(false);

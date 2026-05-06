@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title, organization_id, status')
+      .select('id, title, seller_id, status')
       .eq('id', body.course_id)
       .single()
 
@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course not found', 404, req)
     }
 
-    const authzResult = await verifyOrgMembership(authResult.userId!, course.organization_id, [
+    const authzResult = await verifyOrgMembership(authResult.userId!, course.seller_id, [
       'owner',
       'admin',
       'teacher',
@@ -78,10 +78,10 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Course is already cancelled', 400, req)
     }
 
-    const { data: org } = await supabase
-      .from('organizations')
+    const { data: seller } = await supabase
+      .from('sellers')
       .select('name')
-      .eq('id', course.organization_id)
+      .eq('id', course.seller_id)
       .single()
 
     const { data: signups, error: signupsError } = await supabase
@@ -178,47 +178,11 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (body.notify_participants !== false) {
-      const emailPromises = (signups || [])
-        .filter((s) => s.participant_email)
-        .map(async (signup) => {
-          try {
-            const resp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${supabaseServiceKey}`,
-              },
-              body: JSON.stringify({
-                to: signup.participant_email,
-                template: 'course-cancelled',
-                templateData: {
-                  participantName: signup.participant_name || '',
-                  courseName: course.title,
-                  reason: body.reason || '',
-                  organizationName: org?.name || '',
-                  showRefund: (signup.payment_status === 'paid' && !!signup.amount_paid).toString(),
-                  refundAmount: signup.amount_paid?.toString() || '',
-                },
-              }),
-            })
-            return resp.ok
-          } catch {
-            return false
-          }
-        })
-
-      const emailResults = await Promise.allSettled(emailPromises)
-      results.notifications_sent = emailResults.filter(
-        (r) => r.status === 'fulfilled' && r.value,
-      ).length
-    }
-
     if (results.refunds_failed > 0) {
       results.success = false
-      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.refunds_failed} feilet og krever manuell oppfølging. ${results.notifications_sent} varsler sendt.`
+      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.refunds_failed} feilet og krever manuell oppfølging.`
     } else {
-      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet, ${results.notifications_sent} varsler sendt.`
+      results.message = `Kurset er avlyst. ${results.refunds_processed} refusjoner behandlet.`
     }
 
     return successResponse(results, 200, req)

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, Send, UserMinus, CreditCard } from '@/lib/icons';
+import { MoreHorizontal, CheckCircle, UserMinus, CreditCard } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -37,10 +37,8 @@ export interface ActionableParticipant {
 }
 
 export interface ParticipantActionHandlers {
-  onSendPaymentLink: (signupId: string) => Promise<void>;
   onCancelEnrollment: (signupId: string, refund: boolean) => Promise<void>;
   onMarkResolved: (signupId: string) => Promise<void>;
-  onSendReminder?: (signupId: string) => Promise<void>;
 }
 
 interface ParticipantActionMenuProps {
@@ -96,13 +94,6 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 Betaling feilet
               </DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => runAction(() => handlers.onSendPaymentLink(signup.id))}
-                disabled={loading}
-              >
-                <Send className="size-4 mr-2" />
-                Send betalingslenke på nytt
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onClick={() => setConfirmDialog('resolve')}
                 disabled={loading}
               >
@@ -118,13 +109,6 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
               <DropdownMenuLabel className="text-xs font-medium tracking-wide text-muted-foreground">
                 Venter på betaling
               </DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => runAction(() => handlers.onSendPaymentLink(signup.id))}
-                disabled={loading}
-              >
-                <Send className="size-4 mr-2" />
-                Send påminnelse
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setConfirmDialog('resolve')}
                 disabled={loading}

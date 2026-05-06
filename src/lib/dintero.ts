@@ -1,6 +1,5 @@
 import {
   embed,
-  redirect as dinteroRedirect,
   type DinteroCheckoutInstance,
 } from '@dintero/checkout-web-sdk'
 import { logger } from '@/lib/logger'
@@ -39,8 +38,4 @@ export async function embedDinteroCheckout(options: EmbedOptions): Promise<Dinte
       options.onSessionCancel()
     },
   })
-}
-
-export function redirectToDinteroCheckout(sid: string): void {
-  dinteroRedirect({ sid })
 }

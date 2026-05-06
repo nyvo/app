@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { routes } from '@/lib/routes';
 
 interface PublishCourseDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ export function PublishCourseDialog({
   const navigate = useNavigate();
 
   const handleGoToPayments = () => {
-    navigate('/teacher/payments');
+    navigate(routes.settingsPayouts);
   };
 
   return (

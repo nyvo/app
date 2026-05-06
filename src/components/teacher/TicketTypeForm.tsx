@@ -193,7 +193,6 @@ export function TicketTypeForm({
       audience: form.audience,
       // For drop_in we force weeks=null; for package we require it (validated above).
       weeks: form.ticket_kind === 'drop_in' ? null : Number(form.weeks),
-      is_full_course: form.ticket_kind === 'package' && Number(form.weeks) === defaultWeeks,
       is_active: form.is_active,
       is_default: form.is_default,
       sales_starts_at: form.sales_starts_at ? new Date(form.sales_starts_at).toISOString() : null,

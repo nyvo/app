@@ -95,7 +95,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
             <div className="divide-y divide-border/40">
               {bucket.courses.map(course => {
                 const time = extractTime(course.time_schedule);
-                const studioSlug = course.organization?.slug ?? '';
+                const studioSlug = course.seller?.slug ?? '';
                 const isFull = course.max_participants !== null && course.spots_available <= 0;
                 const isCancelled = course.status === 'cancelled';
                 const lowSpots = course.max_participants !== null && course.spots_available > 0 && course.spots_available <= 3;
@@ -104,7 +104,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                 return (
                   <Link
                     key={course.id}
-                    to={`/studio/${studioSlug}/${course.id}`}
+                    to={`/${studioSlug}/${course.slug}`}
                     state={{ backgroundLocation: location }}
                     className={cn(
                       'group flex items-center gap-4 sm:gap-6 py-3 px-2 -mx-2 rounded-md',

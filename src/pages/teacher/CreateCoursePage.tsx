@@ -16,6 +16,7 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createCourse, updateCourse, fetchExistingSessions } from '@/services/courses';
+import { routes } from '@/lib/routes';
 import type { ExistingSession } from '@/services/courses';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import { uploadCourseImage } from '@/services/storage';
@@ -90,9 +91,9 @@ const CREATE_COURSE_STEPS = [
 
 const CreateCoursePage = () => {
   const navigate = useNavigate();
-  const { currentOrganization } = useAuth();
+  const { currentSeller } = useAuth();
   const { setBreadcrumbs } = useTeacherShell();
-  const { locations: savedLocations } = useLocations(currentOrganization?.id);
+  const { locations: savedLocations } = useLocations(currentSeller?.id);
 
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -139,17 +140,17 @@ const CreateCoursePage = () => {
   const [sessionsOnStartDate, setSessionsOnStartDate] = useState<ExistingSession[]>([]);
 
   useEffect(() => {
-    if (!currentOrganization?.id || !startDate) {
+    if (!currentSeller?.id || !startDate) {
       setSessionsOnStartDate([]);
       return;
     }
     const dateKey = formatLocalDateKey(startDate);
     let cancelled = false;
-    fetchExistingSessions(currentOrganization.id, [dateKey]).then(({ data }) => {
+    fetchExistingSessions(currentSeller.id, [dateKey]).then(({ data }) => {
       if (!cancelled) setSessionsOnStartDate(data);
     });
     return () => { cancelled = true; };
-  }, [currentOrganization?.id, startDate]);
+  }, [currentSeller?.id, startDate]);
 
   // Find the first existing session on the start date that overlaps the
   // chosen start/end time. Null if nothing overlaps (or inputs incomplete).
@@ -166,8 +167,8 @@ const CreateCoursePage = () => {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Kurs', to: '/teacher/courses' },
+      { label: 'Hjem', to: routes.dashboard },
+      { label: 'Kurs', to: routes.courses },
       { label: 'Opprett kurs' },
     ]);
 
@@ -271,7 +272,7 @@ const CreateCoursePage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/teacher/courses');
+    navigate(routes.courses);
   };
 
   const handleNext = () => {
@@ -311,7 +312,7 @@ const CreateCoursePage = () => {
       return;
     }
 
-    if (!currentOrganization?.id) {
+    if (!currentSeller?.id) {
       setSubmitError('Velg et studio først');
       return;
     }
@@ -329,7 +330,7 @@ const CreateCoursePage = () => {
         : `${capitalizedDay}, ${timeRange}`;
 
       const courseData = {
-        organization_id: currentOrganization.id,
+        seller_id: currentSeller.id,
         title: title.trim(),
         description: description.trim() || null,
         course_type: dbCourseType,
@@ -369,7 +370,7 @@ const CreateCoursePage = () => {
         toast.success('Kurs opprettet');
       }
 
-      navigate(`/teacher/courses/${createdCourse.id}`);
+      navigate(routes.course(createdCourse.id));
     } catch {
       setSubmitError('Noe gikk galt. Prøv igjen.');
     } finally {

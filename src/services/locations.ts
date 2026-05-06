@@ -6,11 +6,11 @@ import type {
 } from '@/types/database'
 
 export async function fetchLocations(
-  organizationId: string
+  sellerId: string
 ): Promise<{ data: TeacherLocation[]; error: Error | null }> {
   const { data, error } = await typedFrom('teacher_locations')
     .select('*')
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .order('is_favorite', { ascending: false })
     .order('created_at', { ascending: true })
 
@@ -56,18 +56,18 @@ export async function deleteLocation(
 }
 
 /**
- * Set a location as the favorite for an organization.
+ * Set a location as the favorite for a seller.
  * Clears any existing favorite first, then sets the new one.
  * Pass null to clear the favorite without setting a new one.
  */
 export async function setFavoriteLocation(
-  organizationId: string,
+  sellerId: string,
   locationId: string | null
 ): Promise<{ error: Error | null }> {
   // Clear existing favorite
   const { error: clearError } = await typedFrom('teacher_locations')
     .update({ is_favorite: false })
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .eq('is_favorite', true)
 
   if (clearError) return { error: clearError as Error }

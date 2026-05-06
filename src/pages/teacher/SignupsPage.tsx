@@ -24,7 +24,6 @@ import { friendlyError } from '@/lib/error-messages';
 import {
   fetchAllSignups,
   teacherCancelSignup,
-  sendPaymentLink,
   markPaymentResolved,
   type SignupWithDetails,
 } from '@/services/signups';
@@ -123,7 +122,7 @@ function SegmentedTabs({
 }
 
 export const SignupsPage = () => {
-  const { currentOrganization } = useAuth();
+  const { currentSeller } = useAuth();
   const [signups, setSignups] = useState<SignupWithDetails[]>([]);
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
   const [kpis, setKpis] = useState<SignupsKpis | null>(null);
@@ -136,12 +135,12 @@ export const SignupsPage = () => {
   const [visibleCount, setVisibleCount] = useState(SIGNUPS_INITIAL_VISIBLE);
 
   const loadSignups = useCallback(async () => {
-    if (!currentOrganization?.id) return;
+    if (!currentSeller?.id) return;
 
     setLoading(true);
     setError(null);
 
-    const { data, error: fetchError } = await fetchAllSignups(currentOrganization.id);
+    const { data, error: fetchError } = await fetchAllSignups(currentSeller.id);
 
     if (fetchError) {
       setError('Kunne ikke laste påmeldinger. Sjekk internettforbindelsen og prøv på nytt.');
@@ -171,7 +170,7 @@ export const SignupsPage = () => {
     }
 
     setLoading(false);
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   useEffect(() => { loadSignups(); }, [loadSignups]);
 
@@ -222,7 +221,7 @@ export const SignupsPage = () => {
         note: signup.note || undefined,
         amountPaid: signup.amount_paid ?? null,
         dinteroTransactionId: signup.dintero_transaction_id || null,
-        organizationId: signup.organization_id,
+        sellerId: signup.seller_id,
         courseEnded,
         courseEndDate: courseEndDate ?? courseStartDate ?? null,
         courseCapacity: signup.course?.max_participants ?? null,
@@ -338,14 +337,6 @@ export const SignupsPage = () => {
   const hasFilters = viewTab !== 'active' || searchQuery.trim() !== '' || courseFilter !== 'all';
 
   const actionHandlers: ParticipantActionHandlers = useMemo(() => ({
-    onSendPaymentLink: async (signupId: string) => {
-      const { error } = await sendPaymentLink(signupId);
-      if (!error) {
-        toast.success('Betalingslenke sendt');
-      } else {
-        toast.error(friendlyError(error, 'Kunne ikke sende betalingslenke'));
-      }
-    },
     onCancelEnrollment: async (signupId: string, refund: boolean) => {
       const { error } = await teacherCancelSignup(signupId, { refund });
       if (!error) {
@@ -437,7 +428,11 @@ export const SignupsPage = () => {
               />
             ) : (
               <div className="p-3">
-                <PastSignupsList signups={filteredSignups} actionHandlers={actionHandlers} />
+                <PastSignupsList
+                  signups={filteredSignups}
+                  actionHandlers={actionHandlers}
+                  onMutate={loadSignups}
+                />
               </div>
             )
           ) : (
@@ -449,6 +444,7 @@ export const SignupsPage = () => {
               onClearFilters={clearFilters}
               actionHandlers={actionHandlers}
               viewTab={viewTab}
+              onMutate={loadSignups}
             />
           )}
 

@@ -1,31 +1,15 @@
+// UI projection types for the teacher dashboard. Distinct from
+// `@/types/database` Row types — these are display shapes pre-formatted
+// for cards, lists, and timelines (e.g., signups + capacity merged onto
+// the upcoming class). Keep this file lean: only types that real
+// components import.
+
+import type { SignupStatus } from '@/types/database';
+
+/** Visual variant for course cards. Maps from courses.course_type. */
 export type CourseStyleType = 'course-series' | 'event';
 
-export interface UpcomingClass {
-  id: string;
-  title: string;
-  type: CourseStyleType;
-  startTime: string;
-  endTime: string;
-  date: string;
-  location: string;
-  attendees: number;
-  capacity: number;
-  startsIn: string;
-  imageUrl?: string | null;
-}
-
-export interface Message {
-  id: string;
-  sender: {
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  timestamp: string;
-  isOnline?: boolean;
-  unreadCount: number;
-}
-
+/** Compact card shape used by the teacher home/dashboard. */
 export interface Course {
   id: string;
   title: string;
@@ -41,15 +25,7 @@ export interface Course {
   capacity?: number;
 }
 
-export interface TeacherStats {
-  activeStudents: number;
-  attendanceRate: number;
-  attendanceData: number[];
-}
-
-export type { PaymentStatus, SignupStatus } from '@/types/database';
-import type { SignupStatus } from '@/types/database';
-
+/** Row in the recent-registrations list. */
 export interface Registration {
   id: string;
   participant: {
@@ -70,82 +46,4 @@ export interface Registration {
   /** Indicates signup needs teacher attention (payment failed, offer expiring, etc.) */
   hasException?: boolean;
   paymentStatus?: string;
-}
-
-// Signups page types
-export type SignupPaymentType = 'klippekort' | 'månedskort' | 'drop-in' | 'halvårskort' | 'unpaid';
-
-export interface Signup {
-  id: string;
-  participant: {
-    name: string;
-    email: string;
-    avatar?: string;
-    initials?: string;
-  };
-  className: string;
-  classDate: string;
-  classTime: string;
-  registeredAt: string;
-  status: SignupStatus;
-  paymentType: SignupPaymentType;
-  paymentDetails?: string;
-  note?: string;
-}
-
-export interface Conversation {
-  id: string;
-  name: string;
-  avatar?: string;
-  initials?: string;
-  lastMessage: string;
-  timestamp: string;
-  isOnline?: boolean;
-  unreadCount?: number;
-  isActive?: boolean;
-  isRead?: boolean;
-}
-
-export interface MessageDetail {
-  id: string;
-  conversationId: string;
-  content: string;
-  timestamp: string;
-  isOutgoing: boolean;
-  avatar?: string;
-  isRead?: boolean;
-}
-
-export type CourseType = 'kursrekke' | 'enkeltkurs';
-
-export interface Instructor {
-  name: string;
-  avatar?: string;
-  rating: number;
-  classesCount: number;
-}
-
-export interface DetailedCourse {
-  id: string;
-  title: string;
-  type: 'course-series' | 'event';
-  courseType: CourseType;
-  status: 'active' | 'upcoming' | 'completed' | 'cancelled';
-  location: string;
-  timeSchedule: string;
-  duration: string;
-  participants: number;
-  maxParticipants: number;
-  price: string;
-  progress?: number;
-  currentWeek?: number;
-  totalWeeks?: number;
-  startDate?: string;
-  endDate?: string;
-  completedDate?: string;
-  attendeeAvatars?: string[];
-  description?: string;
-  instructor?: Instructor;
-  level?: string;
-  imageUrl?: string | null;
 }

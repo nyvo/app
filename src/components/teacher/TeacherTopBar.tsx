@@ -11,94 +11,35 @@ import {
 } from '@/components/ui/breadcrumb';
 import { useTeacherShell, type TeacherShellCrumb } from '@/components/teacher/TeacherShellContext';
 import { cn } from '@/lib/utils';
+import { routes } from '@/lib/routes';
 
-// MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add '/teacher/messages' here when enabling.
-const FULL_WIDTH_ROUTES = ['/teacher/schedule'];
+// No routes currently need full-width layout. Kept as an empty array so the
+// isFullWidth conditional below stays cheap; add a route here if a future
+// page needs to escape the centered max-width.
+const FULL_WIDTH_ROUTES: string[] = [];
+
+const home: TeacherShellCrumb = { label: 'Hjem', to: routes.dashboard };
 
 const teacherBreadcrumbs: Array<{
   path: string;
   crumbs: TeacherShellCrumb[];
 }> = [
-  {
-    path: '/teacher',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Oversikt' },
-    ],
-  },
-  {
-    path: '/teacher/courses',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Kurs' },
-    ],
-  },
-  {
-    path: '/teacher/courses/:id',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Kurs', to: '/teacher/courses' },
-      { label: 'Kursdetaljer' },
-    ],
-  },
-  {
-    path: '/teacher/new-course',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Kurs', to: '/teacher/courses' },
-      { label: 'Opprett kurs' },
-    ],
-  },
-  {
-    path: '/teacher/schedule',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Timeplan' },
-    ],
-  },
-  {
-    path: '/teacher/signups',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Påmeldinger' },
-    ],
-  },
-  // MESSAGES_DISABLED_PRE_LAUNCH (2026-04-25): re-add the messages crumb when re-enabling.
-  // {
-  //   path: '/teacher/messages',
-  //   crumbs: [
-  //     { label: 'Hjem', to: '/teacher' },
-  //     { label: 'Meldinger' },
-  //   ],
-  // },
-  {
-    path: '/teacher/locations',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Adresser' },
-    ],
-  },
-  {
-    path: '/teacher/studio',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Studio' },
-    ],
-  },
-  {
-    path: '/teacher/profile',
-    crumbs: [
-      { label: 'Hjem', to: '/teacher' },
-      { label: 'Profil' },
-    ],
-  },
+  { path: routes.dashboard,                   crumbs: [home, { label: 'Oversikt' }] },
+  { path: routes.courses,                     crumbs: [home, { label: 'Kurs' }] },
+  { path: routes.course(':id'),               crumbs: [home, { label: 'Kurs', to: routes.courses }, { label: 'Kursdetaljer' }] },
+  { path: routes.editCourse(':id'),           crumbs: [home, { label: 'Kurs', to: routes.courses }, { label: 'Endre kurs' }] },
+  { path: routes.coursePricing(':id'),        crumbs: [home, { label: 'Kurs', to: routes.courses }, { label: 'Priser' }] },
+  { path: routes.newCourse,                   crumbs: [home, { label: 'Kurs', to: routes.courses }, { label: 'Opprett kurs' }] },
+  { path: routes.schedule,                    crumbs: [home, { label: 'Timeplan' }] },
+  { path: routes.signups,                     crumbs: [home, { label: 'Påmeldinger' }] },
+  { path: routes.studio,                      crumbs: [home, { label: 'Studio' }] },
+  { path: routes.settingsProfile,             crumbs: [home, { label: 'Innstillinger' }, { label: 'Profil' }] },
+  { path: routes.settingsPayouts,            crumbs: [home, { label: 'Innstillinger' }, { label: 'Betalingskonto' }] },
 ];
 
 function getBreadcrumbs(pathname: string) {
   return (
-    teacherBreadcrumbs.find(({ path }) => matchPath({ path, end: true }, pathname))?.crumbs ?? [
-      { label: 'Hjem', to: '/teacher' },
-    ]
+    teacherBreadcrumbs.find(({ path }) => matchPath({ path, end: true }, pathname))?.crumbs ?? [home]
   );
 }
 
@@ -145,9 +86,6 @@ export function TeacherTopBar() {
               <Link to={action.to}>{action.label}</Link>
             </Button>
           )}
-          {/* Notification bell + Settings icon removed 2026-04-25 — updates now
-              live on the dashboard activity card. Profile/settings reachable
-              via the user-avatar dropdown in the sidebar footer. */}
         </div>
       </div>
     </div>

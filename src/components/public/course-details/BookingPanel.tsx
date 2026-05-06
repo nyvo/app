@@ -10,7 +10,7 @@ import { EmbeddedPayment } from '@/components/public/course-details/EmbeddedPaym
 import { friendlyError } from '@/lib/error-messages';
 import { formatKroner, isValidEmail } from '@/lib/utils';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
-import { checkCourseAvailability, createFreeSignup, sendSignupConfirmationEmail } from '@/services/signups';
+import { checkCourseAvailability, createFreeSignup } from '@/services/signups';
 import { createDinteroSession } from '@/services/checkout';
 import { supabase } from '@/lib/supabase';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
@@ -185,7 +185,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
   // Free courses bypass the payment provider, so they're never locked.
   // The form still renders so the page looks complete; an overlay above the
   // form blocks interaction and shows "Påmelding åpner snart".
-  const paymentReady = isFree || (course.organization?.dintero_onboarding_complete ?? false);
+  const paymentReady = isFree || (course.seller?.dintero_onboarding_complete ?? false);
   const lockBooking = !paymentReady;
 
   // Three-state availability badge: full / low / many.
@@ -250,7 +250,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
     }
 
     if (isFree) {
-      const { data: signupData, error: signupError } = await createFreeSignup({
+      const { error: signupError } = await createFreeSignup({
         courseId: course.id,
         participantName: form.name.trim(),
         participantEmail: form.email.trim(),
@@ -260,7 +260,6 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         setSubmitting(false);
         return;
       }
-      if (signupData?.signupId) sendSignupConfirmationEmail(course.id, signupData.signupId);
       window.location.href = `/checkout/success?free=true&org=${studioSlug}`;
       return;
     }

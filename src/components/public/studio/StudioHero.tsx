@@ -1,19 +1,19 @@
 import { MapPin, Mail, ArrowRight } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/utils/stringUtils';
-import type { PublicOrganization } from '@/services/organizations';
+import type { PublicSeller } from '@/services/sellers';
 
 interface StudioHeroProps {
-  organization: PublicOrganization;
+  organization: PublicSeller;
 }
 
-function buildAddress(org: PublicOrganization): string | null {
+function buildAddress(org: PublicSeller): string | null {
   const parts = [org.address, [org.postal_code, org.city].filter(Boolean).join(' ')]
     .filter((p): p is string => !!p && p.trim().length > 0);
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
-function buildMapsUrl(org: PublicOrganization): string | null {
+function buildMapsUrl(org: PublicSeller): string | null {
   const address = buildAddress(org);
   if (!address) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${org.name} ${address}`)}`;
@@ -37,7 +37,7 @@ export function StudioHero({ organization }: StudioHeroProps) {
             {organization.name}
           </h1>
           {organization.description && (
-            <p className="mt-4 max-w-[580px] text-[17px] leading-[1.55] text-muted-foreground">
+            <p className="mt-5 max-w-2xl text-base text-muted-foreground leading-relaxed whitespace-pre-line">
               {organization.description}
             </p>
           )}

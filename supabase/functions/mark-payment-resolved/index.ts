@@ -44,12 +44,12 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Load signup + its org for authorization. Service role bypasses RLS
-    // intentionally — we use the explicit org-membership check below as
+    // Load signup + its seller for authorization. Service role bypasses RLS
+    // intentionally — we use the explicit seller-membership check below as
     // the authoritative gate.
     const { data: signup, error: signupError } = await supabase
       .from('signups')
-      .select('id, organization_id, payment_status, status')
+      .select('id, seller_id, payment_status, status')
       .eq('id', body.signup_id)
       .single()
 
@@ -57,14 +57,14 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Signup not found', 404, req)
     }
 
-    // Only org members (owner/admin/teacher) can reconcile payments.
-    const authzResult = await verifyOrgMembership(authResult.userId!, signup.organization_id, [
+    // Only seller members (owner/admin/teacher) can reconcile payments.
+    const authzResult = await verifyOrgMembership(authResult.userId!, signup.seller_id, [
       'owner',
       'admin',
       'teacher',
     ])
     if (!authzResult.authorized) {
-      return errorResponse('You do not have permission to update payments for this organization', 403, req)
+      return errorResponse('You do not have permission to update payments for this seller', 403, req)
     }
 
     // Don't overwrite already-paid or refunded signups. Teacher can fix

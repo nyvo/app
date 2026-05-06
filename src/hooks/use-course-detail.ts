@@ -27,6 +27,7 @@ function mapCourseToComponentFormat(courseData: Course & { signups_count: number
 
   return {
     title: courseData.title,
+    slug: courseData.slug,
     status: courseData.status,
     date: courseData.time_schedule || '',
     location: courseData.location || 'Ikke angitt',

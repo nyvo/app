@@ -50,25 +50,25 @@ export async function verifyAuth(req: Request): Promise<AuthResult> {
 }
 
 /**
- * Verify that the authenticated user is a member of the organization
+ * Verify that the authenticated user is a member of the seller
  * and optionally check their role
  */
 export async function verifyOrgMembership(
   userId: string,
-  organizationId: string,
+  sellerId: string,
   requiredRoles?: string[]
 ): Promise<AuthorizationResult> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   const { data: member, error } = await supabase
-    .from('org_members')
+    .from('seller_members')
     .select('role')
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .eq('user_id', userId)
     .single()
 
   if (error || !member) {
-    return { authorized: false, error: 'Not a member of this organization' }
+    return { authorized: false, error: 'Not a member of this seller' }
   }
 
   if (requiredRoles && requiredRoles.length > 0) {
@@ -81,11 +81,11 @@ export async function verifyOrgMembership(
 }
 
 /**
- * Combined auth check: verify token and org membership
+ * Combined auth check: verify token and seller membership
  */
 export async function verifyAuthAndOrgMembership(
   req: Request,
-  organizationId: string,
+  sellerId: string,
   requiredRoles?: string[]
 ): Promise<{ authenticated: boolean; authorized: boolean; userId?: string; role?: string; error?: string }> {
   const authResult = await verifyAuth(req)
@@ -94,7 +94,7 @@ export async function verifyAuthAndOrgMembership(
     return { authenticated: false, authorized: false, error: authResult.error }
   }
 
-  const authzResult = await verifyOrgMembership(authResult.userId!, organizationId, requiredRoles)
+  const authzResult = await verifyOrgMembership(authResult.userId!, sellerId, requiredRoles)
 
   return {
     authenticated: true,

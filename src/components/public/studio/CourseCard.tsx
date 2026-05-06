@@ -72,8 +72,8 @@ function extractTime(timeSchedule: string | null): string {
  */
 export function CourseCard({ course, ratio = 'portrait', className }: CourseCardProps) {
   const location = useLocation();
-  const studioSlug = course.organization?.slug ?? '';
-  const href = `/studio/${studioSlug}/${course.id}`;
+  const studioSlug = course.seller?.slug ?? '';
+  const href = `/${studioSlug}/${course.slug}`;
   const linkState = { backgroundLocation: location };
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -105,7 +105,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
   const isDisabled = isCancelled || isFull;
 
   // Instructor falls back to the studio name + initials when no instructor is set
-  const personName = instructor?.name ?? course.organization?.name ?? null;
+  const personName = instructor?.name ?? course.seller?.name ?? null;
   const personAvatar = instructor?.avatar_url ?? null;
 
   return (

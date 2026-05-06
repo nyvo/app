@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { UserPlus, MessageSquare, type LucideIcon } from '@/lib/icons'
+import { UserPlus, type LucideIcon } from '@/lib/icons'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -10,28 +9,28 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatRelativeTimePast } from '@/utils/dateFormatting'
+import { toSignupDisplay } from '@/utils/signupDisplay'
+import { useSignupDrawer } from '@/contexts/SignupDrawerContext'
 import type { SignupWithDetails } from '@/services/signups'
-import type { ConversationWithDetails } from '@/services/messages'
 
 interface RecentActivityCardProps {
   signups: SignupWithDetails[] | null
-  conversations: ConversationWithDetails[] | null
+  /** Called after the drawer mutates a signup (cancel, mark paid).
+   *  Dashboard refetch usually feeds this. */
+  onMutate?: () => void
 }
 
 interface ActivityItem {
   id: string
+  signup: SignupWithDetails
   icon: LucideIcon
   title: string
   description: string
   timestamp: string
   sortKey: number
-  href: string
 }
 
-function buildActivity(
-  signups: SignupWithDetails[],
-  conversations: ConversationWithDetails[]
-): ActivityItem[] {
+function buildActivity(signups: SignupWithDetails[]): ActivityItem[] {
   const items: ActivityItem[] = []
 
   for (const s of signups) {
@@ -40,34 +39,20 @@ function buildActivity(
     const courseTitle = s.course?.title
     items.push({
       id: `signup-${s.id}`,
+      signup: s,
       icon: UserPlus,
       title: name,
       description: courseTitle ? `Meldte seg på ${courseTitle}` : 'Ny påmelding',
       timestamp: createdAt ? formatRelativeTimePast(createdAt) : '',
       sortKey: createdAt ? new Date(createdAt).getTime() : 0,
-      href: '/teacher/signups',
-    })
-  }
-
-  for (const c of conversations) {
-    const updatedAt = c.updated_at ?? ''
-    const name = c.participant?.name || 'Ukjent'
-    items.push({
-      id: `message-${c.id}`,
-      icon: MessageSquare,
-      title: name,
-      description: 'Sendte en melding',
-      timestamp: updatedAt ? formatRelativeTimePast(updatedAt) : '',
-      sortKey: updatedAt ? new Date(updatedAt).getTime() : 0,
-      href: '/teacher/messages',
     })
   }
 
   return items.sort((a, b) => b.sortKey - a.sortKey).slice(0, 5)
 }
 
-export function RecentActivityCard({ signups, conversations }: RecentActivityCardProps) {
-  const loading = signups === null || conversations === null
+export function RecentActivityCard({ signups, onMutate }: RecentActivityCardProps) {
+  const loading = signups === null
 
   return (
     <Card>
@@ -81,7 +66,7 @@ export function RecentActivityCard({ signups, conversations }: RecentActivityCar
         {loading ? (
           <ActivitySkeleton />
         ) : (
-          <ActivityBody signups={signups} conversations={conversations} />
+          <ActivityBody signups={signups} onMutate={onMutate} />
         )}
       </CardContent>
     </Card>
@@ -90,18 +75,19 @@ export function RecentActivityCard({ signups, conversations }: RecentActivityCar
 
 function ActivityBody({
   signups,
-  conversations,
+  onMutate,
 }: {
   signups: SignupWithDetails[]
-  conversations: ConversationWithDetails[]
+  onMutate?: () => void
 }) {
-  const items = buildActivity(signups, conversations)
+  const { open: openDrawer } = useSignupDrawer()
+  const items = buildActivity(signups)
 
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-1 py-8 text-center">
         <p className="text-sm font-medium text-foreground">Ingen aktivitet ennå</p>
-        <p className="text-xs text-muted-foreground">Nye påmeldinger og meldinger vises her</p>
+        <p className="text-xs text-muted-foreground">Nye påmeldinger vises her</p>
       </div>
     )
   }
@@ -111,10 +97,11 @@ function ActivityBody({
       {items.map((item) => {
         const Icon = item.icon
         return (
-          <Link
+          <button
             key={item.id}
-            to={item.href}
-            className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
+            type="button"
+            onClick={() => openDrawer(toSignupDisplay(item.signup), { onMutate })}
+            className="group -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-2.5 text-left outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2">
               <Icon className="size-4" />
@@ -126,7 +113,7 @@ function ActivityBody({
             <span className="shrink-0 text-xs tabular-nums text-tertiary-foreground">
               {item.timestamp}
             </span>
-          </Link>
+          </button>
         )
       })}
     </div>

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation, type Location } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
@@ -19,7 +19,11 @@ const LoginPage = () => {
   const location = useLocation()
   const { signIn, user, isLoading: authLoading } = useAuth()
 
-  const prefillEmail = (location.state as { email?: string } | null)?.email ?? ''
+  const locationState = location.state as { email?: string; from?: Location } | null
+  const prefillEmail = locationState?.email ?? ''
+  // Honor the original destination if ProtectedRoute bounced the user
+  // here. Falls back to the dashboard when there's no captured intent.
+  const redirectAfterLogin = locationState?.from?.pathname ?? ROUTES.dashboard
 
   const { formData, errors, touched, setFormData, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
@@ -44,9 +48,9 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate(ROUTES.dashboard)
+      navigate(redirectAfterLogin, { replace: true })
     }
-  }, [user, authLoading, navigate])
+  }, [user, authLoading, navigate, redirectAfterLogin])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,7 +79,7 @@ const LoginPage = () => {
         return
       }
 
-      navigate(ROUTES.dashboard)
+      navigate(redirectAfterLogin, { replace: true })
     } catch {
       setErrors({ general: AUTH_ERRORS.generic })
       setFormData(prev => ({ ...prev, password: '' }))
@@ -97,7 +101,7 @@ const LoginPage = () => {
       }
     >
       <div className="w-full space-y-5">
-        <GoogleAuthButton redirectTo={`${window.location.origin}/teacher`} />
+        <GoogleAuthButton redirectTo={`${window.location.origin}${AUTH_ROUTES.dashboard}`} />
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />

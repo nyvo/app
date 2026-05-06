@@ -181,7 +181,6 @@ export function buildDiscountDuplicate(source: TicketType): TicketTypeInsert {
     weeks: source.weeks,
     ticket_kind: source.ticket_kind,
     audience: 'student',
-    is_full_course: source.is_full_course,
     is_active: true,
     is_default: false,
     display_order: source.display_order + 1,

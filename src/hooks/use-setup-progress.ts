@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { User, CreditCard, BookOpen } from '@/lib/icons'
 import type { LucideIcon } from '@/lib/icons'
-import type { Organization } from '@/types/database'
+import type { Seller } from '@/types/database'
 import type { Profile } from '@/types/database'
+import { routes } from '@/lib/routes'
 
 export interface SetupStep {
   id: 'profile' | 'payments' | 'course'
@@ -17,7 +18,7 @@ export interface SetupStep {
 }
 
 interface UseSetupProgressParams {
-  currentOrganization: Organization | null
+  currentSeller: Seller | null
   profile: Profile | null
   hasCourses: boolean
   onConnectPayments: () => void
@@ -40,15 +41,15 @@ function getMotivationalSubtitle(completedCount: number, totalCount: number): st
 }
 
 export function useSetupProgress({
-  currentOrganization,
+  currentSeller,
   profile,
   hasCourses,
   onConnectPayments,
 }: UseSetupProgressParams): UseSetupProgressResult {
   return useMemo(() => {
-    const org = currentOrganization
+    const seller = currentSeller
     const hasName = !!profile?.name?.trim()
-    const hasCity = !!org?.city?.trim()
+    const hasCity = !!seller?.city?.trim()
 
     const steps: SetupStep[] = [
       {
@@ -57,14 +58,14 @@ export function useSetupProgress({
         description: 'Navn og by er registrert.',
         isComplete: hasName && hasCity,
         actionLabel: 'Fullfør profil',
-        actionHref: '/teacher/profile',
+        actionHref: routes.settingsProfile,
         icon: User,
       },
       {
         id: 'payments',
         title: 'Aktiver betalinger',
         description: 'Koble til en betalingsløsning så du kan motta betaling fra elever. Trygt og sikkert.',
-        isComplete: !!org?.dintero_onboarding_complete,
+        isComplete: !!seller?.dintero_onboarding_complete,
         actionLabel: 'Aktiver',
         actionOnClick: onConnectPayments,
         icon: CreditCard,
@@ -75,7 +76,7 @@ export function useSetupProgress({
         description: 'Legg ut et kurs, så kan elevene melde seg på.',
         isComplete: hasCourses,
         actionLabel: 'Opprett kurs',
-        actionHref: '/teacher/new-course',
+        actionHref: routes.newCourse,
         icon: BookOpen,
         timeEstimate: 'ca. 3 min',
       },
@@ -94,5 +95,5 @@ export function useSetupProgress({
       nextStep,
       motivationalSubtitle,
     }
-  }, [currentOrganization, profile, hasCourses, onConnectPayments])
+  }, [currentSeller, profile, hasCourses, onConnectPayments])
 }

@@ -42,11 +42,17 @@ interface SignupDetails {
     time_schedule: string | null;
     location: string | null;
     image_url?: string | null;
-    organization: {
-      slug: string;
+    /**
+     * Studio identity — RPC populates this from the seller (legal/billing
+     * entity) plus the slug from the team owned by that seller. The seller
+     * name, email, logo_url come from `sellers`; `team_slug` is the public
+     * URL fragment.
+     */
+    seller: {
       name: string;
       email?: string | null;
       logo_url?: string | null;
+      team_slug: string;
     };
   };
 }
@@ -227,15 +233,15 @@ const CheckoutSuccessPage = () => {
   }
 
   // Determine studio URL from signup data or URL parameter
-  const studioUrl = signup?.course?.organization?.slug
-    ? `/studio/${signup.course.organization.slug}`
+  const studioUrl = signup?.course?.seller?.team_slug
+    ? `/${signup.course.seller.team_slug}`
     : orgSlugFromUrl
-      ? `/studio/${orgSlugFromUrl}`
+      ? `/${orgSlugFromUrl}`
       : '/';
 
   // Show booking failed state
   if (bookingFailed) {
-    const failedStudioUrl = orgSlugFromUrl ? `/studio/${orgSlugFromUrl}` : '/';
+    const failedStudioUrl = orgSlugFromUrl ? `/${orgSlugFromUrl}` : '/';
 
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
@@ -274,9 +280,9 @@ const CheckoutSuccessPage = () => {
           {(() => {
             const dateLong = formatDate(signup?.course.start_date ?? null);
             const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
-            const orgName = signup?.course.organization?.name ?? null;
-            const orgLogo = signup?.course.organization?.logo_url ?? null;
-            const orgEmail = signup?.course.organization?.email ?? null;
+            const orgName = signup?.course.seller?.name ?? null;
+            const orgLogo = signup?.course.seller?.logo_url ?? null;
+            const orgEmail = signup?.course.seller?.email ?? null;
             const courseImage = signup?.course.image_url ?? null;
             const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
             const bookedAt = signup?.created_at ? new Date(signup.created_at) : new Date();

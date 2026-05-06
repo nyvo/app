@@ -21,11 +21,11 @@ interface SubscriptionConfig {
  * @param enabled - Whether the subscription is active
  *
  * @example
- * // Subscribe to new signups for an organization
+ * // Subscribe to new signups for a seller
  * useRealtimeSubscription(
- *   { table: 'signups', filter: `organization_id=eq.${orgId}` },
+ *   { table: 'signups', filter: `seller_id=eq.${sellerId}` },
  *   (payload) => { refetchSignups() },
- *   !!orgId
+ *   !!sellerId
  * )
  */
 export function useRealtimeSubscription<T extends Record<string, unknown>>(
@@ -138,11 +138,11 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
  * // Subscribe to signups and courses for dashboard
  * useMultiTableSubscription(
  *   [
- *     { table: 'signups', filter: `organization_id=eq.${orgId}` },
- *     { table: 'courses', filter: `organization_id=eq.${orgId}` },
+ *     { table: 'signups', filter: `seller_id=eq.${sellerId}` },
+ *     { table: 'courses', filter: `seller_id=eq.${sellerId}` },
  *   ],
  *   () => { refetchDashboard() },
- *   !!orgId
+ *   !!sellerId
  * )
  */
 /**

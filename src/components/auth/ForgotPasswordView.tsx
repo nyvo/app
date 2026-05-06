@@ -13,7 +13,7 @@ import { isValidEmail } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export const ForgotPasswordView = () => {
-  const redirectOrigin = `${window.location.origin}/teacher`
+  const redirectOrigin = `${window.location.origin}${AUTH_ROUTES.dashboard}`
   const { sendMagicLink } = useAuth()
 
   const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm, resetForm } =

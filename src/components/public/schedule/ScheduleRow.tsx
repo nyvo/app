@@ -39,10 +39,11 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
   const location = useLocation();
   const time = extractTime(course.time_schedule);
   const instructorName = course.instructors[0]?.name || course.instructor?.name || null;
-  // Link target is always the owning org's slug, regardless of whether this row
-  // is rendered on an org page or an aggregated space page. Every course belongs
-  // to exactly one org; the booking flow must always return to that org's URL.
-  const studioSlug = course.organization?.slug ?? '';
+  // Link target is always the owning seller's team slug, regardless of whether
+  // this row is rendered on an individual studio page or an aggregated space
+  // page. Every course belongs to exactly one seller; the booking flow must
+  // always return to that seller's URL.
+  const studioSlug = course.seller?.slug ?? '';
   const spots = spotsLabel(course.spots_available, course.max_participants);
   const isFull = spots === 'Fullt';
   const isCancelled = course.status === 'cancelled';
@@ -53,7 +54,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
 
   return (
     <Link
-      to={`/studio/${studioSlug}/${course.id}`}
+      to={`/${studioSlug}/${course.slug}`}
       state={{ backgroundLocation: location }}
       className={cn(
         'group flex items-center gap-4 px-3 py-3 smooth-transition',

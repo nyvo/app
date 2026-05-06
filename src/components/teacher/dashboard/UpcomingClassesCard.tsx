@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { parseLocalDate } from '@/utils/dateUtils'
 import type { Course } from '@/types/dashboard'
+import { routes } from '@/lib/routes'
 
 interface UpcomingClassesCardProps {
   courses: Course[] | null
@@ -90,7 +91,7 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
           <p className="text-xs text-muted-foreground mt-1">Opprett kurs for å fylle timeplanen</p>
         </div>
         <Button asChild size="sm" className="gap-1.5">
-          <Link to="/teacher/new-course">
+          <Link to={routes.newCourse}>
             <CalendarPlus className="size-3.5" />
             Opprett kurs
           </Link>
@@ -113,7 +114,7 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
               {showLabel ? formatDayLabel(course.date!, today, weekSunday) : ''}
             </span>
             <Link
-              to={`/teacher/courses/${course.id}`}
+              to={routes.course(course.id)}
               className="group rounded-lg bg-chart-2/10 outline-none smooth-transition hover:bg-chart-2/20 focus-visible:bg-chart-2/20"
             >
               <div className="p-3 space-y-0.5">

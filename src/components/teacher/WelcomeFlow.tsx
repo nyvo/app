@@ -1,16 +1,19 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen } from '@/lib/icons'
+import { ArrowRight, ArrowLeft, Search, Loader2, Building, MapPin, Check, CreditCard, BookOpen, User } from '@/lib/icons'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { pageVariants, pageTransition, slideVariants, slideTransition, slideTransitionFast } from '@/lib/motion'
 import { useAuth } from '@/contexts/AuthContext'
-import { updateOrganization } from '@/services/organizations'
+import { updateSeller } from '@/services/sellers'
 import { typedFrom } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
+
+type SellerType = 'individual' | 'business'
 
 function generateSlug(name: string): string {
   return name
@@ -59,9 +62,13 @@ interface WelcomeFlowProps {
 }
 
 export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
-  const { profile, currentOrganization, ensureOrganization, signOut } = useAuth()
+  const { profile, currentSeller, ensureSeller, signOut } = useAuth()
+  // Step 0: account type. 1: about you. 2: studio. 3: done.
   const [step, setStep] = useState(0)
   const keyboardNav = useRef(false)
+
+  // Account type — Privatperson (individual seller, ENK in practice) vs Bedrift (AS).
+  const [sellerType, setSellerType] = useState<SellerType>('individual')
 
   // Personal info — don't prefill if the name is just the email prefix
   const prefillName = (() => {
@@ -75,23 +82,34 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
   const [lastName, setLastName] = useState(() => prefillName.split(' ').slice(1).join(' ') || '')
 
   // Location
-  const [city, setCity] = useState(() => currentOrganization?.city || '')
+  const [city, setCity] = useState(() => currentSeller?.city || '')
 
   // Business info
   const [orgNumber, setOrgNumber] = useState('')
-  const [studioName, setStudioName] = useState(() => currentOrganization?.name || '')
+  const [studioName, setStudioName] = useState(() => currentSeller?.name || '')
+  const [studioNameTouched, setStudioNameTouched] = useState(false)
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [lookupResult, setLookupResult] = useState<BrregResult | null>(null)
   const [lookupDone, setLookupDone] = useState(false)
   const [studioError, setStudioError] = useState('')
 
-  // Step 0 validation
+  // Step 1 validation
   const [firstNameError, setFirstNameError] = useState('')
   const [lastNameError, setLastNameError] = useState('')
   const [cityError, setCityError] = useState('')
 
   const [isSaving, setIsSaving] = useState(false)
-  const needsOrg = !currentOrganization
+  const needsSeller = !currentSeller
+
+  // For individual sellers, default the studio name to the user's full name
+  // unless they've explicitly typed something. This nudges them past the
+  // "what do I call my studio" friction.
+  useEffect(() => {
+    if (sellerType === 'individual' && !studioNameTouched) {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
+      if (fullName) setStudioName(fullName)
+    }
+  }, [sellerType, firstName, lastName, studioNameTouched])
 
   // Debounced org number lookup
   const lookupTimerRef = useRef<ReturnType<typeof setTimeout>>(null)
@@ -111,7 +129,10 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         setLookupDone(true)
         setLookupResult(result)
         if (result) {
-          if (result.name) setStudioName(result.name)
+          if (result.name) {
+            setStudioName(result.name)
+            setStudioNameTouched(true)
+          }
           if (result.city) setCity(result.city)
         }
       }, 300)
@@ -128,9 +149,9 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
     setIsSaving(true)
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
-      let orgId = currentOrganization?.id
+      let sellerId = currentSeller?.id
 
-      if (needsOrg) {
+      if (needsSeller) {
         const name = studioName.trim()
         if (!name) {
           setStudioError('Skriv inn et navn')
@@ -138,14 +159,14 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
           return
         }
         const slug = generateSlug(name)
-        const { organization: newOrg, error: orgError } = await ensureOrganization(name, slug)
-        if (orgError || !newOrg) {
-          logger.error('Welcome flow: org creation failed', orgError)
+        const { seller: newSeller, error: sellerError } = await ensureSeller(name, slug, sellerType)
+        if (sellerError || !newSeller) {
+          logger.error('Welcome flow: seller creation failed', sellerError)
           toast.error('Kunne ikke opprette virksomheten. Prøv igjen.')
           setIsSaving(false)
           return
         }
-        orgId = newOrg.id
+        sellerId = newSeller.id
       }
 
       if (profile?.id) {
@@ -162,25 +183,35 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         }
       }
 
-      if (orgId && city.trim()) {
-        const { error } = await updateOrganization(orgId, { city: city.trim() })
-        if (error) {
-          logger.error('Welcome flow: city save failed', error)
+      // Save city + organization_number on the seller. organization_number is
+      // the Norwegian org-nr from Brønnøysund — stored on the seller for KYC
+      // when Dintero onboarding eventually collects it.
+      if (sellerId) {
+        const sellerPatch: { city?: string; organization_number?: string | null } = {}
+        if (city.trim()) sellerPatch.city = city.trim()
+        if (sellerType === 'business' && orgNumber.replace(/\s/g, '').length === 9) {
+          sellerPatch.organization_number = orgNumber.replace(/\s/g, '')
+        }
+        if (Object.keys(sellerPatch).length > 0) {
+          const { error } = await updateSeller(sellerId, sellerPatch)
+          if (error) {
+            logger.error('Welcome flow: seller patch save failed', error)
+          }
         }
       }
 
-      setStep(2)
+      setStep(3)
     } catch (err) {
       logger.error('Welcome flow save error:', err)
       toast.error('Kunne ikke lagre dataene. Prøv igjen.')
     } finally {
       setIsSaving(false)
     }
-  }, [firstName, lastName, studioName, city, needsOrg, profile?.id, currentOrganization?.id, ensureOrganization])
+  }, [firstName, lastName, studioName, city, orgNumber, sellerType, needsSeller, profile?.id, currentSeller?.id, ensureSeller])
 
-  const displayName = firstName.trim() || currentOrganization?.name || ''
+  const displayName = firstName.trim() || currentSeller?.name || ''
 
-  const validateStep0 = useCallback(() => {
+  const validateStep1 = useCallback(() => {
     let valid = true
     if (!firstName.trim()) { setFirstNameError('Skriv inn fornavn'); valid = false }
     else setFirstNameError('')
@@ -193,16 +224,18 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
   // Keyboard navigation
   const advance = useCallback(() => {
-    if (step === 0) { if (validateStep0()) setStep(1) }
-    else if (step === 1) {
+    if (step === 0) setStep(1)
+    else if (step === 1) { if (validateStep1()) setStep(2) }
+    else if (step === 2) {
       if (!studioName.trim()) { setStudioError('Skriv inn et navn'); return }
       handleSave()
     }
-    else if (step === 2) onComplete()
-  }, [step, validateStep0, studioName, handleSave, onComplete])
+    else if (step === 3) onComplete()
+  }, [step, validateStep1, studioName, handleSave, onComplete])
 
   const goBack = useCallback(() => {
     if (step === 1) setStep(0)
+    else if (step === 2) setStep(1)
   }, [step])
 
   useEffect(() => {
@@ -213,17 +246,17 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         return
       }
       if (e.key === 'ArrowLeft') { e.preventDefault(); keyboardNav.current = true; goBack() }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); keyboardNav.current = true; if (step === 0) advance() }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); keyboardNav.current = true; if (step <= 1) advance() }
       else if (e.key === 'Enter') { e.preventDefault(); keyboardNav.current = true; advance() }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [step, advance, goBack])
 
-  // Steps: 0=About you (name+city), 1=Studio, 2=Done
+  // Steps: 0=Type, 1=About you, 2=Studio, 3=Done
   const segments = [
-    { label: 'Om deg', steps: [0] },
-    { label: 'Virksomheten din', steps: [1] },
+    { label: 'Om deg', steps: [0, 1] },
+    { label: 'Virksomheten din', steps: [2] },
   ]
 
   return (
@@ -246,7 +279,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
         >
           <div className="rounded-lg bg-background border border-border p-6 sm:p-8">
             {/* Step indicator */}
-            {step < 2 && (
+            {step < 3 && (
               <div className="flex gap-2 mb-8">
                 {segments.map((seg) => {
                   const isActive = seg.steps.includes(step)
@@ -268,8 +301,78 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
             )}
 
             <AnimatePresence mode="wait">
-              {/* Step 0: Name + City */}
+              {/* Step 0: Account type */}
               {step === 0 && (
+                <motion.div
+                  key="type"
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={keyboardNav.current ? slideTransitionFast : slideTransition}
+                  onAnimationComplete={() => { keyboardNav.current = false }}
+                >
+                  <h2 className="text-base font-semibold mb-1 text-foreground">
+                    Hvordan vil du bruke plattformen?
+                  </h2>
+                  <p className="text-sm mb-6 text-muted-foreground">
+                    Du kan endre dette senere. Valget bestemmer hvordan vi setter opp betalinger og kontaktinfo.
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-3 mb-8">
+                    {([
+                      {
+                        value: 'individual' as const,
+                        icon: User,
+                        title: 'Privatperson',
+                        body: 'Jeg holder kurs i mitt eget navn. Frilans, ENK eller helt nystartet.',
+                      },
+                      {
+                        value: 'business' as const,
+                        icon: Building,
+                        title: 'Bedrift',
+                        body: 'Jeg representerer en bedrift, et studio eller en organisasjon.',
+                      },
+                    ]).map((opt) => {
+                      const isSelected = sellerType === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setSellerType(opt.value)}
+                          aria-pressed={isSelected}
+                          className={cn(
+                            'flex items-start gap-3 rounded-lg border p-4 text-left smooth-transition focus-ring',
+                            isSelected
+                              ? 'border-foreground/15 bg-selection-light ring-1 ring-inset ring-selection/20'
+                              : 'border-border hover:bg-muted/50',
+                          )}
+                        >
+                          <div className={cn(
+                            'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md',
+                            isSelected ? 'bg-background ring-1 ring-border' : 'bg-muted',
+                          )}>
+                            <opt.icon className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">{opt.title}</p>
+                            <p className="text-xs mt-1 text-muted-foreground leading-relaxed">{opt.body}</p>
+                          </div>
+                          {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <Button onClick={() => setStep(1)} className="w-full">
+                    Fortsett
+                    <ArrowRight className="size-3.5" />
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Step 1: Name + City */}
+              {step === 1 && (
                 <motion.div
                   key="about"
                   variants={slideVariants}
@@ -345,15 +448,21 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                     </div>
                   </div>
 
-                  <Button onClick={() => { if (validateStep0()) setStep(1) }} className="w-full">
-                    Fortsett
-                    <ArrowRight className="size-3.5" />
-                  </Button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outline-soft" onClick={() => setStep(0)}>
+                      <ArrowLeft className="size-3.5" />
+                      Tilbake
+                    </Button>
+                    <Button onClick={() => { if (validateStep1()) setStep(2) }}>
+                      Fortsett
+                      <ArrowRight className="size-3.5" />
+                    </Button>
+                  </div>
                 </motion.div>
               )}
 
-              {/* Step 1: Studio */}
-              {step === 1 && (
+              {/* Step 2: Studio */}
+              {step === 2 && (
                 <motion.div
                   key="studio"
                   variants={slideVariants}
@@ -364,107 +473,115 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                   onAnimationComplete={() => { keyboardNav.current = false }}
                 >
                   <h2 className="text-base font-semibold mb-1 text-foreground">
-                    Om virksomheten din
+                    {sellerType === 'business' ? 'Om virksomheten din' : 'Din kursside'}
                   </h2>
                   <p className="text-sm mb-6 text-muted-foreground">
-                    Dette brukes på din offentlige kursside. Har du et organisasjonsnummer? Da fyller vi ut automatisk.
+                    {sellerType === 'business'
+                      ? 'Dette brukes på din offentlige kursside. Har du et organisasjonsnummer? Da fyller vi ut automatisk.'
+                      : 'Navnet vises på din offentlige kursside. Du kan endre dette senere.'}
                   </p>
 
                   <div className="flex flex-col gap-4 mb-8">
-                    {/* Org number lookup */}
-                    <div>
-                      <label htmlFor="welcome-org-nr" className="text-sm font-medium mb-1.5 block text-foreground">
-                        Organisasjonsnummer
-                        <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">(valgfritt)</span>
-                      </label>
-                      <div className="relative">
-                        <Input
-                          id="welcome-org-nr"
-                          value={orgNumber}
-                          onChange={(e) => handleOrgNumberChange(e.target.value)}
-                          placeholder="9 siffer"
-                          inputMode="numeric"
-                          autoFocus
-                          className="pr-10"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {isLookingUp ? (
-                            <Loader2 className="size-4 text-muted-foreground animate-spin" />
-                          ) : (
-                            <Search className="size-4 text-muted-foreground" />
+                    {/* Org number lookup — business only */}
+                    {sellerType === 'business' && (
+                      <>
+                        <div>
+                          <label htmlFor="welcome-org-nr" className="text-sm font-medium mb-1.5 block text-foreground">
+                            Organisasjonsnummer
+                            <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">(valgfritt)</span>
+                          </label>
+                          <div className="relative">
+                            <Input
+                              id="welcome-org-nr"
+                              value={orgNumber}
+                              onChange={(e) => handleOrgNumberChange(e.target.value)}
+                              inputMode="numeric"
+                              autoFocus
+                              className="pr-10"
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {isLookingUp ? (
+                                <Loader2 className="size-4 text-muted-foreground animate-spin" />
+                              ) : (
+                                <Search className="size-4 text-muted-foreground" />
+                              )}
+                            </div>
+                          </div>
+                          {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
+                            <p className="text-xs mt-1.5 text-muted-foreground">
+                              Fant ingen treff. Fyll inn manuelt under.
+                            </p>
                           )}
                         </div>
-                      </div>
-                      {lookupDone && !lookupResult && orgNumber.replace(/\s/g, '').length === 9 && (
-                        <p className="text-xs mt-1.5 text-muted-foreground">
-                          Fant ingen treff. Fyll inn manuelt under.
-                        </p>
-                      )}
-                    </div>
 
-                    {/* Lookup result card */}
-                    {lookupDone && lookupResult && (
-                      <Card className="bg-muted/50 p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
-                            <Building className="size-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium truncate text-foreground">
-                                {lookupResult.name}
-                              </p>
-                              <Check className="size-3.5 text-success shrink-0" />
+                        {/* Lookup result card */}
+                        {lookupDone && lookupResult && (
+                          <Card className="bg-muted/50 p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-0.5 rounded-lg bg-background border border-border p-2">
+                                <Building className="size-4 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium truncate text-foreground">
+                                    {lookupResult.name}
+                                  </p>
+                                  <Check className="size-3.5 text-success shrink-0" />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                  {lookupResult.orgForm && (
+                                    <span className="text-xs font-medium tracking-wide text-muted-foreground">{lookupResult.orgForm}</span>
+                                  )}
+                                  {lookupResult.city && (
+                                    <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
+                                      <MapPin className="size-3" />
+                                      {lookupResult.city}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs tabular-nums mt-1 text-muted-foreground">
+                                  Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                              {lookupResult.orgForm && (
-                                <span className="text-xs font-medium tracking-wide text-muted-foreground">{lookupResult.orgForm}</span>
-                              )}
-                              {lookupResult.city && (
-                                <span className="text-xs font-medium tracking-wide flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="size-3" />
-                                  {lookupResult.city}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs tabular-nums mt-1 text-muted-foreground">
-                              Org.nr {lookupResult.orgNr.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}
-                            </p>
-                          </div>
-                        </div>
-                      </Card>
+                          </Card>
+                        )}
+
+                        <Separator />
+                      </>
                     )}
-
-                    {/* Divider */}
-                    <Separator />
 
                     {/* Studio name */}
                     <div>
                       <label htmlFor="welcome-studio" className="text-sm font-medium mb-1.5 block text-foreground">
-                        Navn på virksomheten
+                        {sellerType === 'business' ? 'Navn på virksomheten' : 'Navn på din kursside'}
                       </label>
                       <Input
                         id="welcome-studio"
                         value={studioName}
                         onChange={(e) => {
                           setStudioName(e.target.value)
+                          setStudioNameTouched(true)
                           if (studioError) setStudioError('')
                         }}
+                        autoFocus={sellerType === 'individual'}
                         aria-invalid={!!studioError || undefined}
-                        aria-describedby={studioError ? 'welcome-studio-error' : undefined}
+                        aria-describedby={studioError ? 'welcome-studio-error' : 'welcome-studio-hint'}
                       />
                       {studioError ? (
                         <p id="welcome-studio-error" className="text-xs font-medium mt-1.5 text-destructive" role="alert">{studioError}</p>
                       ) : (
-                        <p className="text-xs mt-1.5 text-muted-foreground">
-                          Vises på din offentlige kursside. Du kan endre dette senere.
+                        <p id="welcome-studio-hint" className="text-xs mt-1.5 text-muted-foreground">
+                          {sellerType === 'business'
+                            ? 'Vises på din offentlige kursside. Du kan endre dette senere.'
+                            : 'Mange bruker bare navnet sitt. Du kan også finne på et eget studionavn.'}
                         </p>
                       )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <Button variant="outline-soft" onClick={() => setStep(0)}>
+                    <Button variant="outline-soft" onClick={() => setStep(1)}>
                       <ArrowLeft className="size-3.5" />
                       Tilbake
                     </Button>
@@ -486,8 +603,8 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                 </motion.div>
               )}
 
-              {/* Step 2: Bridge — preview remaining journey */}
-              {step === 2 && (
+              {/* Step 3: Bridge — preview remaining journey */}
+              {step === 3 && (
                 <motion.div
                   key="done"
                   variants={slideVariants}

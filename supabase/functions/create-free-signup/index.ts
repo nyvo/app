@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
     // Fetch course to verify it's actually free and bookable
     const { data: course, error: courseError } = await supabase
       .from('courses')
-      .select('id, title, organization_id, status, price, start_date, time_schedule, location')
+      .select('id, title, seller_id, status, price, start_date, time_schedule, location')
       .eq('id', courseId)
       .single()
 
@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
     // Call the atomic capacity RPC. The advisory lock inside it serialises
     // concurrent free signups so the capacity check + insert can't oversell.
     const { data: result, error: rpcError } = await supabase.rpc('create_signup_if_available', {
-      p_organization_id: course.organization_id,
+      p_seller_id: course.seller_id,
       p_course_id: course.id,
       p_ticket_type_id: (defaultTier as { id: string }).id,
       p_participant_name: participantName.trim(),
@@ -98,45 +98,6 @@ Deno.serve(async (req: Request) => {
         : rpcResult.error === 'course_not_found' ? 404
         : 400
       return errorResponse(rpcResult.message || 'Kunne ikke fullføre påmelding', status, req)
-    }
-
-    // Send confirmation email. Parallel to the paid-flow finalize path — same
-    // template, best-effort (email failure must not fail the signup response).
-    try {
-      const { data: org } = await supabase
-        .from('organizations')
-        .select('name')
-        .eq('id', course.organization_id)
-        .single()
-
-      const courseDate = course.start_date
-        ? new Date(course.start_date).toLocaleDateString('nb-NO', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })
-        : ''
-
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          to: participantEmail.trim(),
-          template: 'signup-confirmation',
-          templateData: {
-            courseName: course.title || 'Kurs',
-            courseDate,
-            courseTime: course.time_schedule || '',
-            location: course.location || '',
-            organizationName: org?.name || 'Ease',
-          },
-        }),
-      })
-    } catch (_err) {
-      // Email failures are non-fatal — signup already succeeded.
     }
 
     return successResponse({ signupId: rpcResult.signup_id }, 200, req)

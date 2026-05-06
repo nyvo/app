@@ -60,20 +60,20 @@ export async function uploadCourseImage(
 export async function deleteCourseImage(
   courseId: string,
   imageUrl: string,
-  organizationId: string
+  sellerId: string
 ): Promise<{ error: Error | null }> {
-  // 1. Verify course belongs to the organization
+  // 1. Verify course belongs to the seller
   const { data: course, error: courseError } = await supabase
     .from('courses')
-    .select('organization_id')
+    .select('seller_id')
     .eq('id', courseId)
-    .single<{ organization_id: string }>()
+    .single<{ seller_id: string }>()
 
   if (courseError || !course) {
     return { error: new Error('Kurset ble ikke funnet') }
   }
 
-  if (course.organization_id !== organizationId) {
+  if (course.seller_id !== sellerId) {
     return { error: new Error('Du har ikke tilgang til å slette dette bildet') }
   }
 

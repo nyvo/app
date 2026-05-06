@@ -3,13 +3,19 @@ import { FileText } from '@/lib/icons';
 import { cn, formatKroner } from '@/lib/utils';
 import { getInitials } from '@/utils/stringUtils';
 import { ParticipantActionMenu, type ParticipantActionHandlers } from './ParticipantActionMenu';
+import { useSignupDrawer } from '@/contexts/SignupDrawerContext';
 import type { SignupDisplay, TicketAudience } from '@/types/database';
+import { routes } from '@/lib/routes';
 
 interface SignupRowProps {
   signup: SignupDisplay;
   actionHandlers?: ParticipantActionHandlers;
   /** Hide the course-title link on rows already nested under a per-course group. */
   hideCourse?: boolean;
+  /** Called after the drawer triggers a successful mutation (cancel, mark
+   *  paid). The page that owns the list should refetch. Optional — if
+   *  omitted the drawer still works, the list just won't auto-refresh. */
+  onMutate?: () => void;
 }
 
 /**
@@ -92,7 +98,8 @@ function StatusPill({ kind, label }: { kind: PillKind; label: string }) {
   );
 }
 
-export function SignupRow({ signup, actionHandlers, hideCourse = false }: SignupRowProps) {
+export function SignupRow({ signup, actionHandlers, hideCourse = false, onMutate }: SignupRowProps) {
+  const { open: openDrawer } = useSignupDrawer();
   const isCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled';
   const isDropIn = signup.ticketKind === 'drop_in';
   const audienceLabel = signup.ticketAudience ? AUDIENCE_LABEL[signup.ticketAudience] : null;
@@ -113,11 +120,22 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={() => openDrawer(signup, { onMutate })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openDrawer(signup, { onMutate });
+        }
+      }}
+      aria-label={`Vis detaljer for ${signup.participantName}`}
       className={cn(
-        'grid items-center gap-4 px-4 py-3.5',
+        'grid items-center gap-4 px-4 py-3.5 cursor-pointer text-left',
         'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_160px_32px]',
         'transition-colors duration-100',
         'hover:bg-muted/50',
+        'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
         isCancelled && 'opacity-90',
       )}
     >
@@ -149,7 +167,7 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
           {!hideCourse && (
             <>
               <Link
-                to={`/teacher/courses/${signup.courseId}`}
+                to={routes.course(signup.courseId)}
                 className="text-foreground hover:underline decoration-disabled-foreground underline-offset-2"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -180,8 +198,14 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false }: Signup
         </span>
       </div>
 
-      {/* Action menu — always visible at the far right */}
-      <div className="flex justify-end">
+      {/* Action menu — always visible at the far right. The wrapper stops
+          click propagation so opening the dropdown doesn't also open the
+          drawer. */}
+      <div
+        className="flex justify-end"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         {actionHandlers ? (
           <ParticipantActionMenu signup={signup} handlers={actionHandlers} />
         ) : (

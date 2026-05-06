@@ -26,16 +26,16 @@ Deno.serve(async (req: Request) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: pendingOrgs, error } = await supabase
-      .from('organizations')
+    const { data: pendingSellers, error } = await supabase
+      .from('sellers')
       .select('id, dintero_approval_id, dintero_onboarding_status')
       .in('dintero_onboarding_status', ['PENDING', 'WAITING_FOR_DECLARATION', 'WAITING_FOR_SIGNATURE'])
 
     if (error) {
-      return new Response(`Failed to load orgs: ${error.message}`, { status: 500 })
+      return new Response(`Failed to load sellers: ${error.message}`, { status: 500 })
     }
 
-    if (!pendingOrgs || pendingOrgs.length === 0) {
+    if (!pendingSellers || pendingSellers.length === 0) {
       return new Response(JSON.stringify({ synced: 0 }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -47,25 +47,25 @@ Deno.serve(async (req: Request) => {
     const byId = new Map(approvals.map((a) => [a.id, a]))
 
     let synced = 0
-    for (const org of pendingOrgs) {
-      if (!org.dintero_approval_id) continue
-      const approval = byId.get(org.dintero_approval_id)
+    for (const seller of pendingSellers) {
+      if (!seller.dintero_approval_id) continue
+      const approval = byId.get(seller.dintero_approval_id)
       if (!approval) continue
 
       const caseStatus = approval.case_status
-      if (caseStatus !== org.dintero_onboarding_status) {
+      if (caseStatus !== seller.dintero_onboarding_status) {
         await supabase
-          .from('organizations')
+          .from('sellers')
           .update({
             dintero_onboarding_status: caseStatus,
             dintero_onboarding_complete: caseStatus === 'ACTIVE',
           })
-          .eq('id', org.id)
+          .eq('id', seller.id)
         synced++
       }
     }
 
-    return new Response(JSON.stringify({ synced, checked: pendingOrgs.length }), {
+    return new Response(JSON.stringify({ synced, checked: pendingSellers.length }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })

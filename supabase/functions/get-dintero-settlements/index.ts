@@ -22,6 +22,7 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const API_BASE = 'https://api.dintero.com'
 
 interface BalanceRequest {
+  /** Seller UUID. Kept the camelCase external name for client compatibility. */
   organizationId: string
 }
 
@@ -100,28 +101,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
+    const { data: seller, error: sellerError } = await supabase
+      .from('sellers')
       .select('id, dintero_seller_id, dintero_onboarding_complete, dintero_onboarding_status')
       .eq('id', body.organizationId)
       .single()
 
-    if (orgError || !org) {
-      return errorResponse('Organization not found', 404, req)
+    if (sellerError || !seller) {
+      return errorResponse('Seller not found', 404, req)
     }
 
-    if (!org.dintero_seller_id) {
+    if (!seller.dintero_seller_id) {
       return errorResponse('Dintero seller not set up', 400, req)
     }
 
-    if (!org.dintero_onboarding_complete) {
+    if (!seller.dintero_onboarding_complete) {
       return successResponse({
         balance: { available: [], pending: [] },
         transfers: [],
         account: {
           charges_enabled: false,
           payouts_enabled: false,
-          status: org.dintero_onboarding_status || 'PENDING',
+          status: seller.dintero_onboarding_status || 'PENDING',
         },
         sandbox: isSandbox(),
         notice:
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
     }
 
     const accountId = getAccountId()
-    const sellerId = org.dintero_seller_id
+    const sellerId = seller.dintero_seller_id
 
     const balancesPath = `/v2/accounts/${accountId}/payout/payout-destinations/${sellerId}/balances`
     const transfersPath = `/v2/accounts/${accountId}/payout/payout-destinations/${sellerId}/transfers?limit=10`
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
       account: {
         charges_enabled: true,
         payouts_enabled: true,
-        status: org.dintero_onboarding_status || 'ACTIVE',
+        status: seller.dintero_onboarding_status || 'ACTIVE',
       },
       sandbox: isSandbox(),
     }, 200, req)

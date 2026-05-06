@@ -1,7 +1,7 @@
 // Client-driven finalizer for Dintero transactions in the embedded flow.
 // Replaces reliance on async webhook delivery — the success page calls this
 // endpoint after the iframe authorizes, and we deterministically finish the
-// transaction server-side (capacity check → capture → signup → email).
+// transaction server-side (capacity check → capture → signup).
 //
 // Idempotent. Safe to call multiple times. State machine:
 //
@@ -19,7 +19,7 @@
 // matches our payment_attempt row, preventing forged calls.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import {
   captureTransaction,
   getTransaction,
@@ -48,85 +48,6 @@ function jsonFor(req: Request) {
       status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-}
-
-/**
- * Send the confirmation email. Date/time come from the linked course_session
- * for drop-ins; for package buyers we fall back to the course's own start_date
- * + time_schedule. Email failures are non-fatal — payment is the source of
- * truth, the email is a courtesy.
- */
-async function sendConfirmationEmail(
-  supabase: SupabaseClient,
-  courseId: string,
-  organizationId: string,
-  participantEmail: string,
-  courseSessionId: string | null,
-): Promise<void> {
-  try {
-    const [courseQuery, orgQuery, sessionQuery] = await Promise.all([
-      supabase
-        .from('courses')
-        .select('title, location, time_schedule, start_date')
-        .eq('id', courseId)
-        .single(),
-      supabase.from('organizations').select('name').eq('id', organizationId).single(),
-      courseSessionId
-        ? supabase
-            .from('course_sessions')
-            .select('session_date, start_time')
-            .eq('id', courseSessionId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ])
-
-    const course = courseQuery.data
-    const org = orgQuery.data
-    const session = (sessionQuery as { data: { session_date: string; start_time: string } | null }).data
-
-    const formatDate = (dateStr: string | null): string => {
-      if (!dateStr) return ''
-      return new Date(dateStr).toLocaleDateString('nb-NO', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    }
-
-    const extractTime = (schedule: string | null): string => {
-      if (!schedule) return ''
-      const match = schedule.match(/(\d{1,2}:\d{2})/)
-      return match ? match[1] : ''
-    }
-
-    // Drop-in buyers see their picked session's date/time.
-    // Package buyers see the course's start date + scheduled time.
-    const emailDate = session?.session_date ?? course?.start_date ?? null
-    const emailTime = session?.start_time?.slice(0, 5)
-      ?? extractTime(course?.time_schedule ?? null)
-
-    await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${supabaseServiceKey}`,
-      },
-      body: JSON.stringify({
-        to: participantEmail,
-        template: 'signup-confirmation',
-        templateData: {
-          courseName: course?.title || 'Kurs',
-          courseDate: formatDate(emailDate),
-          courseTime: emailTime,
-          location: course?.location || '',
-          organizationName: org?.name || 'Ease',
-        },
-      }),
-    })
-  } catch (_err) {
-    // Email failures are non-fatal
-  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -263,14 +184,6 @@ Deno.serve(async (req: Request) => {
         .update({ status: 'captured', dintero_transaction_id: transactionId })
         .eq('id', attempt.id)
 
-      await sendConfirmationEmail(
-        supabase,
-        attempt.course_id,
-        attempt.organization_id,
-        attempt.participant_email,
-        attempt.course_session_id ?? null,
-      )
-
       return json({ signup_id: attempt.existing_signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
     }
 
@@ -286,7 +199,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: signupResult } = await supabase.rpc('create_signup_if_available', {
-      p_organization_id: attempt.organization_id,
+      p_seller_id: attempt.seller_id,
       p_course_id: attempt.course_id,
       p_ticket_type_id: attempt.ticket_type_id,
       p_participant_name: attempt.participant_name,
@@ -358,14 +271,6 @@ Deno.serve(async (req: Request) => {
       .from('payment_attempts')
       .update({ status: 'captured', dintero_transaction_id: transactionId })
       .eq('id', attempt.id)
-
-    await sendConfirmationEmail(
-      supabase,
-      attempt.course_id,
-      attempt.organization_id,
-      attempt.participant_email,
-      attempt.course_session_id ?? null,
-    )
 
     return json({ signup_id: signupResult.signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
   } catch (err) {

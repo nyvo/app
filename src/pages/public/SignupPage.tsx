@@ -16,7 +16,7 @@ const ROUTES = AUTH_ROUTES
 
 const SignupPage = () => {
   const navigate = useNavigate()
-  const { signUp, user, isLoading: authLoading, currentOrganization } = useAuth()
+  const { signUp, user, isLoading: authLoading, currentSeller } = useAuth()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -42,10 +42,10 @@ const SignupPage = () => {
     })
 
   useEffect(() => {
-    if (user && !authLoading && currentOrganization) {
+    if (user && !authLoading && currentSeller) {
       navigate(ROUTES.dashboard, { replace: true })
     }
-  }, [user, authLoading, currentOrganization, navigate])
+  }, [user, authLoading, currentSeller, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,7 +100,7 @@ const SignupPage = () => {
       }
     >
       <div className="w-full space-y-5">
-        <GoogleAuthButton redirectTo={`${window.location.origin}/teacher`} />
+        <GoogleAuthButton redirectTo={`${window.location.origin}${AUTH_ROUTES.dashboard}`} />
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />

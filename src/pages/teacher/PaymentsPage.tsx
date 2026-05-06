@@ -48,16 +48,16 @@ const DINTERO_BACKOFFICE_URL = 'https://backoffice.dintero.com/';
  * that on Dintero's own dashboard. Keeps this surface as small as possible.
  */
 const PaymentsPage = () => {
-  const { currentOrganization, user, refreshOrganizations } = useAuth();
+  const { currentSeller, user, refreshSellers } = useAuth();
 
   const onboardingStatus =
-    (currentOrganization?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
-  const isConnected = !!currentOrganization?.dintero_onboarding_complete;
-  const hasApproval = !!currentOrganization?.dintero_seller_id;
-  const contractUrl = currentOrganization?.dintero_contract_url || null;
+    (currentSeller?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
+  const isConnected = !!currentSeller?.dintero_onboarding_complete;
+  const hasApproval = !!currentSeller?.dintero_seller_id;
+  const contractUrl = currentSeller?.dintero_contract_url || null;
 
   const [form, setForm] = useState<OnboardingFormState>({
-    businessName: currentOrganization?.name || '',
+    businessName: currentSeller?.name || '',
     organizationNumber: '',
     contactEmail: user?.email || '',
     bankAccountNumber: '',
@@ -69,7 +69,7 @@ const PaymentsPage = () => {
   const handleSubmitOnboarding = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!currentOrganization?.id) return;
+      if (!currentSeller?.id) return;
       if (
         !form.businessName.trim() ||
         !form.organizationNumber.trim() ||
@@ -84,7 +84,7 @@ const PaymentsPage = () => {
       setSubmitting(true);
       const autoApprove = new URLSearchParams(window.location.search).get('auto_approve') === '1';
       const { data, error } = await createDinteroSeller({
-        organizationId: currentOrganization.id,
+        sellerId: currentSeller.id,
         organizationNumber: form.organizationNumber.trim(),
         businessName: form.businessName.trim(),
         contactEmail: form.contactEmail.trim(),
@@ -99,7 +99,7 @@ const PaymentsPage = () => {
         return;
       }
 
-      await refreshOrganizations();
+      await refreshSellers();
 
       if (data.alreadyOnboarded) {
         toast.success('Utbetalinger er allerede klare');
@@ -113,19 +113,19 @@ const PaymentsPage = () => {
         toast.success('Sjekk e-posten din for å fullføre oppsettet');
       }
     },
-    [currentOrganization?.id, form, refreshOrganizations],
+    [currentSeller?.id, form, refreshSellers],
   );
 
   const handleCheckStatus = useCallback(async () => {
-    if (!currentOrganization?.id) return;
+    if (!currentSeller?.id) return;
     setCheckingStatus(true);
-    const { data, error } = await checkDinteroSellerStatus(currentOrganization.id);
+    const { data, error } = await checkDinteroSellerStatus(currentSeller.id);
     setCheckingStatus(false);
     if (error) {
       toast.error('Kunne ikke sjekke status. Prøv igjen.');
       return;
     }
-    await refreshOrganizations();
+    await refreshSellers();
     if (data?.onboardingComplete) {
       toast.success('Utbetalinger er klare');
     } else if (data?.status === 'DECLINED') {
@@ -133,7 +133,7 @@ const PaymentsPage = () => {
     } else {
       toast('Oppsettet er ikke fullført ennå. Sjekk e-posten din.');
     }
-  }, [currentOrganization?.id, refreshOrganizations]);
+  }, [currentSeller?.id, refreshSellers]);
 
   const handleOpenContract = useCallback(() => {
     if (!contractUrl) return;
@@ -147,11 +147,11 @@ const PaymentsPage = () => {
   // Refresh when coming back from Dintero's hosted KYC (?dintero_return=1).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('dintero_return') === '1' && currentOrganization?.id) {
+    if (params.get('dintero_return') === '1' && currentSeller?.id) {
       void handleCheckStatus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">

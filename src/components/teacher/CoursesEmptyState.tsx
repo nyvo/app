@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { CalendarPlus, Calendar } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { routes } from '@/lib/routes';
 
 export const CoursesEmptyState = () => {
   return (
@@ -12,7 +13,7 @@ export const CoursesEmptyState = () => {
         description="Opprett ditt første kurs for å komme i gang."
         action={(
           <Button asChild size="default" className="gap-2">
-            <Link to="/teacher/new-course">
+            <Link to={routes.newCourse}>
               <CalendarPlus className="size-4" />
               Opprett kurs
             </Link>

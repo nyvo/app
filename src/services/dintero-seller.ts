@@ -9,7 +9,9 @@ export type DinteroOnboardingStatus =
   | 'TERMINATED'
 
 interface CreateSellerParams {
-  organizationId: string
+  sellerId: string
+  // organizationNumber here = the legal/Brønnøysund org-nr of the business
+  // signing up. Has nothing to do with the renamed `organizations` table.
   organizationNumber: string
   businessName: string
   contactEmail: string
@@ -73,11 +75,11 @@ export async function createDinteroSeller(
 }
 
 export async function checkDinteroSellerStatus(
-  organizationId: string,
+  sellerId: string,
 ): Promise<{ data: SellerStatusResult | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke('check-dintero-seller-status', {
-      body: { organizationId },
+      body: { sellerId },
     })
     if (error) return { data: null, error: new Error(error.message || 'Kunne ikke sjekke status') }
     if (data?.error) return { data: null, error: new Error(data.error) }
@@ -88,11 +90,11 @@ export async function checkDinteroSellerStatus(
 }
 
 export async function getDinteroSettlements(
-  organizationId: string,
+  sellerId: string,
 ): Promise<{ data: DinteroSettlementsResult | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke('get-dintero-settlements', {
-      body: { organizationId },
+      body: { sellerId },
     })
     if (error) return { data: null, error: new Error(error.message || 'Kunne ikke hente utbetalinger') }
     if (data?.error) return { data: null, error: new Error(data.error) }

@@ -1,5 +1,4 @@
 import { supabase, typedFrom } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
 import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 
 // Signup with joined course, profile, and (for drop-ins) session data.
@@ -17,7 +16,7 @@ export interface SignupWithProfile extends Signup {
 }
 
 export async function fetchRecentSignups(
-  organizationId: string,
+  sellerId: string,
   limit: number = 4
 ): Promise<{ data: SignupWithDetails[] | null; error: Error | null }> {
   const { data, error } = await supabase
@@ -28,7 +27,7 @@ export async function fetchRecentSignups(
       profile:profiles(id, name, email, avatar_url),
       course_session:course_sessions(session_date, start_time)
     `)
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })
     .limit(limit)
 
@@ -126,18 +125,6 @@ export async function createSignup(
   return { data: data as Signup, error: null }
 }
 
-// Send signup confirmation email (used for free courses where no webhook fires)
-export async function sendSignupConfirmationEmail(courseId: string, signupId: string): Promise<void> {
-  try {
-    await supabase.functions.invoke('send-confirmation-email', {
-      body: { courseId, signupId },
-    })
-  } catch (err) {
-    // Non-blocking — don't fail the signup if email fails
-    logger.error('Failed to send confirmation email:', err)
-  }
-}
-
 // Fetch signups for a course with profile data (for participants tab)
 export async function fetchSignupsByCourseWithProfiles(
   courseId: string
@@ -160,7 +147,7 @@ export async function fetchSignupsByCourseWithProfiles(
 }
 
 export async function fetchAllSignups(
-  organizationId: string
+  sellerId: string
 ): Promise<{ data: SignupWithDetails[] | null; error: Error | null }> {
   const { data, error } = await supabase
     .from('signups')
@@ -169,7 +156,7 @@ export async function fetchAllSignups(
       course:courses(id, title, course_type, time_schedule, start_date, end_date, status, max_participants, total_weeks),
       profile:profiles(id, name, email, avatar_url)
     `)
-    .eq('organization_id', organizationId)
+    .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -271,32 +258,6 @@ export async function createFreeSignup(input: {
     return { data: data as { signupId: string }, error: null }
   } catch (err) {
     return { data: null, error: err instanceof Error ? err : new Error('Ukjent feil') }
-  }
-}
-
-// Send a new payment link to a participant
-export async function sendPaymentLink(
-  signupId: string
-): Promise<{ data: { success: boolean; message: string } | null; error: Error | null }> {
-  try {
-    const { data, error } = await supabase.functions.invoke('send-payment-link', {
-      body: { signup_id: signupId }
-    })
-
-    if (error) {
-      return { data: null, error: new Error(error.message || 'Kunne ikke sende betalingslenke') }
-    }
-
-    if (data?.error) {
-      return { data: null, error: new Error(data.error) }
-    }
-
-    return { data, error: null }
-  } catch (err) {
-    return {
-      data: null,
-      error: err instanceof Error ? err : new Error('Ukjent feil')
-    }
   }
 }
 

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { extractDayName } from '@/utils/dateFormatting';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 import type { Registration } from '@/types/dashboard';
+import { routes } from '@/lib/routes';
 
 interface RegistrationsListProps {
   registrations: Registration[];
@@ -59,7 +60,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         return (
           <Link
             key={registration.id}
-            to="/teacher/signups"
+            to={routes.signups}
             className={cn(
               "group relative flex items-center justify-between gap-4 rounded-lg px-4 py-3 outline-none smooth-transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50",
               registration.hasException && "before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:bg-warning"
@@ -94,7 +95,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-foreground">Siste påmeldinger</h2>
           <Link
-            to="/teacher/signups"
+            to={routes.signups}
             className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground"
           >
             Se alle

@@ -132,7 +132,7 @@ const DEFAULT_SORT_FOR_TAB: Record<ViewTab, SortKey> = {
 
 const CoursesPage = () => {
   const showEmptyState = getShowEmptyState();
-  const { currentOrganization } = useAuth();
+  const { currentSeller } = useAuth();
   const { setAction } = useTeacherShell();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<ViewTab>('active');
@@ -149,7 +149,7 @@ const CoursesPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!currentOrganization?.id) {
+    if (!currentSeller?.id) {
       setIsLoading(false);
       return;
     }
@@ -158,7 +158,7 @@ const CoursesPage = () => {
     setError(null);
 
     try {
-      const coursesResult = await fetchCourses(currentOrganization.id);
+      const coursesResult = await fetchCourses(currentSeller.id);
 
       if (coursesResult.error) {
         setError('Kunne ikke hente kurs. Sjekk nettforbindelsen og prøv på nytt.');
@@ -271,7 +271,7 @@ const CoursesPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentOrganization?.id]);
+  }, [currentSeller?.id]);
 
   useEffect(() => {
     loadData();

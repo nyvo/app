@@ -28,7 +28,9 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 interface SellerRequest {
+  /** Seller UUID. External name kept for client compatibility. */
   organizationId: string
+  /** Norwegian organisation number — Dintero's vocabulary, kept literal. */
   organizationNumber: string
   businessName: string
   contactEmail: string
@@ -67,40 +69,41 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
+    const { data: seller, error: sellerError } = await supabase
+      .from('sellers')
       .select('id, name, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status')
       .eq('id', body.organizationId)
       .single()
 
-    if (orgError || !org) {
-      return errorResponse('Organization not found', 404, req)
+    if (sellerError || !seller) {
+      return errorResponse('Seller not found', 404, req)
     }
 
     // Already active — nothing to do
-    if (org.dintero_onboarding_status === 'ACTIVE') {
+    if (seller.dintero_onboarding_status === 'ACTIVE') {
       return successResponse({
         status: 'ACTIVE',
-        sellerId: org.dintero_seller_id,
+        sellerId: seller.dintero_seller_id,
         contractUrl: null,
         alreadyOnboarded: true,
       }, 200, req)
     }
 
     // Already submitted — return the stored contract URL so the teacher can resume
-    if (org.dintero_approval_id && org.dintero_contract_url) {
+    if (seller.dintero_approval_id && seller.dintero_contract_url) {
       return successResponse({
-        status: org.dintero_onboarding_status || 'PENDING',
-        sellerId: org.dintero_seller_id,
-        approvalId: org.dintero_approval_id,
-        contractUrl: org.dintero_contract_url,
+        status: seller.dintero_onboarding_status || 'PENDING',
+        sellerId: seller.dintero_seller_id,
+        approvalId: seller.dintero_approval_id,
+        contractUrl: seller.dintero_contract_url,
         resumed: true,
       }, 200, req)
     }
 
-    // Use the org id as our platform-side seller id — stable and easy to reconcile.
-    // Dintero wants a UUID-shaped string for both payout_destination_id and payout_reference.
-    const sellerId = org.id
+    // Use the seller id as our platform-side payout destination id — stable
+    // and easy to reconcile. Dintero wants a UUID-shaped string for both
+    // payout_destination_id and payout_reference.
+    const sellerId = seller.id
 
     const approvalRequest: DinteroSellerApprovalRequest = {
       country_code: 'NO',
@@ -133,7 +136,7 @@ Deno.serve(async (req) => {
     const contractUrl = approval.links?.find((l) => l.rel === 'contract_url')?.href ?? null
 
     const { error: updateError } = await supabase
-      .from('organizations')
+      .from('sellers')
       .update({
         dintero_seller_id: sellerId,
         dintero_approval_id: approval.id,
