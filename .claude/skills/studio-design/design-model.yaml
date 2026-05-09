@@ -1,0 +1,304 @@
+name: "Studio"
+philosophy: "Airy, calm wellness. Geist + slate + restraint. Black primary, three cool tints for moments of warmth. Generous spacing because the dashboard isn't data-heavy and shouldn't feel like one."
+primary_mode: "light"
+brand_domain: "wellness / yoga / studio booking"
+brand_type: "ui-rich"
+mono_for_code: false
+mono_for_metrics: false
+
+# ── PRIMITIVES ──
+primitives:
+  colors:
+    slate:    # Cool neutral, Radix slate
+      1:  "#fcfcfd"
+      2:  "#f9f9fb"
+      3:  "#f0f0f3"
+      4:  "#e8e8ec"
+      5:  "#e0e1e6"
+      6:  "#d9d9e0"
+      7:  "#cdced6"
+      8:  "#b9bbc6"
+      9:  "#8b8d98"
+      10: "#80838d"
+      11: "#60646c"
+      12: "#1c2024"
+    sky:      # Cool blue accent (course pop)
+      3:  "#e1f6fd"
+      11: "#00749e"
+    mint:     # Cool green accent (course pop)
+      3:  "#ddf9f2"
+      11: "#027864"
+    iris:     # Cool violet accent (course pop)
+      3:  "#f0f1fe"
+      11: "#5753c6"
+    jade:     # Success
+      3:  "#e6f7ed"
+      11: "#208368"
+    amber:    # Warning
+      3:  "#fff7c2"
+      11: "#ab6400"
+    red:      # Danger / destructive
+      3:  "#feebec"
+      11: "#ce2c31"
+  spacing: [4, 8, 12, 16, 24, 32, 40, 48, 64]
+  radii:   [6, 8, 12, 9999]
+
+# ── SEMANTIC TOKENS ──
+tokens:
+  colors:
+    light:
+      background:           "#ffffff"     # pure white page
+      surface:              "#ffffff"     # cards, same value, different role
+      muted:                "{slate.3}"   # hover fill
+      active:               "{slate.4}"   # selected fill (sidebar nav, picked items)
+      border:               "{slate.6}"   # default border, divider, separator
+      foreground_disabled:  "{slate.8}"
+      foreground_muted:     "{slate.11}"
+      foreground:           "{slate.12}"
+      ring:                 "{slate.12}"
+    success:        "{jade.11}"   # text-success / bg-success (also resolves as solid bg)
+    success_subtle: "{jade.3}"    # bg-success-subtle (pill, banner)
+    warning:        "{amber.11}"
+    warning_subtle: "{amber.3}"
+    danger:         "{red.11}"    # renamed from `destructive` to match status family
+    danger_subtle:  "{red.3}"
+    accent_sky_subtle:    "{sky.3}"
+    accent_sky_fg:        "{sky.11}"
+    accent_mint_subtle:   "{mint.3}"
+    accent_mint_fg:       "{mint.11}"
+    accent_iris_subtle:   "{iris.3}"
+    accent_iris_fg:       "{iris.11}"
+
+  spacing:
+    xs:   4    # icon-text gap, fine details
+    sm:   8    # inside compact components
+    md:   12   # row gap, label-field gap
+    lg:   16   # tight card padding, paragraph rhythm
+    xl:   24   # default card padding (DEFAULT)
+    2xl:  32   # between cards, between major elements
+    3xl:  40   # page-section breaks (dashboard)
+    4xl:  48   # page-section breaks (landing)
+    5xl:  64   # hero breathing (landing only)
+
+  radii:
+    sm:   6      # buttons, inputs, chips
+    md:   8      # cards, panels (THE surface radius)
+    lg:   12     # dialogs, modals only
+    full: 9999   # avatars, pills, indicator dots
+
+  typography:
+    family:
+      sans: "Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    weights:
+      regular: 400
+      medium: 500
+      semibold: 600
+    canonical_sizes:
+      xs:    { size: "12px", line_height: "16px", tracking: "+0.0025em" }
+      sm:    { size: "14px", line_height: "20px", tracking: "0" }
+      base:  { size: "16px", line_height: "24px", tracking: "0" }
+      xl:    { size: "20px", line_height: "28px", tracking: "-0.005em" }
+      "2xl": { size: "24px", line_height: "30px", tracking: "-0.01em" }
+      "3xl": { size: "30px", line_height: "36px", tracking: "-0.015em" }
+      "5xl": { size: "48px", line_height: "52px", tracking: "-0.025em" }
+    dashboard_usage:
+      h1:        "3xl"      # 30px / 600
+      h2:        "2xl"      # 24px / 600
+      h3:        "xl"       # 20px / 600
+      card_title: "base"    # 16px / 600
+      body:      "sm"       # 14px / 400 ← DEFAULT
+      caption:   "xs"       # 12px / 400 or 500
+    landing_usage:
+      display:    "5xl"     # 48px / 600 — hero only, 1 per page (Time2book reference)
+      h1:        "3xl"      # 30px / 600
+      h2:        "2xl"      # 24px / 600
+      h3:        "xl"       # 20px / 600
+      card_title: "xl"      # 20px / 600
+      lead:      "base"     # 16px / 400 — paragraph
+      body:      "base"     # 16px / 400 ← DEFAULT
+      meta:      "sm"       # 14px / 400
+      caption:   "xs"       # 12px / 400
+    note: "Display tops out at 48px. No 60px or 72px hero text — restraint over spectacle. Reference: Time2book — 'measured boldness, confident without being aggressive'."
+
+  elevation:
+    strategy: "flat"
+    border_chrome: "1px solid {colors.light.border}"
+    shadow_xs: "0 1px 2px 0 rgb(0 0 0 / 0.04)"
+    shadow_sm: "0 1px 3px 0 rgb(0 0 0 / 0.05)"
+    note: "Cards use border, not shadow. Shadow only on dialogs / popovers / floating overlays."
+
+  motion:
+    personality: "smooth"
+    duration_fast:   "150ms"   # button press, instant feedback
+    duration_normal: "200ms"   # hover, fade, default
+    duration_slow:   "300ms"   # modal open, page transitions
+    ease_out:    "cubic-bezier(0.16, 1, 0.3, 1)"     # default — calm settling
+    ease_in_out: "cubic-bezier(0.65, 0, 0.35, 1)"    # back-and-forth
+    note: "No spring physics. No bounce. Calm, not playful."
+
+  hero_stage:
+    preset: "flat-blank"
+    observed_style:
+      description: "Restraint over spectacle. The page IS the canvas — no painterly fields, no glowing orbs, no mesh gradients. The card-on-canvas relationship and the typography do the work."
+      where_used: ["all surfaces"]
+    background:
+      medium: "absent"
+      color_mode: "monochrome"
+      saturation: "flat"
+      light_source: "none"
+      falloff: "soft"
+      vignette: "off"
+      texture: "clean"
+      motion: "static"
+      intensity: "subtle"
+      safe_zone: "full-bleed"
+      color_palette: ["#fcfcfd", "#ffffff"]
+    hero:
+      subject: "none"
+    relation:
+      type: "flat"
+      bleed: 0
+    disclaimer: "Studio is intentionally without a hero stage — the calm comes from absence, not composition."
+
+  iconography:
+    observed_style:
+      description: "The user's app already uses Lucide icons (per their CLAUDE.md icon barrel). Lucide pairs natively with Geist — humanist, ~1.75px stroke, rounded terminals."
+      stroke_weight: "regular"
+      corner_treatment: "soft"
+      fill_style: "outline"
+      form_language: "humanist"
+      visual_density: "balanced"
+    fallback_kit:
+      name: "Lucide"
+      weight: "regular"
+      match_score: "high"
+      match_reasoning: "Lucide is already in use in the user's app. Stroke weight 1.75px (set globally) matches Geist 500-weight letterforms. Outline-only, humanist, rounded terminals."
+      cdn: "Imported via lucide-react / from /lib/icons barrel"
+      icon_class_prefix: "lucide-"
+    disclaimer: "Icons inherit the project's Lucide setup — no fallback needed."
+
+# ── COMPONENTS — what the system commits to ──
+components:
+  button_primary:
+    source: "derived"
+    background: "{slate.12}"
+    color: "#ffffff"
+    border: "transparent"
+    padding: "10px 18px"
+    radius: "{radii.full}"   # PILL — roundest tier
+    font_size: "14px"
+    font_weight: 500
+    transition: "none on background — primary stays solid"
+    hover: "no fill change (slate-12 is already near-black; opacity hover adds noise)"
+    active: "no fill change"
+    focus: "2px solid {slate.12}, 2px offset"
+    disabled: { opacity: 0.5 }
+    note: "Primary is the only button that doesn't shift on hover. The motion comes from secondary/ghost variants."
+
+  button_secondary:
+    source: "derived"
+    background: "{colors.surface}"
+    color: "{slate.12}"
+    border: "1px solid {slate.6}"
+    padding: "10px 18px"
+    radius: "{radii.full}"   # PILL
+    hover: { background: "{slate.3}" }
+
+  button_ghost:
+    source: "derived"
+    background: "transparent"
+    color: "{slate.12}"
+    padding: "10px 18px"
+    radius: "{radii.full}"   # PILL
+    hover: { background: "{slate.3}" }
+
+  card:
+    source: "derived"
+    background: "{colors.surface}"
+    border: "1px solid {slate.6}"
+    radius: "{radii.md}"   # 8px
+    padding: "24px"        # p-6 — DEFAULT (airy)
+    shadow: "none"
+
+  input:
+    source: "derived"
+    background: "{colors.surface}"
+    border: "1px solid {slate.6}"
+    radius: "{radii.sm}"   # 6px (NOT pill — pills don't fit text inputs)
+    padding: "8px 12px"
+    height: "36px"         # h-9
+    font_size: "14px"
+    placeholder_color: "{slate.11}"   # ~5.6:1 contrast on white — passes WCAG 1.4.3 AA. slate-9 (~3.7:1) and slate-8 (~2.5:1) both fail.
+    focus: { border: "{slate.12}", ring: "2px solid {slate.12}/15" }
+
+  badge:
+    source: "derived"
+    background: "{slate.3}"
+    color: "{slate.12}"
+    padding: "2px 8px"
+    radius: "{radii.full}"
+    font_size: "12px"
+    font_weight: 500
+    notes: "Sentence case. Never uppercase. Never tracking-wider."
+
+  course_card_pop:
+    source: "derived"
+    notes: "Course cards rotate through three accent tints to create variety. Each card uses {accent_*}_subtle as background — NO border. The tint IS the card. No underline on titles or meta even when the whole card is an <a>. One tint per card, never two together."
+    background: "one of {accent_sky_subtle, accent_mint_subtle, accent_iris_subtle}"
+    border: "none"
+    text_decoration: "none"
+    radius: "{radii.md}"
+    padding: "24px"
+
+  schedule_card_pop:
+    source: "derived"
+    notes: "Schedule/timeplan cards use the same pop pattern as course cards but the pop color is SEMANTIC — it encodes class type. The mapping is system-wide and fixed. Always pair the color with the type LABEL as text on the card (WCAG 1.4.1 — color is never the only signal)."
+    type_color_mapping:
+      engangstime: "{accent_mint_subtle} bg + {accent_mint_fg} type-label color"
+      kursrekke:   "{accent_iris_subtle} bg + {accent_iris_fg} type-label color"
+      online:      "{accent_sky_subtle} bg + {accent_sky_fg} type-label color"
+    border: "none"
+    radius: "{radii.lg}"
+    padding: "16px 20px (today: 20px, p-5)"
+    today_emphasis: "bumped padding (p-5 vs p-4)"
+    type_label_position: "meta line below time/capacity, in {accent_*_fg} color"
+
+  kpi_tile:
+    source: "derived"
+    notes: "Single-metric tile for dashboard hero rows. Label → headline value → delta-as-badge. Delta wraps in badge-rect with semantic color (success when the change is GOOD for the user — fewer cancellations is success, not danger). Max 4 in a row. Never tint the whole card based on direction."
+    background: "{colors.surface}"
+    border: "1px solid {slate.6}"
+    radius: "{radii.md}"
+    padding: "24px"
+    label:
+      size: "12px"
+      weight: 500
+      color: "{foreground_muted}"
+    value:
+      size: "24px"
+      line_height: "30px"
+      weight: 600
+      tracking: "-0.01em"
+      features: "tabular-nums"
+    delta:
+      wrapper: "badge badge-rect (NOT inline colored text)"
+      color_logic: "reflects whether the change is good for the user, not the sign"
+      muted_caption: "rest of context phrase, separated by gap-2"
+    cluster_layout: "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 (max 4)"
+    sparkline: "skip by default — power-user feature"
+
+  dashboard_canvas:
+    source: "derived"
+    notes: "Dashboard main area AND sidebar both use pure white (--background == --surface == #ffffff). A 1px {border} divider separates sidebar from main. Cards become a deliberate tool — used for KPI tiles, modals, course cards, and grouped content with a clear reason; not the default container."
+    background: "#ffffff"
+    sidebar_background: "#ffffff"
+    sidebar_divider: "1px solid {border}"
+
+  sidebar_nav_item:
+    source: "derived"
+    notes: "Three-tier state. Rest = no chrome, just muted text. Hover = muted fill. Selected = active fill + foreground text + medium weight. Selected differs from hover by a single tier (slate-3 vs slate-4) — the delta is small but distinguishable."
+    rest:     { background: "transparent",   color: "{foreground_muted}", weight: 400 }
+    hover:    { background: "{muted}",       color: "{foreground}",       weight: 400 }
+    selected: { background: "{active}",      color: "{foreground}",       weight: 500 }
+    radius: "{radii.sm}"
+    padding: "6px 10px"
