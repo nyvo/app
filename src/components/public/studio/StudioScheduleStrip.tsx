@@ -76,7 +76,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
   return (
     <section className="space-y-8">
       <header className="space-y-1.5">
-        <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-muted-foreground">
+        <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-foreground-muted">
           Hele timeplanen
         </h2>
         <p className="text-base text-foreground/90 leading-snug max-w-md">
@@ -122,18 +122,18 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                           {course.title}
                         </span>
                         {isCancelled && (
-                          <span className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                          <span className="text-[10px] font-medium tracking-wide uppercase text-foreground-muted border border-border rounded px-1.5 py-0.5">
                             Avlyst
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-x-3 text-xs text-muted-foreground">
+                      <div className="mt-0.5 flex items-center gap-x-3 text-xs text-foreground-muted">
                         {instructor && <span className="truncate">{instructor}</span>}
                         {course.location && (
                           <span className="hidden sm:inline truncate">· {course.location}</span>
                         )}
                         {course.course_type === 'course-series' && course.total_weeks && (
-                          <span className="inline-flex items-center gap-1 text-disabled-foreground">
+                          <span className="inline-flex items-center gap-1 text-foreground-disabled">
                             <Clock className="size-3" strokeWidth={1.75} />
                             {course.total_weeks} uker
                           </span>
@@ -150,12 +150,12 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                         </span>
                       )}
                       {isFull && !isCancelled && (
-                        <span className="text-[10px] font-medium tracking-wide uppercase text-muted-foreground">
+                        <span className="text-[10px] font-medium tracking-wide uppercase text-foreground-muted">
                           Fullt
                         </span>
                       )}
                     </div>
-                    <ArrowRight className="size-4 shrink-0 text-disabled-foreground transition-all duration-200 group-hover:text-foreground group-hover:translate-x-0.5" />
+                    <ArrowRight className="size-4 shrink-0 text-foreground-disabled transition-all duration-200 group-hover:text-foreground group-hover:translate-x-0.5" />
                   </Link>
                 );
               })}

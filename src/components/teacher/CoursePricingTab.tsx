@@ -311,15 +311,15 @@ function TicketTypeRow({
           )}
           <p className={cn(
             'text-[15px] font-semibold',
-            archived ? 'text-muted-foreground' : 'text-foreground',
+            archived ? 'text-foreground-muted' : 'text-foreground',
           )}>
             {tier.label}
           </p>
         </div>
-        <p className="mt-1 text-[13px] tabular-nums text-muted-foreground">
+        <p className="mt-1 text-[13px] tabular-nums text-foreground-muted">
           {metaParts.map((part, i) => (
             <span key={i}>
-              {i > 0 && <span className="text-disabled-foreground mx-1.5">·</span>}
+              {i > 0 && <span className="text-foreground-disabled mx-1.5">·</span>}
               <span className={cn(
                 part.tone === 'foreground' && 'text-foreground font-medium',
                 part.tone === 'warning' && 'text-foreground font-medium',
@@ -330,7 +330,7 @@ function TicketTypeRow({
           ))}
         </p>
         {tier.description && (
-          <p className="mt-1.5 text-xs text-muted-foreground leading-[1.45]">{tier.description}</p>
+          <p className="mt-1.5 text-xs text-foreground-muted leading-[1.45]">{tier.description}</p>
         )}
       </div>
 
@@ -383,7 +383,7 @@ function TicketTypeRow({
             </>
           )}
           {onDelete && (
-            <DropdownMenuItem onClick={onDelete} className="text-destructive">
+            <DropdownMenuItem onClick={onDelete} className="text-danger">
               <Trash className="size-3.5 mr-2" />
               Slett permanent
             </DropdownMenuItem>
@@ -398,7 +398,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <div className="flex flex-col items-center gap-1 py-8 text-center">
       <p className="text-sm font-medium text-foreground">Ingen billettyper enda</p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-foreground-muted">
         Opprett minst én aktiv billettype for at studenter skal kunne melde seg på.
       </p>
       <Button size="sm" className="mt-3 gap-1.5" onClick={onCreate}>

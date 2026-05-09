@@ -59,7 +59,7 @@ export function RecentActivityCard({ signups, onMutate }: RecentActivityCardProp
       <CardHeader>
         <CardTitle>Siste aktivitet</CardTitle>
         <CardAction>
-          <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne måneden</Badge>
+          <Badge variant="secondary" className="text-foreground-muted tracking-wide">Denne måneden</Badge>
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -87,7 +87,7 @@ function ActivityBody({
     return (
       <div className="flex flex-col items-center gap-1 py-8 text-center">
         <p className="text-sm font-medium text-foreground">Ingen aktivitet ennå</p>
-        <p className="text-xs text-muted-foreground">Nye påmeldinger vises her</p>
+        <p className="text-xs text-foreground-muted">Nye påmeldinger vises her</p>
       </div>
     )
   }
@@ -108,9 +108,9 @@ function ActivityBody({
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-              <p className="mt-0.5 truncate text-sm text-muted-foreground">{item.description}</p>
+              <p className="mt-0.5 truncate text-sm text-foreground-muted">{item.description}</p>
             </div>
-            <span className="shrink-0 text-xs tabular-nums text-tertiary-foreground">
+            <span className="shrink-0 text-xs tabular-nums text-foreground-tertiary">
               {item.timestamp}
             </span>
           </button>

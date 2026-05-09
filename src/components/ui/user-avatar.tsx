@@ -17,7 +17,7 @@ interface UserAvatarProps {
 const sizeConfig: Record<AvatarSize, { container: string; text: string; icon: string }> = {
   xxs: { container: 'size-4', text: 'text-[6px]', icon: 'size-2.5' },
   xs:  { container: 'size-6', text: 'text-[10px]', icon: 'size-3' },
-  sm:  { container: 'size-8', text: 'text-xxs', icon: 'size-4' },
+  sm:  { container: 'size-8', text: 'text-[11px] leading-none', icon: 'size-4' },
   md:  { container: 'size-9', text: 'text-xs', icon: 'size-4' },
   lg:  { container: 'size-10', text: 'text-sm', icon: 'size-5' },
   xl:  { container: 'size-16', text: 'text-xl', icon: 'size-8' },
@@ -99,7 +99,7 @@ export function UserAvatar({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-full bg-muted text-muted-foreground shrink-0',
+        'flex items-center justify-center rounded-full bg-muted text-foreground-muted shrink-0',
         config.container,
         ringClassName,
         className,

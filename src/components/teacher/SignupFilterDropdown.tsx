@@ -20,7 +20,7 @@ export function SignupFilterDropdown({ value, onChange, counts }: SignupFilterDr
   return (
     <Select value={value} onValueChange={(v) => onChange(v as CombinedFilter)}>
       <SelectTrigger size="sm" className="w-full md:w-auto" aria-label="Filtrer deltakere">
-        <span className="text-muted-foreground">Filter:</span>
+        <span className="text-foreground-muted">Filter:</span>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -104,14 +104,14 @@ function SegmentedTabs({
               'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
               active
                 ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
-                : 'text-muted-foreground hover:text-foreground',
+                : 'text-foreground-muted hover:text-foreground',
             )}
           >
             {t.label}
             {t.count !== undefined && (
               <span className={cn(
                 'tabular-nums text-xs',
-                active ? 'text-foreground' : 'text-muted-foreground',
+                active ? 'text-foreground' : 'text-foreground-muted',
               )}>
                 {t.count}
               </span>
@@ -376,7 +376,7 @@ const CoursesPage = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-semibold text-foreground">Mine kurs</h1>
             {!showCoursesEmptyState && (
-              <p className="text-sm mt-1 text-muted-foreground">Oversikt over kursene dine.</p>
+              <p className="text-sm mt-1 text-foreground-muted">Oversikt over kursene dine.</p>
             )}
           </div>
         </motion.header>
@@ -399,7 +399,7 @@ const CoursesPage = () => {
                 <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
                   <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                     <SelectTrigger className="w-44" aria-label="Sorter kurs">
-                      <ArrowUpDown className="size-3.5 text-muted-foreground" />
+                      <ArrowUpDown className="size-3.5 text-foreground-muted" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -420,7 +420,7 @@ const CoursesPage = () => {
               </div>
 
               {/* Frame — rows + footer in one card */}
-              <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+              <div className="rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
                 {isLoading ? (
                   <div role="status" aria-live="polite" aria-label="Laster kurs">
                     <span className="sr-only">Henter kurs</span>
@@ -452,7 +452,7 @@ const CoursesPage = () => {
                     Lives BELOW the divide-y rows, separated by its own border. */}
                 {showLoadMore && (
                   <div className="flex items-center justify-between gap-3 px-4 py-3 bg-background">
-                    <span className="text-xs text-muted-foreground tabular-nums">
+                    <span className="text-xs text-foreground-muted tabular-nums">
                       Viser {visibleCount} av {filteredRows.length} kurs
                     </span>
                     <Button

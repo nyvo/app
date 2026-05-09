@@ -102,14 +102,14 @@ function SegmentedTabs({
               'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
               active
                 ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
-                : 'text-muted-foreground hover:text-foreground',
+                : 'text-foreground-muted hover:text-foreground',
             )}
           >
             {t.label}
             {t.count !== undefined && (
               <span className={cn(
                 'tabular-nums text-xs',
-                active ? 'text-foreground' : 'text-muted-foreground',
+                active ? 'text-foreground' : 'text-foreground-muted',
               )}>
                 {t.count}
               </span>
@@ -376,7 +376,7 @@ export const SignupsPage = () => {
       >
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-foreground">Påmeldinger</h1>
-          <p className="text-sm mt-1 text-muted-foreground">Hvem som er påmeldt, hva de kjøpte, og hva som trenger oppfølging.</p>
+          <p className="text-sm mt-1 text-foreground-muted">Hvem som er påmeldt, hva de kjøpte, og hva som trenger oppfølging.</p>
         </div>
       </motion.header>
 
@@ -390,7 +390,7 @@ export const SignupsPage = () => {
           <div className="flex w-full items-center gap-2 md:ml-auto md:w-auto">
             <Select value={courseFilter} onValueChange={setCourseFilter}>
               <SelectTrigger className="w-44" aria-label="Filtrer kurs">
-                <Filter className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
+                <Filter className="size-3.5 text-foreground-muted" strokeWidth={1.75} />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -411,7 +411,7 @@ export const SignupsPage = () => {
         </div>
 
         {/* Frame */}
-        <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+        <div className="rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
           {error ? (
             <ErrorState
               title="Kunne ikke laste påmeldinger"
@@ -451,7 +451,7 @@ export const SignupsPage = () => {
           {/* Footer — INSIDE frame, single row */}
           {showPagination && (
             <div className="flex items-center justify-between gap-3 px-4 py-3 bg-background">
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-xs text-foreground-muted tabular-nums">
                 Viser {effectiveVisible} av {filteredSignups.length} påmeldinger
               </span>
               <div className="flex gap-2">

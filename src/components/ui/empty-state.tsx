@@ -39,12 +39,12 @@ export const EmptyState = React.memo(function EmptyState({
           isCompact ? 'size-10' : 'size-12',
           isPublic ? 'bg-muted' : 'bg-background'
         )}>
-          <Icon className={cn(isCompact ? 'size-4' : 'size-5', 'text-muted-foreground')} />
+          <Icon className={cn(isCompact ? 'size-4' : 'size-5', 'text-foreground-muted')} />
         </div>
       )}
       <h3 className="text-base font-semibold text-foreground">{title}</h3>
       {description && (
-        <p className={cn('mt-1 text-muted-foreground', isCompact ? 'text-sm max-w-xs' : 'text-sm max-w-sm')}>
+        <p className={cn('mt-1 text-foreground-muted', isCompact ? 'text-sm max-w-xs' : 'text-sm max-w-sm')}>
           {description}
         </p>
       )}

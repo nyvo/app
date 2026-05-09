@@ -25,13 +25,13 @@ export function LocationCard({ location, address, postalCode, city }: LocationCa
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
       <div className="flex items-start gap-3.5">
         <MapPin className="size-4 shrink-0 mt-0.5 text-foreground" strokeWidth={1.75} />
         <div className="min-w-0 flex-1">
           <p className="text-[15px] font-medium text-foreground">{location}</p>
           {fullAddress && (
-            <p className="mt-0.5 text-[13px] text-muted-foreground">{fullAddress}</p>
+            <p className="mt-0.5 text-[13px] text-foreground-muted">{fullAddress}</p>
           )}
           <a
             href={mapsUrl}

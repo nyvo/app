@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
  * - Table fills the parent container. Page-level constraint is the PAGE'S job
  *   (e.g. `<main className="mx-auto max-w-6xl">` on the page wrapper) — the
  *   Table primitive never caps its own width.
- * - Header cells use label styling (text-xs font-medium tracking-wide text-muted-foreground).
+ * - Header cells use label styling (text-xs font-medium tracking-wide text-foreground-muted).
  * - Body rows get a subtle hover (bg-muted/50) and divide-y via the body wrapper.
  * - Cell padding is uniform (px-4 py-4, sm:px-6).
  *
@@ -75,7 +75,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       data-slot="table-head"
       scope="col"
       className={cn(
-        "text-xs font-medium tracking-wide px-4 py-3 text-muted-foreground sm:px-6",
+        "text-xs font-medium tracking-wide px-4 py-3 text-foreground-muted sm:px-6",
         className,
       )}
       {...props}
@@ -97,7 +97,7 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-sm text-muted-foreground", className)}
+      className={cn("mt-4 text-sm text-foreground-muted", className)}
       {...props}
     />
   )

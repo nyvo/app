@@ -37,7 +37,7 @@ export function StudioHero({ organization }: StudioHeroProps) {
             {organization.name}
           </h1>
           {organization.description && (
-            <p className="mt-5 max-w-2xl text-base text-muted-foreground leading-relaxed whitespace-pre-line">
+            <p className="mt-5 max-w-2xl text-base text-foreground-muted leading-relaxed whitespace-pre-line">
               {organization.description}
             </p>
           )}
@@ -68,14 +68,14 @@ export function StudioHero({ organization }: StudioHeroProps) {
 
           {address && (
             <div className="flex items-start gap-2.5 text-[13px] text-foreground leading-[1.45]">
-              <MapPin className="size-3.5 mt-0.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+              <MapPin className="size-3.5 mt-0.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
               <span>{address}</span>
             </div>
           )}
 
           {organization.email && (
             <div className="flex items-start gap-2.5 text-[13px] text-foreground leading-[1.45]">
-              <Mail className="size-3.5 mt-0.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+              <Mail className="size-3.5 mt-0.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
               <a
                 href={`mailto:${organization.email}`}
                 className="underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground break-all"

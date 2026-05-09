@@ -9,14 +9,14 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground",
+        default: "bg-surface text-foreground",
         destructive:
-          "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
-        info: "bg-card [&_svg]:text-info",
-        success: "bg-card [&_svg]:text-success",
-        warning: "bg-card [&_svg]:text-warning",
-        error: "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90",
-        neutral: "bg-card [&_svg]:text-muted-foreground",
+          "bg-surface text-danger *:data-[slot=alert-description]:text-danger/90 *:[svg]:text-current",
+        info: "bg-surface [&_svg]:text-info",
+        success: "bg-surface [&_svg]:text-success",
+        warning: "bg-surface [&_svg]:text-warning",
+        error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger/90",
+        neutral: "bg-surface [&_svg]:text-foreground-muted",
       },
       size: {
         default: "px-4 py-3",
@@ -35,8 +35,8 @@ const variantTextColor: Record<string, string> = {
   info: "text-info",
   success: "text-success",
   warning: "text-warning",
-  error: "text-destructive",
-  destructive: "text-destructive",
+  error: "text-danger",
+  destructive: "text-danger",
   neutral: "text-foreground",
 }
 
@@ -117,7 +117,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        "text-sm text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+        "text-sm text-balance text-foreground-muted md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
         className
       )}
       {...props}

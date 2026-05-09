@@ -229,7 +229,7 @@ const SchedulePage = () => {
       >
         <div className="mb-8 pt-6 lg:pt-8">
           <h1 className="text-3xl font-semibold text-foreground">Timeplan</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground-muted">
             Kommende timer sortert etter dato.
           </p>
         </div>
@@ -339,11 +339,11 @@ function SessionCard({ session }: { session: SessionRow }) {
           </span>
         </div>
         <div className="mt-1 flex items-baseline gap-3 pl-[6.5rem]">
-          <span className="text-xs text-muted-foreground tabular-nums truncate">
+          <span className="text-xs text-foreground-muted tabular-nums truncate">
             {meta && (
               <>
                 <span>{meta}</span>
-                <span className="text-disabled-foreground mx-1.5">·</span>
+                <span className="text-foreground-disabled mx-1.5">·</span>
               </>
             )}
             <span>{capacityText}</span>

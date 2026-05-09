@@ -42,8 +42,8 @@ function KpiCell({
   bar?: { pct: number };
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="text-xs text-foreground-muted">{label}</div>
       <div className={cn(
         'mt-1 text-[22px] font-semibold tracking-tight text-foreground tabular-nums leading-tight truncate',
       )}>
@@ -58,10 +58,10 @@ function KpiCell({
       </div>
       {bar && !loading && (
         <div className="mt-1.5 h-[3px] rounded-full bg-muted overflow-hidden">
-          <div className="h-full rounded-full bg-muted-foreground" style={{ width: `${bar.pct}%` }} />
+          <div className="h-full rounded-full bg-foreground-muted" style={{ width: `${bar.pct}%` }} />
         </div>
       )}
-      {sub && <div className={cn('text-xs text-muted-foreground truncate', bar ? 'mt-2' : 'mt-1')}>{sub}</div>}
+      {sub && <div className={cn('text-xs text-foreground-muted truncate', bar ? 'mt-2' : 'mt-1')}>{sub}</div>}
     </div>
   );
 }

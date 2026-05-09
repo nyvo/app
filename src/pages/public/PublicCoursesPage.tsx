@@ -171,7 +171,7 @@ const PublicCoursesPage = () => {
         {error && !loading && (
           <div className="flex flex-col items-center justify-center py-32 text-center px-6">
             <h3 className="text-2xl font-semibold mb-2 tracking-tight text-foreground">{error}</h3>
-            <Button asChild variant="link" className="text-muted-foreground">
+            <Button asChild variant="link" className="text-foreground-muted">
               <Link to="/">Gå til forsiden</Link>
             </Button>
           </div>
@@ -201,7 +201,7 @@ const PublicCoursesPage = () => {
                         <h2 className="text-xl font-semibold text-foreground">
                           Timer og kurs
                         </h2>
-                        <p className="text-sm text-muted-foreground max-w-md">
+                        <p className="text-sm text-foreground-muted max-w-md">
                           Alle kurs, sortert etter hva som starter snarest.
                         </p>
                       </div>
@@ -231,7 +231,7 @@ const PublicCoursesPage = () => {
                                     <span
                                       className={cn(
                                         'tabular-nums text-xs',
-                                        active ? 'text-background/60' : 'text-muted-foreground',
+                                        active ? 'text-background/60' : 'text-foreground-muted',
                                       )}
                                     >
                                       {typeCounts[t]}
@@ -245,8 +245,8 @@ const PublicCoursesPage = () => {
 
                         <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
                           <SelectTrigger size="sm" aria-label="Sorter kurs" className="min-w-[200px] gap-1.5">
-                            <ArrowUpDown className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-                            <span className="text-muted-foreground">Sorter etter:</span>
+                            <ArrowUpDown className="size-3.5 text-foreground-muted" strokeWidth={1.75} />
+                            <span className="text-foreground-muted">Sorter etter:</span>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -261,7 +261,7 @@ const PublicCoursesPage = () => {
                     </header>
 
                     {filteredSorted.length === 0 ? (
-                      <p className="py-12 text-center text-sm text-muted-foreground">
+                      <p className="py-12 text-center text-sm text-foreground-muted">
                         Ingen kurs i denne kategorien.
                       </p>
                     ) : (
@@ -282,7 +282,7 @@ const PublicCoursesPage = () => {
                             >
                               Vis flere
                             </Button>
-                            <span className="text-xs text-muted-foreground tabular-nums">
+                            <span className="text-xs text-foreground-muted tabular-nums">
                               Viser {visibleCount} av {filteredSorted.length} kurs
                             </span>
                           </div>

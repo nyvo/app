@@ -77,7 +77,7 @@ export function AuthFormField({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
             aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
           >
             {showPassword ? (
@@ -90,9 +90,9 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-destructive">{error}</p>
+        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-danger">{error}</p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="text-xs text-muted-foreground flex items-center gap-1 transition-colors duration-200">
+        <p id={`${id}-hint`} className="text-xs text-foreground-muted flex items-center gap-1 transition-colors duration-200">
           {hintMet && <Check className="size-3.5" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

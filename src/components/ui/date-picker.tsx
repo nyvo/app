@@ -54,17 +54,17 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-card px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
-            !value && 'text-muted-foreground',
-            error && 'border-destructive',
+            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
+            !value && 'text-foreground-muted',
+            error && 'border-danger',
             className
           )}
           {...buttonProps}
         >
-          <span className={cn(!value && 'text-muted-foreground')}>
+          <span className={cn(!value && 'text-foreground-muted')}>
             {value ? formatDateNorwegian(value) : placeholder}
           </span>
-          <ChevronDown className={cn('size-4 text-muted-foreground shrink-0', error && 'text-destructive')} />
+          <ChevronDown className={cn('size-4 text-foreground-muted shrink-0', error && 'text-danger')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className='w-auto overflow-hidden p-0' align='start' showOverlay>
@@ -83,7 +83,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
             months: "relative flex flex-col gap-4",
             month: "flex flex-col gap-5",
             weekdays: "flex justify-between",
-            weekday: "text-muted-foreground w-11 text-center text-xs font-normal",
+            weekday: "text-foreground-muted w-11 text-center text-xs font-normal",
             week: "flex justify-between w-full mt-1",
             day: "size-11 p-0 text-center",
           }}

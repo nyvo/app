@@ -90,7 +90,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           {/* Exception resolution actions — only for problem signups */}
           {exceptionType === 'payment_failed' && (
             <>
-              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-muted-foreground">
+              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-foreground-muted">
                 Betaling feilet
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -106,7 +106,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
 
           {exceptionType === 'pending_payment' && (
             <>
-              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-muted-foreground">
+              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-foreground-muted">
                 Venter på betaling
               </DropdownMenuLabel>
               <DropdownMenuItem
@@ -159,13 +159,13 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
                     <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground-muted">
                   {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
                     ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt via betalingsoversikten.'
                     : 'Deltakeren mister plassen sin. Dette kan ikke angres.'}
@@ -198,13 +198,13 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
                   </div>
                   {signup.amountPaid != null && signup.amountPaid > 0 && (
                     <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground-muted">
                   Hele beløpet refunderes til betalingskortet. Refusjonen tar vanligvis 5–10 virkedager.
                 </p>
               </div>

@@ -22,16 +22,16 @@ export function PublicFooter({ studioName, studioCity }: PublicFooterProps) {
               </span>
               <span className="text-[15px] font-medium tracking-tight text-foreground">Ease</span>
             </Link>
-            <p className="max-w-sm text-sm text-muted-foreground leading-relaxed">
+            <p className="max-w-sm text-sm text-foreground-muted leading-relaxed">
               Påmeldingsplattform for kurs, timer og arrangementer. Drevet av små studioer i Norge.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 text-xs font-medium tracking-wide uppercase text-muted-foreground sm:flex-row sm:gap-8">
+          <div className="flex flex-col gap-3 text-xs font-medium tracking-wide uppercase text-foreground-muted sm:flex-row sm:gap-8">
             {studioName && (
               <span className="text-foreground/80">
                 {studioName}
-                {studioCity ? <span className="text-muted-foreground"> · {studioCity}</span> : null}
+                {studioCity ? <span className="text-foreground-muted"> · {studioCity}</span> : null}
               </span>
             )}
             <Link to="/terms" className="hover:text-foreground transition-colors">Vilkår</Link>
@@ -39,7 +39,7 @@ export function PublicFooter({ studioName, studioCity }: PublicFooterProps) {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border/40 flex items-center justify-between text-[11px] tracking-wide uppercase text-disabled-foreground">
+        <div className="mt-10 pt-6 border-t border-border/40 flex items-center justify-between text-[11px] tracking-wide uppercase text-foreground-disabled">
           <span>© {new Date().getFullYear()} Ease</span>
           <span className="font-medium">Laget i Norge</span>
         </div>

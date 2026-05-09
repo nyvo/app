@@ -56,13 +56,13 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
           <div className="flex items-start justify-between">
             <div>
               <h3 className="text-sm font-medium text-foreground">Del dette kurset</h3>
-              <p className="text-xs text-muted-foreground mt-1 font-normal">
+              <p className="text-xs text-foreground-muted mt-1 font-normal">
                 Alle med lenken kan se dette kurset.
               </p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted p-1 rounded-lg smooth-transition"
+              className="cursor-pointer text-foreground-muted hover:text-foreground hover:bg-muted p-1 rounded-lg smooth-transition"
             >
               <X className="size-4" />
             </button>
@@ -78,9 +78,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
               className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-muted smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-muted border border-border rounded-lg group-hover:bg-background smooth-transition">
-                <Twitter className="size-4 text-muted-foreground group-hover:text-foreground" />
+                <Twitter className="size-4 text-foreground-muted group-hover:text-foreground" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-muted-foreground">
+              <span className="text-xs font-medium text-foreground-muted group-hover:text-foreground-muted">
                 Twitter
               </span>
             </button>
@@ -92,9 +92,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
             >
               <div className="w-10 h-10 flex items-center justify-center bg-muted border border-border rounded-lg group-hover:bg-background smooth-transition">
                 {/* Brand color: LinkedIn blue */}
-                <Linkedin className="size-4 text-muted-foreground group-hover:text-[#0A66C2]" />
+                <Linkedin className="size-4 text-foreground-muted group-hover:text-[#0A66C2]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-muted-foreground">
+              <span className="text-xs font-medium text-foreground-muted group-hover:text-foreground-muted">
                 LinkedIn
               </span>
             </button>
@@ -106,9 +106,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
             >
               <div className="w-10 h-10 flex items-center justify-center bg-muted border border-border rounded-lg group-hover:bg-background smooth-transition">
                 {/* Brand color: Facebook blue */}
-                <Facebook className="size-4 text-muted-foreground group-hover:text-[#1877F2]" />
+                <Facebook className="size-4 text-foreground-muted group-hover:text-[#1877F2]" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-muted-foreground">
+              <span className="text-xs font-medium text-foreground-muted group-hover:text-foreground-muted">
                 Facebook
               </span>
             </button>
@@ -119,9 +119,9 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
               className="cursor-pointer group flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-muted smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-muted border border-border rounded-lg group-hover:bg-background smooth-transition">
-                <Mail className="size-4 text-muted-foreground group-hover:text-foreground" />
+                <Mail className="size-4 text-foreground-muted group-hover:text-foreground" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground group-hover:text-muted-foreground">
+              <span className="text-xs font-medium text-foreground-muted group-hover:text-foreground-muted">
                 E-post
               </span>
             </button>
@@ -132,23 +132,23 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
 
         {/* Copy Link Section */}
         <div className="px-6 py-4">
-          <label className="text-xs font-medium text-muted-foreground mb-2 block">Kurslenke</label>
+          <label className="text-xs font-medium text-foreground-muted mb-2 block">Kurslenke</label>
           <div className="flex items-center gap-2 p-1.5 bg-muted border border-border rounded-lg focus-within:ring-2 focus-within:ring-ring/50 smooth-transition">
-            <div className="pl-2 text-muted-foreground">
+            <div className="pl-2 text-foreground-muted">
               <LinkIcon className="size-3.5" />
             </div>
             <input
               type="text"
               value={courseUrl}
               readOnly
-              className="bg-transparent border-none text-xs text-muted-foreground w-full focus:ring-0 px-1 py-1 truncate select-all outline-none"
+              className="bg-transparent border-none text-xs text-foreground-muted w-full focus:ring-0 px-1 py-1 truncate select-all outline-none"
             />
             <button
               onClick={handleCopy}
               className={`cursor-pointer flex items-center gap-1.5 border px-3 py-1.5 rounded-lg text-xs font-medium smooth-transition shrink-0 ${
                 copied
-                  ? 'bg-success/10 border-success/20 text-success'
-                  : 'bg-background border-border hover:bg-muted text-muted-foreground'
+                  ? 'bg-success-subtle border-success/20 text-success'
+                  : 'bg-background border-border hover:bg-muted text-foreground-muted'
               }`}
             >
               {copied ? (
@@ -166,7 +166,7 @@ export function ShareCoursePopover({ courseUrl, courseTitle = 'dette kurset', ch
         {/* Footer - Access Info */}
         <div className="bg-background border-t border-border px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Offentlig tilgjengelig</span>
+            <span className="text-xs text-foreground-muted">Offentlig tilgjengelig</span>
           </div>
 
           <Button variant="ghost" size="xs">

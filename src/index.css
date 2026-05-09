@@ -7,8 +7,21 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   shadcn preset `b1Z5aAzb6` (radix-vega) — foundation tokens.
-   Single source of truth for colors, radius, and font.
+   STUDIO DESIGN SYSTEM — three-layer token architecture
+
+   Layer 1 — Primitives (Radix-derived scales, in :root below).
+              Raw color values. Never consume directly in components.
+   Layer 2 — Semantic tokens (also in :root). Reference primitives by
+              role: --foreground, --surface, --success, etc.
+              This is what components consume.
+   Layer 3 — Tailwind @theme (inline below). Exposes semantic tokens
+              as utility classes (bg-foreground, text-success-fg, etc.).
+
+   Source of truth for the design system:
+     ~/.claude/skills/studio-design/design-model.yaml
+
+   Color format: OKLCH (perceptually uniform). Values aligned to
+   Radix Slate / Sky / Mint / Iris / Jade / Amber / Red scales.
    ============================================================ */
 
 @theme inline {
@@ -16,59 +29,62 @@
   --font-sans: 'Geist Variable', sans-serif;
   --font-serif: 'EB Garamond', Georgia, serif;
 
+  /* Surfaces — `--background` (page canvas) and `--surface` (cards/panels)
+     share value in light mode but differ in role; would diverge in dark. */
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-tinted: var(--surface-tinted);
+  --color-surface-tinted-border: var(--surface-tinted-border);
+
+  /* Foreground — role then modifier (Studio convention) */
   --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-tertiary: var(--foreground-tertiary);
+  --color-foreground-disabled: var(--foreground-disabled);
+
+  /* Brand / interaction */
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted-foreground: var(--primary-muted-foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-tertiary-foreground: var(--tertiary-foreground);
-  --color-disabled-foreground: var(--disabled-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--primary-foreground);
+
+  /* Hover/active fill (subtle, not a status) */
+  --color-muted: var(--muted);
+
+  /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+
+  /* Pop accents — category-coding (course level, lesson type) */
+  --color-accent-sky-subtle: var(--accent-sky-subtle);
+  --color-accent-sky-fg: var(--accent-sky-fg);
+  --color-accent-mint-subtle: var(--accent-mint-subtle);
+  --color-accent-mint-fg: var(--accent-mint-fg);
+  --color-accent-iris-subtle: var(--accent-iris-subtle);
+  --color-accent-iris-fg: var(--accent-iris-fg);
+
+  /* Selection */
   --color-selection: var(--selection);
   --color-selection-foreground: var(--selection-foreground);
   --color-selection-light: var(--selection-light);
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
-  --color-sage: var(--sage);
-  --color-sage-foreground: var(--sage-foreground);
-  --color-sage-solid: var(--sage-solid);
-  --color-sage-solid-foreground: var(--sage-solid-foreground);
-  --color-rose: var(--rose);
-  --color-rose-foreground: var(--rose-foreground);
-  --color-rose-solid: var(--rose-solid);
-  --color-rose-solid-foreground: var(--rose-solid-foreground);
-  --color-lavender: var(--lavender);
-  --color-lavender-foreground: var(--lavender-foreground);
-  --color-lavender-solid: var(--lavender-solid);
-  --color-lavender-solid-foreground: var(--lavender-solid-foreground);
-  --color-sand: var(--sand);
-  --color-sand-foreground: var(--sand-foreground);
-  --color-sand-solid: var(--sand-solid);
-  --color-sand-solid-foreground: var(--sand-solid-foreground);
-  --color-sky: var(--sky);
-  --color-sky-foreground: var(--sky-foreground);
-  --color-sky-solid: var(--sky-solid);
-  --color-sky-solid-foreground: var(--sky-solid-foreground);
-  --color-surface-elevated: var(--surface-elevated);
-  --color-surface-tinted: var(--surface-tinted);
-  --color-surface-tinted-border: var(--surface-tinted-border);
-  --color-primary-muted-foreground: var(--primary-muted-foreground);
+
+  /* Structure */
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
   --color-input: var(--input);
@@ -97,115 +113,139 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* ── Type scale ──────────────────────────────────────────────
-     Sizes preserved as Tailwind defaults (so `text-base` stays 16px
-     for public/landing). Line-height + tracking tuned per tier for
-     consistent hierarchy. Display tier (4xl/5xl/6xl) added for
-     landing hero moments. Role conventions live in CLAUDE.md.
+  /* ── Type scale (Studio canonical, per design-model.yaml) ────
+       xs   12 / 16 / +0.0025em    — captions, KPI labels, chips
+       sm   14 / 20 / 0            — dashboard body (DEFAULT)
+       base 16 / 24 / 0            — public/landing body (DEFAULT)
+       xl   20 / 28 / -0.005em     — h3 / large card titles
+       2xl  24 / 30 / -0.01em      — h2 / page titles
+       3xl  30 / 36 / -0.015em     — h1 / hero on dashboard
+       5xl  48 / 52 / -0.025em     — display, 1 per landing hero
+
+     Display caps at 48px. Sub-12px / 18px / 40px / 72px not exposed —
+     use the canonical tier. For sub-12px, prefer `text-[11px]` arbitrary.
      ──────────────────────────────────────────────────────────── */
-  --text-xxs: 11px;
-  --text-xxs--line-height: 1.3;
-  --text-xxs--letter-spacing: 0.04em;
 
   --text-xs: 12px;
-  --text-xs--line-height: 1.4;
+  --text-xs--line-height: calc(16/12);
+  --text-xs--letter-spacing: 0.0025em;
 
   --text-sm: 14px;
-  --text-sm--line-height: 1.5;
+  --text-sm--line-height: calc(20/14);
 
   --text-base: 16px;
-  --text-base--line-height: 1.5;
-
-  --text-lg: 18px;
-  --text-lg--line-height: 1.4;
-  --text-lg--letter-spacing: -0.005em;
+  --text-base--line-height: calc(24/16);
 
   --text-xl: 20px;
-  --text-xl--line-height: 1.35;
-  --text-xl--letter-spacing: -0.01em;
+  --text-xl--line-height: calc(28/20);
+  --text-xl--letter-spacing: -0.005em;
 
   --text-2xl: 24px;
-  --text-2xl--line-height: 1.25;
-  --text-2xl--letter-spacing: -0.015em;
+  --text-2xl--line-height: calc(30/24);
+  --text-2xl--letter-spacing: -0.01em;
 
   --text-3xl: 30px;
-  --text-3xl--line-height: 1.2;
-  --text-3xl--letter-spacing: -0.02em;
+  --text-3xl--line-height: calc(36/30);
+  --text-3xl--letter-spacing: -0.015em;
 
-  --text-4xl: 40px;
-  --text-4xl--line-height: 1.15;
-  --text-4xl--letter-spacing: -0.02em;
-
-  --text-5xl: 52px;
-  --text-5xl--line-height: 1.1;
+  --text-5xl: 48px;
+  --text-5xl--line-height: calc(52/48);
   --text-5xl--letter-spacing: -0.025em;
-
-  --text-6xl: 72px;
-  --text-6xl--line-height: 1.05;
-  --text-6xl--letter-spacing: -0.03em;
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.12 0.01 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.12 0.01 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.12 0.01 250);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --brand: oklch(0.546 0.245 262.881);
-  --brand-foreground: oklch(1 0 0);
-  --secondary: oklch(0.965 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.965 0 0);
-  --muted-foreground: oklch(0.48 0 0);
-  --tertiary-foreground: oklch(0.62 0 0);
-  --disabled-foreground: oklch(0.78 0 0);
-  --accent: oklch(0.965 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --success: oklch(0.58 0.145 154);
-  --success-foreground: oklch(0.985 0 0);
-  --warning: oklch(0.58 0.15 65);
-  --warning-foreground: oklch(0.985 0 0);
-  --info: oklch(0.55 0.18 255);
-  --info-foreground: oklch(0.985 0 0);
-  /* Wellness pastel palette — pre-tinted for inline badges, with a solid
-     companion variant for image-overlay use. Five categorical tones plus
-     the existing semantic warning/destructive/info. Sentence-case only —
-     never paired with `uppercase` or `tracking-[0.12em]`. */
-  --sage: #E8F0E5;
-  --sage-foreground: #3D6444;
-  --sage-solid: #B8D4B0;
-  --sage-solid-foreground: #2A4530;
-  --rose: #F7E5E8;
-  --rose-foreground: #8C3D55;
-  --rose-solid: #E8B7C1;
-  --rose-solid-foreground: #5A1F32;
-  --lavender: #EFEAF7;
-  --lavender-foreground: #5A4A82;
-  --lavender-solid: #C9BCE5;
-  --lavender-solid-foreground: #3A2D5C;
-  --sand: #F2EBDD;
-  --sand-foreground: #6B5C42;
-  --sand-solid: #DDC9A6;
-  --sand-solid-foreground: #4A3D26;
-  --sky: #E5EDF3;
-  --sky-foreground: #3D5A75;
-  --sky-solid: #B8CDE0;
-  --sky-solid-foreground: #243C56;
-  --surface-elevated: oklch(1 0 0 / 0.8);
+  /* ── LAYER 1 · PRIMITIVES (Radix scales in OKLCH) ──
+     Don't consume directly in components. Reference via semantic
+     tokens below. Adding a new color = define here first.
+     ──────────────────────────────────────────────────────────── */
+
+  /* Slate — neutral structural (light mode) */
+  --slate-1:  oklch(0.992 0.002 264);
+  --slate-2:  oklch(0.985 0.003 264);
+  --slate-3:  oklch(0.962 0.005 268);
+  --slate-4:  oklch(0.943 0.006 268);
+  --slate-5:  oklch(0.918 0.008 264);
+  --slate-6:  oklch(0.890 0.010 268);
+  --slate-7:  oklch(0.842 0.014 267);
+  --slate-8:  oklch(0.768 0.015 266);
+  --slate-9:  oklch(0.605 0.014 263);
+  --slate-10: oklch(0.564 0.014 263);
+  --slate-11: oklch(0.453 0.011 264);   /* WCAG 1.4.3 AA on white */
+  --slate-12: oklch(0.213 0.014 254);
+
+  /* Pop accents — sky / mint / iris (Radix step-3 + step-11 only) */
+  --sky-3:   oklch(0.961 0.025 209);
+  --sky-11:  oklch(0.500 0.108 230);
+  --mint-3:  oklch(0.957 0.033 173);
+  --mint-11: oklch(0.487 0.073 169);
+  --iris-3:  oklch(0.965 0.014 282);
+  --iris-11: oklch(0.480 0.183 287);
+
+  /* Status — jade (success) / amber (warning) / red (danger) */
+  --jade-3:   oklch(0.953 0.034 158);
+  --jade-11:  oklch(0.516 0.081 165);
+  --amber-3:  oklch(0.972 0.067 100);
+  --amber-11: oklch(0.557 0.131 65);
+  --red-3:    oklch(0.946 0.024 17);
+  --red-11:   oklch(0.563 0.226 25);
+
+  /* ── LAYER 2 · SEMANTIC TOKENS (consume these in components) ──
+     All values reference Layer 1 primitives. Don't hard-code OKLCH here. */
+
+  /* Surfaces */
+  --background: var(--slate-1);                    /* page canvas */
+  --surface: var(--slate-1);                       /* cards, popovers, panels */
+  --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
   --surface-tinted: oklch(0.97 0.03 258);
   --surface-tinted-border: oklch(0.9 0.04 258);
+
+  /* Foreground */
+  --foreground: var(--slate-12);
+  --foreground-muted: var(--slate-11);             /* WCAG AA on bg */
+  --foreground-tertiary: var(--slate-10);
+  --foreground-disabled: var(--slate-8);
+
+  /* Brand / interaction */
+  --primary: var(--slate-12);
+  --primary-foreground: var(--slate-1);
   --primary-muted-foreground: oklch(1 0 0 / 0.7);
-  --border: oklch(0.92 0 0);
-  --border-subtle: oklch(0.945 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.708 0 0);
+  --brand: oklch(0.546 0.245 262.881);
+  --brand-foreground: oklch(1 0 0);
+  --secondary: var(--slate-3);
+  --secondary-foreground: var(--slate-12);
+  --accent: var(--slate-3);
+  --accent-foreground: var(--slate-12);
+  --muted: var(--slate-3);                         /* hover/active fill */
+
+  /* Status — solid + subtle pairs.
+     `--success` (= jade-11) is the canonical green; used as text on light bg
+     (`text-success`) AND as solid bg (`bg-success`). The `-subtle` variant
+     replaces the `bg-success/10` opacity hack with a proper opaque token.
+     `-foreground` is the contrast color used on top of the solid bg. */
+  --success: var(--jade-11);
+  --success-foreground: var(--slate-1);
+  --success-subtle: var(--jade-3);
+  --warning: var(--amber-11);
+  --warning-foreground: var(--slate-1);
+  --warning-subtle: var(--amber-3);
+  --danger: var(--red-11);
+  --danger-foreground: var(--slate-1);
+  --danger-subtle: var(--red-3);
+  --info: oklch(0.55 0.18 255);
+  --info-foreground: var(--slate-1);
+  --info-subtle: oklch(0.95 0.02 255);
+
+  /* Selection */
   --selection: oklch(0.546 0.245 262.881);
   --selection-foreground: oklch(0.985 0 0);
   --selection-light: oklch(0.546 0.245 262.881 / 8%);
+
+  /* Structure */
+  --border: var(--slate-6);
+  --border-subtle: var(--slate-5);
+  --input: var(--slate-6);
+  --ring: var(--slate-8);
+
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
@@ -220,67 +260,98 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.92 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Pop accents — sky / mint / iris for category-coding */
+  --accent-sky-subtle:   var(--sky-3);
+  --accent-sky-fg:       var(--sky-11);
+  --accent-mint-subtle:  var(--mint-3);
+  --accent-mint-fg:      var(--mint-11);
+  --accent-iris-subtle:  var(--iris-3);
+  --accent-iris-fg:      var(--iris-11);
 }
 
 .dark {
-  --background: oklch(0.205 0 0);
-  --foreground: oklch(0.97 0.005 250);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.97 0.005 250);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.97 0.005 250);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --brand: oklch(0.623 0.214 259.815);
-  --brand-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.97 0.005 250);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.72 0.008 250);
-  --tertiary-foreground: oklch(0.58 0.008 250);
-  --disabled-foreground: oklch(0.42 0.005 250);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --success: oklch(0.72 0.155 154);
-  --success-foreground: oklch(0.205 0 0);
-  --warning: oklch(0.75 0.15 65);
-  --warning-foreground: oklch(0.205 0 0);
-  --info: oklch(0.68 0.18 255);
-  --info-foreground: oklch(0.205 0 0);
-  /* Wellness pastel palette — dark-mode counterparts. Tints invert: dark
-     muted bg with pastel-tinted foreground for legible labels. */
-  --sage: #2A3D2D;
-  --sage-foreground: #9DC4A2;
-  --sage-solid: #4A6B50;
-  --sage-solid-foreground: #E8F0E5;
-  --rose: #3D2026;
-  --rose-foreground: #E5B5C2;
-  --rose-solid: #6B3D4A;
-  --rose-solid-foreground: #F7E5E8;
-  --lavender: #2D2740;
-  --lavender-foreground: #B8A8DD;
-  --lavender-solid: #5A4A82;
-  --lavender-solid-foreground: #EFEAF7;
-  --sand: #332D22;
-  --sand-foreground: #C9B894;
-  --sand-solid: #6B5C42;
-  --sand-solid-foreground: #F2EBDD;
-  --sky: #1F2D3D;
-  --sky-foreground: #A2BBD2;
-  --sky-solid: #3D5A75;
-  --sky-solid-foreground: #E5EDF3;
+  /* ── PRIMITIVES (dark mode — Radix slate dark, pop accents shifted) ── */
+
+  /* Slate — dark mode (1 = darkest, 12 = lightest, mirroring light scale's role) */
+  --slate-1:  oklch(0.182 0.005 264);
+  --slate-2:  oklch(0.214 0.005 264);
+  --slate-3:  oklch(0.252 0.006 268);
+  --slate-4:  oklch(0.286 0.008 264);
+  --slate-5:  oklch(0.315 0.009 264);
+  --slate-6:  oklch(0.354 0.010 264);
+  --slate-7:  oklch(0.405 0.013 264);
+  --slate-8:  oklch(0.484 0.015 264);
+  --slate-9:  oklch(0.560 0.013 264);
+  --slate-10: oklch(0.605 0.013 264);
+  --slate-11: oklch(0.756 0.011 264);
+  --slate-12: oklch(0.951 0.003 264);
+
+  /* Pop accents — dark mode (slightly higher chroma + lightness) */
+  --sky-3:   oklch(0.260 0.045 230);
+  --sky-11:  oklch(0.760 0.105 220);
+  --mint-3:  oklch(0.260 0.040 170);
+  --mint-11: oklch(0.760 0.100 165);
+  --iris-3:  oklch(0.270 0.060 285);
+  --iris-11: oklch(0.760 0.140 285);
+
+  /* Status — dark mode */
+  --jade-3:   oklch(0.270 0.040 165);
+  --jade-11:  oklch(0.760 0.110 165);
+  --amber-3:  oklch(0.290 0.060 80);
+  --amber-11: oklch(0.800 0.135 85);
+  --red-3:    oklch(0.290 0.080 25);
+  --red-11:   oklch(0.730 0.180 25);
+
+  /* Surfaces */
+  --background: var(--slate-1);
+  --surface: var(--slate-1);
   --surface-elevated: oklch(0.205 0 0 / 0.8);
   --surface-tinted: oklch(0.27 0.04 258);
   --surface-tinted-border: oklch(0.38 0.06 258);
+
+  /* Foreground */
+  --foreground: var(--slate-12);
+  --foreground-muted: var(--slate-11);
+  --foreground-tertiary: var(--slate-10);
+  --foreground-disabled: var(--slate-8);
+
+  /* Brand / interaction */
+  --primary: var(--slate-12);
+  --primary-foreground: var(--slate-1);
   --primary-muted-foreground: oklch(0.205 0 0 / 0.7);
-  --border: oklch(1 0 0 / 10%);
-  --border-subtle: oklch(1 0 0 / 6%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --brand: oklch(0.623 0.214 259.815);
+  --brand-foreground: oklch(0.985 0 0);
+  --secondary: var(--slate-3);
+  --secondary-foreground: var(--slate-12);
+  --accent: var(--slate-3);
+  --accent-foreground: var(--slate-12);
+  --muted: var(--slate-3);
+
+  /* Status */
+  --success: var(--jade-11);
+  --success-foreground: var(--slate-1);
+  --success-subtle: var(--jade-3);
+  --warning: var(--amber-11);
+  --warning-foreground: var(--slate-1);
+  --warning-subtle: var(--amber-3);
+  --danger: var(--red-11);
+  --danger-foreground: var(--slate-1);
+  --danger-subtle: var(--red-3);
+  --info: oklch(0.68 0.18 255);
+  --info-foreground: var(--slate-1);
+  --info-subtle: oklch(0.30 0.04 255);
+
+  /* Selection */
   --selection: oklch(0.623 0.214 259.815);
   --selection-foreground: oklch(0.985 0 0);
   --selection-light: oklch(0.623 0.214 259.815 / 12%);
+
+  /* Structure */
+  --border: var(--slate-6);
+  --border-subtle: var(--slate-5);
+  --input: var(--slate-6);
+  --ring: var(--slate-8);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
@@ -294,6 +365,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Pop accents */
+  --accent-sky-subtle:   var(--sky-3);
+  --accent-sky-fg:       var(--sky-11);
+  --accent-mint-subtle:  var(--mint-3);
+  --accent-mint-fg:      var(--mint-11);
+  --accent-iris-subtle:  var(--iris-3);
+  --accent-iris-fg:      var(--iris-11);
 }
 
 @layer base {
@@ -332,7 +411,7 @@
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--muted-foreground);
+    background-color: var(--foreground-muted);
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
@@ -416,7 +495,7 @@
     border-radius: 9999px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--muted-foreground);
+    background: var(--foreground-muted);
   }
 
   .safe-area-bottom {

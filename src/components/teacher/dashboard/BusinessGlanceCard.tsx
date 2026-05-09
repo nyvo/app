@@ -22,7 +22,7 @@ export function BusinessGlanceCard({ stats }: BusinessGlanceCardProps) {
       <CardHeader>
         <CardTitle>Nøkkeltall</CardTitle>
         <CardAction>
-          {hasActivity && <Badge variant="secondary" className="text-muted-foreground tracking-wide">Siste 7 dager</Badge>}
+          {hasActivity && <Badge variant="secondary" className="text-foreground-muted tracking-wide">Siste 7 dager</Badge>}
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -115,7 +115,7 @@ function Kpi({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium tracking-wide text-foreground-muted">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
         {delta}

@@ -396,7 +396,7 @@ const CreateCoursePage = () => {
             <h1 className="text-3xl font-semibold text-foreground">
               Opprett kurs
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground-muted">
               Opprett et nytt kurs eller arrangement
             </p>
           </motion.header>
@@ -409,7 +409,7 @@ const CreateCoursePage = () => {
             />
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
+          <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
             <div className="pb-2">
                 {currentStep === 0 && (
               <motion.div
@@ -425,7 +425,7 @@ const CreateCoursePage = () => {
               <section>
                 <div className="mb-6">
                   <h2 id="course-type-heading" className="text-base font-semibold text-foreground">Kurstype</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Hva slags kurs vil du opprette?</p>
+                  <p className="text-sm mt-1 text-foreground-muted">Hva slags kurs vil du opprette?</p>
                 </div>
                 <RadioGroup
                   value={courseType}
@@ -470,11 +470,11 @@ const CreateCoursePage = () => {
                       aria-required="true"
                       className={cn(
                         "w-full",
-                        showError('title') && "border-destructive focus-visible:ring-destructive"
+                        showError('title') && "border-danger focus-visible:ring-danger"
                       )}
                     />
                     {showError('title') && (
-                      <p id="create-title-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-title-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                         <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.title}
                       </p>
@@ -485,7 +485,7 @@ const CreateCoursePage = () => {
                   <div className="relative">
                     <label htmlFor="create-description" className="text-sm font-medium mb-1.5 block text-foreground">
                       Beskrivelse
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-foreground-muted">Valgfritt</span>
                     </label>
                     <Textarea
                       id="create-description"
@@ -497,7 +497,7 @@ const CreateCoursePage = () => {
                       className="min-h-[100px]"
                     />
                     <div className="flex justify-end mt-1.5">
-                      <p className={`text-xs tabular-nums ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-destructive' : 'text-warning') : 'text-muted-foreground'}`}>
+                      <p className={`text-xs tabular-nums ${description.length > DESCRIPTION_WARN_LENGTH ? (description.length > DESCRIPTION_MAX_LENGTH ? 'text-danger' : 'text-warning') : 'text-foreground-muted'}`}>
                         {description.length}/{DESCRIPTION_MAX_LENGTH}
                       </p>
                     </div>
@@ -507,7 +507,7 @@ const CreateCoursePage = () => {
                   <div>
                     <label className="text-sm font-medium mb-1.5 block text-foreground">
                       Kursbilde
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">Valgfritt</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-foreground-muted">Valgfritt</span>
                     </label>
                     <div className="h-40">
                       <ImageUpload
@@ -536,7 +536,7 @@ const CreateCoursePage = () => {
               <section>
                 <div className="mb-6">
                   <h2 className="text-base font-semibold text-foreground">Tid og sted</h2>
-                  <p className="text-sm mt-1 text-muted-foreground">Når og hvor skal kurset holdes?</p>
+                  <p className="text-sm mt-1 text-foreground-muted">Når og hvor skal kurset holdes?</p>
                 </div>
                 <div className="space-y-6">
                   {/* Date + Weeks row */}
@@ -561,7 +561,7 @@ const CreateCoursePage = () => {
                         aria-invalid={showError('startDate') ? 'true' : undefined}
                       />
                       {showError('startDate') && (
-                        <p id="startDate-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                        <p id="startDate-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                           <AlertCircle className="size-3" aria-hidden="true" />
                           {errors.startDate}
                         </p>
@@ -590,11 +590,11 @@ const CreateCoursePage = () => {
                           aria-required="true"
                           className={cn(
                             "w-full",
-                            showError('weeks') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
+                            showError('weeks') ? 'border-danger focus-visible:ring-danger' : 'border-input'
                           )}
                         />
                         {showError('weeks') && (
-                          <p id="weeks-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                          <p id="weeks-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                             <AlertCircle className="size-3" aria-hidden="true" />
                             {errors.weeks}
                           </p>
@@ -624,7 +624,7 @@ const CreateCoursePage = () => {
                           ref={startTimeRef}
                           className={cn(
                             "w-full",
-                            showError('startTime') && 'border-destructive focus:ring-destructive'
+                            showError('startTime') && 'border-danger focus:ring-danger'
                           )}
                           aria-label="Starttid"
                           aria-invalid={showError('startTime') ? 'true' : undefined}
@@ -640,7 +640,7 @@ const CreateCoursePage = () => {
                         </SelectContent>
                       </Select>
 
-                      <span className="text-sm font-medium shrink-0 text-muted-foreground">–</span>
+                      <span className="text-sm font-medium shrink-0 text-foreground-muted">–</span>
 
                       <Select
                         value={endTime}
@@ -653,7 +653,7 @@ const CreateCoursePage = () => {
                           ref={endTimeRef}
                           className={cn(
                             "w-full",
-                            showError('endTime') && 'border-destructive focus:ring-destructive'
+                            showError('endTime') && 'border-danger focus:ring-danger'
                           )}
                           aria-label="Sluttid"
                           aria-invalid={showError('endTime') ? 'true' : undefined}
@@ -670,13 +670,13 @@ const CreateCoursePage = () => {
                       </Select>
                     </div>
                     {(showError('startTime') || showError('endTime')) && (
-                      <p className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                         <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.startTime || errors.endTime}
                       </p>
                     )}
                     {!showError('startTime') && !showError('endTime') && conflictingSession && (
-                      <Alert variant="info" size="sm" className="mt-3 text-muted-foreground">
+                      <Alert variant="info" size="sm" className="mt-3 text-foreground-muted">
                         {conflictingSession.courseTitle} ligger allerede på {conflictingSession.startTime}–{conflictingSession.endTime} denne dagen. Du kan opprette likevel.
                       </Alert>
                     )}
@@ -697,11 +697,11 @@ const CreateCoursePage = () => {
                       aria-invalid={showError('location') ? 'true' : undefined}
                       className={cn(
                         "w-full",
-                        showError('location') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
+                        showError('location') ? 'border-danger focus-visible:ring-danger' : 'border-input'
                       )}
                     />
                     {showError('location') && (
-                      <p id="create-location-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-location-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                         <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.location}
                       </p>
@@ -731,7 +731,7 @@ const CreateCoursePage = () => {
                   <div>
                     <label htmlFor="create-price" className="text-sm font-medium mb-1.5 block text-foreground">
                       Pris
-                      <span className="text-xs font-medium tracking-wide ml-2 text-muted-foreground">per person</span>
+                      <span className="text-xs font-medium tracking-wide ml-2 text-foreground-muted">per person</span>
                     </label>
                     <div className="relative">
                       <Input
@@ -748,15 +748,15 @@ const CreateCoursePage = () => {
                         aria-required="true"
                         className={cn(
                           "w-full pr-12",
-                          showError('price') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
+                          showError('price') ? 'border-danger focus-visible:ring-danger' : 'border-input'
                         )}
                       />
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className={`text-xs font-medium tracking-wide ${showError('price') ? 'text-destructive' : 'text-muted-foreground'}`}>kr</span>
+                        <span className={`text-xs font-medium tracking-wide ${showError('price') ? 'text-danger' : 'text-foreground-muted'}`}>kr</span>
                       </div>
                     </div>
                     {showError('price') && (
-                      <p id="create-price-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-price-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                         <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.price}
                       </p>
@@ -782,11 +782,11 @@ const CreateCoursePage = () => {
                       aria-required="true"
                       className={cn(
                         "w-full",
-                        showError('capacity') ? 'border-destructive focus-visible:ring-destructive' : 'border-input'
+                        showError('capacity') ? 'border-danger focus-visible:ring-danger' : 'border-input'
                       )}
                     />
                     {showError('capacity') && (
-                      <p id="create-capacity-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-destructive" role="alert">
+                      <p id="create-capacity-error" className="text-xs font-medium mt-1.5 flex items-center gap-1 text-danger" role="alert">
                         <AlertCircle className="size-3" aria-hidden="true" />
                         {errors.capacity}
                       </p>
@@ -800,9 +800,9 @@ const CreateCoursePage = () => {
                 <div className="mb-6">
                   <div className="flex items-center gap-2">
                     <h2 className="text-base font-semibold text-foreground">Praktisk info</h2>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xxs font-medium text-muted-foreground">Valgfritt</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground-muted">Valgfritt</span>
                   </div>
-                  <p className="text-sm mt-1 text-muted-foreground">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
+                  <p className="text-sm mt-1 text-foreground-muted">Dette vises på kurssiden og hjelper deltakerne å komme forberedt.</p>
                 </div>
                 <div className="space-y-6">
                   {/* Audience Level - Segmented pills (single-select) */}
@@ -895,7 +895,7 @@ const CreateCoursePage = () => {
                             size="icon-sm"
                             type="button"
                             onClick={() => setCustomBullets(customBullets.filter((_, j) => j !== i))}
-                            className="text-muted-foreground hover:text-destructive hover:bg-transparent"
+                            className="text-foreground-muted hover:text-danger hover:bg-transparent"
                             aria-label={`Fjern punkt ${i + 1}`}
                           >
                             <X className="size-4" />
@@ -928,7 +928,7 @@ const CreateCoursePage = () => {
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 lg:px-8">
             {submitAttempted && !validateStep(currentStep) && (
               <Alert variant="destructive" size="sm" aria-live="polite">
-                <p className="text-sm text-center text-destructive">
+                <p className="text-sm text-center text-danger">
                   Fyll ut de markerte feltene.
                 </p>
               </Alert>
@@ -936,13 +936,13 @@ const CreateCoursePage = () => {
             {submitError && (
               <Alert variant="destructive" size="sm" aria-live="polite">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm text-destructive">{submitError}</p>
+                  <p className="text-sm text-danger">{submitError}</p>
                   <Button
                     variant="ghost"
                     size="icon-sm"
                     type="button"
                     onClick={() => setSubmitError(null)}
-                    className="text-muted-foreground hover:text-destructive hover:bg-transparent shrink-0"
+                    className="text-foreground-muted hover:text-danger hover:bg-transparent shrink-0"
                     aria-label="Lukk"
                   >
                     <X className="size-4" />

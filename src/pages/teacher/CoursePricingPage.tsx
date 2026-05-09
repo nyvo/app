@@ -54,7 +54,7 @@ const CoursePricingPage = () => {
         <div className="flex-1 flex items-center justify-center text-center py-24">
           <div>
             <h1 className="text-3xl font-semibold mb-2 text-foreground">Kurs ikke funnet</h1>
-            <p className="text-sm text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
+            <p className="text-sm text-foreground-muted">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             <Button
               variant="outline-soft"
               size="sm"
@@ -84,7 +84,7 @@ const CoursePricingPage = () => {
             variant="ghost"
             size="sm"
             asChild
-            className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
+            className="mb-3 -ml-2 text-foreground-muted hover:text-foreground"
           >
             <Link to={id ? routes.course(id) : routes.courses}>
               <ArrowLeft className="size-3.5" />
@@ -92,7 +92,7 @@ const CoursePricingPage = () => {
             </Link>
           </Button>
           <h1 className="text-3xl font-semibold text-foreground">Priser</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground-muted">
             Billettyper og priser for {courseData.title}.
           </p>
 

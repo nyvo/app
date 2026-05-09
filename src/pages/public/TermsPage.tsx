@@ -9,7 +9,7 @@ const TermsPage = () => {
       {/* Minimal Header */}
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
         <div className="w-24">
-          <Button variant="outline-soft" size="sm" className="text-muted-foreground hover:text-foreground" asChild>
+          <Button variant="outline-soft" size="sm" className="text-foreground-muted hover:text-foreground" asChild>
             <Link to="/">
               <ArrowLeft className="size-4 mr-2" />
               Tilbake
@@ -36,46 +36,46 @@ const TermsPage = () => {
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Vilkår for påmelding
             </h1>
-            <p className="text-base mx-auto max-w-2xl text-muted-foreground">
+            <p className="text-base mx-auto max-w-2xl text-foreground-muted">
               Disse vilkårene gjelder for påmelding til kurs og arrangementer formidlet gjennom Ease.
             </p>
           </div>
 
-          <Card className="border-border bg-card p-6 sm:p-8">
+          <Card className="border-border bg-surface p-6 sm:p-8">
             <div className="space-y-10">
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">1. Påmelding og betaling</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er fullført.
                 </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Du vil motta en bekreftelse på e-post når påmeldingen er bekreftet.
                 </p>
               </section>
 
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">2. Avbestilling og refusjon</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Trenger du å avbestille, ta kontakt med studioet du har meldt deg på hos. Refusjon avgjøres av studioet fra sak til sak.
                 </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Instruktøren forbeholder seg retten til å avlyse kurset ved for få påmeldte. Ved avlysning fra instruktørens side refunderes hele kursavgiften automatisk.
                 </p>
               </section>
 
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">3. Ansvar</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Deltakelse på kurs skjer på eget ansvar. Instruktøren er ikke ansvarlig for skader som måtte oppstå under kurset.
                 </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Ved eventuelle helseutfordringer anbefales det å konsultere lege før deltakelse.
                 </p>
               </section>
 
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">4. Personvern</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Vi behandler dine personopplysninger i henhold til gjeldende personvernlovgivning.
                   Opplysninger brukes kun til administrasjon av kurspåmelding og kommunikasjon relatert til kurset.
                 </p>
@@ -83,7 +83,7 @@ const TermsPage = () => {
 
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">5. Endringer</h2>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-base text-foreground-muted leading-relaxed">
                   Instruktøren forbeholder seg retten til å gjøre endringer i kursprogrammet eller vilkårene.
                   Eventuelle endringer vil bli kommunisert til påmeldte deltakere.
                 </p>
@@ -92,7 +92,7 @@ const TermsPage = () => {
           </Card>
 
           <div className="text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground-muted">
               Sist oppdatert: januar 2026
             </p>
           </div>

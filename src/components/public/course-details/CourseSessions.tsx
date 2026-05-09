@@ -51,14 +51,14 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
           <div
             key={s.id}
             className={cn(
-              'relative rounded-lg border border-border bg-card px-3.5 py-3',
+              'relative rounded-lg border border-border bg-surface px-3.5 py-3',
               dim && 'bg-muted border-transparent',
             )}
           >
             <span
               className={cn(
                 'text-[11px] font-medium',
-                dim ? 'text-muted-foreground' : 'text-muted-foreground',
+                dim ? 'text-foreground-muted' : 'text-foreground-muted',
               )}
             >
               {day}
@@ -66,25 +66,25 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
             <div
               className={cn(
                 'mt-0.5 flex items-baseline gap-1',
-                dim && 'text-muted-foreground',
+                dim && 'text-foreground-muted',
               )}
             >
               <span
                 className={cn(
                   'text-[22px] font-semibold tabular-nums tracking-tight leading-none',
-                  dim ? 'text-muted-foreground' : 'text-foreground',
+                  dim ? 'text-foreground-muted' : 'text-foreground',
                 )}
               >
                 {dayNum}
               </span>
-              <span className="text-xs text-muted-foreground">{month}</span>
+              <span className="text-xs text-foreground-muted">{month}</span>
             </div>
             {isCancelled ? (
-              <div className="mt-1.5 text-[11px] font-medium text-destructive">Avlyst</div>
+              <div className="mt-1.5 text-[11px] font-medium text-danger">Avlyst</div>
             ) : isPast ? (
-              <div className="mt-1.5 text-[11px] font-medium text-muted-foreground">Ferdig</div>
+              <div className="mt-1.5 text-[11px] font-medium text-foreground-muted">Ferdig</div>
             ) : s.start_time ? (
-              <div className="mt-1.5 text-xs tabular-nums text-muted-foreground">
+              <div className="mt-1.5 text-xs tabular-nums text-foreground-muted">
                 kl. {formatTime(s.start_time)}
               </div>
             ) : null}

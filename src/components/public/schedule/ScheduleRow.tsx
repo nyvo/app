@@ -82,7 +82,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
           )}
         </div>
 
-        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-xs text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-xs text-foreground-muted">
           {instructorName && (
             <span className="flex items-center gap-1 truncate">
               <User className="size-3.5 shrink-0" />
@@ -106,7 +106,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
         {spots && (
           <span className={cn(
             'text-xs font-medium tracking-wide whitespace-nowrap',
-            isFull ? 'text-muted-foreground' : 'text-warning',
+            isFull ? 'text-foreground-muted' : 'text-warning',
           )}>
             {spots}
           </span>

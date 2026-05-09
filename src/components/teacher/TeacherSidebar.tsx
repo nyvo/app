@@ -200,7 +200,7 @@ export const TeacherSidebar = () => {
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-foreground-muted outline-none ring-sidebar-ring transition-[background-color,color] duration-150 ease-out hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2"
                   aria-label={sidebarToggleLabel}
                   title={sidebarToggleLabel}
                 >
@@ -287,7 +287,7 @@ export const TeacherSidebar = () => {
                         <item.icon />
                         <span className="flex-1 text-left">{item.label}</span>
                         <ChevronRight
-                          className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                          className={`size-4 shrink-0 text-foreground-muted transition-transform duration-200 ${
                             isExpanded ? 'rotate-90' : ''
                           }`}
                         />
@@ -334,7 +334,7 @@ export const TeacherSidebar = () => {
                   />
                   <div className="grid flex-1 text-left leading-tight">
                     <span className="text-sm font-medium truncate text-foreground">{profile?.name || currentSeller?.name || 'Konto'}</span>
-                    <span className="text-xs font-medium tracking-wide truncate text-muted-foreground">
+                    <span className="text-xs font-medium tracking-wide truncate text-foreground-muted">
                       {userRole === 'owner' || userRole === 'admin' ? 'Administrator' : 'Instruktør'}
                     </span>
                   </div>
@@ -356,7 +356,7 @@ export const TeacherSidebar = () => {
                     />
                     <div className="grid flex-1 text-left leading-tight">
                       <span className="text-sm font-medium truncate text-foreground">{profile?.name || currentSeller?.name}</span>
-                      <span className="text-xs truncate text-muted-foreground">{profile?.email}</span>
+                      <span className="text-xs truncate text-foreground-muted">{profile?.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>

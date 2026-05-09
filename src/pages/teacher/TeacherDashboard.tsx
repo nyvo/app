@@ -252,7 +252,7 @@ const TeacherDashboard = () => {
 
 
               {showSetupBanner && !isLoading && (
-                <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 shadow-xs ring-1 ring-foreground/10">
+                <div className="mb-6 flex items-center justify-between gap-3 rounded-lg border bg-surface px-4 py-3 shadow-xs ring-1 ring-foreground/10">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="size-3" />
@@ -278,10 +278,10 @@ const TeacherDashboard = () => {
               ) : loadError ? (
                 <div className="flex flex-col items-center justify-center h-64 text-center">
                   <div className="mb-4 rounded-full bg-muted p-4">
-                    <AlertCircle className="size-8 text-destructive" />
+                    <AlertCircle className="size-8 text-danger" />
                   </div>
                   <h2 className="text-base font-semibold mb-1 text-foreground">Kunne ikke laste oversikten</h2>
-                  <p className="text-sm max-w-xs mb-4 text-muted-foreground">{loadError}</p>
+                  <p className="text-sm max-w-xs mb-4 text-foreground-muted">{loadError}</p>
                   <Button
                     variant="outline-soft"
                     size="sm"
@@ -318,12 +318,12 @@ const TeacherDashboard = () => {
                   <Card className="lg:col-span-2">
                     <CardContent className="flex flex-col items-center justify-center py-12">
                       <div className="mb-6 w-fit rounded-lg border border-border bg-background p-3">
-                        <Plus className="size-6 text-muted-foreground" />
+                        <Plus className="size-6 text-foreground-muted" />
                       </div>
                       <h2 className="text-xl font-semibold text-foreground text-center">
                         Opprett ditt første kurs
                       </h2>
-                      <p className="text-sm mt-2 mb-6 max-w-md text-center text-muted-foreground">
+                      <p className="text-sm mt-2 mb-6 max-w-md text-center text-foreground-muted">
                         Start med ett kurs. Derfra kan du ta imot påmeldinger, holde oversikt over deltakere og bygge opp timeplanen din.
                       </p>
                       <Button asChild size="default" className="gap-2">

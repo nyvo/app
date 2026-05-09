@@ -111,7 +111,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-lg bg-card outline-none',
+        'group relative flex flex-col overflow-hidden rounded-lg bg-surface outline-none',
         'ring-1 ring-border/70 transition-all duration-300',
         'hover:ring-foreground/30 hover:-translate-y-0.5',
         'focus-within:ring-2 focus-within:ring-ring',
@@ -154,8 +154,8 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
                   'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-relaxed',
                   b.tone === 'full' && 'bg-foreground/85 text-background backdrop-blur-md',
                   b.tone === 'urgent' && 'bg-warning text-warning-foreground',
-                  b.tone === 'lively' && 'bg-rose-solid text-rose-solid-foreground',
-                  b.tone === 'soft' && 'bg-sand-solid text-sand-solid-foreground',
+                  b.tone === 'lively' && 'bg-danger text-danger-foreground',
+                  b.tone === 'soft' && 'bg-foreground-muted text-background',
                 )}
               >
                 {b.label}
@@ -186,10 +186,10 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
         {(dateChip || time) && (
           <div className={cn(
             'inline-flex items-baseline gap-1.5 text-xs font-medium tabular-nums',
-            isDisabled ? 'text-muted-foreground' : 'text-muted-foreground',
+            isDisabled ? 'text-foreground-muted' : 'text-foreground-muted',
           )}>
             {dateChip && <span>{dateChip.label}</span>}
-            {dateChip && time && <span className="text-disabled-foreground">·</span>}
+            {dateChip && time && <span className="text-foreground-disabled">·</span>}
             {time && <span>{time}</span>}
           </div>
         )}
@@ -197,7 +197,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
         {/* Title */}
         <h3 className={cn(
           'text-[15px] font-semibold leading-[1.3] line-clamp-2',
-          isDisabled ? 'text-muted-foreground' : 'text-foreground',
+          isDisabled ? 'text-foreground-muted' : 'text-foreground',
         )}>
           <Link
             to={href}
@@ -210,7 +210,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
 
         {/* Meta line — single tier: avatar + name on the left, price on the right.
             Falls back to studio name when no instructor is set. */}
-        <div className="mt-auto pt-1.5 flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
+        <div className="mt-auto pt-1.5 flex items-center gap-2 text-xs text-foreground-muted tabular-nums">
           {personName && (
             <>
               <UserAvatar

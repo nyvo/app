@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Mimics <Card> shell without animate-pulse on the container so inner Skeleton elements stay visible
 function CardShell({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg bg-card shadow-xs ring-1 ring-foreground/10 overflow-hidden py-6">
+    <div className="rounded-lg bg-surface shadow-xs ring-1 ring-foreground/10 overflow-hidden py-6">
       {children}
     </div>
   )

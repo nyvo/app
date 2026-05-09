@@ -68,7 +68,7 @@ export function ScheduleDayList({ courses }: ScheduleDayListProps) {
           <h3 className="mb-2 text-sm font-medium text-foreground">
             {formatDayHeading(bucket.dateStr)}
           </h3>
-          <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
             {bucket.courses.map(course => (
               <ScheduleRow
                 key={course.id}

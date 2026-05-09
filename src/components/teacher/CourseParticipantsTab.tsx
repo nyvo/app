@@ -152,27 +152,27 @@ function ParticipantRow({
       <div className="min-w-0 flex flex-col gap-0.5">
         <p className={cn(
           'text-sm font-medium leading-[1.3] truncate',
-          isCancelled ? 'text-muted-foreground' : 'text-foreground',
+          isCancelled ? 'text-foreground-muted' : 'text-foreground',
         )}>
           <span>{p.name}</span>
           {p.notes && (
             <span
-              className="ml-1.5 inline-flex items-center align-middle text-muted-foreground"
+              className="ml-1.5 inline-flex items-center align-middle text-foreground-muted"
               title={p.notes}
             >
               <FileText className="size-3" strokeWidth={1.75} />
             </span>
           )}
         </p>
-        <p className="text-xs leading-[1.4] text-muted-foreground tabular-nums truncate">
+        <p className="text-xs leading-[1.4] text-foreground-muted tabular-nums truncate">
           {metaParts.map((part, i) => (
             <span key={i}>
-              {i > 0 && <span className="text-disabled-foreground mx-1.5">·</span>}
+              {i > 0 && <span className="text-foreground-disabled mx-1.5">·</span>}
               {part}
             </span>
           ))}
         </p>
-        <p className="text-xs leading-[1.4] text-muted-foreground truncate">{p.email}</p>
+        <p className="text-xs leading-[1.4] text-foreground-muted truncate">{p.email}</p>
       </div>
 
       <div className="hidden md:flex flex-col items-end justify-center gap-1 self-center">
@@ -180,9 +180,9 @@ function ParticipantRow({
           'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
           pill.kind === 'failed' && 'bg-foreground text-background',
           pill.kind === 'confirmed' && 'bg-muted text-foreground',
-          pill.kind === 'pending' && 'bg-muted text-muted-foreground',
-          pill.kind === 'refunded' && 'bg-muted text-muted-foreground',
-          pill.kind === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+          pill.kind === 'pending' && 'bg-muted text-foreground-muted',
+          pill.kind === 'refunded' && 'bg-muted text-foreground-muted',
+          pill.kind === 'cancelled' && 'bg-muted text-foreground-muted line-through',
         )}>
           {pill.label}
         </span>
@@ -192,7 +192,7 @@ function ParticipantRow({
           </span>
         )}
         {p.registeredAgo && (
-          <span className="text-[11px] text-muted-foreground tabular-nums leading-none">
+          <span className="text-[11px] text-foreground-muted tabular-nums leading-none">
             {p.registeredAgo}
           </span>
         )}
@@ -315,7 +315,7 @@ export const CourseParticipantsTab = ({
       </div>
 
       {/* Frame — rows + footer */}
-      <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+      <div className="rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
         {participantsLoading ? (
           <>
             <RowSkeleton />
@@ -327,7 +327,7 @@ export const CourseParticipantsTab = ({
             <p className="text-sm font-medium text-foreground">
               {hasActiveFilters ? 'Ingen deltakere funnet' : 'Ingen deltakere ennå'}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground-muted">
               {hasActiveFilters ? 'Prøv å justere filtrene.' : 'Deltakere vises her når de melder seg på.'}
             </p>
             {hasActiveFilters && (

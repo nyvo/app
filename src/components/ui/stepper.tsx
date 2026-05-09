@@ -35,7 +35,7 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
     >
       {/* Status text: "Steg X av 3" — small, quiet label */}
       <p
-        className="text-xs font-medium text-muted-foreground"
+        className="text-xs font-medium text-foreground-muted"
         aria-hidden
       >
         Steg {clampedStep + 1} av {total}
@@ -77,7 +77,7 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
                     isCompleted && 'bg-primary text-primary-foreground',
                     isActive && 'bg-primary text-primary-foreground',
                     isUpcoming &&
-                      'border border-border bg-background text-muted-foreground'
+                      'border border-border bg-background text-foreground-muted'
                   )}
                 >
                   {isCompleted ? (
@@ -89,9 +89,9 @@ export function Stepper({ steps, currentStep, onStepSelect, className }: Stepper
                 <span
                   className={cn(
                     'mt-2 text-center text-xs',
-                    isCompleted && 'text-muted-foreground',
+                    isCompleted && 'text-foreground-muted',
                     isActive && 'font-medium text-foreground',
-                    isUpcoming && 'text-muted-foreground'
+                    isUpcoming && 'text-foreground-muted'
                   )}
                 >
                   {step.label}

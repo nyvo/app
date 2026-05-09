@@ -52,7 +52,7 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
     <section className="relative">
       <header className="mb-5 flex items-end justify-between gap-4">
         <div className="space-y-1.5">
-          <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-muted-foreground">
+          <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-foreground-muted">
             {title}
           </h2>
           {description && (

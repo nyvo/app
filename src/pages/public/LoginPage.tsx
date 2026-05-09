@@ -92,7 +92,7 @@ const LoginPage = () => {
       title="Velkommen tilbake"
       subtitle="Logg inn for å fortsette til oversikten."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground-muted">
           Har du ikke konto?{' '}
           <Link to={ROUTES.signup} className="text-sm font-medium text-foreground hover:underline">
             Opprett konto
@@ -105,7 +105,7 @@ const LoginPage = () => {
 
         <div className="flex items-center gap-3" aria-hidden="true">
           <Separator className="flex-1" />
-          <span className="text-xs font-medium tracking-wide text-muted-foreground">eller</span>
+          <span className="text-xs font-medium tracking-wide text-foreground-muted">eller</span>
           <Separator className="flex-1" />
         </div>
       </div>
@@ -136,7 +136,7 @@ const LoginPage = () => {
           labelExtra={
             <Link
               to={ROUTES.forgotPassword}
-              className="text-xs font-medium tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+              className="text-xs font-medium tracking-wide text-foreground-muted transition-colors hover:text-foreground"
             >
               Glemt passord?
             </Link>
@@ -145,11 +145,11 @@ const LoginPage = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-danger">{errors.general}</p>
             {errors.general === AUTH_ERRORS.invalidCredentials && (
               <Link
                 to={ROUTES.forgotPassword}
-                className="text-xs font-medium tracking-wide mt-1.5 inline-block text-destructive underline hover:text-destructive/80"
+                className="text-xs font-medium tracking-wide mt-1.5 inline-block text-danger underline hover:text-danger/80"
               >
                 Tilbakestill passord
               </Link>

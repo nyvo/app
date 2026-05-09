@@ -264,7 +264,7 @@ export function TicketTypeForm({
                 onChange={e => update('label', e.target.value)}
                 aria-invalid={!!errors.label}
               />
-              {errors.label && <p className="text-xs font-medium text-destructive">{errors.label}</p>}
+              {errors.label && <p className="text-xs font-medium text-danger">{errors.label}</p>}
             </div>
 
             <div className="space-y-2">
@@ -289,7 +289,7 @@ export function TicketTypeForm({
                   onChange={e => update('price', e.target.value)}
                   aria-invalid={!!errors.price}
                 />
-                {errors.price && <p className="text-xs font-medium text-destructive">{errors.price}</p>}
+                {errors.price && <p className="text-xs font-medium text-danger">{errors.price}</p>}
               </div>
 
               <div className="space-y-2">
@@ -322,7 +322,7 @@ export function TicketTypeForm({
                   onChange={e => update('weeks', e.target.value)}
                   aria-invalid={!!errors.weeks}
                 />
-                {errors.weeks && <p className="text-xs font-medium text-destructive">{errors.weeks}</p>}
+                {errors.weeks && <p className="text-xs font-medium text-danger">{errors.weeks}</p>}
               </div>
             )}
 
@@ -346,7 +346,7 @@ export function TicketTypeForm({
                   aria-invalid={!!errors.sales_ends_at}
                 />
                 {errors.sales_ends_at && (
-                  <p className="text-xs font-medium text-destructive">{errors.sales_ends_at}</p>
+                  <p className="text-xs font-medium text-danger">{errors.sales_ends_at}</p>
                 )}
               </div>
             </div>
@@ -362,18 +362,18 @@ export function TicketTypeForm({
                 onChange={e => update('max_quantity', e.target.value)}
                 aria-invalid={!!errors.max_quantity}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-foreground-muted">
                 Tom = ubegrenset. Gjelder hele kurset, ikke per økt.
               </p>
               {errors.max_quantity && (
-                <p className="text-xs font-medium text-destructive">{errors.max_quantity}</p>
+                <p className="text-xs font-medium text-danger">{errors.max_quantity}</p>
               )}
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
                 <Label htmlFor="is_default" className="text-sm">Forhåndsvalgt billett</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground-muted">
                   Denne velges automatisk på påmeldingssiden.
                 </p>
               </div>
@@ -387,7 +387,7 @@ export function TicketTypeForm({
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
                 <Label htmlFor="is_active" className="text-sm">Aktiv</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-foreground-muted">
                   Skru av for å skjule fra påmeldingssiden uten å slette.
                 </p>
               </div>

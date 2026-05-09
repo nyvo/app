@@ -68,10 +68,10 @@ export function LocationsSection() {
   return (
     <section aria-labelledby="locations-heading" className="space-y-4">
       <header>
-        <h2 id="locations-heading" className="text-lg font-semibold text-foreground">
+        <h2 id="locations-heading" className="text-xl font-semibold text-foreground">
           Adresser
         </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+        <p className="mt-0.5 text-sm text-foreground-muted">
           Lagre steder du bruker ofte, så kan du velge dem raskt når du oppretter kurs.
         </p>
       </header>
@@ -240,7 +240,7 @@ function LocationCard({
                   className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
                 >
                   <h3 className="truncate text-base font-semibold text-foreground">{name}</h3>
-                  <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>
+                  <span className="shrink-0 text-xs text-foreground-muted">Rediger</span>
                 </motion.button>
               )}
             </AnimatePresence>
@@ -283,7 +283,7 @@ function LocationCard({
 
         <div className="space-y-4">
           <div>
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground-muted">
               <MapPin className="size-3.5" />
               Adresse
             </span>
@@ -317,21 +317,21 @@ function LocationCard({
                   aria-label="Rediger adresse"
                   className={cn(
                     "-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none",
-                    address ? "text-foreground" : "text-muted-foreground"
+                    address ? "text-foreground" : "text-foreground-muted"
                   )}
                 >
                   {!address && <Plus className="size-4 shrink-0" />}
                   <span className="truncate">
                     {address || 'Legg til adresse'}
                   </span>
-                  {address && <span className="shrink-0 text-xs text-muted-foreground">Rediger</span>}
+                  {address && <span className="shrink-0 text-xs text-foreground-muted">Rediger</span>}
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
 
           <div>
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground-muted">
               <DoorOpen className="size-3.5" />
               Rom
             </span>
@@ -351,7 +351,7 @@ function LocationCard({
                       <button
                         type="button"
                         onClick={() => removeRoom(room)}
-                        className="flex size-5 items-center justify-center rounded text-muted-foreground transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        className="flex size-5 items-center justify-center rounded text-foreground-muted transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                         aria-label={`Fjern ${room}`}
                       >
                         <X className="size-3.5" />
@@ -388,7 +388,7 @@ function LocationCard({
                   {...editSwap}
                   type="button"
                   onClick={startAddRoom}
-                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-muted-foreground transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
+                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-foreground-muted transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
                 >
                   <Plus className="size-4" />
                   Legg til rom
@@ -433,7 +433,7 @@ function NewLocationCard({ onClick, loading }: { onClick: () => void; loading: b
       disabled={loading}
       className="group flex min-h-40 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground hover:bg-muted/50 focus-visible:border-foreground focus-visible:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
     >
-      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition-[color] duration-150 ease-out group-hover:text-foreground">
+      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground-muted transition-[color] duration-150 ease-out group-hover:text-foreground">
         <MapPinPlus className={cn('size-4', loading && 'animate-pulse')} />
         {loading ? 'Oppretter …' : 'Legg til sted'}
       </div>

@@ -317,7 +317,7 @@ const CourseDetailPage = () => {
         <div className="flex-1 flex items-center justify-center text-center">
           <div>
             <h1 className="text-3xl font-semibold mb-2 text-foreground">Kurs ikke funnet</h1>
-            <p className="text-sm text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
+            <p className="text-sm text-foreground-muted">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
           </div>
         </div>
       </div>
@@ -420,9 +420,9 @@ const CourseDetailPage = () => {
                         'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
                         courseData.status === 'active' && 'bg-foreground text-background',
                         courseData.status === 'upcoming' && 'bg-muted text-foreground',
-                        courseData.status === 'draft' && 'bg-muted text-muted-foreground',
-                        courseData.status === 'completed' && 'bg-muted text-muted-foreground',
-                        courseData.status === 'cancelled' && 'bg-muted text-muted-foreground line-through'
+                        courseData.status === 'draft' && 'bg-muted text-foreground-muted',
+                        courseData.status === 'completed' && 'bg-muted text-foreground-muted',
+                        courseData.status === 'cancelled' && 'bg-muted text-foreground-muted line-through'
                       )}
                     >
                       {courseData.status === 'active' && 'Pågår'}
@@ -432,7 +432,7 @@ const CourseDetailPage = () => {
                       {courseData.status === 'cancelled' && 'Avlyst'}
                     </span>
                   </h1>
-                  <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+                  <p className="mt-2 text-sm text-foreground-muted tabular-nums">
                     {[
                       course.timeSchedule && course.durationMinutes
                         ? `${course.timeSchedule} (${course.durationMinutes} min)`
@@ -447,7 +447,7 @@ const CourseDetailPage = () => {
                       .map((part, i, arr) => (
                         <span key={i}>
                           {part}
-                          {i < arr.length - 1 && <span className="text-disabled-foreground mx-2">·</span>}
+                          {i < arr.length - 1 && <span className="text-foreground-disabled mx-2">·</span>}
                         </span>
                       ))}
                   </p>

@@ -49,7 +49,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
   const content = displayedRegistrations.length === 0 ? (
     <div className="flex flex-col items-center gap-1 py-8 text-center">
       <p className="text-sm font-medium text-foreground">Ingen nye påmeldinger</p>
-      <p className="text-xs text-muted-foreground">Nye påmeldinger vises her.</p>
+      <p className="text-xs text-foreground-muted">Nye påmeldinger vises her.</p>
     </div>
   ) : (
     <div className={cn("divide-y divide-border", hideCard ? "" : "px-3 py-3")}>
@@ -70,16 +70,16 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
               <p className="text-sm font-medium truncate text-foreground">
                 {registration.participant.name}
               </p>
-              <p className="text-sm mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+              <p className="text-sm mt-0.5 flex items-center gap-1.5 text-foreground-muted">
                 <span className="truncate">{registration.course}</span>
-                <span className="text-muted-foreground mx-1.5">·</span>
+                <span className="text-foreground-muted mx-1.5">·</span>
                 <span className="truncate">
                   {dayName}{startTime && ` kl. ${startTime}`}
                 </span>
               </p>
             </div>
             <div className="text-right shrink-0">
-              <span className="text-xs tabular-nums text-tertiary-foreground">
+              <span className="text-xs tabular-nums text-foreground-tertiary">
                 {registration.registeredAt}
               </span>
             </div>
@@ -96,7 +96,7 @@ export const RegistrationsList = memo(function RegistrationsList({ registrations
           <h2 className="text-base font-semibold text-foreground">Siste påmeldinger</h2>
           <Link
             to={routes.signups}
-            className="text-xs font-medium tracking-wide text-muted-foreground smooth-transition hover:text-foreground"
+            className="text-xs font-medium tracking-wide text-foreground-muted smooth-transition hover:text-foreground"
           >
             Se alle
           </Link>

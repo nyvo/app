@@ -70,7 +70,7 @@ export const ForgotPasswordView = () => {
         title=""
         customContent
         footer={
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground-muted">
             <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
               Til innlogging
             </Link>
@@ -85,7 +85,7 @@ export const ForgotPasswordView = () => {
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Sjekk e-posten din
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Vi har sendt en lenke til{' '}
             <span className="text-foreground">{formData.email}</span>
           </p>
@@ -93,7 +93,7 @@ export const ForgotPasswordView = () => {
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground-muted">
               {AUTH_HINTS.checkSpam}
             </p>
           </Alert>
@@ -118,7 +118,7 @@ export const ForgotPasswordView = () => {
       title="Glemt passord?"
       subtitle="Skriv inn e-posten din, så sender vi en lenke."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground-muted">
           Husker du passordet ditt?{' '}
           <Link to={AUTH_ROUTES.login} className="text-sm font-medium text-foreground hover:underline">
             Logg inn
@@ -141,7 +141,7 @@ export const ForgotPasswordView = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-danger">{errors.general}</p>
           </Alert>
         )}
 

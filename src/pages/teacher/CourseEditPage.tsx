@@ -295,7 +295,7 @@ const CourseEditPage = () => {
         <div className="flex-1 flex items-center justify-center text-center py-24">
           <div>
             <h1 className="text-3xl font-semibold mb-2 text-foreground">Kurs ikke funnet</h1>
-            <p className="text-sm text-muted-foreground">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
+            <p className="text-sm text-foreground-muted">{error || 'Kurset finnes ikke eller har blitt slettet.'}</p>
             <Button
               variant="outline-soft"
               size="sm"
@@ -326,7 +326,7 @@ const CourseEditPage = () => {
               variant="ghost"
               size="sm"
               asChild
-              className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
+              className="mb-3 -ml-2 text-foreground-muted hover:text-foreground"
             >
               <Link to={id ? routes.course(id) : routes.courses}>
                 <ArrowLeft className="size-3.5" />
@@ -334,7 +334,7 @@ const CourseEditPage = () => {
               </Link>
             </Button>
             <h1 className="text-3xl font-semibold text-foreground">Endre kurs</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-foreground-muted">
               Juster kursdetaljer for {courseData.title}.
             </p>
 
@@ -402,7 +402,7 @@ const CourseEditPage = () => {
           {refundPreview.count > 0 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <span className="text-xs font-medium tracking-wide block text-muted-foreground">
+                <span className="text-xs font-medium tracking-wide block text-foreground-muted">
                   Refunderes
                 </span>
                 <div className="max-h-[200px] overflow-y-auto">
@@ -417,7 +417,7 @@ const CourseEditPage = () => {
                       <span className="text-sm font-medium text-foreground">
                         {p.participant_name || p.participant_email}
                       </span>
-                      <span className="text-sm tabular-nums text-muted-foreground">
+                      <span className="text-sm tabular-nums text-foreground-muted">
                         {formatKroner(p.amount_paid)}
                       </span>
                     </div>
@@ -425,7 +425,7 @@ const CourseEditPage = () => {
                 </div>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-muted px-4 py-3">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium tracking-wide text-foreground-muted">
                   Total refusjon
                 </span>
                 <span className="text-sm font-medium tabular-nums text-foreground">

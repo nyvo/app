@@ -43,7 +43,7 @@ const TeamsPage = () => {
       >
         <div className="mb-8 pt-6 lg:pt-8">
           <h1 className="text-3xl font-semibold text-foreground">Studio</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground-muted">
             Slik vises siden din til kursdeltakere. Her samler du også samarbeid
             og adresser.
           </p>
@@ -53,7 +53,7 @@ const TeamsPage = () => {
           <div className="max-w-3xl space-y-12">
             {/* Studio info card */}
             <section aria-labelledby="studio-info-heading" className="space-y-3">
-              <h2 id="studio-info-heading" className="text-lg font-semibold text-foreground">
+              <h2 id="studio-info-heading" className="text-xl font-semibold text-foreground">
                 Min studio
               </h2>
 
@@ -70,14 +70,14 @@ const TeamsPage = () => {
                 <CardContent className="space-y-4 p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-semibold text-foreground truncate">
+                      <h3 className="text-xl font-semibold text-foreground truncate">
                         {currentTeam.name}
                       </h3>
-                      <p className="mt-0.5 text-xs text-muted-foreground tabular-nums truncate">
+                      <p className="mt-0.5 text-xs text-foreground-muted tabular-nums truncate">
                         framio.no/{currentTeam.slug}
                       </p>
                       {currentTeam.city && (
-                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-foreground-muted">
                           <MapPin className="size-3" />
                           {currentTeam.city}
                         </p>
@@ -105,7 +105,7 @@ const TeamsPage = () => {
                         href={publicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs text-foreground-muted hover:text-foreground transition-colors"
                       >
                         <ExternalLink className="size-3" />
                         Vis offentlig side
@@ -129,7 +129,7 @@ const TeamsPage = () => {
         ) : (
           <Card>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-foreground-muted">
                 Ingen studio funnet. Logg ut og inn igjen, eller kontakt
                 support hvis problemet vedvarer.
               </p>

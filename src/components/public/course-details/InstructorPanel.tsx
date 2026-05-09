@@ -24,7 +24,7 @@ export function InstructorPanel({ instructors, studioFallback }: InstructorPanel
   if (!hasInstructors && !studioFallback) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-lg border border-border bg-surface p-5 sm:p-6">
       {hasInstructors ? (
         <div className="space-y-7">
           {instructors.map(i => (
@@ -45,7 +45,7 @@ export function InstructorPanel({ instructors, studioFallback }: InstructorPanel
                   )}
                 </div>
                 {i.bio && (
-                  <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed text-foreground-muted whitespace-pre-wrap">
                     {i.bio}
                   </p>
                 )}

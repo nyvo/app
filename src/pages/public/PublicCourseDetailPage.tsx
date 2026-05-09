@@ -168,12 +168,12 @@ export default function PublicCourseDetailPage() {
 
                     {/* Dates accordion — collapsed by default, near the bottom */}
                     {showDatesAccordion && (
-                      <Accordion type="single" collapsible className="rounded-lg border border-border bg-card">
+                      <Accordion type="single" collapsible className="rounded-lg border border-border bg-surface">
                         <AccordionItem value="dates" className="not-last:border-b-0">
                           <AccordionTrigger className="px-[18px] py-3.5 text-[15px] font-medium items-center hover:no-underline">
                             <div className="flex flex-1 items-center justify-between mr-3">
                               <span className="text-foreground">Alle datoer</span>
-                              <span className="text-[13px] font-medium text-muted-foreground tabular-nums">
+                              <span className="text-[13px] font-medium text-foreground-muted tabular-nums">
                                 {sessions.length} {sessions.length === 1 ? 'gang' : 'ganger'}
                               </span>
                             </div>

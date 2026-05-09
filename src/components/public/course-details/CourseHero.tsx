@@ -88,7 +88,7 @@ export function CourseHero({ course }: CourseHeroProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <ImageIcon className="size-12 text-disabled-foreground" />
+            <ImageIcon className="size-12 text-foreground-disabled" />
           </div>
         )}
       </div>
@@ -96,7 +96,7 @@ export function CourseHero({ course }: CourseHeroProps) {
       <div className="mt-8 sm:mt-10 max-w-3xl">
         {/* Quiet subtitle — studio link only */}
         {studio && (
-          <p className="mb-3 text-sm text-muted-foreground">
+          <p className="mb-3 text-sm text-foreground-muted">
             <Link
               to={`/${studio.slug}`}
               className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
@@ -112,7 +112,7 @@ export function CourseHero({ course }: CourseHeroProps) {
         </h1>
 
         {/* Meta strip — date range, when + duration, instructor, level */}
-        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground-muted">
           {dateRange && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="size-3.5" strokeWidth={1.75} />
@@ -137,7 +137,7 @@ export function CourseHero({ course }: CourseHeroProps) {
             </span>
           )}
           {course.level && (
-            <Badge variant="sage" shape="pill" size="sm">
+            <Badge variant="accent-mint" shape="pill" size="sm">
               {LEVEL_LABELS[course.level]}
             </Badge>
           )}

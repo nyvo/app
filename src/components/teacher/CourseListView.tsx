@@ -72,7 +72,7 @@ function CourseImage({ src, alt, className = '' }: { src?: string | null; alt: s
 
   return (
     <div className={`rounded-md bg-muted flex items-center justify-center shrink-0 ${className}`}>
-      <ImageIcon className="size-5 text-disabled-foreground" />
+      <ImageIcon className="size-5 text-foreground-disabled" />
     </div>
   );
 }
@@ -107,8 +107,8 @@ function StatusPill({ status }: { status: CourseCardStatus }) {
         'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
         status === 'full' && 'bg-foreground text-background',
         status === 'active' && 'bg-muted text-foreground',
-        status === 'draft' && 'bg-muted text-muted-foreground',
-        status === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+        status === 'draft' && 'bg-muted text-foreground-muted',
+        status === 'cancelled' && 'bg-muted text-foreground-muted line-through',
       )}
     >
       {statusLabel(status)}
@@ -155,16 +155,16 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
               {course.courseTitle}
             </h3>
             {course.allowsDropIn && (
-              <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-[11px] font-medium leading-[1.45] group-hover:bg-background">
+              <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full bg-muted text-foreground-muted text-[11px] font-medium leading-[1.45] group-hover:bg-background">
                 Drop-in
               </span>
             )}
           </div>
           {metaParts.length > 0 && (
-            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums truncate">
+            <p className="mt-0.5 text-xs text-foreground-muted tabular-nums truncate">
               {metaParts.map((p, i) => (
                 <span key={i}>
-                  {i > 0 && <span className="text-disabled-foreground"> · </span>}
+                  {i > 0 && <span className="text-foreground-disabled"> · </span>}
                   {p}
                 </span>
               ))}
@@ -177,25 +177,25 @@ export function CourseCard({ course }: { course: SessionScheduleRow }) {
           <div className="flex items-center justify-between gap-2 text-xs tabular-nums leading-none">
             <StatusPill status={status} />
             {status === 'draft' ? (
-              <span className="text-muted-foreground">Ikke publisert</span>
+              <span className="text-foreground-muted">Ikke publisert</span>
             ) : status === 'cancelled' ? (
-              <span className="text-muted-foreground">Avlyst</span>
+              <span className="text-foreground-muted">Avlyst</span>
             ) : hasMax ? (
               <span>
                 <span className="text-foreground">{course.signupsCount}/{course.maxParticipants}</span>
-                <span className="text-muted-foreground"> · {pct} %</span>
+                <span className="text-foreground-muted"> · {pct} %</span>
               </span>
             ) : (
               <span>
                 <span className="text-foreground">{course.signupsCount} påmeldte</span>
-                <span className="text-muted-foreground"> · ubegrenset</span>
+                <span className="text-foreground-muted"> · ubegrenset</span>
               </span>
             )}
           </div>
           {showBar && (
             <div className="h-1 w-full rounded-full bg-muted overflow-hidden group-hover:bg-background">
               <div
-                className="h-full rounded-full bg-muted-foreground"
+                className="h-full rounded-full bg-foreground-muted"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -281,13 +281,13 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
               <div className="flex items-center gap-2">
                 <ChevronDown
                   className={cn(
-                    'size-4 shrink-0 text-muted-foreground transition-transform',
+                    'size-4 shrink-0 text-foreground-muted transition-transform',
                     !s.expanded && '-rotate-90',
                   )}
                 />
                 <span className="text-sm font-medium tabular-nums text-foreground">{g.year}</span>
               </div>
-              <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+              <span className="text-xs tabular-nums text-foreground-muted shrink-0">
                 {g.rows.length} kurs
               </span>
             </button>

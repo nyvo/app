@@ -46,7 +46,7 @@ export function QuickOverviewCard({ stats }: QuickOverviewCardProps) {
       <CardHeader>
         <CardTitle>Oversikt</CardTitle>
         <CardAction>
-          {hasActivity && <Badge variant="secondary" className="text-muted-foreground tracking-wide">Denne måneden</Badge>}
+          {hasActivity && <Badge variant="secondary" className="text-foreground-muted tracking-wide">Denne måneden</Badge>}
         </CardAction>
       </CardHeader>
       <CardContent>
@@ -81,7 +81,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:gap-5">
             <div className="sm:order-1">
               <div className="mb-1">
-                <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
+                <p className="text-xs font-medium tracking-wide text-foreground-muted">Inntekter</p>
                 <div className="mt-1 flex items-baseline gap-2">
                   <p className="text-2xl font-semibold tabular-nums text-foreground">{formatKroner(12400)}</p>
                 </div>
@@ -117,7 +117,7 @@ function QuickOverviewBody({ stats }: { stats: MonthStats }) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:gap-5">
       <div className="sm:order-1">
         <div className="mb-1">
-          <p className="text-xs font-medium tracking-wide text-muted-foreground">Inntekter</p>
+          <p className="text-xs font-medium tracking-wide text-foreground-muted">Inntekter</p>
           <div className="mt-1 flex items-baseline gap-2">
             <p className="text-2xl font-semibold tabular-nums text-foreground">{formatKroner(stats.revenue)}</p>
             <DeltaChip delta={stats.deltas.revenue} />
@@ -198,7 +198,7 @@ function Kpi({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium tracking-wide text-foreground-muted">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <p className="text-2xl font-semibold tabular-nums text-foreground">{value}</p>
         {delta}

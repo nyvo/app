@@ -12,10 +12,10 @@ const EQUIPMENT_LABELS: Record<EquipmentInfo, string> = {
 };
 
 /**
- * Praktisk info — sand-tinted card with a checklist. The one chromatic
- * surface in the body cluster (instructor + sted are outlined neutral),
- * marking it as the "actionable list to read before showing up".
- * No heading; the checkmarks self-identify the card.
+ * Praktisk info — muted-tinted card with a checklist. The one neutral chromatic
+ * surface in the body cluster (instructor + sted are outlined), marking it as
+ * the "actionable list to read before showing up". No heading; the checkmarks
+ * self-identify the card.
  */
 export function PracticalInfoSection({ info }: PracticalInfoSectionProps) {
   if (!info) return null;
@@ -31,11 +31,11 @@ export function PracticalInfoSection({ info }: PracticalInfoSectionProps) {
   if (items.length === 0) return null;
 
   return (
-    <div className="rounded-lg bg-sand text-sand-foreground p-5 sm:p-6">
+    <div className="rounded-lg bg-muted p-5 sm:p-6">
       <ul className="space-y-2.5">
         {items.map((value, i) => (
           <li key={i} className="flex items-start gap-2.5 text-[15px] text-foreground leading-relaxed">
-            <Check className="size-3.5 mt-1 shrink-0 text-sand-foreground" strokeWidth={2} />
+            <Check className="size-3.5 mt-1 shrink-0 text-foreground-muted" strokeWidth={2} />
             <span>{value}</span>
           </li>
         ))}

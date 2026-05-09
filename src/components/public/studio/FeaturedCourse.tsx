@@ -59,15 +59,15 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
       to={`/${studioSlug}/${course.slug}`}
       state={{ backgroundLocation: location }}
       className={cn(
-        'group relative grid overflow-hidden rounded-lg bg-card outline-none',
+        'group relative grid overflow-hidden rounded-lg bg-surface outline-none',
         'ring-1 ring-border transition-all duration-300',
         'hover:ring-foreground/40',
         'focus-visible:ring-2 focus-visible:ring-ring',
         'md:grid-cols-2',
       )}
     >
-      {/* Featured badge — lavender wellness pastel, sentence case */}
-      <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-lavender text-lavender-foreground px-2.5 py-0.5 text-xs font-medium">
+      {/* Featured badge — Studio iris pop accent, sentence case */}
+      <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-accent-iris-subtle text-accent-iris-fg px-2.5 py-0.5 text-xs font-medium">
         <Star className="size-3" fill="currentColor" strokeWidth={0} />
         Fremhevet kurs
       </span>
@@ -82,7 +82,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <ImageIcon className="size-10 text-disabled-foreground" />
+            <ImageIcon className="size-10 text-foreground-disabled" />
           </div>
         )}
         {/* Subtle right-side scrim on desktop to soften seam with the content panel */}
@@ -99,7 +99,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
               {longDate}
               {time && (
                 <>
-                  <span className="text-disabled-foreground">·</span>
+                  <span className="text-foreground-disabled">·</span>
                   <span>kl. {time}</span>
                 </>
               )}
@@ -113,13 +113,13 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
 
           {/* Subtitle */}
           {course.description && (
-            <p className="text-base text-muted-foreground leading-[1.55] line-clamp-3 max-w-prose">
+            <p className="text-base text-foreground-muted leading-[1.55] line-clamp-3 max-w-prose">
               {course.description}
             </p>
           )}
 
           {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-sm text-muted-foreground pt-2">
+          <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-sm text-foreground-muted pt-2">
             {instructor && (
               <span className="inline-flex items-center gap-1.5">
                 <User className="size-3.5" strokeWidth={1.75} />
@@ -148,7 +148,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
               {formatCoursePrice(course.price)}
             </div>
             {isSeries && course.total_weeks && (
-              <div className="text-xs text-muted-foreground">for hele rekken</div>
+              <div className="text-xs text-foreground-muted">for hele rekken</div>
             )}
           </div>
           {/* Visual-only — the whole card is the Link, so the button can't be a real <button> */}

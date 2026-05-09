@@ -47,14 +47,14 @@ export function SegmentedTabs<T extends string>({
               'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
               active
                 ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
-                : 'text-muted-foreground hover:text-foreground',
+                : 'text-foreground-muted hover:text-foreground',
             )}
           >
             {t.label}
             {t.count !== undefined && (
               <span className={cn(
                 'tabular-nums text-xs',
-                active ? 'text-foreground' : 'text-muted-foreground',
+                active ? 'text-foreground' : 'text-foreground-muted',
               )}>
                 {t.count}
               </span>

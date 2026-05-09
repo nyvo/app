@@ -60,16 +60,16 @@ function DatePill({ dateStr, isPast }: { dateStr: string; isPast: boolean }) {
     <span
       className={cn(
         'inline-flex flex-col items-center justify-center w-12 h-11 rounded-md shrink-0',
-        isPast ? 'bg-muted border border-transparent' : 'bg-card border border-border',
+        isPast ? 'bg-muted border border-transparent' : 'bg-surface border border-border',
       )}
     >
-      <span className="text-[9px] font-semibold tracking-wide uppercase text-muted-foreground leading-none">
+      <span className="text-[9px] font-semibold tracking-wide uppercase text-foreground-muted leading-none">
         {month}
       </span>
       <span
         className={cn(
           'text-base font-semibold tabular-nums leading-none mt-1',
-          isPast ? 'text-muted-foreground' : 'text-foreground',
+          isPast ? 'text-foreground-muted' : 'text-foreground',
         )}
       >
         {day}
@@ -108,8 +108,8 @@ export const SessionList: React.FC<SessionListProps> = ({
     <div>
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="space-y-0.5">
-          <h2 className="text-lg font-semibold text-foreground">Kursplan</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-semibold text-foreground">Kursplan</h2>
+          <p className="text-sm text-foreground-muted">
             Dette kurset varer i <span className="tabular-nums">{sessions.length}</span> {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
           </p>
         </div>
@@ -152,7 +152,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                     <span
                       className={cn(
                         'text-sm font-medium truncate',
-                        isPast ? 'text-muted-foreground' : 'text-foreground',
+                        isPast ? 'text-foreground-muted' : 'text-foreground',
                       )}
                     >
                       {weekday}
@@ -167,7 +167,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                   <span
                     className={cn(
                       'text-sm tabular-nums text-right',
-                      isPast ? 'text-muted-foreground' : 'text-muted-foreground',
+                      isPast ? 'text-foreground-muted' : 'text-foreground-muted',
                     )}
                   >
                     {timeRange}
@@ -175,7 +175,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                   {/* Past = check icon, active = 3-dot menu */}
                   {isPast ? (
-                    <span className="inline-flex items-center justify-center size-4 text-muted-foreground" aria-hidden>
+                    <span className="inline-flex items-center justify-center size-4 text-foreground-muted" aria-hidden>
                       <Check className="size-3.5" strokeWidth={2} />
                     </span>
                   ) : (
@@ -183,7 +183,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center size-6 rounded text-muted-foreground hover:text-foreground hover:bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                          className="inline-flex items-center justify-center size-6 rounded text-foreground-muted hover:text-foreground hover:bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                           aria-label={`Mer for ${weekday} ${session.date}`}
                         >
                           <MoreHorizontal className="size-4" />
@@ -202,7 +202,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                 {/* Inline edit panel — appears under the row when editing */}
                 {isEditing && (
                   <div className="border-t border-border bg-muted/50 px-5 py-4">
-                    <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+                    <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label id={`session-${session.id}-date-label`} className="text-sm font-medium mb-1.5 block text-foreground">Dato</label>
@@ -226,7 +226,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="text-xs text-muted-foreground">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="text-xs text-foreground-muted">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
                       <div className="flex gap-2">

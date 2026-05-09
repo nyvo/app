@@ -203,7 +203,7 @@ export function PastSignupsList({
               <div className="flex items-center gap-2 min-w-0">
                 <ChevronDown
                   className={cn(
-                    'size-4 shrink-0 text-muted-foreground transition-transform',
+                    'size-4 shrink-0 text-foreground-muted transition-transform',
                     !s.expanded && '-rotate-90',
                   )}
                 />
@@ -212,13 +212,13 @@ export function PastSignupsList({
                     {g.className}
                   </p>
                   {endLabel && (
-                    <p className="text-xs text-tertiary-foreground">
+                    <p className="text-xs text-foreground-tertiary">
                       Sluttet {endLabel}
                     </p>
                   )}
                 </div>
               </div>
-              <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+              <span className="text-xs tabular-nums text-foreground-muted shrink-0">
                 {summary}
               </span>
             </button>

@@ -19,7 +19,7 @@ export function NotePopover({ note, className }: NotePopoverProps) {
           aria-label="Les notat"
           className={cn(
             badgeVariants({ variant: 'neutral', shape: 'rect', size: 'md' }),
-            'cursor-pointer smooth-transition hover:bg-muted-foreground/10 hover:text-foreground',
+            'cursor-pointer smooth-transition hover:bg-foreground-muted/10 hover:text-foreground',
             className,
           )}
         >
@@ -29,8 +29,8 @@ export function NotePopover({ note, className }: NotePopoverProps) {
       </PopoverTrigger>
       <PopoverContent align="center" side="top" className="w-56 p-3">
         <div className="flex items-start gap-2">
-          <MessageSquare className="size-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
-          <p className="text-sm text-muted-foreground leading-relaxed">{note}</p>
+          <MessageSquare className="size-3.5 text-foreground-muted shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-foreground-muted leading-relaxed">{note}</p>
         </div>
       </PopoverContent>
     </Popover>

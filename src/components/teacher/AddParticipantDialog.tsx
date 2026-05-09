@@ -203,7 +203,7 @@ export function AddParticipantDialog({
 
         {isCheckingCapacity ? (
           <div className="flex items-center justify-center py-8">
-            <Spinner size="lg" className="text-muted-foreground" />
+            <Spinner size="lg" className="text-foreground-muted" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -229,7 +229,7 @@ export function AddParticipantDialog({
                   htmlFor="firstName"
                   className="text-xs font-medium mb-1.5 block text-foreground"
                 >
-                  Fornavn <span className="text-destructive">*</span>
+                  Fornavn <span className="text-danger">*</span>
                 </label>
                 <Input
                   id="firstName"
@@ -246,7 +246,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.firstName && touched.firstName
-                      ? 'border-destructive bg-destructive/5 animate-shake'
+                      ? 'border-danger bg-danger-subtle animate-shake'
                       : ''
                   }
                 />
@@ -254,7 +254,7 @@ export function AddParticipantDialog({
                   <p
                     id="firstName-error"
                     role="alert"
-                    className="text-xs mt-1.5 text-destructive"
+                    className="text-xs mt-1.5 text-danger"
                   >
                     {errors.firstName}
                   </p>
@@ -267,7 +267,7 @@ export function AddParticipantDialog({
                   htmlFor="lastName"
                   className="text-xs font-medium mb-1.5 block text-foreground"
                 >
-                  Etternavn <span className="text-destructive">*</span>
+                  Etternavn <span className="text-danger">*</span>
                 </label>
                 <Input
                   id="lastName"
@@ -284,7 +284,7 @@ export function AddParticipantDialog({
                   disabled={isSubmitting}
                   className={
                     errors.lastName && touched.lastName
-                      ? 'border-destructive bg-destructive/5 animate-shake'
+                      ? 'border-danger bg-danger-subtle animate-shake'
                       : ''
                   }
                 />
@@ -292,7 +292,7 @@ export function AddParticipantDialog({
                   <p
                     id="lastName-error"
                     role="alert"
-                    className="text-xs mt-1.5 text-destructive"
+                    className="text-xs mt-1.5 text-danger"
                   >
                     {errors.lastName}
                   </p>
@@ -303,7 +303,7 @@ export function AddParticipantDialog({
             {/* Email */}
             <div>
               <label htmlFor="email" className="text-xs font-medium mb-1.5 block text-foreground">
-                E-post <span className="text-destructive">*</span>
+                E-post <span className="text-danger">*</span>
               </label>
               <Input
                 id="email"
@@ -318,7 +318,7 @@ export function AddParticipantDialog({
                 disabled={isSubmitting}
                 className={
                   errors.email && touched.email
-                    ? 'border-destructive bg-destructive/5 animate-shake'
+                    ? 'border-danger bg-danger-subtle animate-shake'
                     : ''
                 }
               />
@@ -326,12 +326,12 @@ export function AddParticipantDialog({
                 <p
                   id="email-error"
                   role="alert"
-                  className="text-xs mt-1.5 text-destructive"
+                  className="text-xs mt-1.5 text-danger"
                 >
                   {errors.email}
                 </p>
               ) : (
-                <p id="email-hint" className="text-xs mt-1.5 text-muted-foreground">
+                <p id="email-hint" className="text-xs mt-1.5 text-foreground-muted">
                   Bekreftelse sendes hit
                 </p>
               )}
@@ -340,7 +340,7 @@ export function AddParticipantDialog({
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="text-xs font-medium mb-1.5 block text-foreground">
-                Telefonnummer <span className="text-muted-foreground">(valgfritt)</span>
+                Telefonnummer <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Input
                 id="phone"
@@ -352,7 +352,7 @@ export function AddParticipantDialog({
                 aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
-              <p id="phone-hint" className="text-xs mt-1.5 text-muted-foreground">
+              <p id="phone-hint" className="text-xs mt-1.5 text-foreground-muted">
                 For kontakt ved endringer
               </p>
             </div>
@@ -360,7 +360,7 @@ export function AddParticipantDialog({
             {/* Note */}
             <div>
               <label htmlFor="note" className="text-xs font-medium mb-1.5 block text-foreground">
-                Notat <span className="text-muted-foreground">(valgfritt)</span>
+                Notat <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Textarea
                 id="note"
@@ -370,7 +370,7 @@ export function AddParticipantDialog({
                 rows={3}
                 disabled={isSubmitting}
               />
-              <p className="text-xs mt-1.5 text-muted-foreground">Synlig kun for instruktør</p>
+              <p className="text-xs mt-1.5 text-foreground-muted">Synlig kun for instruktør</p>
             </div>
 
             {/* Payment Toggle */}
@@ -393,7 +393,7 @@ export function AddParticipantDialog({
                 <ToggleGroupItem value="pending" className="flex-1">Venter betaling</ToggleGroupItem>
                 <ToggleGroupItem value="paid" className="flex-1">Betalt</ToggleGroupItem>
               </ToggleGroup>
-              <p className="text-xs mt-1.5 text-muted-foreground">Registreres utenfor betalingsløsningen</p>
+              <p className="text-xs mt-1.5 text-foreground-muted">Registreres utenfor betalingsløsningen</p>
             </div>
 
             <DialogFooter>

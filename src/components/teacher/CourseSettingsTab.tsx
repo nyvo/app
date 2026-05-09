@@ -205,7 +205,7 @@ export const CourseSettingsTab = ({
             <div className="space-y-2">
               <div>
                 <h4 className="text-sm font-medium text-foreground">Kursbilde</h4>
-                <p className="text-xs text-muted-foreground">Vises på kurssiden og i oversikten.</p>
+                <p className="text-xs text-foreground-muted">Vises på kurssiden og i oversikten.</p>
               </div>
               <div className="relative min-h-[200px] overflow-hidden rounded-lg bg-muted">
                 <ImageUpload
@@ -270,7 +270,7 @@ export const CourseSettingsTab = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <span className="text-sm font-medium shrink-0 text-tertiary-foreground">–</span>
+              <span className="text-sm font-medium shrink-0 text-foreground-tertiary">–</span>
               <Select
                 value={endTime}
                 onValueChange={handleEndTimeChange}
@@ -311,7 +311,7 @@ export const CourseSettingsTab = ({
             />
             {currentEnrolled > 0 && (
               <div className="mt-1.5 flex items-center gap-1.5">
-                <p className="text-xs tabular-nums text-muted-foreground">
+                <p className="text-xs tabular-nums text-foreground-muted">
                   {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''} akkurat nå
                 </p>
                 <InfoTooltip content={`Kan ikke settes lavere enn ${currentEnrolled} fordi det allerede er ${currentEnrolled} påmeldt${currentEnrolled > 1 ? 'e' : ''}.`} />
@@ -321,7 +321,7 @@ export const CourseSettingsTab = ({
         </div>
           {currentEnrolled > 0 && maxParticipants <= currentEnrolled && (
             <Alert variant="warning" size="sm" icon={false}>
-              <p className="text-xs font-medium tabular-nums text-destructive">
+              <p className="text-xs font-medium tabular-nums text-danger">
                 Kan ikke reduseres under {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''}.
               </p>
             </Alert>
@@ -353,7 +353,7 @@ export const CourseSettingsTab = ({
                       'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
                       active
                         ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-muted-foreground border-border hover:text-foreground hover:border-foreground/40',
+                        : 'bg-background text-foreground-muted border-border hover:text-foreground hover:border-foreground/40',
                     )}
                   >
                     {opt.label}
@@ -361,7 +361,7 @@ export const CourseSettingsTab = ({
                 );
               })}
             </div>
-            <p className="text-xs mt-1.5 text-muted-foreground">
+            <p className="text-xs mt-1.5 text-foreground-muted">
               Velg det laveste nivået som passer.
             </p>
           </div>
@@ -422,7 +422,7 @@ export const CourseSettingsTab = ({
                     size="icon-sm"
                     type="button"
                     onClick={() => onCustomBulletsChange(settingsCustomBullets.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-destructive hover:bg-transparent"
+                    className="text-foreground-muted hover:text-danger hover:bg-transparent"
                     aria-label={`Fjern punkt ${i + 1}`}
                   >
                     <X className="size-4" />
@@ -448,11 +448,11 @@ export const CourseSettingsTab = ({
 
       {/* Danger zone — visually separated from the calm save flow.
           Uses destructive surface tones to signal "this is irreversible". */}
-      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
+      <div className="rounded-lg border border-danger/30 bg-danger-subtle p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-0.5">
             <h3 className="text-sm font-semibold text-foreground">Avlys kurs</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground-muted">
               {refundPreview.count > 0
                 ? <><span className="tabular-nums">{refundPreview.count}</span> {`deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet. Dette kan ikke angres.`}</>
                 : 'Kurset vil bli avlyst. Dette kan ikke angres.'}
@@ -477,10 +477,10 @@ export const CourseSettingsTab = ({
             <div className="flex items-center gap-2 min-w-0">
               {saveError ? (
                 <Alert variant="error" size="sm" icon={Info} className="py-1">
-                  <span className="text-sm text-destructive">{saveError}</span>
+                  <span className="text-sm text-danger">{saveError}</span>
                 </Alert>
               ) : (
-                <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-2 text-sm text-foreground-muted">
                   <span className="size-1.5 rounded-full bg-foreground" aria-hidden />
                   Du har endringer som ikke er lagret
                 </span>

@@ -28,7 +28,7 @@ const NotFoundPage = () => {
         <div className="text-center max-w-md">
           {/* 404 Number */}
           <div className="mb-6">
-            <span className="text-6xl font-semibold tracking-tight text-muted select-none">
+            <span className="text-5xl font-semibold tracking-tight text-muted select-none">
               404
             </span>
           </div>
@@ -37,7 +37,7 @@ const NotFoundPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
             Siden ble ikke funnet
           </h1>
-          <p className="text-base mb-8 text-muted-foreground">
+          <p className="text-base mb-8 text-foreground-muted">
             Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
           </p>
 

@@ -88,7 +88,7 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
       <div className="flex flex-col items-center gap-3 py-8">
         <div className="text-center">
           <p className="text-sm font-medium text-foreground">Ingen kommende kurs</p>
-          <p className="text-xs text-muted-foreground mt-1">Opprett kurs for å fylle timeplanen</p>
+          <p className="text-xs text-foreground-muted mt-1">Opprett kurs for å fylle timeplanen</p>
         </div>
         <Button asChild size="sm" className="gap-1.5">
           <Link to={routes.newCourse}>
@@ -110,7 +110,7 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
         lastDate = course.date ?? lastDate
         return (
           <div key={`${course.id}-${course.date}-${course.time}`} className="grid grid-cols-[theme(spacing.16)_1fr] pl-6 pr-6">
-            <span className="text-xs font-medium tabular-nums text-tertiary-foreground">
+            <span className="text-xs font-medium tabular-nums text-foreground-tertiary">
               {showLabel ? formatDayLabel(course.date!, today, weekSunday) : ''}
             </span>
             <Link
@@ -119,10 +119,10 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
             >
               <div className="p-3 space-y-0.5">
                 <h3 className="truncate text-sm font-medium text-foreground">{course.title}</h3>
-                <p className="truncate text-xs tabular-nums text-tertiary-foreground">
+                <p className="truncate text-xs tabular-nums text-foreground-tertiary">
                   {course.time ? `kl. ${course.time}` : 'Tid ikke satt'}
                 </p>
-                <p className="truncate text-xs tabular-nums text-tertiary-foreground">
+                <p className="truncate text-xs tabular-nums text-foreground-tertiary">
                   {hasAttendance ? `${course.signups}/${course.capacity} påmeldte` : course.subtitle || 'Ingen påmeldte'}
                 </p>
               </div>

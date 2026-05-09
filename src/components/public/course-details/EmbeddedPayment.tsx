@@ -85,12 +85,12 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 ring-1 ring-foreground/[0.04] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.12)]">
+    <div className="rounded-lg border border-border bg-surface p-6 ring-1 ring-foreground/[0.04] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.12)]">
       {/* Customer row — inline "Endre" replaces the detached "Tilbake" link */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground truncate">{customerName}</p>
-          <p className="text-sm text-muted-foreground truncate mt-0.5">{customerEmail}</p>
+          <p className="text-sm text-foreground-muted truncate mt-0.5">{customerEmail}</p>
         </div>
         <Button variant="plain" size="xs" type="button" onClick={onBack}>
           Endre
@@ -100,7 +100,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
       {/* Course block */}
       <div className="mt-4 border-t border-border pt-4">
         <p className="text-sm font-medium text-foreground">{courseName}</p>
-        {courseMeta && <p className="text-sm text-muted-foreground mt-0.5">{courseMeta}</p>}
+        {courseMeta && <p className="text-sm text-foreground-muted mt-0.5">{courseMeta}</p>}
       </div>
 
       {/* Price breakdown — same shape as step 1, locked */}
@@ -111,8 +111,8 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
         </div>
         {fee > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Servicegebyr</span>
-            <span className="tabular-nums text-muted-foreground">{formatKroner(fee)}</span>
+            <span className="text-foreground-muted">Servicegebyr</span>
+            <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
           </div>
         )}
         <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">

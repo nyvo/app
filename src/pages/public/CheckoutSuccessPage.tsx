@@ -183,11 +183,11 @@ const CheckoutSuccessPage = () => {
             <Spinner size="xl" className="text-foreground" />
           </div>
           <p className="text-sm font-medium mb-2 text-foreground">{getLoadingMessage()}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Bekrefter med banken. Ikke lukk denne siden.
           </p>
           {attemptCount > 8 && (
-            <p className="text-xs mt-4 text-muted-foreground">
+            <p className="text-xs mt-4 text-foreground-muted">
               Du får beskjed når betalingen er klar.
             </p>
           )}
@@ -213,12 +213,12 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto max-w-lg text-center">
             <Card className="p-8 md:p-12">
               <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-                <AlertCircle className="size-8 text-destructive" />
+                <AlertCircle className="size-8 text-danger" />
               </div>
               <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
                 Noe gikk galt
               </h1>
-              <p className="text-base text-muted-foreground mb-8">{error}</p>
+              <p className="text-base text-foreground-muted mb-8">{error}</p>
               <Button asChild variant="default">
                 <Link to="/">
                   <Home className="size-4 mr-2" />
@@ -249,7 +249,7 @@ const CheckoutSuccessPage = () => {
           <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
             Betalingen er bekreftet
           </h1>
-          <p className="text-base text-muted-foreground mb-8">
+          <p className="text-base text-foreground-muted mb-8">
             Bekreftelsen tar litt tid. Du vil motta en bekreftelse på e-post når påmeldingen er klar.
           </p>
           <Button asChild variant="default">
@@ -302,7 +302,7 @@ const CheckoutSuccessPage = () => {
                         className="size-8 rounded-md object-cover bg-muted"
                       />
                     ) : (
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-muted-foreground">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-foreground-muted">
                         {orgName.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -311,17 +311,17 @@ const CheckoutSuccessPage = () => {
                 )}
 
                 {/* Success card — single centered surface, Uvodo-shaped. */}
-                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-card p-7 sm:p-10 ring-1 ring-foreground/[0.04] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.14)]">
+                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-surface p-7 sm:p-10 ring-1 ring-foreground/[0.04] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.14)]">
                   {/* Soft success indicator */}
-                  <div className="flex size-12 items-center justify-center rounded-full bg-success/10">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-success-subtle">
                     <CircleCheck className="size-6 text-success" />
                   </div>
 
                   {/* Hero copy — warm, single-color subline */}
-                  <h1 className="mt-6 text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
+                  <h1 className="mt-6 text-3xl sm:text-5xl font-semibold tracking-tight text-foreground">
                     Du er påmeldt.
                   </h1>
-                  <p className="mt-3 text-base text-muted-foreground">
+                  <p className="mt-3 text-base text-foreground-muted">
                     {signup
                       ? `Du er påmeldt. Vi har sendt en bekreftelse til ${signup.participant_email}.`
                       : isFreeSignup
@@ -341,7 +341,7 @@ const CheckoutSuccessPage = () => {
                               className="absolute inset-0 size-full object-cover"
                             />
                           ) : (
-                            <div className="flex size-full items-center justify-center text-muted-foreground">
+                            <div className="flex size-full items-center justify-center text-foreground-muted">
                               <ImageIcon className="size-5" />
                             </div>
                           )}
@@ -349,10 +349,10 @@ const CheckoutSuccessPage = () => {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-foreground">{signup.course.title}</p>
                           {whenLine && (
-                            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{whenLine}</p>
+                            <p className="mt-0.5 text-xs text-foreground-muted tabular-nums">{whenLine}</p>
                           )}
                           {signup.course.location && (
-                            <p className="mt-0.5 text-xs text-muted-foreground truncate">{signup.course.location}</p>
+                            <p className="mt-0.5 text-xs text-foreground-muted truncate">{signup.course.location}</p>
                           )}
                         </div>
                       </div>
@@ -360,17 +360,17 @@ const CheckoutSuccessPage = () => {
                       {/* Discreet meta row — booking date + paid amount */}
                       <div className="mt-6 border-t border-border pt-5 space-y-2.5 text-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Påmeldt</span>
+                          <span className="text-foreground-muted">Påmeldt</span>
                           <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">{isFree ? 'Pris' : 'Betalt'}</span>
+                          <span className="text-foreground-muted">{isFree ? 'Pris' : 'Betalt'}</span>
                           <span className="font-medium text-foreground tabular-nums">
                             {isFree ? 'Gratis' : formatKroner(signup.amount_paid)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Referanse</span>
+                          <span className="text-foreground-muted">Referanse</span>
                           <span className="font-medium text-foreground tabular-nums">{shortRef(signup.id)}</span>
                         </div>
                       </div>
@@ -379,7 +379,7 @@ const CheckoutSuccessPage = () => {
 
                   {/* Support — contact studio if anything's off */}
                   {orgEmail && (
-                    <div className="mt-6 border-t border-border pt-5 text-sm text-muted-foreground">
+                    <div className="mt-6 border-t border-border pt-5 text-sm text-foreground-muted">
                       Trenger du hjelp? Send en e-post til{' '}
                       <a
                         href={`mailto:${orgEmail}`}

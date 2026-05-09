@@ -91,7 +91,7 @@ export function LocationCombobox({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          'flex h-9 w-full items-center rounded-lg border border-input bg-card px-4 py-2 text-[14px] font-medium ring-offset-background placeholder:font-normal placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-9 w-full items-center rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium ring-offset-background placeholder:font-normal placeholder:text-foreground-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         {...ariaProps}
@@ -107,8 +107,8 @@ export function LocationCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-card px-4 py-2 text-[14px] font-medium ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-            !value && 'font-normal text-muted-foreground',
+            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+            !value && 'font-normal text-foreground-muted',
             className
           )}
           {...ariaProps}
@@ -124,7 +124,7 @@ export function LocationCombobox({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Sok eller skriv nytt sted..."
-            className="flex h-8 w-full rounded-md border-0 bg-transparent px-2 text-[13px] font-medium placeholder:font-normal placeholder:text-muted-foreground focus:outline-none"
+            className="flex h-8 w-full rounded-md border-0 bg-transparent px-2 text-[13px] font-medium placeholder:font-normal placeholder:text-foreground-muted focus:outline-none"
             autoFocus
           />
         </div>
@@ -140,7 +140,7 @@ export function LocationCombobox({
                 value === opt.value && 'bg-accent'
               )}
             >
-              <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+              <MapPin className="size-3.5 shrink-0 text-foreground-muted" />
               <span className="flex-1 truncate">{opt.label}</span>
               {value === opt.value && <Check className="size-3.5 shrink-0" />}
             </button>
@@ -160,7 +160,7 @@ export function LocationCombobox({
                     value === groupName && 'bg-accent'
                   )}
                 >
-                  <MapPin className="size-3.5 shrink-0 text-muted-foreground" />
+                  <MapPin className="size-3.5 shrink-0 text-foreground-muted" />
                   <span className="flex-1 truncate">{groupName}</span>
                   {value === groupName && <Check className="size-3.5 shrink-0" />}
                 </button>
@@ -174,7 +174,7 @@ export function LocationCombobox({
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
                       'relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] outline-none hover:bg-accent',
-                      value === opt.value ? 'bg-accent font-medium' : 'text-muted-foreground'
+                      value === opt.value ? 'bg-accent font-medium' : 'text-foreground-muted'
                     )}
                   >
                     <DoorOpen className="size-3.5 shrink-0" />
@@ -191,14 +191,14 @@ export function LocationCombobox({
             <button
               type="button"
               onClick={() => handleSelect(search.trim())}
-              className="relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-muted-foreground outline-none hover:bg-accent hover:text-foreground"
+              className="relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-foreground-muted outline-none hover:bg-accent hover:text-foreground"
             >
               Bruk &laquo;{search.trim()}&raquo;
             </button>
           )}
 
           {filtered.length === 0 && !showCustom && (
-            <p className="px-3 py-2 text-[13px] text-muted-foreground">Ingen treff</p>
+            <p className="px-3 py-2 text-[13px] text-foreground-muted">Ingen treff</p>
           )}
         </div>
       </PopoverContent>

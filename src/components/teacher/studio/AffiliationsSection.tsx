@@ -88,10 +88,10 @@ export function AffiliationsSection() {
   return (
     <section aria-labelledby="affiliations-heading" className="space-y-8">
       <header>
-        <h2 id="affiliations-heading" className="text-lg font-semibold text-foreground">
+        <h2 id="affiliations-heading" className="text-xl font-semibold text-foreground">
           Samarbeid
         </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
+        <p className="mt-0.5 text-sm text-foreground-muted">
           La andre instruktørers kurs vises på din studio-side, eller bli
           invitert til å vises på en annen.
         </p>
@@ -103,7 +103,7 @@ export function AffiliationsSection() {
         {incomingLoading ? (
           <LoadingRow />
         ) : pendingInvites.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Du har ingen åpne invitasjoner.
           </p>
         ) : (
@@ -122,13 +122,13 @@ export function AffiliationsSection() {
       {/* Panel 2: Active affiliations (freelancer side) */}
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-foreground">Du samarbeider med</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground-muted">
           Velg hvilke kurs som skal vises på studio-sider du samarbeider med.
         </p>
         {incomingLoading ? (
           <LoadingRow />
         ) : activeInvites.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Ingen aktive samarbeid ennå.
           </p>
         ) : (
@@ -148,7 +148,7 @@ export function AffiliationsSection() {
       {currentTeam && currentSeller ? (
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-foreground">På din studio-side</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-foreground-muted">
             Inviter andre instruktører til å la kursene sine vises på{' '}
             <span className="font-medium text-foreground">{currentTeam.name}</span>.
           </p>
@@ -162,7 +162,7 @@ export function AffiliationsSection() {
           {affiliatesLoading ? (
             <LoadingRow />
           ) : affiliates.length === 0 ? (
-            <p className="text-sm text-muted-foreground pt-2">
+            <p className="text-sm text-foreground-muted pt-2">
               Ingen samarbeid ennå.
             </p>
           ) : (
@@ -184,7 +184,7 @@ export function AffiliationsSection() {
 
 function LoadingRow() {
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div className="flex items-center gap-2 text-sm text-foreground-muted">
       <Spinner size="sm" />
       Laster …
     </div>
@@ -226,7 +226,7 @@ function PendingInviteCard({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-foreground truncate">{invite.team.name}</p>
           {invite.team.description && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
+            <p className="text-xs text-foreground-muted truncate mt-0.5">
               {invite.team.description}
             </p>
           )}
@@ -352,13 +352,13 @@ function ActiveAffiliationCard({
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <ChevronDown
                 className={cn(
-                  'size-4 shrink-0 text-muted-foreground transition-transform',
+                  'size-4 shrink-0 text-foreground-muted transition-transform',
                   !expanded && '-rotate-90',
                 )}
               />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">{invite.team.name}</p>
-                <p className="text-xs text-muted-foreground truncate mt-0.5 tabular-nums">
+                <p className="text-xs text-foreground-muted truncate mt-0.5 tabular-nums">
                   {listedIds.size} kurs vises
                 </p>
               </div>
@@ -370,7 +370,7 @@ function ActiveAffiliationCard({
               {loadingList ? (
                 <LoadingRow />
               ) : visibleCourses.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground-muted">
                   Du har ingen kurs ennå. Opprett et kurs for å la det vises på{' '}
                   {invite.team.name}.
                 </p>
@@ -405,7 +405,7 @@ function ActiveAffiliationCard({
                   variant="ghost"
                   size="sm"
                   onClick={() => setConfirmLeave(true)}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-foreground-muted hover:text-foreground"
                 >
                   <LogOut className="size-3.5" />
                   Avslutt samarbeid
@@ -482,7 +482,7 @@ function InviteForm({
   return (
     <form onSubmit={handleSubmit} className="flex items-center gap-2">
       <div className="relative flex-1">
-        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground-muted pointer-events-none" />
         <Input
           type="email"
           placeholder="instruktør@eksempel.no"
@@ -542,13 +542,13 @@ function AffiliateCard({
                 {affiliate.seller.name}
               </p>
               {isPending && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-foreground-muted">
                   Venter
                 </span>
               )}
             </div>
             {affiliate.seller.city && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+              <p className="text-xs text-foreground-muted mt-0.5 truncate">
                 {affiliate.seller.city}
               </p>
             )}

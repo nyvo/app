@@ -88,9 +88,9 @@ function StatusPill({ kind, label }: { kind: PillKind; label: string }) {
         'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
         kind === 'failed' && 'bg-foreground text-background',
         kind === 'confirmed' && 'bg-muted text-foreground',
-        kind === 'pending' && 'bg-muted text-muted-foreground',
-        kind === 'refunded' && 'bg-muted text-muted-foreground',
-        kind === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+        kind === 'pending' && 'bg-muted text-foreground-muted',
+        kind === 'refunded' && 'bg-muted text-foreground-muted',
+        kind === 'cancelled' && 'bg-muted text-foreground-muted line-through',
       )}
     >
       {label}
@@ -151,19 +151,19 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false, onMutate
       <div className="min-w-0 flex flex-col gap-0.5">
         <p className={cn(
           'text-sm font-medium leading-[1.3] truncate',
-          isCancelled ? 'text-muted-foreground' : 'text-foreground',
+          isCancelled ? 'text-foreground-muted' : 'text-foreground',
         )}>
           <span>{signup.participantName}</span>
           {signup.note && (
             <span
-              className="ml-1.5 inline-flex items-center align-middle text-muted-foreground"
+              className="ml-1.5 inline-flex items-center align-middle text-foreground-muted"
               title={signup.note}
             >
               <FileText className="size-3" strokeWidth={1.75} />
             </span>
           )}
         </p>
-        <p className="text-xs leading-[1.4] text-muted-foreground tabular-nums truncate">
+        <p className="text-xs leading-[1.4] text-foreground-muted tabular-nums truncate">
           {!hideCourse && (
             <>
               <Link
@@ -173,14 +173,14 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false, onMutate
               >
                 {signup.className}
               </Link>
-              {(middle || ticketTag) && <span className="text-disabled-foreground mx-1.5">·</span>}
+              {(middle || ticketTag) && <span className="text-foreground-disabled mx-1.5">·</span>}
             </>
           )}
           {middle && <span>{middle}</span>}
-          {middle && ticketTag && <span className="text-disabled-foreground mx-1.5">·</span>}
+          {middle && ticketTag && <span className="text-foreground-disabled mx-1.5">·</span>}
           {ticketTag && <span>{ticketTag}</span>}
         </p>
-        <p className="text-xs leading-[1.4] text-muted-foreground truncate">
+        <p className="text-xs leading-[1.4] text-foreground-muted truncate">
           {signup.participantEmail}
         </p>
       </div>
@@ -193,7 +193,7 @@ export function SignupRow({ signup, actionHandlers, hideCourse = false, onMutate
             ? formatKroner(signup.amountPaid)
             : 'Gratis'}
         </span>
-        <span className="text-[11px] text-muted-foreground tabular-nums leading-none">
+        <span className="text-[11px] text-foreground-muted tabular-nums leading-none">
           {signup.registeredAt}
         </span>
       </div>

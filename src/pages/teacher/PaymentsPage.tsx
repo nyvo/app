@@ -166,7 +166,7 @@ const PaymentsPage = () => {
       >
         <div className="mb-10 pt-6 pb-8 lg:pt-8">
           <h1 className="text-3xl font-semibold text-foreground">Betalinger</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground-muted">
             Sett opp utbetalinger via Dintero. Saldo og transaksjoner ser du på din Dintero-konto.
           </p>
         </div>
@@ -177,7 +177,7 @@ const PaymentsPage = () => {
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Sett opp utbetalinger</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-foreground-muted">
                   Du fyller ut signering og bekreftelse på Dinteros side. Det tar 5–10 minutter.
                 </p>
               </div>
@@ -265,7 +265,7 @@ const PaymentsPage = () => {
                         onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
                         required
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-foreground-muted">
                         Dintero sender signering og oppdateringer hit.
                       </p>
                     </div>
@@ -285,7 +285,7 @@ const PaymentsPage = () => {
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Fullfør hos Dintero</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-foreground-muted">
                   Status: {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Venter'}.
                 </p>
               </div>
@@ -335,20 +335,20 @@ const PaymentsPage = () => {
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Utbetalinger er aktive</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-foreground-muted">
                   Avtalen med Dintero er på plass.
                 </p>
               </div>
               <Card className="md:col-span-2">
                 <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-subtle text-success">
                     <Check className="size-5" />
                   </div>
                   <div className="flex-1">
                     <p className="text-base font-semibold text-foreground">
                       Utbetalinger er klare
                     </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-foreground-muted">
                       Dintero håndterer utbetalingene direkte til bankkontoen din. Saldo,
                       transaksjoner og innstillinger ser du på din Dintero-konto.
                     </p>

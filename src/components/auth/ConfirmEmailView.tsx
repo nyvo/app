@@ -42,14 +42,14 @@ export const ConfirmEmailView = () => {
   return (
     <AuthLayout title="" customContent>
       <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-        <Mail className="size-8 text-muted-foreground" />
+        <Mail className="size-8 text-foreground-muted" />
       </div>
 
       <div className="text-center mb-8 space-y-2 w-full">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Sjekk e-posten din
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-foreground-muted">
           {email ? (
             <>
               Vi har sendt en bekreftelseslenke til{' '}
@@ -80,7 +80,7 @@ export const ConfirmEmailView = () => {
         </Button>
       </div>
 
-      <p className="text-xs mt-6 text-center text-muted-foreground">
+      <p className="text-xs mt-6 text-center text-foreground-muted">
         {AUTH_HINTS.checkSpamAlt}
       </p>
     </AuthLayout>

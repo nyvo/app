@@ -27,13 +27,13 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
       <CardHeader>
         <CardTitle>Kom i gang</CardTitle>
         <CardAction>
-          <Badge variant="secondary" className="text-muted-foreground tracking-wide">{completedCount} av {totalCount}</Badge>
+          <Badge variant="secondary" className="text-foreground-muted tracking-wide">{completedCount} av {totalCount}</Badge>
         </CardAction>
       </CardHeader>
       <CardContent>
         {/* Progress bar */}
         <div className="mb-4">
-          <p className="text-xs text-muted-foreground mb-1.5">
+          <p className="text-xs text-foreground-muted mb-1.5">
             {motivationalSubtitle}
           </p>
           <div
@@ -67,10 +67,10 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 {/* Step number */}
                 <span className={`text-xs font-medium tracking-wide mt-0.5 shrink-0 tabular-nums ${
                   step.isComplete
-                    ? 'text-muted-foreground'
+                    ? 'text-foreground-muted'
                     : isNext
                       ? 'text-foreground'
-                      : 'text-muted-foreground'
+                      : 'text-foreground-muted'
                 }`}>
                   {index + 1}
                 </span>
@@ -79,15 +79,15 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 <div className="flex-1 min-w-0">
                   <p className={`${
                     step.isComplete
-                      ? 'text-sm text-muted-foreground'
+                      ? 'text-sm text-foreground-muted'
                       : isNext
                         ? 'text-sm font-medium text-foreground'
-                        : 'text-sm text-muted-foreground'
+                        : 'text-sm text-foreground-muted'
                   }`}>
                     {step.title}
                   </p>
                   {isNext && (
-                    <p className="text-xs mt-0.5 text-muted-foreground">
+                    <p className="text-xs mt-0.5 text-foreground-muted">
                       {step.description}
                     </p>
                   )}
@@ -95,7 +95,7 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
 
                 {/* Completed check (right side) */}
                 {step.isComplete && (
-                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-success/10 border border-success/20">
+                  <div className="mt-0.5 shrink-0 size-5 rounded-full flex items-center justify-center bg-success-subtle border border-success/20">
                     <Check className="size-3 text-success" />
                   </div>
                 )}
@@ -104,13 +104,13 @@ export const SetupChecklist = ({ steps, completedCount, totalCount, motivational
                 {!step.isComplete && isNext && (
                   <>
                     {isLoading ? (
-                      <Loader2 className="size-3.5 text-muted-foreground animate-spin shrink-0" />
+                      <Loader2 className="size-3.5 text-foreground-muted animate-spin shrink-0" />
                     ) : step.actionHref ? (
                       <Button variant="outline-soft" size="sm" asChild>
                         <Link to={step.actionHref}>
                           {step.actionLabel}
                           {step.timeEstimate && (
-                            <span className="text-muted-foreground font-normal ml-1">· {step.timeEstimate}</span>
+                            <span className="text-foreground-muted font-normal ml-1">· {step.timeEstimate}</span>
                           )}
                         </Link>
                       </Button>

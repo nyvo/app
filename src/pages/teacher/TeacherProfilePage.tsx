@@ -354,14 +354,14 @@ const TeacherProfilePage = () => {
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Innstillinger
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">Din profil, varslinger og kontoinnstillinger.</p>
+            <p className="mt-1 text-sm text-foreground-muted">Din profil, varslinger og kontoinnstillinger.</p>
           </div>
           <div className="max-w-5xl space-y-8">
                   {/* Personlig informasjon */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Personlig informasjon</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Navn, e-post og informasjon om studioet ditt.</p>
+                      <p className="text-sm mt-1 text-foreground-muted">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
                     <Card className="md:col-span-2">
                       <CardContent className="md:px-8">
@@ -378,7 +378,7 @@ const TeacherProfilePage = () => {
                                 aria-describedby={errors.firstName && touched.firstName ? 'profile-firstname-error' : undefined}
                             />
                             {errors.firstName && touched.firstName && (
-                              <p id="profile-firstname-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.firstName}</p>
+                              <p id="profile-firstname-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.firstName}</p>
                             )}
                         </div>
 
@@ -394,7 +394,7 @@ const TeacherProfilePage = () => {
                                 aria-describedby={errors.lastName && touched.lastName ? 'profile-lastname-error' : undefined}
                             />
                             {errors.lastName && touched.lastName && (
-                              <p id="profile-lastname-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.lastName}</p>
+                              <p id="profile-lastname-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.lastName}</p>
                             )}
                         </div>
 
@@ -410,9 +410,9 @@ const TeacherProfilePage = () => {
                                 aria-describedby={errors.email && touched.email ? 'profile-email-error' : 'profile-email-hint'}
                             />
                             {errors.email && touched.email ? (
-                              <p id="profile-email-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{errors.email}</p>
+                              <p id="profile-email-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.email}</p>
                             ) : (
-                              <p id="profile-email-hint" className="text-xs mt-1.5 text-muted-foreground">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              <p id="profile-email-hint" className="text-xs mt-1.5 text-foreground-muted">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
@@ -425,7 +425,7 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => setCity(e.target.value)}
                                 placeholder="Oslo"
                             />
-                            <p className="text-xs mt-1.5 text-muted-foreground">Vises på din offentlige side.</p>
+                            <p className="text-xs mt-1.5 text-foreground-muted">Vises på din offentlige side.</p>
                         </div>
 
                         <div className="md:col-span-2">
@@ -442,11 +442,11 @@ const TeacherProfilePage = () => {
                             />
                             <div className="mt-1.5 flex justify-between">
                                 {errors.studioDescription && touched.studioDescription ? (
-                                  <span id="profile-description-error" role="alert" className="text-xs font-medium text-destructive">{errors.studioDescription}</span>
+                                  <span id="profile-description-error" role="alert" className="text-xs font-medium text-danger">{errors.studioDescription}</span>
                                 ) : (
-                                  <span id="profile-description-hint" className="text-xs text-muted-foreground">Vises på din offentlige side.</span>
+                                  <span id="profile-description-hint" className="text-xs text-foreground-muted">Vises på din offentlige side.</span>
                                 )}
-                                <span className={`text-xs tabular-nums ${studioDescription.length > 500 ? 'text-destructive' : 'text-muted-foreground'}`}>{studioDescription.length}/500</span>
+                                <span className={`text-xs tabular-nums ${studioDescription.length > 500 ? 'text-danger' : 'text-foreground-muted'}`}>{studioDescription.length}/500</span>
                             </div>
                         </div>
                       </div>
@@ -458,7 +458,7 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Konto & Sikkerhet</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Passord og sikkerhet.</p>
+                      <p className="text-sm mt-1 text-foreground-muted">Passord og sikkerhet.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                           {/* Endre passord */}
@@ -466,7 +466,7 @@ const TeacherProfilePage = () => {
                               <div className="flex items-center justify-between">
                                   <div>
                                       <span className="text-sm font-medium block text-foreground">Endre passord</span>
-                                      <span className="text-xs block text-muted-foreground">Oppdater passordet ditt.</span>
+                                      <span className="text-xs block text-foreground-muted">Oppdater passordet ditt.</span>
                                   </div>
                                   <Button
                                       variant={passwordExpanded ? 'ghost' : 'outline-soft'}
@@ -504,14 +504,14 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                                                   aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.currentPassword && (
-                                              <p id="current-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.currentPassword}</p>
+                                              <p id="current-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.currentPassword}</p>
                                           )}
                                       </div>
 
@@ -530,16 +530,16 @@ const TeacherProfilePage = () => {
                                               <button
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                                                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.newPassword ? (
-                                              <p id="new-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.newPassword}</p>
+                                              <p id="new-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p id="new-password-hint" className="text-xs mt-1.5 text-muted-foreground">Må være minst 10 tegn</p>
+                                              <p id="new-password-hint" className="text-xs mt-1.5 text-foreground-muted">Må være minst 10 tegn</p>
                                           )}
                                       </div>
 
@@ -555,7 +555,7 @@ const TeacherProfilePage = () => {
                                               autoComplete="new-password"
                                           />
                                           {passwordErrors.confirmPassword && (
-                                              <p id="confirm-password-error" role="alert" className="text-xs font-medium mt-1.5 text-destructive">{passwordErrors.confirmPassword}</p>
+                                              <p id="confirm-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.confirmPassword}</p>
                                           )}
                                       </div>
 
@@ -589,7 +589,7 @@ const TeacherProfilePage = () => {
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Logg ut alle enheter</span>
-                                  <span className="text-xs block text-muted-foreground">Logger deg ut overalt.</span>
+                                  <span className="text-xs block text-foreground-muted">Logger deg ut overalt.</span>
                               </div>
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
@@ -627,13 +627,13 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">E-postvarslinger</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Velg hvilke e-poster du vil motta.</p>
+                      <p className="text-sm mt-1 text-foreground-muted">Velg hvilke e-poster du vil motta.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Nye påmeldinger</span>
-                                  <span className="text-xs block text-muted-foreground">Få e-post når noen melder seg på kurset ditt.</span>
+                                  <span className="text-xs block text-foreground-muted">Få e-post når noen melder seg på kurset ditt.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -646,7 +646,7 @@ const TeacherProfilePage = () => {
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Avbestillinger</span>
-                                  <span className="text-xs block text-muted-foreground">Få e-post når noen avbestiller.</span>
+                                  <span className="text-xs block text-foreground-muted">Få e-post når noen avbestiller.</span>
                               </div>
                               <Switch
                                   size="sm"
@@ -663,13 +663,13 @@ const TeacherProfilePage = () => {
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Slett konto</h2>
-                      <p className="text-sm mt-1 text-muted-foreground">Permanent sletting av kontoen din.</p>
+                      <p className="text-sm mt-1 text-foreground-muted">Permanent sletting av kontoen din.</p>
                     </div>
                     <Card className="md:col-span-2 gap-0 py-0">
                           <div className="flex items-center justify-between px-6 py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>
-                                  <span className="text-xs block text-muted-foreground">All data slettes permanent.</span>
+                                  <span className="text-xs block text-foreground-muted">All data slettes permanent.</span>
                               </div>
                               <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
                                   <AlertDialogTrigger asChild>

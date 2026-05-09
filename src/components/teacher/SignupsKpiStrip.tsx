@@ -18,12 +18,12 @@ interface SignupsKpiStripProps {
 
 function KpiCell({ label, value, sub, loading }: { label: string; value: string; sub?: string; loading: boolean }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="text-xs text-foreground-muted">{label}</div>
       <div className="mt-1 text-[22px] font-semibold tracking-tight text-foreground tabular-nums leading-tight">
         {loading ? '—' : value}
       </div>
-      {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+      {sub && <div className="mt-1 text-xs text-foreground-muted">{sub}</div>}
     </div>
   );
 }

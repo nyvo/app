@@ -184,27 +184,27 @@ export function ImageUpload({
             smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
             ${
               dragActive
-                ? 'border-ring bg-card'
-                : 'border-input bg-card hover:border-ring'
+                ? 'border-ring bg-surface'
+                : 'border-input bg-surface hover:border-ring'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${displayError ? 'border-destructive' : ''}
+            ${displayError ? 'border-danger' : ''}
           `}
         >
-          <div className="size-10 rounded-lg bg-card border border-input flex items-center justify-center">
-            <ImagePlus className="size-5 text-muted-foreground" />
+          <div className="size-10 rounded-lg bg-surface border border-input flex items-center justify-center">
+            <ImagePlus className="size-5 text-foreground-muted" />
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-foreground">
               {dragActive ? 'Slipp for å laste opp' : 'Legg til bilde'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Dra og slipp, eller velg fil</p>
+            <p className="text-xs text-foreground-muted mt-1">Dra og slipp, eller velg fil</p>
           </div>
         </div>
       )}
 
       {displayError && (
-        <p className="mt-2 text-xs text-destructive flex items-center gap-1">
+        <p className="mt-2 text-xs text-danger flex items-center gap-1">
           <AlertCircle className="size-3" />
           {displayError}
         </p>

@@ -81,9 +81,9 @@ function StatusPill({ kind, label }: { kind: PillKind; label: string }) {
         'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
         kind === 'failed' && 'bg-foreground text-background',
         kind === 'confirmed' && 'bg-muted text-foreground',
-        kind === 'pending' && 'bg-muted text-muted-foreground',
-        kind === 'refunded' && 'bg-muted text-muted-foreground',
-        kind === 'cancelled' && 'bg-muted text-muted-foreground line-through',
+        kind === 'pending' && 'bg-muted text-foreground-muted',
+        kind === 'refunded' && 'bg-muted text-foreground-muted',
+        kind === 'cancelled' && 'bg-muted text-foreground-muted line-through',
       )}
     >
       {label}
@@ -192,7 +192,7 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
                 <SheetTitle className="text-base font-medium leading-tight truncate">
                   {signup.participantName}
                 </SheetTitle>
-                <SheetDescription className="text-xs text-muted-foreground mt-0.5 truncate">
+                <SheetDescription className="text-xs text-foreground-muted mt-0.5 truncate">
                   {signup.participantEmail}
                 </SheetDescription>
                 <div className="mt-2">
@@ -205,16 +205,16 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
           <div className="flex-1 overflow-y-auto">
             {/* Course context */}
             <section className="px-6 py-4 space-y-3 border-b">
-              <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Kurs</h3>
+              <h3 className="text-xs font-medium tracking-wide text-foreground-muted uppercase">Kurs</h3>
               <Link
                 to={routes.course(signup.courseId)}
                 className="group flex items-center gap-2 text-sm font-medium text-foreground hover:underline decoration-muted-foreground underline-offset-2"
                 onClick={onClose}
               >
                 <span className="truncate">{signup.className}</span>
-                <ExternalLink className="size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+                <ExternalLink className="size-3.5 shrink-0 text-foreground-muted transition-colors group-hover:text-foreground" />
               </Link>
-              <dl className="text-xs text-muted-foreground space-y-1.5 tabular-nums">
+              <dl className="text-xs text-foreground-muted space-y-1.5 tabular-nums">
                 {dateLine && (
                   <div className="flex justify-between gap-3">
                     <dt>{isDropIn ? 'Tid' : 'Varighet'}</dt>
@@ -243,7 +243,7 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
             {/* Note — read-only for now; inline edit is a future enhancement */}
             {signup.note && (
               <section className="px-6 py-4 space-y-2 border-b">
-                <h3 className="text-xs font-medium tracking-wide text-muted-foreground uppercase flex items-center gap-1.5">
+                <h3 className="text-xs font-medium tracking-wide text-foreground-muted uppercase flex items-center gap-1.5">
                   <FileText className="size-3" strokeWidth={1.75} />
                   Notat
                 </h3>
@@ -260,7 +260,7 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
                   href={`mailto:${signup.participantEmail}`}
                   className="inline-flex items-center gap-2 text-sm text-foreground hover:underline decoration-muted-foreground underline-offset-2"
                 >
-                  <Mail className="size-3.5 text-muted-foreground" />
+                  <Mail className="size-3.5 text-foreground-muted" />
                   Send e-post
                 </a>
               </section>
@@ -322,7 +322,7 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
                   </div>
                   {isPaid && (
                     <span className="text-sm font-medium tabular-nums text-foreground">
@@ -330,7 +330,7 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground-muted">
                   {isPaid
                     ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt via betalingsoversikten.'
                     : 'Deltakeren mister plassen sin. Dette kan ikke angres.'}
@@ -362,13 +362,13 @@ export function SignupDetailDrawer({ signup, onClose, onMutate }: SignupDetailDr
                 <div className="flex items-center justify-between py-1">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{signup.participantEmail}</p>
+                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
                   </div>
                   <span className="text-sm font-medium tabular-nums text-foreground">
                     {formatKroner(signup.amountPaid ?? 0)}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-foreground-muted">
                   Hele beløpet refunderes til betalingskortet. Refusjonen tar vanligvis 5–10 virkedager.
                 </p>
               </div>

@@ -101,14 +101,14 @@ export const ResetPasswordView = () => {
     return (
       <AuthLayout title="" customContent>
         <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <AlertCircle className="size-8 text-destructive" />
+          <AlertCircle className="size-8 text-danger" />
         </div>
 
         <div className="text-center mb-8 space-y-2 w-full">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Ugyldig lenke
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Lenken er utløpt eller fungerer ikke.
           </p>
         </div>
@@ -136,7 +136,7 @@ export const ResetPasswordView = () => {
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Passordet er oppdatert
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Du kan nå logge inn med det nye passordet.
           </p>
         </div>
@@ -155,7 +155,7 @@ export const ResetPasswordView = () => {
       title="Tilbakestill passord"
       subtitle="Velg et nytt passord."
       footer={
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-foreground-muted">
           Trenger du hjelp? Send en e-post til{' '}
           <a
             href="mailto:hei@ease.no"
@@ -193,15 +193,15 @@ export const ResetPasswordView = () => {
         />
 
         <div className="rounded-lg bg-muted p-3">
-          <p className="text-xs font-medium tracking-wide mb-1 text-muted-foreground">Krav</p>
-          <ul className="text-xs ml-3 space-y-0.5 text-muted-foreground">
+          <p className="text-xs font-medium tracking-wide mb-1 text-foreground-muted">Krav</p>
+          <ul className="text-xs ml-3 space-y-0.5 text-foreground-muted">
             <li className="list-disc">Minst 10 tegn</li>
           </ul>
         </div>
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-destructive">{errors.general}</p>
+            <p className="text-xs font-medium text-danger">{errors.general}</p>
           </Alert>
         )}
 

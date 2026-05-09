@@ -42,7 +42,7 @@ export function AuthLayout({
           transition={authPageTransition}
           className="w-full max-w-md"
         >
-          <Card className="border-border bg-card p-6 sm:p-8">
+          <Card className="border-border bg-surface p-6 sm:p-8">
             {customContent ? (
               <div className="flex flex-col items-center">
                 {children}
@@ -54,7 +54,7 @@ export function AuthLayout({
                     {title}
                   </h1>
                   {subtitle && (
-                    <p className="text-sm text-muted-foreground">{subtitle}</p>
+                    <p className="text-sm text-foreground-muted">{subtitle}</p>
                   )}
                 </div>
 

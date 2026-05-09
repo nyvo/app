@@ -124,7 +124,7 @@ function Samples() {
           <CardDescription>Torsdag kl. 18:00 · 12 av 14 påmeldte</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-foreground-muted">
             Åpen klasse for alle nivåer. Fokus på pusteteknikk og avslapning. Ta med egen matte.
           </p>
         </CardContent>
@@ -140,11 +140,11 @@ function Samples() {
       </div>
 
       {/* Text hierarchy */}
-      <div className="space-y-2 rounded-lg border border-border bg-card p-6">
-        <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">Inntekter</p>
+      <div className="space-y-2 rounded-lg border border-border bg-surface p-6">
+        <p className="text-xs font-medium tracking-wide uppercase text-foreground-muted">Inntekter</p>
         <p className="text-3xl font-semibold tabular-nums text-foreground">42 800 kr</p>
-        <p className="text-sm text-muted-foreground">Denne måneden</p>
-        <p className="text-xs text-tertiary-foreground">Oppdatert for 2 minutter siden</p>
+        <p className="text-sm text-foreground-muted">Denne måneden</p>
+        <p className="text-xs text-foreground-tertiary">Oppdatert for 2 minutter siden</p>
       </div>
 
       {/* Chart-2 accent surface */}
@@ -154,7 +154,7 @@ function Samples() {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">Yin Yoga</p>
-          <p className="text-xs text-tertiary-foreground">Mandag kl. 19:00</p>
+          <p className="text-xs text-foreground-tertiary">Mandag kl. 19:00</p>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ function Samples() {
       </div>
 
       {/* Row list with dividers */}
-      <div className="rounded-lg border border-border bg-card divide-y divide-border overflow-hidden">
+      <div className="rounded-lg border border-border bg-surface divide-y divide-border overflow-hidden">
         {[
           { name: 'Kari Nordmann', meta: 'kari@example.com', status: 'Betalt' },
           { name: 'Ola Hansen', meta: 'ola@example.com', status: 'Venter' },
@@ -184,9 +184,9 @@ function Samples() {
           <div key={row.name} className="flex items-center justify-between px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{row.name}</p>
-              <p className="text-xs text-muted-foreground">{row.meta}</p>
+              <p className="text-xs text-foreground-muted">{row.meta}</p>
             </div>
-            <span className="text-xs font-medium tracking-wide text-muted-foreground">{row.status}</span>
+            <span className="text-xs font-medium tracking-wide text-foreground-muted">{row.status}</span>
           </div>
         ))}
       </div>
@@ -204,7 +204,7 @@ function Column({ label, description, tokens }: ColumnProps) {
   return (
     <section className="p-6 bg-background" style={tokens}>
       <div className="mb-6">
-        <p className="text-xs font-medium tracking-wide uppercase text-muted-foreground">{label}</p>
+        <p className="text-xs font-medium tracking-wide uppercase text-foreground-muted">{label}</p>
         <p className="text-sm text-foreground mt-0.5 leading-snug">{description}</p>
       </div>
       <Samples />
@@ -217,7 +217,7 @@ export default function TokenPreview() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-4">
         <h1 className="text-xl font-semibold text-foreground">Token comparison</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-sm text-foreground-muted mt-0.5">
           Same components, 4 different token sets. Compare and pick your axis.
         </p>
       </header>

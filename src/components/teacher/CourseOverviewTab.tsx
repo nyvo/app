@@ -126,7 +126,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               ) : (
                 <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg bg-muted lg:aspect-square">
-                  <Image className="mx-auto mb-2 size-5 text-disabled-foreground" />
+                  <Image className="mx-auto mb-2 size-5 text-foreground-disabled" />
                 </div>
               )}
             </div>
@@ -138,7 +138,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </p>
               )}
               {course.description2 && (
-                <p className="text-sm leading-[1.55] text-muted-foreground whitespace-pre-wrap">
+                <p className="text-sm leading-[1.55] text-foreground-muted whitespace-pre-wrap">
                   {course.description2}
                 </p>
               )}
@@ -157,7 +157,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               )}
               {!course.description && !course.description2 && (
-                <p className="text-sm leading-relaxed text-muted-foreground italic">
+                <p className="text-sm leading-relaxed text-foreground-muted italic">
                   Ingen beskrivelse lagt til.
                 </p>
               )}
@@ -214,12 +214,12 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                      <p className="text-xs truncate text-muted-foreground">{p.email}</p>
+                      <p className="text-xs truncate text-foreground-muted">{p.email}</p>
                     </div>
                     <span className={cn(
                       'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5] shrink-0',
                       pillTone === 'failed' && 'bg-foreground text-background',
-                      pillTone === 'muted' && 'bg-muted text-muted-foreground',
+                      pillTone === 'muted' && 'bg-muted text-foreground-muted',
                       pillTone === 'foreground' && 'bg-muted text-foreground',
                     )}>
                       {label}
@@ -230,7 +230,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             </div>
             {/* Estimated revenue moved out of headline — surfaced as quiet meta */}
             {course.estimatedRevenue > 0 && (
-              <p className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground tabular-nums">
+              <p className="mt-4 pt-3 border-t border-border text-xs text-foreground-muted tabular-nums">
                 Estimerte inntekter for denne kursrekken:{' '}
                 <span className="text-foreground font-medium">{formatKroner(course.estimatedRevenue)}</span>
               </p>

@@ -327,18 +327,18 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
 
   // Shared chrome — single hairline border, no shadow, overflow-hidden so
   // the rounded corners clip the bottom disclosure cleanly.
-  const panelClass = 'rounded-lg border border-border bg-card p-6 overflow-hidden';
+  const panelClass = 'rounded-lg border border-border bg-surface p-6 overflow-hidden';
 
   // Reused header — meta line above title (12px tabular muted), then 16px
   // semibold title. Spots badge floats top-right.
   const courseHeader = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        {meta && <p className="text-xs text-muted-foreground tabular-nums">{meta}</p>}
+        {meta && <p className="text-xs text-foreground-muted tabular-nums">{meta}</p>}
         <h3 className="mt-0.5 text-base font-semibold leading-snug text-foreground">{course.title}</h3>
       </div>
       {spotsState === 'low' && (
-        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-relaxed bg-warning/15 text-warning shrink-0">
+        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-relaxed bg-warning-subtle text-warning shrink-0">
           {spotsLabel}
         </span>
       )}
@@ -364,7 +364,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         {courseHeader}
         <div className="rounded-md bg-muted/60 px-4 py-3 text-center">
           <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
-          <p className="text-xs mt-0.5 text-muted-foreground">Ingen ledige plasser igjen.</p>
+          <p className="text-xs mt-0.5 text-foreground-muted">Ingen ledige plasser igjen.</p>
         </div>
       </div>
     );
@@ -436,9 +436,9 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
                       </span>
                     </div>
                     {dropInDateLine && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">{dropInDateLine}</p>
+                      <p className="mt-0.5 text-xs text-foreground-muted">{dropInDateLine}</p>
                     )}
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-foreground-muted">
                       {audienceLabel && <span>{audienceLabel}</span>}
                       {!isDropIn && tier.weeks ? <span>{tier.weeks} uker</span> : null}
                       {salesEnds && (
@@ -449,7 +449,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
                       )}
                     </div>
                     {tier.description && tier.description !== tier.label && (
-                      <p className="mt-1 text-xs text-muted-foreground">{tier.description}</p>
+                      <p className="mt-1 text-xs text-foreground-muted">{tier.description}</p>
                     )}
                   </div>
                 </label>
@@ -472,8 +472,8 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
           </div>
           {fee > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Servicegebyr</span>
-              <span className="tabular-nums text-muted-foreground">{formatKroner(fee)}</span>
+              <span className="text-foreground-muted">Servicegebyr</span>
+              <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
             </div>
           )}
           <div className="flex justify-between border-t border-border pt-2 text-base font-semibold">
@@ -502,7 +502,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             onChange={(e) => updateField('name', e.target.value)}
             aria-invalid={errors.name || undefined}
           />
-          {errors.name && <p role="alert" className="text-xs font-medium text-destructive mt-1">Fyll inn navn.</p>}
+          {errors.name && <p role="alert" className="text-xs font-medium text-danger mt-1">Fyll inn navn.</p>}
         </div>
 
         <div>
@@ -518,7 +518,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             aria-invalid={errors.email || undefined}
           />
           {errors.email && (
-            <p role="alert" className="text-xs font-medium text-destructive mt-1">
+            <p role="alert" className="text-xs font-medium text-danger mt-1">
               {emailMessage ?? 'Fyll inn en gyldig e-postadresse.'}
             </p>
           )}
@@ -534,7 +534,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             aria-invalid={errors.terms || undefined}
             className="mt-0.5"
           />
-          <label htmlFor="bk-terms" className="text-xs text-muted-foreground leading-relaxed select-none cursor-pointer">
+          <label htmlFor="bk-terms" className="text-xs text-foreground-muted leading-relaxed select-none cursor-pointer">
             Jeg godtar{' '}
             <Link to="/terms" target="_blank" className="text-foreground underline underline-offset-2 decoration-muted-foreground/40 hover:decoration-foreground">
               vilkår og angrerett
@@ -542,7 +542,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             .
           </label>
         </div>
-        {errors.terms && <p role="alert" className="text-xs font-medium text-destructive">Du må godta vilkårene for å gå videre.</p>}
+        {errors.terms && <p role="alert" className="text-xs font-medium text-danger">Du må godta vilkårene for å gå videre.</p>}
       </div>
 
       <Button
@@ -563,10 +563,10 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
       <details className="group/disc -mx-6 -mb-6 mt-5 border-t border-border">
         <summary className="flex items-center justify-between px-6 py-3 cursor-pointer text-xs font-medium text-foreground list-none [&::-webkit-details-marker]:hidden">
           <span>Avbestilling og vilkår</span>
-          <Plus className="size-3.5 text-muted-foreground group-open/disc:hidden" strokeWidth={2} />
-          <Minus className="size-3.5 text-muted-foreground hidden group-open/disc:block" strokeWidth={2} />
+          <Plus className="size-3.5 text-foreground-muted group-open/disc:hidden" strokeWidth={2} />
+          <Minus className="size-3.5 text-foreground-muted hidden group-open/disc:block" strokeWidth={2} />
         </summary>
-        <p className="px-6 pb-4 text-xs leading-relaxed text-muted-foreground">
+        <p className="px-6 pb-4 text-xs leading-relaxed text-foreground-muted">
           Trenger du å avbestille, ta kontakt med studioet. Refusjon avgjøres av studioet fra sak til sak.
         </p>
       </details>

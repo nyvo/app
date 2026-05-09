@@ -47,9 +47,9 @@ export function PublicNav({ studioName, studioSlug, overlay = false }: PublicNav
         {studioName && studioSlug && (
           <Link
             to={`/${studioSlug}`}
-            className="hidden sm:flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-muted-foreground hover:text-foreground transition-colors"
+            className="hidden sm:flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-foreground-muted hover:text-foreground transition-colors"
           >
-            <span className="hidden md:inline text-disabled-foreground">studio /</span>
+            <span className="hidden md:inline text-foreground-disabled">studio /</span>
             <span className="truncate max-w-[200px]">{studioName}</span>
           </Link>
         )}

@@ -172,7 +172,7 @@ export function EditTeamDialog({ open, onOpenChange, team, onSaved }: Props) {
           <div className="flex flex-col gap-1.5">
             <label htmlFor="es-slug" className="text-xs font-medium text-foreground">URL</label>
             <div className="flex min-w-0 items-center gap-1 text-sm">
-              <span className="shrink-0 text-muted-foreground">framio.no/</span>
+              <span className="shrink-0 text-foreground-muted">framio.no/</span>
               <Input id="es-slug" value={team?.slug ?? ''} className="min-w-0" disabled readOnly />
             </div>
           </div>
@@ -200,12 +200,12 @@ export function EditTeamDialog({ open, onOpenChange, team, onSaved }: Props) {
               onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
               rows={3}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-foreground-muted">
               {MAX_DESCRIPTION - description.length} tegn igjen
             </p>
           </div>
 
-          {errorMsg && <p role="alert" className="text-xs text-destructive font-medium">{errorMsg}</p>}
+          {errorMsg && <p role="alert" className="text-xs text-danger font-medium">{errorMsg}</p>}
 
           <DialogFooter>
             <Button

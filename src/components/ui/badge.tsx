@@ -9,22 +9,22 @@ import { cn } from "@/lib/utils"
  *
  * Variant dimensions:
  *   variant : semantic colour + weight
- *     • semantic         — success / warning / destructive / info / neutral
- *     • wellness pastels — sage / rose / lavender / sand / sky (sentence case, calm)
- *     • emphasis         — default / secondary / outline / ghost / link / accent
+ *     • semantic     — success / warning / destructive / info / neutral
+ *     • pop accents  — accent-sky / accent-mint / accent-iris (Studio pairs, calm)
+ *     • emphasis     — default / secondary / outline / ghost / link / accent
  *   shape   : visual container rounding — "pill" (round, for card meta) or "rect" (slightly rounded, for status rows/tables)
  *   size    : xs / sm / md
  *
- * Pastels are pre-tinted via the --sage / --rose / --lavender / --sand / --sky
- * tokens in `index.css`. Don't pair them with `uppercase` or `tracking-[0.12em]` —
- * the whole point is the calmer treatment.
+ * Pop accents resolve to Studio's `--accent-{sky,mint,iris}-{subtle,fg}` token
+ * pairs. Use them for category-coding only (course level, lesson type), never
+ * for status — that's what success/warning/destructive are for.
  *
  * The 3 typed wrappers (StatusBadge, PaymentBadge, SignupStatusBadge) pick variant + label
  * from a status enum and render <Badge/>. Do NOT render `<Badge variant="success">…</Badge>` ad-hoc
  * for a payment status — use PaymentBadge so copy + silence rules stay centralized.
  */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium tracking-wide transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&>svg]:pointer-events-none",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium tracking-wide transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-danger aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
@@ -37,27 +37,23 @@ const badgeVariants = cva(
         ghost:
           "bg-transparent border-transparent hover:bg-muted",
         destructive:
-          "bg-destructive/10 text-destructive border-transparent focus-visible:ring-destructive/20 [a]:hover:bg-destructive/20",
+          "bg-danger-subtle text-danger border-transparent focus-visible:ring-danger/20 [a]:hover:bg-danger/20",
         success:
-          "bg-success/10 text-success border-transparent",
+          "bg-success-subtle text-success border-transparent",
         warning:
-          "bg-warning/10 text-warning border-transparent",
+          "bg-warning-subtle text-warning border-transparent",
         info:
-          "bg-info/10 text-info border-transparent",
+          "bg-info-subtle text-info border-transparent",
         neutral:
-          "bg-muted text-muted-foreground border-transparent",
+          "bg-muted text-foreground-muted border-transparent",
         accent:
           "bg-chart-2/10 text-chart-2 border-transparent",
-        sage:
-          "bg-sage text-sage-foreground border-transparent tracking-normal",
-        rose:
-          "bg-rose text-rose-foreground border-transparent tracking-normal",
-        lavender:
-          "bg-lavender text-lavender-foreground border-transparent tracking-normal",
-        sand:
-          "bg-sand text-sand-foreground border-transparent tracking-normal",
-        sky:
-          "bg-sky text-sky-foreground border-transparent tracking-normal",
+        "accent-sky":
+          "bg-accent-sky-subtle text-accent-sky-fg border-transparent tracking-normal",
+        "accent-mint":
+          "bg-accent-mint-subtle text-accent-mint-fg border-transparent tracking-normal",
+        "accent-iris":
+          "bg-accent-iris-subtle text-accent-iris-fg border-transparent tracking-normal",
         link:
           "bg-transparent border-transparent text-primary tracking-normal underline-offset-4 hover:underline",
       },
@@ -68,7 +64,7 @@ const badgeVariants = cva(
         rect: "rounded-md",
       },
       size: {
-        xs: "h-4 px-1.5 text-xxs [&>svg]:size-2.5",
+        xs: "h-4 px-1.5 text-[10px] leading-none [&>svg]:size-2.5",
         sm: "h-5 px-2 text-xs [&>svg]:size-3",
         md: "h-6 px-2.5 text-xs [&>svg]:size-3.5",
       },

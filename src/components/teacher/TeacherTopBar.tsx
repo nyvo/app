@@ -58,7 +58,7 @@ export function TeacherTopBar() {
         )}
       >
         <Breadcrumb className="min-w-0 flex-1">
-          <BreadcrumbList className="text-sm gap-2 text-muted-foreground">
+          <BreadcrumbList className="text-sm gap-2 text-foreground-muted">
             {crumbs.map((crumb, index) => {
               const isLast = index === crumbs.length - 1;
 
@@ -73,7 +73,7 @@ export function TeacherTopBar() {
                       <BreadcrumbPage className="font-medium text-foreground">{crumb.label}</BreadcrumbPage>
                     )}
                   </BreadcrumbItem>
-                  {!isLast && <BreadcrumbSeparator className="text-disabled-foreground" />}
+                  {!isLast && <BreadcrumbSeparator className="text-foreground-disabled" />}
                 </Fragment>
               );
             })}
