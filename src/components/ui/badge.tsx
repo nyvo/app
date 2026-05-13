@@ -9,22 +9,17 @@ import { cn } from "@/lib/utils"
  *
  * Variant dimensions:
  *   variant : semantic colour + weight
- *     • semantic     — success / warning / destructive / info / neutral
- *     • pop accents  — accent-sky / accent-mint / accent-iris (Studio pairs, calm)
- *     • emphasis     — default / secondary / outline / ghost / link / accent
+ *     • semantic — success / warning / destructive / info / neutral
+ *     • emphasis — default / secondary / outline / ghost / link / inverted
  *   shape   : visual container rounding — "pill" (round, for card meta) or "rect" (slightly rounded, for status rows/tables)
  *   size    : xs / sm / md
- *
- * Pop accents resolve to Studio's `--accent-{sky,mint,iris}-{subtle,fg}` token
- * pairs. Use them for category-coding only (course level, lesson type), never
- * for status — that's what success/warning/destructive are for.
  *
  * The 3 typed wrappers (StatusBadge, PaymentBadge, SignupStatusBadge) pick variant + label
  * from a status enum and render <Badge/>. Do NOT render `<Badge variant="success">…</Badge>` ad-hoc
  * for a payment status — use PaymentBadge so copy + silence rules stay centralized.
  */
 const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium tracking-wide transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-danger aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
+  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border font-medium transition-colors duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20 [&>svg]:pointer-events-none",
   {
     variants: {
       variant: {
@@ -46,20 +41,14 @@ const badgeVariants = cva(
           "bg-info-subtle text-info border-transparent",
         neutral:
           "bg-muted text-foreground-muted border-transparent",
-        accent:
-          "bg-chart-2/10 text-chart-2 border-transparent",
-        "accent-sky":
-          "bg-accent-sky-subtle text-accent-sky-fg border-transparent tracking-normal",
-        "accent-mint":
-          "bg-accent-mint-subtle text-accent-mint-fg border-transparent tracking-normal",
-        "accent-iris":
-          "bg-accent-iris-subtle text-accent-iris-fg border-transparent tracking-normal",
+        inverted:
+          "bg-foreground text-background border-transparent",
         link:
-          "bg-transparent border-transparent text-primary tracking-normal underline-offset-4 hover:underline",
+          "bg-transparent border-transparent text-primary underline-offset-4 hover:underline",
       },
       shape: {
         // Card meta / counts / decorative chips — fully rounded pill
-        pill: "rounded-4xl",
+        pill: "rounded-full",
         // Status in tables / rows — slightly rounded rectangle
         rect: "rounded-md",
       },

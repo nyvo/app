@@ -28,7 +28,7 @@ function PopoverContent({
     <>
       {showOverlay && (
         <PopoverPrimitive.Portal>
-          <div className="fixed inset-0 z-40 bg-black/20 animate-in fade-in-0" />
+          <div className="fixed inset-0 z-40 bg-foreground/20 animate-in fade-in-0" />
         </PopoverPrimitive.Portal>
       )}
       <PopoverPrimitive.Portal>
@@ -67,7 +67,7 @@ function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
     <div
       data-slot="popover-title"
-      className={cn("font-heading font-medium", className)}
+      className={cn("font-medium", className)}
       {...props}
     />
   )

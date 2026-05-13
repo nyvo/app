@@ -49,14 +49,13 @@ export function useSetupProgress({
   return useMemo(() => {
     const seller = currentSeller
     const hasName = !!profile?.name?.trim()
-    const hasCity = !!seller?.city?.trim()
 
     const steps: SetupStep[] = [
       {
         id: 'profile',
         title: 'Profilen din er klar',
-        description: 'Navn og by er registrert.',
-        isComplete: hasName && hasCity,
+        description: 'Navnet ditt er registrert.',
+        isComplete: hasName,
         actionLabel: 'Fullfør profil',
         actionHref: routes.settingsProfile,
         icon: User,
@@ -76,7 +75,7 @@ export function useSetupProgress({
         description: 'Legg ut et kurs, så kan elevene melde seg på.',
         isComplete: hasCourses,
         actionLabel: 'Opprett kurs',
-        actionHref: routes.newCourse,
+        actionHref: routes.coursesNew,
         icon: BookOpen,
         timeEstimate: 'ca. 3 min',
       },

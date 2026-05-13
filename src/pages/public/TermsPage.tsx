@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Infinity } from '@/lib/icons';
+import { Infinity } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -11,7 +11,6 @@ const TermsPage = () => {
         <div className="w-24">
           <Button variant="outline-soft" size="sm" className="text-foreground-muted hover:text-foreground" asChild>
             <Link to="/">
-              <ArrowLeft className="size-4 mr-2" />
               Tilbake
             </Link>
           </Button>
@@ -32,13 +31,10 @@ const TermsPage = () => {
       {/* Terms Content */}
       <main className="flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-3xl space-y-10">
-          <div className="space-y-3 text-center">
+          <div className="text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               Vilkår for påmelding
             </h1>
-            <p className="text-base mx-auto max-w-2xl text-foreground-muted">
-              Disse vilkårene gjelder for påmelding til kurs og arrangementer formidlet gjennom Ease.
-            </p>
           </div>
 
           <Card className="border-border bg-surface p-6 sm:p-8">

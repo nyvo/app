@@ -1,26 +1,23 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { UserPlus } from '@/lib/icons';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
 import { isValidEmail } from '@/lib/utils';
 
 
-interface AddParticipantDialogProps {
+interface AddParticipantDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   courseId: string;
@@ -28,13 +25,13 @@ interface AddParticipantDialogProps {
   onSuccess: () => void;
 }
 
-export function AddParticipantDialog({
+export function AddParticipantDrawer({
   open,
   onOpenChange,
   courseId,
   organizationId,
   onSuccess,
-}: AddParticipantDialogProps) {
+}: AddParticipantDrawerProps) {
   // Form data
   const [formData, setFormData] = useState({
     firstName: '',
@@ -52,9 +49,6 @@ export function AddParticipantDialog({
   const [availableSpots, setAvailableSpots] = useState<number | null>(null);
   const [isCheckingCapacity, setIsCheckingCapacity] = useState(true);
 
-  // Payment marking
-  const [paymentMarked, setPaymentMarked] = useState<'pending' | 'paid'>('pending');
-
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -68,14 +62,13 @@ export function AddParticipantDialog({
     }
   }, [open, courseId]);
 
-  // Reset form when dialog closes
+  // Reset form when drawer closes
   useEffect(() => {
     if (!open) {
       setFormData({ firstName: '', lastName: '', email: '', phone: '', note: '' });
       setErrors({});
       setTouched({});
       setSubmitError(null);
-      setPaymentMarked('pending');
     }
   }, [open]);
 
@@ -163,6 +156,10 @@ export function AddParticipantDialog({
 
       // ticket_type_id + the 3 snapshots are auto-resolved inside createSignup
       // from the course's default tier — manual adds don't need to pick one.
+      // Manual signups bypass the integrated payment flow — the teacher
+      // handles the transaction outside the system (Vipps, cash, invoice).
+      // Always recorded as 'paid' here; if the money never actually arrives,
+      // the teacher can cancel/refund from the row action menu later.
       const { error } = await createSignup({
         seller_id: organizationId,
         course_id: courseId,
@@ -171,7 +168,7 @@ export function AddParticipantDialog({
         participant_phone: formData.phone.trim() || null,
         note: formData.note.trim() || null,
         status: 'confirmed',
-        payment_status: paymentMarked,
+        payment_status: 'paid',
       });
 
       if (error) {
@@ -192,21 +189,26 @@ export function AddParticipantDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Legg til deltaker</DialogTitle>
-          <DialogDescription>
-            Legg til deltaker manuelt.
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-[480px] p-0 gap-0">
+        <SheetHeader>
+          <SheetTitle>Legg til deltaker</SheetTitle>
+        </SheetHeader>
 
         {isCheckingCapacity ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-1 items-center justify-center py-8">
             <Spinner size="lg" className="text-foreground-muted" />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            {/* Mental-model note — manual signups bypass the integrated
+                payment flow. Muted fill, no border, no icon — this is
+                context, not an alert. */}
+            <div className="rounded-md bg-muted px-3 py-2.5 text-sm text-foreground-muted leading-relaxed">
+              Manuelle påmeldinger registreres som betalt. Du håndterer betalingen selv (Vipps, kontant, faktura).
+            </div>
+
             {/* Info banner if full */}
             {isFull && (
               <Alert variant="info" size="sm">
@@ -313,7 +315,7 @@ export function AddParticipantDialog({
                 onChange={handleInputChange}
                 onBlur={() => handleBlur('email')}
                 aria-invalid={!!errors.email}
-                aria-describedby={errors.email && touched.email ? 'email-error' : 'email-hint'}
+                aria-describedby={errors.email && touched.email ? 'email-error' : undefined}
                 aria-required="true"
                 disabled={isSubmitting}
                 className={
@@ -322,17 +324,13 @@ export function AddParticipantDialog({
                     : ''
                 }
               />
-              {errors.email && touched.email ? (
+              {errors.email && touched.email && (
                 <p
                   id="email-error"
                   role="alert"
                   className="text-xs mt-1.5 text-danger"
                 >
                   {errors.email}
-                </p>
-              ) : (
-                <p id="email-hint" className="text-xs mt-1.5 text-foreground-muted">
-                  Bekreftelse sendes hit
                 </p>
               )}
             </div>
@@ -348,13 +346,8 @@ export function AddParticipantDialog({
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                placeholder="9xx xx xxx"
-                aria-describedby="phone-hint"
                 disabled={isSubmitting}
               />
-              <p id="phone-hint" className="text-xs mt-1.5 text-foreground-muted">
-                For kontakt ved endringer
-              </p>
             </div>
 
             {/* Note */}
@@ -370,50 +363,17 @@ export function AddParticipantDialog({
                 rows={3}
                 disabled={isSubmitting}
               />
-              <p className="text-xs mt-1.5 text-foreground-muted">Synlig kun for instruktør</p>
+            </div>
             </div>
 
-            {/* Payment Toggle */}
-            <div>
-              <p id="payment-label" className="text-xs font-medium mb-1.5 text-foreground">
-                Betalingsstatus
-              </p>
-              <ToggleGroup
-                type="single"
-                value={paymentMarked}
-                onValueChange={(v) => {
-                  if (v === 'pending' || v === 'paid') setPaymentMarked(v);
-                }}
-                variant="segmented"
-                size="sm"
-                aria-labelledby="payment-label"
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                <ToggleGroupItem value="pending" className="flex-1">Venter betaling</ToggleGroupItem>
-                <ToggleGroupItem value="paid" className="flex-1">Betalt</ToggleGroupItem>
-              </ToggleGroup>
-              <p className="text-xs mt-1.5 text-foreground-muted">Registreres utenfor betalingsløsningen</p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline-soft"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Avbryt
-              </Button>
+            <SheetFooter className="flex-row justify-end">
               <Button type="submit" size="sm" disabled={isFull} loading={isSubmitting} loadingText="Legger til">
-                <UserPlus className="size-3.5" />
                 Legg til deltaker
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

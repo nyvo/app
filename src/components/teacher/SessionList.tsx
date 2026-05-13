@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, MoreHorizontal, Check, Pencil } from '@/lib/icons';
+import { MoreHorizontal, Check } from '@/lib/icons';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Button } from '@/components/ui/button';
@@ -59,11 +59,11 @@ function DatePill({ dateStr, isPast }: { dateStr: string; isPast: boolean }) {
   return (
     <span
       className={cn(
-        'inline-flex flex-col items-center justify-center w-12 h-11 rounded-md shrink-0',
+        'inline-flex flex-col items-center justify-center w-12 h-12 rounded-md shrink-0',
         isPast ? 'bg-muted border border-transparent' : 'bg-surface border border-border',
       )}
     >
-      <span className="text-[9px] font-semibold tracking-wide uppercase text-foreground-muted leading-none">
+      <span className="text-xs font-medium text-foreground-muted leading-none lowercase">
         {month}
       </span>
       <span
@@ -107,7 +107,7 @@ export const SessionList: React.FC<SessionListProps> = ({
   return (
     <div>
       <div className="mb-3 flex items-end justify-between gap-4">
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           <h2 className="text-xl font-semibold text-foreground">Kursplan</h2>
           <p className="text-sm text-foreground-muted">
             Dette kurset varer i <span className="tabular-nums">{sessions.length}</span> {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
@@ -122,7 +122,6 @@ export const SessionList: React.FC<SessionListProps> = ({
             className="font-medium"
           >
             {showAll ? 'Vis færre' : `Vis alle ${sessions.length}`}
-            <ChevronDown className={`size-3.5 transition-transform ${showAll ? 'rotate-180' : ''}`} />
           </Button>
         )}
       </div>
@@ -142,8 +141,8 @@ export const SessionList: React.FC<SessionListProps> = ({
                 {/* Session row — 4-column grid: pill | label | time | menu/check */}
                 <div
                   className={cn(
-                    'grid grid-cols-[48px_minmax(0,1fr)_auto_24px] items-center gap-3.5 px-5 py-2.5 transition-colors duration-100',
-                    isPast ? 'bg-muted/40' : 'hover:bg-muted',
+                    'grid grid-cols-[48px_minmax(0,1fr)_auto_24px] items-center gap-4 px-4 py-3 transition-colors duration-150',
+                    isPast ? 'bg-muted' : 'hover:bg-muted',
                   )}
                 >
                   <DatePill dateStr={session.originalDate} isPast={isPast} />
@@ -158,7 +157,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       {weekday}
                     </span>
                     {!isPast && session.isNext && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-foreground text-background text-[11px] font-medium leading-[1.5] shrink-0">
+                      <span className="inline-flex h-5 items-center rounded-full bg-foreground px-2 text-xs font-medium text-background shrink-0">
                         Neste
                       </span>
                     )}
@@ -176,7 +175,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                   {/* Past = check icon, active = 3-dot menu */}
                   {isPast ? (
                     <span className="inline-flex items-center justify-center size-4 text-foreground-muted" aria-hidden>
-                      <Check className="size-3.5" strokeWidth={2} />
+                      <Check className="size-4" strokeWidth={2} />
                     </span>
                   ) : (
                     <DropdownMenu>
@@ -191,7 +190,6 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEditClick(session.id)}>
-                          <Pencil className="size-3.5 mr-2" />
                           Rediger
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -201,11 +199,11 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                 {/* Inline edit panel — appears under the row when editing */}
                 {isEditing && (
-                  <div className="border-t border-border bg-muted/50 px-5 py-4">
+                  <div className="border-t border-border bg-muted px-4 py-4">
                     <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label id={`session-${session.id}-date-label`} className="text-sm font-medium mb-1.5 block text-foreground">Dato</label>
+                          <label id={`session-${session.id}-date-label`} className="text-sm font-medium mb-2 block text-foreground">Dato</label>
                           <DatePicker
                             aria-labelledby={`session-${session.id}-date-label`}
                             value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
@@ -216,7 +214,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           />
                         </div>
                         <div>
-                          <label id={`session-${session.id}-time-label`} className="text-sm font-medium mb-1.5 block text-foreground">Tidspunkt</label>
+                          <label id={`session-${session.id}-time-label`} className="text-sm font-medium mb-2 block text-foreground">Tidspunkt</label>
                           <TimePicker
                             aria-labelledby={`session-${session.id}-time-label`}
                             value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}

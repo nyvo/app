@@ -93,6 +93,7 @@ export const RESERVED_SLUGS = new Set<string>([
   'refunds',
   'invite',
   'invites',
+  'join',
 
   // Norwegian counterparts
   'om-oss',

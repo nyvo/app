@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Minus } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { EmbeddedPayment } from '@/components/public/course-details/EmbeddedPayment';
 import { friendlyError } from '@/lib/error-messages';
 import { formatKroner, isValidEmail } from '@/lib/utils';
@@ -25,15 +25,14 @@ const SHORT_WEEKDAYS = ['søn.', 'man.', 'tir.', 'ons.', 'tor.', 'fre.', 'lør.'
 function buildBookingMeta(course: PublicCourseWithDetails): string | null {
   const parts: string[] = [];
   const typeLabel =
-    course.course_type === 'course-series' ? 'Kursrekke'
-    : course.course_type === 'online' ? 'Nettkurs'
-    : course.course_type === 'event' ? 'Arrangement'
-    : null;
-  if (typeLabel) parts.push(typeLabel);
+    course.delivery_mode === 'online' ? 'Nettkurs'
+    : course.format === 'series' ? 'Kursrekke'
+    : 'Enkelttime';
+  parts.push(typeLabel);
   const m = course.time_schedule?.match(/(\d{1,2}:\d{2})/);
   const time = m ? m[1] : null;
   const dateStr = course.next_session?.session_date ?? course.start_date;
-  if (course.course_type === 'course-series' && dateStr && time) {
+  if (course.format === 'series' && dateStr && time) {
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) parts.push(`${SHORT_WEEKDAYS[d.getDay()]} kl. ${time}`);
     else parts.push(`kl. ${time}`);
@@ -98,14 +97,22 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
   // Drop-in submit is blocked when no session has seats.
   const dropInUnavailable = isDropInSelected && !selectedSessionId;
 
-  // Load tiers via the public RPC (filters out inactive / out-of-window rows).
+  // Load tiers via the public RPC. The RPC handles all gating —
+  //   • is_active / sales window
+  //   • drop-in availability (series + started + spots open)
+  //   • drop-in price computed as base ÷ total_weeks
+  // Client-side filter is launch-only: prune any alternative pricing tier
+  // (Student/Honnør/etc) that's not yet wired into the new templates flow.
   useEffect(() => {
     let cancelled = false
     void (async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase.rpc as any)('available_ticket_types', { p_course_id: course.id })
       if (cancelled) return
-      const result = (data ?? []) as AvailableTicketType[]
+      const raw = (data ?? []) as AvailableTicketType[]
+      const result = raw.filter(
+        t => t.is_default || t.ticket_kind === 'drop_in',
+      )
       setTiers(result)
       // Pre-select the explicitly-marked default if it's a non-drop-in tier
       // (drop-in needs a session pick before we can submit). Else first
@@ -338,9 +345,9 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         <h3 className="mt-0.5 text-base font-semibold leading-snug text-foreground">{course.title}</h3>
       </div>
       {spotsState === 'low' && (
-        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium leading-relaxed bg-warning-subtle text-warning shrink-0">
+        <Badge variant="warning" shape="pill" size="sm" className="shrink-0">
           {spotsLabel}
-        </span>
+        </Badge>
       )}
     </div>
   );
@@ -362,7 +369,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
     return (
       <div className={`${panelClass} space-y-4`}>
         {courseHeader}
-        <div className="rounded-md bg-muted/60 px-4 py-3 text-center">
+        <div className="rounded-md bg-muted px-4 py-3 text-center">
           <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
           <p className="text-xs mt-0.5 text-foreground-muted">Ingen ledige plasser igjen.</p>
         </div>
@@ -381,14 +388,14 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
           is implicit). Drop-in tiers always show because they pivot to a
           session picker below. */}
       {!isFree && tiers.length > 1 && (
-        <div className="mt-5 border-t border-border pt-4 space-y-2">
+        <div className="mt-6 border-t border-border pt-4 space-y-2">
           <p className="text-sm font-medium text-foreground">Velg billett</p>
           <div className="space-y-2">
             {tiers.map(tier => {
               const selected = tier.id === selectedTierId;
               const audienceLabel =
-                tier.audience === 'student' ? 'Student / ufør / pensjon'
-                : tier.audience === 'senior' ? 'Senior'
+                tier.audience === 'student' ? 'Student'
+                : tier.audience === 'senior' ? 'Honnør'
                 : tier.audience === 'staff' ? 'Personale'
                 : null;
               const salesEnds = tier.sales_ends_at ? new Date(tier.sales_ends_at) : null;
@@ -417,7 +424,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
                 <label
                   key={tier.id}
                   className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition ${
-                    selected ? 'border-foreground bg-muted/40 ring-1 ring-inset ring-border' : 'border-border hover:bg-muted/40'
+                    selected ? 'border-foreground bg-muted ring-1 ring-inset ring-border' : 'border-border hover:bg-muted'
                   } ${dropInDisabled ? 'pointer-events-none opacity-60' : ''}`}
                 >
                   <input
@@ -465,14 +472,14 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
       {/* Price breakdown — surface the all-in total before the CTA so step 2
           carries no surprise charges (EU price-transparency directive). */}
       {!isFree ? (
-        <div className="mt-5 border-t border-border pt-4 space-y-2">
+        <div className="mt-6 border-t border-border pt-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-foreground">{ticketLabel}</span>
             <span className="tabular-nums text-foreground">{formatKroner(tierPrice)}</span>
           </div>
           {fee > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-foreground-muted">Servicegebyr</span>
+              <span className="text-foreground-muted">Tjenestegebyr</span>
               <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
             </div>
           )}
@@ -482,14 +489,14 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
           </div>
         </div>
       ) : (
-        <div className="mt-5 border-t border-border pt-4 flex justify-between text-sm font-semibold">
+        <div className="mt-6 border-t border-border pt-4 flex justify-between text-sm font-semibold">
           <span className="text-foreground">Pris</span>
           <span className="tabular-nums text-foreground">Gratis</span>
         </div>
       )}
 
       {/* Name + email */}
-      <div className="mt-5 border-t border-border pt-5 space-y-3">
+      <div className="mt-6 border-t border-border pt-6 space-y-3">
         <div>
           <label htmlFor="bk-name" className="text-xs font-medium mb-1.5 block text-foreground">
             Navn
@@ -525,7 +532,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         </div>
       </div>
 
-      <div className="mt-5 space-y-2">
+      <div className="mt-6 space-y-2">
         <div className="flex items-start gap-2.5">
           <Checkbox
             id="bk-terms"
@@ -536,7 +543,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
           />
           <label htmlFor="bk-terms" className="text-xs text-foreground-muted leading-relaxed select-none cursor-pointer">
             Jeg godtar{' '}
-            <Link to="/terms" target="_blank" className="text-foreground underline underline-offset-2 decoration-muted-foreground/40 hover:decoration-foreground">
+            <Link to="/terms" target="_blank" className="text-foreground underline underline-offset-2 decoration-border hover:decoration-foreground">
               vilkår og angrerett
             </Link>
             .
@@ -547,7 +554,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
 
       <Button
         type="submit"
-        className="mt-5 w-full"
+        className="mt-6 w-full"
         size="cta"
         disabled={submitting || lockBooking || dropInUnavailable}
         loading={submitting}
@@ -556,20 +563,21 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         {isFree ? 'Meld på' : 'Fortsett til betaling'}
       </Button>
 
-      {/* Fine print — collapsible disclosure for cancellation + terms.
-          Native <details> so we have full control over icons (+/−) and
-          the edge-to-edge border. Negative margins extend it to the
-          panel edges; overflow-hidden on the form clips the rounded corners. */}
-      <details className="group/disc -mx-6 -mb-6 mt-5 border-t border-border">
-        <summary className="flex items-center justify-between px-6 py-3 cursor-pointer text-xs font-medium text-foreground list-none [&::-webkit-details-marker]:hidden">
-          <span>Avbestilling og vilkår</span>
-          <Plus className="size-3.5 text-foreground-muted group-open/disc:hidden" strokeWidth={2} />
-          <Minus className="size-3.5 text-foreground-muted hidden group-open/disc:block" strokeWidth={2} />
-        </summary>
-        <p className="px-6 pb-4 text-xs leading-relaxed text-foreground-muted">
-          Trenger du å avbestille, ta kontakt med studioet. Refusjon avgjøres av studioet fra sak til sak.
+      {/* Cancellation policy + trust micro-copy directly below the CTA.
+          Stated plainly inline per patterns.md §18.10 + §23.3 — never "kontakt
+          studioet" / never link out. Plain text so the customer sees the
+          policy at the moment of decision, not buried in a disclosure. */}
+      {!isFree && (
+        <p className="mt-4 text-xs text-foreground-muted text-center leading-relaxed">
+          Avbestill innen 24 timer før kurset for full refusjon.<br />
+          Sikker betaling med Vipps eller kort.
         </p>
-      </details>
+      )}
+      {isFree && (
+        <p className="mt-4 text-xs text-foreground-muted text-center leading-relaxed">
+          Du kan avbestille når som helst — ingen kostnad.
+        </p>
+      )}
 
     </form>
     {lockBooking && (
@@ -577,7 +585,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         className="absolute inset-0 flex items-center justify-center rounded-lg bg-surface-elevated"
         aria-live="polite"
       >
-        <div className="rounded-full border border-border bg-background px-5 py-2.5 shadow-sm">
+        <div className="rounded-full border border-border bg-background px-4 py-2.5 shadow-sm">
           <p className="text-sm font-medium text-foreground">Påmelding åpner snart</p>
         </div>
       </div>

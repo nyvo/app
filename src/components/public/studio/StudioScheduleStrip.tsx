@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Clock } from '@/lib/icons';
+import { Clock } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -76,15 +76,15 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
   return (
     <section className="space-y-8">
       <header className="space-y-1.5">
-        <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-foreground-muted">
+        <h2 className="text-xl font-semibold text-foreground">
           Hele timeplanen
         </h2>
-        <p className="text-base text-foreground/90 leading-snug max-w-md">
+        <p className="text-sm text-foreground-muted leading-snug max-w-md">
           Alt som er åpent for påmelding, sortert kronologisk.
         </p>
       </header>
 
-      <div className="divide-y divide-border/60">
+      <div className="divide-y divide-border">
         {buckets.map(bucket => (
           <div key={bucket.dateStr} className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 md:gap-10 py-6">
             <div className="md:pt-2">
@@ -92,7 +92,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                 {formatDayHeading(bucket.dateStr)}
               </h3>
             </div>
-            <div className="divide-y divide-border/40">
+            <div className="divide-y divide-border">
               {bucket.courses.map(course => {
                 const time = extractTime(course.time_schedule);
                 const studioSlug = course.seller?.slug ?? '';
@@ -109,8 +109,8 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                     className={cn(
                       'group flex items-center gap-4 sm:gap-6 py-3 px-2 -mx-2 rounded-md',
                       'transition-colors duration-200',
-                      'hover:bg-muted/40',
-                      (isFull || isCancelled) && 'opacity-60',
+                      'hover:bg-muted',
+                      (isFull || isCancelled) && 'text-foreground-muted',
                     )}
                   >
                     <div className="w-14 shrink-0 text-sm font-medium tabular-nums text-foreground">
@@ -118,11 +118,11 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-medium text-foreground truncate">
+                        <span className="text-base font-medium text-foreground truncate">
                           {course.title}
                         </span>
                         {isCancelled && (
-                          <span className="text-[10px] font-medium tracking-wide uppercase text-foreground-muted border border-border rounded px-1.5 py-0.5">
+                          <span className="text-xs font-medium text-foreground-muted border border-border rounded px-1.5 py-0.5">
                             Avlyst
                           </span>
                         )}
@@ -132,7 +132,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                         {course.location && (
                           <span className="hidden sm:inline truncate">· {course.location}</span>
                         )}
-                        {course.course_type === 'course-series' && course.total_weeks && (
+                        {course.format === 'series' && course.total_weeks && (
                           <span className="inline-flex items-center gap-1 text-foreground-disabled">
                             <Clock className="size-3" strokeWidth={1.75} />
                             {course.total_weeks} uker
@@ -145,17 +145,16 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                         {formatCoursePrice(course.price)}
                       </span>
                       {lowSpots && !isFull && (
-                        <span className="text-[10px] font-medium tracking-wide uppercase text-warning">
+                        <span className="text-xs font-medium text-warning">
                           {course.spots_available} igjen
                         </span>
                       )}
                       {isFull && !isCancelled && (
-                        <span className="text-[10px] font-medium tracking-wide uppercase text-foreground-muted">
+                        <span className="text-xs font-medium text-foreground-muted">
                           Fullt
                         </span>
                       )}
                     </div>
-                    <ArrowRight className="size-4 shrink-0 text-foreground-disabled transition-all duration-200 group-hover:text-foreground group-hover:translate-x-0.5" />
                   </Link>
                 );
               })}

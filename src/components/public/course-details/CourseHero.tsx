@@ -58,13 +58,13 @@ export function CourseHero({ course }: CourseHeroProps) {
   const date = course.next_session?.session_date ?? course.start_date;
   const time = extractTime(course.time_schedule);
   const relativeDate = formatRelativeDate(date);
-  const isSeries = course.course_type === 'course-series';
+  const isSeries = course.format === 'series';
 
   // Date range — only meaningful for bounded series / online runs.
   const startShort = formatShortDate(course.start_date);
   const endShort = formatShortDate(course.end_date);
   const dateRange =
-    (isSeries || course.course_type === 'online') && startShort && endShort
+    (isSeries || course.delivery_mode === 'online') && startShort && endShort
       ? `${startShort} – ${endShort}`
       : null;
 
@@ -77,7 +77,7 @@ export function CourseHero({ course }: CourseHeroProps) {
   if (whenLabel && course.duration) whenLabel += ` (${course.duration} min)`;
 
   return (
-    <header className="mx-auto max-w-6xl px-5 sm:px-8 pt-6 sm:pt-10">
+    <header className="mx-auto max-w-6xl px-4 sm:px-8 pt-6 sm:pt-10">
       {/* Image — rounded-lg, 16:10 (cards are surfaces, not overlays) */}
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
         {img ? (
@@ -99,20 +99,20 @@ export function CourseHero({ course }: CourseHeroProps) {
           <p className="mb-3 text-sm text-foreground-muted">
             <Link
               to={`/${studio.slug}`}
-              className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
+              className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
             >
               {studio.name}
             </Link>
           </p>
         )}
 
-        {/* Title — capped slightly tamer than before */}
-        <h1 className="font-semibold tracking-tight text-foreground text-[clamp(1.75rem,4.5vw,3.25rem)] leading-[1.05]">
+        {/* Title — display tier on the public surface (text-5xl max, per tokens) */}
+        <h1 className="font-semibold tracking-tight text-foreground text-3xl sm:text-5xl">
           {course.title}
         </h1>
 
         {/* Meta strip — date range, when + duration, instructor, level */}
-        <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground-muted">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground-muted">
           {dateRange && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="size-3.5" strokeWidth={1.75} />
@@ -130,14 +130,14 @@ export function CourseHero({ course }: CourseHeroProps) {
               <UserAvatar
                 size="xs"
                 name={instructor?.name ?? studio?.name ?? null}
-                src={instructor?.avatar_url ?? null}
+                src={studio?.logo_url ?? null}
                 className="shrink-0"
               />
               <span>{instructor?.name ?? studio?.name}</span>
             </span>
           )}
           {course.level && (
-            <Badge variant="accent-mint" shape="pill" size="sm">
+            <Badge variant="secondary" shape="pill" size="sm">
               {LEVEL_LABELS[course.level]}
             </Badge>
           )}

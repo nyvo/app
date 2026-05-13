@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, Check, ExternalLink } from '@/lib/icons';
+import { Check } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -162,16 +161,13 @@ const PaymentsPage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-6xl px-6 pb-24 md:pb-8 lg:px-8"
       >
-        <div className="mb-10 pt-6 pb-8 lg:pt-8">
-          <h1 className="text-3xl font-semibold text-foreground">Betalinger</h1>
-          <p className="mt-1 text-sm text-foreground-muted">
-            Sett opp utbetalinger via Dintero. Saldo og transaksjoner ser du på din Dintero-konto.
-          </p>
+        <div className="mb-8 pt-6 lg:pt-12">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Betalinger</h1>
         </div>
 
-        <div className="max-w-5xl space-y-8">
+        <div className="space-y-8">
           {/* ─── State 1: Not started — minimal onboarding form ─── */}
           {!hasApproval && !isConnected && (
             <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
@@ -184,10 +180,10 @@ const PaymentsPage = () => {
               <Card className="md:col-span-2">
                 <CardContent>
                   <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
-                    <div className="space-y-1.5">
+                    <div className="grid gap-2">
                       <label
                         htmlFor="businessName"
-                        className="text-xs font-medium mb-1.5 block text-foreground"
+                        className="text-sm font-medium text-foreground"
                       >
                         Selskapsnavn
                       </label>
@@ -198,10 +194,10 @@ const PaymentsPage = () => {
                         required
                       />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="grid gap-2">
                       <label
                         htmlFor="organizationNumber"
-                        className="text-xs font-medium mb-1.5 block text-foreground"
+                        className="text-sm font-medium text-foreground"
                       >
                         Organisasjonsnummer
                       </label>
@@ -218,10 +214,10 @@ const PaymentsPage = () => {
                       />
                     </div>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="space-y-1.5">
+                      <div className="grid gap-2">
                         <label
                           htmlFor="bankAccountNumber"
-                          className="text-xs font-medium mb-1.5 block text-foreground"
+                          className="text-sm font-medium text-foreground"
                         >
                           Kontonummer
                         </label>
@@ -236,10 +232,10 @@ const PaymentsPage = () => {
                           required
                         />
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="grid gap-2">
                         <label
                           htmlFor="bankName"
-                          className="text-xs font-medium mb-1.5 block text-foreground"
+                          className="text-sm font-medium text-foreground"
                         >
                           Banknavn
                         </label>
@@ -251,10 +247,10 @@ const PaymentsPage = () => {
                         />
                       </div>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="grid gap-2">
                       <label
                         htmlFor="contactEmail"
-                        className="text-xs font-medium mb-1.5 block text-foreground"
+                        className="text-sm font-medium text-foreground"
                       >
                         Kontakt-e-post
                       </label>
@@ -265,7 +261,7 @@ const PaymentsPage = () => {
                         onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
                         required
                       />
-                      <p className="text-xs text-foreground-muted">
+                      <p className="text-sm text-foreground-muted">
                         Dintero sender signering og oppdateringer hit.
                       </p>
                     </div>
@@ -292,14 +288,11 @@ const PaymentsPage = () => {
               <Card className="md:col-span-2">
                 <CardContent>
                   {onboardingStatus === 'DECLINED' || onboardingStatus === 'TERMINATED' ? (
-                    <Alert variant="error" size="sm">
-                      <AlertCircle className="size-4" />
-                      <AlertDescription>
-                        {onboardingStatus === 'DECLINED'
-                          ? 'Søknaden ble avslått. Kontakt oss for hjelp.'
-                          : 'Avtalen er avsluttet. Kontakt oss for hjelp.'}
-                      </AlertDescription>
-                    </Alert>
+                    <p className="text-sm text-foreground">
+                      {onboardingStatus === 'DECLINED'
+                        ? 'Søknaden ble avslått. Kontakt oss for hjelp.'
+                        : 'Avtalen er avsluttet. Kontakt oss for hjelp.'}
+                    </p>
                   ) : (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm text-foreground">
@@ -319,7 +312,6 @@ const PaymentsPage = () => {
                         {contractUrl && (
                           <Button size="sm" onClick={handleOpenContract}>
                             Åpne hos Dintero
-                            <ExternalLink className="size-3.5" />
                           </Button>
                         )}
                       </div>
@@ -355,7 +347,6 @@ const PaymentsPage = () => {
                     <div className="mt-4">
                       <Button onClick={handleOpenDintero}>
                         Åpne Dintero-konto
-                        <ExternalLink className="size-3.5" />
                       </Button>
                     </div>
                   </div>

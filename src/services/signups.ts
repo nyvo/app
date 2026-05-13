@@ -5,14 +5,19 @@ import type { Signup, SignupInsert, Profile, Course } from '@/types/database'
 // `course_session` is populated from the FK on signups.course_session_id —
 // only set for drop-in signups; package buyers have it null.
 export interface SignupWithDetails extends Signup {
-  course: Pick<Course, 'id' | 'title' | 'course_type' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants' | 'total_weeks'> | null
-  profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
+  course: Pick<Course, 'id' | 'title' | 'format' | 'delivery_mode' | 'time_schedule' | 'start_date' | 'end_date' | 'status' | 'max_participants' | 'total_weeks'> | null
+  profile: Pick<Profile, 'id' | 'name' | 'email'> | null
   course_session: { session_date: string; start_time: string } | null
 }
 
-// Signup with profile for participants list
+// Signup with profile + ticket price for participants list. The ticket price is
+// joined from course_signup_packages so the row can display the *expected*
+// amount even for pending/failed signups where amount_paid is null. This
+// matches the Stripe/Polar convention: amount is always present, status
+// communicates whether the money has cleared.
 export interface SignupWithProfile extends Signup {
-  profile: Pick<Profile, 'id' | 'name' | 'email' | 'avatar_url'> | null
+  profile: Pick<Profile, 'id' | 'name' | 'email'> | null
+  ticket_type: { price: number } | null
 }
 
 export async function fetchRecentSignups(
@@ -23,8 +28,8 @@ export async function fetchRecentSignups(
     .from('signups')
     .select(`
       *,
-      course:courses!inner(id, title, course_type, time_schedule, start_date),
-      profile:profiles(id, name, email, avatar_url),
+      course:courses!inner(id, title, format, delivery_mode, time_schedule, start_date),
+      profile:profiles(id, name, email),
       course_session:course_sessions(session_date, start_time)
     `)
     .eq('seller_id', sellerId)
@@ -129,14 +134,18 @@ export async function createSignup(
 export async function fetchSignupsByCourseWithProfiles(
   courseId: string
 ): Promise<{ data: SignupWithProfile[] | null; error: Error | null }> {
+  // Returns ALL signups for the course (confirmed + cancelled + course_cancelled).
+  // The participants tab shows cancelled rows visually demoted rather than
+  // hiding them outright — matches Stripe / Mindbody / Linear convention for
+  // operational rosters where audit trail and reconciliation matter.
   const { data, error } = await supabase
     .from('signups')
     .select(`
       *,
-      profile:profiles(id, name, email, avatar_url)
+      profile:profiles(id, name, email),
+      ticket_type:course_signup_packages!ticket_type_id(price)
     `)
     .eq('course_id', courseId)
-    .neq('status', 'cancelled')
     .order('created_at', { ascending: true })
 
   if (error) {
@@ -153,8 +162,8 @@ export async function fetchAllSignups(
     .from('signups')
     .select(`
       *,
-      course:courses(id, title, course_type, time_schedule, start_date, end_date, status, max_participants, total_weeks),
-      profile:profiles(id, name, email, avatar_url)
+      course:courses(id, title, format, delivery_mode, time_schedule, start_date, end_date, status, max_participants, total_weeks),
+      profile:profiles(id, name, email)
     `)
     .eq('seller_id', sellerId)
     .order('created_at', { ascending: false })

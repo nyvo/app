@@ -21,7 +21,7 @@
      ~/.claude/skills/studio-design/design-model.yaml
 
    Color format: OKLCH (perceptually uniform). Values aligned to
-   Radix Slate / Sky / Mint / Iris / Jade / Amber / Red scales.
+   Radix Sand / Sky / Mint / Iris / Jade / Amber / Red scales.
    ============================================================ */
 
 @theme inline {
@@ -36,11 +36,12 @@
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-tinted: var(--surface-tinted);
   --color-surface-tinted-border: var(--surface-tinted-border);
+  --color-surface-on-dark: var(--surface-on-dark);
+  --color-border-on-dark: var(--border-on-dark);
 
   /* Foreground — role then modifier (Studio convention) */
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
-  --color-foreground-tertiary: var(--foreground-tertiary);
   --color-foreground-disabled: var(--foreground-disabled);
 
   /* Brand / interaction */
@@ -56,6 +57,7 @@
 
   /* Hover/active fill (subtle, not a status) */
   --color-muted: var(--muted);
+  --color-active: var(--sand-3);
 
   /* Status — solid (alert dialog, toast, button) + subtle (pill, banner) */
   --color-success: var(--success);
@@ -70,14 +72,6 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-info-subtle: var(--info-subtle);
-
-  /* Pop accents — category-coding (course level, lesson type) */
-  --color-accent-sky-subtle: var(--accent-sky-subtle);
-  --color-accent-sky-fg: var(--accent-sky-fg);
-  --color-accent-mint-subtle: var(--accent-mint-subtle);
-  --color-accent-mint-fg: var(--accent-mint-fg);
-  --color-accent-iris-subtle: var(--accent-iris-subtle);
-  --color-accent-iris-fg: var(--accent-iris-fg);
 
   /* Selection */
   --color-selection: var(--selection);
@@ -95,15 +89,6 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -159,27 +144,19 @@
      tokens below. Adding a new color = define here first.
      ──────────────────────────────────────────────────────────── */
 
-  /* Slate — neutral structural (light mode) */
-  --slate-1:  oklch(0.992 0.002 264);
-  --slate-2:  oklch(0.985 0.003 264);
-  --slate-3:  oklch(0.962 0.005 268);
-  --slate-4:  oklch(0.943 0.006 268);
-  --slate-5:  oklch(0.918 0.008 264);
-  --slate-6:  oklch(0.890 0.010 268);
-  --slate-7:  oklch(0.842 0.014 267);
-  --slate-8:  oklch(0.768 0.015 266);
-  --slate-9:  oklch(0.605 0.014 263);
-  --slate-10: oklch(0.564 0.014 263);
-  --slate-11: oklch(0.453 0.011 264);   /* WCAG 1.4.3 AA on white */
-  --slate-12: oklch(0.213 0.014 254);
-
-  /* Pop accents — sky / mint / iris (Radix step-3 + step-11 only) */
-  --sky-3:   oklch(0.961 0.025 209);
-  --sky-11:  oklch(0.500 0.108 230);
-  --mint-3:  oklch(0.957 0.033 173);
-  --mint-11: oklch(0.487 0.073 169);
-  --iris-3:  oklch(0.965 0.014 282);
-  --iris-11: oklch(0.480 0.183 287);
+  /* Sand — canonical Radix Sand scale (light mode), warm-neutral. */
+  --sand-1:  oklch(0.992 0.002 89);
+  --sand-2:  oklch(0.983 0.003 89);
+  --sand-3:  oklch(0.953 0.005 89);
+  --sand-4:  oklch(0.929 0.006 86);
+  --sand-5:  oklch(0.906 0.007 80);
+  --sand-6:  oklch(0.881 0.008 80);
+  --sand-7:  oklch(0.848 0.010 80);
+  --sand-8:  oklch(0.776 0.013 86);
+  --sand-9:  oklch(0.612 0.010 86);
+  --sand-10: oklch(0.569 0.010 86);
+  --sand-11: oklch(0.453 0.012 86);   /* WCAG 1.4.3 AA on white */
+  --sand-12: oklch(0.231 0.008 88);
 
   /* Status — jade (success) / amber (warning) / red (danger) */
   --jade-3:   oklch(0.953 0.034 158);
@@ -193,29 +170,30 @@
      All values reference Layer 1 primitives. Don't hard-code OKLCH here. */
 
   /* Surfaces */
-  --background: var(--slate-1);                    /* page canvas */
-  --surface: var(--slate-1);                       /* cards, popovers, panels */
+  --background: oklch(1 0 0);                      /* pure white, per spec */
+  --surface: oklch(1 0 0);                         /* cards, popovers, panels */
   --surface-elevated: oklch(1 0 0 / 0.8);          /* translucent backdrop-blur header */
   --surface-tinted: oklch(0.97 0.03 258);
   --surface-tinted-border: oklch(0.9 0.04 258);
+  --surface-on-dark: oklch(1 0 0 / 0.06);          /* faint elevated surface over bg-primary */
+  --border-on-dark: oklch(1 0 0 / 0.15);           /* subtle border over bg-primary */
 
   /* Foreground */
-  --foreground: var(--slate-12);
-  --foreground-muted: var(--slate-11);             /* WCAG AA on bg */
-  --foreground-tertiary: var(--slate-10);
-  --foreground-disabled: var(--slate-8);
+  --foreground: var(--sand-12);
+  --foreground-muted: var(--sand-11);             /* WCAG AA on bg */
+  --foreground-disabled: var(--sand-8);
 
   /* Brand / interaction */
-  --primary: var(--slate-12);
-  --primary-foreground: var(--slate-1);
+  --primary: var(--sand-12);
+  --primary-foreground: var(--sand-1);
   --primary-muted-foreground: oklch(1 0 0 / 0.7);
   --brand: oklch(0.546 0.245 262.881);
   --brand-foreground: oklch(1 0 0);
-  --secondary: var(--slate-3);
-  --secondary-foreground: var(--slate-12);
-  --accent: var(--slate-3);
-  --accent-foreground: var(--slate-12);
-  --muted: var(--slate-3);                         /* hover/active fill */
+  --secondary: var(--sand-3);
+  --secondary-foreground: var(--sand-12);
+  --accent: var(--sand-3);
+  --accent-foreground: var(--sand-12);
+  --muted: var(--sand-3);                         /* hover/active fill */
 
   /* Status — solid + subtle pairs.
      `--success` (= jade-11) is the canonical green; used as text on light bg
@@ -223,16 +201,16 @@
      replaces the `bg-success/10` opacity hack with a proper opaque token.
      `-foreground` is the contrast color used on top of the solid bg. */
   --success: var(--jade-11);
-  --success-foreground: var(--slate-1);
+  --success-foreground: var(--sand-1);
   --success-subtle: var(--jade-3);
   --warning: var(--amber-11);
-  --warning-foreground: var(--slate-1);
+  --warning-foreground: var(--sand-1);
   --warning-subtle: var(--amber-3);
   --danger: var(--red-11);
-  --danger-foreground: var(--slate-1);
+  --danger-foreground: var(--sand-1);
   --danger-subtle: var(--red-3);
   --info: oklch(0.55 0.18 255);
-  --info-foreground: var(--slate-1);
+  --info-foreground: var(--sand-1);
   --info-subtle: oklch(0.95 0.02 255);
 
   /* Selection */
@@ -241,10 +219,10 @@
   --selection-light: oklch(0.546 0.245 262.881 / 8%);
 
   /* Structure */
-  --border: var(--slate-6);
-  --border-subtle: var(--slate-5);
-  --input: var(--slate-6);
-  --ring: var(--slate-8);
+  --border: var(--sand-6);
+  --border-subtle: var(--sand-5);
+  --input: var(--sand-6);
+  --ring: var(--sand-12);                          /* per spec: ring = foreground */
 
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -252,48 +230,24 @@
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
   --radius: 0.45rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.965 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-
-  /* Pop accents — sky / mint / iris for category-coding */
-  --accent-sky-subtle:   var(--sky-3);
-  --accent-sky-fg:       var(--sky-11);
-  --accent-mint-subtle:  var(--mint-3);
-  --accent-mint-fg:      var(--mint-11);
-  --accent-iris-subtle:  var(--iris-3);
-  --accent-iris-fg:      var(--iris-11);
 }
 
 .dark {
-  /* ── PRIMITIVES (dark mode — Radix slate dark, pop accents shifted) ── */
+  /* ── PRIMITIVES (dark mode — Radix sand dark, pop accents shifted) ── */
 
-  /* Slate — dark mode (1 = darkest, 12 = lightest, mirroring light scale's role) */
-  --slate-1:  oklch(0.182 0.005 264);
-  --slate-2:  oklch(0.214 0.005 264);
-  --slate-3:  oklch(0.252 0.006 268);
-  --slate-4:  oklch(0.286 0.008 264);
-  --slate-5:  oklch(0.315 0.009 264);
-  --slate-6:  oklch(0.354 0.010 264);
-  --slate-7:  oklch(0.405 0.013 264);
-  --slate-8:  oklch(0.484 0.015 264);
-  --slate-9:  oklch(0.560 0.013 264);
-  --slate-10: oklch(0.605 0.013 264);
-  --slate-11: oklch(0.756 0.011 264);
-  --slate-12: oklch(0.951 0.003 264);
-
-  /* Pop accents — dark mode (slightly higher chroma + lightness) */
-  --sky-3:   oklch(0.260 0.045 230);
-  --sky-11:  oklch(0.760 0.105 220);
-  --mint-3:  oklch(0.260 0.040 170);
-  --mint-11: oklch(0.760 0.100 165);
-  --iris-3:  oklch(0.270 0.060 285);
-  --iris-11: oklch(0.760 0.140 285);
+  /* Sand — dark mode (1 = darkest, 12 = lightest, mirroring light scale's role) */
+  --sand-1:  oklch(0.182 0.003 89);
+  --sand-2:  oklch(0.215 0.004 89);
+  --sand-3:  oklch(0.253 0.005 89);
+  --sand-4:  oklch(0.286 0.005 86);
+  --sand-5:  oklch(0.317 0.006 80);
+  --sand-6:  oklch(0.355 0.007 80);
+  --sand-7:  oklch(0.407 0.010 80);
+  --sand-8:  oklch(0.484 0.013 86);
+  --sand-9:  oklch(0.557 0.011 86);
+  --sand-10: oklch(0.605 0.011 86);
+  --sand-11: oklch(0.756 0.010 89);
+  --sand-12: oklch(0.952 0.003 89);
 
   /* Status — dark mode */
   --jade-3:   oklch(0.270 0.040 165);
@@ -304,42 +258,43 @@
   --red-11:   oklch(0.730 0.180 25);
 
   /* Surfaces */
-  --background: var(--slate-1);
-  --surface: var(--slate-1);
+  --background: oklch(0.177 0.003 264);
+  --surface: oklch(0.177 0.003 264);
   --surface-elevated: oklch(0.205 0 0 / 0.8);
   --surface-tinted: oklch(0.27 0.04 258);
   --surface-tinted-border: oklch(0.38 0.06 258);
+  --surface-on-dark: oklch(1 0 0 / 0.06);
+  --border-on-dark: oklch(1 0 0 / 0.15);
 
   /* Foreground */
-  --foreground: var(--slate-12);
-  --foreground-muted: var(--slate-11);
-  --foreground-tertiary: var(--slate-10);
-  --foreground-disabled: var(--slate-8);
+  --foreground: var(--sand-12);
+  --foreground-muted: var(--sand-11);
+  --foreground-disabled: var(--sand-8);
 
   /* Brand / interaction */
-  --primary: var(--slate-12);
-  --primary-foreground: var(--slate-1);
+  --primary: var(--sand-12);
+  --primary-foreground: var(--sand-1);
   --primary-muted-foreground: oklch(0.205 0 0 / 0.7);
   --brand: oklch(0.623 0.214 259.815);
   --brand-foreground: oklch(0.985 0 0);
-  --secondary: var(--slate-3);
-  --secondary-foreground: var(--slate-12);
-  --accent: var(--slate-3);
-  --accent-foreground: var(--slate-12);
-  --muted: var(--slate-3);
+  --secondary: var(--sand-3);
+  --secondary-foreground: var(--sand-12);
+  --accent: var(--sand-3);
+  --accent-foreground: var(--sand-12);
+  --muted: var(--sand-3);
 
   /* Status */
   --success: var(--jade-11);
-  --success-foreground: var(--slate-1);
+  --success-foreground: var(--sand-1);
   --success-subtle: var(--jade-3);
   --warning: var(--amber-11);
-  --warning-foreground: var(--slate-1);
+  --warning-foreground: var(--sand-1);
   --warning-subtle: var(--amber-3);
   --danger: var(--red-11);
-  --danger-foreground: var(--slate-1);
+  --danger-foreground: var(--sand-1);
   --danger-subtle: var(--red-3);
   --info: oklch(0.68 0.18 255);
-  --info-foreground: var(--slate-1);
+  --info-foreground: var(--sand-1);
   --info-subtle: oklch(0.30 0.04 255);
 
   /* Selection */
@@ -348,31 +303,15 @@
   --selection-light: oklch(0.623 0.214 259.815 / 12%);
 
   /* Structure */
-  --border: var(--slate-6);
-  --border-subtle: var(--slate-5);
-  --input: var(--slate-6);
-  --ring: var(--slate-8);
+  --border: var(--sand-6);
+  --border-subtle: var(--sand-5);
+  --input: var(--sand-6);
+  --ring: var(--sand-12);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.145 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-
-  /* Pop accents */
-  --accent-sky-subtle:   var(--sky-3);
-  --accent-sky-fg:       var(--sky-11);
-  --accent-mint-subtle:  var(--mint-3);
-  --accent-mint-fg:      var(--mint-11);
-  --accent-iris-subtle:  var(--iris-3);
-  --accent-iris-fg:      var(--iris-11);
 }
 
 @layer base {
@@ -461,14 +400,6 @@
                 color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
-  /* Smooth hover transition */
-  .smooth-transition {
-    transition: color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-                background-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-                border-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-                opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-                transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
 
   ::selection {
     background-color: var(--muted);

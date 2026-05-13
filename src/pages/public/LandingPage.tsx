@@ -25,7 +25,7 @@ const LandingPage = () => {
   return (
     <div className="overflow-x-hidden bg-background text-foreground antialiased">
       <nav className="absolute top-0 w-full z-50 bg-transparent border-none" aria-label="Hovednavigasjon">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2" aria-label="Ease – til forsiden">
             <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground" aria-hidden="true">
               <Infinity className="size-3.5" />
@@ -44,7 +44,7 @@ const LandingPage = () => {
             <Link to="/login" className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground">
               Logg inn
             </Link>
-            <Button asChild size="sm" shape="pill">
+            <Button asChild size="sm">
               <Link to="/signup">Start gratis</Link>
             </Button>
           </div>
@@ -53,21 +53,20 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
-        <div className="max-w-7xl mx-auto px-6 w-full">
+        <div className="max-w-6xl mx-auto px-6 w-full">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="font-serif text-3xl font-medium tracking-tight mb-5 text-foreground md:text-5xl">
+            <h1 className="text-3xl font-semibold tracking-tight mb-6 text-foreground md:text-5xl">
               Påmelding og betaling <br className="hidden md:block" />
               for yogastudioer.
             </h1>
 
-            <p className="text-xl text-foreground-muted mb-7">
+            <p className="text-xl text-foreground-muted mb-8">
               Automatiser påmeldinger, betaling og regnskap. Alt på ett sted.
             </p>
 
             <Button
               asChild
               size="cta"
-              shape="pill"
             >
               <Link to="/signup">Start gratis</Link>
             </Button>
@@ -96,7 +95,7 @@ const LandingPage = () => {
 
       {/* How It Works */}
       <section id="how-it-works" className="bg-background py-20 md:py-28 w-full">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -141,7 +140,7 @@ const LandingPage = () => {
               </p>
             </div>
             {/* Mini weekly calendar mockup */}
-            <div className="absolute bottom-0 right-0 hidden h-3/4 w-1/2 translate-x-4 translate-y-4 rounded-tl-2xl border-l border-t border-border bg-muted p-5 md:block">
+            <div className="absolute bottom-0 right-0 hidden h-3/4 w-1/2 translate-x-4 translate-y-4 rounded-tl-xl border-l border-t border-border bg-muted p-6 md:block">
               <div className="grid grid-cols-5 gap-2 text-center mb-3">
                 {['Man', 'Tir', 'Ons', 'Tor', 'Fre'].map((day) => (
                   <span key={day} className="text-xs font-medium tracking-wide text-foreground-muted">{day}</span>
@@ -150,7 +149,7 @@ const LandingPage = () => {
               <div className="grid grid-cols-5 gap-2">
                 <div className="col-start-1 rounded-lg bg-primary text-primary-foreground p-2">
                   <p className="text-xs font-medium tracking-wide">Vinyasa</p>
-                  <p className="text-xs font-medium tracking-wide opacity-70">09:00</p>
+                  <p className="text-xs font-medium tracking-wide text-primary-muted-foreground">09:00</p>
                 </div>
                 <div className="col-start-3 rounded-lg border border-border bg-surface p-2">
                   <p className="text-xs font-medium tracking-wide text-foreground">Yin Yoga</p>
@@ -162,10 +161,10 @@ const LandingPage = () => {
                 </div>
                 <div className="col-start-2 rounded-lg bg-primary text-primary-foreground p-2">
                   <p className="text-xs font-medium tracking-wide">Morgen</p>
-                  <p className="text-xs font-medium tracking-wide opacity-70">07:30</p>
+                  <p className="text-xs font-medium tracking-wide text-primary-muted-foreground">07:30</p>
                 </div>
-                <div className="col-start-4 rounded-lg border border-border bg-surface p-2 opacity-50">
-                  <p className="text-xs font-medium tracking-wide text-foreground">Restorative</p>
+                <div className="col-start-4 rounded-lg border border-border bg-muted p-2">
+                  <p className="text-xs font-medium tracking-wide text-foreground-muted">Restorative</p>
                   <p className="text-xs font-medium tracking-wide text-foreground-muted">19:00</p>
                 </div>
               </div>
@@ -205,7 +204,7 @@ const LandingPage = () => {
                       </span>
                     </div>
                   </div>
-                  <p className="text-sm font-medium text-foreground">{formatKroner(250)}</p>
+                  <p className="text-sm font-medium tabular-nums text-foreground">{formatKroner(250)}</p>
                 </div>
                 <div className="text-xs font-medium tracking-wide mb-3 flex items-center gap-1.5 text-foreground-muted">
                   <MapPin className="size-3.5" /> Majorstuen Studio
@@ -275,9 +274,9 @@ const LandingPage = () => {
       {/* Features Section */}
       <section
         id="features"
-        className="py-20 md:py-28 w-full border-t border-border/50"
+        className="py-20 md:py-28 w-full border-t border-border"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -329,13 +328,13 @@ const LandingPage = () => {
                 </div>
               </div>
               <div className="relative">
-                <div className="rounded-lg border border-border bg-muted/50 p-8">
+                <div className="rounded-lg border border-border bg-muted p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <p className="text-sm font-medium text-foreground-muted">
                         Total omsetning
                       </p>
-                      <p className="text-3xl font-semibold tracking-tight text-foreground mt-1">
+                      <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground mt-1">
                         {formatKroner(42500)}
                       </p>
                     </div>
@@ -374,7 +373,7 @@ const LandingPage = () => {
                 Integrert med Fiken. Hvert salg bokføres automatisk.
               </p>
             </div>
-            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-[#5239ba] flex items-center justify-center overflow-hidden">
+            <div className="mt-auto relative -mx-8 -mb-8 h-64 bg-foreground flex items-center justify-center overflow-hidden">
               <img
                 src="/badges/fiken-hovedlogo.svg"
                 alt="Fiken"
@@ -416,7 +415,7 @@ const LandingPage = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium tracking-wide text-foreground">Kvittering for Morning Flow</p>
-                  <p className="text-xs font-medium tracking-wide text-foreground-muted">{`${formatKroner(250)} · Sendt til deltaker`}</p>
+                  <p className="text-xs font-medium tabular-nums tracking-wide text-foreground-muted">{`${formatKroner(250)} · Sendt til deltaker`}</p>
                 </div>
               </div>
             </div>
@@ -434,7 +433,7 @@ const LandingPage = () => {
         transition={scrollTransition}
         className="bg-primary py-20 md:py-28 w-full"
       >
-        <div className="max-w-7xl mx-auto px-6 text-center">
+        <div className="max-w-6xl mx-auto px-6 text-center">
           <motion.div variants={scrollVariants} transition={scrollTransition}>
             <h2 className="text-3xl font-semibold tracking-tight mb-4 text-primary-foreground">
               Bygget for yogastudioer i Norge
@@ -451,15 +450,15 @@ const LandingPage = () => {
             viewport={{ once: true, margin: "-50px" }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-12"
           >
-            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
+            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-surface-on-dark border border-border-on-dark">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">100 %</p>
               <p className="text-base mt-1 text-primary-muted-foreground">Laget i Norge</p>
             </motion.div>
-            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
+            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-surface-on-dark border border-border-on-dark">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">Gratis</p>
               <p className="text-base mt-1 text-primary-muted-foreground">Ingen abonnement</p>
             </motion.div>
-            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20">
+            <motion.div variants={scrollVariants} transition={scrollTransition} className="p-6 rounded-lg bg-surface-on-dark border border-border-on-dark">
               <p className="text-xl font-semibold tracking-tight text-primary-foreground">Fiken</p>
               <p className="text-base mt-1 text-primary-muted-foreground">Automatisk bokføring</p>
             </motion.div>
@@ -469,7 +468,6 @@ const LandingPage = () => {
             asChild
             size="cta"
             variant="secondary"
-            shape="pill"
           >
             <Link to="/signup">Kom i gang</Link>
           </Button>
@@ -481,7 +479,7 @@ const LandingPage = () => {
         id="pricing"
         className="bg-background py-24 md:py-32 w-full"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -520,7 +518,7 @@ const LandingPage = () => {
             </div>
             <div className="mb-8 pb-8 border-b border-border">
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-semibold tracking-tight text-foreground">
+                <span className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                   Gratis
                 </span>
                 <span className="text-sm font-medium text-foreground-muted">/ mnd</span>
@@ -580,7 +578,7 @@ const LandingPage = () => {
         transition={scrollTransition}
         className="bg-background border-t border-border pt-32 pb-16"
       >
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
             <div className="md:col-span-5">
               <div className="flex items-center gap-2 mb-6">
@@ -595,9 +593,6 @@ const LandingPage = () => {
                 Påmelding og betaling for yogastudioer. <br />
                 Bygget i Oslo.
               </p>
-              <div className="flex items-center gap-4 opacity-60">
-                {/* Social icons could go here */}
-              </div>
             </div>
             <div className="md:col-span-2 md:col-start-7">
               <h4 className="text-sm font-medium mb-6 text-foreground">

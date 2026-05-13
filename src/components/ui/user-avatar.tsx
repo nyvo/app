@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { getInitials } from '@/utils/stringUtils';
 
 type AvatarSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -14,17 +13,17 @@ interface UserAvatarProps {
   ringClassName?: string;
 }
 
-const sizeConfig: Record<AvatarSize, { container: string; text: string; icon: string }> = {
-  xxs: { container: 'size-4', text: 'text-[6px]', icon: 'size-2.5' },
-  xs:  { container: 'size-6', text: 'text-[10px]', icon: 'size-3' },
-  sm:  { container: 'size-8', text: 'text-[11px] leading-none', icon: 'size-4' },
-  md:  { container: 'size-9', text: 'text-xs', icon: 'size-4' },
-  lg:  { container: 'size-10', text: 'text-sm', icon: 'size-5' },
-  xl:  { container: 'size-16', text: 'text-xl', icon: 'size-8' },
+const sizeConfig: Record<AvatarSize, { container: string; icon: string }> = {
+  xxs: { container: 'size-4', icon: 'size-2.5' },
+  xs:  { container: 'size-6', icon: 'size-3' },
+  sm:  { container: 'size-8', icon: 'size-4' },
+  md:  { container: 'size-9', icon: 'size-4' },
+  lg:  { container: 'size-10', icon: 'size-5' },
+  xl:  { container: 'size-16', icon: 'size-8' },
 };
 
-/** Minimalist silhouette SVG for when no name or email is available */
-function SilhouetteIcon({ className }: { className?: string }) {
+/** Neutral User silhouette — used as the only fallback when no image is set. */
+function UserIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -38,12 +37,10 @@ function SilhouetteIcon({ className }: { className?: string }) {
 }
 
 /**
- * Unified avatar component following the Ease Design System.
- *
- * Priority:
- * 1. Image (`src`) with onerror fallback
- * 2. Initials from `name` (or `email` if name absent)
- * 3. Minimalist silhouette SVG
+ * Unified avatar primitive. Image with neutral User-icon fallback — Studio
+ * forbids initials placeholders (no per-user chromatic noise; the icon reads
+ * as "anonymous user" without imposing identity). Always neutral chrome:
+ * `bg-muted` + `text-foreground-muted` icon.
  */
 export function UserAvatar({
   name,
@@ -57,16 +54,14 @@ export function UserAvatar({
   const config = sizeConfig[size];
 
   const handleError = useCallback(() => setImgFailed(true), []);
-
-  const initials = getInitials(name || email || null);
-  const hasInitials = initials !== '?';
   const showImage = src && !imgFailed;
+  const ariaLabel = name || email || 'Bruker';
 
   if (showImage) {
     return (
       <img
         src={src}
-        alt={name || email || 'Avatar'}
+        alt={ariaLabel}
         onError={handleError}
         className={cn(
           'rounded-full object-cover shrink-0',
@@ -78,24 +73,6 @@ export function UserAvatar({
     );
   }
 
-  if (hasInitials) {
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center rounded-full bg-[var(--secondary)] font-medium text-[var(--secondary-foreground)] shrink-0',
-          config.container,
-          config.text,
-          ringClassName,
-          className,
-        )}
-        aria-label={name || email || undefined}
-      >
-        {initials}
-      </div>
-    );
-  }
-
-  // Silhouette fallback — no name or email available
   return (
     <div
       className={cn(
@@ -104,9 +81,9 @@ export function UserAvatar({
         ringClassName,
         className,
       )}
-      aria-label="Bruker"
+      aria-label={ariaLabel}
     >
-      <SilhouetteIcon className={config.icon} />
+      <UserIcon className={config.icon} />
     </div>
   );
 }

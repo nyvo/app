@@ -1,56 +1,43 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Infinity } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import { routes } from '@/lib/routes';
+
+/**
+ * Smart fallback per Studio § 13.5:
+ * - Came from inside the app → go back to where they were
+ * - Came from outside (or fresh load) → land on home
+ */
+function handleBackOrFallback() {
+  if (
+    typeof window !== 'undefined' &&
+    window.history.length > 1 &&
+    document.referrer.startsWith(window.location.origin)
+  ) {
+    window.history.back();
+    return;
+  }
+  window.location.href = routes.home;
+}
 
 const NotFoundPage = () => {
-
   return (
-    <div className="min-h-screen w-full bg-background text-foreground antialiased flex flex-col selection:bg-muted selection:text-foreground">
-      {/* Minimal Header */}
-      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-between z-50 max-w-6xl mx-auto">
-        <div className="w-24">
-        </div>
-        
-        <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-            <Infinity className="size-3.5" />
-          </div>
-          <span className="text-base font-medium text-foreground">
-            Ease
-          </span>
-        </Link>
-
-        <div className="w-24" />
-      </header>
-
-      {/* 404 Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
-        <div className="text-center max-w-md">
-          {/* 404 Number */}
-          <div className="mb-6">
-            <span className="text-5xl font-semibold tracking-tight text-muted select-none">
-              404
-            </span>
-          </div>
-
-          {/* Message */}
-          <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
-            Siden ble ikke funnet
-          </h1>
-          <p className="text-base mb-8 text-foreground-muted">
-            Siden finnes ikke. Den kan ha blitt flyttet eller fjernet.
-          </p>
-
-          {/* Back Button */}
-          <Button asChild size="cta" className="px-8">
-            <Link to="/">
-              <ArrowLeft className="size-4 mr-2" />
-              Til forsiden
-            </Link>
-          </Button>
-        </div>
-      </main>
-    </div>
+    <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
+      <h1 className="text-2xl font-semibold tracking-tight max-w-md text-foreground">
+        Vi finner ikke den siden du leter etter
+      </h1>
+      <p className="mt-3 text-sm text-foreground-muted max-w-md">
+        Lenken er kanskje utdatert, eller siden er flyttet.
+      </p>
+      <Button size="sm" className="mt-7" onClick={handleBackOrFallback}>
+        Gå tilbake
+      </Button>
+      <Link
+        to={routes.home}
+        className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
+      >
+        eller gå til startsiden →
+      </Link>
+    </main>
   );
 };
 

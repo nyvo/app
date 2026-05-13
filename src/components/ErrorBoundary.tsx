@@ -1,6 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 
 interface Props {
   children: ReactNode
@@ -30,10 +29,6 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload()
   }
 
-  handleReset = () => {
-    this.setState({ hasError: false, error: null })
-  }
-
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
@@ -41,24 +36,23 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-4">
-          <Card className="w-full max-w-md p-8 text-center">
-            <h1 className="text-base font-medium mb-2 text-foreground">
-              Noe gikk galt
-            </h1>
-            <p className="text-sm mb-6 text-foreground-muted">
-              En uventet feil oppstod. Prøv å laste siden på nytt.
-            </p>
-            <Button onClick={this.handleReload}>
-              Last siden på nytt
-            </Button>
-            {import.meta.env.DEV && this.state.error && (
-              <pre className="text-xs mt-6 max-h-40 overflow-auto rounded-lg bg-background p-3 text-left text-danger">
-                {this.state.error.message}
-              </pre>
-            )}
-          </Card>
-        </div>
+        <main className="flex min-h-[60vh] flex-col items-center justify-center bg-background px-6 py-12 text-center">
+          <h1 className="max-w-md text-2xl font-semibold tracking-tight text-foreground">
+            Noe gikk galt
+          </h1>
+          <p className="mt-3 max-w-md text-sm text-foreground-muted">
+            Prøv igjen om noen sekunder. Hvis problemet vedvarer, ta kontakt.
+          </p>
+          <Button size="sm" className="mt-7" onClick={this.handleReload}>
+            Last på nytt
+          </Button>
+          <a
+            href="/"
+            className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
+          >
+            eller gå til startsiden →
+          </a>
+        </main>
       )
     }
 

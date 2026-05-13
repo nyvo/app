@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Star, Copy, Archive, ArchiveRestore, Pencil, Trash2 as Trash, MoreHorizontal } from '@/lib/icons'
+import { Star, MoreHorizontal } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState as SharedEmptyState } from '@/components/ui/empty-state'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,16 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog'
 import { friendlyError } from '@/lib/error-messages'
 import { formatKroner } from '@/lib/utils'
 import {
@@ -38,7 +29,7 @@ import type { TicketAudience, TicketType, TicketTypeInsert } from '@/types/datab
 const AUDIENCE_LABEL: Record<TicketAudience, string> = {
   standard: 'Standard',
   student: 'Student',
-  senior: 'Senior',
+  senior: 'Honnør',
   staff: 'Personale',
 }
 
@@ -107,28 +98,60 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
     void load()
   }
 
+  // Tier 1 — toast+undo. is_active flip is fully reversible, so archive/
+  // restore are both optimistic with an Angre action that swaps them back.
   async function handleArchive(tier: TicketType) {
     if (tier.is_default) {
       toast.error('Kan ikke arkivere standardvalget. Sett en annen som standard først.')
       return
     }
+    // Optimistic flip
+    setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: false } : t))
     const { error } = await deactivateTicketType(tier.id)
     if (error) {
+      // Revert on failure
+      setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: true } : t))
       toast.error(friendlyError(error, 'Kunne ikke arkivere'))
       return
     }
-    toast.success('Arkivert')
-    void load()
+    toast.success('Arkivert', {
+      duration: 8000,
+      action: {
+        label: 'Angre',
+        onClick: async () => {
+          setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: true } : t))
+          const { error: revertError } = await reactivateTicketType(tier.id)
+          if (revertError) {
+            setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: false } : t))
+            toast.error(friendlyError(revertError, 'Kunne ikke gjenopprette'))
+          }
+        },
+      },
+    })
   }
 
   async function handleRestore(tier: TicketType) {
+    setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: true } : t))
     const { error } = await reactivateTicketType(tier.id)
     if (error) {
+      setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: false } : t))
       toast.error(friendlyError(error, 'Kunne ikke aktivere'))
       return
     }
-    toast.success('Aktivert')
-    void load()
+    toast.success('Aktivert', {
+      duration: 8000,
+      action: {
+        label: 'Angre',
+        onClick: async () => {
+          setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: false } : t))
+          const { error: revertError } = await deactivateTicketType(tier.id)
+          if (revertError) {
+            setTiers(prev => prev.map(t => t.id === tier.id ? { ...t, is_active: true } : t))
+            toast.error(friendlyError(revertError, 'Kunne ikke gjenopprette'))
+          }
+        },
+      },
+    })
   }
 
   async function handleHardDelete(tier: TicketType) {
@@ -148,22 +171,23 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div>
-            <CardTitle>Priser og billettyper</CardTitle>
-            <CardDescription className="mt-1">
-              Lag en eller flere billettyper — for eksempel «Hele kurset», «Student-rabatt» og «Drop-in».
-              Studenten ser bare aktive billetter på påmeldingssiden.
-            </CardDescription>
+    <div>
+      {/* Aktive billettyper — first section, no top divider. Heading on the
+          left, list of tiers on the right (col-span-2). */}
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Billettyper</h3>
+          <p className="mt-1 text-sm text-foreground-muted">
+            Lag en eller flere billettyper — for eksempel «Hele kurset», «Student-rabatt» og «Drop-in».
+            Deltakerne ser bare aktive billetter på påmeldingssiden.
+          </p>
+        </div>
+        <div className="md:col-span-2 space-y-4">
+          <div className="flex items-center justify-end">
+            <Button size="sm" onClick={startCreate} className="shrink-0">
+              Ny billettype
+            </Button>
           </div>
-          <Button size="sm" onClick={startCreate} className="shrink-0 gap-1.5">
-            <Plus className="size-3.5" />
-            Ny billettype
-          </Button>
-        </CardHeader>
-        <CardContent>
           {loading ? (
             <div className="space-y-3">
               <Skeleton className="h-20 rounded-lg" />
@@ -186,18 +210,20 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {archived.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Arkiverte ({archived.length})</CardTitle>
-            <CardDescription className="mt-0.5">
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">
+              Arkiverte <span className="text-foreground-muted tabular-nums font-normal">({archived.length})</span>
+            </h3>
+            <p className="mt-1 text-sm text-foreground-muted">
               Skjult fra påmeldingssiden. Tidligere påmeldinger beholder fortsatt riktig billettlabel.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </p>
+          </div>
+          <div className="md:col-span-2 space-y-3">
             {archived.map(tier => (
               <TicketTypeRow
                 key={tier.id}
@@ -208,8 +234,8 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
                 onDelete={() => setDeletingId(tier.id)}
               />
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       <TicketTypeForm
@@ -222,30 +248,32 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
         onSaved={() => void load()}
       />
 
-      <AlertDialog open={!!deletingId} onOpenChange={open => !open && setDeletingId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Slette denne billettypen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Permanent sletting fungerer kun hvis ingen påmeldinger viser til denne billetten.
-              Hvis det finnes påmeldinger, bruk «Arkiver» i stedet — da skjules den fra påmeldingssiden
-              men historikken beholdes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                const target = tiers.find(t => t.id === deletingId)
-                if (target) void handleHardDelete(target)
-              }}
-            >
-              Slett permanent
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {(() => {
+        const deletingTier = tiers.find(t => t.id === deletingId)
+        return (
+          <ConfirmDialog
+            open={!!deletingId}
+            onOpenChange={open => !open && setDeletingId(null)}
+            ariaLabel="Slett billettype"
+            headline="Billettypen slettes permanent. Sletting fungerer kun hvis ingen påmeldinger viser til billetten — bruk «Arkiver» ellers."
+            scope={
+              deletingTier ? (
+                <ConfirmScopeItem
+                  name={deletingTier.label}
+                  meta={AUDIENCE_LABEL[deletingTier.audience as TicketAudience]}
+                  trailing={formatKroner(deletingTier.price)}
+                />
+              ) : (
+                <ConfirmScopeItem name="Billettype" />
+              )
+            }
+            actionLabel="Slett permanent"
+            onConfirm={() => {
+              if (deletingTier) void handleHardDelete(deletingTier)
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -295,31 +323,31 @@ function TicketTypeRow({
     <div
       className={cn(
         'flex items-start gap-3 rounded-lg border border-border p-4',
-        archived && 'bg-muted/50',
+        archived && 'bg-muted',
       )}
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {tier.is_default && (
             <span
               className="text-foreground shrink-0"
               title="Standardvalg"
               aria-label="Standardvalg"
             >
-              <Star className="size-3.5" fill="currentColor" strokeWidth={0} />
+              <Star className="size-4" fill="currentColor" strokeWidth={0} />
             </span>
           )}
           <p className={cn(
-            'text-[15px] font-semibold',
+            'text-base font-semibold',
             archived ? 'text-foreground-muted' : 'text-foreground',
           )}>
             {tier.label}
           </p>
         </div>
-        <p className="mt-1 text-[13px] tabular-nums text-foreground-muted">
+        <p className="mt-1 text-sm tabular-nums text-foreground-muted">
           {metaParts.map((part, i) => (
             <span key={i}>
-              {i > 0 && <span className="text-foreground-disabled mx-1.5">·</span>}
+              {i > 0 && <span className="text-foreground-disabled mx-2">·</span>}
               <span className={cn(
                 part.tone === 'foreground' && 'text-foreground font-medium',
                 part.tone === 'warning' && 'text-foreground font-medium',
@@ -330,7 +358,7 @@ function TicketTypeRow({
           ))}
         </p>
         {tier.description && (
-          <p className="mt-1.5 text-xs text-foreground-muted leading-[1.45]">{tier.description}</p>
+          <p className="mt-2 text-xs text-foreground-muted">{tier.description}</p>
         )}
       </div>
 
@@ -340,7 +368,7 @@ function TicketTypeRow({
             variant="ghost"
             size="icon-sm"
             aria-label="Mer"
-            className="shrink-0 -mr-2 -mt-1"
+            className="shrink-0 -mr-2"
           >
             <MoreHorizontal className="size-4" />
           </Button>
@@ -348,19 +376,16 @@ function TicketTypeRow({
         <DropdownMenuContent align="end">
           {onEdit && (
             <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="size-3.5 mr-2" />
               Rediger
             </DropdownMenuItem>
           )}
           {!archived && onSetDefault && !tier.is_default && (
             <DropdownMenuItem onClick={onSetDefault}>
-              <Star className="size-3.5 mr-2" />
               Sett som standard
             </DropdownMenuItem>
           )}
           {!archived && onDuplicate && (
             <DropdownMenuItem onClick={onDuplicate}>
-              <Copy className="size-3.5 mr-2" />
               Dupliser
             </DropdownMenuItem>
           )}
@@ -368,7 +393,6 @@ function TicketTypeRow({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onArchive}>
-                <Archive className="size-3.5 mr-2" />
                 Arkiver
               </DropdownMenuItem>
             </>
@@ -377,14 +401,12 @@ function TicketTypeRow({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onRestore}>
-                <ArchiveRestore className="size-3.5 mr-2" />
                 Aktiver
               </DropdownMenuItem>
             </>
           )}
           {onDelete && (
             <DropdownMenuItem onClick={onDelete} className="text-danger">
-              <Trash className="size-3.5 mr-2" />
               Slett permanent
             </DropdownMenuItem>
           )}
@@ -396,15 +418,15 @@ function TicketTypeRow({
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-1 py-8 text-center">
-      <p className="text-sm font-medium text-foreground">Ingen billettyper enda</p>
-      <p className="text-xs text-foreground-muted">
-        Opprett minst én aktiv billettype for at studenter skal kunne melde seg på.
-      </p>
-      <Button size="sm" className="mt-3 gap-1.5" onClick={onCreate}>
-        <Plus className="size-3.5" />
-        Ny billettype
-      </Button>
-    </div>
+    <SharedEmptyState
+      variant="compact"
+      title="Ingen billettyper enda"
+      description="Opprett minst én aktiv billettype for at studenter skal kunne melde seg på."
+      action={
+        <Button size="sm" onClick={onCreate}>
+          Ny billettype
+        </Button>
+      }
+    />
   )
 }

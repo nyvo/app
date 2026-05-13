@@ -30,7 +30,7 @@ export function InfoTooltip({
           <button
             type="button"
             className={cn(
-              'inline-flex items-center justify-center rounded-full p-0.5 text-foreground-muted transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              'inline-flex items-center justify-center rounded-full p-0.5 text-foreground-muted transition-colors duration-150 ease-out hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
               className
             )}
             aria-label="Mer informasjon"

@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
  *   (e.g. `<main className="mx-auto max-w-6xl">` on the page wrapper) — the
  *   Table primitive never caps its own width.
  * - Header cells use label styling (text-xs font-medium tracking-wide text-foreground-muted).
- * - Body rows get a subtle hover (bg-muted/50) and divide-y via the body wrapper.
+ * - Body rows get a subtle hover (bg-muted) and divide-y via the body wrapper.
  * - Cell padding is uniform (px-4 py-4, sm:px-6).
  *
  * Column-width rule: the first/identity column (avatar + name + meta) should get
@@ -40,7 +40,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("border-b border-border bg-background/50", className)}
+      className={cn("border-b border-border bg-background", className)}
       {...props}
     />
   )
@@ -61,7 +61,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "group smooth-transition hover:bg-muted/50 data-[state=selected]:bg-muted",
+        "group transition-colors duration-150 hover:bg-muted data-[state=selected]:bg-muted",
         className,
       )}
       {...props}
@@ -75,7 +75,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       data-slot="table-head"
       scope="col"
       className={cn(
-        "text-xs font-medium tracking-wide px-4 py-3 text-foreground-muted sm:px-6",
+        "text-xs font-medium px-4 py-3 text-foreground-muted sm:px-6",
         className,
       )}
       {...props}

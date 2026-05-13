@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { CheckCircle2, AlertCircle } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
@@ -9,26 +8,21 @@ import { useFormValidation } from '@/hooks/use-form-validation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
-import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
+import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS, AUTH_HINTS } from '@/lib/auth-messages'
 
 export const ResetPasswordView = () => {
   const routes = AUTH_ROUTES
 
-  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateField, validateForm } =
+  // NIST 2024+: single password field, no confirm. Show-toggle on
+  // AuthFormField replaces the confirm-field rationale (§ 21.2 / 21.6).
+  const { formData, errors, touched, setErrors, handleChange, handleBlur, validateForm } =
     useFormValidation({
-      initialValues: { password: '', confirmPassword: '' },
+      initialValues: { password: '' },
       rules: {
         password: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.passwordNewRequired
-            if (value.length < 10) return AUTH_VALIDATION.passwordMinLength
-            return undefined
-          },
-        },
-        confirmPassword: {
-          validate: (value, fd) => {
-            if (!value.trim()) return AUTH_VALIDATION.passwordConfirmRequired
-            if (fd.password !== value) return AUTH_VALIDATION.passwordMismatch
+            if (value.length < 12) return AUTH_VALIDATION.passwordMinLength
             return undefined
           },
         },
@@ -49,13 +43,6 @@ export const ResetPasswordView = () => {
     }
     checkSession()
   }, [])
-
-  const handlePasswordChange = (value: string) => {
-    handleChange('password', value)
-    if (touched.confirmPassword) {
-      setTimeout(() => validateField('confirmPassword'), 0)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,27 +87,27 @@ export const ResetPasswordView = () => {
   if (isValidSession === false) {
     return (
       <AuthLayout title="" customContent>
-        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <AlertCircle className="size-8 text-danger" />
-        </div>
-
-        <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <div className="text-center space-y-2 w-full">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground max-w-md">
             Ugyldig lenke
           </h1>
-          <p className="text-sm text-foreground-muted">
+          <p className="text-sm text-foreground-muted max-w-md">
             Lenken er utløpt eller fungerer ikke.
           </p>
         </div>
 
-        <div className="w-full space-y-3">
+        <div className="mt-7 w-full">
           <Button asChild size="cta" className="w-full">
             <Link to={routes.forgotPassword}>Be om ny lenke</Link>
           </Button>
-          <Button asChild variant="outline-soft" size="cta" className="w-full">
-            <Link to={routes.login}>Til innlogging</Link>
-          </Button>
         </div>
+
+        <Link
+          to={routes.login}
+          className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
+        >
+          eller gå til innlogging →
+        </Link>
       </AuthLayout>
     )
   }
@@ -128,12 +115,8 @@ export const ResetPasswordView = () => {
   if (resetSuccess) {
     return (
       <AuthLayout title="" customContent>
-        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <CheckCircle2 className="size-8 text-success" />
-        </div>
-
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Passordet er oppdatert
           </h1>
           <p className="text-sm text-foreground-muted">
@@ -159,7 +142,7 @@ export const ResetPasswordView = () => {
           Trenger du hjelp? Send en e-post til{' '}
           <a
             href="mailto:hei@ease.no"
-            className="text-foreground underline decoration-disabled-foreground underline-offset-2 hover:decoration-foreground"
+            className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
           >
             hei@ease.no
           </a>
@@ -167,7 +150,7 @@ export const ResetPasswordView = () => {
         </p>
       }
     >
-      <form className="w-full space-y-5" onSubmit={handleSubmit}>
+      <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <AuthFormField
           id="password"
           label="Nytt passord"
@@ -176,32 +159,15 @@ export const ResetPasswordView = () => {
           error={errors.password}
           touched={touched.password}
           placeholder={AUTH_PLACEHOLDERS.passwordMin}
-          onChange={handlePasswordChange}
+          hint={AUTH_HINTS.passwordMinLength}
+          hintMet={formData.password.length >= 12}
+          onChange={(v) => handleChange('password', v)}
           onBlur={() => handleBlur('password')}
         />
 
-        <AuthFormField
-          id="confirmPassword"
-          label="Gjenta passord"
-          type="password"
-          value={formData.confirmPassword}
-          error={errors.confirmPassword}
-          touched={touched.confirmPassword}
-          placeholder={AUTH_PLACEHOLDERS.confirmPassword}
-          onChange={(v) => handleChange('confirmPassword', v)}
-          onBlur={() => handleBlur('confirmPassword')}
-        />
-
-        <div className="rounded-lg bg-muted p-3">
-          <p className="text-xs font-medium tracking-wide mb-1 text-foreground-muted">Krav</p>
-          <ul className="text-xs ml-3 space-y-0.5 text-foreground-muted">
-            <li className="list-disc">Minst 10 tegn</li>
-          </ul>
-        </div>
-
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-danger">{errors.general}</p>
+            {errors.general}
           </Alert>
         )}
 

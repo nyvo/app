@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { ArrowLeft } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -14,7 +13,6 @@ import { PublicNav } from '@/components/public/marketing/PublicNav';
 import { PublicFooter } from '@/components/public/marketing/PublicFooter';
 import { CourseHero } from '@/components/public/course-details/CourseHero';
 import { LocationCard } from '@/components/public/course-details/LocationCard';
-import { PracticalInfoSection } from '@/components/public/course-details/PracticalInfoSection';
 import { CourseSessions } from '@/components/public/course-details/CourseSessions';
 import { OtherCoursesShelf } from '@/components/public/course-details/OtherCoursesShelf';
 import { BookingPanel } from '@/components/public/course-details/BookingPanel';
@@ -50,6 +48,16 @@ export default function PublicCourseDetailPage() {
         setLoading(false);
         return;
       }
+
+      // Canonical URL = owner's team slug. If the visitor landed via a
+      // venue's storefront (syndicated affiliation), redirect to the owner's
+      // URL so bookmarks and shares always point at the canonical page.
+      const ownerSlug = courseRes.data.seller?.slug;
+      if (ownerSlug && ownerSlug !== slug) {
+        navigate(`/${ownerSlug}/${courseSlug}`, { replace: true, state: location.state });
+        return;
+      }
+
       setCourse(courseRes.data);
 
       // Fetch the dated session list for the dates accordion. Series courses
@@ -65,7 +73,7 @@ export default function PublicCourseDetailPage() {
     }
     load();
     return () => { active = false; };
-  }, [slug, courseSlug]);
+  }, [slug, courseSlug, navigate, location.state]);
 
   // Lock the body scroll only when overlaying.
   useEffect(() => {
@@ -82,7 +90,7 @@ export default function PublicCourseDetailPage() {
   // series courses or any course with multiple sessions.
   const showDatesAccordion = useMemo(() => {
     if (!course) return false;
-    if (course.course_type === 'course-series') return sessions.length > 0;
+    if (course.format === 'series') return sessions.length > 0;
     return sessions.length > 1;
   }, [course, sessions]);
 
@@ -106,8 +114,7 @@ export default function PublicCourseDetailPage() {
               onClick={handleBack}
               className="bg-background/70 backdrop-blur-md border border-border/40 hover:bg-background"
             >
-              <ArrowLeft className="size-4" />
-              <span className="hidden sm:inline">Tilbake</span>
+              Tilbake
             </Button>
           </div>
         )}
@@ -132,7 +139,7 @@ export default function PublicCourseDetailPage() {
             <>
               <CourseHero course={course} />
 
-              <div className="mx-auto max-w-6xl px-5 sm:px-8 py-12 sm:py-16">
+              <div className="mx-auto max-w-6xl px-4 sm:px-8 py-12 sm:py-16">
                 <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16">
                   <div className="flex flex-col gap-14 max-w-[640px] min-w-0">
                     {/* Om kurset — leads the body */}
@@ -152,19 +159,11 @@ export default function PublicCourseDetailPage() {
                       <BookingPanel course={course} studioSlug={slug || ''} />
                     </div>
 
-                    {/* Info cluster — sted (outlined) + praktisk (sand).
-                        Tight 10px gap inside; 56px gap to neighboring sections. */}
-                    <section className="flex flex-col gap-2.5">
-                      {course.location && (
-                        <LocationCard
-                          location={course.location}
-                          address={course.seller?.address}
-                          postalCode={course.seller?.postal_code}
-                          city={course.seller?.city}
-                        />
-                      )}
-                      <PracticalInfoSection info={course.practical_info} />
-                    </section>
+                    {course.location && (
+                      <section>
+                        <LocationCard location={course.location} />
+                      </section>
+                    )}
 
                     {/* Dates accordion — collapsed by default, near the bottom */}
                     {showDatesAccordion && (
@@ -195,9 +194,13 @@ export default function PublicCourseDetailPage() {
                     )}
                   </div>
 
-                  {/* Desktop right rail — non-sticky, sits at the natural top */}
+                  {/* Desktop right rail — sticky so booking stays visible
+                      while the customer scans description / dates / location.
+                      Per patterns.md §18.10 — booking IS the page's purpose. */}
                   <aside className="hidden lg:block">
-                    <BookingPanel course={course} studioSlug={slug || ''} />
+                    <div className="sticky top-24">
+                      <BookingPanel course={course} studioSlug={slug || ''} />
+                    </div>
                   </aside>
                 </div>
               </div>

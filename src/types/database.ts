@@ -14,7 +14,8 @@ export type Json =
   | Json[]
 
 // Enum types matching the database
-export type CourseType = 'course-series' | 'event' | 'online'
+export type CourseFormat = 'single' | 'series'
+export type DeliveryMode = 'in_person' | 'online'
 export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'cancelled'
 export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
@@ -29,6 +30,7 @@ export type TicketAudience = 'standard' | 'student' | 'senior' | 'staff'
 
 // Seller's legal entity model.
 export type SellerType = 'individual' | 'business'
+export type UserRole = 'buyer' | 'seller'
 
 // Storefront syndication: a venue/studio team invites a freelancer seller to
 // advertise their courses. 'pending' = awaiting freelancer response.
@@ -61,7 +63,8 @@ export interface SignupDisplay {
   ticketKind?: TicketKind;
   ticketAudience?: TicketAudience;
   // Course shape, used for the meta line.
-  courseType?: CourseType;
+  courseFormat?: CourseFormat;
+  deliveryMode?: DeliveryMode;
   courseStartDate?: string | null;
   courseTotalWeeks?: number | null;
 }
@@ -219,11 +222,12 @@ export type Database = {
       }
       courses: {
         Row: {
-          course_type: Database["public"]["Enums"]["course_type"]
           created_at: string | null
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           description: string | null
           duration: number | null
           end_date: string | null
+          format: Database["public"]["Enums"]["course_format"]
           id: string
           idempotency_key: string | null
           image_url: string | null
@@ -231,7 +235,6 @@ export type Database = {
           level: Database["public"]["Enums"]["course_level"] | null
           location: string | null
           max_participants: number | null
-          practical_info: Json | null
           price: number | null
           seller_id: string
           slug: string
@@ -243,11 +246,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string | null
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
           duration?: number | null
           end_date?: string | null
+          format?: Database["public"]["Enums"]["course_format"]
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
@@ -255,7 +259,6 @@ export type Database = {
           level?: Database["public"]["Enums"]["course_level"] | null
           location?: string | null
           max_participants?: number | null
-          practical_info?: Json | null
           price?: number | null
           seller_id: string
           slug: string
@@ -267,11 +270,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          course_type?: Database["public"]["Enums"]["course_type"]
           created_at?: string | null
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
           duration?: number | null
           end_date?: string | null
+          format?: Database["public"]["Enums"]["course_format"]
           id?: string
           idempotency_key?: string | null
           image_url?: string | null
@@ -279,7 +283,6 @@ export type Database = {
           level?: Database["public"]["Enums"]["course_level"] | null
           location?: string | null
           max_participants?: number | null
-          practical_info?: Json | null
           price?: number | null
           seller_id?: string
           slug?: string
@@ -459,8 +462,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
           created_at: string | null
           email: string
           id: string
@@ -468,12 +469,11 @@ export type Database = {
           name: string | null
           onboarding_completed_at: string | null
           phone: string | null
+          role: string | null
           setup_complete_seen_at: string | null
           updated_at: string | null
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
           created_at?: string | null
           email: string
           id: string
@@ -481,12 +481,11 @@ export type Database = {
           name?: string | null
           onboarding_completed_at?: string | null
           phone?: string | null
+          role?: string | null
           setup_complete_seen_at?: string | null
           updated_at?: string | null
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
           created_at?: string | null
           email?: string
           id?: string
@@ -494,6 +493,7 @@ export type Database = {
           name?: string | null
           onboarding_completed_at?: string | null
           phone?: string | null
+          role?: string | null
           setup_complete_seen_at?: string | null
           updated_at?: string | null
         }
@@ -537,8 +537,6 @@ export type Database = {
       }
       sellers: {
         Row: {
-          address: string | null
-          city: string | null
           created_at: string | null
           dintero_approval_id: string | null
           dintero_contract_url: string | null
@@ -551,14 +549,11 @@ export type Database = {
           name: string
           organization_number: string | null
           phone: string | null
-          postal_code: string | null
           seller_type: string
           settings: Json | null
           updated_at: string | null
         }
         Insert: {
-          address?: string | null
-          city?: string | null
           created_at?: string | null
           dintero_approval_id?: string | null
           dintero_contract_url?: string | null
@@ -571,14 +566,11 @@ export type Database = {
           name: string
           organization_number?: string | null
           phone?: string | null
-          postal_code?: string | null
           seller_type?: string
           settings?: Json | null
           updated_at?: string | null
         }
         Update: {
-          address?: string | null
-          city?: string | null
           created_at?: string | null
           dintero_approval_id?: string | null
           dintero_contract_url?: string | null
@@ -591,7 +583,6 @@ export type Database = {
           name?: string
           organization_number?: string | null
           phone?: string | null
-          postal_code?: string | null
           seller_type?: string
           settings?: Json | null
           updated_at?: string | null
@@ -798,6 +789,44 @@ export type Database = {
           },
         ]
       }
+      team_invite_links: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          team_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          revoked_at?: string | null
+          team_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invite_links_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           joined_at: string
@@ -836,12 +865,9 @@ export type Database = {
       }
       teams: {
         Row: {
-          address: string | null
-          city: string | null
           cover_image_url: string | null
           created_at: string
           default_course_image_url: string | null
-          description: string | null
           id: string
           invite_code: string
           name: string
@@ -850,12 +876,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          address?: string | null
-          city?: string | null
           cover_image_url?: string | null
           created_at?: string
           default_course_image_url?: string | null
-          description?: string | null
           id?: string
           invite_code: string
           name: string
@@ -864,12 +887,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          address?: string | null
-          city?: string | null
           cover_image_url?: string | null
           created_at?: string
           default_course_image_url?: string | null
-          description?: string | null
           id?: string
           invite_code?: string
           name?: string
@@ -920,11 +940,34 @@ export type Database = {
           was_created: boolean
         }[]
       }
+      lookup_team_invite_link: {
+        Args: { p_code: string }
+        Returns: {
+          status: string
+          team_id: string | null
+          team_slug: string | null
+          team_name: string | null
+          team_cover_image_url: string | null
+        }[]
+      }
+      create_team_invite_link: {
+        Args: { p_team_id: string; p_expires_days?: number }
+        Returns: Database["public"]["Tables"]["team_invite_links"]["Row"]
+      }
+      redeem_team_invite_link: {
+        Args: { p_code: string; p_force_leave?: boolean }
+        Returns: {
+          status: string
+          team_id: string | null
+          existing_team_id: string | null
+        }[]
+      }
     }
     Enums: {
+      course_format: "single" | "series"
       course_level: "alle" | "nybegynner" | "viderekommen"
       course_status: "draft" | "upcoming" | "active" | "completed" | "cancelled"
-      course_type: "course-series" | "event" | "online"
+      delivery_mode: "in_person" | "online"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       seller_member_role: "owner" | "admin"
       signup_status: "confirmed" | "cancelled" | "course_cancelled"
@@ -999,6 +1042,17 @@ export type TeamAffiliationUpdate = Database['public']['Tables']['team_affiliati
 export type CourseTeamListing = Database['public']['Tables']['course_team_listings']['Row']
 export type CourseTeamListingInsert = Database['public']['Tables']['course_team_listings']['Insert']
 export type CourseTeamListingUpdate = Database['public']['Tables']['course_team_listings']['Update']
+
+export type TeamInviteLink = Database['public']['Tables']['team_invite_links']['Row']
+export type TeamInviteLinkInsert = Database['public']['Tables']['team_invite_links']['Insert']
+export type TeamInviteLinkUpdate = Database['public']['Tables']['team_invite_links']['Update']
+
+// RPC payload shapes — kept narrow so the discriminated unions in callers
+// stay exhaustive.
+export type LookupTeamInviteLinkResult =
+  Database['public']['Functions']['lookup_team_invite_link']['Returns'][number]
+export type RedeemTeamInviteLinkResult =
+  Database['public']['Functions']['redeem_team_invite_link']['Returns'][number]
 
 // Notification preferences stored in sellers.settings JSONB.
 // The 'messages' field is gone along with the messaging subsystem.

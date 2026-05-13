@@ -426,7 +426,7 @@ Different durations call for different signals. Don't conflate them.
 |---|---|---|
 | **<200ms** | nothing — render content directly | A skeleton that flashes for 80ms reads as a glitch, *worse* than no indicator. |
 | **200ms - 3s** | skeleton (content surface) OR inline button-spinner (action) | Skeleton tells the user the layout is coming; spinner tells them their click registered. |
-| **3s - 8s** | persistent progress indicator visible (banner / toast with progress bar). User stays on the page; the indicator confirms work is ongoing. |  |
+| **3s - 8s** | persistent progress indicator visible (toast with progress bar, or inline "Lagrer…" near the action). User stays on the page; the indicator confirms work is ongoing. |  |
 | **>8-10s** | progress + **cancel button required** (Microsoft / NN/g threshold). Beyond 10s without cancel, the user feels trapped. Consider making the operation backgroundable so they can keep using the app. |  |
 
 **Cancel vs Stop — copy matters:**
@@ -497,11 +497,11 @@ Most toast systems ship 5+ variants (default / success / info / warning / error)
 | **Action** | blue (`#0090ff`) | Reversible action with undo: `Påmelding er avbestilt.` + Angre | 8s |
 | **Error** | red (`#e5484d`) | Something failed: `Kunne ikke laste påmeldinger.` + Prøv igjen | manual dismiss |
 
-No "success" variant — a green-striped `Lagret.` over-celebrates a routine save. Default (no stripe) is enough. No "warning" variant — warnings belong in banners (page-scoped, persistent), not toasts (ephemeral).
+No "success" variant — a green-striped `Lagret.` over-celebrates a routine save. Default (no stripe) is enough. No "warning" variant — Studio has no persistent alert surface; if something needs warning about, state it as plain prose on the relevant page (§13.1 decision tree).
 
-### Visual — same family as banners (§13.6)
+### Visual
 
-Toasts inherit the banner vocabulary: white surface, foreground text, **inset accent stripe at the left** (4px wide, full-height, rounded). NEVER filled-color backgrounds. The destructive button (where present) is the loud anchor; the toast surface stays calm.
+White surface, foreground text, **inset accent stripe at the left** (4px wide, full-height, rounded). NEVER filled-color backgrounds. The destructive button (where present) is the loud anchor; the toast surface stays calm.
 
 ### Code
 
@@ -536,7 +536,7 @@ toast.promise(cancelBooking(id), {
 - **Position bottom-center on desktop AND mobile.** Override Sonner's `bottom-right` default — bottom-right has IDE/dev-tool connotations and reads peripheral. Bottom-center reads neutral and app-wide, which fits a non-technical wellness audience.
 - **Duration: 4s default**, 8s for action toasts (undo needs reading time), `Infinity` for errors (manual dismiss).
 - **Wording: imperative past tense.** "Påmelding er avbestilt." — short, declarative. Not "Din påmelding ble avbestilt" (too formal). Not "Avbestilt!" (too cute). For errors, state what failed — `Kunne ikke laste påmeldinger.` — never `Noe gikk galt.`
-- **Action button: ghost pill, single verb.** `Angre`, `Prøv igjen`, `Vis`. Not "OK". Not two buttons — if the toast needs two buttons, it's a banner or dialog.
+- **Action button: ghost pill, single verb.** `Angre`, `Prøv igjen`, `Vis`. Not "OK". Not two buttons — if the toast needs two buttons, it's a dialog.
 - **No icons in the body.** The stripe is the visual signal. An icon next to a stripe is doubled signaling — the AI-default look.
 - **No emoji in copy.** No `✓ Lagret`, no `⚠️ Advarsel`. The stripe communicates status.
 - **No progress bar showing auto-dismiss countdown.** Power-user detail; not for this audience.
@@ -547,10 +547,10 @@ For surfaces where toasts overlay rich content (image-heavy public pages, custom
 
 ### Anti-patterns
 
-- ❌ **Filled-color backgrounds** (`bg-success-subtle` or `bg-jade-3` for the whole toast). The most recognizable AI-default in the system. Dated; doesn't match the banner family.
+- ❌ **Filled-color backgrounds** (`bg-success-subtle` or `bg-jade-3` for the whole toast). The most recognizable AI-default in the system. Dated; reads heavy on a calm canvas.
 - ❌ **Sonner `richColors` mode.** Same problem — turns variants into colored cards.
 - ❌ **Generic copy:** `Suksess!` / `Feil!` / `Noe gikk galt`. Always say WHAT happened.
-- ❌ **Multi-line explanations.** If it needs explaining, it's a banner.
+- ❌ **Multi-line explanations.** If it needs explaining, state it inline on the page instead.
 - ❌ **Auto-dismissing errors.** Errors are rare; require manual dismiss to confirm read.
 - ❌ **Title-as-question** (`Did this work?`). Always a statement.
 
@@ -648,7 +648,6 @@ The single most-reached-for doctrine in the system. Every loading, empty, and er
 | **Field** (one input) | spinner inside the field/button (Sonner promise) | — | inline message under input |
 | **Section** (one card / component) | skeleton matching the layout | empty state (#6) | inline section error + retry |
 | **Page** (whole route) | full-page skeleton template | full-page empty state | **page state shell** — 404, 500, permission |
-| **App** (across pages) | — | — | banner alert (system-level) |
 
 Plus **toast** (Sonner) — sits across all scopes as transient confirmation of *user-initiated actions* (#11).
 
@@ -657,7 +656,7 @@ Plus **toast** (Sonner) — sits across all scopes as transient confirmation of 
 - Is this a form field that's invalid? → **inline field error** (under the input)
 - Did one card / list / section fail to load? → **inline section error** with retry
 - Did the whole page fail to load (404, 500, no-permission)? → **page state shell**
-- Is this system-level info user should see (subscription expiring, KYC needed)? → **banner alert**
+- Is this system-level info the user needs to act on (subscription expiring, KYC needed)? → **state it as plain prose on the page where they'd fix it.** No banners, no sidebar dots — Studio has no persistent alert surface.
 - Is this a critical block requiring decision (card declined, action irreversible)? → **modal/dialog** (#12)
 
 ### 13.2 Field-level errors — the shadcn pattern, full four signals
@@ -825,197 +824,7 @@ Match the actual page layout. If the real page has a hero card + 3 metric tiles 
 
 **Animation: `animate-pulse` (gentle fade), not shimmer** (gradient sweep). Pulse fits Studio's calm aesthetic; shimmer reads as more "energetic SaaS." Tailwind's default `animate-pulse` is exactly the right rhythm — don't customize.
 
-### 13.6 Alert placement — three tiers by scope
-
-The default of "banner at top of every page" is itself an AI-default. For a calm, non-data-heavy app, alerts belong **where they're relevant**, not where they're easy to put. Banner-everywhere creates fatigue, conflates urgency, and violates the canvas-first philosophy.
-
-Studio uses **three tiers** of alert placement, picked by *scope*. Most alerts are Tier A + B; Tier C is rare.
-
-#### Decision tree
-
-```
-Where does the alert belong?
-│
-├─ Does this affect every page in the app?
-│  YES → Tier C (app-wide banner). Truly app-wide states only.
-│  NO  → Continue ↓
-│
-├─ Does the user fix this from a specific page?
-│  YES → Tier A (sidebar dot) + Tier B (inline alert on that page)
-│  NO  → Continue ↓
-│
-└─ Is this a notification of an event?
-   YES → Toast (#11) for transient · inbox/notification center for persistent
-```
-
-**Most alerts that today's apps treat as banners should actually be Tier A + Tier B.** The user is signalled via a sidebar dot (calm, doesn't take vertical space), and when they navigate to the relevant page, they see the full alert in context where they can act.
-
-#### Tier A — Sidebar nav count badge (the workhorse)
-
-A small count badge on the affected sidebar nav item. Tells the user explicitly *how many* items need attention here. Calmer than a banner, clearer than a plain dot.
-
-```html
-<a href="..." class="flex items-center justify-between
-                     px-3 py-1.5 rounded-md text-sm
-                     text-foreground-muted hover:bg-muted hover:text-foreground">
-  <span>Innstillinger</span>
-  <span aria-label="1 sak trenger oppmerksomhet"
-        title="1 sak trenger oppmerksomhet"
-        class="min-w-[18px] h-[18px] px-1.5
-               inline-flex items-center justify-center
-               text-xs font-medium tabular-nums rounded-full
-               bg-foreground text-background">
-    1
-  </span>
-</a>
-```
-
-**Rules:**
-- **Show the count, not a dot.** "1" or "2" tells the user explicitly what's pending. A dot is too vague.
-- **One neutral style — `bg-foreground` (slate-12) + `text-background` (white).** Dark filled pill. Calm, neutral, unmissable. Same treatment whether the issue is "subscription expiring" or "KYC needed." For genuinely critical/blocking issues, escalate by surfacing an inline error at the user's action point (not by changing the badge color).
-- **No chromatic variants.** No amber, no red. The badge stays in the neutral palette across all severity levels. Studio holds the line: count badges signal "there's something here," and the page itself communicates urgency.
-- **Size: `min-w-[18px] h-[18px]`** with `px-1.5`. Tiny but legible at 12px digit size.
-- **Pill shape (`rounded-full`)** — matches Studio's button language; consistent across the system.
-- **Position: right edge** of the nav item, vertically centered.
-- **One badge per nav item, max.** If three issues live under "Innstillinger", show "3" — never multiple badges.
-- **`aria-label` + `title`** make the badge self-documenting. Title gives a tooltip on desktop hover; aria-label reads correctly to screen readers. Both reinforce the meaning without changing the visual.
-- **The badge is not clickable separately** — clicking the nav item is what takes the user there.
-- **Cap at "9+"** if a count would ever exceed two digits. For Studio's audience, this should never happen.
-
-#### Tier B — Page-scoped contextual alert
-
-When the user navigates to the page where the issue lives, THAT page shows the inline alert with the action. Same visual treatment as the existing banner pattern — but it only renders on the relevant route, not globally.
-
-```html
-<!-- Renders only on /innstillinger/betaling — not on every page -->
-<div role="alert" class="flex items-center gap-4 px-4 py-3 bg-warning-subtle border-b border-border">
-  <p class="flex-1 text-sm font-medium text-foreground">
-    Stripe trenger ny KYC-info før du kan ta imot betaling.
-  </p>
-  <button class="btn btn-primary btn-sm gap-1.5">
-    Fullfør
-    <svg class="size-3.5" viewBox="0 0 16 16">
-      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-</div>
-```
-
-**Rules:**
-- **Scoped to the relevant route only.** The router/page knows which alerts apply. Global state with route-aware rendering.
-- **Same banner visual treatment** as before — `bg-warning-subtle` / `bg-danger-subtle`, font-medium foreground text, primary + arrow CTA, no leading icon.
-- **Pairs with Tier A.** When a Tier B alert is active, Tier A dot also appears on the relevant sidebar item. They work together: the dot draws the user in; the page-scoped banner shows the action.
-
-#### Tier C — App-wide banner (rare)
-
-Reserved for genuinely app-wide states. Under 1% of all alerts. When it happens, it sits at the very top of the content area, above any Tier A indicators.
-
-**Legitimate Tier C use cases:**
-- **Maintenance mode** — "Studio er i lesemodus i 30 minutter mens vi gjør oppgraderinger."
-- **Account suspended / paused** — "Studioet ditt er pauset. Ta kontakt for å reaktivere."
-- **Critical security event** — forced sign-out, compromised account.
-- **Read-only mode** during data migration.
-
-What's NOT Tier C: KYC, subscription expiring, payment failed, terms updated, billing issues. Those are all Tier A + B.
-
-**Rules:**
-- **Max one Tier C banner at a time.** If two app-wide states coexist, the more critical wins.
-- **Persistent until the state resolves.** No dismiss button.
-- **Same visual as Tier B banner** — but conceptually different (it appears everywhere because the state is app-wide).
-
-#### Mapping Studio's alerts to tiers
-
-| Alert | Tier(s) | Where it appears |
-|-------|---------|------------------|
-| KYC needed for Stripe | A + B | Dot on `Innstillinger` · Banner on `/innstillinger/betaling` |
-| Subscription expires in 3 days | A + B | Dot on `Innstillinger` · Banner on `/innstillinger/abonnement` |
-| Payment failed for one signup | (inline section) | Inline error on the affected signup row · Dot on `Påmeldinger` if unresolved |
-| Terms updated | one-time toast on next sign-in | No banner. Toast on first sign-in after update. |
-| Maintenance mode tonight | C | App-wide banner during the maintenance window |
-| Account suspended | C | App-wide banner; rest of app gates behind it |
-
-**Result:** the user opens Studio on a normal day and sees nothing screaming for attention. When something IS wrong, the sidebar dot is unmissable but calm. They navigate, see the context, fix the issue.
-
-#### Anti-patterns specific to alert placement
-
-- **Don't show the same banner on every page.** If the alert is fixable from one page, it's Tier A + B, not Tier C.
-- **Don't stack persistent banners.** Multiple Tier B banners on the same page is fine (rare); multiple Tier C banners is never fine.
-- **Don't use a plain dot when a count would be more informative.** "1" or "2" tells the user explicitly what's pending; a dot is vague. Studio uses count badges, not dots.
-- **Don't make the sidebar dot the only signal for genuinely blocking issues.** If the user tries an action that's blocked (e.g., booking a paid class without KYC), surface an inline error at THAT action point too — don't let them hit a silent wall.
-
----
-
-### 13.6.1 (legacy — banner alerts, all flavors)
-
-The full banner visual treatment is documented below — applicable across Tier B (page-scoped) and Tier C (app-wide). Two persistence modes, three semantic variants.
-
-```html
-<!-- Persistent: action required — inset bright accent stripe (between border and text) -->
-<div class="flex items-stretch gap-3 pl-4 pr-3 py-3
-            bg-surface border border-border rounded-md">
-  <span aria-hidden="true"
-        class="w-1 self-stretch bg-[#e5484d] rounded-full shrink-0"></span>
-  <p class="flex-1 self-center text-sm font-medium text-foreground">
-    Stripe trenger ny KYC-info før du kan ta imot betaling.
-  </p>
-  <button class="btn btn-primary btn-sm gap-1.5 self-center">
-    Fullfør
-    <svg class="size-3.5" viewBox="0 0 16 16">
-      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-</div>
-
-<!-- Dismissable: informational — same structure as action banners, blue-9 stripe -->
-<div class="flex items-stretch gap-3 pl-4 pr-3 py-3
-            bg-surface border border-border rounded-md">
-  <span aria-hidden="true"
-        class="w-1 self-stretch bg-[#0090ff] rounded-full shrink-0"></span>
-  <p class="flex-1 self-center text-sm text-foreground">
-    Vi har oppdatert vilkårene for bruk. <a href="..." class="underline">Les mer</a>.
-  </p>
-  <button aria-label="Lukk" class="size-5 self-center text-foreground-muted hover:text-foreground">×</button>
-</div>
-```
-
-**Five rules a banner must follow:**
-1. **One line of text, one weight.** A banner is a sentence, not a card. No bold-primary + muted-secondary hierarchy. If the message can't fit in one sentence, it's too long.
-2. **Inset bright accent stripe**, not a `border-left`. The stripe is rendered as a 4px-wide × 20px-tall `<span>` (matching body line-height) sitting INSIDE the regular border, with `align-self: center` and `rounded-full` ends. **Universal stripe rule for both banners and toasts:** stripe height matches one line of text, never `align-self: stretch`. A stretched stripe reads as oversized and container-bound; a one-line-tall stripe reads as a deliberate accent mark next to the message. Edge-stuck `border-left` is also wrong — it looks shrunken at the rounded corner.
-3. **Stripe color is bright (Radix step-9), not muted `*-fg`.** Use `#e5484d` (red-9) for danger and `#ffc53d` (amber-9) for warning. The `*-fg` tokens are tuned for body-text contrast — too muted to identify clearly at 4px width. Step-9 reads vividly as red/amber even at small sizes.
-4. **No leading icon.** The accent stripe is the variant signal.
-5. **Action button is a quiet ghost pill** (`btn-secondary btn-sm`) — same class as the toast action button. Single verb (`Fullfør`, `Forny`, `Bekreft`), no arrow icon. The accent stripe + bold message already carry urgency; a black primary button with arrow stacks three signals for the same job. **Universal alert-surface rule:** in banners AND toasts, the action button is always the quiet variant. The stripe carries visual weight, not the button.
-
-**Treatment matrix — three variants, same structure:**
-
-All three variants share the same anatomy: `bg-surface` (white) + `border-border` + inset 4px rounded stripe + foreground text. Variant identity comes from stripe color; priority comes from the CTA type.
-
-| Variant | Background | Accent stripe | Text color | Text weight | CTA |
-|---------|-----------|---------------|-----------|-------------|-----|
-| **Danger** (blocks critical) | `bg-surface` | inset 4px, `#e5484d` (Radix red-9), rounded-full | `text-foreground` | **500** | Ghost pill (`btn-secondary btn-sm`), single verb |
-| **Warning** (action recommended) | `bg-surface` | inset 4px, `#ffc53d` (Radix amber-9), rounded-full | `text-foreground` | **500** | Ghost pill (`btn-secondary btn-sm`), single verb |
-| **Info** (dismissable) | `bg-surface` | inset 4px, `#0090ff` (Radix blue-9), rounded-full | `text-foreground` | **500** | Dismiss × or inline link |
-
-**Why info is no longer on `bg-muted`:** earlier spec used grey bg + grey text for info banners, signaling "low priority" through visual muting. That made the banner hard to read (grey on grey) AND broke the system's own pattern (two variants had stripes, one didn't). Now: structure is consistent across all three — same surface, same border, same text weight (500). The "lower priority" of info is communicated through the **CTA** (dismiss × instead of action button), not by varying typography. Mixing weights across variants reads as inconsistency, not hierarchy.
-
-**Why this beats full-tint AND edge-stuck `border-left`:**
-- Full-tint banners stack as "demo of all states" — visually loud
-- `border-left: 3px solid var(--danger-fg)` looks shrunken at rounded corners and uses a too-muted color
-- The inset bright stripe is deliberate, vivid, and reads as a real banner accent — not as an edge artifact
-
-#### Persistence rule
-
-- **Persistent (no dismiss button)** when the banner conveys *action required* — payment failed, KYC pending, account suspended. Don't let users close their way out of fixing it.
-- **Dismissable (× button on the right)** when the banner is *informational* — terms updated, scheduled maintenance, new feature. User can close once they've read it.
-
-#### Placement rule
-
-- **Top of content area**, not top of window. Sidebar stays clean; banner sits above the main column.
-- **Max one persistent banner at a time.** Stacking multiple persistent banners is overwhelming. If two action-required things exist, prioritize and queue.
-- **Multiple dismissable banners is fine** but rare.
-
-The variants section above replaces an earlier full-tint treatment. Use the left-accent + neutral fill, not the full-tint backgrounds.
-
-### 13.7 Anti-patterns
+### 13.6 Anti-patterns
 
 The bans for this whole pattern, in one list:
 
@@ -1025,15 +834,11 @@ The bans for this whole pattern, in one list:
 - **No spinner-as-page** — full-page spinners block the user. Use a skeleton matching the layout.
 - **No infinite retry loops** in section error boundaries. Cap at 3 attempts with backoff.
 - **No "Are you sure?" generic dialogs** — see #12, undo first
-- **No banner stacking** — one persistent at a time
+- **No persistent system alerts.** Studio has no banner system, no sidebar attention dots, no notifications inbox. State system-level facts in plain prose on the page where the user would act.
 - **No "Go to homepage" as the only 404 action** when the user came from a deleted resource — use the smart-fallback pattern
 - **No skeleton + spinner together** on the same loading state. Pick one.
 - **No shimmer animation** — pulse only (matches Studio's calm aesthetic)
-- **No banner above the sidebar** — banner lives at the top of the content area, not the window
 - **No status-code eyebrow on error pages.** "404", "500", "Error 403" above the headline reads as developer-speak leaking into UI. The headline says what happened in plain language; the eyebrow adds nothing for the user.
-- **No primary (black) buttons or right-arrow icons in banner CTAs.** Stacks three signals (stripe + bold text + black button + arrow) for one job and reads as confrontational. Use a quiet ghost pill (`btn-secondary btn-sm`) with a single verb. The stripe carries the urgency, never the button. Universal across banners and toasts.
-- **No leading icon in banner.** The tinted background already signals status. Adding an icon (⚠, ℹ, ✕) stacks signal-on-signal and reads as decoration.
-- **No two-tier text hierarchy in banners.** A banner is one sentence, one weight. Bold primary + muted secondary turns a banner into a card. If the message needs that much structure, it shouldn't be a banner.
 
 ---
 
@@ -1232,9 +1037,9 @@ Follows pattern #13.3 — on-blur for filled, on-submit for empty, on-change aft
 
 ---
 
-## 15. Drawer — detail panel for clickable rows
+## 15. Drawer — quick-glance panel for clickable rows
 
-Studio's canonical "click row → see/edit details without leaving the page" pattern. Used everywhere a list row, card, or item needs deeper interaction. **Most "click → new page" navigations in the dashboard should be drawers instead.**
+Studio's canonical "click row → see what matters in 2 seconds, then either close it or go deeper on the full page" pattern. **The drawer is supplementary; the page is primary.** When the detail becomes the subject (you'd bookmark it, share it in Slack, sit with it for >30s), it's a page, not a drawer.
 
 Built on shadcn primitives:
 - **Desktop:** `<Sheet>` (Radix Dialog under the hood) — slides in from right
@@ -1245,16 +1050,30 @@ Same content, surface adapts to viewport.
 ### 15.1 When to use a drawer (and when not)
 
 **Use a drawer when:**
-- A list row needs detail or inline editing — signups, courses, payments, schedule items
-- A card needs a deeper view that doesn't deserve a full page
+- A list row needs a quick status check or one-action operation (publish, share, mark as paid, cancel)
 - The user benefits from keeping the list visible behind it (compare items, jump between rows)
-- The detail content fits comfortably in ~480px width
+- The content is supplementary — it annotates the list, it isn't the subject
+- The whole detail comfortably fits in ~480px width AND ≤2 sections
 
 **Don't use a drawer for:**
-- **Full-screen content** — long-form pages, complex multi-column layouts, dashboards. Use a real page.
-- **Critical confirmations** — "delete this account" needs a focused dialog (#12), not a drawer
-- **Multi-step wizards** that need full-screen attention. Use a wizard pattern (#4) — though a SHORT wizard (2-3 steps, simple fields) can live inside a drawer
-- **Notifications / toasts** — those are pattern #11
+- **Editable forms with more than 2-3 fields.** Editing is a page concern — the drawer holds an "Åpne X-side →" escape link to the page where editing happens
+- **Anything bookmarkable / shareable.** If the user might paste the URL in Slack or email, it must be a page. URLs of bookmarkable detail use `/resource/:id`; drawer state uses `?resource=:id` over the list URL
+- **Critical confirmations** — "delete this account" needs a focused dialog (§12), not a drawer
+- **Multi-step wizards** — Studio doesn't use wizards (§16); for "Create X" use a trimmed quick-create drawer (6–8 fields, no advanced options) that escapes to the page after success
+- **Full-screen content** — long-form pages, complex multi-column layouts
+
+### 15.1a Density ceiling — the hard limit
+
+A drawer that exceeds any of these is wrong by definition:
+
+| Property | Ceiling |
+|----------|---------|
+| Sections (h3 / divided blocks) | ≤2 |
+| Form fields | 0 in a *view* drawer; ≤8 in a quick-create drawer |
+| Footer actions | ≤3 (typically: one primary action + one escape link, or one escape link only) |
+| Scroll | Acceptable only for an unbounded list (participants preview, sessions list); never for a stacked form |
+
+If you need more than this, you've discovered a page, not a drawer. Add the escape link and move the content to `/resource/:id`.
 
 ### 15.2 Anatomy
 
@@ -1299,46 +1118,66 @@ Three close affordances. **All three must work** for accessibility and user expe
 |-----------|------|
 | **× button** in header (top right) | Always present. Visible, click-targetable, screen-reader-labeled (`aria-label="Lukk"`). |
 | **Escape key** | Always works. Closes the drawer regardless of focused field. |
-| **Click outside** (backdrop) | Default yes. Disable only if the drawer has unsaved changes (then prompt to confirm). |
+| **Click outside** (backdrop) | Default yes. **Silently blocked when the form is dirty** — `onPointerDownOutside={(e) => { if (isDirty) e.preventDefault() }}`. No modal, no toast, no chrome. |
 
-If the drawer has **unsaved form changes**, intercepting close events with a "Du har ulagrede endringer" dialog is appropriate — but only when there are actual unsaved changes, not as a default friction.
+**Silent backdrop block for unsaved input** (the preferred pattern; supersedes the older "confirm dialog" advice for drawers with form input):
 
-**Subtle backdrop overlay**: `bg-foreground/20` (slate-12 at 20% opacity) fades in behind the drawer. Signals focus without strong dimming. Click on the backdrop dismisses the drawer.
+When a drawer has form input the user has invested in, the backdrop tap is the accidental gesture worth intercepting — especially on tablets where the dimmed area outside a 480px sheet is most of the screen. Silently `preventDefault()` on the backdrop when the form is dirty. × and Esc remain free because both are deliberate gestures.
 
-### 15.5 Inline editing — Studio's default
+**Why silent over a confirm dialog:**
+- An AlertDialog ("Forkast endringene?") is the same chrome used for "Delete permanently?" — way too heavy for "you typed a title."
+- §12 doctrine: confirm dialog is the *second tier* of destructive UX (after toast+undo). Unsaved form input in a quick-create drawer doesn't qualify for the dialog tier.
+- Silence requires no chrome, no decision, no read — the safety just *is*. The user only notices when they try to ditch real progress; even then, × and Esc are escape hatches.
 
-The drawer body shows form fields in their **edit state from the start**. No separate "Rediger" button to enter edit mode. Save button at the bottom commits changes.
+```tsx
+<Sheet open={open} onOpenChange={onOpenChange}>
+  <SheetContent
+    onPointerDownOutside={(e) => { if (isDirty) e.preventDefault() }}
+    // Esc and × handled separately, both close freely.
+  >
+    {/* ... */}
+  </SheetContent>
+</Sheet>
+```
 
-**Why inline:**
-- Fewer clicks (open drawer → edit immediately)
-- Fewer modes to learn (no "view mode" vs "edit mode" mental model)
-- Matches modern app conventions (Linear, Notion, Cal.com all do inline)
+Reserve the AlertDialog "Forkast endringene?" pattern for the rare case where data loss is genuinely catastrophic (multi-section forms with 10+ filled fields, irreversible flows). For quick-create drawers (≤8 fields), silent backdrop block is enough.
 
-**Where it fails:** truly read-only data (transaction logs, audit history, locked records). For those, render the drawer body as plain typography without input chrome — but still no "Edit" toggle. If editing is allowed, fields are editable.
+**Subtle backdrop overlay**: `bg-foreground/20` (sand-12 at 20% opacity) fades in behind the drawer. Signals focus without strong dimming.
 
-For **destructive operations** (delete signup, refund payment), don't gate behind an edit-mode toggle either — surface them as explicit buttons (often in the footer or via a kebab menu) and confirm via dialog (#12).
+### 15.5 Read-only by default — editing lives on the page
 
-### 15.6 Footer actions
+The drawer body is **read-only quick-glance**. No form fields, no inputs, no save bar. The user sees the state (title, status, participants, sessions) and operates via a small set of quick actions (publish, share, unpublish via kebab). Anything that requires editing a form goes to the full page reached via the "Åpne X-side →" footer link.
 
-Sticky bottom footer with right-aligned actions. **Primary on the right, secondary on the left** — left-to-right reading flow.
+**The exception — quick-create drawers.** For "Create X" flows where the entity doesn't exist yet, a trimmed create drawer with the bare-minimum required fields is the right pattern (Notion page creation, Linear issue creation, Cal.com event creation). After creation, the user lands on the full page where they refine. The density ceiling still applies: ≤8 fields, one section, validation on submit, no advanced options.
+
+**Why not inline-edit in the drawer:**
+- Multiple modes inside one drawer (view → edit → pricing → create) is the bloat that turned CourseDrawer into a 1,600-line monolith. Modes are pages.
+- Form state + save bar inside a drawer competes with the page's own concerns and creates two visual save targets.
+- "I just want to look" and "I want to change something" are different intents — the drawer answers the first quickly; the page answers the second thoroughly.
+
+For **destructive operations** in a view drawer (unpublish, cancel a course), surface them in the kebab/`MoreHorizontal` menu in the action cluster — not in the footer. Confirm via dialog (§12) when undo isn't enough.
+
+### 15.6 Footer — one escape link, nothing else
+
+The footer contains exactly one thing: the **"Åpne X-side"** ghost link to the full page.
 
 ```html
-<div class="border-t border-border px-6 py-3 flex justify-end gap-2">
-  <button class="btn btn-secondary btn-sm">Avbryt</button>
-  <button class="btn btn-primary btn-sm">Lagre endringer</button>
+<div class="border-t border-border px-6 py-4 bg-background">
+  <button class="btn btn-ghost btn-sm -ml-2 text-foreground-muted hover:text-foreground">
+    Åpne kursside
+  </button>
 </div>
 ```
 
-**Patterns by drawer purpose:**
+**Rules:**
+- **Label:** `Åpne <ressurs>-side` (Norwegian; "Åpne kursside", "Åpne påmeldingsdetaljer"). Neutral — doesn't commit to view-vs-edit. No trailing arrow icon — text alone is enough (see SKILL.md § 3 anti-patterns: no icons in text-bearing buttons).
+- **Variant:** ghost link, `size="sm"`, left-aligned. Not a primary button — the escape is *secondary*; the drawer's real value is the quick view above it.
+- **Position:** bottom-left of the footer. Right-of-footer is reserved for nothing — leave it blank.
+- **Behavior:** clicking closes the drawer and navigates to `/resource/:id`. The page mounts in place of the drawer (Notion-style); no overlay over the drawer.
 
-| Drawer purpose | Footer actions |
-|---------------|----------------|
-| Edit existing record | `[Avbryt] [Lagre endringer]` |
-| Create new record (rare in drawers — usually a wizard) | `[Avbryt] [Opprett]` |
-| Pure view (audit log, history) | No footer needed; close via × is enough |
-| Detail view with secondary actions (signup with refund/cancel) | Primary footer + kebab menu in header for destructive |
+**Quick-create drawers are the only exception** — they have a sticky footer with just the primary action right-aligned: `[Opprett]`. **Drop the `[Avbryt]` ghost button** — the drawer already has three close affordances (×, Esc, backdrop tap when clean) per §15.4, so a fourth one in the footer is visual noise that fights the primary action for attention. Linear / Notion / Stripe checkout all drop it. On successful create, navigate to the new entity's page.
 
-**Sticky positioning:** the footer is `position: sticky; bottom: 0` with `border-t border-border bg-surface`. Body content scrolls under it.
+**Sticky positioning:** the footer is `position: sticky; bottom: 0` with `border-t border-border bg-background`. Body content scrolls under it.
 
 ### 15.7 Mobile considerations
 
@@ -1362,14 +1201,15 @@ const Component = isMobile ? Drawer : Sheet;
 
 ### 15.8 Anti-patterns
 
-- **No multi-drawer stacking.** One drawer at a time. Opening a new drawer replaces the current one. Stacking confuses users about navigation history.
-- **No "Edit" / "View" toggle.** Studio drawers are inline-edit. The toggle pattern is power-user friction.
+- **No drawer-from-drawer.** Opening a second `<Sheet>` from inside a `<Sheet>` is forbidden. Confirmation modals (`AlertDialog`) layered above a drawer are fine — they're a different stacking concern. If a drawer needs to navigate to a different entity's details, close the drawer and open the new one; never stack.
+- **No multi-mode drawers.** A drawer that switches between "view / edit / pricing / create" inside the same panel is the failure mode this whole pattern exists to prevent. Each mode is a different page or a different drawer.
+- **No form-stuffed drawers.** Drawers with more than 8 fields, multiple sections, or a save bar competing with the page have failed the density ceiling (§15.1a). Move the form to a page and add the escape link.
+- **No "Edit details" + "Pricing" + "Settings" buttons in the footer.** That's three escape hatches pretending to be a router. Use one neutral "Åpne <ressurs>-side →" link; the page itself handles section navigation.
 - **No drawers wider than 560px on desktop.** If your detail view needs more space, it's a page, not a drawer.
-- **No drawer-as-modal-confirmation.** "Are you sure you want to delete?" is a dialog (#12), not a drawer.
+- **No drawer-as-modal-confirmation.** "Are you sure you want to delete?" is a dialog (§12), not a drawer.
 - **No swipe-only dismiss on mobile.** Always include the × button — swipe alone fails for users who don't know the gesture.
 - **No persistent (non-modal) drawer.** Studio drawers are modal — they have a backdrop and capture focus. Persistent panels (Linear-style "always visible right rail") are a different pattern, not in scope here.
-- **No nested forms in a drawer body.** If editing requires opening another form (e.g., "edit signup → edit student profile"), it's a sign the data model is too coupled. Rethink scope.
-- **No drawer that wraps a wizard with more than 3 steps.** Long wizards need full-screen attention.
+- **No drawer that wraps a wizard.** Studio doesn't use wizards (§16). For "Create X" use a trimmed quick-create drawer with bare-minimum fields, then escape to the page.
 
 ---
 
@@ -1512,7 +1352,7 @@ The completed task title is **dimmed** (`text-foreground-muted`) — visually co
 
 **Where the checklist lives:**
 - A dedicated route (e.g., `/kom-i-gang` or `/sett-opp`)
-- Sidebar nav item with optional count badge (Tier A pattern, #13.6) showing pending count: `[3]` next to "Kom i gang" → "Kom i gang (3)"
+- Sidebar nav item (no count badge — Studio doesn't carry attention indicators on nav items)
 - Auto-redirect new users here on first sign-in
 - Hide the nav item once all tasks complete (or move it to "Hjelp")
 
@@ -1536,47 +1376,50 @@ Stripe Connect, Dintero, and similar vendors ship their own KYC / onboarding flo
 
 Where content lives on the page and how the layout adapts from mobile to ultrawide. The single most important layout rule:
 
-> **Sidebar present → content left-aligned with max-width. No sidebar (public) → content centered with max-width.** Never center content next to a sidebar.
+> **Every page — dashboard and public — uses `mx-auto max-w-6xl`.** Content centers within the available viewport (post-sidebar on dashboard, full viewport on public). Pick one width and one alignment, apply consistently.
 
 ### 17.1 The decision tree
 
 ```
-Does this page have a sidebar?
+Every page (dashboard or public)
 │
-├─ YES (dashboard, admin pages)
-│  └─ Layout: max-width + LEFT-aligned (no `mx-auto`)
-│     Content flows from the right edge of the sidebar
-│     Empty space on the RIGHT at ultrawide is correct
-│
-└─ NO (public booking, landing, login)
-   └─ Layout: max-width + CENTERED (`mx-auto`)
-      Symmetric horizontal margins
-      Empty space split evenly on both sides at ultrawide
+└─ Layout: `mx-auto max-w-6xl` (centered, 1152px outer / ~1088px content after lg:px-8)
+   On dashboard: sidebar pinned left, content centered in the post-sidebar area.
+   On public: content centered in the full viewport.
+   Empty space at ultrawide splits across both sides — symmetric, balanced.
 ```
 
-The asymmetry on the dashboard isn't a bug. NN/g eye-tracking research: 80% of fixations occur on the left half of pages. Centering content next to a left-anchored sidebar fights that natural reading pattern. Every major SaaS dashboard (Linear, Notion, Stripe, Vercel, Cal.com, GitHub) does it this way.
+This is a Studio-specific choice. Both centered and left-aligned dashboards ship in well-regarded SaaS apps — Stripe centers, Linear / Vercel / Cal.com left-align. Studio chooses centered because:
+
+1. **The audience isn't power-user / data-heavy.** A wellness teacher doesn't scan dashboards 50× a session; they open it, do one thing, leave. The "left anchor for fast scanning" argument applies to productivity tools, not calm operator UIs.
+2. **Ultrawide feel.** With a 280px sidebar pinned left + 1024px content also pinned left, a 1920px+ display reads as lopsided (two left-anchored columns + one big empty right). Centering halves the void into balanced margins on both sides.
+3. **Consistency cost.** When some pages are `max-w-4xl mx-auto` and some are `max-w-6xl` left-aligned, content jumps between pages — that inconsistency is a bigger UX problem than the alignment choice itself. Studio collapses both decisions into one rule: `mx-auto max-w-6xl` everywhere.
 
 ### 17.2 Max-widths by surface — four values, each with a clear job
 
 | Surface | Token | Alignment | When |
 |---------|-------|-----------|------|
-| **Dashboard pages** | `max-w-5xl` (1024px) | Left (no `mx-auto`) | Every admin page |
-| **Public content** | `mx-auto max-w-5xl` (1024px) | Centered | Landing, booking listing — public non-prose, non-form. |
+| **Dashboard pages** | `mx-auto max-w-6xl` (1024px) | Centered | Every admin page |
+| **Public content** | `mx-auto max-w-6xl` (1024px) | Centered | Landing, booking listing — public non-prose, non-form. |
 | **Course detail body** | `mx-auto max-w-[1100px]` (1100px) | Centered | Course detail page body. Hero is full-bleed; body is a 2-col grid (main + 360px sticky rail). See §18.2. |
 | **Long-form prose** | `mx-auto max-w-3xl` (768px) | Centered | Legal, privacy, terms, FAQ |
 | **Centered forms** | `mx-auto max-w-md` (~448px) | Centered | Login, signup, password reset |
 
 **The rule, simplified:**
-1. Dashboard? → `max-w-5xl` (left)
-2. Public content? → `mx-auto max-w-5xl`
-3. Heavy reading? → `mx-auto max-w-3xl`
-4. Compact form? → `mx-auto max-w-md`
+1. Dashboard or public content? → `mx-auto max-w-6xl`
+2. Heavy reading? → `mx-auto max-w-3xl`
+3. Compact form? → `mx-auto max-w-md`
 
-If you can't tell which one a page is, it's probably (1) or (2) — those cover ~90% of pages.
+If you can't tell which one a page is, it's probably (1) — that covers ~90% of pages. Everything is centered; only the width changes.
 
-**Reading-width constraint:** body text within all of these respects the 50-75 character line length (~66 ch sweet spot, per Baymard / NN/g). This isn't just convention — **WCAG 2.1 SC 1.4.8** specifies "no more than 80 characters" for AA-conformant prose. Long-form prose narrows to 3xl for that reason. The 5xl-tier surfaces mix cards / forms / lists — body text within them is bounded by component widths, not the page itself.
+**Reading-width constraint:** body text within all of these respects the 50-75 character line length (~66 ch sweet spot, per Baymard / NN/g). This isn't just convention — **WCAG 2.1 SC 1.4.8** specifies "no more than 80 characters" for AA-conformant prose. Long-form prose narrows to 3xl for that reason. The 4xl-tier surfaces mix cards / forms / lists — body text within them is bounded by component widths, not the page itself.
 
-**Note on the 5xl choice:** industry consensus for dashboard max-widths trends 1140-1280px (Carbon, Material, several SaaS dashboards). Studio uses `max-w-5xl` (1024px), narrower. This is deliberate: a non-power-user audience benefits from a less dense canvas — readability over density. Don't widen the dashboard cap without a clear reason; the calm tone depends on it.
+**Note on the 6xl choice:** industry consensus for dashboard max-widths trends 1140-1280px (Carbon, Material, several SaaS dashboards). Studio uses `max-w-6xl` (1152px outer), squarely in the lower range. **The math that matters:** with `lg:px-8` internal padding (32px each side), effective content width on desktop = 1152 - 64 = **~1088px**. We tested narrower options:
+
+- `max-w-4xl` (896 outer / 832 effective) — read as a tablet view; unoptimized for desktop
+- `max-w-5xl` (1024 outer / 960 effective) — too narrow once padding eats the budget; gutters were barely visible at 1366px–1440px viewports
+
+`max-w-6xl` is the floor for "feels designed for desktop" while staying within Studio's calm-canvas philosophy. Don't widen further (`max-w-7xl` = 1280) without a clear reason — that crosses into power-user-dashboard density. Don't narrow either; we already proved 5xl is too tight after padding.
 
 ### 17.3 Container padding — three tiers
 
@@ -1589,18 +1432,13 @@ Desktop (≥1024px)      →   px-8   (32px)
 Standard responsive container:
 
 ```html
-<!-- Dashboard page (left-aligned) -->
-<main class="max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
-  <!-- content -->
-</main>
-
-<!-- Public page (centered) -->
-<main class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
+<!-- Every page — dashboard and public -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
   <!-- content -->
 </main>
 ```
 
-The `mx-auto` is the only difference. Easy to remember.
+One container shape for the whole app. The only thing that varies between dashboard and public is the page chrome around it (sidebar / no sidebar) — the inner content shell is always `mx-auto max-w-6xl`.
 
 ### 17.4 Breakpoints
 
@@ -1618,21 +1456,20 @@ Tailwind defaults, used with intent. Studio doesn't override.
 
 ### 17.5 Ultrawide behavior (4K, 5K, 6K)
 
-Three options, only the right one:
+Two options, only the right one:
 
 | Strategy | What happens at 5K | Use for Studio |
 |----------|--------------------|---------------|
 | **Stretch content** to fill | Cards/tables expand, readability dies | ❌ Never |
-| **Center content** with `mx-auto` | Empty space splits both sides | ✅ Public surfaces |
-| **Left-align content** with sidebar | Empty space on the right | ✅ Dashboard surfaces |
+| **Center content** with `mx-auto` | Empty space splits both sides | ✅ Always |
 
 Concrete: a dashboard at 5120px (5K) shows:
 - Sidebar (280px) on the left
-- Content (max 1024px via `max-w-5xl`) immediately right of sidebar with `lg:px-8` padding
-- Total used: ~1336px
-- ~3784px of empty space on the right
+- Post-sidebar area: 4840px wide
+- Content (max 1152px outer / ~1088px after `lg:px-8`, via `max-w-6xl`) centered within the post-sidebar area
+- ~1908px of empty space on each side of the content
 
-That's correct. The empty right side feels strange initially but it follows where users actually look. Don't try to fill it.
+That's correct. Don't try to fill it. The content column reads at a comfortable line-length wherever it sits, and balanced margins on both sides feel calmer than a content column hard-anchored to the sidebar.
 
 ### 17.6 Mobile rules at the page level
 
@@ -1664,7 +1501,7 @@ The research basis: heading top-spacing should be ~2× paragraph spacing — but
 
 | Property | Value |
 |---|---|
-| **Width (desktop)** | `280px` — within research range 220-300px. Wide enough for label + leading icon comfortably; narrow enough to leave room for `max-w-5xl` content beside it. |
+| **Width (desktop)** | `256px` (16rem) — within research range 220-300px. Wide enough for label + leading icon comfortably; narrow enough to leave room for `max-w-6xl` content centered beside it. |
 | **Top-level item count** | **5-7 items max** — research-backed cognitive cap. Beyond 7, scanning collapses; users either ignore items or scroll past. If you have more nav items, group into sections with sub-headings, not into a 12-item flat list. |
 | **Collapsed state (optional)** | 64px-wide rail showing icons only with tooltips on hover. **Studio's audience doesn't need this** — yoga teachers don't want the chrome customization burden. Skip the collapse toggle for v1. |
 | **Border separator** | 1px on the right against `bg-background` — same hairline used everywhere else in the system. |
@@ -1714,7 +1551,7 @@ Pages are typically composed of 2–4 sections (header + content). Sections are 
 
 ### 17.9 Anti-patterns
 
-- **Don't `mx-auto` dashboard pages.** Sidebar provides the left anchor; content should be left-aligned, not centered. Centering creates asymmetric whitespace that fights the layout.
+- **Don't mix max-widths across dashboard pages.** Every page shell is `mx-auto max-w-6xl`. Mixing `max-w-4xl` / `max-w-6xl` / `max-w-6xl` across pages causes content to jump horizontally between routes, which reads as broken layout. Narrower inner blocks (a centered form at `max-w-md`, long-form prose at `max-w-3xl`) are fine — but the page shell stays 5xl.
 - **Don't stretch content past max-width to fill ultrawide screens.** Cards become too wide, tables become hard to scan, line-lengths exceed the readable range. Embrace the empty space.
 - **Don't use `max-w-full` or no max-width on dashboard pages** unless the page is genuinely full-bleed (e.g., a calendar view that benefits from horizontal space). Default to a sensible cap.
 - **Don't put a sidebar on public/booking pages.** Public surfaces are sidebar-less — they're for users who haven't yet entered the app. Adding a sidebar there muddies the public/private surface distinction and puts navigation chrome in front of users who don't need it yet.
@@ -1727,7 +1564,7 @@ Pages are typically composed of 2–4 sections (header + content). Sections are 
 
 The first page a customer lands on after clicking a course in a studio's listing. It carries the entire booking conversion. Layout is canonical — don't redesign per studio.
 
-**The 2-col-with-sticky-rail layout is the right answer here, but only with the calmer chrome.** The page felt SaaS-template before because of the *content* (pop-tinted hero, mint avatar, accordion dates, separate cards), not because of the 2-col structure itself. With those issues fixed (photo hero, monochrome avatar, dates inline, no decorative tints), the rail earns its place: booking is the page's purpose, and a sticky panel keeps that action visible. Hiding it below 5+ scrolls of content makes the user dig.
+**The 2-col-with-sticky-rail layout is the right answer here, but only with the calmer chrome.** The page felt SaaS-template before because of the *content* (decorative tints, accordion dates, separate cards), not because of the 2-col structure itself. With those issues fixed (photo hero, monochrome avatar, dates inline, no decorative tints), the rail earns its place: booking is the page's purpose, and a sticky panel keeps that action visible. Hiding it below 5+ scrolls of content makes the user dig.
 
 ### 18.1 Anatomy
 
@@ -1967,11 +1804,11 @@ The BookingPanel sits in the right rail of the 2-col grid, **sticky** with `top-
 - **Contact fields stack** inside the 360px rail (not 2-col like the inline variant) — width doesn't allow side-by-side cleanly.
 - **Cancellation policy preview** is the small line under the CTA — `Avbestill innen {{ window }} for full refusjon`. Window is per-studio configurable; same source of truth as §23 cancel dialog and §19 confirmation page.
 
-**Why a rail (not inline)**, despite the calm aesthetic: booking IS the page's purpose. Hiding it below 5+ scrolls of description / dates / location / praktisk forces the customer to dig. The 2-col with rail keeps the action visible from the start — and with all the *other* chrome calmed (no pop tints, no SaaS-template hero, no accordion dates), the rail itself doesn't make the page feel template-y. The chrome was the problem, not the structure.
+**Why a rail (not inline)**, despite the calm aesthetic: booking IS the page's purpose. Hiding it below 5+ scrolls of description / dates / location / praktisk forces the customer to dig. The 2-col with rail keeps the action visible from the start — and with all the *other* chrome calmed (monochrome surfaces, no SaaS-template hero, no accordion dates), the rail itself doesn't make the page feel template-y. The chrome was the problem, not the structure.
 
 ### 18.11 Cross-sell shelf
 
-Bordered cards, no pop tints (see Course detail anti-patterns). Suggestion-tier surface, not protagonist.
+Bordered cards. Suggestion-tier surface, not protagonist.
 
 ### 18.12 Mobile
 
@@ -2016,7 +1853,7 @@ Plus **MobilePriceBar** fixed at the bottom of the viewport — persistent CTA b
 - ❌ **Tabs inside the body** (Description / Practical / Dates as tabs). Customers want the whole page in one read. Stack everything.
 - ❌ **Skeleton flash on hero image load.** Use a blur-up placeholder (Next/Image `placeholder="blur"`).
 - ❌ **CTA inside the hero visual.** The BookingPanel rail is the action; hero is identification. No double CTA.
-- ❌ **Pop tints used as decoration.** Reserved for course cards on the listing surface and timeplan type-coding (§22) — not for the hero band, info cards, or instructor avatar.
+- ❌ **Pop tints used as decoration.** Studio has no chromatic accent palette — every surface is monochrome sand with status colors as the only chromatic exception.
 - ❌ **Cross-sell cards in pop colors on this page.** They're suggestions, not protagonists. Bordered/white only.
 - ❌ **Scarcity / FOMO messaging.** "Only 2 spots left!" / "Booked 15 times in last 6 hours." Counter to the calm tone.
 - ❌ **Chrome change when the sticky rail engages.** No shadow, no border darken, no scale on scroll. The rail is just always there — visual changes break the calm presence.
@@ -2455,7 +2292,7 @@ All error messages: imperative past tense or stating the consequence + next step
 
 ## 22. Timeplan — schedule view as a day-grouped card list (no calendar grid)
 
-The teacher's view of upcoming classes. **Studio rejects the calendar grid view** — it's a power-user metaphor that chokes on multi-event days, fails on mobile below 360px, and overwhelms an audience running 8-15 classes a week. Instead, classes show up as **a chronological list of cards grouped by day**, with type-coded pop accents so the eye can scan format at a glance.
+The teacher's view of upcoming classes. **Studio rejects the calendar grid view** — it's a power-user metaphor that chokes on multi-event days, fails on mobile below 360px, and overwhelms an audience running 8-15 classes a week. Instead, classes show up as **a chronological list of monochrome bordered cards grouped by day**.
 
 ### 22.1 Why list, not calendar (the research)
 
@@ -2471,40 +2308,34 @@ The list view also adapts perfectly to screen readers (single chronological colu
 
 ```
 I DAG, 12. mai
-  [sky pop card] Online Vinyasa Flow
-                 kl. 18:00 — 19:00 · 8 / 15 påmeldt
-                 Online
+  [bordered card] Online Vinyasa Flow
+                  kl. 18:00 — 19:00 · 8 / 15 påmeldt
+                  Online
 
 I MORGEN, 13. mai
-  [mint pop card] Drop-in Hatha
+  [bordered card] Drop-in Hatha
                   kl. 09:00 — 10:00 · 12 / 14 påmeldt
                   Sal 1 · Engangstime
 
-  [iris pop card] Vinyasa kursrekke (uke 3 / 8)
+  [bordered card] Vinyasa kursrekke (uke 3 / 8)
                   kl. 18:00 — 19:30 · 14 / 14 påmeldt · Fullt
                   Sal 2 · Kursrekke
 
 ONSDAG, 14. mai
-  [iris pop card] Vinyasa kursrekke (uke 3 / 8)
+  [bordered card] Vinyasa kursrekke (uke 3 / 8)
                   kl. 18:00 — 19:30 · 12 / 14 påmeldt
                   Sal 2 · Kursrekke
 ```
 
-**Day groups** use the same eyebrow-style label as the notifications inbox (`text-xs font-medium text-foreground-muted uppercase tracking-wide`). Today and tomorrow get named labels (`I DAG`, `I MORGEN`); subsequent days get the weekday + date (`ONSDAG, 14. mai`). Past days collapse into a `TIDLIGERE` group at the bottom (or a separate `/historikk` route if there's a lot of history).
+**Day groups** use a small eyebrow-style label (`text-xs font-medium text-foreground-muted uppercase tracking-wide`). Today and tomorrow get named labels (`I DAG`, `I MORGEN`); subsequent days get the weekday + date (`ONSDAG, 14. mai`). Past days collapse into a `TIDLIGERE` group at the bottom (or a separate `/historikk` route if there's a lot of history).
 
-**Class card** uses the established course-card pop pattern (§ Course cards in components.md) — `bg-accent-{color}-subtle` body + `text-accent-{color}-fg` for the type-label accent. **The card content stays calm** — pop color is the surface tint, copy stays in `text-foreground` for legibility.
+**Class card** is a bordered sand surface (`bg-surface border border-border rounded-lg`), hover lifts to `bg-muted`. Copy in `text-foreground` for the title, `text-foreground-muted` for the meta line. **No chromatic fills** — Studio is monochrome, so type/delivery is communicated by the text label only.
 
-### 22.3 Type colors — semantic mapping
+### 22.3 Type — text label, no color coding
 
-Studio's three pop accents map to class types. The mapping is fixed, not chosen per studio — type-coding only works if it's consistent across the system.
+Studio is monochrome. Class type (engangstime / kursrekke / online) is encoded in the **text label** of the meta line below time/capacity — `Sal 1 · Engangstime`, `Online`, `Sal 2 · Kursrekke`. No colored fills, no tinted backgrounds.
 
-| Type | Pop accent | Rationale |
-|---|---|---|
-| **Engangstime** (drop-in / one-time) | **mint** (`#ddf9f2` / `#027864`) | Fresh, singular event — visually communicates "this is happening once." |
-| **Kursrekke** (multi-date / weekly series) | **iris** (`#f0f1fe` / `#5753c6`) | Iris is the most substantial of the three pops; matches the commitment of a series. |
-| **Online** | **sky** (`#e1f6fd` / `#00749e`) | Cloud / digital association — already standard across SaaS. |
-
-**WCAG 1.4.1 compliance:** color is *not* the only signal. **Every card carries the type label as text** (`Engangstime` / `Kursrekke` / `Online`) in the meta line, so the information is fully available to colorblind users and screen readers. The pop color is an *accent that aids scanning*, never the primary identifier. Verify by toggling the card to greyscale: meaning must survive.
+This satisfies WCAG 1.4.1 by default (color is never the only signal — it's never the signal at all). Verify by toggling to greyscale: nothing changes, because there was no color carrying meaning to begin with.
 
 ### 22.4 Card content per row
 
@@ -2514,7 +2345,7 @@ Studio's three pop accents map to class types. The mapping is fixed, not chosen 
 - **Meta line** below (`text-xs text-foreground-muted`) — location + type label. Format: `Sal 1 · Engangstime`. The type label here is what carries the WCAG-compliant meaning.
 - **Series progress** for kursrekke (inline in title or as a chip): `(uke 3 / 8)`. Tells the teacher how far into the series this class sits without doing math.
 
-**No drop shadow on cards.** Borderless pop tint is the visual differentiator — a shadow on top of pop tint reads as "marketing card" rather than "schedule item."
+**No drop shadow on cards.** The border carries grouping; a shadow on a bordered card reads as "marketing card" rather than "schedule item."
 
 ### 22.5 Today emphasis & progressive density
 
@@ -2524,7 +2355,7 @@ Studio's three pop accents map to class types. The mapping is fixed, not chosen 
 
 ### 22.6 Layout & navigation
 
-- **Page width:** `max-w-3xl` (~768px) inside the dashboard's `max-w-5xl` content cap. The schedule is text-list density — it doesn't benefit from extra horizontal real estate.
+- **Page width:** `max-w-3xl` (~768px) inside the dashboard's `max-w-6xl` content cap. The schedule is text-list density — it doesn't benefit from extra horizontal real estate.
 - **Default view:** "this week" — Monday through Sunday of the current week, with "today" expanded. Pagination via `Forrige uke` / `Neste uke` buttons in the page header (don't auto-load infinity scroll — finite, week-bounded scope is calmer).
 - **Filter chips** above the list (`Alle · Engangstime · Kursrekke · Online`) let the teacher narrow by type. Use the segmented control pattern (§ components.md) — natural-width, not stretched.
 - **Empty state per day** is silent — days with no classes don't render at all (don't show "no classes" placeholders). Empty *week* shows the standard empty state with `Lag et kurs` CTA.
@@ -2540,10 +2371,9 @@ Same list, narrower. Cards full-width inside `px-4` (16px) page padding. Day lab
 ### 22.9 Anti-patterns
 
 - ❌ **Calendar grid view** as the primary schedule surface for teachers. Power-user metaphor, fails on mobile, overwhelms multi-event days.
-- ❌ **Color without text label.** WCAG 1.4.1 violation — colorblind users get nothing from a sky-tinted card if the word `Online` isn't on it.
-- ❌ **Per-studio type colors** — the mapping is system-wide. A studio that decides "yellow is online" breaks consistency across the app.
-- ❌ **Drop shadows on schedule cards.** Pop tint already differentiates them from canvas; shadow turns it loud.
-- ❌ **Showing all-day events as full-width banners across the day.** Studio doesn't have all-day events. Even a workshop has a start time.
+- ❌ **Color-coding class type.** Studio is monochrome — type is conveyed by the text label only, not by a tinted card or a colored dot.
+- ❌ **Drop shadows on schedule cards.** The border differentiates from canvas; shadow turns it loud.
+- ❌ **Showing all-day events as full-width strips across the day.** Studio doesn't have all-day events. Even a workshop has a start time.
 - ❌ **Past classes mixed with upcoming in the same flow** without visual demarcation. Collapse them into a separate grouped row.
 
 ---
@@ -2593,7 +2423,7 @@ Page layout: centered single column at `max-w-3xl mx-auto px-6 py-12`. Public su
 ```
 
 **Booking card:**
-- Border + rounded card (no pop tint here — pop tints are reserved for the *type-coding* on the teacher's timeplan, §22). Customer-side bookings are personal, not categorical.
+- Border + rounded card. Monochrome sand surface — Studio has no chromatic accent palette.
 - Title: `text-base font-medium`.
 - Meta line 1 (date + time): `text-sm text-foreground tabular-nums`.
 - Meta line 2 (location): `text-sm text-foreground-muted`.
@@ -2683,7 +2513,7 @@ A short single-page form. Sections:
 
 1. **Identitet** — name, email. Email is read-only on this screen (changing it = security event, separate flow).
 2. **Sikkerhet** — `Sett passord` button (if magic-link only) OR `Bytt passord` (if password is set). Plus passkey enrollment (per §21.5).
-3. **Varsler** — notification preferences (per § notifications inbox preferences). 3 preset modes + per-channel.
+3. **Varsler** — notification preferences (email/SMS opt-ins for booking confirmations and reminders). Simple per-channel toggles.
 4. **Logg ut** — secondary button at the bottom.
 5. **Slett konto** — small destructive link at the very bottom, with proper confirm flow (type-to-confirm per §components.md). Mandatory under GDPR.
 

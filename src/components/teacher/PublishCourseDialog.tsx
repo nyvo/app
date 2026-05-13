@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from '@/lib/icons';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +47,6 @@ export function PublishCourseDialog({
           </Button>
           <Button size="sm" onClick={handleGoToPayments}>
             Sett opp betalinger
-            <ArrowRight className="size-3.5" />
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
-import { CheckCircle2 } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Alert } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/AuthContext'
@@ -77,12 +76,8 @@ export const ForgotPasswordView = () => {
           </p>
         }
       >
-        <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-          <CheckCircle2 className="size-8 text-success" />
-        </div>
-
         <div className="text-center mb-8 space-y-2 w-full">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Sjekk e-posten din
           </h1>
           <p className="text-sm text-foreground-muted">
@@ -93,9 +88,7 @@ export const ForgotPasswordView = () => {
 
         <div className="w-full space-y-4">
           <Alert variant="neutral" size="sm">
-            <p className="text-xs text-foreground-muted">
-              {AUTH_HINTS.checkSpam}
-            </p>
+            {AUTH_HINTS.checkSpam}
           </Alert>
 
           <Button
@@ -126,7 +119,7 @@ export const ForgotPasswordView = () => {
         </p>
       }
     >
-      <form className="w-full space-y-5" onSubmit={handleSubmit}>
+      <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <AuthFormField
           id="email"
           label="E-post"
@@ -141,7 +134,7 @@ export const ForgotPasswordView = () => {
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-danger">{errors.general}</p>
+            {errors.general}
           </Alert>
         )}
 

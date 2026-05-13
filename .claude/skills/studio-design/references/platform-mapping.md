@@ -13,13 +13,13 @@ Paste this into your global CSS (replaces existing `:root` neutrals if any).
   /* ── Color: neutral ── */
   --background:           #ffffff;   /* page canvas */
   --surface:              #ffffff;   /* cards (when used) — same value, different role */
-  --muted:                #f0f0f3;   /* slate-3 — hover fill */
-  --active:               #e8e8ec;   /* slate-4 — selected fill */
-  --border:               #d9d9e0;   /* slate-6 — borders, dividers */
-  --foreground-disabled:  #b9bbc6;   /* slate-8 */
-  --foreground-muted:     #60646c;   /* slate-11 */
-  --foreground:           #1c2024;   /* slate-12 */
-  --ring:                 #1c2024;   /* slate-12 */
+  --muted:                #f0f0f3;   /* sand-3 — hover fill */
+  --active:               #e8e8ec;   /* sand-4 — selected fill */
+  --border:               #d9d9e0;   /* sand-6 — borders, dividers */
+  --foreground-disabled:  #b9bbc6;   /* sand-8 */
+  --foreground-muted:     #60646c;   /* sand-11 */
+  --foreground:           #1c2024;   /* sand-12 */
+  --ring:                 #1c2024;   /* sand-12 */
 
   /* ── Color: status ── */
   --success-subtle:  #e6f7ed;   /* jade-3 */
@@ -28,14 +28,6 @@ Paste this into your global CSS (replaces existing `:root` neutrals if any).
   --warning-fg:      #ab6400;   /* amber-11 */
   --danger-subtle:   #feebec;   /* red-3 */
   --danger-fg:       #ce2c31;   /* red-11 */
-
-  /* ── Color: pop accents (course cards) ── */
-  --accent-sky-subtle:    #e1f6fd;
-  --accent-sky-fg:        #00749e;
-  --accent-mint-subtle:   #ddf9f2;
-  --accent-mint-fg:       #027864;
-  --accent-iris-subtle:   #f0f1fe;
-  --accent-iris-fg:       #5753c6;
 
   /* ── Typography ── */
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -128,13 +120,6 @@ Paste into `src/index.css` using `@theme`:
   --color-danger-subtle: #feebec;
   --color-danger-fg: #ce2c31;
 
-  --color-accent-sky-subtle: #e1f6fd;
-  --color-accent-sky-fg: #00749e;
-  --color-accent-mint-subtle: #ddf9f2;
-  --color-accent-mint-fg: #027864;
-  --color-accent-iris-subtle: #f0f1fe;
-  --color-accent-iris-fg: #5753c6;
-
   /* ── Font ── */
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
@@ -183,14 +168,6 @@ extension Color {
     static let dangerSubtle  = Color(hex: 0xFEEBEC)
     static let dangerFg      = Color(hex: 0xCE2C31)
 
-    // Pop
-    static let accentSkySubtle  = Color(hex: 0xE1F6FD)
-    static let accentSkyFg      = Color(hex: 0x00749E)
-    static let accentMintSubtle = Color(hex: 0xDDF9F2)
-    static let accentMintFg     = Color(hex: 0x027864)
-    static let accentIrisSubtle = Color(hex: 0xF0F1FE)
-    static let accentIrisFg     = Color(hex: 0x5753C6)
-
     init(hex: UInt) {
         self.init(
             .sRGB,
@@ -221,13 +198,13 @@ If your project currently uses the radix-vega shadcn preset, here's the diff:
 |-----------|-----------|-------|
 | `--background` | unchanged role, value `#ffffff` | pure white page canvas |
 | `--card` | `--surface` (unchanged white) | renamed for clarity; same hex as background, different role |
-| `--primary` | `--foreground` | primary button is just slate-12 |
-| `--accent` | (removed) | pop tints replace generic accent |
+| `--primary` | `--foreground` | primary button is just sand-12 |
+| `--accent` | (removed) | no chromatic accent — Studio is monochrome sand + status colors only |
 | `--ring` | unchanged role, value `--foreground` | now monochrome |
 | `--font-sans` | unchanged role, value `Geist, ...` | swap from radix-vega family to Geist |
 | `--radius` | split: buttons `rounded-full` / cards `rounded-lg` 8px | shape diverges by component |
 | chart-2 | (removed) | no chromatic accent for buttons or links |
-| wellness pastels (rose / sage / lavender / sand / sky) | replaced by `--accent-sky-*`, `--accent-mint-*`, `--accent-iris-*` | three cool tints replace five warm/cool mix |
+| wellness pastels (rose / sage / lavender / sand / sky) | (removed) | Studio is strictly monochrome — only sand neutrals + the three status colors (success / warning / danger) |
 | `--text-xxs` (11px) | (removed) | scale stops at 12px |
 | `font-mono` token | (removed) | one family — Geist |
 | Card-default architecture | Canvas-default architecture | Cards become deliberate, used for KPI tiles, modals, course cards, callouts. Most sections live directly on the white canvas. |

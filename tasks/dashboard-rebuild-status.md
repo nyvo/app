@@ -127,23 +127,20 @@ a participant row lives:
 
 | # | Item | Source | Effort | Notes |
 |---|---|---|---|---|
-| 1 | **Onboarding two-toggle flow** | §4 | 4-6 hr | Replace current "Privatperson/Bedrift" wizard with two independent toggles: "Create your own studio?" + "Join existing studio?" Pure shared-studio renters need to skip studio creation; affiliates need to enter invite code at signup. |
-| 2 | **Dashboard calibration sweep** | §1, §2 | multi-day | `text-sm` → `text-base` across `src/pages/teacher/**` + `src/components/teacher/**`. Drop `tertiary-foreground` / `disabled-foreground` in normal use. Increase row padding. Progressive disclosure for payment / Dintero / refund detail. Reduce KPI density. Plan as 4-6 commits, one surface per commit. |
-| 3 | **Premade tier templates** | §3 | 1-2 days | Replace `CoursePricingTab` + `TicketTypeForm` with toggle templates: Hele kurset, Halvkurs (only when total_weeks > 16), Drop-in, Early bird. Each card has active toggle + price. Audience tier UI goes away (column stays). |
-| 4 | **Late-signup auto-prorate** | §5 | 1 day | Add `package_start_date` to signups + payment_attempts. Course-level toggle `allow_late_signup` (default true). Pro-rate math in BookingPanel. `Pågår` chip on public course card. Update `count_signups_for_session` to filter by both start and end. |
-| 5 | **IA: reshape Påmeldinger as activity feed + persistent "Vis offentlig side"** | §9 | half day | Påmeldinger becomes chronological dated cards (not table). Persistent affordance in topbar/chrome to view public-facing surface. |
-| 6 | **Phone field on booking form** | §7 | 15 min | `signups.participant_phone` already exists. `customerPhone` already exists in `createDinteroSession`. Just plumb through `BookingPanel`. |
-| 7 | **Course thumbnails on `CourseListView`** | §8 | 30 min | Use `image_url` falling back to `default_course_image_url` from team. |
-| 8 | **Verify multi-day event affordance in CreateCoursePage** | §6 | unknown | Check whether "Add another day" is exposed in `CreateCoursePage`. Schema already supports it via `course_sessions`. |
+| 1 | **Onboarding: buyer/seller account-type flow** | superseded §4 | 1-2 days | Replace `WelcomeFlow.tsx`. New shape: New account → Choose account type (Buyer / Seller). Seller branch → Individual teacher / Studio → profile name (org name if studio) → profile photo (optional) → slug (URL-style). Buyer branch → full name + phone → buyer dashboard. **No "join existing studio" / "create your own" toggles** — each account is its own source of truth. Cross-storefront collaboration happens via `team_affiliations` after signup, not at onboarding. |
+| 4 | **Late-signup auto-prorate** | §5 | 1 day | See dedicated plan below ([Plan: late-signup auto-prorate](#plan-late-signup-auto-prorate)). |
+| 8 | **`CreateCourseDrawer` rewrite — Enkelt / Gjentakende** | superseded §6 | 0.5-1 day | Rename current "Én gang / Flere ganger" to **Enkelt / Gjentakende** (or better Norwegian). `Enkelt` supports multi-day (e.g. weekend retreat: Sat + Sun) but **not** multi-week — adds N `course_sessions` rows under a single course. `Gjentakende` stays weekly-recurring with `total_weeks`. Drop the hard-coded `eventDays: 1` for single events; let the user add additional days inline. |
 
-### Cleanup (low priority but real)
+Items 2, 3, 5, 6, 7 from the original list are **deprioritised** — see [Backlog](#backlog-deprioritised-meeting-items) below.
 
-| # | Item | Effort | Notes |
-|---|---|---|---|
-| 9 | **Drop `team_members` table** | 5 min | Zero application references. One-line: `DROP TABLE public.team_members CASCADE;` |
-| 10 | **Stub `team-actions` edge function with 410 Gone** | 5 min | Same pattern as the 11 other dead functions. |
-| 11 | **Public course detail redirect for syndicated URLs** | 30 min | Direct `/inspire/<anna-course>` access currently 404s instead of redirecting to `/anna/<anna-course>`. Edge case. |
-| 12 | **OAuth post-login `state.from` redirect** | ~1 hr | Encode intended destination in OAuth `redirectTo` URL. Currently always lands on `/overview`. |
+### Cleanup (completed 2026-05-12)
+
+| # | Item | Status |
+|---|---|---|
+| 9 | **Drop `team_members` table** | ✅ Dropped via migration `drop_team_members_table`. 7 legacy rows were pre-affiliations self-admin pairs (no cross-org data). |
+| 10 | **Stub `team-actions` edge function with 410 Gone** | ✅ Deployed v2 returning 410. Audit verified the other 9 candidate functions were already 410-stubbed (`space-actions`, `space-join-requests`, `join-waitlist`, `promote-waitlist-signup`, `process-expired-offers`, `process-waitlist-promotion`, `validate-claim-token`, `send-payment-link`, `notify-schedule-change`). |
+| 11 | **Public course detail redirect for syndicated URLs** | ✅ `PublicCourseDetailPage` now compares URL slug vs `course.seller.slug` after fetch; if they differ, `navigate(canonical, { replace: true })`. Venue URLs (`/inspire/<anna-course>`) bounce to owner's canonical URL (`/anna/<anna-course>`). |
+| 12 | **OAuth post-login `state.from` redirect** | ✅ `LoginPage` now passes `redirectAfterLogin` to `GoogleAuthButton` instead of hardcoded dashboard URL. Deep links survive OAuth round-trip. |
 
 ### Cosmetic / nice-to-haves
 
@@ -152,6 +149,136 @@ a participant row lives:
 | 13 | Consolidate `SignupsPage` to use shared `toSignupDisplay` helper | 5 min |
 | 14 | Show signup count per course in the affiliation toggle UI | 1 hr |
 | 15 | Bundle code-splitting (index.js is 784kb) | 1-2 hr |
+
+### Backlog (deprioritised meeting items)
+
+These came out of the prospect feedback but were deprioritised on 2026-05-12.
+Re-promote individually if a real user asks.
+
+| # | Item | Source | Effort | Notes |
+|---|---|---|---|---|
+| B1 | **Dashboard calibration sweep** | §1, §2 | multi-day | `text-sm` → `text-base` across `src/pages/teacher/**` + `src/components/teacher/**`. Increase row padding. Progressive disclosure for payment / Dintero / refund detail. Reduce KPI density. ✅ Already done via studio-design token migration: `tertiary-foreground` / `disabled-foreground` removed from app code. |
+| B2 | **Premade tier templates** | §3 | 1-2 days | Replace `CoursePricingTab` + `TicketTypeForm` with toggle templates: Hele kurset, Halvkurs (only when total_weeks > 16), Drop-in, Early bird. |
+| B3 | **IA: reshape Påmeldinger as activity feed + persistent "Vis offentlig side"** | §9 | half day | Päameldinger becomes chronological dated cards. Persistent affordance in topbar/chrome. Note: `TeacherTopBar` no longer exists; chrome is sidebar-only. |
+| B4 | **Phone field on booking form** | §7 | 15 min | `signups.participant_phone` and `customerPhone` in `createDinteroSession` already exist. Pure UI plumb-through in `BookingPanel.tsx`. |
+| B5 | **Course thumbnails on `CourseListView`** | §8 | 30 min | Use `image_url` falling back to `teams.default_course_image_url`. Both DB columns ready. |
+
+---
+
+## Plan: late-signup auto-prorate
+
+Spec source: `post-mvp-feedback.md` §5. This is the full breakdown for item #4 above.
+
+### Goal
+
+A course already in progress (`start_date <= today <= end_date`) shows a
+`Pågår` chip on the public list and a prorated full-course price on the
+booking page. Original price struck through. Late signup contributes
+to per-session capacity only from the join date forward.
+
+### Phases
+
+**Phase 1 — Schema (one migration, applied locally then to remote)**
+
+```sql
+-- 1. Late-signup window start
+ALTER TABLE public.signups ADD COLUMN package_start_date DATE;
+ALTER TABLE public.payment_attempts ADD COLUMN package_start_date DATE;
+
+-- 2. Per-course opt-out
+ALTER TABLE public.courses
+  ADD COLUMN allow_late_signup BOOLEAN NOT NULL DEFAULT true;
+
+-- 3. Capacity RPC — extend filter
+CREATE OR REPLACE FUNCTION public.count_signups_for_session(...)
+-- existing body now also filters: package_start_date <= session_date
+--                              AND package_end_date   >= session_date
+```
+
+Backfill: existing rows get `package_start_date = course.start_date` via
+the migration. Going forward, the signup RPC sets it explicitly.
+
+**Phase 2 — Public course card (`Pågår` chip)**
+
+- `fetchPublicCourses` already returns `start_date` / `end_date`.
+- `CourseCard` (or `CourseListItem` — wherever the public card lives now):
+  if `start_date <= today <= end_date && allow_late_signup`, render the
+  `Pågår` chip via existing `StatusBadge` variants.
+- If `allow_late_signup === false` and the course has started, render
+  `Påmelding stengt` instead — the tile is non-clickable for booking.
+
+**Phase 3 — BookingPanel math + display**
+
+```ts
+const totalWeeks = course.total_weeks ?? 1;
+const today = new Date();
+const courseHasStarted = course.start_date <= today && today <= course.end_date;
+const allowLate = course.allow_late_signup;
+
+const remainingWeeks = Math.max(
+  1,
+  Math.ceil((+course.end_date - +today) / (7 * 24 * 60 * 60 * 1000)),
+);
+const proratedPrice = Math.round(
+  fullPrice * remainingWeeks / totalWeeks,
+);
+
+const showProrated = courseHasStarted && allowLate;
+```
+
+UI: when `showProrated`, the full-price option is **replaced** (not added
+to) by the prorated card:
+
+```
+Hele kurset (N uker igjen)
+{proratedPrice} kr   {fullPrice} kr   ← struck through
+```
+
+Use `formatKroner()` for both (per CLAUDE.md formatting rule).
+
+**Phase 4 — Server: RPC + Dintero session**
+
+- `createDinteroSession` and `create-free-signup` edge functions:
+  compute `package_start_date` server-side. If course has started AND
+  `allow_late_signup`, pass `today`. Else pass `course.start_date`.
+  Also pass the prorated `amount` so the buyer pays what they see.
+- Webhook handler / `finalize-dintero-transaction`: persist
+  `package_start_date` to `signups` from the matching `payment_attempts` row.
+
+**Phase 5 — Settings UI**
+
+- `CourseEditPage` or `CourseSettingsTab`: add `allow_late_signup` toggle.
+  Default on. Helper text: "La elever melde seg på etter kursstart med
+  redusert pris."
+
+### Verification checklist
+
+- [ ] Schema migration applied, RPC updated, rows backfilled
+- [ ] Late signup for a started course charges the prorated amount in Dintero test mode
+- [ ] `signups.package_start_date` = today after a late signup
+- [ ] `count_signups_for_session` returns the late signup only for sessions on/after `package_start_date`
+- [ ] `Pågår` chip appears on the public list once `start_date` is past
+- [ ] `allow_late_signup = false` suppresses the prorated path, surfaces "Påmelding stengt"
+- [ ] No regression on full-price signups for not-yet-started courses
+
+### Out of scope (deferred)
+
+- Per-course minimum-weeks floor (§12 of feedback — "stop showing late signup with fewer than X weeks left"). Add when a teacher asks.
+- Tier-aware proration (Drop-in / Early bird tiers when those land via the premade templates work).
+
+---
+
+## Stale items / TODO from 2026-05-12 verification
+
+Surfaced while running the plan against the codebase. Park here until acted on.
+
+- **Doc rename:** `post-mvp-feedback.md` §4 (two-toggle onboarding) is **superseded** by the buyer/seller flow in item #1 above. Add a header note to that section pointing here, so a future re-read doesn't relitigate.
+- **Doc rename:** §6 in `post-mvp-feedback.md` references `CreateCoursePage` — file no longer exists. Replace with `CreateCourseDrawer` and reframe as the Enkelt/Gjentakende rewrite (item #8).
+- ~~**Drawer-policy wording:** the "ONE drawer in the entire app" locked decision is contradicted by `CreateCourseDrawer`. Either reword the rule ("one *signup-detail* drawer") or accept the carve-out for creation flows.~~ **Resolved 2026-05-12:** reworded to "two drawer roles, kept distinct" — one signup-detail drawer + quick-create drawers.
+- **Edge-function audit:** open `team-actions`, `space-actions`, `space-join-requests`, `join-waitlist`, `promote-waitlist-signup`, `process-expired-offers`, `process-waitlist-promotion`, `validate-claim-token`, `send-payment-link`, `notify-schedule-change` and confirm whether they internally return 410 or are still live. The "11 already 410-stubbed" claim was not verifiable from `list_edge_functions` alone.
+- **`team_members` rows:** 7 legacy rows exist before drop (item #9). Eyeball them so nothing useful is lost.
+
+---
 
 ### Deferred (explicitly post-launch per §12)
 
@@ -190,10 +317,10 @@ a participant row lives:
 
 ### Drawer policy
 
-- **ONE drawer in the entire app.** It's the signup detail drawer.
-  Multiple call sites, single component instance via context.
-- Other interactions: dedicated routes (edit course, pricing) or
-  dialogs (add participant, alert confirms). Not drawers.
+- **Two drawer roles, kept distinct.**
+  1. **One signup-detail drawer** — multiple call sites (SignupRow, CourseParticipantsTab, RecentActivityCard), single component instance mounted in `TeacherLayout` via `SignupDrawerProvider`. This is the triage-from-list drawer (read-only quick-glance per §15 of the studio-design spec).
+  2. **Quick-create drawers** — entry points for new entities (currently `CreateCourseDrawer`; future similar create flows are allowed). Trimmed sectioned form, ≤8 fields, escapes to the full page on success. Each creation entry point gets its own component.
+- Everything else — edit, pricing, settings — is a dedicated route, not a drawer. Confirms (delete, refund) are AlertDialogs, not drawers.
 
 ### Affiliation model
 

@@ -34,7 +34,7 @@ const SignupPage = () => {
         password: {
           validate: (value) => {
             if (!value.trim()) return AUTH_VALIDATION.passwordNewRequired
-            if (value.length < 10) return AUTH_VALIDATION.passwordMinLength
+            if (value.length < 12) return AUTH_VALIDATION.passwordMinLength
             return undefined
           },
         },
@@ -99,17 +99,17 @@ const SignupPage = () => {
         </p>
       }
     >
-      <div className="w-full space-y-5">
+      <div className="w-full">
         <GoogleAuthButton redirectTo={`${window.location.origin}${AUTH_ROUTES.dashboard}`} />
-
-        <div className="flex items-center gap-3" aria-hidden="true">
-          <Separator className="flex-1" />
-          <span className="text-xs font-medium tracking-wide text-foreground-muted">eller</span>
-          <Separator className="flex-1" />
-        </div>
       </div>
 
-      <form className="w-full space-y-5" onSubmit={handleSubmit}>
+      <div className="my-6 flex items-center gap-3" aria-hidden="true">
+        <Separator className="flex-1" />
+        <span className="text-xs text-foreground-muted">eller</span>
+        <Separator className="flex-1" />
+      </div>
+
+      <form className="w-full space-y-6" onSubmit={handleSubmit}>
         <AuthFormField
           id="email"
           label="E-post"
@@ -131,14 +131,14 @@ const SignupPage = () => {
           touched={touched.password}
           placeholder={AUTH_PLACEHOLDERS.password}
           hint={AUTH_HINTS.passwordMinLength}
-          hintMet={formData.password.length >= 10}
+          hintMet={formData.password.length >= 12}
           onChange={(v) => handleChange('password', v)}
           onBlur={() => handleBlur('password')}
         />
 
         {errors.general && (
           <Alert variant="destructive" size="sm">
-            <p className="text-xs font-medium text-danger">{errors.general}</p>
+            {errors.general}
           </Alert>
         )}
 

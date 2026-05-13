@@ -1,27 +1,23 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
-import type { CourseType } from '@/types/database';
+import type { CourseFormat, DeliveryMode } from '@/types/database';
 
-const PLACEHOLDER_BY_TYPE: Record<CourseType, { from: string; to: string; label: string }> = {
-  'course-series': { from: '#EFE7DC', to: '#D4C4A6', label: 'Kursrekke' },
-  event: { from: '#F2DDC9', to: '#D9A879', label: 'Arrangement' },
-  online: { from: '#E2E5EA', to: '#B6BCC7', label: 'Online' },
-};
+function placeholderLabel(format: CourseFormat, delivery: DeliveryMode): string {
+  if (delivery === 'online') return 'Online';
+  return format === 'series' ? 'Kursrekke' : 'Enkelttime';
+}
 
-function CoursePlaceholder({ type }: { type: CourseType }) {
-  const cfg = PLACEHOLDER_BY_TYPE[type] ?? PLACEHOLDER_BY_TYPE['course-series'];
+function CoursePlaceholder({ format, delivery }: { format: CourseFormat; delivery: DeliveryMode }) {
   return (
     <div
-      className="absolute inset-0 flex items-center justify-center transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-      style={{ backgroundImage: `linear-gradient(140deg, ${cfg.from} 0%, ${cfg.to} 100%)` }}
+      className="absolute inset-0 flex items-center justify-center bg-muted transition-transform duration-700 ease-out group-hover:scale-[1.04]"
       aria-hidden
     >
-      <span className="text-xs font-medium tracking-[0.24em] uppercase text-foreground/55">
-        {cfg.label}
+      <span className="text-xs font-medium text-foreground-muted">
+        {placeholderLabel(format, delivery)}
       </span>
     </div>
   );
@@ -104,18 +100,20 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
 
   const isDisabled = isCancelled || isFull;
 
-  // Instructor falls back to the studio name + initials when no instructor is set
+  // One image per teacher (sellers.logo_url is canonical). The instructor
+  // name still falls through to the seller name when no specific instructor
+  // is set on a course.
   const personName = instructor?.name ?? course.seller?.name ?? null;
-  const personAvatar = instructor?.avatar_url ?? null;
+  const personAvatar = course.seller?.logo_url ?? null;
 
   return (
     <article
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-lg bg-surface outline-none',
-        'ring-1 ring-border/70 transition-all duration-300',
-        'hover:ring-foreground/30 hover:-translate-y-0.5',
+        'transition-transform duration-300',
+        'hover:-translate-y-0.5',
         'focus-within:ring-2 focus-within:ring-ring',
-        isDisabled && 'bg-muted/50 hover:translate-y-0',
+        isDisabled && 'bg-muted hover:translate-y-0',
         className,
       )}
     >
@@ -142,7 +140,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
             )}
           />
         ) : (
-          <CoursePlaceholder type={course.course_type} />
+          <CoursePlaceholder format={course.format} delivery={course.delivery_mode} />
         )}
 
         {imageBadges.length > 0 && (
@@ -152,7 +150,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
                 key={b.label}
                 className={cn(
                   'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-relaxed',
-                  b.tone === 'full' && 'bg-foreground/85 text-background backdrop-blur-md',
+                  b.tone === 'full' && 'bg-foreground text-background backdrop-blur-md',
                   b.tone === 'urgent' && 'bg-warning text-warning-foreground',
                   b.tone === 'lively' && 'bg-danger text-danger-foreground',
                   b.tone === 'soft' && 'bg-foreground-muted text-background',
@@ -164,20 +162,6 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
           </div>
         )}
 
-        {/* Hover arrow lives on the cover image so it can't collide with body content */}
-        {!isDisabled && (
-          <span
-            aria-hidden
-            className={cn(
-              'pointer-events-none absolute bottom-2.5 right-2.5 flex size-7 items-center justify-center rounded-full',
-              'bg-foreground/85 text-background backdrop-blur-md',
-              'opacity-0 -translate-x-1 transition-all duration-200',
-              'group-hover:opacity-100 group-hover:translate-x-0',
-            )}
-          >
-            <ArrowRight className="size-3.5" strokeWidth={2} />
-          </span>
-        )}
       </Link>
 
       {/* Body — title, when, meta. No CTA button. */}
@@ -196,13 +180,13 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
 
         {/* Title */}
         <h3 className={cn(
-          'text-[15px] font-semibold leading-[1.3] line-clamp-2',
+          'text-base font-semibold leading-tight line-clamp-2',
           isDisabled ? 'text-foreground-muted' : 'text-foreground',
         )}>
           <Link
             to={href}
             state={linkState}
-            className="outline-none hover:underline underline-offset-2 decoration-foreground/30 focus-visible:underline"
+            className="outline-none focus-visible:underline underline-offset-2"
           >
             {course.title}
           </Link>

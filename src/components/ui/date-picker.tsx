@@ -53,10 +53,10 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           id={id}
           type="button"
           disabled={disabled}
+          aria-invalid={error || undefined}
           className={cn(
-            'flex h-9 w-full items-center justify-between rounded-lg border border-input bg-surface px-4 py-2 text-[14px] font-medium text-foreground ring-offset-background transition-[background-color,border-color,color,opacity] duration-150 ease-out hover:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-input',
+            'flex h-9 w-full items-center justify-between rounded-md border border-border bg-surface px-3 text-sm text-foreground outline-none transition-[color,border-color,box-shadow] duration-150 ease-out focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-50 aria-invalid:border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20',
             !value && 'text-foreground-muted',
-            error && 'border-danger',
             className
           )}
           {...buttonProps}
@@ -64,7 +64,7 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
           <span className={cn(!value && 'text-foreground-muted')}>
             {value ? formatDateNorwegian(value) : placeholder}
           </span>
-          <ChevronDown className={cn('size-4 text-foreground-muted shrink-0', error && 'text-danger')} />
+          <ChevronDown className={cn('size-4 shrink-0 text-foreground-muted', error && 'text-danger')} />
         </button>
       </PopoverTrigger>
       <PopoverContent className='w-auto overflow-hidden p-0' align='start' showOverlay>
@@ -76,17 +76,9 @@ const DatePicker = React.forwardRef<HTMLButtonElement, DatePickerProps>(({
             setOpen(false)
           }}
           locale={nb}
+          weekStartsOn={1}
           timeZone={timeZone}
           disabled={fromDate ? { before: fromDate } : undefined}
-          classNames={{
-            root: "w-full max-w-[350px]",
-            months: "relative flex flex-col gap-4",
-            month: "flex flex-col gap-5",
-            weekdays: "flex justify-between",
-            weekday: "text-foreground-muted w-11 text-center text-xs font-normal",
-            week: "flex justify-between w-full mt-1",
-            day: "size-11 p-0 text-center",
-          }}
         />
       </PopoverContent>
     </Popover>

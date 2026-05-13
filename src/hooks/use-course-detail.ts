@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCourseById, fetchCourseSessions } from '@/services/courses';
+import { fetchCourseById, fetchCourseSessions, fetchDropInTierActive } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import type { Course, CourseSession } from '@/types/database';
-import type { PracticalInfo } from '@/types/practicalInfo';
 
 // Helper to map database course to component format
-function mapCourseToComponentFormat(courseData: Course & { signups_count: number }) {
+function mapCourseToComponentFormat(
+  courseData: Course & { signups_count: number },
+  allowsDropIn: boolean,
+) {
   const priceNumber = courseData.price || 0;
   const estimatedRevenue = priceNumber * courseData.signups_count;
   const descriptionParts = courseData.description?.split('\n\n') || [''];
@@ -18,12 +20,9 @@ function mapCourseToComponentFormat(courseData: Course & { signups_count: number
     return '';
   };
 
-  // Map course_type to courseType
-  const courseTypeMap: Record<string, 'kursrekke' | 'enkeltkurs'> = {
-    'course-series': 'kursrekke',
-    'event': 'enkeltkurs',
-    'online': 'enkeltkurs',
-  };
+  // Map db format → legacy UI label
+  const courseTypeLabel: 'kursrekke' | 'enkeltkurs' =
+    courseData.format === 'series' ? 'kursrekke' : 'enkeltkurs';
 
   return {
     title: courseData.title,
@@ -47,7 +46,7 @@ function mapCourseToComponentFormat(courseData: Course & { signups_count: number
     })(),
     duration: formatDuration(),
     durationMinutes: courseData.duration || 60,
-    courseType: courseTypeMap[courseData.course_type] || 'enkeltkurs',
+    courseType: courseTypeLabel,
     totalWeeks: courseData.total_weeks || 0,
     currentWeek: 0,
     timeSchedule: courseData.time_schedule || '',
@@ -55,7 +54,8 @@ function mapCourseToComponentFormat(courseData: Course & { signups_count: number
     startDate: courseData.start_date || null,
     endDate: courseData.end_date || null,
     createdAt: courseData.created_at || null,
-    practicalInfo: (courseData.practical_info as unknown as PracticalInfo | null) ?? null,
+    format: courseData.format,
+    allowsDropIn,
   };
 }
 
@@ -108,14 +108,17 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
       setError(null);
 
       try {
-        const { data, error: fetchError } = await fetchCourseById(courseId);
+        const [courseResult, dropInActive] = await Promise.all([
+          fetchCourseById(courseId),
+          fetchDropInTierActive(courseId),
+        ]);
 
-        if (fetchError || !data) {
+        if (courseResult.error || !courseResult.data) {
           setError('Kurset ble ikke funnet');
           return;
         }
 
-        const mappedCourse = mapCourseToComponentFormat(data);
+        const mappedCourse = mapCourseToComponentFormat(courseResult.data, dropInActive);
         setCourseData(mappedCourse);
         setMaxParticipants(mappedCourse.capacity);
       } catch {

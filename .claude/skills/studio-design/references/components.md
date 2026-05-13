@@ -56,9 +56,10 @@ The desktop dashboard can use `sm` and `xs` (toolbars, dense filters, mouse-driv
 
 **Rules:**
 - **All buttons are pill-shaped (`rounded-full`).** Primary, secondary, ghost, destructive, link. The pill is the system's signature interactive shape — no rect-button variant exists.
-- **Primary doesn't shift on hover.** Slate-12 is already near-black; an opacity hover adds noise instead of feedback. Skip the transition. Secondary and ghost variants use a `hover:bg-muted` shift — that's where the visual feedback lives in the system.
+- **Primary doesn't shift on hover.** Sand-12 is already near-black; an opacity hover adds noise instead of feedback. Skip the transition. Secondary and ghost variants use a `hover:bg-muted` shift — that's where the visual feedback lives in the system.
 - **Maximum 1 primary button per logical group** (1 per form, 1 per dialog, 1 per page hero). If you need a second primary action, redesign the hierarchy — usually one of the actions is actually secondary.
 - **Never use `font-bold`** — `font-medium` (500) is the rule. Buttons read as confident at 500 + the pill shape.
+- **No icons in text-bearing buttons.** No leading `<Plus>`, no trailing `<ArrowRight>`, no decorative `<Sparkles>`. The label carries the action; an icon next to it doubles the signal and reads as generic SaaS template. Applies to every variant (primary, secondary, outline, ghost, destructive, link). **Three carve-outs:** (1) icon-only buttons where the icon IS the button (close `×`, kebab menu, sidebar nav-rail) — see § Icon-only buttons below; (2) `Loader2` spinner that *replaces* the label during in-flight async actions (see § Loading state above); (3) form-input-shaped triggers (date picker, time picker, select) where the chevron/calendar signals field type, not an action. Otherwise: text only.
 
 > **Note: `secondary` and `outline` variants overlap.** Currently both use `bg-surface border border-border`; "outline" only differs by hover-emphasis. This is redundant — pick one. Recommendation: keep `secondary`, drop `outline` (one less variant for consumers to choose from). If kept, give `outline` a genuinely different look (e.g., transparent bg with stronger border) so the choice is meaningful.
 
@@ -90,7 +91,7 @@ import { Loader2 } from "@/lib/icons";
 
 ### Icon-only buttons — accessibility
 
-Buttons containing only an icon (close × in a dialog header, kebab menu trigger, dismiss × on a banner) MUST carry an `aria-label`:
+Buttons containing only an icon (close × in a dialog header, kebab menu trigger, etc.) MUST carry an `aria-label`:
 
 ```html
 <button aria-label="Lukk dialog" class="size-8 grid place-items-center rounded-md hover:bg-muted">
@@ -131,7 +132,7 @@ The default container for content is **not a card — it's a `<section>` directl
 - KPI tile clusters (a row of numbers benefits from boundaries)
 - Modals / dialogs / popovers (must visually float)
 - Pricing or feature comparison clusters
-- Course-card pop pattern (the pastel tint is the card)
+- Course cards in a grid (bordered sand surfaces grouping image + meta)
 - Forms that genuinely group multiple steps
 
 **When NOT to use a card:** activity feeds, notification lists, recent-items panels, single-purpose forms with one clear topic, settings rows. Use a section + dividers.
@@ -232,8 +233,7 @@ For card grids that show **content** (blog posts, customer stories, instructor p
 
 **Where it does NOT apply (use bordered cards instead):**
 - KPI tiles — the border IS the structural grouping for a number + delta
-- Course-card-pop pattern — the pop tint already replaces the border
-- Forms / dialogs / drawers / banners — need the border for grouping
+- Forms / dialogs / drawers — need the border for grouping
 - **Content tiles WITHOUT real imagery** — without a real image, the no-border version feels unfinished. Fall back to the bordered card with a calm typographic layout (which is what Studio's current cross-sell mock does on the course detail page — that's a deliberate choice, not a bug).
 
 **The litmus test:** if your visual tile is just a colored block with text on top, you don't have a chromeless card — you have a bordered card with extra steps. Either commit to a real visual (image, illustration, screenshot, abstract dark line drawing à la Linear) or keep the border.
@@ -554,7 +554,7 @@ import { nb } from "date-fns/locale";
 **Rules:**
 - **Display format**: `d. MMMM yyyy` (e.g. `12. mai 2026`) — full month name in lowercase per Norwegian convention. Never `12/05/2026` (ambiguous: US vs EU).
 - **Locale**: always `nb` from `date-fns/locale` — affects week start (Monday), month names, weekday abbreviations.
-- **Empty state**: placeholder `Velg dato` in `text-foreground-muted` (slate-11). NOT `text-foreground-disabled` — disabled-tier color (slate-8) fails WCAG 1.4.3 contrast on white (~2.5:1 vs required 4.5:1).
+- **Empty state**: placeholder `Velg dato` in `text-foreground-muted` (sand-11). NOT `text-foreground-disabled` — disabled-tier color (sand-8) fails WCAG 1.4.3 contrast on white (~2.5:1 vs required 4.5:1).
 - **Past-date handling**: in scheduling contexts, disable past dates via `disabled={{ before: new Date() }}`. In reporting/history contexts, allow them.
 - **Trigger height/border** matches `<input>` exactly — same chrome means consistent form fields.
 
@@ -667,6 +667,25 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem }
 - For ≤8 options, **Select dropdown** is fine.
 - For >8 options or unknown values, use **Combobox** (search-as-you-type, see `cmdk`).
 
+**Conditional selects — don't disable, filter.** When one Select's valid values depend on another (end-time after start-time, end-date after start-date), do NOT pass `disabled={!dependency}` to the dependent Select. The shadcn primitive applies `disabled:bg-muted disabled:opacity-50` — both **violate Studio's anti-patterns** (`opacity-50` on inactive items is banned; `bg-muted` makes the disabled field look like a different element). Instead, leave the dependent Select always interactive and **filter its options** based on the dependency. When the dependency changes, clear the dependent value if it'd be invalid:
+
+```tsx
+const endTimeOptions = startTime ? slotsAfter(startTime) : ALL_SLOTS
+
+<Select
+  value={startTime}
+  onValueChange={(v) => {
+    setStartTime(v)
+    if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('')
+  }}
+/>
+<Select value={endTime} onValueChange={setEndTime}>
+  {/* always enabled, options filter dynamically */}
+</Select>
+```
+
+Friendlier UX (user can pick either order), zero banned styling, matches `CourseSettingsTab`'s pattern.
+
 ---
 
 ## Textarea
@@ -723,10 +742,8 @@ import { IMaskInput } from "react-imask";
   mask="000 00 000"            // 8 digits with spaces
   inputMode="tel"
   type="tel"
-  placeholder="9xx xx xxx"
   className="h-9 w-full px-3 bg-surface border border-border rounded-md
-             text-sm tabular-nums text-foreground
-             placeholder:text-foreground-muted"
+             text-sm tabular-nums text-foreground"
   onAccept={(value: string) => setPhone(value.replace(/\s/g, ""))}
 />
 ```
@@ -737,7 +754,7 @@ import { IMaskInput } from "react-imask";
 - `tabular-nums` so digits column-align as they're entered.
 - **Strip spaces on submit** — store the raw 8-digit string, not the formatted view.
 - **Accept pasted content gracefully** — if the user pastes `+4798765432` or `987 65 432`, the mask should normalize. `react-imask` does this; verify the chosen library does too.
-- Placeholder shows the formatted shape (`9xx xx xxx`).
+- **No placeholder.** Do not use `9xx xx xxx` (or any format hint) as placeholder. The `Telefon` label identifies the field; the mask shapes the digits as the user types. A placeholder here adds visual noise, vanishes the moment a digit lands, and reads as a fake value. If a format hint is genuinely needed, put it in helper text below the field.
 - For international support later: prefix country-code dropdown left of the field with mask switching by country. Out of scope for v1 (Norwegian-only audience).
 
 ---
@@ -855,38 +872,65 @@ const [dragOver, setDragOver] = useState(false);
 
 ---
 
-## Drawer — detail panel for clickable rows
+## Drawer — quick-glance panel for clickable rows
 
-The detail-view pattern for the dashboard. Use anywhere a list row, card, or item needs deeper interaction without a page navigation. **Pair with shadcn Sheet (desktop) + shadcn Drawer/Vaul (mobile)**.
+The triage-from-list pattern. Read-only body, one escape link to the full page. Full doctrine in `patterns.md` § 15.
 
-### Composition
+### Composition — view drawer (the default)
 
 ```tsx
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Link } from "react-router-dom";
 
 <Sheet open={open} onOpenChange={setOpen}>
   <SheetContent
     side="right"
-    className="w-full sm:max-w-[480px] p-0 flex flex-col"
+    className="w-full sm:max-w-[480px] p-0 flex flex-col gap-0"
   >
-    {/* Header */}
-    <SheetHeader className="px-6 py-4 border-b border-border flex-row items-center justify-between space-y-0">
-      <SheetTitle className="text-base font-semibold">Påmelding</SheetTitle>
-      {/* × close button is included by default by SheetContent */}
+    {/* Header — title + status */}
+    <SheetHeader className="px-6 py-4 border-b border-border">
+      <SheetTitle className="text-base font-semibold">Vinyasa Flow</SheetTitle>
     </SheetHeader>
 
-    {/* Body — scrollable */}
-    <div className="flex-1 overflow-y-auto p-6 space-y-4">
-      {/* form fields, content */}
+    {/* Body — scrollable, read-only */}
+    <div className="flex-1 overflow-y-auto">
+      {/* status, when/where, quick actions, participants preview */}
     </div>
 
-    {/* Footer — sticky */}
-    <div className="border-t border-border px-6 py-3 flex justify-end gap-2 bg-surface">
-      <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>Avbryt</Button>
-      <Button size="sm" onClick={onSave}>Lagre endringer</Button>
+    {/* Footer — single escape link, nothing else */}
+    <div className="border-t border-border px-6 py-4 bg-background">
+      <Button variant="ghost" size="sm" asChild
+        className="-ml-2 text-foreground-muted hover:text-foreground"
+      >
+        <Link to={`/courses/${id}`} onClick={() => setOpen(false)}>
+          Åpne kursside
+        </Link>
+      </Button>
     </div>
   </SheetContent>
 </Sheet>
+```
+
+### Composition — quick-create drawer (the exception)
+
+For "Create X" flows the entity doesn't exist yet, so an "Åpne X-side" link makes no sense. A trimmed quick-create drawer with bare-minimum fields is allowed. Density ceiling: ≤8 fields, one section, validation on submit, no advanced options. On successful create, navigate to `/resource/:newId` (the full page where the user refines).
+
+```tsx
+<SheetContent side="right" className="w-full sm:max-w-[480px] p-0 flex flex-col gap-0">
+  <SheetHeader className="px-6 py-4 border-b border-border">
+    <SheetTitle>Opprett kurs</SheetTitle>
+    <SheetDescription className="text-xs text-foreground-muted">
+      Bare det viktigste — du kan endre alle detaljer på kurssiden etterpå.
+    </SheetDescription>
+  </SheetHeader>
+  <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+    {/* 6–8 essential fields, no advanced options */}
+  </div>
+  <div className="border-t border-border px-6 py-4 flex justify-end gap-2 bg-background">
+    <Button variant="ghost" size="sm" onClick={onCancel}>Avbryt</Button>
+    <Button size="sm" onClick={onCreate}>Opprett</Button>
+  </div>
+</SheetContent>
 ```
 
 ### Mobile pairing — Vaul drawer
@@ -1034,12 +1078,14 @@ If the drawer has unsaved form changes, intercept dismiss and confirm via dialog
 
 | Drawer purpose | Footer |
 |---------------|--------|
-| Edit existing record | `[Avbryt] [Lagre endringer]` |
-| Create new record (rare) | `[Avbryt] [Opprett]` |
+| Edit existing record | `[Lagre endringer]` (right-aligned, no Avbryt) |
+| Create new record (rare) | `[Opprett]` (right-aligned, no Avbryt) |
 | Pure view | No footer |
 | Detail with destructive actions | Primary footer + kebab menu in header for "Refunder", "Slett", etc. |
 
-Primary action right, secondary left. Both `btn-sm` (32px). Never both primary.
+**Drop `[Avbryt]` from all drawer footers.** The drawer already has three close affordances (× button, Esc, backdrop tap when clean) per `patterns.md` §15.4. A fourth Cancel button in the footer is visual noise that fights the primary action for attention. Modern reference apps — Linear new-issue, Notion add-page, Stripe checkout — all drop it. Primary action only, right-aligned, `size="sm"` (32px).
+
+For drawers with form input, pair this footer with the **silent backdrop block** when dirty (see `patterns.md` §15.4) — that's the safety mechanism that replaces a Cancel button's "let me back out" affordance.
 
 ### Anti-patterns (cross-reference patterns.md § 15.8)
 
@@ -1103,6 +1149,16 @@ Studio's replacement for multi-step wizards (#16). A single form with section he
 **Section dividers:** the first section has no top border; sections 2+ get `pt-8 border-t border-border`. The border is what visually chunks the form.
 
 **When to skip the divider:** if the form has only 2 sections AND fewer than 6 fields total, drop the divider — the vertical spacing alone is enough chunk.
+
+**When to skip section headings entirely.** A section H2 (`text-base font-semibold`) over field labels (`text-sm font-medium`) is only a 2px size step and one weight step — not enough delta. The eye can't tell which is the container and which is the thing, hierarchy collapses, and the page reads as messy. Before adding a section H2, apply the **three-knob check**:
+
+1. **Size delta** — at least 4px between heading and label. `text-base` (16) → `text-sm` (14) is only 2px. Prefer `text-lg`+ (18px) when keeping the H2.
+2. **Weight delta** — `font-semibold` over `font-medium` is one step. Pair with size, never alone.
+3. **Space delta** — the gap *before* the heading must be 2× the gap inside the section. If fields are `space-y-4` (16px), the heading needs `pt-8` (32px) above. `mb-4` *under* the heading is the inverse mistake — closes the gap.
+
+**The shortcut:** if the form has ≤6 fields OR one coherent purpose, **drop the H2s entirely.** The page/drawer H1 + field labels are enough hierarchy. Use spacing (`space-y-5` between blocks, or the `space-y-6` airy default) to group; reach for a horizontal divider only when categories are genuinely distinct (e.g. "Personal info" vs "Shipping address").
+
+Stripe / Linear default to no section H2s on short forms — they get hierarchy from the page H1 + label-to-input rhythm. Reach for H2s only when the form is long enough that scanning or skipping helps. Quick-create drawers almost never qualify.
 
 **Footer pattern** (when in a drawer): sticky bottom with Cancel + primary action. See drawer pattern (#15) and primary button (#components.md § Button).
 
@@ -1186,7 +1242,7 @@ All pending tasks look the same. There's no "first-value" or "next up" tier — 
 - **Auto-detect completion.** If the user creates a course via the courses page (not via the checklist link), the checklist task auto-marks complete. Onboarding tracks *outcomes*, not navigation paths. This is invisible behavior — the user just notices the ✓ next time they visit the checklist.
 - **Progress indicator: simple count** — `2 av 4 fullført`, top-right of the page header in `text-sm text-foreground-muted tabular-nums`. Not a sentence with predictions, not a progress bar. The number speaks for itself.
 - **The ✓ on complete tasks is the one place Studio uses success green** in the dashboard. It's the earned positive moment of onboarding. Don't extend the precedent to other dashboard contexts.
-- **Sidebar nav routing:** the checklist gets a sidebar nav item with optional count badge (#13.6 Tier A) showing pending count. Auto-redirect new users here on first sign-in. **Hide the nav item once all tasks complete** — keeping it visible adds chrome with no purpose.
+- **Sidebar nav routing:** the checklist gets a sidebar nav item — no count badge (Studio doesn't carry attention indicators on nav items). Auto-redirect new users here on first sign-in. **Hide the nav item once all tasks complete** — keeping it visible adds chrome with no purpose.
 - **Don't show a celebration modal** when the last task completes. A toast (#11) saying "Du er klar! Studioet er satt opp." is the right size for this app.
 
 ### Empty states ARE onboarding
@@ -1353,268 +1409,6 @@ Built from shadcn `<Input type="number">` with an absolutely-positioned suffix l
 
 ---
 
-## Banner alert
-
-System-level state. Lives at the top of the content area (right of sidebar, not above the window).
-
-**Important: banners are NOT the default.** For most "system needs attention" cases (KYC, subscription expiring, payment failed), use **Tier A (sidebar dot) + Tier B (page-scoped inline alert)** instead — see `patterns.md` § 13.6.
-
-Banners apply in two cases only:
-- **Tier B** — inline alert on a specific page where the issue is fixed (rendered conditionally on that route)
-- **Tier C** — truly app-wide states like maintenance mode, account suspended, read-only mode (very rare)
-
-The visual treatment below applies to both.
-
-### Persistent — action required, no dismiss
-
-A banner is **one line of text, no icon, neutral fill, with an inset bright accent stripe** sitting BETWEEN the border and the text (not on the edge). The stripe is rendered as a separate element, not as a `border-left`, so it can be brighter and detached from the rounded corner.
-
-```html
-<div role="alert"
-     class="flex items-stretch gap-3 pl-4 pr-3 py-3
-            bg-surface border border-border rounded-md">
-  <!-- Inset accent stripe — brighter than danger-fg, detached from edge -->
-  <span aria-hidden="true"
-        class="w-1 self-stretch bg-[#e5484d] rounded-full shrink-0"></span>
-  <p class="flex-1 self-center text-sm font-medium text-foreground">
-    Stripe trenger ny KYC-info før du kan ta imot betaling.
-  </p>
-  <button class="btn btn-primary btn-sm gap-1.5 self-center">
-    Fullfør
-    <svg class="size-3.5" viewBox="0 0 16 16">
-      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-</div>
-```
-
-**Why the inset stripe (not `border-left`):**
-- A `border-left: 3px solid` sits AT the rounded corner — visually shrunken and stuck to the edge
-- The inset `<span>` element sits between the regular border and the text, with the border's `--border` (slate-6) wrapping it cleanly
-- The stripe gets its own padding context, reads as a deliberate accent rather than an edge artifact
-- Stripe color is **brighter** (Radix step-9: `#e5484d` for danger, `#ffc53d` for warning) than the standard `*-fg` text token — `*-fg` is tuned for body-text contrast (dark, low-saturation); the accent stripe needs vivid identification at small sizes
-
-**Five rules a banner must follow:**
-1. **One line of text, one weight.** A banner is a sentence, not a card with title-and-subtitle. If it can't fit in one sentence, it's too long.
-2. **Neutral fill + inset bright accent stripe** (4px wide × **20px tall** matching body line-height, `rounded-full`, vertically centered with `align-self: center`, sitting INSIDE the border with padding). Body on `bg-surface` (white). All banner text is `font-medium` (500) at 14px regardless of variant — banners are attention-asking surfaces no matter the type, and 400 reads diluted at 14px in this context. Variant identity comes from the stripe color, never the text weight. **Universal stripe rule:** stripe height matches one line of text — never `align-self: stretch`. Stretching makes the stripe feel oversized and edge-anchored; a one-line-tall stripe reads as a deliberate accent mark.
-3. **No leading icon.** The accent stripe is the variant signal. An icon stacks signal-on-signal and reads as decoration.
-4. **Action button is a quiet ghost pill** (`btn-secondary btn-sm` — same class as the toast action button). Single verb, no arrow icon. The accent stripe and bold message already carry urgency; a black primary button + arrow stacks three signals for the same job and reads as confrontational, especially in a wellness context. **Universal alert-surface rule:** in banners AND toasts, the action button is always the quiet variant — the stripe carries the visual weight, never the button.
-5. **Stripe is bright (Radix step-9), not muted (`*-fg`).** Bright at small sizes communicates the variant clearly. Muted reads as a vague dark line.
-
-**Three variants — same structure, different stripe color:**
-
-All banners use the same anatomy: white `bg-surface` + 1px `border-border` + inset 4px stripe + foreground text. The stripe color identifies the variant; the CTA (action button vs dismiss ×) signals priority.
-
-| Variant | Background | Accent stripe | Text color | Text weight | CTA |
-|---------|-----------|--------------|-----------|-------------|-----|
-| **Danger** (blocks critical) | `bg-surface` | inset 4px, `#e5484d` (Radix red-9) | `text-foreground` | **500** | Ghost pill (`btn-secondary btn-sm`), single verb |
-| **Warning** (action recommended) | `bg-surface` | inset 4px, `#ffc53d` (Radix amber-9) | `text-foreground` | **500** | Ghost pill (`btn-secondary btn-sm`), single verb |
-| **Info** (dismissable) | `bg-surface` | inset 4px, `#0090ff` (Radix blue-9) | `text-foreground` | **500** | Dismiss × or inline link |
-
-**Why all three banners use the same surface:**
-- Earlier spec had info on `bg-muted` (grey on grey) — failed visual readability and broke the system's own pattern. Two variants had stripes; one didn't.
-- Now: structure is consistent (white bg + stripe + foreground text). Differentiation comes from stripe color (red/amber/blue) and CTA type.
-- The "lower priority" of info isn't communicated by making the banner harder to read — it's communicated by the dismiss × (you can close it) instead of an action button.
-
-**Don't:**
-- Don't use `border-left` for the accent — sits at the edge, gets visually shrunken by the rounded corner. Use an inset `<span>` element.
-- Don't use the `*-fg` token color for the stripe — too muted at small sizes. Use the brighter step-9.
-- Don't use full-tint backgrounds (`bg-danger-subtle` / `bg-warning-subtle` as the body bg). Stacks of full-tint banners read as "demo of all states."
-- Don't use a leading icon (`⚠`, `ℹ`, `✕`) — the accent stripe signals variant.
-- Don't use a two-tier text hierarchy — banner is a sentence, not a card.
-- Don't use secondary/outline buttons — they read as decorative pills.
-- Don't use 600 (semibold) on banner text — heading weight, makes the banner shouty.
-
-### Dismissable — informational, can close
-
-Same structure as action banners (white bg + inset stripe + foreground text). Stripe color is **`#0090ff` (Radix blue-9)** — universal "info" blue.
-
-```html
-<div role="status"
-     class="flex items-stretch gap-3 pl-4 pr-3 py-3
-            bg-surface border border-border rounded-md">
-  <span aria-hidden="true"
-        class="w-1 self-stretch bg-[#0090ff] rounded-full shrink-0"></span>
-  <p class="flex-1 self-center text-sm text-foreground">
-    Vi har oppdatert vilkårene for bruk.
-    <a href="..." class="underline decoration-foreground-muted/40 underline-offset-2">Les mer</a>.
-  </p>
-  <button aria-label="Lukk" class="size-5 self-center text-foreground-muted hover:text-foreground">
-    <svg viewBox="0 0 16 16" class="size-4"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
-  </button>
-</div>
-```
-
-### Variants
-
-| Variant | When | Treatment |
-|---------|------|-----------|
-| **Info / neutral** | Informational, dismissable | `bg-muted` |
-| **Warning** | Action recommended | `bg-warning-subtle` + warning-fg icon |
-| **Danger** | Action required, blocks critical flow | `bg-danger-subtle` + danger-fg icon |
-
-### Rules
-
-- Persistent (no dismiss) for action-required. Dismissable (× button) for informational.
-- Max one persistent banner at a time. If two action-required things exist, prioritize and queue.
-- Banner placement: top of content area, NOT top of window. Sidebar stays clean.
-- See `references/patterns.md` § 13.6 for full doctrine.
-
----
-
-## Notifications inbox
-
-The list of system events the user can review at their own pace — booking received, payment confirmed, KYC reminder, etc. Triggered by the **bell icon** in the dashboard top bar. Studio uses a **popover**, not a full-page notification center — full-page is over-engineered for the audience (wellness teachers don't manage 200+ pending notifications) and adds a route + nav item for low-frequency use.
-
-### Trigger — bell icon with single dot
-
-Lives in the top-right of the dashboard top bar, alongside profile avatar:
-
-```html
-<button aria-label="Varsler" class="relative size-9 grid place-items-center rounded-md
-                                     hover:bg-muted text-foreground-muted hover:text-foreground">
-  <BellIcon class="size-5" />
-  {hasUnread && (
-    <span aria-hidden="true"
-          class="absolute top-1.5 right-1.5 size-2 rounded-full bg-foreground" />
-  )}
-</button>
-```
-
-**Rules:**
-- **Single dot, no count.** The Tier A doctrine (§13.6) applies — `42` doesn't help a yoga teacher, `something new` does. `bg-foreground` (slate-12), 8px (`size-2`), top-right of the icon.
-- **Dot disappears when the user opens the popover** — not when individual notifications are read. Opening the popover IS the acknowledgment that "I saw the new stuff." Subsequent unread items keep the dot back.
-- **Bell, never a megaphone or speech bubble** — convention. Universal recognition.
-
-### Popover anatomy
-
-Width 360-400px, max-height 480px (with overflow scroll). Anchored to the bell, slides down with the standard motion (200ms ease-out).
-
-```
-┌──────────────────────────────────────┐
-│ Varsler        Marker alle som lest  │  ← header
-├──────────────────────────────────────┤
-│ I DAG                                │  ← group label, sticky as scroll
-│  • [unread] 3 nye påmeldinger til    │
-│      Vinyasa Flow                    │
-│      kl. 14:32                       │
-│    [read] Anna Berg avbestilte       │
-│      kl. 11:08                       │
-├──────────────────────────────────────┤
-│ I GÅR                                │
-│    [read] Betaling mottatt 450 kr    │
-│      08. mai kl. 18:43               │
-├──────────────────────────────────────┤
-│ TIDLIGERE                            │
-│    [read] ...                        │
-├──────────────────────────────────────┤
-│         Se alle varsler              │  ← footer link to full page (optional)
-└──────────────────────────────────────┘
-```
-
-**Header:**
-- Title `Varsler` left, `text-base font-medium`.
-- `Marker alle som lest` right, ghost link style (`text-xs text-foreground-muted hover:text-foreground`). Disabled state when nothing unread.
-
-**Group labels** (`text-xs font-medium text-foreground-muted uppercase tracking-wide`):
-- `I DAG` (today)
-- `I GÅR` (yesterday)
-- `TIDLIGERE` (older — collapse everything older than 7 days here)
-
-Sticky as the popover scrolls so context never disappears.
-
-**Notification row anatomy** (per row):
-
-```html
-<a class="flex items-start gap-3 px-4 py-3 hover:bg-muted">
-  <span class="size-2 rounded-full bg-foreground mt-2 shrink-0
-               {{ unread ? '' : 'opacity-0' }}" aria-hidden="true" />
-  <div class="flex-1 min-w-0">
-    <p class="text-sm {{ unread ? 'text-foreground font-medium' : 'text-foreground-muted' }}">
-      {{ message }}
-    </p>
-    <p class="text-xs text-foreground-muted mt-0.5">{{ timestamp }}</p>
-  </div>
-</a>
-```
-
-| State | Dot | Text | Background |
-|---|---|---|---|
-| **Unread** | visible (`bg-foreground`) | `text-foreground font-medium` | none |
-| **Read** | invisible (`opacity-0` so spacing stays) | `text-foreground-muted` (regular weight) | none |
-| **Hover** | unchanged | unchanged | `hover:bg-muted` |
-
-The dot occupies space even when invisible — keeps row alignment consistent so reading the list doesn't shift as items get marked read.
-
-### Frequency capping & grouping (mandatory)
-
-Research: 2-5 notifications/week causes 46% opt-out. For Studio, with bursty events (5 bookings in an hour for a popular class), un-grouped notifications would create instant fatigue.
-
-**Bundling rules:**
-- **Same event type within 1 hour → grouped.** `5 nye påmeldinger til Vinyasa Flow` instead of 5 individual rows.
-- **Expand on click** to see the underlying items (drawer or expanded popover state).
-- **Timestamp on the bundle** is the latest event time.
-- **Bundles count as ONE unread item** for the dot indicator.
-
-Configurable thresholds (in code, not user-facing):
-- Booking events: bundle within 1h
-- Payment events: bundle within 1h
-- System events (KYC reminder, terms updated): never bundle (each is unique)
-
-### Empty state
-
-When there's nothing — first-run user, freshly onboarded teacher:
-
-```
-[centered, py-12]
-Ingen varsler ennå
-Vi gir beskjed når du får første påmelding.
-```
-
-`text-sm font-medium text-foreground` for the heading, `text-xs text-foreground-muted` for the supporting line. **No illustration, no big icon** — that's the AI-default empty-state look.
-
-### Notification preferences (settings page)
-
-Per the research, granular per-type opt-out overwhelms users; presets win. Studio's preference structure:
-
-```
-Innstillinger → Varsler
-
-  Modus
-  ◉ Regelmessig (anbefalt)         ← default
-  ◯ Kun viktige (rolig modus)
-  ◯ Alle (power-user)
-
-  Detaljerte valg                  ← collapsed accordion
-  ▾ ...override per type
-```
-
-**Mode definitions:**
-
-| Mode | What user gets | Use case |
-|---|---|---|
-| **Regelmessig** (default) | Bookings, payments, account, system | Most teachers |
-| **Kun viktige** | System + payment failures only | Vacation, focus mode |
-| **Alle** | Everything including FYI updates (new student joined waitlist, profile views) | Engaged power-user |
-
-**Granular override** (collapsed accordion below presets) lets users override per-type. But the *default* is the preset, not the override list — research is clear this is what reduces decision fatigue.
-
-**Compliance — Norwegian context:**
-- Datatilsynet (Norwegian DPA) enforces GDPR domestically. Marketing emails / SMS require explicit opt-in; transactional notifications (booking confirmation, receipts) are operational and exempt.
-- Per-channel preferences (email / SMS / in-app) are required separately. The above modes apply per-channel.
-- Audit trail: timestamp every preference change so the user (and you) can verify consent state.
-
-### Anti-patterns
-
-- ❌ **Number badge on the bell** (`9+` or `12`). Not for this audience.
-- ❌ **Granular per-type opt-in as the default UI** — overwhelms; users either ignore or carpet-disable everything.
-- ❌ **Animating the bell when new arrives** (shake, swing, ring). Calm tone — the dot is enough.
-- ❌ **Sound on new notification** (in-app). Wellness app, not chat tool.
-- ❌ **Marketing notifications** in the operational inbox. They belong in email with their own opt-out.
-- ❌ **Snooze / mute per notification.** Power-user feature; preferences cover the use case more cleanly for this audience.
-
----
-
 ## Page state shell
 
 One layout, four variants — 404, 500, permission denied, page-loading. Same shell handles all four; they differ only in headline / supporting / actions. Users never have to learn multiple page-error designs.
@@ -1708,10 +1502,11 @@ The Stripe / Cal.com pattern: in a multi-field form (Email + Full name + Passwor
 This means email placeholders like `navn@eksempel.no` get dropped from forms that also have a Navn (no format) field — even though `navn@eksempel.no` is a legitimate format example in isolation. The visual consistency of the form trumps the marginal format-illustrating help, *especially* since `type="email"` already enforces the format and most users know what an email address is.
 
 **Exceptions that override visual consistency** — when format help is genuinely necessary even at the cost of mismatch:
-- **Phone fields with non-standard formats** (Norwegian `9xx xx xxx`). The format isn't obvious from a `Telefon` label alone, and getting the digits right matters for sending SMS / verifying. Keep this placeholder even when it visually mismatches adjacent fields.
 - **Manual date entry without a picker** (`dd.mm.åååå`). Picker-driven date inputs don't need this; manual-entry ones do.
 
 The exception fields are typically the only ones in their form that need the hint — and the visual difference reads as "this field has a specific format" rather than as "the form is inconsistent."
+
+**Phone is NOT an exception.** Do not use `9xx xx xxx` as a placeholder on the `Telefon` field. The auto-formatting input mask (see "Phone input — Norwegian format") shapes the digits as the user types — the format reveals itself on first keystroke. The placeholder reads as a fake value, vanishes the moment the user types, and clutters the calm surface. Label-only on phone. If you genuinely need a format hint (rare), use helper text below the field, not a placeholder.
 
 #### When a placeholder earns its place
 
@@ -1719,7 +1514,7 @@ Three legitimate uses:
 
 | Case | Pattern | Example |
 |---|---|---|
-| **Format example** — when the label can't convey the literal format | Format string only, no prose prefix | `9xx xx xxx` (phone) · `navn@eksempel.no` (email format example) · `dd.mm.åååå` (manual date entry) |
+| **Format example** — when the label can't convey the literal format | Format string only, no prose prefix | `navn@eksempel.no` (email format example) · `dd.mm.åååå` (manual date entry). **Not phone** — the auto-format mask conveys shape on first keystroke; no placeholder needed. |
 | **Search inputs** — scope clarification | Imperative + scope + ellipsis | `Søk i kurs…` · `Søk på navn…` · `Søk i påmeldinger…` |
 | **Textareas with free-form input** — instructional context | Full sentence, calm tone | `Eventuelle merknader. F.eks. allergier eller andre hensyn.` (cancel reason / booking notes) |
 
@@ -1735,14 +1530,14 @@ Anywhere outside those three cases, the answer is "no placeholder."
 
 #### Color: WCAG 1.4.3 minimum
 
-**Placeholder color must be `text-foreground-muted` (slate-11 / `#60646c`)**, NOT `text-foreground-disabled` (slate-8 / `#b9bbc6`).
+**Placeholder color must be `text-foreground-muted` (sand-11 / `#60646c`)**, NOT `text-foreground-disabled` (sand-8 / `#b9bbc6`).
 
 | Color | Contrast on white | WCAG 1.4.3 AA (4.5:1) |
 |---|---|---|
-| `slate-8` (`#b9bbc6`) — disabled tier | ~2.5:1 | ❌ FAILS |
-| `slate-11` (`#60646c`) — muted tier | ~5.6:1 | ✓ PASSES |
+| `sand-8` (`#b9bbc6`) — disabled tier | ~2.5:1 | ❌ FAILS |
+| `sand-11` (`#60646c`) — muted tier | ~5.6:1 | ✓ PASSES |
 
-Beyond the contrast issue, slate-8 sends the wrong semantic signal — it makes the placeholder look *disabled* when the field is actually *active and waiting for input*. Two different states should not share a color.
+Beyond the contrast issue, sand-8 sends the wrong semantic signal — it makes the placeholder look *disabled* when the field is actually *active and waiting for input*. Two different states should not share a color.
 
 This applies to **all placeholder-equivalent contexts**: text-input `::placeholder`, date-picker trigger empty state (`Velg dato`), time-picker trigger empty state (`Velg tid`), Select trigger empty state (`Velg type`), etc.
 
@@ -1772,7 +1567,7 @@ Pattern: `label` (always visible, above) → `input` (with optional format place
 For every field in a form, ask:
 1. Is there a visible `<label>` above? (Required.)
 2. If there's a placeholder, is it a *format example*, *search scope*, or *textarea instruction*? (If not, drop it.)
-3. **Are placeholders applied consistently across the form?** If field A has a placeholder and field B doesn't, the eye reads them as different states. Either both have placeholders, or neither does. The exception is genuine format-help fields (phone, manual date) that visually self-identify as "specific format required."
+3. **Are placeholders applied consistently across the form?** If field A has a placeholder and field B doesn't, the eye reads them as different states. Either both have placeholders, or neither does. The exception is genuine format-help fields (manual date entry without picker) that visually self-identify as "specific format required." **Phone is not such an exception** — the auto-format mask handles shape; no placeholder.
 4. Does the placeholder color use `text-foreground-muted` or equivalent? (If `disabled` color, fix it.)
 5. Is critical guidance in the placeholder rather than helper text below? (If so, move it to helper text.)
 6. Is the placeholder repeating the label? (If so, it's noise — drop it.)
@@ -1829,37 +1624,35 @@ Single primitive with three dimensions: `variant`, `shape`, `size`.
 
 ---
 
-## Course-card pop pattern
+## Course card
 
-Course cards rotate through three accent tints to create variety. One tint per card, never two.
+Image-led card for listing surfaces. Bordered sand surface when no image is present; image-as-card when an image exists. Monochrome — no chromatic tints.
 
 **Rules:**
-- **No border.** The tint IS the card. A border on a tinted surface fights the tint and reads as fussy.
-- **No underline.** Even though the card is an `<a>`, suppress all `text-decoration` — title, meta, and any nested links. The card itself is the affordance.
-- **One tint per card** — sky, mint, OR iris. Never two together.
-- **Decoration is the lift on hover** — `hover:translate-y-[-1px]`. Don't change the tint, don't add a border on hover.
+- **Bordered sand surface** — `bg-surface border border-border rounded-lg`. The image (when present) fills the top portion; meta sits in the bordered body.
+- **No underline on the title** even though the card is an `<a>` — suppress `text-decoration` on title, meta, and nested links. The card itself is the affordance.
+- **Decoration is the lift on hover** — `hover:translate-y-[-1px]`. No fill change, no border thickening.
+- **Type/format reads as a text label** in the meta line — never a colored fill or tinted chip.
 
 ```html
 <a class="
-  block rounded-lg p-6
-  bg-accent-mint-subtle
+  block rounded-lg p-4
+  bg-surface border border-border
   no-underline
   transition-transform duration-200 ease-out
   hover:translate-y-[-1px]
 ">
-  <span class="text-xs font-medium text-accent-mint-fg">Yoga</span>
+  <span class="text-xs font-medium text-foreground-muted">Engangstime</span>
   <h3 class="mt-2 text-xl font-semibold text-foreground no-underline">Vinyasa Flow</h3>
   <p class="mt-1 text-sm text-foreground-muted no-underline">Tirsdag 18:00 · 60 min · 12 plasser</p>
 </a>
 ```
 
-**Three tints:** `accent-sky-*`, `accent-mint-*`, `accent-iris-*`. Assign to your course types or rotate. No fixed mapping.
-
 ---
 
 ## Avatar
 
-Customer / teacher / staff representation. Image with initials fallback. Always has a fallback — a missing image must never leave a hole in the layout.
+Customer / teacher / staff representation. Image with **User-icon fallback**. Always has a fallback — a missing image must never leave a hole in the layout.
 
 ```html
 <!-- with image -->
@@ -1867,10 +1660,10 @@ Customer / teacher / staff representation. Image with initials fallback. Always 
   <img src="/avatar.jpg" alt="Maria Hansen" class="size-full object-cover" />
 </div>
 
-<!-- initials fallback -->
+<!-- icon fallback (NO initials) -->
 <div class="size-8 rounded-full bg-muted flex items-center justify-center
-            text-xs font-medium text-foreground-muted">
-  MH
+            text-foreground-muted" aria-label="Maria Hansen">
+  <UserIcon class="size-4" />
 </div>
 ```
 
@@ -1883,12 +1676,12 @@ Customer / teacher / staff representation. Image with initials fallback. Always 
 | `md` | 40px | Profile cards, larger list items |
 | `lg` | 56px | Detail views, profile headers |
 
-### Initials rules
+### Fallback rules
 
-- 1–2 characters max. "Maria Hansen" → `MH`. Single name → first letter only.
-- Sentence case (capitalized first letter of each name part), not all caps.
-- Color: `text-foreground-muted`, `bg-muted`. **Never** chromatically tint per-user (no "Maria gets blue, Ola gets orange") — that's chaotic and adds no real signal.
-- Use `font-medium` (500), `text-xs` for sm/xs sizes, scale up to `text-sm` for md/lg.
+- **Never initials.** Initials introduce hash-based color noise (each name gets a different tone, fragmenting the calm palette) AND add cognitive load when scanning lists. The User icon reads as "anonymous user" without imposing identity.
+- **Always neutral chrome.** `bg-muted` + `text-foreground-muted` icon — no chromatic per-user tints. Same fallback look across every avatar in the app.
+- Set the user's name as `aria-label` on the fallback container so screen readers still convey identity.
+- Use `<UserAvatar>` primitive — don't hand-roll. The primitive handles image → icon fallback automatically.
 
 ### Notification dot indicator
 
@@ -2270,8 +2063,8 @@ Sidebar shares the white canvas with main content. A 1px `border` on the right s
 | State | Background | Text | Weight |
 |-------|-----------|------|--------|
 | **Rest** (unselected) | none | `text-foreground-muted` | 400 |
-| **Hover** | `bg-muted` (slate-3) | `text-foreground` | 400 |
-| **Selected** (current) | `bg-active` (slate-4) | `text-foreground` | 500 |
+| **Hover** | `bg-muted` (sand-3) | `text-foreground` | 400 |
+| **Selected** (current) | `bg-active` (sand-3) | `text-foreground` | 500 |
 
 ```html
 <aside class="bg-background border-r border-border">
@@ -2290,42 +2083,7 @@ Sidebar shares the white canvas with main content. A 1px `border` on the right s
 </aside>
 ```
 
-The hover (slate-3) and selected (slate-4) tiers differ by one step — small but distinguishable. The 500-weight bump on selected reinforces.
-
-### Attention count badge
-
-When a nav item has unresolved issues or pending actions, mark it with a small count badge on the right. This is **Tier A** in the alert placement system — the calmest possible signal that something needs attention, used in place of always-visible top-of-page banners.
-
-```html
-<a href="..." class="flex items-center justify-between
-                    px-3 py-1.5 rounded-md text-sm
-                    text-foreground-muted hover:bg-muted hover:text-foreground">
-  <span>Innstillinger</span>
-  <span aria-label="1 sak trenger oppmerksomhet"
-        title="1 sak trenger oppmerksomhet"
-        class="min-w-[18px] h-[18px] px-1.5
-               inline-flex items-center justify-center
-               text-xs font-medium tabular-nums rounded-full
-               bg-foreground text-background">
-    1
-  </span>
-</a>
-```
-
-**Rules:**
-- **Show the count.** "1", "2", "3" — explicit number, not a dot. A plain dot is too vague; the user can't tell scale.
-- **One neutral style: `bg-foreground` + `text-background`.** Dark filled pill, white digit. Stays in the neutral palette regardless of urgency — the page itself communicates urgency, not the badge.
-- **No chromatic variants.** No amber, no red. Studio holds the neutral line. For genuinely critical issues, escalate by surfacing an inline error at the user's action point — don't color the badge.
-- **Size: `min-w-[18px] h-[18px]`, `px-1.5`** — tiny but legible. Digits at `text-xs` (12px), `font-medium` (500), `tabular-nums` for column-stable numerals.
-- **Pill shape (`rounded-full`)** — matches Studio's button language.
-- **One badge per nav item, max.** If three issues live under "Innstillinger", show "3" — never multiple badges.
-- **Cap at "9+"** if the count would ever exceed two digits. For Studio's audience, this should never happen.
-- **`aria-label` + `title`** for accessibility and desktop hover tooltip.
-- **Badge is not separately interactive** — clicking the nav item is the affordance.
-
-See `references/patterns.md` § 13.6 for the full alert placement doctrine (Tier A sidebar count badge + Tier B page-scoped + Tier C rare app-wide).
-
----
+The hover (sand-3) and selected (sand-3) tiers share the same fill in this build; the 500-weight bump and foreground-text shift on the selected state carry the distinction.
 
 ---
 

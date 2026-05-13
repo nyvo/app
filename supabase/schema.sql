@@ -117,9 +117,6 @@ CREATE TABLE courses (
   -- Client-generated key to prevent duplicate course creation on retries
   idempotency_key TEXT,
 
-  -- Structured practical info (e.g., what to bring, requirements)
-  practical_info JSONB CHECK (practical_info IS NULL OR jsonb_typeof(practical_info) = 'object'),
-
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

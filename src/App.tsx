@@ -13,12 +13,8 @@ import TeacherLayout from './layouts/TeacherLayout';
 // Lazy load all route components for code splitting
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
-const SignupsPage = lazy(() => import('./pages/teacher/SignupsPage'));
-const CreateCoursePage = lazy(() => import('./pages/teacher/CreateCoursePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
-const CourseDetailPage = lazy(() => import('./pages/teacher/CourseDetailPage'));
-const CourseEditPage = lazy(() => import('./pages/teacher/CourseEditPage'));
-const CoursePricingPage = lazy(() => import('./pages/teacher/CoursePricingPage'));
+const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
 const TeacherProfilePage = lazy(() => import('./pages/teacher/TeacherProfilePage'));
 const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const TeamsPage = lazy(() => import('./pages/teacher/TeamsPage'));
@@ -32,9 +28,16 @@ const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
 const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
+const AuthCallbackPage = lazy(() => import('./pages/public/AuthCallbackPage'));
+const JoinPage = lazy(() => import('./pages/public/JoinPage'));
+const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
+const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
+const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview'));
+const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
+const MonthGridPreview = lazy(() => import('./pages/dev/MonthGridPreview'));
 
 type RouterState = { backgroundLocation?: Location } | null;
 
@@ -78,6 +81,9 @@ function AppRoutes() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/confirm-email" element={<ConfirmEmailPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/join/:code" element={<JoinPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
 
         {/* Authenticated dashboard — slug-less namespace, English URLs,
             Norwegian UI copy (Time2Book-style). All under TeacherLayout
@@ -86,11 +92,7 @@ function AppRoutes() {
           <Route path="overview" element={<TeacherDashboard />} />
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="courses" element={<CoursesPage />} />
-          <Route path="courses/new" element={<CreateCoursePage />} />
-          <Route path="courses/:id" element={<CourseDetailPage />} />
-          <Route path="courses/:id/edit" element={<CourseEditPage />} />
-          <Route path="courses/:id/pricing" element={<CoursePricingPage />} />
-          <Route path="signups" element={<SignupsPage />} />
+          <Route path="courses/:id" element={<CoursePage />} />
           <Route path="studio" element={<TeamsPage />} />
           <Route path="settings/profile" element={<TeacherProfilePage />} />
           <Route path="settings/payouts" element={<PaymentsPage />} />
@@ -98,6 +100,10 @@ function AppRoutes() {
 
         {/* Dev preview (no auth, direct-URL only) */}
         <Route path="/dev/token-preview" element={<TokenPreview />} />
+        <Route path="/dev/onboarding-preview" element={<OnboardingPreview />} />
+        <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
+        <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
+        <Route path="/dev/month-grid-preview" element={<MonthGridPreview />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and
@@ -153,7 +159,7 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <Toaster
-          position="top-right"
+          position="bottom-center"
           theme="light"
         />
         <ErrorBoundary>

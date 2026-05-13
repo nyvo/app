@@ -50,13 +50,13 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
 
   return (
     <section className="relative">
-      <header className="mb-5 flex items-end justify-between gap-4">
+      <header className="mb-6 flex items-end justify-between gap-4">
         <div className="space-y-1.5">
-          <h2 className="text-xs font-medium tracking-[0.14em] uppercase text-foreground-muted">
+          <h2 className="text-xl font-semibold text-foreground">
             {title}
           </h2>
           {description && (
-            <p className="text-[15px] sm:text-base text-foreground/90 max-w-md leading-snug">
+            <p className="text-sm text-foreground-muted max-w-md leading-snug">
               {description}
             </p>
           )}
@@ -68,8 +68,8 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
             disabled={!canLeft}
             className={cn(
               'flex size-8 items-center justify-center rounded-full border border-border bg-background',
-              'transition-all duration-200',
-              canLeft ? 'hover:bg-muted opacity-100' : 'opacity-30 cursor-not-allowed',
+              'transition-colors duration-200',
+              canLeft ? 'text-foreground hover:bg-muted' : 'text-foreground-disabled cursor-not-allowed',
             )}
             aria-label="Forrige"
           >
@@ -81,8 +81,8 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
             disabled={!canRight}
             className={cn(
               'flex size-8 items-center justify-center rounded-full border border-border bg-background',
-              'transition-all duration-200',
-              canRight ? 'hover:bg-muted opacity-100' : 'opacity-30 cursor-not-allowed',
+              'transition-colors duration-200',
+              canRight ? 'text-foreground hover:bg-muted' : 'text-foreground-disabled cursor-not-allowed',
             )}
             aria-label="Neste"
           >
@@ -92,12 +92,12 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
       </header>
 
       {/* Scroller */}
-      <div className="relative -mx-5 sm:-mx-8">
+      <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
         <div
           ref={scrollerRef}
           className={cn(
             'flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory',
-            'px-5 sm:px-8 pb-1',
+            'px-4 sm:px-6 lg:px-8 pb-1',
             '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           )}
         >

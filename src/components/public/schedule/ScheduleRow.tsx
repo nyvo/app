@@ -48,7 +48,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
   const isFull = spots === 'Fullt';
   const isCancelled = course.status === 'cancelled';
 
-  const seriesBadge = course.course_type === 'course-series'
+  const seriesBadge = course.format === 'series'
     ? weekOfSeries(course.start_date, course.total_weeks, displayDate)
     : null;
 
@@ -57,9 +57,9 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
       to={`/${studioSlug}/${course.slug}`}
       state={{ backgroundLocation: location }}
       className={cn(
-        'group flex items-center gap-4 px-3 py-3 smooth-transition',
-        'hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
-        (isFull || isCancelled) && 'opacity-70',
+        'group flex items-center gap-4 px-3 py-3 transition-colors duration-150',
+        'hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        (isFull || isCancelled) && 'text-foreground-muted',
       )}
       aria-label={`${course.title}${time ? `, kl. ${time}` : ''}`}
     >

@@ -4,16 +4,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Mimics <Card> shell without animate-pulse on the container so inner Skeleton elements stay visible
 function CardShell({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg bg-surface shadow-xs ring-1 ring-foreground/10 overflow-hidden py-6">
+    <div className="rounded-lg border border-border bg-surface overflow-hidden py-6">
       {children}
     </div>
   )
 }
 
 /**
- * Dashboard Skeleton — mirrors the 4-card lg:grid-cols-2 layout:
- * [RecentActivity] [QuickOverview]
- * [UpcomingClasses] [BusinessGlance]
+ * Dashboard Skeleton — mirrors the 3-card lg:grid-cols-2 layout actually rendered
+ * by <TeacherDashboard>:
+ *   [RecentActivity] [QuickOverview]
+ *   [UpcomingClasses]
+ *
+ * Shape parity matters (Studio § 10): skeletons must match the real layout so
+ * content arriving doesn't cause a layout shift. Avatars in real cards are
+ * rounded-full, not rounded-md.
  */
 export const DashboardSkeleton = memo(function DashboardSkeleton() {
   return (
@@ -34,11 +39,11 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
           </div>
         </div>
         <div className="px-6 pt-6">
-          <div className="space-y-1">
+          <div className="space-y-2">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg px-2 py-2.5">
-                <Skeleton className="size-9 shrink-0 rounded-md" />
-                <div className="min-w-0 flex-1 space-y-1.5">
+              <div key={i} className="flex items-center gap-3 rounded-lg px-2 py-2">
+                <Skeleton className="size-9 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-2">
                   <Skeleton className="h-4 w-32 max-w-full" />
                   <Skeleton className="h-3 w-44 max-w-full" />
                 </div>
@@ -64,8 +69,8 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
               <Skeleton className="mt-1 h-7 w-28" />
               <Skeleton className="mt-3 h-40 w-full" />
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-5 self-center sm:grid-cols-1 sm:gap-4 sm:min-w-36">
-              {[...Array(3)].map((_, i) => (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 self-center sm:grid-cols-1 sm:gap-4 sm:min-w-36">
+              {[...Array(2)].map((_, i) => (
                 <div key={i}>
                   <Skeleton className="h-3 w-20" />
                   <Skeleton className="mt-2 h-7 w-12" />
@@ -82,34 +87,15 @@ export const DashboardSkeleton = memo(function DashboardSkeleton() {
           <Skeleton className="h-5 w-32" />
         </div>
         <div className="px-6 pt-6">
-          <div className="space-y-1">
+          <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-lg px-2 py-2.5">
-                <Skeleton className="size-9 shrink-0 rounded-md" />
-                <div className="min-w-0 flex-1 space-y-1.5">
+              <div key={i} className="grid grid-cols-[theme(spacing.16)_1fr] gap-2">
+                <Skeleton className="h-3 w-12" />
+                <div className="space-y-2 p-3">
                   <Skeleton className="h-4 w-40 max-w-full" />
                   <Skeleton className="h-3 w-28 max-w-full" />
+                  <Skeleton className="h-3 w-32 max-w-full" />
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardShell>
-
-      {/* BusinessGlance skeleton */}
-      <CardShell>
-        <div className="px-6 pb-2">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-5 w-24 rounded-full" />
-          </div>
-        </div>
-        <div className="px-6 pt-6">
-          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i}>
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="mt-2 h-7 w-16" />
               </div>
             ))}
           </div>

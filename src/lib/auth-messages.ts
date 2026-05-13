@@ -7,9 +7,9 @@ export const AUTH_VALIDATION = {
   emailRequired: 'Skriv inn e-posten din',
   emailInvalid: 'Sjekk at e-posten er riktig',
   passwordRequired: 'Skriv inn passordet ditt',
-  passwordMinLength: 'Passord må være minst 10 tegn',
+  // NIST 2024+: length over complexity. 12+ chars, no composition rules.
+  passwordMinLength: 'Passord må være minst 12 tegn',
   passwordNewRequired: 'Skriv inn et passord',
-  passwordConfirmRequired: 'Gjenta passordet',
   passwordMismatch: 'Passordene er ikke like',
   nameRequired: 'Skriv inn navnet ditt',
   studioNameRequired: 'Skriv inn navnet på studioet',
@@ -31,14 +31,13 @@ export const AUTH_ERRORS = {
 export const AUTH_PLACEHOLDERS = {
   email: '',
   password: '',
-  passwordMin: 'Minst 10 tegn',
-  confirmPassword: '',
+  passwordMin: 'Minst 12 tegn',
   studioName: '',
   fullName: '',
 } as const
 
 export const AUTH_HINTS = {
-  passwordMinLength: 'Minst 10 tegn',
+  passwordMinLength: 'Minst 12 tegn',
   studioNameHelper: 'Vises på din offentlige side. Du kan endre det senere.',
   checkSpam: 'Sjekk spam-mappen hvis du ikke finner den.',
   checkSpamAlt: 'Hvis du ikke ser e-posten, sjekk søppelpost.',

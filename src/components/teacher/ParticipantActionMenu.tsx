@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MoreHorizontal, CheckCircle, UserMinus, CreditCard } from '@/lib/icons';
+import { MoreHorizontal } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatKroner } from '@/lib/utils';
@@ -9,18 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import type { ExceptionType, PaymentStatus } from '@/types/database';
 
 /** Minimal shape the action menu needs — satisfied by both SignupDisplay and DisplayParticipant */
@@ -62,10 +52,22 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
   };
 
   const { exceptionType } = signup;
-  // Cancelled signups are terminal: no actions, no menu — regardless of any
-  // lingering exceptionType from the source data. Belt-and-suspenders alongside
-  // each caller's detectException cancelled-guard.
-  if (signup.status === 'cancelled' || signup.status === 'course_cancelled') return null;
+  // Cancelled signups are terminal: no actions available. Render a disabled
+  // trigger anyway so the row's action-menu slot stays visually consistent
+  // across the list — empty cells make the layout look broken.
+  if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
+    return (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="shrink-0"
+        aria-label="Ingen handlinger tilgjengelig"
+        disabled
+      >
+        <MoreHorizontal className="size-4" />
+      </Button>
+    );
+  }
 
   return (
     <>
@@ -73,13 +75,13 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
-            className="min-h-[44px] min-w-[44px] flex-shrink-0"
+            size="icon-sm"
+            className="shrink-0"
             aria-label="Handlinger"
             disabled={loading}
           >
             {loading ? (
-              <Spinner size="md" />
+              <Spinner size="sm" />
             ) : (
               <MoreHorizontal className="size-4" />
             )}
@@ -87,33 +89,15 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
 
-          {/* Exception resolution actions — only for problem signups */}
-          {exceptionType === 'payment_failed' && (
+          {/* Exception resolution actions — only for problem signups.
+              No section label; the "Merk som betalt" item is self-explanatory
+              and the row's badge already names the exception. */}
+          {(exceptionType === 'payment_failed' || exceptionType === 'pending_payment') && (
             <>
-              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-foreground-muted">
-                Betaling feilet
-              </DropdownMenuLabel>
               <DropdownMenuItem
                 onClick={() => setConfirmDialog('resolve')}
                 disabled={loading}
               >
-                <CheckCircle className="size-4 mr-2" />
-                Merk som betalt
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-
-          {exceptionType === 'pending_payment' && (
-            <>
-              <DropdownMenuLabel className="text-xs font-medium tracking-wide text-foreground-muted">
-                Venter på betaling
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => setConfirmDialog('resolve')}
-                disabled={loading}
-              >
-                <CheckCircle className="size-4 mr-2" />
                 Merk som betalt
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -121,24 +105,26 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           )}
 
           {/* Base cancel actions — the early return above guarantees the signup
-              isn't already cancelled, so these always render. */}
+              isn't already cancelled, so these always render. The refund
+              option is gated on having a Dintero transaction to reverse;
+              manually-added signups (no integrated payment) can only cancel,
+              since the platform never received their money. */}
           {(() => {
             const isPaid = signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0;
+            const canRefund = isPaid && !!signup.dinteroTransactionId;
             return (
               <>
                 <DropdownMenuItem
                   onClick={() => setConfirmDialog('cancel-no-refund')}
                   disabled={loading}
                 >
-                  <UserMinus className="size-4 mr-2" />
                   Avbestill
                 </DropdownMenuItem>
-                {isPaid && (
+                {canRefund && (
                   <DropdownMenuItem
                     onClick={() => setConfirmDialog('cancel-with-refund')}
                     disabled={loading}
                   >
-                    <CreditCard className="size-4 mr-2" />
                     Avbestill med refusjon
                   </DropdownMenuItem>
                 )}
@@ -150,103 +136,81 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
       </DropdownMenu>
 
       {/* Cancel WITHOUT refund */}
-      <AlertDialog open={confirmDialog === 'cancel-no-refund'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avbestill påmelding?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-1">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
-                  </div>
-                  {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0 && (
-                    <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
-                  )}
-                </div>
-                <p className="text-sm text-foreground-muted">
-                  {signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-                    ? 'Deltakeren beholder påmeldingsbeløpet. Du kan refundere manuelt via betalingsoversikten.'
-                    : 'Deltakeren mister plassen sin. Dette kan ikke angres.'}
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                setConfirmDialog(null);
-                runAction(() => handlers.onCancelEnrollment(signup.id, false));
-              }}
-            >
-              Avbestill
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDialog === 'cancel-no-refund'}
+        onOpenChange={(open) => !open && setConfirmDialog(null)}
+        ariaLabel="Avbestill påmelding"
+        headline={
+          signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
+            ? 'Påmeldingen avbestilles uten refusjon. Det kan ikke angres.'
+            : 'Påmeldingen avbestilles. Det kan ikke angres.'
+        }
+        scope={
+          <ConfirmScopeItem
+            name={signup.participantName}
+            meta={signup.participantEmail}
+            trailing={
+              signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
+                ? formatKroner(signup.amountPaid)
+                : undefined
+            }
+          />
+        }
+        actionLabel="Avbestill"
+        onConfirm={() => {
+          setConfirmDialog(null);
+          runAction(() => handlers.onCancelEnrollment(signup.id, false));
+        }}
+      />
 
       {/* Cancel WITH refund (only for paid signups) */}
-      <AlertDialog open={confirmDialog === 'cancel-with-refund'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avbestill med refusjon?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-1">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-foreground truncate">{signup.participantName}</p>
-                    <p className="text-xs text-foreground-muted truncate">{signup.participantEmail}</p>
-                  </div>
-                  {signup.amountPaid != null && signup.amountPaid > 0 && (
-                    <span className="text-sm font-medium tabular-nums text-foreground">{formatKroner(signup.amountPaid)}</span>
-                  )}
-                </div>
-                <p className="text-sm text-foreground-muted">
-                  Hele beløpet refunderes til betalingskortet. Refusjonen tar vanligvis 5–10 virkedager.
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => {
-                setConfirmDialog(null);
-                runAction(() => handlers.onCancelEnrollment(signup.id, true));
-              }}
-            >
-              Avbestill og refunder
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDialog === 'cancel-with-refund'}
+        onOpenChange={(open) => !open && setConfirmDialog(null)}
+        ariaLabel="Avbestill med refusjon"
+        headline="Påmeldingen avbestilles og hele beløpet refunderes (5–10 virkedager)."
+        scope={
+          <ConfirmScopeItem
+            name={signup.participantName}
+            meta={signup.participantEmail}
+            trailing={
+              signup.amountPaid != null && signup.amountPaid > 0
+                ? formatKroner(signup.amountPaid)
+                : undefined
+            }
+          />
+        }
+        actionLabel="Avbestill og refunder"
+        onConfirm={() => {
+          setConfirmDialog(null);
+          runAction(() => handlers.onCancelEnrollment(signup.id, true));
+        }}
+      />
 
       {/* Mark as resolved confirmation dialog */}
-      <AlertDialog open={confirmDialog === 'resolve'} onOpenChange={(open) => !open && setConfirmDialog(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Merk som betalt?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Betalingen for {signup.participantName} merkes som mottatt utenom betalingsløsningen (kontant, Vipps, e.l.).
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmDialog(null);
-                runAction(() => handlers.onMarkResolved(signup.id));
-              }}
-            >
-              Merk som betalt
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmDialog === 'resolve'}
+        onOpenChange={(open) => !open && setConfirmDialog(null)}
+        ariaLabel="Merk som betalt"
+        headline="Betalingen merkes som mottatt utenom betalingsløsningen (kontant, Vipps e.l.)."
+        scope={
+          <ConfirmScopeItem
+            name={signup.participantName}
+            meta={signup.participantEmail}
+            trailing={
+              signup.amountPaid != null && signup.amountPaid > 0
+                ? formatKroner(signup.amountPaid)
+                : undefined
+            }
+          />
+        }
+        actionLabel="Merk som betalt"
+        actionVariant="default"
+        onConfirm={() => {
+          setConfirmDialog(null);
+          runAction(() => handlers.onMarkResolved(signup.id));
+        }}
+      />
     </>
   );
 }

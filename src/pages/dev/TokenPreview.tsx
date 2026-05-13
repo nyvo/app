@@ -144,7 +144,7 @@ function Samples() {
         <p className="text-xs font-medium tracking-wide uppercase text-foreground-muted">Inntekter</p>
         <p className="text-3xl font-semibold tabular-nums text-foreground">42 800 kr</p>
         <p className="text-sm text-foreground-muted">Denne måneden</p>
-        <p className="text-xs text-foreground-tertiary">Oppdatert for 2 minutter siden</p>
+        <p className="text-xs text-foreground-muted">Oppdatert for 2 minutter siden</p>
       </div>
 
       {/* Chart-2 accent surface */}
@@ -154,7 +154,7 @@ function Samples() {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">Yin Yoga</p>
-          <p className="text-xs text-foreground-tertiary">Mandag kl. 19:00</p>
+          <p className="text-xs text-foreground-muted">Mandag kl. 19:00</p>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ function Samples() {
         <Badge variant="destructive" shape="rect">Feilet</Badge>
         <Badge variant="info" shape="rect">Ny</Badge>
         <Badge variant="neutral" shape="rect">Utkast</Badge>
-        <Badge variant="accent" shape="rect">Uke 6</Badge>
+        <Badge variant="secondary" shape="rect">Uke 6</Badge>
       </div>
 
       {/* Form field */}

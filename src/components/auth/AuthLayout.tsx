@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Infinity } from '@/lib/icons'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
-import { Card } from '@/components/ui/card'
 
 interface AuthLayoutProps {
   title: string
@@ -14,6 +13,11 @@ interface AuthLayoutProps {
   children: React.ReactNode
 }
 
+/**
+ * Auth surface shell — centered single-column form at max-w-md.
+ * Per studio-design § 21.3: no card chrome around the form, no sidebar,
+ * logo top, title left-aligned, single column.
+ */
 export function AuthLayout({
   title,
   subtitle,
@@ -42,31 +46,29 @@ export function AuthLayout({
           transition={authPageTransition}
           className="w-full max-w-md"
         >
-          <Card className="border-border bg-surface p-6 sm:p-8">
-            {customContent ? (
-              <div className="flex flex-col items-center">
-                {children}
+          {customContent ? (
+            <div className="flex flex-col items-center">
+              {children}
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <div className="mb-8 space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                  {title}
+                </h1>
+                {subtitle && (
+                  <p className="text-sm text-foreground-muted">{subtitle}</p>
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <div className="mb-8 w-full space-y-2 text-center">
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                    {title}
-                  </h1>
-                  {subtitle && (
-                    <p className="text-sm text-foreground-muted">{subtitle}</p>
-                  )}
-                </div>
 
-                {children}
-              </div>
-            )}
-          </Card>
+              {children}
+            </div>
+          )}
         </motion.div>
       </main>
 
       {footer && (
-        <footer className="py-6 text-center border-t border-border bg-background">
+        <footer className="py-6 text-center bg-background">
           {footer}
         </footer>
       )}

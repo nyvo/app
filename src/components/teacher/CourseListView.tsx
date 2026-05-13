@@ -1,23 +1,26 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ImageIcon } from '@/lib/icons';
+import { CalendarDays, ChevronDown, ImageIcon, Users } from '@/lib/icons';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SessionScheduleRow } from '@/services/courses';
-import type { CourseType } from '@/types/database';
+import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
 
 const WEEKDAYS_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
-const TYPE_LABEL: Record<CourseType, string> = {
-  'course-series': 'Kursrekke',
-  'event':         'Arrangement',
-  'online':        'Nettkurs',
+const FORMAT_LABEL: Record<CourseFormat, string> = {
+  series: 'Kursrekke',
+  single: 'Enkelttime',
 };
+
+function typeLabel(format: CourseFormat, delivery: DeliveryMode): string {
+  if (delivery === 'online') return 'Nettkurs';
+  return FORMAT_LABEL[format];
+}
 
 function formatNextSession(sessionDate: string | null | undefined, startTime: string | null | undefined): string {
   if (!sessionDate) return '';
@@ -40,9 +43,9 @@ function formatNextSession(sessionDate: string | null | undefined, startTime: st
   return `${weekday} ${date.getDate()}. ${month}${timePart}`;
 }
 
-function formatSeriesProgress(courseType: CourseType, totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
-  if (courseType !== 'course-series') {
-    return courseType === 'event' ? 'enkelttime' : null;
+function formatSeriesProgress(format: CourseFormat, totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
+  if (format !== 'series') {
+    return 'enkelttime';
   }
   if (!totalWeeks) return null;
   if (!courseStartDate) return totalWeeks === 1 ? '1 uke' : `${totalWeeks} uker`;
@@ -104,7 +107,7 @@ function StatusPill({ status }: { status: CourseCardStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5]',
+        'inline-flex h-5 items-center rounded-full px-2 text-xs font-medium',
         status === 'full' && 'bg-foreground text-background',
         status === 'active' && 'bg-muted text-foreground',
         status === 'draft' && 'bg-muted text-foreground-muted',
@@ -116,98 +119,101 @@ function StatusPill({ status }: { status: CourseCardStatus }) {
   );
 }
 
-export function CourseCard({ course }: { course: SessionScheduleRow }) {
+export const COURSES_PER_PAGE = 6;
+const ITEMS_PER_PAGE = COURSES_PER_PAGE;
+
+/**
+ * Horizontal row card — thumbnail left, content middle, price right.
+ * Used by the active/draft Mine kurs list. Each card is self-contained
+ * (own border + bg-surface) so it reads as catalogue rather than table.
+ * See /dev/courses-grid-preview variant B for the reference layout.
+ */
+export function CourseRowCard({ course }: { course: SessionScheduleRow }) {
   const status = deriveStatus(course.courseStatus, course.signupsCount, course.maxParticipants);
-  const sequence = formatSeriesProgress(course.courseType, course.totalWeeks, course.courseStartDate);
+  const sequence = formatSeriesProgress(course.courseFormat, course.totalWeeks, course.courseStartDate);
   const nextSession = status === 'draft' ? '' : formatNextSession(course.sessionDate, course.startTime);
 
-  // Meta line: date · time · location · sequence — single tier, muted.
-  // Drafts skip date+time; status pill carries that signal instead.
-  const metaParts: string[] = [];
-  if (nextSession) metaParts.push(nextSession);
-  if (course.location) metaParts.push(course.location);
-  if (sequence) metaParts.push(sequence);
-  if (metaParts.length === 0 && status === 'draft') {
-    metaParts.push(TYPE_LABEL[course.courseType] ?? '');
-  }
-
-  // Capacity readouts
   const hasMax = course.maxParticipants !== null && course.maxParticipants > 0;
-  const pct = hasMax ? Math.min(100, Math.round((course.signupsCount / (course.maxParticipants as number)) * 100)) : 0;
-  const showBar = status !== 'draft' && status !== 'cancelled' && hasMax;
+  const showStatusPill = status === 'draft' || status === 'full' || status === 'cancelled';
 
   return (
     <Link
       to={routes.course(course.courseId)}
-      className="group block smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+      className={cn(
+        'group block rounded-md outline-none transition-colors',
+        'hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
+      )}
     >
-      <div className="grid items-center gap-4 p-3 md:gap-5 md:p-4 grid-cols-[56px_1fr] md:grid-cols-[56px_minmax(0,1fr)_180px]">
+      <article className="flex items-stretch gap-4 py-4 px-2 md:gap-5 md:py-5">
         <CourseImage
           src={course.imageUrl}
           alt={course.courseTitle}
-          className="h-14 w-14 md:h-14 md:w-14"
+          className="size-20 rounded-lg md:size-28"
         />
 
-        {/* Identity cluster — title (+ drop-in marker inline) on top, muted meta line below */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-sm font-medium text-foreground leading-[1.35] truncate min-w-0">
-              {course.courseTitle}
-            </h3>
-            {course.allowsDropIn && (
-              <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full bg-muted text-foreground-muted text-[11px] font-medium leading-[1.45] group-hover:bg-background">
-                Drop-in
-              </span>
-            )}
+        <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-sm font-medium text-foreground">
+                {course.courseTitle}
+              </h3>
+              {showStatusPill && <StatusPill status={status} />}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-foreground-muted">
+              <span>{typeLabel(course.courseFormat, course.deliveryMode)}</span>
+              {course.location && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="truncate">{course.location}</span>
+                </>
+              )}
+              {sequence && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{sequence}</span>
+                </>
+              )}
+              {course.allowsDropIn && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>Drop-in</span>
+                </>
+              )}
+            </div>
           </div>
-          {metaParts.length > 0 && (
-            <p className="mt-0.5 text-xs text-foreground-muted tabular-nums truncate">
-              {metaParts.map((p, i) => (
-                <span key={i}>
-                  {i > 0 && <span className="text-foreground-disabled"> · </span>}
-                  {p}
-                </span>
-              ))}
-            </p>
-          )}
-        </div>
 
-        {/* Status / capacity cluster — desktop only, vertically centered with the identity column */}
-        <div className="hidden md:flex flex-col justify-center gap-1.5 self-center w-full">
-          <div className="flex items-center justify-between gap-2 text-xs tabular-nums leading-none">
-            <StatusPill status={status} />
-            {status === 'draft' ? (
-              <span className="text-foreground-muted">Ikke publisert</span>
-            ) : status === 'cancelled' ? (
-              <span className="text-foreground-muted">Avlyst</span>
-            ) : hasMax ? (
-              <span>
-                <span className="text-foreground">{course.signupsCount}/{course.maxParticipants}</span>
-                <span className="text-foreground-muted"> · {pct} %</span>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+            <span className="inline-flex items-center gap-1.5 text-foreground-muted">
+              <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
+              <span className={cn(!nextSession && 'italic')}>
+                {nextSession || 'Ingen datoer satt'}
+              </span>
+            </span>
+            {hasMax ? (
+              <span className="inline-flex items-center gap-1.5 text-foreground-muted">
+                <Users className="size-4 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {course.signupsCount} / {course.maxParticipants}
+                </span>
               </span>
             ) : (
-              <span>
-                <span className="text-foreground">{course.signupsCount} påmeldte</span>
-                <span className="text-foreground-muted"> · ubegrenset</span>
+              <span className="inline-flex items-center gap-1.5 text-foreground-muted">
+                <Users className="size-4 shrink-0" aria-hidden="true" />
+                <span>{course.signupsCount} påmeldt · ubegrenset</span>
               </span>
             )}
           </div>
-          {showBar && (
-            <div className="h-1 w-full rounded-full bg-muted overflow-hidden group-hover:bg-background">
-              <div
-                className="h-full rounded-full bg-foreground-muted"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          )}
         </div>
-      </div>
+
+        <div className="hidden shrink-0 items-end justify-end py-0.5 sm:flex">
+          <span className="text-sm font-medium tabular-nums text-foreground">
+            {formatKroner(course.price)}
+          </span>
+        </div>
+      </article>
     </Link>
   );
 }
-
-export const COURSES_PER_PAGE = 6;
-const ITEMS_PER_PAGE = COURSES_PER_PAGE;
 
 interface CourseListViewProps {
   courses: SessionScheduleRow[];
@@ -223,7 +229,7 @@ export function CourseListView({ courses }: CourseListViewProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18 }}
         >
-          <CourseCard course={c} />
+          <CourseRowCard course={c} />
         </motion.div>
       ))}
     </div>
@@ -254,7 +260,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
   if (groups.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {groups.map(g => {
         const s = state[g.year] ?? { expanded: false, visibleCount: ITEMS_PER_PAGE };
         const visible = s.expanded ? g.rows.slice(0, s.visibleCount) : [];
@@ -262,7 +268,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
         const sectionId = `past-year-${g.year}`;
 
         return (
-          <Card key={g.year} className="gap-0 overflow-hidden p-0">
+          <section key={g.year} className="space-y-2">
             <button
               type="button"
               onClick={() =>
@@ -276,24 +282,22 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
               }
               aria-expanded={s.expanded}
               aria-controls={sectionId}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left smooth-transition hover:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
+              className="flex w-full items-center justify-between gap-3 rounded-md bg-muted px-3 py-2.5 text-left transition-colors duration-150 hover:bg-muted/80 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
-              <div className="flex items-center gap-2">
-                <ChevronDown
-                  className={cn(
-                    'size-4 shrink-0 text-foreground-muted transition-transform',
-                    !s.expanded && '-rotate-90',
-                  )}
-                />
-                <span className="text-sm font-medium tabular-nums text-foreground">{g.year}</span>
-              </div>
-              <span className="text-xs tabular-nums text-foreground-muted shrink-0">
-                {g.rows.length} kurs
+              <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
+                {g.year}
               </span>
+              <ChevronDown
+                className={cn(
+                  'size-5 shrink-0 text-foreground-muted transition-transform duration-200',
+                  s.expanded && 'rotate-180',
+                )}
+                aria-hidden="true"
+              />
             </button>
 
             {s.expanded && (
-              <div id={sectionId} className="border-t border-border divide-y divide-border">
+              <div id={sectionId} className="divide-y divide-border">
                 {visible.map(c => (
                   <motion.div
                     key={c.sessionId}
@@ -301,11 +305,11 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.18 }}
                   >
-                    <CourseCard course={c} />
+                    <CourseRowCard course={c} />
                   </motion.div>
                 ))}
                 {hasMore && (
-                  <div className="flex justify-center p-3">
+                  <div className="flex justify-center py-3">
                     <Button
                       variant="outline-soft"
                       size="sm"
@@ -325,7 +329,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                 )}
               </div>
             )}
-          </Card>
+          </section>
         );
       })}
     </div>
@@ -336,18 +340,23 @@ export function CourseListSkeleton() {
   return (
     <div className="divide-y divide-border">
       {[...Array(5)].map((_, i) => (
-        <div key={i} className="grid items-center gap-4 p-3 md:gap-5 md:p-4 grid-cols-[56px_1fr] md:grid-cols-[56px_minmax(0,1fr)_180px]">
-          <Skeleton className="h-14 w-14 rounded-md shrink-0" />
-          <div className="min-w-0 flex flex-col gap-1.5">
-            <Skeleton className="h-4 w-48 max-w-full" />
-            <Skeleton className="h-3 w-56 max-w-full" />
-          </div>
-          <div className="hidden md:flex flex-col gap-1.5 self-center">
-            <div className="flex items-center justify-between gap-2">
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-3 w-20" />
+        <div
+          key={i}
+          className="flex items-stretch gap-4 py-4 px-2 md:gap-5 md:py-5"
+        >
+          <Skeleton className="size-20 shrink-0 rounded-lg md:size-28" />
+          <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-48 max-w-full" />
+              <Skeleton className="h-3 w-56 max-w-full" />
             </div>
-            <Skeleton className="h-1 w-full" />
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+          </div>
+          <div className="hidden shrink-0 items-end justify-end sm:flex">
+            <Skeleton className="h-4 w-16" />
           </div>
         </div>
       ))}

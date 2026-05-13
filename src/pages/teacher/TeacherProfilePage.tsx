@@ -6,40 +6,21 @@ import {
 } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateSeller } from '@/services/sellers';
-import { updateTeam } from '@/services/teams';
-import type { Json } from '@/types/database';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail } from '@/lib/utils';
 import { toast } from 'sonner';
-import type { NotificationSettings, SellerSettings } from '@/types/database';
 
 const TeacherProfilePage = () => {
-  const { profile, currentSeller, currentTeam, refreshSellers, updatePassword } = useAuth();
+  const { profile, refreshSellers, updatePassword } = useAuth();
 
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [studioDescription, setStudioDescription] = useState('');
-  const [city, setCity] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -48,11 +29,7 @@ const TeacherProfilePage = () => {
       setLastName(nameParts.slice(1).join(' ') || '');
       setEmail(profile.email || '');
     }
-    if (currentSeller) {
-      setStudioDescription(currentTeam?.description || '');
-      setCity(currentSeller.city || '');
-    }
-  }, [profile, currentSeller, currentTeam]);
+  }, [profile]);
 
   // Dirty state tracking
   const isDirty = useMemo(() => {
@@ -61,17 +38,13 @@ const TeacherProfilePage = () => {
     const origFirst = nameParts[0] || '';
     const origLast = nameParts.slice(1).join(' ') || '';
     const origEmail = profile.email || '';
-    const origDesc = currentTeam?.description || '';
-    const origCity = currentSeller?.city || '';
 
     return (
       firstName !== origFirst ||
       lastName !== origLast ||
-      email !== origEmail ||
-      studioDescription !== origDesc ||
-      city !== origCity
+      email !== origEmail
     );
-  }, [profile, currentSeller, currentTeam, firstName, lastName, email, studioDescription, city]);
+  }, [profile, firstName, lastName, email]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -96,11 +69,6 @@ const TeacherProfilePage = () => {
       isValid = false;
     } else if (!isValidEmail(email)) {
       newErrors.email = 'Ugyldig e-postadresse';
-      isValid = false;
-    }
-
-    if (studioDescription.length > 500) {
-      newErrors.studioDescription = 'Maks 500 tegn';
       isValid = false;
     }
 
@@ -135,12 +103,6 @@ const TeacherProfilePage = () => {
       }
     }
 
-    if (field === 'studioDescription' && studioDescription.length > 500) {
-      newErrors.studioDescription = 'Maks 500 tegn';
-    } else if (field === 'studioDescription') {
-      delete newErrors.studioDescription;
-    }
-
     setErrors(newErrors);
   };
 
@@ -161,27 +123,18 @@ const TeacherProfilePage = () => {
       setLastName(nameParts.slice(1).join(' ') || '');
       setEmail(profile.email || '');
     }
-    if (currentSeller) {
-      setStudioDescription(currentTeam?.description || '');
-      setCity(currentSeller.city || '');
-    }
     setErrors({});
     setTouched({});
   };
 
   const handleSave = async () => {
-    setTouched({ firstName: true, lastName: true, email: true, studioDescription: true, city: true });
+    setTouched({ firstName: true, lastName: true, email: true });
 
     if (!validateForm()) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
       if (firstErrorField) {
         firstErrorField.focus();
       }
-      return;
-    }
-
-    if (!currentSeller) {
-      toast.error('Fant ikke organisasjonen');
       return;
     }
 
@@ -201,21 +154,6 @@ const TeacherProfilePage = () => {
       }
     }
 
-    // Save seller-level data (city for legal/billing address) and
-    // team-level data (description, the public-facing studio bio).
-    const [{ error: orgError }, teamResult] = await Promise.all([
-      updateSeller(currentSeller.id, { city: city || null }),
-      currentTeam
-        ? updateTeam(currentTeam.id, { description: studioDescription || null })
-        : Promise.resolve({ data: null, error: null as Error | null }),
-    ]);
-
-    if (orgError || teamResult.error) {
-      toast.error('Kunne ikke lagre endringene');
-      setIsSaving(false);
-      return;
-    }
-
     await refreshSellers();
 
     toast.success('Endringer lagret');
@@ -226,7 +164,6 @@ const TeacherProfilePage = () => {
   const [passwordExpanded, setPasswordExpanded] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -234,35 +171,19 @@ const TeacherProfilePage = () => {
 
   // Logout all devices
   const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
+  const [logoutAllOpen, setLogoutAllOpen] = useState(false);
 
   // Delete account
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-
-  // Notification preferences
-  const defaultNotifications: NotificationSettings = {
-    newSignups: true,
-    cancellations: true,
-    marketing: false,
-  };
-  const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
-
-  useEffect(() => {
-    if (currentSeller?.settings) {
-      const settings = currentSeller.settings as unknown as SellerSettings;
-      if (settings.notifications) {
-        setNotifications({ ...defaultNotifications, ...settings.notifications });
-      }
-    }
-  }, [currentSeller?.id]);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Password change handler
   const handleChangePassword = async () => {
     const errs: Record<string, string> = {};
     if (!currentPassword) errs.currentPassword = 'Skriv inn nåværende passord';
     if (!newPassword) errs.newPassword = 'Skriv inn nytt passord';
-    else if (newPassword.length < 10) errs.newPassword = 'Må være minst 10 tegn';
-    if (!confirmPassword) errs.confirmPassword = 'Bekreft nytt passord';
-    else if (newPassword !== confirmPassword) errs.confirmPassword = 'Passordene er ikke like';
+    else if (newPassword.length < 12) errs.newPassword = 'Må være minst 12 tegn';
 
     if (Object.keys(errs).length > 0) {
       setPasswordErrors(errs);
@@ -294,7 +215,6 @@ const TeacherProfilePage = () => {
     setPasswordExpanded(false);
     setCurrentPassword('');
     setNewPassword('');
-    setConfirmPassword('');
     setShowCurrentPassword(false);
     setShowNewPassword(false);
     setIsChangingPassword(false);
@@ -308,35 +228,10 @@ const TeacherProfilePage = () => {
 
   // Delete account handler (deferred — signs out + instructs to contact support)
   const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
     await supabase.auth.signOut();
     toast.info('Kontoen slettes. Kontakt hei@ease.no for å angre.');
-  };
-
-  // Notification toggle with auto-save
-  const handleNotificationToggle = async (key: keyof NotificationSettings) => {
-    if (!currentSeller) return;
-
-    const previous = { ...notifications };
-    const updated = { ...notifications, [key]: !notifications[key] };
-    setNotifications(updated);
-
-    const currentSettings = (currentSeller.settings as unknown as SellerSettings) || {};
-    const newSettings: SellerSettings = {
-      ...currentSettings,
-      notifications: updated,
-    };
-
-    const { error } = await updateSeller(currentSeller.id, {
-      settings: newSettings as unknown as Json,
-    });
-
-    if (error) {
-      setNotifications(previous);
-      toast.error('Kunne ikke lagre innstilling');
-      return;
-    }
-
-    await refreshSellers();
+    setIsDeletingAccount(false);
   };
 
   return (
@@ -348,121 +243,101 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="px-6 pb-24 md:pb-8 lg:px-8"
+          className="mx-auto w-full max-w-6xl px-6 pb-24 md:pb-8 lg:px-8"
         >
-          <div className="mb-10 border-b border-border pt-6 pb-8 lg:pt-8">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <div className="mb-8 pt-6 lg:pt-12">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Innstillinger
             </h1>
-            <p className="mt-1 text-sm text-foreground-muted">Din profil, varslinger og kontoinnstillinger.</p>
           </div>
-          <div className="max-w-5xl space-y-8">
-                  {/* Personlig informasjon */}
+          <div>
+                  {/* Personlig informasjon — first section, no top divider */}
                   <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Personlig informasjon</h2>
-                      <p className="text-sm mt-1 text-foreground-muted">Navn, e-post og informasjon om studioet ditt.</p>
                     </div>
-                    <Card className="md:col-span-2">
-                      <CardContent className="md:px-8">
+                    <div className="md:col-span-2">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="profile-firstname" className="text-sm font-medium mb-1.5 block text-foreground">Fornavn</label>
+                        <div className="grid gap-2">
+                            <label
+                              htmlFor="profile-firstname"
+                              data-error={(errors.firstName && touched.firstName) || undefined}
+                              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                            >
+                              Fornavn
+                            </label>
                             <Input
                                 id="profile-firstname"
                                 type="text"
                                 value={firstName}
                                 onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
                                 onBlur={() => handleBlur('firstName')}
-                                aria-invalid={!!errors.firstName}
+                                aria-invalid={!!(errors.firstName && touched.firstName) || undefined}
                                 aria-describedby={errors.firstName && touched.firstName ? 'profile-firstname-error' : undefined}
                             />
                             {errors.firstName && touched.firstName && (
-                              <p id="profile-firstname-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.firstName}</p>
+                              <p id="profile-firstname-error" role="alert" className="text-sm text-danger">{errors.firstName}</p>
                             )}
                         </div>
 
-                        <div>
-                            <label htmlFor="profile-lastname" className="text-sm font-medium mb-1.5 block text-foreground">Etternavn</label>
+                        <div className="grid gap-2">
+                            <label
+                              htmlFor="profile-lastname"
+                              data-error={(errors.lastName && touched.lastName) || undefined}
+                              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                            >
+                              Etternavn
+                            </label>
                             <Input
                                 id="profile-lastname"
                                 type="text"
                                 value={lastName}
                                 onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
                                 onBlur={() => handleBlur('lastName')}
-                                aria-invalid={!!errors.lastName}
+                                aria-invalid={!!(errors.lastName && touched.lastName) || undefined}
                                 aria-describedby={errors.lastName && touched.lastName ? 'profile-lastname-error' : undefined}
                             />
                             {errors.lastName && touched.lastName && (
-                              <p id="profile-lastname-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.lastName}</p>
+                              <p id="profile-lastname-error" role="alert" className="text-sm text-danger">{errors.lastName}</p>
                             )}
                         </div>
 
-                        <div className="md:col-span-2">
-                            <label htmlFor="profile-email" className="text-sm font-medium mb-1.5 block text-foreground">E-post</label>
+                        <div className="grid gap-2 md:col-span-2">
+                            <label
+                              htmlFor="profile-email"
+                              data-error={(errors.email && touched.email) || undefined}
+                              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                            >
+                              E-post
+                            </label>
                             <Input
                                 id="profile-email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
                                 onBlur={() => handleBlur('email')}
-                                aria-invalid={!!errors.email}
+                                aria-invalid={!!(errors.email && touched.email) || undefined}
                                 aria-describedby={errors.email && touched.email ? 'profile-email-error' : 'profile-email-hint'}
                             />
                             {errors.email && touched.email ? (
-                              <p id="profile-email-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{errors.email}</p>
+                              <p id="profile-email-error" role="alert" className="text-sm text-danger">{errors.email}</p>
                             ) : (
-                              <p id="profile-email-hint" className="text-xs mt-1.5 text-foreground-muted">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
+                              <p id="profile-email-hint" className="text-sm text-foreground-muted">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
-                        <div className="md:col-span-2">
-                            <label htmlFor="profile-city" className="text-sm font-medium mb-1.5 block text-foreground">By / Sted</label>
-                            <Input
-                                id="profile-city"
-                                type="text"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                placeholder="Oslo"
-                            />
-                            <p className="text-xs mt-1.5 text-foreground-muted">Vises på din offentlige side.</p>
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <label htmlFor="profile-description" className="text-sm font-medium mb-1.5 block text-foreground">Om deg</label>
-                            <Textarea
-                                id="profile-description"
-                                rows={4}
-                                value={studioDescription}
-                                onChange={(e) => { setStudioDescription(e.target.value); clearError('studioDescription'); }}
-                                onBlur={() => handleBlur('studioDescription')}
-                                placeholder="Fortell litt om deg"
-                                aria-invalid={!!errors.studioDescription}
-                                aria-describedby={errors.studioDescription && touched.studioDescription ? 'profile-description-error' : 'profile-description-hint'}
-                            />
-                            <div className="mt-1.5 flex justify-between">
-                                {errors.studioDescription && touched.studioDescription ? (
-                                  <span id="profile-description-error" role="alert" className="text-xs font-medium text-danger">{errors.studioDescription}</span>
-                                ) : (
-                                  <span id="profile-description-hint" className="text-xs text-foreground-muted">Vises på din offentlige side.</span>
-                                )}
-                                <span className={`text-xs tabular-nums ${studioDescription.length > 500 ? 'text-danger' : 'text-foreground-muted'}`}>{studioDescription.length}/500</span>
-                            </div>
-                        </div>
                       </div>
-                      </CardContent>
-                    </Card>
+                    </div>
                   </section>
 
                   {/* Konto & Sikkerhet */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Konto & Sikkerhet</h2>
-                      <p className="text-sm mt-1 text-foreground-muted">Passord og sikkerhet.</p>
                     </div>
-                    <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
+                    <div className="md:col-span-2 divide-y divide-border">
                           {/* Endre passord */}
-                          <div className="px-6 py-4">
+                          <div className="py-4">
                               <div className="flex items-center justify-between">
                                   <div>
                                       <span className="text-sm font-medium block text-foreground">Endre passord</span>
@@ -476,7 +351,6 @@ const TeacherProfilePage = () => {
                                           setPasswordErrors({});
                                           setCurrentPassword('');
                                           setNewPassword('');
-                                          setConfirmPassword('');
                                           setShowCurrentPassword(false);
                                           setShowNewPassword(false);
                                       }}
@@ -488,78 +362,76 @@ const TeacherProfilePage = () => {
 
                               {/* Expanded password form */}
                               {passwordExpanded && (
-                                  <div className="mt-4 space-y-4 rounded-lg bg-muted p-6 animate-in fade-in slide-in-from-top-1 duration-200 ease-out">
-                                      <div>
-                                          <label htmlFor="current-password" className="text-sm font-medium mb-1.5 block text-foreground">Nåværende passord</label>
+                                  <div className="mt-4 space-y-4 rounded-lg bg-muted p-4">
+                                      <div className="grid gap-2">
+                                          <label
+                                            htmlFor="current-password"
+                                            data-error={!!passwordErrors.currentPassword || undefined}
+                                            className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                                          >
+                                            Nåværende passord
+                                          </label>
                                           <div className="relative">
                                               <Input
                                                   id="current-password"
                                                   type={showCurrentPassword ? 'text' : 'password'}
                                                   value={currentPassword}
                                                   onChange={(e) => { setCurrentPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.currentPassword; return n; }); }}
-                                                  aria-invalid={!!passwordErrors.currentPassword}
+                                                  aria-invalid={!!passwordErrors.currentPassword || undefined}
                                                   aria-describedby={passwordErrors.currentPassword ? 'current-password-error' : undefined}
                                                   autoComplete="current-password"
+                                                  className="pr-10"
                                               />
                                               <button
                                                   type="button"
                                                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-foreground-muted outline-none transition-colors duration-200 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
                                                   aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.currentPassword && (
-                                              <p id="current-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.currentPassword}</p>
+                                              <p id="current-password-error" role="alert" className="text-sm text-danger">{passwordErrors.currentPassword}</p>
                                           )}
                                       </div>
 
-                                      <div>
-                                          <label htmlFor="new-password" className="text-sm font-medium mb-1.5 block text-foreground">Nytt passord</label>
+                                      <div className="grid gap-2">
+                                          <label
+                                            htmlFor="new-password"
+                                            data-error={!!passwordErrors.newPassword || undefined}
+                                            className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                                          >
+                                            Nytt passord
+                                          </label>
                                           <div className="relative">
                                               <Input
                                                   id="new-password"
                                                   type={showNewPassword ? 'text' : 'password'}
                                                   value={newPassword}
                                                   onChange={(e) => { setNewPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.newPassword; return n; }); }}
-                                                  aria-invalid={!!passwordErrors.newPassword}
+                                                  aria-invalid={!!passwordErrors.newPassword || undefined}
                                                   aria-describedby={passwordErrors.newPassword ? 'new-password-error' : 'new-password-hint'}
                                                   autoComplete="new-password"
+                                                  className="pr-10"
                                               />
                                               <button
                                                   type="button"
                                                   onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-[color] duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+                                                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-foreground-muted outline-none transition-colors duration-200 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
                                                   aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
                                               >
                                                   {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                               </button>
                                           </div>
                                           {passwordErrors.newPassword ? (
-                                              <p id="new-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.newPassword}</p>
+                                              <p id="new-password-error" role="alert" className="text-sm text-danger">{passwordErrors.newPassword}</p>
                                           ) : (
-                                              <p id="new-password-hint" className="text-xs mt-1.5 text-foreground-muted">Må være minst 10 tegn</p>
+                                              <p id="new-password-hint" className="text-sm text-foreground-muted">Må være minst 12 tegn</p>
                                           )}
                                       </div>
 
-                                      <div>
-                                          <label htmlFor="confirm-password" className="text-sm font-medium mb-1.5 block text-foreground">Bekreft nytt passord</label>
-                                          <Input
-                                              id="confirm-password"
-                                              type={showNewPassword ? 'text' : 'password'}
-                                              value={confirmPassword}
-                                              onChange={(e) => { setConfirmPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.confirmPassword; return n; }); }}
-                                              aria-invalid={!!passwordErrors.confirmPassword}
-                                              aria-describedby={passwordErrors.confirmPassword ? 'confirm-password-error' : undefined}
-                                              autoComplete="new-password"
-                                          />
-                                          {passwordErrors.confirmPassword && (
-                                              <p id="confirm-password-error" role="alert" className="text-xs font-medium mt-1.5 text-danger">{passwordErrors.confirmPassword}</p>
-                                          )}
-                                      </div>
-
-                                      <div className="flex justify-end gap-3 pt-2">
+                                      <div className="flex justify-end gap-2 pt-2">
                                           <Button
                                               variant="ghost"
                                               size="sm"
@@ -568,7 +440,6 @@ const TeacherProfilePage = () => {
                                                   setPasswordErrors({});
                                                   setCurrentPassword('');
                                                   setNewPassword('');
-                                                  setConfirmPassword('');
                                               }}
                                           >
                                               Avbryt
@@ -576,9 +447,10 @@ const TeacherProfilePage = () => {
                                           <Button
                                               size="sm"
                                               onClick={handleChangePassword}
-                                              disabled={isChangingPassword}
+                                              loading={isChangingPassword}
+                                              loadingText="Oppdaterer"
                                           >
-                                              {isChangingPassword ? 'Oppdaterer' : 'Oppdater passord'}
+                                              Oppdater passord
                                           </Button>
                                       </div>
                                   </div>
@@ -586,148 +458,109 @@ const TeacherProfilePage = () => {
                           </div>
 
                           {/* Logg ut alle enheter */}
-                          <div className="flex items-center justify-between px-6 py-4">
+                          <div className="flex items-center justify-between py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Logg ut alle enheter</span>
                                   <span className="text-xs block text-foreground-muted">Logger deg ut overalt.</span>
                               </div>
-                              <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                      <Button
-                                          variant="outline-soft"
-                                          size="sm"
-                                          className="ml-4 shrink-0"
-                                      >
-                                          Logg ut alle
-                                      </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>Logg ut alle enheter?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
-                                          </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                                          <AlertDialogAction
-                                              onClick={handleLogoutAllDevices}
-                                              disabled={isLoggingOutAll}
-                                          >
-                                              {isLoggingOutAll ? 'Logger ut …' : 'Logg ut alle'}
-                                          </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
-                          </div>
-                      </Card>
-                  </section>
-
-                  {/* E-postvarslinger */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">E-postvarslinger</h2>
-                      <p className="text-sm mt-1 text-foreground-muted">Velg hvilke e-poster du vil motta.</p>
-                    </div>
-                    <Card className="md:col-span-2 gap-0 divide-y divide-border py-0">
-                          <div className="flex items-center justify-between px-6 py-4">
-                              <div>
-                                  <span className="text-sm font-medium block text-foreground">Nye påmeldinger</span>
-                                  <span className="text-xs block text-foreground-muted">Få e-post når noen melder seg på kurset ditt.</span>
-                              </div>
-                              <Switch
+                              <Button
+                                  variant="outline-soft"
                                   size="sm"
-                                  checked={notifications.newSignups}
-                                  onCheckedChange={() => handleNotificationToggle('newSignups')}
-                                  aria-label="Nye påmeldinger"
+                                  className="ml-4 shrink-0"
+                                  onClick={() => setLogoutAllOpen(true)}
+                              >
+                                  Logg ut alle
+                              </Button>
+                              <ConfirmDialog
+                                  open={logoutAllOpen}
+                                  onOpenChange={setLogoutAllOpen}
+                                  ariaLabel="Logg ut alle enheter"
+                                  headline="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
+                                  scope={
+                                      <ConfirmScopeItem
+                                          name={email || 'Kontoen din'}
+                                          meta="Aktiv på alle påloggede enheter"
+                                      />
+                                  }
+                                  actionLabel="Logg ut alle"
+                                  actionVariant="default"
+                                  onConfirm={handleLogoutAllDevices}
+                                  loading={isLoggingOutAll}
+                                  loadingText="Logger ut"
                               />
                           </div>
-
-                          <div className="flex items-center justify-between px-6 py-4">
-                              <div>
-                                  <span className="text-sm font-medium block text-foreground">Avbestillinger</span>
-                                  <span className="text-xs block text-foreground-muted">Få e-post når noen avbestiller.</span>
-                              </div>
-                              <Switch
-                                  size="sm"
-                                  checked={notifications.cancellations}
-                                  onCheckedChange={() => handleNotificationToggle('cancellations')}
-                                  aria-label="Avbestillinger"
-                              />
-                          </div>
-
-                      </Card>
+                      </div>
                   </section>
 
                   {/* Slett konto */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Slett konto</h2>
-                      <p className="text-sm mt-1 text-foreground-muted">Permanent sletting av kontoen din.</p>
                     </div>
-                    <Card className="md:col-span-2 gap-0 py-0">
-                          <div className="flex items-center justify-between px-6 py-4">
+                    <div className="md:col-span-2">
+                          <div className="flex items-center justify-between py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>
                                   <span className="text-xs block text-foreground-muted">All data slettes permanent.</span>
                               </div>
-                              <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmText(''); }}>
-                                  <AlertDialogTrigger asChild>
-                                      <Button
-                                          variant="destructive"
-                                          size="sm"
-                                          className="ml-4 shrink-0"
-                                      >
-                                          Slett konto
-                                      </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>Slette kontoen din?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres.
-                                          </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <div className="py-2">
-                                          <label htmlFor="delete-confirm" className="text-sm font-medium mb-1.5 block text-foreground">
-                                              Skriv SLETT for å bekrefte
-                                          </label>
-                                          <Input
-                                              id="delete-confirm"
-                                              value={deleteConfirmText}
-                                              onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                              placeholder="SLETT"
-                                              autoComplete="off"
-                                          />
-                                      </div>
-                                      <AlertDialogFooter>
-                                          <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                                          <AlertDialogAction
-                                              variant="destructive"
-                                              onClick={handleDeleteAccount}
-                                              disabled={deleteConfirmText !== 'SLETT'}
-                                          >
-                                              Slett
-                                          </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
+                              <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="ml-4 shrink-0"
+                                  onClick={() => setDeleteOpen(true)}
+                              >
+                                  Slett konto
+                              </Button>
+                              <ConfirmDialog
+                                  open={deleteOpen}
+                                  onOpenChange={(open) => {
+                                      setDeleteOpen(open);
+                                      if (!open) setDeleteConfirmText('');
+                                  }}
+                                  ariaLabel="Slett kontoen din"
+                                  headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
+                                  scope={
+                                      <ConfirmScopeItem
+                                          name={email || 'Kontoen din'}
+                                          meta="Permanent sletting"
+                                      />
+                                  }
+                                  actionLabel="Slett konto"
+                                  onConfirm={handleDeleteAccount}
+                                  disabled={deleteConfirmText !== 'SLETT'}
+                                  loading={isDeletingAccount}
+                                  loadingText="Sletter"
+                              >
+                                  <div className="grid gap-2">
+                                      <label htmlFor="delete-confirm" className="text-sm font-medium text-foreground">
+                                          Skriv SLETT for å bekrefte
+                                      </label>
+                                      <Input
+                                          id="delete-confirm"
+                                          value={deleteConfirmText}
+                                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                          placeholder="SLETT"
+                                          autoComplete="off"
+                                      />
+                                  </div>
+                              </ConfirmDialog>
                           </div>
-                      </Card>
+                      </div>
                   </section>
           </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}
             {isDirty && (
-              <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-3 border-t border-border bg-surface-elevated p-4 backdrop-blur-md md:static md:mt-8 md:border-none md:bg-transparent md:p-0 md:backdrop-blur-none">
+              <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-end gap-2 border-t border-border bg-surface p-4 md:static md:mt-8 md:border-none md:bg-transparent md:p-0">
                   <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={handleCancel}>Avbryt</Button>
                   <Button
                     size="sm"
-                    className="flex-1 md:flex-none justify-center"
+                    className="flex-1 justify-center md:flex-none"
                     onClick={handleSave}
-                    disabled={isSaving}
+                    loading={isSaving}
+                    loadingText="Lagrer"
                   >
-                      {isSaving ? 'Lagrer' : 'Lagre endringer'}
+                      Lagre endringer
                   </Button>
               </div>
             )}

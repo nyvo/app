@@ -21,11 +21,11 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
     const parts = dateStr.split('-');
     date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   } else {
-    return <div className={cn("size-11 rounded-lg bg-muted", className)} />;
+    return <div className={cn("size-12 rounded-lg bg-muted", className)} />;
   }
 
   if (isNaN(date.getTime())) {
-    return <div className={cn("size-11 rounded-lg bg-muted", className)} />;
+    return <div className={cn("size-12 rounded-lg bg-muted", className)} />;
   }
 
   const month = MONTHS[date.getMonth()];
@@ -34,12 +34,12 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
   return (
     <div
       className={cn(
-        "flex size-11 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
+        "flex size-12 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
         className
       )}
     >
-      <div className="flex h-3.5 items-center justify-center bg-[var(--secondary)]">
-        <span className="text-xs font-medium tracking-wide text-[9px] uppercase leading-none tracking-[0.06em] text-[var(--secondary-foreground)]">{month}</span>
+      <div className="flex h-3.5 items-center justify-center bg-muted">
+        <span className="text-xs font-medium leading-none text-foreground-muted">{month}</span>
       </div>
       <div className="flex flex-1 items-center justify-center">
         <span className="text-base font-semibold leading-none text-foreground">{day}</span>

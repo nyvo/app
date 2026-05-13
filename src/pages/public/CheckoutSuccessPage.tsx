@@ -2,10 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Leaf, AlertCircle, Home, CircleCheck, ImageIcon } from '@/lib/icons';
+import { Leaf, ImageIcon, Building } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
@@ -209,24 +208,20 @@ const CheckoutSuccessPage = () => {
             </Link>
           </div>
         </header>
-        <main className="pt-24 px-4 sm:px-6 pb-24">
-          <div className="mx-auto max-w-lg text-center">
-            <Card className="p-8 md:p-12">
-              <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-                <AlertCircle className="size-8 text-danger" />
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
-                Noe gikk galt
-              </h1>
-              <p className="text-base text-foreground-muted mb-8">{error}</p>
-              <Button asChild variant="default">
-                <Link to="/">
-                  <Home className="size-4 mr-2" />
-                  Til forsiden
-                </Link>
-              </Button>
-            </Card>
-          </div>
+        <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12 pt-24">
+          <h1 className="text-2xl font-semibold tracking-tight max-w-md text-foreground">
+            Noe gikk galt
+          </h1>
+          <p className="mt-3 text-sm text-foreground-muted max-w-md">{error}</p>
+          <Button size="sm" className="mt-7" onClick={() => window.location.reload()}>
+            Last på nytt
+          </Button>
+          <Link
+            to="/"
+            className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
+          >
+            eller gå til startsiden →
+          </Link>
         </main>
       </div>
     );
@@ -302,37 +297,32 @@ const CheckoutSuccessPage = () => {
                         className="size-8 rounded-md object-cover bg-muted"
                       />
                     ) : (
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-sm font-semibold text-foreground-muted">
-                        {orgName.charAt(0).toUpperCase()}
+                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-foreground-muted">
+                        <Building className="size-4" />
                       </div>
                     )}
                     <span className="text-base font-semibold text-foreground">{orgName}</span>
                   </div>
                 )}
 
-                {/* Success card — single centered surface, Uvodo-shaped. */}
-                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-surface p-7 sm:p-10 ring-1 ring-foreground/[0.04] shadow-[0_8px_32px_-12px_rgba(0,0,0,0.14)]">
-                  {/* Soft success indicator */}
-                  <div className="flex size-12 items-center justify-center rounded-full bg-success-subtle">
-                    <CircleCheck className="size-6 text-success" />
-                  </div>
-
-                  {/* Hero copy — warm, single-color subline */}
-                  <h1 className="mt-6 text-3xl sm:text-5xl font-semibold tracking-tight text-foreground">
-                    Du er påmeldt.
+                {/* Confirmation card — calm, no celebration chrome.
+                    Per patterns.md §19.4a: no green check, no shadow,
+                    no ring. Typography carries the moment. */}
+                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-surface p-6 sm:p-10">
+                  {/* Heading carries the success moment */}
+                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                    Du er påmeldt
                   </h1>
                   <p className="mt-3 text-base text-foreground-muted">
                     {signup
-                      ? `Du er påmeldt. Vi har sendt en bekreftelse til ${signup.participant_email}.`
-                      : isFreeSignup
-                        ? 'Du er påmeldt. Vi har sendt en bekreftelse til e-posten din.'
-                        : 'Betalingen er bekreftet. Vi har sendt en bekreftelse til e-posten din.'}
+                      ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
+                      : 'Vi har sendt en bekreftelse til e-posten din.'}
                   </p>
 
                   {signup && (
                     <>
                       {/* Course card — image + title + date/time. Nested card-in-card. */}
-                      <div className="mt-7 flex items-center gap-4 rounded-lg border border-border bg-background p-3.5">
+                      <div className="mt-8 flex items-center gap-4 rounded-lg border border-border bg-background p-3.5">
                         <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
                           {courseImage ? (
                             <img
@@ -358,7 +348,7 @@ const CheckoutSuccessPage = () => {
                       </div>
 
                       {/* Discreet meta row — booking date + paid amount */}
-                      <div className="mt-6 border-t border-border pt-5 space-y-2.5 text-sm">
+                      <div className="mt-6 border-t border-border pt-6 space-y-2.5 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">Påmeldt</span>
                           <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
@@ -377,25 +367,37 @@ const CheckoutSuccessPage = () => {
                     </>
                   )}
 
+                  {/* Cancellation policy reinforcement — per patterns.md §19.4.
+                      Stated plainly so customers who missed it during booking
+                      find it on the receipt. */}
+                  {!isFree && (
+                    <p className="mt-6 border-t border-border pt-6 text-sm text-foreground-muted">
+                      Avbestill innen 24 timer før kurset for full refusjon.
+                    </p>
+                  )}
+
                   {/* Support — contact studio if anything's off */}
                   {orgEmail && (
-                    <div className="mt-6 border-t border-border pt-5 text-sm text-foreground-muted">
+                    <p className="mt-3 text-sm text-foreground-muted">
                       Trenger du hjelp? Send en e-post til{' '}
                       <a
                         href={`mailto:${orgEmail}`}
-                        className="text-foreground underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground"
+                        className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
                       >
                         {orgEmail}
                       </a>
                       .
-                    </div>
+                    </p>
                   )}
                 </div>
 
-                {/* Single calm CTA below the card */}
+                {/* Single quiet CTA — back to the studio, NOT a "book another"
+                    upsell. Per patterns.md §19.4. */}
                 <div className="mt-8 flex justify-center">
-                  <Button asChild size="default">
-                    <Link to={studioUrl}>Se flere kurs</Link>
+                  <Button asChild variant="ghost" size="default">
+                    <Link to={studioUrl}>
+                      {orgName ? `Tilbake til ${orgName}` : 'Tilbake til studioet'}
+                    </Link>
                   </Button>
                 </div>
               </>

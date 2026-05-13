@@ -1,25 +1,13 @@
 import React from 'react';
-import { Image, ArrowRight } from '@/lib/icons';
+import { Image } from '@/lib/icons';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
-import { CourseDetailKpiStrip, type CourseDetailKpis } from '@/components/teacher/CourseDetailKpiStrip';
 import { SessionList } from '@/components/teacher/SessionList';
-import { cn, formatKroner } from '@/lib/utils';
-import { getInitials } from '@/utils/stringUtils';
+import { formatKroner } from '@/lib/utils';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
+import { Badge } from '@/components/ui/badge';
 import type { SignupStatus, PaymentStatus } from '@/types/database';
 import type { CourseWeek, SessionEditHandlers } from './session-types';
-
-const AVATAR_TONES = [
-  '#6B7280', '#4F6CB0', '#A66B4F', '#5C7E5A',
-  '#8B6A8F', '#B07B4F', '#707070', '#6E6E84',
-] as const;
-
-function avatarToneFor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  }
-  return AVATAR_TONES[hash % AVATAR_TONES.length];
-}
 
 interface RecentParticipant {
   id: string;
@@ -67,24 +55,10 @@ interface CourseOverviewTabProps {
   recentParticipants: RecentParticipant[];
   totalParticipantCount: number;
 
-  // KPIs (computed in parent from signups + course data)
-  kpis: CourseDetailKpis | null;
-  kpisLoading: boolean;
-
   // Tab navigation — for the "Se alle X" shortcut on Nylige påmeldinger
   onJumpToParticipants?: () => void;
 
   kursplanRef: React.RefObject<HTMLDivElement | null>;
-}
-
-function statusLabel(s: SignupStatus, p: PaymentStatus): { label: string; tone: 'foreground' | 'muted' | 'failed' } {
-  if (s === 'cancelled' || s === 'course_cancelled') {
-    if (p === 'refunded') return { label: 'Refundert', tone: 'muted' };
-    return { label: 'Avbestilt', tone: 'muted' };
-  }
-  if (p === 'failed') return { label: 'Betaling feilet', tone: 'failed' };
-  if (p === 'pending') return { label: 'Venter', tone: 'muted' };
-  return { label: 'Påmeldt', tone: 'foreground' };
 }
 
 export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
@@ -97,16 +71,11 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
   sessionEditHandlers,
   recentParticipants,
   totalParticipantCount,
-  kpis,
-  kpisLoading,
   onJumpToParticipants,
   kursplanRef,
 }) => {
   return (
-    <div className="space-y-5">
-      {/* KPI strip — replaces the old "Oversikt" meta-grid card */}
-      <CourseDetailKpiStrip kpis={kpis} loading={kpisLoading} />
-
+    <div className="space-y-6">
       {/* Om kurset — eyebrows dropped, lede paragraph emphasized */}
       <Card>
         <CardHeader>
@@ -133,31 +102,27 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
             <div className="min-w-0 flex-1 space-y-4">
               {course.description && (
-                <p className="text-[15px] leading-[1.55] text-foreground whitespace-pre-wrap">
+                <p className="text-base text-foreground whitespace-pre-wrap">
                   {course.description}
                 </p>
               )}
               {course.description2 && (
-                <p className="text-sm leading-[1.55] text-foreground-muted whitespace-pre-wrap">
+                <p className="text-sm text-foreground-muted whitespace-pre-wrap">
                   {course.description2}
                 </p>
               )}
               {(course.level || course.courseType === 'kursrekke') && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
+                <div className="flex flex-wrap gap-2 pt-1">
                   {course.level && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px] font-medium leading-[1.5]">
-                      {course.level}
-                    </span>
+                    <Badge variant="neutral" shape="pill">{course.level}</Badge>
                   )}
                   {course.courseType === 'kursrekke' && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px] font-medium leading-[1.5]">
-                      Voksne
-                    </span>
+                    <Badge variant="neutral" shape="pill">Voksne</Badge>
                   )}
                 </div>
               )}
               {!course.description && !course.description2 && (
-                <p className="text-sm leading-relaxed text-foreground-muted italic">
+                <p className="text-sm text-foreground-muted italic">
                   Ingen beskrivelse lagt til.
                 </p>
               )}
@@ -190,43 +155,29 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <button
                   type="button"
                   onClick={onJumpToParticipants}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:underline decoration-disabled-foreground underline-offset-2"
+                  className="inline-flex items-center text-sm font-medium text-foreground hover:underline underline-offset-4"
                 >
                   Se alle {totalParticipantCount}
-                  <ArrowRight className="size-3.5" strokeWidth={1.75} />
                 </button>
               </CardAction>
             )}
           </CardHeader>
           <CardContent>
             <div className="divide-y divide-border -my-2">
-              {recentParticipants.map((p) => {
-                const tone = avatarToneFor(p.name || p.email || '?');
-                const { label, tone: pillTone } = statusLabel(p.status, p.paymentStatus);
-                return (
-                  <div key={p.id} className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 py-2.5">
-                    <div
-                      className="size-8 rounded-full inline-flex items-center justify-center text-white text-[11px] font-semibold tracking-tight"
-                      style={{ background: tone }}
-                      aria-label={p.name}
-                    >
-                      {getInitials(p.name || p.email || null)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                      <p className="text-xs truncate text-foreground-muted">{p.email}</p>
-                    </div>
-                    <span className={cn(
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium leading-[1.5] shrink-0',
-                      pillTone === 'failed' && 'bg-foreground text-background',
-                      pillTone === 'muted' && 'bg-muted text-foreground-muted',
-                      pillTone === 'foreground' && 'bg-muted text-foreground',
-                    )}>
-                      {label}
-                    </span>
+              {recentParticipants.map((p) => (
+                <div key={p.id} className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 py-3">
+                  <UserAvatar name={p.name} email={p.email} size="sm" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
+                    <p className="text-xs truncate text-foreground-muted">{p.email}</p>
                   </div>
-                );
-              })}
+                  <SignupStatusBadge
+                    status={p.status}
+                    paymentStatus={p.paymentStatus}
+                    className="shrink-0"
+                  />
+                </div>
+              ))}
             </div>
             {/* Estimated revenue moved out of headline — surfaced as quiet meta */}
             {course.estimatedRevenue > 0 && (

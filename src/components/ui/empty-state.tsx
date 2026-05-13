@@ -1,54 +1,49 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import type { LucideIcon } from '@/lib/icons'
 
 interface EmptyStateProps {
-  icon?: LucideIcon
   title: string
   description?: string
   action?: React.ReactNode
+  /** Optional inline arrow link below the primary action — per § 6.
+   *  Use this for secondary paths so they don't compete with the CTA. */
+  inlineLink?: React.ReactNode
   className?: string
-  variant?: 'default' | 'public' | 'compact'
+  variant?: 'default' | 'compact'
 }
 
 /**
- * Reusable empty state component for displaying when lists are empty
+ * Empty state per Studio § 6 / § 13.5 — text-driven, no icon, no illustration.
+ * Three pieces in order: what is this (title) → why does it matter (description)
+ * → what should I do next (action). Secondary path is an inline arrow link
+ * below the primary, never a ghost button beside it.
  */
 export const EmptyState = React.memo(function EmptyState({
-  icon: Icon,
   title,
   description,
   action,
+  inlineLink,
   className,
-  variant = 'default'
+  variant = 'default',
 }: EmptyStateProps) {
-  const isPublic = variant === 'public'
   const isCompact = variant === 'compact'
 
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center px-4 text-center',
+        'flex flex-col items-center px-4 text-center mx-auto max-w-sm',
         isCompact ? 'py-8' : 'py-12',
-        className
+        className,
       )}
     >
-      {Icon && (
-        <div className={cn(
-          'mb-4 flex items-center justify-center rounded-lg border border-border',
-          isCompact ? 'size-10' : 'size-12',
-          isPublic ? 'bg-muted' : 'bg-background'
-        )}>
-          <Icon className={cn(isCompact ? 'size-4' : 'size-5', 'text-foreground-muted')} />
-        </div>
-      )}
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <p className="text-base font-semibold text-foreground">{title}</p>
       {description && (
-        <p className={cn('mt-1 text-foreground-muted', isCompact ? 'text-sm max-w-xs' : 'text-sm max-w-sm')}>
-          {description}
-        </p>
+        <p className="mt-1 text-sm text-foreground-muted">{description}</p>
       )}
       {action && <div className={cn(isCompact ? 'mt-4' : 'mt-6')}>{action}</div>}
+      {inlineLink && (
+        <div className="mt-3 text-sm">{inlineLink}</div>
+      )}
     </div>
   )
 })

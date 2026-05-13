@@ -1,13 +1,10 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import type { CourseType, CourseStatus, CourseLevel, Json } from '@/types/database'
-import type { PracticalInfo } from '@/types/practicalInfo'
+import type { CourseFormat, DeliveryMode, CourseStatus, CourseLevel } from '@/types/database'
 
 interface PublicCourseInstructor {
   id: string
   name: string | null
-  avatar_url: string | null
-  bio: string | null
   role: 'primary' | 'guest'
   display_order: number
 }
@@ -18,28 +15,22 @@ interface PublicCourseSeller {
   // populated via a follow-up team query and merged into this shape on the
   // returned PublicCourseWithDetails.
   slug: string
+  logo_url: string | null
   dintero_onboarding_complete: boolean
   default_course_image_url: string | null
-  address: string | null
-  postal_code: string | null
-  city: string | null
 }
 
 // Internal type for the joined course query result
 interface InstructorProfileJoinRow {
   id: string
   name: string | null
-  avatar_url: string | null
-  bio: string | null
 }
 
 interface SellerJoinRow {
   id: string
   name: string
+  logo_url: string | null
   dintero_onboarding_complete: boolean
-  address: string | null
-  postal_code: string | null
-  city: string | null
 }
 
 interface CourseQueryResult {
@@ -47,7 +38,8 @@ interface CourseQueryResult {
   slug: string
   title: string
   description: string | null
-  course_type: string
+  format: string
+  delivery_mode: string
   status: string
   level: string | null
   location: string | null
@@ -60,7 +52,6 @@ interface CourseQueryResult {
   end_date: string | null
   image_url: string | null
   seller_id: string
-  practical_info: Json | null
   seller: SellerJoinRow | null
   instructor: InstructorProfileJoinRow | null
 }
@@ -78,7 +69,8 @@ export interface PublicCourseWithDetails {
   slug: string
   title: string
   description: string | null
-  course_type: CourseType
+  format: CourseFormat
+  delivery_mode: DeliveryMode
   status: CourseStatus
   level: CourseLevel | null
   location: string | null
@@ -93,7 +85,6 @@ export interface PublicCourseWithDetails {
   end_date: string | null
   image_url: string | null
   seller_id: string
-  practical_info: PracticalInfo | null
   spots_available: number
   /** Seller info enriched with slug + default_course_image_url from the seller's team. */
   seller: PublicCourseSeller | null
@@ -102,6 +93,8 @@ export interface PublicCourseWithDetails {
   /** All instructors, primary first then guests in display_order. */
   instructors: PublicCourseInstructor[]
   next_session: NextSessionInfo | null
+  /** All future session dates (status='upcoming', session_date >= today), ascending. Powers the day strip. */
+  upcoming_session_dates: string[]
 }
 
 /** Wrap the single primary instructor (from courses.instructor_id) as a PublicCourseInstructor array. */
@@ -110,8 +103,6 @@ function flattenInstructors(profile: InstructorProfileJoinRow | null | undefined
   return [{
     id: profile.id,
     name: profile.name,
-    avatar_url: profile.avatar_url,
-    bio: profile.bio,
     role: 'primary',
     display_order: 0,
   }]
@@ -224,7 +215,8 @@ export async function fetchPublicCourses(
       slug,
       title,
       description,
-      course_type,
+      format,
+      delivery_mode,
       status,
       level,
       location,
@@ -237,9 +229,8 @@ export async function fetchPublicCourses(
       end_date,
       image_url,
       seller_id,
-      practical_info,
-      seller:sellers(id, name, dintero_onboarding_complete, address, postal_code, city),
-      instructor:profiles!instructor_id(id, name, avatar_url, bio)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete),
+      instructor:profiles!instructor_id(id, name)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -353,26 +344,29 @@ export async function fetchPublicCourses(
     signupCountMap[row.course_id] = Number(row.confirmed_count)
   }
 
-  // Build session maps (total count + next upcoming session per course)
+  // Build session maps (total count + next upcoming session + all upcoming dates per course)
   const totalSessionsMap: Record<string, number> = {}
   const nextSessionMap: Record<string, NextSessionInfo> = {}
+  const upcomingDatesMap: Record<string, string[]> = {}
   const sessionsTyped = sessionsResult.data as { course_id: string; session_date: string; session_number: number; status: string }[] | null
 
   for (const session of sessionsTyped || []) {
     // Count all sessions for total
     totalSessionsMap[session.course_id] = (totalSessionsMap[session.course_id] || 0) + 1
 
-    // Track first upcoming session per course
-    if (
-      session.status === 'upcoming' &&
-      session.session_date >= todayStr &&
-      !nextSessionMap[session.course_id]
-    ) {
-      nextSessionMap[session.course_id] = {
-        session_date: session.session_date,
-        session_number: session.session_number,
-        total_sessions: 0, // Will be set after we have all counts
+    if (session.status === 'upcoming' && session.session_date >= todayStr) {
+      // Track first upcoming session per course
+      if (!nextSessionMap[session.course_id]) {
+        nextSessionMap[session.course_id] = {
+          session_date: session.session_date,
+          session_number: session.session_number,
+          total_sessions: 0, // Will be set after we have all counts
+        }
       }
+      // Collect every upcoming date so the day strip can plot recurring weeks.
+      const arr = upcomingDatesMap[session.course_id]
+      if (arr) arr.push(session.session_date)
+      else upcomingDatesMap[session.course_id] = [session.session_date]
     }
   }
 
@@ -382,23 +376,32 @@ export async function fetchPublicCourses(
   }
 
   // Map to public format with spots available and next session
+  const today = new Date().toISOString().split('T')[0]
   const publicCourses: PublicCourseWithDetails[] = courses.map(course => {
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
     const instructors = flattenInstructors(course.instructor)
-    const dropInPrice = dropInPriceMap[course.id] ?? null
     const teamMeta = teamMetaMap[course.seller_id]
+    // Drop-in availability mirrors the RPC's gating: there must be an active
+    // drop-in tier row (the teacher's policy) AND the series must be
+    // started + have spots open. Price is computed at read time — never
+    // snapshotted, so it tracks the course base price.
+    const hasDropInTier = course.id in dropInPriceMap
+    const courseStarted = !!course.start_date && course.start_date <= today
+    const isEligibleSeries = course.format === 'series' && courseStarted && spotsAvailable > 0
+    const dropInActive = hasDropInTier && isEligibleSeries
+    const dropInPrice = !dropInActive
+      ? null
+      : (course.price && course.total_weeks ? Math.round(course.price / course.total_weeks) : null)
 
     const sellerEnriched: PublicCourseSeller | null = course.seller
       ? {
           name: course.seller.name,
           slug: teamMeta?.slug ?? '',
+          logo_url: course.seller.logo_url,
           dintero_onboarding_complete: course.seller.dintero_onboarding_complete,
           default_course_image_url: teamMeta?.default_course_image_url ?? null,
-          address: course.seller.address,
-          postal_code: course.seller.postal_code,
-          city: course.seller.city,
         }
       : null
 
@@ -407,7 +410,8 @@ export async function fetchPublicCourses(
       slug: course.slug,
       title: course.title,
       description: course.description,
-      course_type: course.course_type as CourseType,
+      format: course.format as CourseFormat,
+      delivery_mode: course.delivery_mode as DeliveryMode,
       status: course.status as CourseStatus,
       level: course.level as CourseLevel | null,
       location: course.location,
@@ -415,20 +419,20 @@ export async function fetchPublicCourses(
       duration: course.duration,
       max_participants: course.max_participants,
       price: course.price,
-      // Derived from active drop-in tier rows — see dropInTiersResult above.
-      allows_drop_in: dropInPrice !== null,
+      // Derived: active drop-in tier exists AND series + started + spots open.
+      allows_drop_in: dropInActive,
       drop_in_price: dropInPrice,
       total_weeks: course.total_weeks,
       start_date: course.start_date,
       end_date: course.end_date,
       image_url: course.image_url,
       seller_id: course.seller_id,
-      practical_info: (course.practical_info as unknown as PracticalInfo) || null,
       seller: sellerEnriched,
       instructor: instructors[0] ?? null,
       instructors,
       spots_available: spotsAvailable,
       next_session: nextSessionMap[course.id] || null,
+      upcoming_session_dates: upcomingDatesMap[course.id] ?? [],
     }
   })
 
@@ -454,7 +458,8 @@ export async function fetchPublicCourseBySlug(
       slug,
       title,
       description,
-      course_type,
+      format,
+      delivery_mode,
       status,
       level,
       location,
@@ -467,9 +472,8 @@ export async function fetchPublicCourseBySlug(
       end_date,
       image_url,
       seller_id,
-      practical_info,
-      seller:sellers(id, name, dintero_onboarding_complete, address, postal_code, city),
-      instructor:profiles!instructor_id(id, name, avatar_url, bio)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete),
+      instructor:profiles!instructor_id(id, name)
     `)
     .eq('slug', courseSlug)
     .neq('status', 'cancelled')
@@ -535,9 +539,19 @@ export async function fetchPublicCourseBySlug(
   const maxParticipants = typedCourse.max_participants || 0
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
 
-  // Drop-in tier may be missing — that just means no active drop-in offer.
+  // Drop-in availability: an active drop-in tier exists (teacher policy)
+  // AND the series has started + has spots open. Price always computed
+  // from the course base — no snapshot, no drift.
+  const today = new Date().toISOString().split('T')[0]
+  const courseStarted = !!typedCourse.start_date && typedCourse.start_date <= today
+  const isEligibleSeries = typedCourse.format === 'series' && courseStarted && spotsAvailable > 0
   const dropInTier = dropInResult.data as { price: number } | null
-  const dropInPrice = dropInTier ? Number(dropInTier.price) : null
+  const dropInActive = !!dropInTier && isEligibleSeries
+  const dropInPrice = !dropInActive
+    ? null
+    : (typedCourse.price && typedCourse.total_weeks
+        ? Math.round(typedCourse.price / typedCourse.total_weeks)
+        : null)
 
   const instructors = flattenInstructors(typedCourse.instructor)
   const teamMeta = teamMetaMap[typedCourse.seller_id]
@@ -546,11 +560,9 @@ export async function fetchPublicCourseBySlug(
     ? {
         name: typedCourse.seller.name,
         slug: teamMeta?.slug ?? '',
+        logo_url: typedCourse.seller.logo_url,
         dintero_onboarding_complete: typedCourse.seller.dintero_onboarding_complete,
         default_course_image_url: teamMeta?.default_course_image_url ?? null,
-        address: typedCourse.seller.address,
-        postal_code: typedCourse.seller.postal_code,
-        city: typedCourse.seller.city,
       }
     : null
 
@@ -559,7 +571,8 @@ export async function fetchPublicCourseBySlug(
     slug: typedCourse.slug,
     title: typedCourse.title,
     description: typedCourse.description,
-    course_type: typedCourse.course_type as CourseType,
+    format: typedCourse.format as CourseFormat,
+    delivery_mode: typedCourse.delivery_mode as DeliveryMode,
     status: typedCourse.status as CourseStatus,
     level: typedCourse.level as CourseLevel | null,
     location: typedCourse.location,
@@ -567,19 +580,19 @@ export async function fetchPublicCourseBySlug(
     duration: typedCourse.duration,
     max_participants: typedCourse.max_participants,
     price: typedCourse.price,
-    allows_drop_in: dropInPrice !== null,
+    allows_drop_in: dropInActive,
     drop_in_price: dropInPrice,
     total_weeks: typedCourse.total_weeks,
     start_date: typedCourse.start_date,
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
     seller_id: typedCourse.seller_id,
-    practical_info: (typedCourse.practical_info as unknown as PracticalInfo) || null,
     seller: sellerEnriched,
     instructor: instructors[0] ?? null,
     instructors,
     spots_available: spotsAvailable,
     next_session: null, // Detail page fetches sessions separately
+    upcoming_session_dates: [], // Detail page fetches sessions separately
   }
 
   return { data: publicCourse, error: null }

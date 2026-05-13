@@ -3,14 +3,14 @@ import type { VariantProps } from 'class-variance-authority';
 import type { SignupStatus } from '@/types/database';
 
 export type { SignupStatus };
-export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
+export type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed' | 'cancelled';
 export type BadgeStatus = SignupStatus | CourseStatus;
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
 const config: Record<BadgeStatus, { variant: BadgeVariant; label: string }> = {
   confirmed:        { variant: 'success', label: 'Påmeldt' },
-  cancelled:        { variant: 'neutral', label: 'Avbestilt' },
+  cancelled:        { variant: 'neutral', label: 'Avlyst' },
   course_cancelled: { variant: 'warning', label: 'Kurs avlyst' },
   draft:            { variant: 'neutral', label: 'Utkast' },
   active:           { variant: 'success', label: 'Pågår' },

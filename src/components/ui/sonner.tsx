@@ -14,8 +14,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
+          // Studio tokens — popover/popover-foreground don't exist in this
+          // design system, so the previous values resolved to transparent.
+          "--normal-bg": "var(--surface)",
+          "--normal-text": "var(--foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
         } as React.CSSProperties

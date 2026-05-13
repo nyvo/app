@@ -27,7 +27,7 @@ interface AuthFormFieldProps {
  * aria-invalid propagation, and show/hide toggle for password fields.
  *
  * Uses shadcn preset tokens: semantic label styles, Input with
- * border-input, aria-invalid for error styling.
+ * border-border, aria-invalid for error styling.
  */
 export function AuthFormField({
   id,
@@ -50,11 +50,12 @@ export function AuthFormField({
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type
 
   return (
-    <div className="space-y-1.5">
+    <div className="grid gap-2">
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="text-sm font-medium block text-foreground"
+          data-error={hasError || undefined}
+          className="text-sm font-medium block text-foreground data-[error=true]:text-danger"
         >
           {label}
         </label>
@@ -90,9 +91,9 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p id={`${id}-error`} role="alert" className="text-xs font-medium text-danger">{error}</p>
+        <p id={`${id}-error`} role="alert" className="text-sm text-danger">{error}</p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="text-xs text-foreground-muted flex items-center gap-1 transition-colors duration-200">
+        <p id={`${id}-hint`} className="text-sm text-foreground-muted flex items-center gap-1 transition-colors duration-200">
           {hintMet && <Check className="size-3.5" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

@@ -8,5 +8,6 @@ export const AUTH_ROUTES = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   confirmEmail: '/confirm-email',
+  callback: '/auth/callback',
   dashboard: '/overview',
 } as const

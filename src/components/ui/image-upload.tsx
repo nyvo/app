@@ -143,7 +143,7 @@ export function ImageUpload({
           <div className="relative h-full rounded-lg overflow-hidden border border-border bg-muted">
             <img src={displayUrl} alt="Kursbilde" className="w-full h-full object-cover" />
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+            <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
                 type="button"
                 variant="secondary"
@@ -179,27 +179,26 @@ export function ImageUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           className={`
-            relative h-full rounded-lg border
-            flex flex-col items-center justify-center gap-3 cursor-pointer
-            smooth-transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50
+            relative h-full rounded-lg border border-dashed
+            flex flex-col items-center justify-center gap-2 cursor-pointer p-6
+            transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15
             ${
               dragActive
-                ? 'border-ring bg-surface'
-                : 'border-input bg-surface hover:border-ring'
+                ? 'border-foreground bg-muted'
+                : 'border-border hover:bg-muted'
             }
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${displayError ? 'border-danger' : ''}
           `}
         >
-          <div className="size-10 rounded-lg bg-surface border border-input flex items-center justify-center">
-            <ImagePlus className="size-5 text-foreground-muted" />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-foreground">
-              {dragActive ? 'Slipp for å laste opp' : 'Legg til bilde'}
-            </p>
-            <p className="text-xs text-foreground-muted mt-1">Dra og slipp, eller velg fil</p>
-          </div>
+          <ImagePlus className="size-5 text-foreground-muted" aria-hidden="true" />
+          <p className="text-sm text-center">
+            <span className="font-medium text-foreground">
+              {dragActive ? 'Slipp for å laste opp' : 'Klikk for å laste opp'}
+            </span>
+            {!dragActive && <span className="text-foreground-muted"> eller dra og slipp</span>}
+          </p>
+          <p className="text-xs text-foreground-muted">PNG eller JPG · Maks 5 MB</p>
         </div>
       )}
 

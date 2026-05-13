@@ -6,23 +6,23 @@ Every value here is sourced from `design-model.yaml`. If a value isn't documente
 
 ## Color
 
-### Neutral (Radix `slate`, light)
+### Neutral (Radix `sand`, light)
 
 | Token | Hex | Use |
 |-------|-----|-----|
 | `--background` | `#ffffff` | Page canvas — the white surface everything sits on |
 | `--surface` | `#ffffff` | Cards (when used deliberately) — same value, different role |
-| `--muted` | `#f0f0f3` (slate-3) | Hover fill — sidebar item hover, button-secondary hover, muted surface |
-| `--active` | `#e8e8ec` (slate-4) | Selected fill — current sidebar item, picked date, multi-selected row |
-| `--border` | `#d9d9e0` (slate-6) | Default border, divider, separator (sidebar/main divider, list dividers, card border) |
-| `--foreground-disabled` | `#b9bbc6` (slate-8) | Disabled text, bullet separators, very muted meta |
-| `--foreground-muted` | `#60646c` (slate-11) | Secondary text — descriptions, form labels, captions, unselected nav items |
-| `--foreground` | `#1c2024` (slate-12) | Primary text — headings, body |
-| `--ring` | `#1c2024` (slate-12) | Focus ring |
+| `--muted` | `#f1f0ef` (sand-3) | Hover fill — sidebar item hover, button-secondary hover, muted surface |
+| `--active` | `#f1f0ef` (sand-3) | Selected fill — current sidebar item. Shares fill with hover; selected differs via `font-medium` + foreground text |
+| `--border` | `#dad9d6` (sand-6) | Default border, divider, separator (sidebar/main divider, list dividers, card border) |
+| `--foreground-disabled` | `#bcbbb5` (sand-8) | Disabled text, bullet separators, very muted meta |
+| `--foreground-muted` | `#63635e` (sand-11) | Secondary text — descriptions, form labels, captions, unselected nav items |
+| `--foreground` | `#21201c` (sand-12) | Primary text — headings, body |
+| `--ring` | `#21201c` (sand-12) | Focus ring |
 
-**Note:** `--background` and `--surface` are both `#ffffff` in light mode but have different semantic roles. `--background` is the page canvas; `--surface` is what cards sit on. They'd diverge in a future dark mode (e.g., `#0a0a0a` page vs `#111111` cards). Same value today, different contracts.
+**Note:** `--background` and `--surface` are both `#ffffff` in light mode but have different semantic roles. `--background` is the page canvas; `--surface` is what cards sit on. They'd diverge in a future dark mode. Same value today, different contracts.
 
-**The slate scale (1–12) still backs the system as primitives.** We use slate-3, 4, 6, 8, 11, and 12 as semantic tokens; slate-1, 2, 5, 7, 9, 10 are available as primitives if a future need arises.
+**The sand scale (1–12) backs the system as primitives.** We consume sand-3, 6, 8, 11, and 12 as semantic tokens; sand-1, 2, 4, 5, 7, 9, 10 are available as primitives if a future need arises.
 
 ### Status
 
@@ -35,17 +35,7 @@ Every value here is sourced from `design-model.yaml`. If a value isn't documente
 | `--danger-subtle` | `#feebec` (red-3) | Tinted background for "failed", "cancelled", "refunded" |
 | `--danger-fg` | `#ce2c31` (red-11) | Text/icon on danger surfaces |
 
-### Pop accents (course-card categorization)
-
-Three cool tints, all Radix-recommended pairings with slate. No predefined logic — assign to your categories as needed.
-
-| Token | Hex | Pair fg | Pair fg hex |
-|-------|-----|---------|------------|
-| `--accent-sky-subtle` | `#e1f6fd` (sky-3) | `--accent-sky-fg` | `#00749e` (sky-11) |
-| `--accent-mint-subtle` | `#ddf9f2` (mint-3) | `--accent-mint-fg` | `#027864` (mint-11) |
-| `--accent-iris-subtle` | `#f0f1fe` (iris-3) | `--accent-iris-fg` | `#5753c6` (iris-11) |
-
-**Usage rule:** one pop tint per card, max. Never two together.
+Studio has **no chromatic accent palette** (no sky / mint / iris pop tints). The system is strictly monochrome sand neutrals + the three status colors above. Category coding (course type, lesson delivery mode, etc.) uses text labels, not colored fills.
 
 ---
 
@@ -204,7 +194,7 @@ Smooth, calm. No spring physics. No bounce.
 
 ## Focus
 
-`ring-2 ring-foreground ring-offset-2 ring-offset-background` (shadcn pattern). 2px slate-12 ring + 2px white offset = visually distinct against any background.
+`ring-2 ring-foreground ring-offset-2 ring-offset-background` (shadcn pattern). 2px sand-12 ring + 2px white offset = visually distinct against any background.
 
 ```css
 button:focus-visible {

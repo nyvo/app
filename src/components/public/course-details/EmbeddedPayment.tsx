@@ -85,7 +85,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 ring-1 ring-foreground/[0.04] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.12)]">
+    <div className="rounded-lg border border-border bg-surface p-6">
       {/* Customer row — inline "Endre" replaces the detached "Tilbake" link */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -111,7 +111,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
         </div>
         {fee > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-foreground-muted">Servicegebyr</span>
+            <span className="text-foreground-muted">Tjenestegebyr</span>
             <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
           </div>
         )}
@@ -124,7 +124,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
       {/* Dintero iframe — same continuous card surface */}
       <div
         ref={containerRef}
-        className="mt-5 min-h-[420px] w-full overflow-hidden rounded-md border border-border"
+        className="mt-6 min-h-[420px] w-full overflow-hidden rounded-md border border-border"
       />
 
       {cancelled && (

@@ -1,49 +1,52 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { useCallback } from 'react';
+import { Navigate, Outlet, useSearchParams } from 'react-router-dom';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { TeacherShellProvider } from '@/components/teacher/TeacherShellContext';
 import { TeacherSidebar } from '@/components/teacher/TeacherSidebar';
-import { TeacherTopBar } from '@/components/teacher/TeacherTopBar';
+import { CourseDrawer } from '@/components/teacher/CourseDrawer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { WelcomeFlow } from '@/components/teacher/WelcomeFlow';
 import { useAuth } from '@/contexts/AuthContext';
-import { SignupDrawerProvider } from '@/contexts/SignupDrawerContext';
 
-// No teacher routes currently need full-width layout. Kept as an empty
-// array to preserve the existing isFullWidth conditional — easy to add a
-// route here later if a future page needs to escape the centered max-width.
-const FULL_WIDTH_ROUTES: string[] = [];
+/**
+ * `?kurs=:id` is a layout-wide overlay — opens the quick-glance drawer on
+ * top of whatever page is mounted (Timeplan, Mine kurs, etc.) without
+ * changing the underlying route. Removing the param closes it.
+ */
+function GlobalCourseDrawer() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const courseId = searchParams.get('kurs') || undefined;
+
+  const close = useCallback(() => {
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('kurs');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams]);
+
+  return <CourseDrawer courseId={courseId} onClose={close} />;
+}
 
 export default function TeacherLayout() {
-  const { profile, refreshSellers } = useAuth();
-  const { pathname } = useLocation();
-  const showWelcome = !!profile && !profile.onboarding_completed_at;
-  const isFullWidth = FULL_WIDTH_ROUTES.some((route) => pathname.startsWith(route));
+  const { profile } = useAuth();
+
+  // Unfinished onboarding → bounce to /onboarding. The onboarding route
+  // itself handles the role-branching internally.
+  if (profile && !profile.onboarding_completed_at) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <ProtectedRoute>
-      {showWelcome ? (
-        <WelcomeFlow onComplete={refreshSellers} />
-      ) : (
-        <SidebarProvider>
-          <TeacherShellProvider>
-            <SignupDrawerProvider>
-              <TeacherSidebar />
-              <SidebarInset>
-                <TeacherTopBar />
-                <div className="min-h-0 flex-1">
-                  {isFullWidth ? (
-                    <Outlet />
-                  ) : (
-                    <div className="mx-auto w-full max-w-[1600px]">
-                      <Outlet />
-                    </div>
-                  )}
-                </div>
-              </SidebarInset>
-            </SignupDrawerProvider>
-          </TeacherShellProvider>
-        </SidebarProvider>
-      )}
+      <SidebarProvider>
+        <TeacherSidebar />
+        <SidebarInset>
+          <Outlet />
+        </SidebarInset>
+        <GlobalCourseDrawer />
+      </SidebarProvider>
     </ProtectedRoute>
   );
 }

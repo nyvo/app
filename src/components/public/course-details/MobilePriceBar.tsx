@@ -31,7 +31,7 @@ export function MobilePriceBar({ course }: MobilePriceBarProps) {
 
   return (
     <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/90 backdrop-blur-md">
-      <div className="mx-auto max-w-6xl px-5 py-3 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
         <div className="min-w-0">
           <div className="text-xl font-semibold tracking-tight tabular-nums text-foreground">
             {formatCoursePrice(course.price)}

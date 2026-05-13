@@ -172,7 +172,10 @@ export async function setDefaultTicketType(
  * shape rather than persisting, so the editor can show the form prefilled.
  */
 export function buildDiscountDuplicate(source: TicketType): TicketTypeInsert {
-  const discountedPrice = Math.round(source.price * 0.75)
+  // Source price can be null when the tier inherits from a template — fall
+  // back to 0 in that case; the editor will surface the real price for the
+  // user to adjust before saving.
+  const discountedPrice = Math.round((source.price ?? 0) * 0.75)
   return {
     course_id: source.course_id,
     label: `${source.label} — student`,

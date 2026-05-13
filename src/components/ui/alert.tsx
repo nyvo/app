@@ -11,11 +11,11 @@ const alertVariants = cva(
       variant: {
         default: "bg-surface text-foreground",
         destructive:
-          "bg-surface text-danger *:data-[slot=alert-description]:text-danger/90 *:[svg]:text-current",
+          "bg-surface text-danger *:data-[slot=alert-description]:text-danger *:[svg]:text-current",
         info: "bg-surface [&_svg]:text-info",
         success: "bg-surface [&_svg]:text-success",
         warning: "bg-surface [&_svg]:text-warning",
-        error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger/90",
+        error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger",
         neutral: "bg-surface [&_svg]:text-foreground-muted",
       },
       size: {
@@ -100,7 +100,7 @@ function AlertTitle({
     <div
       data-slot="alert-title"
       className={cn(
-        "font-heading font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground",
+        "font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground",
         variant ? variantTextColor[variant] : "",
         className
       )}

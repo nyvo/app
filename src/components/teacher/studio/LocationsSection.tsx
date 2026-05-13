@@ -1,54 +1,40 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Check, Heart, Home, MapPin, MapPinPlus, DoorOpen, Plus, Trash2, X } from '@/lib/icons';
-import { badgeVariants } from '@/components/ui/badge';
+import { X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
-import { createLocation, updateLocation, deleteLocation, setFavoriteLocation } from '@/services/locations';
+import {
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  setFavoriteLocation,
+} from '@/services/locations';
 import { cn } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Locations management as a section that lives inside the Studio page.
-//
-// Previously this was its own route at /teacher/locations. Locations are
-// fundamentally a property of the studio (where the seller teaches), so they
-// belong on the studio page rather than as a top-level sidebar slot.
+// Locations as a small, optional sub-section of the Studio page. Row list
+// where each row inline-expands to reveal an edit form on Rediger. No modal,
+// no card grid — sellers set this once and forget.
 // ---------------------------------------------------------------------------
 
 const DEFAULT_NEW_NAME = 'Nytt sted';
 
-const ease = [0.23, 1, 0.32, 1] as const;
-const editSwap = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.12, ease },
-};
-
 export function LocationsSection() {
   const { currentSeller } = useAuth();
   const { locations, refetch } = useLocations(currentSeller?.id);
-  const [focusLocationId, setFocusLocationId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const handleCreate = async () => {
-    if (!currentSeller?.id || creating) return;
+  if (!currentSeller?.id) return null;
+
+  const handleAdd = async () => {
+    if (creating) return;
     setCreating(true);
     const { data, error } = await createLocation({
       seller_id: currentSeller.id,
@@ -61,138 +47,128 @@ export function LocationsSection() {
       toast.error('Kunne ikke opprette stedet');
       return;
     }
-    setFocusLocationId(data.id);
+    setOpenId(data.id);
     refetch();
   };
 
   return (
-    <section aria-labelledby="locations-heading" className="space-y-4">
-      <header>
-        <h2 id="locations-heading" className="text-xl font-semibold text-foreground">
-          Adresser
-        </h2>
-        <p className="mt-0.5 text-sm text-foreground-muted">
-          Lagre steder du bruker ofte, så kan du velge dem raskt når du oppretter kurs.
+    <div>
+      {locations.length === 0 ? (
+        <p className="text-sm text-foreground-muted">
+          Du har ikke lagt til noen steder ennå.
         </p>
-      </header>
+      ) : (
+        <ul className="divide-y divide-border">
+          {locations.map((loc) => (
+            <LocationRow
+              key={loc.id}
+              location={loc}
+              isOpen={openId === loc.id}
+              onToggle={() => setOpenId((id) => (id === loc.id ? null : loc.id))}
+              onChanged={refetch}
+              sellerId={currentSeller.id}
+            />
+          ))}
+        </ul>
+      )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {locations.map((loc) => (
-          <LocationCard
-            key={loc.id}
-            location={loc}
-            autoFocus={focusLocationId === loc.id}
-            hasFavorite={locations.some((l) => l.is_favorite)}
-            sellerId={currentSeller?.id}
-            onChanged={refetch}
-          />
-        ))}
-        <NewLocationCard onClick={handleCreate} loading={creating} />
+      <div className={locations.length > 0 ? 'pt-4' : 'pt-2'}>
+        <Button
+          variant="outline-soft"
+          size="sm"
+          onClick={handleAdd}
+          loading={creating}
+          loadingText="Oppretter"
+        >
+          Legg til sted
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }
 
-type EditField = 'name' | 'address' | null;
-
-function LocationCard({
+function LocationRow({
   location,
-  autoFocus,
-  hasFavorite,
-  sellerId,
+  isOpen,
+  onToggle,
   onChanged,
+  sellerId,
 }: {
   location: TeacherLocation;
-  autoFocus: boolean;
-  hasFavorite: boolean;
-  sellerId: string | undefined;
+  isOpen: boolean;
+  onToggle: () => void;
   onChanged: () => void;
+  sellerId: string;
 }) {
-  const [editingField, setEditingField] = useState<EditField>(autoFocus ? 'name' : null);
   const [name, setName] = useState(location.name);
   const [address, setAddress] = useState(location.address ?? '');
   const [rooms, setRooms] = useState<string[]>(location.rooms);
+  const [isFavorite, setIsFavorite] = useState(location.is_favorite);
   const [newRoom, setNewRoom] = useState('');
-  const [addingRoom, setAddingRoom] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const isFavorite = location.is_favorite;
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const nameRef = useRef<HTMLInputElement | null>(null);
-  const addressRef = useRef<HTMLInputElement | null>(null);
-  const newRoomRef = useRef<HTMLInputElement | null>(null);
 
+  // Re-sync when the underlying location changes or row opens/closes.
   useEffect(() => {
-    if (editingField !== 'name') setName(location.name);
-    if (editingField !== 'address') setAddress(location.address ?? '');
+    setName(location.name);
+    setAddress(location.address ?? '');
     setRooms(location.rooms);
-  }, [location.id, location.name, location.address, location.rooms, editingField]);
+    setIsFavorite(location.is_favorite);
+    setNewRoom('');
+  }, [location.id, location.name, location.address, location.rooms, location.is_favorite, isOpen]);
 
   useEffect(() => {
-    if (editingField === 'name') {
-      setTimeout(() => { nameRef.current?.focus(); nameRef.current?.select(); }, 0);
-    } else if (editingField === 'address') {
-      setTimeout(() => addressRef.current?.focus(), 0);
+    if (isOpen && location.name === DEFAULT_NEW_NAME) {
+      // Newly created — focus + select the name field.
+      setTimeout(() => {
+        nameRef.current?.focus();
+        nameRef.current?.select();
+      }, 50);
     }
-  }, [editingField]);
+  }, [isOpen, location.name]);
 
-  const saveField = async (updates: Partial<Pick<TeacherLocation, 'name' | 'address' | 'rooms'>>) => {
-    const { error } = await updateLocation(location.id, updates);
-    if (error) {
-      toast.error('Kunne ikke lagre endringen');
+  const addRoom = () => {
+    const trimmed = newRoom.trim();
+    if (!trimmed || rooms.includes(trimmed)) {
+      setNewRoom('');
       return;
     }
-    onChanged();
-  };
-
-  const commitName = () => {
-    const trimmed = name.trim() || DEFAULT_NEW_NAME;
-    setName(trimmed);
-    setEditingField(null);
-    if (trimmed !== location.name) saveField({ name: trimmed });
-  };
-
-  const cancelName = () => {
-    setName(location.name);
-    setEditingField(null);
-  };
-
-  const commitAddress = () => {
-    const trimmed = address.trim();
-    const next = trimmed || null;
-    setAddress(trimmed);
-    setEditingField(null);
-    if (next !== location.address) saveField({ address: next });
-  };
-
-  const cancelAddress = () => {
-    setAddress(location.address ?? '');
-    setEditingField(null);
-  };
-
-  const commitNewRoom = () => {
-    const trimmed = newRoom.trim();
+    setRooms((prev) => [...prev, trimmed]);
     setNewRoom('');
-    setAddingRoom(false);
-    if (!trimmed || rooms.includes(trimmed)) return;
-    const next = [...rooms, trimmed];
-    setRooms(next);
-    saveField({ rooms: next });
-  };
-
-  const startAddRoom = () => {
-    setAddingRoom(true);
-    setTimeout(() => newRoomRef.current?.focus(), 0);
   };
 
   const removeRoom = (room: string) => {
-    const next = rooms.filter((r) => r !== room);
-    setRooms(next);
-    saveField({ rooms: next });
+    setRooms((prev) => prev.filter((r) => r !== room));
+  };
+
+  const handleSave = async () => {
+    const trimmedName = name.trim() || DEFAULT_NEW_NAME;
+    setSaving(true);
+    const { error } = await updateLocation(location.id, {
+      name: trimmedName,
+      address: address.trim() || null,
+      rooms,
+    });
+    if (error) {
+      toast.error('Kunne ikke lagre stedet');
+      setSaving(false);
+      return;
+    }
+    if (isFavorite !== location.is_favorite) {
+      await setFavoriteLocation(sellerId, isFavorite ? location.id : null);
+    }
+    setSaving(false);
+    onChanged();
+    onToggle();
   };
 
   const handleDelete = async () => {
     setDeleting(true);
     const { error } = await deleteLocation(location.id);
     setDeleting(false);
+    setConfirmDelete(false);
     if (error) {
       toast.error('Kunne ikke slette stedet');
       return;
@@ -202,241 +178,157 @@ function LocationCard({
   };
 
   return (
-    <Card className="gap-0 py-0 flex flex-col">
-      <CardContent className="flex flex-1 flex-col gap-5 p-6">
-        <div className="flex items-start gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2">
-            <Home className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <AnimatePresence mode="wait" initial={false}>
-              {editingField === 'name' ? (
-                <motion.div key="name-edit" {...editSwap} className="flex items-center gap-1.5">
-                  <Input
-                    ref={nameRef}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); commitName(); }
-                      else if (e.key === 'Escape') cancelName();
-                    }}
-                    placeholder="Navn på stedet"
-                    className="h-7 max-w-56 px-2 text-sm font-medium shadow-none"
-                  />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitName} aria-label="Lagre">
-                    <Check className="size-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelName} aria-label="Avbryt">
-                    <X className="size-3.5" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="name-display"
-                  {...editSwap}
-                  type="button"
-                  onClick={() => setEditingField('name')}
-                  aria-label="Rediger navn"
-                  className="-mx-2 flex items-center gap-1.5 rounded px-2 text-left transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
-                >
-                  <h3 className="truncate text-base font-semibold text-foreground">{name}</h3>
-                  <span className="shrink-0 text-xs text-foreground-muted">Rediger</span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-          <Button
-            type="button"
-            variant="outline-soft"
-            size="sm"
-            disabled={!isFavorite && hasFavorite}
-            onClick={async () => {
-              if (!sellerId) return;
-              const { error } = await setFavoriteLocation(
-                sellerId,
-                isFavorite ? null : location.id
-              );
-              if (error) {
-                toast.error('Kunne ikke oppdatere favoritt');
-                return;
-              }
-              onChanged();
-            }}
-            aria-pressed={isFavorite}
-            className={cn(
-              'h-6 shrink-0 gap-1.5 px-2 text-xs transition-[background-color,border-color,color] duration-200 ease-out',
-              isFavorite && 'border-chart-2/20 bg-chart-2/10 text-chart-2 hover:bg-chart-2/20 hover:text-chart-2'
+    <li className="py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground truncate">{location.name}</span>
+            {location.is_favorite && (
+              <Badge variant="neutral" size="xs" shape="rect">Standard</Badge>
             )}
-          >
-            <motion.span
-              key={isFavorite ? 'fav' : 'unfav'}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 15, mass: 0.5 }}
-              className="flex items-center"
-            >
-              <Heart className={cn('size-3.5', isFavorite && 'fill-current')} />
-            </motion.span>
-            {isFavorite ? 'Favoritt' : 'Lagre som favoritt'}
-          </Button>
+          </div>
+          {location.address && !isOpen && (
+            <p className="mt-0.5 text-xs text-foreground-muted truncate">{location.address}</p>
+          )}
         </div>
+        <Button
+          variant={isOpen ? 'ghost' : 'outline-soft'}
+          size="sm"
+          className="shrink-0"
+          onClick={onToggle}
+        >
+          {isOpen ? 'Lukk' : 'Rediger'}
+        </Button>
+      </div>
 
-        <div className="space-y-4">
-          <div>
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground-muted">
-              <MapPin className="size-3.5" />
-              Adresse
-            </span>
-            <AnimatePresence mode="wait" initial={false}>
-              {editingField === 'address' ? (
-                <motion.div key="addr-edit" {...editSwap} className="flex items-center gap-1.5">
-                  <Input
-                    ref={addressRef}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); commitAddress(); }
-                      else if (e.key === 'Escape') cancelAddress();
-                    }}
-                    placeholder="Skriv inn adresse"
-                    className="h-7 max-w-64 px-2 text-sm shadow-none"
-                  />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitAddress} aria-label="Lagre">
-                    <Check className="size-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={cancelAddress} aria-label="Avbryt">
-                    <X className="size-3.5" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="addr-display"
-                  {...editSwap}
-                  type="button"
-                  onClick={() => setEditingField('address')}
-                  aria-label="Rediger adresse"
-                  className={cn(
-                    "-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-left text-sm transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none",
-                    address ? "text-foreground" : "text-foreground-muted"
-                  )}
-                >
-                  {!address && <Plus className="size-4 shrink-0" />}
-                  <span className="truncate">
-                    {address || 'Legg til adresse'}
-                  </span>
-                  {address && <span className="shrink-0 text-xs text-foreground-muted">Rediger</span>}
-                </motion.button>
-              )}
-            </AnimatePresence>
+      {isOpen && (
+        <div className="mt-4 space-y-4 rounded-lg bg-muted p-4">
+          <div className="grid gap-2">
+            <label htmlFor={`loc-name-${location.id}`} className="text-sm font-medium text-foreground">
+              Navn
+            </label>
+            <Input
+              ref={nameRef}
+              id={`loc-name-${location.id}`}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
 
-          <div>
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground-muted">
-              <DoorOpen className="size-3.5" />
-              Rom
-            </span>
+          <div className="grid gap-2">
+            <label htmlFor={`loc-addr-${location.id}`} className="text-sm font-medium text-foreground">
+              Adresse
+            </label>
+            <Input
+              id={`loc-addr-${location.id}`}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Storgata 1, 0123 Oslo"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <span className="text-sm font-medium text-foreground">Rom</span>
             {rooms.length > 0 && (
-              <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                <AnimatePresence initial={false}>
-                  {rooms.map((room) => (
-                    <motion.span
-                      key={room}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.15, ease }}
-                      className={cn(badgeVariants({ variant: 'secondary', shape: 'rect', size: 'md' }), 'h-7 pl-2 pr-1 gap-1')}
+              <div className="flex flex-wrap gap-1.5">
+                {rooms.map((room) => (
+                  <span
+                    key={room}
+                    className={cn(
+                      badgeVariants({ variant: 'secondary', shape: 'rect', size: 'md' }),
+                      'h-7 pl-2 pr-1 gap-1',
+                    )}
+                  >
+                    {room}
+                    <button
+                      type="button"
+                      onClick={() => removeRoom(room)}
+                      className="flex size-5 items-center justify-center rounded text-foreground-muted transition-colors hover:bg-background hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      aria-label={`Fjern ${room}`}
                     >
-                      {room}
-                      <button
-                        type="button"
-                        onClick={() => removeRoom(room)}
-                        className="flex size-5 items-center justify-center rounded text-foreground-muted transition-[color] duration-150 ease-out hover:bg-background hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                        aria-label={`Fjern ${room}`}
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </motion.span>
-                  ))}
-                </AnimatePresence>
+                      <X className="size-3.5" />
+                    </button>
+                  </span>
+                ))}
               </div>
             )}
-            <AnimatePresence mode="wait" initial={false}>
-              {addingRoom ? (
-                <motion.div key="room-edit" {...editSwap} className="flex items-center gap-1.5">
-                  <Input
-                    ref={newRoomRef}
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); commitNewRoom(); }
-                      else if (e.key === 'Escape') { setNewRoom(''); setAddingRoom(false); }
-                    }}
-                    placeholder="Navn på rom"
-                    className="h-7 w-32 px-2 text-xs"
-                  />
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={commitNewRoom} aria-label="Lagre">
-                    <Check className="size-3.5" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon-xs" onClick={() => { setNewRoom(''); setAddingRoom(false); }} aria-label="Avbryt">
-                    <X className="size-3.5" />
-                  </Button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="room-add"
-                  {...editSwap}
-                  type="button"
-                  onClick={startAddRoom}
-                  className="-mx-2 flex items-center gap-1.5 rounded px-2 py-0.5 text-sm text-foreground-muted transition-[background-color] duration-150 ease-out hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none"
-                >
-                  <Plus className="size-4" />
-                  Legg til rom
-                </motion.button>
-              )}
-            </AnimatePresence>
+            <div className="flex items-center gap-2">
+              <Input
+                value={newRoom}
+                onChange={(e) => setNewRoom(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addRoom();
+                  }
+                }}
+                placeholder="Sal 1"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline-soft"
+                size="sm"
+                onClick={addRoom}
+                disabled={!newRoom.trim()}
+              >
+                Legg til
+              </Button>
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={isFavorite}
+              onCheckedChange={(c) => setIsFavorite(!!c)}
+            />
+            <span className="text-sm text-foreground">Bruk som standard når jeg oppretter kurs</span>
+          </label>
+
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-danger hover:text-danger hover:bg-danger-subtle"
+              onClick={() => setConfirmDelete(true)}
+            >
+              Slett sted
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" size="sm" onClick={onToggle}>
+                Avbryt
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSave}
+                loading={saving}
+                loadingText="Lagrer"
+              >
+                Lagre
+              </Button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="mt-auto border-t border-border pt-4">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" size="sm">
-                <Trash2 className="size-3.5" />
-                Slett sted
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Slette {location.name}?</AlertDialogTitle>
-                <AlertDialogDescription>Dette kan ikke angres.</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} disabled={deleting}>
-                  {deleting ? 'Sletter' : 'Slett'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function NewLocationCard({ onClick, loading }: { onClick: () => void; loading: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={loading}
-      className="group flex min-h-40 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border bg-transparent p-6 text-center outline-none transition-[background-color,border-color] duration-150 ease-out hover:border-foreground hover:bg-muted/50 focus-visible:border-foreground focus-visible:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
-    >
-      <div className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground-muted transition-[color] duration-150 ease-out group-hover:text-foreground">
-        <MapPinPlus className={cn('size-4', loading && 'animate-pulse')} />
-        {loading ? 'Oppretter …' : 'Legg til sted'}
-      </div>
-    </button>
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        ariaLabel="Slett sted"
+        headline="Stedet slettes. Det kan ikke angres."
+        scope={
+          <ConfirmScopeItem
+            name={location.name}
+            meta={location.address || (location.rooms.length > 0 ? `${location.rooms.length} rom` : 'Ingen adresse')}
+          />
+        }
+        actionLabel="Slett sted"
+        onConfirm={handleDelete}
+        loading={deleting}
+        loadingText="Sletter"
+      />
+    </li>
   );
 }

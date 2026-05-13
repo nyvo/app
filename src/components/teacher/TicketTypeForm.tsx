@@ -45,8 +45,8 @@ import type {
 
 const AUDIENCE_LABELS: Record<TicketAudience, string> = {
   standard: 'Standard',
-  student: 'Student / ufør / pensjon',
-  senior: 'Senior',
+  student: 'Student',
+  senior: 'Honnør',
   staff: 'Personale',
 }
 

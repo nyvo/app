@@ -18,7 +18,6 @@ export interface IncomingInvite {
     id: string;
     slug: string;
     name: string;
-    description: string | null;
     cover_image_url: string | null;
   };
 }
@@ -33,9 +32,64 @@ export interface OutgoingAffiliate {
   seller: {
     id: string;
     name: string;
-    city: string | null;
     logo_url: string | null;
   };
+}
+
+/** Unified row for the members table — owner row + active affiliates. */
+export interface TeamMember {
+  sellerId: string;
+  name: string;
+  email: string | null;
+  role: 'owner' | 'member';
+}
+
+/** Active members of a team: the owner (first) + each active affiliate. */
+export async function fetchTeamMembers(
+  teamId: string,
+): Promise<{ data: TeamMember[]; error: Error | null }> {
+  // Owner — derived from teams.owner_seller_id.
+  const { data: team, error: teamError } = await supabase
+    .from('teams')
+    .select('owner_seller_id, owner:sellers!inner(id, name, email)')
+    .eq('id', teamId)
+    .maybeSingle();
+
+  if (teamError) return { data: [], error: teamError as Error };
+  if (!team) return { data: [], error: null };
+
+  const owner = (team as { owner: { id: string; name: string; email: string | null } | null }).owner;
+
+  // Active affiliates.
+  const { data: rows, error: affErr } = await supabase
+    .from('team_affiliations')
+    .select('seller_id, seller:sellers!inner(id, name, email)')
+    .eq('team_id', teamId)
+    .eq('status', 'active');
+
+  if (affErr) return { data: [], error: affErr as Error };
+
+  const members: TeamMember[] = [];
+  if (owner) {
+    members.push({
+      sellerId: owner.id,
+      name: owner.name,
+      email: owner.email,
+      role: 'owner',
+    });
+  }
+  for (const r of (rows ?? []) as Array<{
+    seller_id: string;
+    seller: { id: string; name: string; email: string | null };
+  }>) {
+    members.push({
+      sellerId: r.seller.id,
+      name: r.seller.name,
+      email: r.seller.email,
+      role: 'member',
+    });
+  }
+  return { data: members, error: null };
 }
 
 /**
@@ -52,7 +106,7 @@ export async function fetchIncomingInvites(
     .from('team_affiliations')
     .select(`
       team_id, seller_id, status, invited_at,
-      team:teams!inner(id, slug, name, description, cover_image_url)
+      team:teams!inner(id, slug, name, cover_image_url)
     `)
     .in('seller_id', sellerIds)
     .order('invited_at', { ascending: false });
@@ -75,7 +129,7 @@ export async function fetchTeamAffiliates(
     .from('team_affiliations')
     .select(`
       team_id, seller_id, status, invited_at, responded_at,
-      seller:sellers!inner(id, name, city, logo_url)
+      seller:sellers!inner(id, name, logo_url)
     `)
     .eq('team_id', teamId)
     .order('invited_at', { ascending: false });

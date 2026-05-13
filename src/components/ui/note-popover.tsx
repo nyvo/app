@@ -19,7 +19,7 @@ export function NotePopover({ note, className }: NotePopoverProps) {
           aria-label="Les notat"
           className={cn(
             badgeVariants({ variant: 'neutral', shape: 'rect', size: 'md' }),
-            'cursor-pointer smooth-transition hover:bg-foreground-muted/10 hover:text-foreground',
+            'cursor-pointer transition-colors duration-150 hover:bg-muted hover:text-foreground',
             className,
           )}
         >

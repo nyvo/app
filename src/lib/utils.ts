@@ -43,3 +43,21 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function isValidEmail(email: string): boolean {
   return EMAIL_REGEX.test(email);
 }
+
+/**
+ * Lowercase + diacritic-strip for Norwegian-name list filters.
+ *
+ * Required for every Studio search input over user-typed text (see
+ * `studio-design § 20`): plain `.toLowerCase().includes(q)` fails on names
+ * like `Mårten Sønnergård` when the user types `morten sonner`. NFD splits
+ * accented characters into base + combining mark, then `\p{Diacritic}` strips
+ * the marks — so `å → a`, `ø → o`, `æ → ae`-ish (æ has no decomposition, but
+ * it still folds consistently against itself). Combine with
+ * `toLocaleLowerCase('nb-NO')` so the casing rules respect Norwegian.
+ */
+export function foldNorwegian(value: string): string {
+  return value
+    .toLocaleLowerCase('nb-NO')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+}

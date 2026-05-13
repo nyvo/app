@@ -1,515 +1,290 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Mail, X, Check, UserPlus, Trash2, ChevronDown, LogOut } from '@/lib/icons';
+import { ImageIcon, MoreVertical } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { fetchCourses } from '@/services/courses';
+import { fetchTeamMembers, revokeAffiliation, type TeamMember } from '@/services/affiliations';
 import {
-  fetchIncomingInvites,
-  fetchTeamAffiliates,
-  inviteAffiliateByEmail,
-  respondToInvite,
-  revokeAffiliation,
-  fetchListedCourseIds,
-  addCourseListing,
-  removeCourseListing,
-  type IncomingInvite,
-  type OutgoingAffiliate,
-} from '@/services/affiliations';
-import type { Course } from '@/types/database';
+  fetchActiveInviteLink,
+  createInviteLink,
+} from '@/services/invite-links';
+import { supabase } from '@/lib/supabase';
+import type { TeamInviteLink } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Affiliations UI — storefront syndication.
+// Team UI — split by seller type.
 //
-// Three panels:
-//   1. "Invitasjoner til deg"     — pending invites (Godta / Avslå)
-//   2. "Du samarbeider med"       — active affiliations the user accepted,
-//                                    with per-course listing toggles + leave
-//   3. "På din studio-side"       — affiliates of the user's OWN team,
-//                                    with revoke + invite-by-email form
+// Business / studio (owner side):
+//   - Invite link panel: copyable link + "Lag ny lenke".
+//   - Members table: Eier + Medlems with kebab to Fjern medlem.
+//
+// Individual teacher (member side):
+//   - Active team header: cover + name + URL.
+//   - Same members table read-only.
+//   - "Forlat team" button below the table.
+//
+// Empty state for individuals: "Du har ikke et team enda."
 // ---------------------------------------------------------------------------
 
 export function AffiliationsSection() {
-  const { sellers, currentSeller, currentTeam, user } = useAuth();
-  const sellerIds = useMemo(() => sellers.map((s) => s.id), [sellers]);
+  const { currentSeller, currentTeam } = useAuth();
+  const isBusiness = currentSeller?.seller_type === 'business';
 
-  const [invitesAndActive, setInvitesAndActive] = useState<IncomingInvite[]>([]);
-  const [incomingLoading, setIncomingLoading] = useState(true);
+  if (!currentSeller) return null;
 
-  const [affiliates, setAffiliates] = useState<OutgoingAffiliate[]>([]);
-  const [affiliatesLoading, setAffiliatesLoading] = useState(true);
+  if (isBusiness) {
+    if (!currentTeam) return null;
+    return <BusinessView teamId={currentTeam.id} />;
+  }
 
-  const loadIncoming = useCallback(async () => {
-    if (sellerIds.length === 0) {
-      setInvitesAndActive([]);
-      setIncomingLoading(false);
-      return;
-    }
-    setIncomingLoading(true);
-    const { data } = await fetchIncomingInvites(sellerIds);
-    // Drop declined rows from the freelancer view (clutter once said no).
-    setInvitesAndActive(data.filter((r) => r.status !== 'declined'));
-    setIncomingLoading(false);
-  }, [sellerIds]);
-
-  const loadAffiliates = useCallback(async () => {
-    if (!currentTeam?.id) {
-      setAffiliates([]);
-      setAffiliatesLoading(false);
-      return;
-    }
-    setAffiliatesLoading(true);
-    const { data } = await fetchTeamAffiliates(currentTeam.id);
-    setAffiliates(data.filter((r) => r.status !== 'declined'));
-    setAffiliatesLoading(false);
-  }, [currentTeam?.id]);
-
-  useEffect(() => { loadIncoming(); }, [loadIncoming]);
-  useEffect(() => { loadAffiliates(); }, [loadAffiliates]);
-
-  const pendingInvites = invitesAndActive.filter((r) => r.status === 'pending');
-  const activeInvites = invitesAndActive.filter((r) => r.status === 'active');
-
-  return (
-    <section aria-labelledby="affiliations-heading" className="space-y-8">
-      <header>
-        <h2 id="affiliations-heading" className="text-xl font-semibold text-foreground">
-          Samarbeid
-        </h2>
-        <p className="mt-0.5 text-sm text-foreground-muted">
-          La andre instruktørers kurs vises på din studio-side, eller bli
-          invitert til å vises på en annen.
-        </p>
-      </header>
-
-      {/* Panel 1: Pending incoming invites */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-foreground">Invitasjoner til deg</h3>
-        {incomingLoading ? (
-          <LoadingRow />
-        ) : pendingInvites.length === 0 ? (
-          <p className="text-sm text-foreground-muted">
-            Du har ingen åpne invitasjoner.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {pendingInvites.map((invite) => (
-              <PendingInviteCard
-                key={`${invite.team_id}-${invite.seller_id}`}
-                invite={invite}
-                onResponded={loadIncoming}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Panel 2: Active affiliations (freelancer side) */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-foreground">Du samarbeider med</h3>
-        <p className="text-xs text-foreground-muted">
-          Velg hvilke kurs som skal vises på studio-sider du samarbeider med.
-        </p>
-        {incomingLoading ? (
-          <LoadingRow />
-        ) : activeInvites.length === 0 ? (
-          <p className="text-sm text-foreground-muted">
-            Ingen aktive samarbeid ennå.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {activeInvites.map((invite) => (
-              <ActiveAffiliationCard
-                key={`${invite.team_id}-${invite.seller_id}`}
-                invite={invite}
-                onChanged={loadIncoming}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Panel 3: My team's affiliates + invite form */}
-      {currentTeam && currentSeller ? (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-foreground">På din studio-side</h3>
-          <p className="text-xs text-foreground-muted">
-            Inviter andre instruktører til å la kursene sine vises på{' '}
-            <span className="font-medium text-foreground">{currentTeam.name}</span>.
-          </p>
-
-          <InviteForm
-            teamId={currentTeam.id}
-            inviterUserId={user?.id ?? null}
-            onInvited={loadAffiliates}
-          />
-
-          {affiliatesLoading ? (
-            <LoadingRow />
-          ) : affiliates.length === 0 ? (
-            <p className="text-sm text-foreground-muted pt-2">
-              Ingen samarbeid ennå.
-            </p>
-          ) : (
-            <div className="space-y-2 pt-2">
-              {affiliates.map((aff) => (
-                <AffiliateCard
-                  key={`${aff.team_id}-${aff.seller_id}`}
-                  affiliate={aff}
-                  onChanged={loadAffiliates}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ) : null}
-    </section>
-  );
+  return <IndividualView sellerId={currentSeller.id} />;
 }
 
-function LoadingRow() {
+// ───────────────────────────────────────────────────────────────────────────
+// Business view — invite link + members table + manage actions
+// ───────────────────────────────────────────────────────────────────────────
+
+function BusinessView({ teamId }: { teamId: string }) {
+  const [members, setMembers] = useState<TeamMember[] | null>(null);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoadingMembers(true);
+    const { data } = await fetchTeamMembers(teamId);
+    setMembers(data);
+    setLoadingMembers(false);
+  }, [teamId]);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
   return (
-    <div className="flex items-center gap-2 text-sm text-foreground-muted">
-      <Spinner size="sm" />
-      Laster …
+    <div className="space-y-6">
+      <InviteLinkPanel teamId={teamId} />
+      <MembersTable
+        members={members}
+        loading={loadingMembers}
+        kebabFor={(m) => (m.role === 'owner' ? null : (
+          <MemberActionsMenu
+            teamId={teamId}
+            member={m}
+            onRevoked={refresh}
+          />
+        ))}
+      />
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Pending incoming invite — Godta / Avslå
-// ---------------------------------------------------------------------------
+// ───────────────────────────────────────────────────────────────────────────
+// Individual view — host team header + read-only members table + leave action
+// ───────────────────────────────────────────────────────────────────────────
 
-function PendingInviteCard({
-  invite,
-  onResponded,
-}: {
-  invite: IncomingInvite;
-  onResponded: () => void;
-}) {
-  const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
-
-  const respond = async (accept: boolean) => {
-    setBusy(accept ? 'accept' : 'decline');
-    const { error } = await respondToInvite({
-      teamId: invite.team_id,
-      sellerId: invite.seller_id,
-      accept,
-    });
-    setBusy(null);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(accept ? 'Invitasjon godtatt.' : 'Invitasjon avslått.');
-    onResponded();
-  };
-
-  return (
-    <Card className="gap-0 p-0">
-      <CardContent className="flex items-start justify-between gap-3 p-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground truncate">{invite.team.name}</p>
-          {invite.team.description && (
-            <p className="text-xs text-foreground-muted truncate mt-0.5">
-              {invite.team.description}
-            </p>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => respond(true)}
-            loading={busy === 'accept'}
-            disabled={busy !== null}
-          >
-            <Check className="size-3.5" />
-            Godta
-          </Button>
-          <Button
-            variant="outline-soft"
-            size="sm"
-            onClick={() => respond(false)}
-            loading={busy === 'decline'}
-            disabled={busy !== null}
-          >
-            <X className="size-3.5" />
-            Avslå
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+interface HostTeam {
+  id: string;
+  slug: string;
+  name: string;
+  cover_image_url: string | null;
 }
 
-// ---------------------------------------------------------------------------
-// Active affiliation — expandable course-listing toggles + leave button
-// ---------------------------------------------------------------------------
-
-function ActiveAffiliationCard({
-  invite,
-  onChanged,
-}: {
-  invite: IncomingInvite;
-  onChanged: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
+function IndividualView({ sellerId }: { sellerId: string }) {
+  const [host, setHost] = useState<HostTeam | null | undefined>(undefined);
+  const [members, setMembers] = useState<TeamMember[] | null>(null);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
-  const [courses, setCourses] = useState<Course[] | null>(null);
-  const [listedIds, setListedIds] = useState<Set<string>>(new Set());
-  const [loadingList, setLoadingList] = useState(false);
-  const [pendingToggleId, setPendingToggleId] = useState<string | null>(null);
+  const loadHost = useCallback(async () => {
+    // The individual's "active team" = the team they have an active
+    // affiliation with. With single-team enforcement, this is at most one.
+    const { data, error } = await supabase
+      .from('team_affiliations')
+      .select('team_id, team:teams!inner(id, slug, name, cover_image_url)')
+      .eq('seller_id', sellerId)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
 
-  const loadList = useCallback(async () => {
-    if (!expanded) return;
-    setLoadingList(true);
-    const [coursesResult, listedResult] = await Promise.all([
-      courses === null
-        ? fetchCourses(invite.seller_id)
-        : Promise.resolve({ data: courses, error: null }),
-      fetchListedCourseIds({ teamId: invite.team_id, sellerId: invite.seller_id }),
-    ]);
-    if (!coursesResult.error && coursesResult.data) setCourses(coursesResult.data);
-    if (!listedResult.error) setListedIds(listedResult.data);
-    setLoadingList(false);
-  }, [expanded, invite.team_id, invite.seller_id, courses]);
-
-  useEffect(() => { loadList(); }, [loadList]);
-
-  const toggleCourse = async (courseId: string, listed: boolean) => {
-    setPendingToggleId(courseId);
-    // Optimistic update
-    setListedIds((prev) => {
-      const next = new Set(prev);
-      if (listed) next.add(courseId);
-      else next.delete(courseId);
-      return next;
-    });
-    const { error } = listed
-      ? await addCourseListing({ courseId, teamId: invite.team_id })
-      : await removeCourseListing({ courseId, teamId: invite.team_id });
-    setPendingToggleId(null);
     if (error) {
-      // Revert on error
-      setListedIds((prev) => {
-        const next = new Set(prev);
-        if (listed) next.delete(courseId);
-        else next.add(courseId);
-        return next;
-      });
-      toast.error(error.message);
+      setHost(null);
+      return;
     }
-  };
+    const t = (data as { team: HostTeam | null } | null)?.team ?? null;
+    setHost(t);
+  }, [sellerId]);
+
+  const loadMembers = useCallback(async (teamId: string) => {
+    setLoadingMembers(true);
+    const { data } = await fetchTeamMembers(teamId);
+    setMembers(data);
+    setLoadingMembers(false);
+  }, []);
+
+  useEffect(() => { void loadHost(); }, [loadHost]);
+  useEffect(() => {
+    if (host?.id) void loadMembers(host.id);
+  }, [host?.id, loadMembers]);
 
   const handleLeave = async () => {
+    if (!host) return;
     setLeaving(true);
-    const { error } = await revokeAffiliation({
-      teamId: invite.team_id,
-      sellerId: invite.seller_id,
-    });
+    const { error } = await revokeAffiliation({ teamId: host.id, sellerId });
     setLeaving(false);
     setConfirmLeave(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success('Samarbeid avsluttet.');
-    onChanged();
+    toast.success('Du har forlatt teamet.');
+    setHost(null);
+    setMembers(null);
   };
 
-  // Filter to publishable course statuses; drafts can be listed but in
-  // practice teachers list active/upcoming courses. Show all for control.
-  const visibleCourses = courses ?? [];
+  if (host === undefined) {
+    return <LoadingRow />;
+  }
+
+  if (host === null) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-8 text-center">
+        <p className="text-sm font-medium text-foreground">Du har ikke et team enda</p>
+        <p className="text-sm text-foreground-muted mt-1 max-w-xs mx-auto">
+          Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <Card className="gap-0 p-0">
-        <CardContent className="p-0">
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className="w-full flex items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <ChevronDown
-                className={cn(
-                  'size-4 shrink-0 text-foreground-muted transition-transform',
-                  !expanded && '-rotate-90',
-                )}
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{invite.team.name}</p>
-                <p className="text-xs text-foreground-muted truncate mt-0.5 tabular-nums">
-                  {listedIds.size} kurs vises
-                </p>
-              </div>
-            </div>
-          </button>
+    <div className="space-y-6">
+      {/* Host team header */}
+      <div className="flex items-center gap-3">
+        <HostCover url={host.cover_image_url} />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{host.name}</p>
+          <p className="text-xs text-foreground-muted truncate">
+            {window.location.host}/{host.slug}
+          </p>
+        </div>
+      </div>
 
-          {expanded && (
-            <div className="border-t border-border px-4 py-4 space-y-4">
-              {loadingList ? (
-                <LoadingRow />
-              ) : visibleCourses.length === 0 ? (
-                <p className="text-sm text-foreground-muted">
-                  Du har ingen kurs ennå. Opprett et kurs for å la det vises på{' '}
-                  {invite.team.name}.
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {visibleCourses.map((c) => {
-                    const isListed = listedIds.has(c.id);
-                    const isPending = pendingToggleId === c.id;
-                    return (
-                      <label
-                        key={c.id}
-                        className={cn(
-                          'flex items-center gap-3 rounded-md px-2 py-1.5 cursor-pointer hover:bg-muted/40 transition-colors',
-                          isPending && 'opacity-60',
-                        )}
-                      >
-                        <Checkbox
-                          checked={isListed}
-                          onCheckedChange={(checked) => toggleCourse(c.id, !!checked)}
-                          disabled={isPending}
-                          aria-label={`Vis ${c.title} på ${invite.team.name}`}
-                        />
-                        <span className="text-sm text-foreground truncate flex-1">{c.title}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+      <MembersTable members={members} loading={loadingMembers} />
 
-              <div className="border-t border-border pt-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConfirmLeave(true)}
-                  className="text-foreground-muted hover:text-foreground"
-                >
-                  <LogOut className="size-3.5" />
-                  Avslutt samarbeid
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex justify-end">
+        <Button
+          variant="outline-soft"
+          size="sm"
+          className="text-danger"
+          onClick={() => setConfirmLeave(true)}
+        >
+          Forlat team
+        </Button>
+      </div>
 
-      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avslutt samarbeid med {invite.team.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Kursene dine slutter å vises på {invite.team.name} sin side. Du kan
-              bli invitert på nytt senere.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLeave} disabled={leaving} variant="destructive">
-              {leaving ? 'Avslutter …' : 'Avslutt'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      <ConfirmDialog
+        open={confirmLeave}
+        onOpenChange={setConfirmLeave}
+        ariaLabel="Forlat team"
+        headline="Kursene dine slutter å vises på studio-siden. Du kan bli invitert på nytt senere."
+        scope={<ConfirmScopeItem name={host.name} meta="Medlem av teamet" />}
+        actionLabel="Forlat team"
+        onConfirm={handleLeave}
+        loading={leaving}
+        loadingText="Forlater"
+      />
+    </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Invite-by-email form (studio side)
-// ---------------------------------------------------------------------------
+function HostCover({ url }: { url: string | null }) {
+  if (url) {
+    return (
+      <div className="size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+        <img src={url} alt="" className="size-full object-cover" />
+      </div>
+    );
+  }
+  return (
+    <div className="size-10 shrink-0 rounded-md bg-muted flex items-center justify-center">
+      <ImageIcon className="size-5 text-foreground-muted" aria-hidden="true" />
+    </div>
+  );
+}
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// ───────────────────────────────────────────────────────────────────────────
+// Members table primitive — reused by both views
+// ───────────────────────────────────────────────────────────────────────────
 
-function InviteForm({
+function MembersTable({
+  members,
+  loading,
+  kebabFor,
+}: {
+  members: TeamMember[] | null;
+  loading: boolean;
+  kebabFor?: (m: TeamMember) => React.ReactNode;
+}) {
+  if (loading || members === null) {
+    return (
+      <div className="rounded-md border border-border bg-surface">
+        <div className="p-4"><LoadingRow /></div>
+      </div>
+    );
+  }
+  if (members.length === 0) {
+    return (
+      <div className="rounded-md border border-border bg-surface p-4">
+        <p className="text-sm text-foreground-muted">Ingen medlemmer ennå.</p>
+      </div>
+    );
+  }
+  const hasKebab = !!kebabFor;
+  return (
+    <ul className="rounded-md border border-border bg-surface overflow-hidden">
+      {members.map((m, i) => (
+        <li
+          key={m.sellerId}
+          className={cn(
+            'grid items-center gap-4 px-4 py-3',
+            hasKebab ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]',
+            i > 0 && 'border-t border-border',
+          )}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+            {m.email && (
+              <p className="text-xs text-foreground-muted truncate">{m.email}</p>
+            )}
+          </div>
+          {m.role === 'owner' ? (
+            <Badge variant="inverted" shape="pill">Eier</Badge>
+          ) : (
+            <Badge variant="neutral" shape="pill">Medlem</Badge>
+          )}
+          {hasKebab && (kebabFor!(m) ?? <span className="w-9" aria-hidden="true" />)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function MemberActionsMenu({
   teamId,
-  inviterUserId,
-  onInvited,
+  member,
+  onRevoked,
 }: {
   teamId: string;
-  inviterUserId: string | null;
-  onInvited: () => void;
-}) {
-  const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviterUserId) return;
-    const trimmed = email.trim();
-    if (!EMAIL_REGEX.test(trimmed)) {
-      toast.error('Skriv inn en gyldig e-post.');
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await inviteAffiliateByEmail({
-      teamId,
-      email: trimmed,
-      inviterUserId,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success('Invitasjon sendt.');
-    setEmail('');
-    onInvited();
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
-      <div className="relative flex-1">
-        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground-muted pointer-events-none" />
-        <Input
-          type="email"
-          placeholder="instruktør@eksempel.no"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="pl-9"
-          disabled={submitting}
-        />
-      </div>
-      <Button type="submit" disabled={submitting || !email.trim()} loading={submitting}>
-        <UserPlus className="size-4" />
-        Inviter
-      </Button>
-    </form>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Studio's view of an affiliate (revoke button + status pill)
-// ---------------------------------------------------------------------------
-
-function AffiliateCard({
-  affiliate,
-  onChanged,
-}: {
-  affiliate: OutgoingAffiliate;
-  onChanged: () => void;
+  member: TeamMember;
+  onRevoked: () => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -517,8 +292,8 @@ function AffiliateCard({
   const handleRevoke = async () => {
     setDeleting(true);
     const { error } = await revokeAffiliation({
-      teamId: affiliate.team_id,
-      sellerId: affiliate.seller_id,
+      teamId,
+      sellerId: member.sellerId,
     });
     setDeleting(false);
     setConfirmOpen(false);
@@ -526,64 +301,158 @@ function AffiliateCard({
       toast.error(error.message);
       return;
     }
-    toast.success('Samarbeid avsluttet.');
-    onChanged();
+    toast.success('Fjernet fra teamet.');
+    onRevoked();
   };
-
-  const isPending = affiliate.status === 'pending';
 
   return (
     <>
-      <Card className="gap-0 p-0">
-        <CardContent className="flex items-center justify-between gap-3 p-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-foreground truncate">
-                {affiliate.seller.name}
-              </p>
-              {isPending && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-foreground-muted">
-                  Venter
-                </span>
-              )}
-            </div>
-            {affiliate.seller.city && (
-              <p className="text-xs text-foreground-muted mt-0.5 truncate">
-                {affiliate.seller.city}
-              </p>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setConfirmOpen(true)}
-            aria-label={isPending ? 'Trekk tilbake invitasjon' : 'Avslutt samarbeid'}
-          >
-            <Trash2 className="size-3.5" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Handlinger">
+            <MoreVertical className="size-4" />
           </Button>
-        </CardContent>
-      </Card>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="text-danger focus:text-danger"
+            onClick={() => setConfirmOpen(true)}
+          >
+            Fjern medlem
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {isPending ? 'Trekk tilbake invitasjon?' : 'Avslutt samarbeid?'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {isPending
-                ? `Invitasjonen til ${affiliate.seller.name} fjernes. Du kan invitere på nytt senere.`
-                : `Kurs fra ${affiliate.seller.name} blir fjernet fra studio-siden din.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRevoke} disabled={deleting} variant="destructive">
-              {deleting ? 'Fjerner …' : 'Bekreft'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        ariaLabel="Fjern fra team"
+        headline="Kursene blir fjernet fra studio-siden din."
+        scope={<ConfirmScopeItem name={member.name} meta="Medlem av teamet" />}
+        actionLabel="Fjern fra team"
+        onConfirm={handleRevoke}
+        loading={deleting}
+        loadingText="Fjerner"
+      />
     </>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Invite link panel — replaces the old email invite form
+// ───────────────────────────────────────────────────────────────────────────
+
+function InviteLinkPanel({ teamId }: { teamId: string }) {
+  const [link, setLink] = useState<TeamInviteLink | null | undefined>(undefined);
+  const [creating, setCreating] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const { data } = await fetchActiveInviteLink(teamId);
+    setLink(data);
+  }, [teamId]);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const handleGenerate = async () => {
+    setCreating(true);
+    const { data, error } = await createInviteLink(teamId);
+    setCreating(false);
+    if (error || !data) {
+      toast.error(error?.message ?? 'Kunne ikke lage lenke.');
+      return;
+    }
+    setLink(data);
+    toast.success('Ny lenke laget.');
+  };
+
+  const handleCopy = async () => {
+    if (!link) return;
+    const url = `${window.location.origin}/join/${link.code}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Lenke kopiert.');
+    } catch {
+      toast.error('Kunne ikke kopiere — kopier manuelt.');
+    }
+  };
+
+  // Loading shimmer
+  if (link === undefined) {
+    return (
+      <div>
+        <div className="flex gap-2">
+          <div className="h-9 flex-1 rounded-md border border-border bg-muted" />
+          <div className="h-9 w-20 rounded-full bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!link) {
+    return (
+      <div>
+        <p className="text-sm text-foreground-muted mb-2">
+          Du har ikke en aktiv invitasjonslenke.
+        </p>
+        <Button
+          size="sm"
+          onClick={() => void handleGenerate()}
+          loading={creating}
+          loadingText="Lager"
+        >
+          Lag invitasjonslenke
+        </Button>
+      </div>
+    );
+  }
+
+  const host = window.location.host;
+  const expires = new Date(link.expires_at);
+  const daysLeft = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 86400000));
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <div className="flex h-9 flex-1 items-center rounded-md border border-border bg-surface text-sm overflow-hidden min-w-0">
+          <span className="pl-3 text-foreground-muted shrink-0">{host}</span>
+          <span className="px-1 text-foreground-muted shrink-0">/</span>
+          <span className="text-foreground-muted shrink-0">join</span>
+          <span className="px-1 text-foreground-muted shrink-0">/</span>
+          <input
+            readOnly
+            value={link.code}
+            className="flex-1 min-w-0 bg-transparent pr-3 text-foreground outline-none tabular-nums"
+            aria-label="Invitasjonskode"
+          />
+        </div>
+        <Button variant="outline-soft" size="sm" onClick={() => void handleCopy()}>
+          Kopier
+        </Button>
+      </div>
+      <p className="mt-2 text-xs text-foreground-muted">
+        Gyldig i {daysLeft} {daysLeft === 1 ? 'dag' : 'dager'}.{' '}
+        <button
+          type="button"
+          className="underline hover:text-foreground transition-colors disabled:opacity-50"
+          disabled={creating}
+          onClick={() => void handleGenerate()}
+        >
+          {creating ? 'Lager …' : 'Lag ny lenke'}
+        </button>
+      </p>
+    </div>
+  );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Misc
+// ───────────────────────────────────────────────────────────────────────────
+
+function LoadingRow() {
+  return (
+    <div className="flex items-center gap-2 text-sm text-foreground-muted">
+      <Spinner size="sm" />
+      Laster …
+    </div>
   );
 }

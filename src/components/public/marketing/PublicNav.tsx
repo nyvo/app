@@ -32,24 +32,24 @@ export function PublicNav({ studioName, studioSlug, overlay = false }: PublicNav
       className={cn(
         'relative z-40 w-full transition-[background-color,backdrop-filter,border-color] duration-300',
         scrolled
-          ? 'bg-background/80 backdrop-blur-md border-b border-border/60'
+          ? 'bg-background backdrop-blur-md border-b border-border'
           : 'bg-transparent border-b border-transparent',
       )}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5 sm:px-8">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="flex size-7 items-center justify-center rounded-md border border-border bg-background/60 group-hover:bg-background transition-colors">
+          <span className="flex size-7 items-center justify-center rounded-md border border-border bg-background group-hover:bg-muted transition-colors">
             <Leaf className="size-3.5 text-foreground" strokeWidth={1.75} />
           </span>
-          <span className="text-[15px] font-medium tracking-tight text-foreground">Ease</span>
+          <span className="text-base font-medium tracking-tight text-foreground">Ease</span>
         </Link>
 
         {studioName && studioSlug && (
           <Link
             to={`/${studioSlug}`}
-            className="hidden sm:flex items-center gap-2 text-xs font-medium tracking-wide uppercase text-foreground-muted hover:text-foreground transition-colors"
+            className="hidden sm:flex items-center gap-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
           >
-            <span className="hidden md:inline text-foreground-disabled">studio /</span>
+            <span className="hidden md:inline text-foreground-disabled">Studio /</span>
             <span className="truncate max-w-[200px]">{studioName}</span>
           </Link>
         )}

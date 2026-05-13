@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import type { Profile, Seller, SellerMemberRole, Team } from '@/types/database'
+import type { Profile, Seller, SellerMemberRole, Team, UserRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 
@@ -36,6 +36,11 @@ interface AuthContextType {
   ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
   switchSeller: (sellerId: string) => void
   refreshSellers: () => Promise<void>
+
+  // Onboarding methods
+  setRole: (role: UserRole) => Promise<{ error: Error | null }>
+  completeBuyerOnboarding: (input: { name: string; phone?: string }) => Promise<{ error: Error | null }>
+  markOnboardingComplete: () => Promise<{ error: Error | null }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -389,9 +394,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logo_url: null,
       email: null,
       phone: null,
-      address: null,
-      city: null,
-      postal_code: null,
       dintero_seller_id: null,
       dintero_approval_id: null,
       dintero_contract_url: null,
@@ -419,9 +421,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: row.team_id,
       slug: row.team_slug,
       name: row.seller_name,
-      description: null,
-      address: null,
-      city: null,
       cover_image_url: null,
       default_course_image_url: null,
       owner_seller_id: row.seller_id,
@@ -432,6 +431,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTeamsBySellerId((prev) => ({ ...prev, [seller.id]: stubTeam }))
 
     return { seller, error: null }
+  }, [])
+
+  // Onboarding — write the role the user picked in the RoleChooser step.
+  // No auto-side-effects: a buyer doesn't get a seller stub here, a seller
+  // doesn't get a team here. Those happen later in their respective forms.
+  const setRole = useCallback(async (role: UserRole) => {
+    const userId = userRef.current?.id
+    if (!userId) return { error: new Error('Ikke pålogget') }
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', userId)
+    if (error) return { error: error as Error }
+    setProfile((prev) => (prev ? { ...prev, role } : prev))
+    return { error: null }
+  }, [])
+
+  // Onboarding — buyer finishes the single-form step. Writes name + phone
+  // and stamps onboarding_completed_at in one call.
+  const completeBuyerOnboarding = useCallback(async (input: { name: string; phone?: string }) => {
+    const userId = userRef.current?.id
+    if (!userId) return { error: new Error('Ikke pålogget') }
+    const patch = {
+      name: input.name.trim(),
+      phone: input.phone?.trim() || null,
+      onboarding_completed_at: new Date().toISOString(),
+    }
+    const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
+    if (error) return { error: error as Error }
+    setProfile((prev) => (prev ? { ...prev, ...patch } : prev))
+    return { error: null }
+  }, [])
+
+  // Onboarding — seller finishes the profile + slug steps. Just stamps
+  // onboarding_completed_at (name + slug are persisted via ensureSeller).
+  const markOnboardingComplete = useCallback(async () => {
+    const userId = userRef.current?.id
+    if (!userId) return { error: new Error('Ikke pålogget') }
+    const stamp = new Date().toISOString()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ onboarding_completed_at: stamp })
+      .eq('id', userId)
+    if (error) return { error: error as Error }
+    setProfile((prev) => (prev ? { ...prev, onboarding_completed_at: stamp } : prev))
+    return { error: null }
   }, [])
 
   // Switch seller
@@ -489,7 +534,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updatePassword,
     ensureSeller,
     switchSeller,
-    refreshSellers
+    refreshSellers,
+    setRole,
+    completeBuyerOnboarding,
+    markOnboardingComplete,
   }), [
     user?.id,
     profile?.id,
@@ -509,7 +557,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updatePassword,
     ensureSeller,
     switchSeller,
-    refreshSellers
+    refreshSellers,
+    setRole,
+    completeBuyerOnboarding,
+    markOnboardingComplete,
   ])
 
   return (

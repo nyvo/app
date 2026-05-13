@@ -73,6 +73,13 @@ extending it.
 
 ## 4. Unified studio model — drop `/space/` entirely
 
+> **⚠️ Superseded 2026-05-12** — the **two-toggle onboarding flow** in this
+> section was overruled. New onboarding is buyer/seller account-type:
+> see `dashboard-rebuild-status.md` item #1. Each account is its own source
+> of truth; cross-storefront collaboration happens via `team_affiliations`
+> *after* signup, not at onboarding. The studio/course/affiliation model
+> below still holds — only the welcome flow shape changed.
+
 The current split between `/studio/<org-slug>` (solo teacher's page) and
 `/space/<slug>` (multi-tenant aggregate) is the source of multiple confusions
 in the feedback. Both teachers AND students struggle with the URL fork.
@@ -206,12 +213,16 @@ Default: `course.start_date`. Late signups override to `today`. Update
 
 ## 6. Multi-day events
 
-A weekend retreat is one event running Sat + Sun. Data model already supports
-it — `course_sessions` per course, regardless of `course_type`. **Verify** the
-`CreateCoursePage` flow exposes "Add another day" for events. If not, surface
-the affordance.
+> **Updated 2026-05-12** — `CreateCoursePage` no longer exists. Entry point
+> is `CreateCourseDrawer`, currently offers Én gang / Flere ganger and
+> hard-codes `eventDays: 1` for single events. Reframed as the
+> **Enkelt / Gjentakende** rewrite — see `dashboard-rebuild-status.md`
+> item #8.
 
-Sized: 2 hours.
+A weekend retreat is one event running Sat + Sun. Data model already supports
+it — `course_sessions` per course, regardless of `course_type`. The
+`Enkelt` branch must let the user add additional days (multi-day, not
+multi-week). The `Gjentakende` branch keeps weekly recurrence with `total_weeks`.
 
 ## 7. Phone field on the booking form
 

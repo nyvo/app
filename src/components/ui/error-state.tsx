@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { AlertCircle, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
 
@@ -9,20 +8,30 @@ interface ErrorStateProps {
   onRetry?: () => void
   retryLabel?: string
   className?: string
+  /**
+   * default — bare, lives directly on the page canvas (use inside an existing card)
+   * inline  — bare with reduced vertical padding (small slots)
+   * card    — wraps itself in a bordered surface (when not already inside a card)
+   */
   variant?: 'default' | 'inline' | 'card'
 }
 
 const variantClasses = {
-  default: 'flex flex-col items-center justify-center h-64 text-center',
+  default: 'flex flex-col items-center justify-center p-6 text-center',
   inline: 'flex flex-col items-center justify-center py-8 px-4 text-center',
-  card: 'flex flex-col items-center justify-center h-64 rounded-lg border border-border bg-surface text-center',
+  card: 'flex flex-col items-center justify-center rounded-lg border border-border p-6 text-center',
 }
 
+/**
+ * Section-level error per Studio § 13.4 — bounded retry inside a single widget.
+ * Text-driven; no chromatic icon. Prefer this over a page-level error when only
+ * one card or list has failed.
+ */
 export const ErrorState = React.memo(function ErrorState({
-  title = 'Noe gikk galt',
-  message = 'Kunne ikke laste inn dataene.',
+  title = 'Kunne ikke laste innholdet',
+  message = 'Sjekk forbindelsen og prøv igjen. Hvis problemet vedvarer, ta kontakt.',
   onRetry,
-  retryLabel = 'Prøv på nytt',
+  retryLabel = 'Prøv igjen',
   className,
   variant = 'default'
 }: ErrorStateProps) {
@@ -32,18 +41,15 @@ export const ErrorState = React.memo(function ErrorState({
       role="alert"
       aria-live="polite"
     >
-      <div className="mb-4 flex size-12 items-center justify-center rounded-lg border border-danger/20 bg-danger-subtle">
-        <AlertCircle className="size-6 text-danger" aria-hidden="true" />
-      </div>
-      <h3 className="text-base font-semibold mb-1 text-foreground">{title}</h3>
-      <p className="text-sm mb-4 max-w-xs text-foreground-muted">{message}</p>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 text-sm text-foreground-muted max-w-sm">{message}</p>
       {onRetry && (
         <Button
           variant="outline-soft"
           size="sm"
           onClick={onRetry}
+          className="mt-4"
         >
-          <RefreshCw className="size-3.5" aria-hidden="true" />
           {retryLabel}
         </Button>
       )}

@@ -8,7 +8,8 @@ import type {
   CourseSession,
   CourseSessionInsert,
   CourseSessionUpdate,
-  CourseType,
+  CourseFormat,
+  DeliveryMode,
   SessionStatus,
 } from '@/types/database'
 
@@ -230,13 +231,13 @@ function generateSessionDates(
   const baseDate = new Date(courseData.start_date + 'T12:00:00') // noon avoids timezone drift
   const results: { date: string; startTime: string }[] = []
 
-  if (courseData.course_type === 'course-series' && courseData.total_weeks) {
+  if (courseData.format === 'series' && courseData.total_weeks) {
     for (let i = 0; i < courseData.total_weeks; i++) {
       const d = new Date(baseDate.getTime())
       d.setDate(baseDate.getDate() + i * 7)
       results.push({ date: formatLocalDateKey(d), startTime })
     }
-  } else if (courseData.course_type === 'event') {
+  } else if (courseData.format === 'single') {
     const eventDays = options?.eventDays || 1
     const overrides = options?.sessionTimeOverrides || []
 
@@ -391,6 +392,84 @@ export async function updateCourse(courseId: string, courseData: CourseUpdate): 
   }
 
   return { data: data as Course, error: null }
+}
+
+/**
+ * Toggle drop-in availability for a course. Single source of truth — the
+ * existence of an `is_active=true` drop-in tier row on `course_signup_packages`
+ * is the policy. The RPC `available_ticket_types` gates the runtime exposure
+ * (course must be a series, started, with spots open) and computes the price
+ * on read as `course.price ÷ course.total_weeks` — no snapshot, no drift.
+ *
+ * - `enabled=true` upserts/reactivates the drop-in tier.
+ * - `enabled=false` deactivates it (preserves the row so past signups' FKs
+ *   remain valid).
+ *
+ * The stored `price` column on the tier row is functionally dead for drop-in
+ * tiers (the RPC overrides it on every read), but we write `0` on upsert to
+ * satisfy NOT NULL and signal explicitly that the value isn't trusted.
+ */
+export async function syncCourseDropInTier(
+  courseId: string,
+  enabled: boolean,
+): Promise<{ error: Error | null }> {
+  const { data: existing, error: fetchError } = await supabase
+    .from('course_signup_packages')
+    .select('id')
+    .eq('course_id', courseId)
+    .eq('ticket_kind', 'drop_in')
+    .maybeSingle()
+
+  if (fetchError) return { error: fetchError as Error }
+
+  if (!enabled) {
+    if (!existing) return { error: null }
+    const { error: updateError } = await supabase
+      .from('course_signup_packages')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', existing.id)
+    return { error: updateError as Error | null }
+  }
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('course_signup_packages')
+      .update({
+        is_active: true,
+        label: 'Drop-in',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+    return { error: updateError as Error | null }
+  }
+
+  const { error: insertError } = await supabase
+    .from('course_signup_packages')
+    .insert({
+      course_id: courseId,
+      label: 'Drop-in',
+      ticket_kind: 'drop_in',
+      audience: 'standard',
+      price: 0, // ignored by the RPC; computed at read time
+      is_active: true,
+      is_default: false,
+    })
+  return { error: insertError as Error | null }
+}
+
+/**
+ * Returns true when the course currently has an active drop-in tier row.
+ * This is the canonical "is drop-in offered?" check the teacher UI reads.
+ */
+export async function fetchDropInTierActive(courseId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('course_signup_packages')
+    .select('id')
+    .eq('course_id', courseId)
+    .eq('ticket_kind', 'drop_in')
+    .eq('is_active', true)
+    .maybeSingle()
+  return !!data
 }
 
 // Publish a draft course (sets status to 'upcoming')
@@ -563,7 +642,8 @@ export interface SessionScheduleRow {
   sessionId: string
   courseId: string
   courseTitle: string
-  courseType: CourseType
+  courseFormat: CourseFormat
+  deliveryMode: DeliveryMode
   sessionDate: string        // YYYY-MM-DD
   startTime: string          // HH:MM
   endTime: string            // HH:MM (calculated from duration if null)

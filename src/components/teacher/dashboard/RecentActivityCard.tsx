@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { UserPlus, type LucideIcon } from '@/lib/icons'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -7,22 +8,19 @@ import {
   CardAction,
   CardContent,
 } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatRelativeTimePast } from '@/utils/dateFormatting'
-import { toSignupDisplay } from '@/utils/signupDisplay'
-import { useSignupDrawer } from '@/contexts/SignupDrawerContext'
+import { routes } from '@/lib/routes'
 import type { SignupWithDetails } from '@/services/signups'
 
 interface RecentActivityCardProps {
   signups: SignupWithDetails[] | null
-  /** Called after the drawer mutates a signup (cancel, mark paid).
-   *  Dashboard refetch usually feeds this. */
-  onMutate?: () => void
 }
 
 interface ActivityItem {
   id: string
-  signup: SignupWithDetails
+  courseId: string | null
   icon: LucideIcon
   title: string
   description: string
@@ -39,7 +37,7 @@ function buildActivity(signups: SignupWithDetails[]): ActivityItem[] {
     const courseTitle = s.course?.title
     items.push({
       id: `signup-${s.id}`,
-      signup: s,
+      courseId: s.course?.id ?? null,
       icon: UserPlus,
       title: name,
       description: courseTitle ? `Meldte seg på ${courseTitle}` : 'Ny påmelding',
@@ -51,7 +49,7 @@ function buildActivity(signups: SignupWithDetails[]): ActivityItem[] {
   return items.sort((a, b) => b.sortKey - a.sortKey).slice(0, 5)
 }
 
-export function RecentActivityCard({ signups, onMutate }: RecentActivityCardProps) {
+export function RecentActivityCard({ signups }: RecentActivityCardProps) {
   const loading = signups === null
 
   return (
@@ -59,61 +57,63 @@ export function RecentActivityCard({ signups, onMutate }: RecentActivityCardProp
       <CardHeader>
         <CardTitle>Siste aktivitet</CardTitle>
         <CardAction>
-          <Badge variant="secondary" className="text-foreground-muted tracking-wide">Denne måneden</Badge>
+          <Badge variant="secondary" className="text-foreground-muted">Denne måneden</Badge>
         </CardAction>
       </CardHeader>
       <CardContent>
         {loading ? (
           <ActivitySkeleton />
         ) : (
-          <ActivityBody signups={signups} onMutate={onMutate} />
+          <ActivityBody signups={signups} />
         )}
       </CardContent>
     </Card>
   )
 }
 
-function ActivityBody({
-  signups,
-  onMutate,
-}: {
-  signups: SignupWithDetails[]
-  onMutate?: () => void
-}) {
-  const { open: openDrawer } = useSignupDrawer()
+function ActivityBody({ signups }: { signups: SignupWithDetails[] }) {
   const items = buildActivity(signups)
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-1 py-8 text-center">
-        <p className="text-sm font-medium text-foreground">Ingen aktivitet ennå</p>
-        <p className="text-xs text-foreground-muted">Nye påmeldinger vises her</p>
-      </div>
+      <EmptyState
+        variant="compact"
+        title="Ingen aktivitet ennå"
+        description="Nye påmeldinger vises her."
+      />
     )
   }
+
+  const rowClass =
+    'group -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-2 text-left outline-none transition-colors duration-150 hover:bg-muted focus-visible:bg-muted'
 
   return (
     <div className="space-y-1">
       {items.map((item) => {
         const Icon = item.icon
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => openDrawer(toSignupDisplay(item.signup), { onMutate })}
-            className="group -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-2.5 text-left outline-none smooth-transition hover:bg-muted/50 focus-visible:bg-muted/50"
-          >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2">
+        const body = (
+          <>
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground-muted">
               <Icon className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-              <p className="mt-0.5 truncate text-sm text-foreground-muted">{item.description}</p>
+              <p className="mt-1 truncate text-sm text-foreground-muted">{item.description}</p>
             </div>
-            <span className="shrink-0 text-xs tabular-nums text-foreground-tertiary">
+            <span className="shrink-0 text-xs tabular-nums text-foreground-muted">
               {item.timestamp}
             </span>
-          </button>
+          </>
+        )
+
+        return item.courseId ? (
+          <Link key={item.id} to={routes.course(item.courseId)} className={rowClass}>
+            {body}
+          </Link>
+        ) : (
+          <div key={item.id} className={rowClass}>
+            {body}
+          </div>
         )
       })}
     </div>
@@ -125,10 +125,10 @@ function ActivitySkeleton() {
     <div className="space-y-3">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3">
-          <Skeleton className="size-9 shrink-0 rounded-md" />
+          <Skeleton className="size-9 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
             <Skeleton className="h-4 w-32" />
-            <Skeleton className="mt-1.5 h-3 w-44" />
+            <Skeleton className="mt-2 h-3 w-44" />
           </div>
         </div>
       ))}

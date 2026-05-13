@@ -28,13 +28,6 @@
     --danger-subtle:   #feebec;
     --danger-fg:       #ce2c31;
 
-    /* ── pop accents ── */
-    --accent-sky-subtle:   #e1f6fd;
-    --accent-sky-fg:       #00749e;
-    --accent-mint-subtle:  #ddf9f2;
-    --accent-mint-fg:      #027864;
-    --accent-iris-subtle:  #f0f1fe;
-    --accent-iris-fg:      #5753c6;
 
     /* ── radius ── */
     --radius-sm:   6px;
@@ -104,7 +97,7 @@
   .hero-eyebrow::before {
     content: "";
     width: 6px; height: 6px; border-radius: 9999px;
-    background: var(--accent-mint-fg);
+    background: var(--foreground-muted);
     display: inline-block;
   }
   .hero h1 {
@@ -335,12 +328,12 @@
     color: var(--foreground-muted);
     text-decoration: none;
   }
-  .course-sky  { background: var(--accent-sky-subtle); }
-  .course-mint { background: var(--accent-mint-subtle); }
-  .course-iris { background: var(--accent-iris-subtle); }
-  .course-sky  .pill, .course-sky-fg  { color: var(--accent-sky-fg); }
-  .course-mint .pill, .course-mint-fg { color: var(--accent-mint-fg); }
-  .course-iris .pill, .course-iris-fg { color: var(--accent-iris-fg); }
+  .course-sky  { background: var(--muted); }
+  .course-mint { background: var(--muted); }
+  .course-iris { background: var(--muted); }
+  .course-sky  .pill, .course-sky-fg  { color: var(--foreground-muted); }
+  .course-mint .pill, .course-mint-fg { color: var(--foreground-muted); }
+  .course-iris .pill, .course-iris-fg { color: var(--foreground-muted); }
 
   /* dashboard preview — sidebar + main both white, divided by 1px */
   .dashboard {
@@ -384,7 +377,7 @@
     background: var(--foreground-disabled);
     flex: none;
   }
-  .dashboard-nav .item.active .dot { background: var(--accent-mint-fg); }
+  .dashboard-nav .item.active .dot { background: var(--foreground-muted); }
 
   .dashboard-main {
     background: var(--background);
@@ -660,7 +653,7 @@
   <!-- HERO -->
   <section class="hero">
     <h1>A calm design language<br>for booking flows.</h1>
-    <p class="lede">Geist on slate. Black primary buttons. Three cool tints — sky, mint, iris — for moments when course content needs to breathe apart.</p>
+    <p class="lede">Geist on warm sand. Black primary buttons. Monochrome canvas — no chromatic accents, only sand neutrals plus three status colors.</p>
   </section>
 
   <!-- CATEGORY TABS — sticky -->
@@ -683,16 +676,16 @@
       <!-- Neutral -->
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Neutral</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Radix slate. Cool gray. Carries the entire structural surface system.</p>
+        <p class="body muted" style="margin-bottom: 24px;">Radix sand. Cool gray. Carries the entire structural surface system.</p>
         <div class="swatch-list">
           <div class="swatch"><div class="swatch-chip" style="background:#ffffff"></div><div class="swatch-meta"><span class="swatch-name">background</span><span class="swatch-value">#ffffff · page canvas</span></div></div>
           <div class="swatch"><div class="swatch-chip" style="background:#ffffff"></div><div class="swatch-meta"><span class="swatch-name">surface</span><span class="swatch-value">#ffffff · cards (same value, different role)</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#f0f0f3"></div><div class="swatch-meta"><span class="swatch-name">muted</span><span class="swatch-value">#f0f0f3 · slate-3</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#e8e8ec"></div><div class="swatch-meta"><span class="swatch-name">active</span><span class="swatch-value">#e8e8ec · slate-4</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#d9d9e0"></div><div class="swatch-meta"><span class="swatch-name">border</span><span class="swatch-value">#d9d9e0 · slate-6</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#b9bbc6"></div><div class="swatch-meta"><span class="swatch-name">foreground-disabled</span><span class="swatch-value">#b9bbc6 · slate-8</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#60646c"></div><div class="swatch-meta"><span class="swatch-name">foreground-muted</span><span class="swatch-value">#60646c · slate-11</span></div></div>
-          <div class="swatch"><div class="swatch-chip" style="background:#1c2024"></div><div class="swatch-meta"><span class="swatch-name">foreground</span><span class="swatch-value">#1c2024 · slate-12</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#f0f0f3"></div><div class="swatch-meta"><span class="swatch-name">muted</span><span class="swatch-value">#f0f0f3 · sand-3</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#e8e8ec"></div><div class="swatch-meta"><span class="swatch-name">active</span><span class="swatch-value">#e8e8ec · sand-4</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#d9d9e0"></div><div class="swatch-meta"><span class="swatch-name">border</span><span class="swatch-value">#d9d9e0 · sand-6</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#b9bbc6"></div><div class="swatch-meta"><span class="swatch-name">foreground-disabled</span><span class="swatch-value">#b9bbc6 · sand-8</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#60646c"></div><div class="swatch-meta"><span class="swatch-name">foreground-muted</span><span class="swatch-value">#60646c · sand-11</span></div></div>
+          <div class="swatch"><div class="swatch-chip" style="background:#1c2024"></div><div class="swatch-meta"><span class="swatch-name">foreground</span><span class="swatch-value">#1c2024 · sand-12</span></div></div>
         </div>
       </div>
 
@@ -724,31 +717,6 @@
           </div>
         </div>
 
-        <!-- pop -->
-        <div class="card">
-          <h3 class="h4" style="margin-bottom: 4px;">Pop accents</h3>
-          <p class="body muted" style="margin-bottom: 24px;">Three cool tints. Course-card variety. One per card — never two together.</p>
-          <div class="swatch-list">
-            <div class="swatch">
-              <div class="swatch-chip" style="background: var(--accent-sky-subtle);">
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--accent-sky-fg);">Aa</div>
-              </div>
-              <div class="swatch-meta"><span class="swatch-name">sky</span><span class="swatch-value">#e1f6fd / #00749e</span></div>
-            </div>
-            <div class="swatch">
-              <div class="swatch-chip" style="background: var(--accent-mint-subtle);">
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--accent-mint-fg);">Aa</div>
-              </div>
-              <div class="swatch-meta"><span class="swatch-name">mint</span><span class="swatch-value">#ddf9f2 / #027864</span></div>
-            </div>
-            <div class="swatch">
-              <div class="swatch-chip" style="background: var(--accent-iris-subtle);">
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; color: var(--accent-iris-fg);">Aa</div>
-              </div>
-              <div class="swatch-meta"><span class="swatch-name">iris</span><span class="swatch-value">#f0f1fe / #5753c6</span></div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -899,7 +867,7 @@
         </div>
         <div style="margin-bottom: 16px;">
           <label class="label" for="ex2">Telefon</label>
-          <input id="ex2" class="input" placeholder="9xx xx xxx" />
+          <input id="ex2" class="input" inputmode="tel" />
         </div>
         <div>
           <label class="label" for="ex3">Søk</label>
@@ -988,12 +956,6 @@
         <span class="badge badge-rect" style="background: var(--muted);">Utkast</span>
       </div>
 
-      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 12px;">Pop tints (course pills)</div>
-      <div class="badge-row">
-        <span class="badge" style="background: var(--accent-sky-subtle); color: var(--accent-sky-fg);">Yoga</span>
-        <span class="badge" style="background: var(--accent-mint-subtle); color: var(--accent-mint-fg);">Pilates</span>
-        <span class="badge" style="background: var(--accent-iris-subtle); color: var(--accent-iris-fg);">Restorative</span>
-      </div>
     </div>
   </section>
 
@@ -1009,7 +971,7 @@
         <span class="pill">Yoga</span>
         <div class="title">Vinyasa Flow</div>
         <div class="meta">Tirsdag 18:00 · 60 min</div>
-        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--accent-mint-fg);">
+        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--foreground-muted);">
           <span class="dot" style="background: currentColor;"></span>
           12 av 14 plasser
         </div>
@@ -1018,7 +980,7 @@
         <span class="pill">Pilates</span>
         <div class="title">Mat Foundations</div>
         <div class="meta">Torsdag 09:00 · 50 min</div>
-        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--accent-sky-fg);">
+        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--foreground-muted);">
           <span class="dot" style="background: currentColor;"></span>
           8 av 12 plasser
         </div>
@@ -1027,7 +989,7 @@
         <span class="pill">Restorative</span>
         <div class="title">Stillpoint</div>
         <div class="meta">Søndag 10:30 · 75 min</div>
-        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--accent-iris-fg);">
+        <div style="margin-top: 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--foreground-muted);">
           <span class="dot" style="background: currentColor;"></span>
           6 av 10 plasser
         </div>
@@ -1191,10 +1153,10 @@
   <section class="section">
     <div class="section-head">
       <h2>Timeplan</h2>
-      <span class="meta">day-grouped card list · type-coded pop accent · no calendar grid</span>
+      <span class="meta">day-grouped card list · bordered monochrome cards · no calendar grid</span>
     </div>
 
-    <p class="body muted" style="margin-bottom: 24px;">List view, not grid — calendar grids are power-user territory and choke on busy days. Cards use the established course-card pop pattern: <strong style="font-weight: 500; color: var(--foreground);">mint = engangstime · iris = kursrekke · sky = online</strong>. Type label appears as text on every card so colorblind users and screen readers get the meaning without relying on color (WCAG 1.4.1).</p>
+    <p class="body muted" style="margin-bottom: 24px;">List view, not grid — calendar grids are power-user territory and choke on busy days. Cards are monochrome bordered sand surfaces. Type (engangstime / kursrekke / online) reads as a text label in the meta line — Studio is monochrome, color is never used to encode type.</p>
 
     <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 32px; max-width: 720px;">
 
@@ -1202,10 +1164,10 @@
       <div style="font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">I dag, 12. mai</div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
         <!-- Today's card — slightly bumped padding -->
-        <a href="#" style="display: block; background: var(--accent-sky-subtle); border-radius: var(--radius-lg); padding: 20px; text-decoration: none; color: var(--foreground);">
+        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 20px; text-decoration: none; color: var(--foreground);">
           <p style="font-size: 16px; font-weight: 500;">Online Vinyasa Flow</p>
           <p style="margin-top: 4px; font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">kl. 18:00 — 19:00 · 8 / 15 påmeldt</p>
-          <p style="margin-top: 4px; font-size: 12px; color: var(--accent-sky-fg);">Online</p>
+          <p style="margin-top: 4px; font-size: 12px; color: var(--foreground-muted);">Online</p>
         </a>
       </div>
 
@@ -1214,17 +1176,17 @@
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
 
         <!-- Engangstime: mint -->
-        <a href="#" style="display: block; background: var(--accent-mint-subtle); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
+        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
           <p style="font-size: 16px; font-weight: 500;">Drop-in Hatha</p>
           <p style="margin-top: 4px; font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">kl. 09:00 — 10:00 · 12 / 14 påmeldt</p>
-          <p style="margin-top: 4px; font-size: 12px; color: var(--accent-mint-fg);">Sal 1 · Engangstime</p>
+          <p style="margin-top: 4px; font-size: 12px; color: var(--foreground-muted);">Sal 1 · Engangstime</p>
         </a>
 
         <!-- Kursrekke: iris -->
-        <a href="#" style="display: block; background: var(--accent-iris-subtle); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
+        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
           <p style="font-size: 16px; font-weight: 500;">Vinyasa kursrekke <span style="font-weight: 400; color: var(--foreground-muted); font-feature-settings: 'tnum';">(uke 3 / 8)</span></p>
           <p style="margin-top: 4px; font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">kl. 18:00 — 19:30 · 14 / 14 påmeldt · <span style="color: var(--foreground-muted);">Fullt</span></p>
-          <p style="margin-top: 4px; font-size: 12px; color: var(--accent-iris-fg);">Sal 2 · Kursrekke</p>
+          <p style="margin-top: 4px; font-size: 12px; color: var(--foreground-muted);">Sal 2 · Kursrekke</p>
         </a>
       </div>
 
@@ -1232,10 +1194,10 @@
       <div style="font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">Onsdag, 14. mai</div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
         <!-- Same kursrekke, future day — capacity reduced detail -->
-        <a href="#" style="display: block; background: var(--accent-iris-subtle); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
+        <a href="#" style="display: block; background: var(--muted); border-radius: var(--radius-lg); padding: 16px 20px; text-decoration: none; color: var(--foreground);">
           <p style="font-size: 16px; font-weight: 500;">Vinyasa kursrekke <span style="font-weight: 400; color: var(--foreground-muted); font-feature-settings: 'tnum';">(uke 3 / 8)</span></p>
           <p style="margin-top: 4px; font-size: 14px; color: var(--foreground); font-feature-settings: 'tnum';">kl. 18:00 — 19:30 · 12 / 14 påmeldt</p>
-          <p style="margin-top: 4px; font-size: 12px; color: var(--accent-iris-fg);">Sal 2 · Kursrekke</p>
+          <p style="margin-top: 4px; font-size: 12px; color: var(--foreground-muted);">Sal 2 · Kursrekke</p>
         </a>
       </div>
 
@@ -1378,265 +1340,6 @@
     </div>
   </section>
 
-  <!-- NOTIFICATIONS INBOX -->
-  <section class="section">
-    <div class="section-head">
-      <h2>Notifications inbox</h2>
-      <span class="meta">bell + popover · single dot, no count · group by day · bundle high-frequency</span>
-    </div>
-
-    <div class="grid-2">
-      <!-- Bell trigger states -->
-      <div class="card">
-        <h3 class="h4" style="margin-bottom: 4px;">Bell trigger</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Single 8px dot signals "new" — no count, per Tier A doctrine. Dot disappears on popover open.</p>
-
-        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 40px 24px; display: flex; gap: 32px; justify-content: center; align-items: center;">
-          <!-- Default (no unread) -->
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-            <button aria-label="Varsler" style="position: relative; width: 36px; height: 36px; display: grid; place-items: center; background: transparent; border: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--foreground-muted);">
-              <svg viewBox="0 0 16 16" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M8 2c-2.5 0-4 1.5-4 4v3l-1 2h10l-1-2V6c0-2.5-1.5-4-4-4z" stroke-linejoin="round"/>
-                <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <p style="font-size: 11px; color: var(--foreground-muted);">Default</p>
-          </div>
-
-          <!-- With unread dot -->
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-            <button aria-label="Varsler · 3 nye" style="position: relative; width: 36px; height: 36px; display: grid; place-items: center; background: transparent; border: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--foreground);">
-              <svg viewBox="0 0 16 16" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M8 2c-2.5 0-4 1.5-4 4v3l-1 2h10l-1-2V6c0-2.5-1.5-4-4-4z" stroke-linejoin="round"/>
-                <path d="M6.5 13a1.5 1.5 0 0 0 3 0" stroke-linecap="round"/>
-              </svg>
-              <span aria-hidden="true" style="position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 9999px; background: var(--foreground); box-shadow: 0 0 0 2px var(--background);"></span>
-            </button>
-            <p style="font-size: 11px; color: var(--foreground-muted);">Unread</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Popover -->
-      <div class="card">
-        <h3 class="h4" style="margin-bottom: 4px;">Popover</h3>
-        <p class="body muted" style="margin-bottom: 24px;">360-400px wide · max 480px tall · sticky day labels · invisible dot reserves space on read rows.</p>
-
-        <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; display: flex; justify-content: center;">
-          <div role="dialog" aria-label="Varsler" style="width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16); overflow: hidden;">
-
-            <!-- Header -->
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border);">
-              <p style="font-size: 14px; font-weight: 500;">Varsler</p>
-              <button style="font-size: 12px; color: var(--foreground-muted); background: transparent; border: none; cursor: pointer; font-family: inherit;">Marker alle som lest</button>
-            </div>
-
-            <!-- I DAG group -->
-            <div style="padding: 8px 16px 4px; font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase;">I dag</div>
-            <a href="#" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit;">
-              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 9999px; background: var(--foreground); flex: none; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <p style="font-size: 14px; font-weight: 500; color: var(--foreground); line-height: 20px;">3 nye påmeldinger til Vinyasa Flow</p>
-                <p style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted);">kl. 14:32</p>
-              </div>
-            </a>
-            <a href="#" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit;">
-              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 9999px; background: transparent; flex: none; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <p style="font-size: 14px; color: var(--foreground-muted); line-height: 20px;">Anna Berg avbestilte påmeldingen</p>
-                <p style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted);">kl. 11:08</p>
-              </div>
-            </a>
-
-            <!-- I GÅR group -->
-            <div style="padding: 8px 16px 4px; font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; border-top: 1px solid var(--border); margin-top: 4px;">I går</div>
-            <a href="#" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit;">
-              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 9999px; background: transparent; flex: none; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <p style="font-size: 14px; color: var(--foreground-muted); line-height: 20px;">Betaling mottatt — 450 kr</p>
-                <p style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted);">08. mai kl. 18:43</p>
-              </div>
-            </a>
-
-            <!-- TIDLIGERE group -->
-            <div style="padding: 8px 16px 4px; font-size: 11px; font-weight: 600; color: var(--foreground-muted); letter-spacing: 0.06em; text-transform: uppercase; border-top: 1px solid var(--border); margin-top: 4px;">Tidligere</div>
-            <a href="#" style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit;">
-              <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 9999px; background: transparent; flex: none; margin-top: 6px;"></span>
-              <div style="flex: 1; min-width: 0;">
-                <p style="font-size: 14px; color: var(--foreground-muted); line-height: 20px;">Vilkårene for bruk er oppdatert</p>
-                <p style="margin-top: 2px; font-size: 12px; color: var(--foreground-muted);">04. mai</p>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- AUTHENTICATION -->
-  <section class="section">
-    <div class="section-head">
-      <h2>Authentication — sign in / sign up</h2>
-      <span class="meta">single column · max-w-md · magic link primary for customers · Vipps Login for Norwegian users</span>
-    </div>
-
-    <p class="body muted" style="margin-bottom: 24px;">Login and register are <strong style="font-weight: 500; color: var(--foreground);">universal</strong> — same form for everyone. The system can't know your role when you arrive at login, so the customer-vs-teacher split happens during register, via a single onboarding step right after sign-up succeeds. That step is the only thing that distinguishes the two paths.</p>
-
-    <div class="grid-2">
-      <!-- Login (universal) -->
-      <div class="card">
-        <h3 class="h4" style="margin-bottom: 4px;">Login (universal)</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Magic link primary · Vipps + Google accelerated · identifier-first (system picks method per account). <strong style="font-weight: 500; color: var(--foreground);">No card chrome around the form</strong> — auth is single-purpose, the centered column IS the form.</p>
-
-        <div style="padding: 56px 24px; display: flex; justify-content: center;">
-          <div style="width: 320px; max-width: 100%;">
-            <div style="font-size: 16px; font-weight: 600; margin-bottom: 32px;">studio.</div>
-
-            <h2 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600;">Logg inn</h2>
-            <p style="margin-top: 4px; font-size: 14px; color: var(--foreground-muted);">Velkommen tilbake</p>
-
-            <!-- Social/SSO -->
-            <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 8px;">
-              <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px;">
-                <span style="width: 16px; height: 16px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: white; background: #ff5b24; border-radius: 3px;">V</span>
-                Logg inn med Vipps
-              </button>
-              <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px;">
-                <svg viewBox="0 0 16 16" style="width: 14px; height: 14px;" aria-hidden="true">
-                  <path d="M14 8.2c0-.5 0-1-.1-1.4H8.1v2.7h3.3c-.1.7-.6 1.4-1.3 1.8v1.5h2.1c1.2-1.1 1.8-2.7 1.8-4.6z" fill="#4285f4"/>
-                  <path d="M8.1 14c1.7 0 3.2-.6 4.2-1.5l-2-1.5c-.6.4-1.3.6-2.2.6-1.7 0-3.1-1.1-3.6-2.6h-2.1v1.6C3.4 12.7 5.6 14 8.1 14z" fill="#34a853"/>
-                  <path d="M4.5 9c-.1-.4-.2-.8-.2-1.2s.1-.8.2-1.2v-1.6h-2C2 5.8 1.7 6.9 1.7 8s.3 2.2.8 3.2L4.5 9z" fill="#fbbc04"/>
-                  <path d="M8.1 4.2c1 0 1.8.3 2.5 1l1.8-1.8C11.3 2.4 9.8 1.8 8.1 1.8c-2.5 0-4.7 1.3-5.7 3.4L4.5 6.8C5 5.3 6.4 4.2 8.1 4.2z" fill="#ea4335"/>
-                </svg>
-                Logg inn med Google
-              </button>
-            </div>
-
-            <div style="margin: 24px 0; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--foreground-muted);">
-              <span style="flex: 1; height: 1px; background: var(--border);"></span>
-              eller
-              <span style="flex: 1; height: 1px; background: var(--border);"></span>
-            </div>
-
-            <div>
-              <label for="auth-email" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">E-postadresse</label>
-              <input id="auth-email" class="input" type="email" />
-            </div>
-
-            <button class="btn btn-primary" style="margin-top: 16px; width: 100%; justify-content: center;">Send innloggingslenke</button>
-
-            <p style="margin-top: 20px; font-size: 13px; color: var(--foreground-muted); text-align: center;">
-              Har du ikke konto? <a href="#" style="color: var(--foreground); font-weight: 500;">Lag en</a>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Register (universal — form only; role question comes next) -->
-      <div class="card">
-        <h3 class="h4" style="margin-bottom: 4px;">Register (universal)</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Same form regardless of audience. Email + name + magic link verification. No password by default. Form sits directly on canvas — no surrounding card chrome.</p>
-
-        <div style="padding: 56px 24px; display: flex; justify-content: center;">
-          <div style="width: 320px; max-width: 100%;">
-            <div style="font-size: 16px; font-weight: 600; margin-bottom: 32px;">studio.</div>
-
-            <h2 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600;">Lag konto</h2>
-            <p style="margin-top: 4px; font-size: 14px; color: var(--foreground-muted);">Det tar under ett minutt.</p>
-
-            <div style="margin-top: 32px; display: flex; flex-direction: column; gap: 8px;">
-              <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px;">
-                <span style="width: 16px; height: 16px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: white; background: #ff5b24; border-radius: 3px;">V</span>
-                Fortsett med Vipps
-              </button>
-              <button class="btn btn-secondary" style="width: 100%; justify-content: center; gap: 8px;">
-                <svg viewBox="0 0 16 16" style="width: 14px; height: 14px;" aria-hidden="true">
-                  <path d="M14 8.2c0-.5 0-1-.1-1.4H8.1v2.7h3.3c-.1.7-.6 1.4-1.3 1.8v1.5h2.1c1.2-1.1 1.8-2.7 1.8-4.6z" fill="#4285f4"/>
-                  <path d="M8.1 14c1.7 0 3.2-.6 4.2-1.5l-2-1.5c-.6.4-1.3.6-2.2.6-1.7 0-3.1-1.1-3.6-2.6h-2.1v1.6C3.4 12.7 5.6 14 8.1 14z" fill="#34a853"/>
-                  <path d="M4.5 9c-.1-.4-.2-.8-.2-1.2s.1-.8.2-1.2v-1.6h-2C2 5.8 1.7 6.9 1.7 8s.3 2.2.8 3.2L4.5 9z" fill="#fbbc04"/>
-                  <path d="M8.1 4.2c1 0 1.8.3 2.5 1l1.8-1.8C11.3 2.4 9.8 1.8 8.1 1.8c-2.5 0-4.7 1.3-5.7 3.4L4.5 6.8C5 5.3 6.4 4.2 8.1 4.2z" fill="#ea4335"/>
-                </svg>
-                Fortsett med Google
-              </button>
-            </div>
-
-            <div style="margin: 24px 0; display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--foreground-muted);">
-              <span style="flex: 1; height: 1px; background: var(--border);"></span>
-              eller
-              <span style="flex: 1; height: 1px; background: var(--border);"></span>
-            </div>
-
-            <div>
-              <label for="auth-name" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">Navn</label>
-              <input id="auth-name" class="input" type="text" />
-            </div>
-            <div style="margin-top: 12px;">
-              <label for="auth-email-3" style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px;">E-postadresse</label>
-              <input id="auth-email-3" class="input" type="email" />
-            </div>
-
-            <button class="btn btn-primary" style="margin-top: 16px; width: 100%; justify-content: center;">Lag konto</button>
-
-            <p style="margin-top: 16px; font-size: 11px; color: var(--foreground-muted); text-align: center; line-height: 16px;">
-              Ved å fortsette godtar du <a href="#" style="color: var(--foreground-muted); text-decoration: underline;">vilkårene</a> og <a href="#" style="color: var(--foreground-muted); text-decoration: underline;">personvernerklæringen</a>.
-            </p>
-
-            <p style="margin-top: 16px; font-size: 13px; color: var(--foreground-muted); text-align: center;">
-              Har du allerede konto? <a href="#" style="color: var(--foreground); font-weight: 500;">Logg inn</a>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Onboarding role step (the ONE thing that splits customer vs teacher) -->
-    <div class="card" style="margin-top: 24px;">
-      <h3 class="h4" style="margin-bottom: 4px;">Onboarding role step — the only thing that splits customer / teacher</h3>
-      <p class="body muted" style="margin-bottom: 24px;">Appears immediately after register. Form sits directly on canvas — same as login/register, no surrounding card chrome.</p>
-
-      <div style="padding: 64px 24px; display: flex; justify-content: center;">
-        <div style="width: 440px; max-width: 100%;">
-          <div style="font-size: 16px; font-weight: 600; margin-bottom: 32px;">studio.</div>
-
-          <h2 style="font-size: 24px; line-height: 30px; letter-spacing: -0.01em; font-weight: 600;">Hva vil du gjøre?</h2>
-          <p style="margin-top: 4px; font-size: 14px; color: var(--foreground-muted);">Vi tilpasser opplevelsen etter dette.</p>
-
-          <!-- Role options as large clickable cards -->
-          <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
-
-            <!-- Customer option -->
-            <label style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
-              <input type="radio" name="role" value="customer" style="margin-top: 4px;" checked />
-              <div>
-                <p style="font-size: 15px; font-weight: 500; color: var(--foreground);">Booke klasser</p>
-                <p style="margin-top: 2px; font-size: 13px; color: var(--foreground-muted); line-height: 18px;">Finn og book yoga, pilates eller andre klasser hos studios i nærheten.</p>
-              </div>
-            </label>
-
-            <!-- Teacher option — emphasized as next-step using same row treatment as setup checklist -->
-            <label style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
-              <input type="radio" name="role" value="teacher" style="margin-top: 4px;" />
-              <div>
-                <p style="font-size: 15px; font-weight: 500; color: var(--foreground);">Drive et studio</p>
-                <p style="margin-top: 2px; font-size: 13px; color: var(--foreground-muted); line-height: 18px;">Sett opp ditt eget studio, lag kurs, og motta påmeldinger og betalinger.</p>
-              </div>
-            </label>
-          </div>
-
-          <button class="btn btn-primary" style="margin-top: 24px; width: 100%; justify-content: center;">Fortsett</button>
-
-          <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted); text-align: center;">
-            Du kan endre dette senere i innstillingene.
-          </p>
-        </div>
-      </div>
-
-      <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">
-        Required step but reversible — the user record stores <code style="font-family: inherit; font-weight: 500;">role: 'customer' | 'teacher'</code> + a flag for "can switch later." Customer answer → routes to first booking flow / studio listing. Teacher answer → routes to the setup checklist (§ Setup checklist).
-      </p>
-    </div>
-  </section>
-
   <!-- COURSE DETAIL PAGE (§18) — Photo-led + 2-col with sticky rail. Calm chrome throughout. -->
   <section class="section">
     <div class="section-head">
@@ -1644,7 +1347,7 @@
       <span class="meta">photo hero · 2-col · sticky booking rail · instructor up · compact dates · no review chrome</span>
     </div>
 
-    <p class="body muted" style="margin-bottom: 24px;">Two-column layout — main reading column + sticky BookingPanel on the right — keeps the booking action visible from the start. The 2-col itself was never the problem; the <em>chrome</em> was (pop tints, mint avatar, accordion dates). With those fixed, the rail earns its place: booking is the page's purpose, not a buried section. No review widget — yoga classes don't have reviews, so reserving the slot would be theater. Compact inline date list for kursrekke. Photo-led hero (typographic only as a rare fallback).</p>
+    <p class="body muted" style="margin-bottom: 24px;">Two-column layout — main reading column + sticky BookingPanel on the right — keeps the booking action visible from the start. The 2-col itself was never the problem; the <em>chrome</em> was (chromatic tints, accordion dates). With those fixed, the rail earns its place: booking is the page's purpose, not a buried section. No review widget — yoga classes don't have reviews, so reserving the slot would be theater. Compact inline date list for kursrekke. Photo-led hero (typographic only as a rare fallback).</p>
 
     <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
 
@@ -1899,7 +1602,7 @@
       <span class="meta">two surfaces (bookings + profile) · self-service cancel · no streaks, no upsells</span>
     </div>
 
-    <p class="body muted" style="margin-bottom: 24px;">The customer's logged-in surface — symmetric to the teacher dashboard but customer-scoped. <code style="font-family: inherit; font-weight: 500;">max-w-3xl mx-auto</code>, no sidebar (avatar menu in PublicNav handles nav). Cards have a calm border treatment — no pop tints (those are reserved for the teacher's timeplan type-coding). Inline ghost links for actions; <code style="font-family: inherit; font-weight: 500;">Avbestill</code> is muted, not red.</p>
+    <p class="body muted" style="margin-bottom: 24px;">The customer's logged-in surface — symmetric to the teacher dashboard but customer-scoped. <code style="font-family: inherit; font-weight: 500;">max-w-3xl mx-auto</code>, no sidebar (avatar menu in PublicNav handles nav). Cards have a calm border treatment — strictly monochrome, Studio has no chromatic accent palette. Inline ghost links for actions; <code style="font-family: inherit; font-weight: 500;">Avbestill</code> is muted, not red.</p>
 
     <div class="grid-2">
       <!-- Mine påmeldinger page -->
@@ -1949,7 +1652,7 @@
           </div>
         </div>
 
-        <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">No pop tints (reserved for teacher timeplan). No "Rate this class" prompt. No "Other classes you might like" cross-sell. Just what's booked + how to act on it.</p>
+        <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Monochrome — no chromatic tints anywhere in Studio. No "Rate this class" prompt. No "Other classes you might like" cross-sell. Just what's booked + how to act on it.</p>
       </div>
 
       <!-- Cancel booking dialog -->
@@ -2725,7 +2428,7 @@
   <section class="section">
     <div class="section-head">
       <h2>States &amp; feedback</h2>
-      <span class="meta">field · section · page · empty · banner · toast — one doctrine, all states</span>
+      <span class="meta">field · section · page · empty · toast — one doctrine, all states</span>
     </div>
 
     <!-- FORM FIELD VALIDATION -->
@@ -2823,67 +2526,6 @@
       </div>
     </div>
 
-    <!-- ALERT PLACEMENT — three tiers -->
-    <div class="card">
-      <h3 class="h4" style="margin-bottom: 4px;">Alert placement — three tiers by scope</h3>
-      <p class="body muted" style="margin-bottom: 20px;">Top-of-page banner is itself an AI-default. Studio uses three tiers picked by scope. <strong style="color: var(--foreground); font-weight: 500;">Most alerts are Tier A + B; Tier C is rare.</strong></p>
-
-      <!-- Tier A: Sidebar count badge -->
-      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 8px;">Tier A · Sidebar count badge — the workhorse</div>
-      <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; max-width: 280px;">
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 14px; color: var(--foreground-muted);">
-            <span>Kurs</span>
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 14px; color: var(--foreground-muted);">
-            <span>Betalinger</span>
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 14px; color: var(--foreground-muted);">
-            <span>Innstillinger</span>
-            <span aria-label="1 sak trenger oppmerksomhet" title="1 sak trenger oppmerksomhet" style="min-width: 18px; height: 18px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; border-radius: 9999px; background: var(--foreground); color: var(--background); font-feature-settings: 'tnum'; flex: none;">1</span>
-          </div>
-        </div>
-      </div>
-      <p style="font-size: 12px; color: var(--foreground-muted); margin-bottom: 24px; max-width: 480px;">A small dark count badge tells the user explicitly how many items need attention. Neutral palette — stays calm regardless of urgency. The number is unambiguous: clearer than a plain dot, calmer than a banner. Hover for tooltip. Click the nav item → see the issue in context (Tier B).</p>
-
-      <!-- Tier B / C: Banner -->
-      <div style="font-size: 12px; font-weight: 500; color: var(--foreground-muted); margin-bottom: 8px;">Tier B · Page-scoped inline alert (renders only on the relevant route) · Tier C · App-wide banner (rare)</div>
-
-      <!-- Danger / persistent — inset accent stripe (between border and text) -->
-      <div role="alert" style="display: flex; align-items: stretch; gap: 14px; padding: 12px 14px 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 12px;">
-        <span aria-hidden="true" style="width: 4px; height: 20px; align-self: center; background: #e5484d; border-radius: 9999px; flex: none;"></span>
-        <div style="flex: 1; align-self: center; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--foreground);">
-          Dintero trenger ny KYC-info før du kan ta imot betaling.
-        </div>
-        <button class="btn btn-secondary btn-sm" style="align-self: center;">Fullfør</button>
-      </div>
-
-      <!-- Warning / persistent — inset accent stripe -->
-      <div role="alert" style="display: flex; align-items: stretch; gap: 14px; padding: 12px 14px 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 12px;">
-        <span aria-hidden="true" style="width: 4px; height: 20px; align-self: center; background: #ffc53d; border-radius: 9999px; flex: none;"></span>
-        <div style="flex: 1; align-self: center; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--foreground);">
-          Abonnementet ditt utløper om 3 dager.
-        </div>
-        <button class="btn btn-secondary btn-sm" style="align-self: center;">Forny</button>
-      </div>
-
-      <!-- Info / dismissable — same structure as danger/warning, blue-9 stripe -->
-      <div role="status" style="display: flex; align-items: stretch; gap: 14px; padding: 12px 14px 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);">
-        <span aria-hidden="true" style="width: 4px; height: 20px; align-self: center; background: #0090ff; border-radius: 9999px; flex: none;"></span>
-        <div style="flex: 1; align-self: center; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--foreground);">
-          Vi har oppdatert vilkårene for bruk.
-          <a href="#" style="color: var(--foreground); text-decoration: underline; text-decoration-color: rgb(96 100 108 / 0.4); text-underline-offset: 2px;">Les mer</a>.
-        </div>
-        <button aria-label="Lukk" style="flex: none; align-self: center; width: 20px; height: 20px; display: grid; place-items: center; background: transparent; border: none; color: var(--foreground-muted); cursor: pointer;">
-          <svg viewBox="0 0 16 16" style="width: 14px; height: 14px;">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-
-      <p style="margin-top: 16px; font-size: 12px; color: var(--foreground-muted);">Persistent (no ×) for action-required · Dismissable (×) for informational · Max 1 persistent at a time. <strong style="color: var(--foreground); font-weight: 500;">For most cases, prefer Tier A + B (sidebar dot + page-scoped) over Tier C (app-wide).</strong></p>
-    </div>
-
     <!-- EMPTY STATE + TOAST — moved here from standalone section -->
     <div class="grid-2" style="margin-top: 24px;">
       <div class="card">
@@ -2902,7 +2544,7 @@
 
       <div class="card">
         <h3 class="h4" style="margin-bottom: 4px;">Toast — feedback after action</h3>
-        <p class="body muted" style="margin-bottom: 24px;">Sonner under the hood (with <code style="font-family: inherit; font-weight: 500;">unstyled: true</code>); visually the same family as banners — inset accent stripe, white surface, foreground text. No filled-color backgrounds. Three variants only. Position bottom-center.</p>
+        <p class="body muted" style="margin-bottom: 24px;">Sonner under the hood (with <code style="font-family: inherit; font-weight: 500;">unstyled: true</code>); inset accent stripe, white surface, foreground text. No filled-color backgrounds. Three variants only. Position bottom-center.</p>
 
         <div style="background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
 
@@ -3256,7 +2898,7 @@
   <footer class="footer">
     <div class="row" style="justify-content: space-between;">
       <span>Studio · v1.0 · generated by /hue</span>
-      <span>Geist · Radix slate · 49 design tokens</span>
+      <span>Geist · Radix sand · 49 design tokens</span>
     </div>
   </footer>
 
@@ -3277,7 +2919,6 @@
       'components',  // KPI tile
       'patterns',    // Timeplan
       'patterns',    // Pricing display
-      'components',  // Notifications inbox
       'patterns',    // Authentication
       'patterns',    // Course detail page (§18)
       'patterns',    // Booking confirmation (§19)

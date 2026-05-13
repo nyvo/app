@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, ImageIcon, MapPin, User, Clock, Star } from '@/lib/icons';
+import { ImageIcon, MapPin, User, Clock, Star } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -51,7 +51,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
   const time = extractTime(course.time_schedule);
   const longDate = formatLongDate(date);
   const instructor = course.instructors[0]?.name ?? course.instructor?.name ?? null;
-  const isSeries = course.course_type === 'course-series';
+  const isSeries = course.format === 'series';
   const isFull = course.max_participants !== null && course.spots_available <= 0;
 
   return (
@@ -61,13 +61,13 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
       className={cn(
         'group relative grid overflow-hidden rounded-lg bg-surface outline-none',
         'ring-1 ring-border transition-all duration-300',
-        'hover:ring-foreground/40',
+        'hover:ring-foreground',
         'focus-visible:ring-2 focus-visible:ring-ring',
         'md:grid-cols-2',
       )}
     >
-      {/* Featured badge — Studio iris pop accent, sentence case */}
-      <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-accent-iris-subtle text-accent-iris-fg px-2.5 py-0.5 text-xs font-medium">
+      {/* Featured badge — inverted pill for "earned" emphasis, sentence case */}
+      <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-2.5 py-0.5 text-xs font-medium">
         <Star className="size-3" fill="currentColor" strokeWidth={0} />
         Fremhevet kurs
       </span>
@@ -86,15 +86,15 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
           </div>
         )}
         {/* Subtle right-side scrim on desktop to soften seam with the content panel */}
-        <div className="hidden md:block absolute inset-y-0 right-0 w-1/3 bg-gradient-to-r from-transparent to-card" />
+        <div className="hidden md:block absolute inset-y-0 right-0 w-1/3 bg-gradient-to-r from-transparent to-background" />
       </div>
 
       {/* Content */}
       <div className="relative flex flex-col justify-between gap-8 p-6 sm:p-10">
-        <div className="space-y-5">
+        <div className="space-y-6">
           {/* When line — single tier, sentence case, tabular */}
           {longDate && (
-            <div className="inline-flex items-center gap-2 text-[13px] font-medium text-foreground tabular-nums">
+            <div className="inline-flex items-center gap-2 text-sm font-medium text-foreground tabular-nums">
               <span className="size-1.5 rounded-full bg-success" />
               {longDate}
               {time && (
@@ -107,19 +107,19 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
           )}
 
           {/* Display title */}
-          <h3 className="font-semibold text-foreground text-[clamp(1.875rem,3vw,2.5rem)] leading-[1.05]">
+          <h3 className="font-semibold text-foreground text-3xl leading-tight tracking-tight sm:text-5xl">
             {course.title}
           </h3>
 
           {/* Subtitle */}
           {course.description && (
-            <p className="text-base text-foreground-muted leading-[1.55] line-clamp-3 max-w-prose">
+            <p className="text-base text-foreground-muted leading-relaxed line-clamp-3 max-w-prose">
               {course.description}
             </p>
           )}
 
           {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-x-[18px] gap-y-1.5 text-sm text-foreground-muted pt-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-foreground-muted pt-2">
             {instructor && (
               <span className="inline-flex items-center gap-1.5">
                 <User className="size-3.5" strokeWidth={1.75} />
@@ -142,7 +142,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
         </div>
 
         {/* CTA / price row */}
-        <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/60">
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
           <div className="space-y-0.5">
             <div className="text-2xl font-semibold text-foreground tabular-nums">
               {formatCoursePrice(course.price)}
@@ -154,14 +154,13 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
           {/* Visual-only — the whole card is the Link, so the button can't be a real <button> */}
           <span
             className={cn(
-              'inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground',
-              'h-10 px-5 text-sm font-medium',
+              'inline-flex items-center rounded-full bg-primary text-primary-foreground',
+              'h-10 px-6 text-sm font-medium',
               'transition-transform duration-300 group-hover:translate-x-0.5',
-              isFull && 'opacity-60',
+              isFull && 'bg-muted text-foreground-muted',
             )}
           >
             {isFull ? 'Fullt' : 'Se kurset'}
-            <ArrowRight className="size-4" strokeWidth={2} />
           </span>
         </div>
       </div>

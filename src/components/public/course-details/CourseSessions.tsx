@@ -57,7 +57,7 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
           >
             <span
               className={cn(
-                'text-[11px] font-medium',
+                'text-xs font-medium',
                 dim ? 'text-foreground-muted' : 'text-foreground-muted',
               )}
             >
@@ -71,7 +71,7 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
             >
               <span
                 className={cn(
-                  'text-[22px] font-semibold tabular-nums tracking-tight leading-none',
+                  'text-2xl font-semibold tabular-nums tracking-tight leading-none',
                   dim ? 'text-foreground-muted' : 'text-foreground',
                 )}
               >
@@ -80,9 +80,9 @@ export function CourseSessions({ sessions }: CourseSessionsProps) {
               <span className="text-xs text-foreground-muted">{month}</span>
             </div>
             {isCancelled ? (
-              <div className="mt-1.5 text-[11px] font-medium text-danger">Avlyst</div>
+              <div className="mt-1.5 text-xs font-medium text-danger">Avlyst</div>
             ) : isPast ? (
-              <div className="mt-1.5 text-[11px] font-medium text-foreground-muted">Ferdig</div>
+              <div className="mt-1.5 text-xs font-medium text-foreground-muted">Ferdig</div>
             ) : s.start_time ? (
               <div className="mt-1.5 text-xs tabular-nums text-foreground-muted">
                 kl. {formatTime(s.start_time)}

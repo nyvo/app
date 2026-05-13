@@ -13,6 +13,8 @@ interface SegmentedTabsProps<T extends string> {
   tabs: SegmentedTab<T>[];
   ariaLabel?: string;
   className?: string;
+  /** Stretch the control to fill its container; each tab gets equal width. */
+  stretch?: boolean;
 }
 
 /**
@@ -26,12 +28,17 @@ export function SegmentedTabs<T extends string>({
   tabs,
   ariaLabel,
   className,
+  stretch = false,
 }: SegmentedTabsProps<T>) {
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn('inline-flex rounded-lg bg-muted p-0.5 gap-0.5 w-fit', className)}
+      className={cn(
+        'h-9 items-center rounded-full bg-muted p-1 gap-1',
+        stretch ? 'flex w-full' : 'inline-flex w-fit',
+        className,
+      )}
     >
       {tabs.map(t => {
         const active = value === t.key;
@@ -43,10 +50,11 @@ export function SegmentedTabs<T extends string>({
             aria-selected={active}
             onClick={() => onChange(t.key)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              'outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+              'inline-flex h-7 items-center justify-center gap-2 rounded-full px-3 text-sm font-medium transition-colors',
+              'outline-none focus-visible:ring-2 focus-visible:ring-foreground/15',
+              stretch && 'flex-1',
               active
-                ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+                ? 'bg-surface text-foreground shadow-xs'
                 : 'text-foreground-muted hover:text-foreground',
             )}
           >

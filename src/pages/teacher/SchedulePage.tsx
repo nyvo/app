@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CalendarDays } from '@/lib/icons';
+import { Clock, Users } from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
-import { useTeacherShell } from '@/components/teacher/TeacherShellContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
-import { Card } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -19,7 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { routes } from '@/lib/routes';
+import type { CourseFormat, DeliveryMode } from '@/types/database';
 
 // ---------------------------------------------------------------------------
 // Vertical session list — replaces the prior calendar/grid view (2026-04-29).
@@ -27,7 +25,7 @@ import { routes } from '@/lib/routes';
 // ("I dag", "I morgen", weekday). Course filter + date-range filter on top.
 // ---------------------------------------------------------------------------
 
-type RangeFilter = '7' | '30' | 'all';
+type RangeFilter = 'active' | 'past';
 
 interface SessionRow {
   id: string;
@@ -37,6 +35,8 @@ interface SessionRow {
   endTime: string | null;    // HH:MM[:SS]
   courseTitle: string;
   courseLocation: string | null;
+  courseFormat: CourseFormat;
+  deliveryMode: DeliveryMode;
   signupCount: number;
   maxParticipants: number | null;
 }
@@ -52,7 +52,8 @@ interface SessionWithCourse {
     id: string;
     title: string;
     location: string | null;
-    course_type: string;
+    format: CourseFormat;
+    delivery_mode: DeliveryMode;
     max_participants: number | null;
   } | null;
 }
@@ -77,39 +78,33 @@ function daysBetween(a: string, b: string): number {
   return Math.round((db.getTime() - da.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function formatDayLabel(dateStr: string): string {
+function formatDayLabel(dateStr: string): { primary: string; secondary: string } {
   const today = todayKey();
   const diff = daysBetween(today, dateStr);
   const d = new Date(dateStr + 'T00:00:00');
   const weekday = WEEKDAY_NB[d.getDay()];
   const dayNum = d.getDate();
   const month = MONTH_NB[d.getMonth()];
+  const dateText = `${dayNum}. ${month}`;
 
-  if (diff === 0) return `I dag · ${weekday} ${dayNum}. ${month}`;
-  if (diff === 1) return `I morgen · ${weekday} ${dayNum}. ${month}`;
-  if (diff > 1 && diff < 7) return `${weekday} ${dayNum}. ${month}`;
-  return `${weekday} ${dayNum}. ${month}`;
+  if (diff === 0) return { primary: 'I dag', secondary: dateText };
+  if (diff === 1) return { primary: 'I morgen', secondary: dateText };
+  return { primary: weekday, secondary: dateText };
 }
 
 function formatTimeRange(start: string, end: string | null): string {
   const s = start.slice(0, 5);
   if (!end) return s;
-  return `${s} – ${end.slice(0, 5)}`;
+  return `${s} — ${end.slice(0, 5)}`;
 }
 
 const SchedulePage = () => {
   const { currentSeller } = useAuth();
-  const { setBreadcrumbs } = useTeacherShell();
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [courseFilter, setCourseFilter] = useState<string>('all');
-  const [rangeFilter, setRangeFilter] = useState<RangeFilter>('30');
-
-  useEffect(() => {
-    setBreadcrumbs([{ label: 'Hjem', to: routes.dashboard }, { label: 'Timeplan' }]);
-    return () => setBreadcrumbs(null);
-  }, [setBreadcrumbs]);
+  const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [rangeFilter, setRangeFilter] = useState<RangeFilter>('active');
 
   useEffect(() => {
     if (!currentSeller?.id) return;
@@ -118,30 +113,20 @@ const SchedulePage = () => {
     setError(null);
 
     const today = todayKey();
-    const upperBound = (() => {
-      if (rangeFilter === 'all') return null;
-      const days = rangeFilter === '7' ? 7 : 30;
-      const d = new Date();
-      d.setDate(d.getDate() + days);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${dd}`;
-    })();
+    const isActive = rangeFilter === 'active';
 
     (async () => {
-      let query = supabase
+      const query = supabase
         .from('course_sessions')
         .select(
-          'id, course_id, session_date, start_time, end_time, course:courses!inner(id, title, location, course_type, max_participants)',
+          'id, course_id, session_date, start_time, end_time, course:courses!inner(id, title, location, format, delivery_mode, max_participants)',
         )
         .eq('course.seller_id', currentSeller.id)
         .neq('course.status', 'cancelled')
         .neq('status', 'cancelled')
-        .gte('session_date', today)
-        .order('session_date', { ascending: true })
-        .order('start_time', { ascending: true });
-      if (upperBound) query = query.lte('session_date', upperBound);
+        [isActive ? 'gte' : 'lt']('session_date', today)
+        .order('session_date', { ascending: isActive })
+        .order('start_time', { ascending: isActive });
 
       const { data, error: fetchError } = await query;
       if (cancelled) return;
@@ -179,6 +164,8 @@ const SchedulePage = () => {
           endTime: r.end_time,
           courseTitle: r.course!.title,
           courseLocation: r.course!.location,
+          courseFormat: r.course!.format,
+          deliveryMode: r.course!.delivery_mode,
           signupCount: counts[r.course_id] ?? 0,
           maxParticipants: r.course!.max_participants,
         }));
@@ -192,18 +179,38 @@ const SchedulePage = () => {
     };
   }, [currentSeller?.id, rangeFilter]);
 
-  const courseOptions = useMemo(() => {
-    const seen = new Map<string, string>();
+  // Distinct YYYY-MM keys present in the loaded data, in display order.
+  // For active tab: chronological ascending. For past: descending.
+  const monthOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const ordered: string[] = [];
     for (const s of sessions) {
-      if (!seen.has(s.courseId)) seen.set(s.courseId, s.courseTitle);
+      const key = s.sessionDate.slice(0, 7); // YYYY-MM
+      if (!seen.has(key)) {
+        seen.add(key);
+        ordered.push(key);
+      }
     }
-    return Array.from(seen.entries()).map(([id, title]) => ({ id, title }));
+    return ordered.map((key) => {
+      const [y, m] = key.split('-');
+      const monthName = MONTH_NB[Number(m) - 1];
+      const label = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${y}`;
+      return { key, label };
+    });
   }, [sessions]);
 
+  // Reset month filter when the underlying month set changes (e.g. tab switch
+  // moves between past/upcoming) so we never end up with a stale selection.
+  useEffect(() => {
+    if (monthFilter !== 'all' && !monthOptions.some((o) => o.key === monthFilter)) {
+      setMonthFilter('all');
+    }
+  }, [monthOptions, monthFilter]);
+
   const filtered = useMemo(() => {
-    if (courseFilter === 'all') return sessions;
-    return sessions.filter((s) => s.courseId === courseFilter);
-  }, [sessions, courseFilter]);
+    if (monthFilter === 'all') return sessions;
+    return sessions.filter((s) => s.sessionDate.startsWith(monthFilter));
+  }, [sessions, monthFilter]);
 
   // Group by sessionDate. Sessions are already date-sorted by the query.
   const groups = useMemo(() => {
@@ -225,37 +232,47 @@ const SchedulePage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
       >
-        <div className="mb-8 pt-6 lg:pt-8">
-          <h1 className="text-3xl font-semibold text-foreground">Timeplan</h1>
-          <p className="mt-1 text-sm text-foreground-muted">
-            Kommende timer sortert etter dato.
-          </p>
+        <div className="mb-8 pt-6 lg:pt-12">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Timeplan</h1>
         </div>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
-            <SelectTrigger className="h-9 w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Neste 7 dager</SelectItem>
-              <SelectItem value="30">Neste 30 dager</SelectItem>
-              <SelectItem value="all">Alle kommende</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Underline tabs — active vs past. Course filter as a secondary lens. */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border">
+          <nav role="tablist" aria-label="Status" className="flex gap-6">
+            {(['active', 'past'] as const).map((key) => {
+              const label = key === 'active' ? 'Aktive' : 'Fullførte';
+              const isActive = rangeFilter === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setRangeFilter(key)}
+                  className={cn(
+                    'inline-flex items-center py-3 text-sm border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
+                    isActive
+                      ? 'font-medium border-foreground text-foreground'
+                      : 'border-transparent text-foreground-muted hover:text-foreground',
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
 
-          <Select value={courseFilter} onValueChange={setCourseFilter}>
-            <SelectTrigger className="h-9 w-56">
-              <SelectValue placeholder="Alle kurs" />
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger className="h-9 w-48 mb-2">
+              <SelectValue placeholder="Alle måneder" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alle kurs</SelectItem>
-              {courseOptions.map((opt) => (
-                <SelectItem key={opt.id} value={opt.id}>
-                  {opt.title}
+              <SelectItem value="all">Alle måneder</SelectItem>
+              {monthOptions.map((opt) => (
+                <SelectItem key={opt.key} value={opt.key}>
+                  {opt.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -281,32 +298,37 @@ const SchedulePage = () => {
           />
         ) : groups.length === 0 ? (
           <EmptyState
-            icon={CalendarDays}
-            title="Ingen kommende timer"
+            title={rangeFilter === 'active' ? 'Ingen kommende timer' : 'Ingen fullførte timer ennå'}
             description={
-              courseFilter !== 'all'
-                ? 'Prøv et annet kurs eller endre tidsperiode.'
-                : 'Opprett et kurs for å fylle timeplanen.'
+              monthFilter !== 'all'
+                ? 'Prøv en annen måned.'
+                : rangeFilter === 'active'
+                  ? 'Opprett et kurs for å fylle timeplanen.'
+                  : 'Tidligere økter dukker opp her etter de er ferdige.'
             }
             className="py-16"
           />
         ) : (
           <div className="space-y-8">
-            {groups.map(([date, daySessions]) => (
-              <section key={date} aria-labelledby={`day-${date}`}>
-                <h2
-                  id={`day-${date}`}
-                  className="mb-3 text-sm font-medium tracking-tight text-foreground"
-                >
-                  {formatDayLabel(date)}
-                </h2>
-                <div className="space-y-2">
-                  {daySessions.map((s) => (
-                    <SessionCard key={s.id} session={s} />
-                  ))}
-                </div>
-              </section>
-            ))}
+            {groups.map(([date, daySessions]) => {
+              const label = formatDayLabel(date);
+              return (
+                <section key={date} aria-labelledby={`day-${date}`}>
+                  <h2
+                    id={`day-${date}`}
+                    className="mb-3 flex items-baseline gap-2"
+                  >
+                    <span className="text-lg font-medium text-foreground">{label.primary}</span>
+                    <span className="text-sm text-foreground-muted">{label.secondary}</span>
+                  </h2>
+                  <div className="space-y-2">
+                    {daySessions.map((s) => (
+                      <SessionCard key={s.id} session={s} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </motion.div>
@@ -315,42 +337,39 @@ const SchedulePage = () => {
 };
 
 function SessionCard({ session }: { session: SessionRow }) {
-  const meta = [session.courseLocation].filter(Boolean).join(' · ');
+  const isFull =
+    session.maxParticipants != null && session.signupCount >= session.maxParticipants;
   const capacityText =
     session.maxParticipants != null
-      ? `${session.signupCount} / ${session.maxParticipants} påmeldt`
-      : `${session.signupCount} påmeldt`;
+      ? isFull
+        ? 'Fullt'
+        : `${session.signupCount} / ${session.maxParticipants}`
+      : `${session.signupCount}`;
 
   return (
-    <Card className="gap-0 p-0 hover:bg-muted/40 transition-colors">
-      <Link
-        to={routes.course(session.courseId)}
-        className={cn(
-          'block px-4 py-3.5 outline-none rounded-lg',
-          'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/50',
-        )}
-      >
-        <div className="flex items-baseline gap-3">
-          <span className="text-sm font-medium tabular-nums text-foreground shrink-0 min-w-[6.5rem]">
-            {formatTimeRange(session.startTime, session.endTime)}
-          </span>
-          <span className="text-sm font-medium text-foreground truncate">
-            {session.courseTitle}
-          </span>
-        </div>
-        <div className="mt-1 flex items-baseline gap-3 pl-[6.5rem]">
-          <span className="text-xs text-foreground-muted tabular-nums truncate">
-            {meta && (
-              <>
-                <span>{meta}</span>
-                <span className="text-foreground-disabled mx-1.5">·</span>
-              </>
-            )}
-            <span>{capacityText}</span>
-          </span>
-        </div>
-      </Link>
-    </Card>
+    <Link
+      to={{ search: `?kurs=${session.courseId}` }}
+      className={cn(
+        'block rounded-lg bg-muted p-4 outline-none transition-shadow ring-1 ring-transparent',
+        'hover:ring-border',
+        'focus-visible:ring-2 focus-visible:ring-ring/50',
+      )}
+    >
+      <p className="text-sm font-medium text-foreground truncate">
+        {session.courseTitle}
+      </p>
+
+      <div className="mt-1 flex items-center gap-4 text-sm text-foreground-muted tabular-nums">
+        <span className="inline-flex items-center gap-1.5">
+          <Clock className="size-4 shrink-0" aria-hidden="true" />
+          {formatTimeRange(session.startTime, session.endTime)}
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Users className="size-4 shrink-0" aria-hidden="true" />
+          {capacityText}
+        </span>
+      </div>
+    </Link>
   );
 }
 

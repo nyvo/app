@@ -1,7 +1,8 @@
 import { supabase } from '@/lib/supabase'
 
-// Storage bucket name
+// Storage bucket names
 const COURSE_IMAGES_BUCKET = 'course-images'
+const SELLER_LOGOS_BUCKET = 'seller-logos'
 
 // Accepted image types
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -111,4 +112,32 @@ export function createImagePreviewUrl(file: File): string {
 // Utility: Revoke preview URL to free memory
 export function revokeImagePreviewUrl(url: string): void {
   URL.revokeObjectURL(url)
+}
+
+// Upload seller logo / teacher photo. Used by onboarding and the seller
+// profile editor. Returns the public URL on success.
+export async function uploadSellerLogo(
+  sellerId: string,
+  file: File,
+): Promise<{ url: string | null; error: Error | null }> {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    return { url: null, error: new Error('Ugyldig filtype. Bruk JPG, PNG eller WebP.') }
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    return { url: null, error: new Error('Bildet er for stort. Maks 5 MB') }
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const filePath = `${sellerId}/${Date.now()}.${extension}`
+
+  const { error: uploadError } = await supabase.storage
+    .from(SELLER_LOGOS_BUCKET)
+    .upload(filePath, file, { cacheControl: '3600', upsert: false })
+
+  if (uploadError) {
+    return { url: null, error: uploadError as Error }
+  }
+
+  const { data: urlData } = supabase.storage.from(SELLER_LOGOS_BUCKET).getPublicUrl(filePath)
+  return { url: urlData.publicUrl, error: null }
 }

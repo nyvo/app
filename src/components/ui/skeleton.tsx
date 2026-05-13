@@ -13,7 +13,10 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
 function SkeletonCard({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("rounded-lg border animate-pulse bg-muted border-border", className)}
+      className={cn(
+        "rounded-lg border border-border bg-surface",
+        className
+      )}
       aria-hidden="true"
       {...props}
     />

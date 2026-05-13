@@ -95,7 +95,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
           inputMode="numeric"
           autoComplete="off"
           disabled={disabled}
-          className={cn("pr-11 font-tabular-nums", className)}
+          className={cn("pr-12 tabular-nums", className)}
           {...inputProps}
         />
         <PopoverTrigger asChild>
@@ -119,7 +119,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
         <div className="flex items-center justify-between pb-3">
           <div>
             <p className="text-xs font-medium text-foreground">Velg tid</p>
-            <p className="text-xs font-medium tracking-wide text-foreground-muted">
+            <p className="text-xs font-medium text-foreground-muted">
               {isCompleteTime(value) ? value : "Skriv eller velg"}
             </p>
           </div>
@@ -137,7 +137,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
 
         <div className="grid grid-cols-[1fr_auto] gap-3">
           <div className="space-y-2">
-            <p className="text-xs font-medium tracking-wide text-foreground-muted">Timer</p>
+            <p className="text-xs font-medium text-foreground-muted">Timer</p>
             <div className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto pr-1">
               {HOUR_OPTIONS.map((hour) => (
                 <button
@@ -146,10 +146,10 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleHourSelect(hour)}
                   className={cn(
-                    "text-sm font-medium rounded-md border px-0 py-2 text-center transition-[background-color,border-color,color]",
+                    "text-sm font-medium rounded-md border px-0 py-2 text-center tabular-nums transition-colors duration-150 ease-out",
                     selectedHour === hour
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"
+                      : "border-border bg-surface text-foreground hover:bg-muted"
                   )}
                 >
                   {padTimePart(hour)}
@@ -159,7 +159,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs font-medium tracking-wide text-foreground-muted">Min</p>
+            <p className="text-xs font-medium text-foreground-muted">Min</p>
             <div className="flex flex-col gap-2">
               {MINUTE_OPTIONS.map((minute) => (
                 <button
@@ -168,10 +168,10 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(fu
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => handleMinuteSelect(minute)}
                   className={cn(
-                    "text-sm font-medium min-w-14 rounded-md border px-3 py-2 text-center transition-[background-color,border-color,color]",
+                    "text-sm font-medium min-w-14 rounded-md border px-3 py-2 text-center tabular-nums transition-colors duration-150 ease-out",
                     selectedMinute === minute
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-surface text-foreground hover:border-input hover:bg-accent"
+                      : "border-border bg-surface text-foreground hover:bg-muted"
                   )}
                 >
                   {padTimePart(minute)}

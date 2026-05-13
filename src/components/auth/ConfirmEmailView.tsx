@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Mail } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -41,12 +40,8 @@ export const ConfirmEmailView = () => {
 
   return (
     <AuthLayout title="" customContent>
-      <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
-        <Mail className="size-8 text-foreground-muted" />
-      </div>
-
       <div className="text-center mb-8 space-y-2 w-full">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Sjekk e-posten din
         </h1>
         <p className="text-sm text-foreground-muted">
