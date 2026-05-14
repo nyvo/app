@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Infinity } from '@/lib/icons'
 import { authPageVariants, authPageTransition } from '@/lib/motion'
 
 interface AuthLayoutProps {
@@ -28,12 +27,9 @@ export function AuthLayout({
   return (
     <div className="min-h-screen w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
-        <Link to="/" className="flex items-center gap-2 select-none mx-auto">
-          <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-            <Infinity className="size-3.5" />
-          </div>
+        <Link to="/" className="flex items-center select-none mx-auto">
           <span className="text-base font-medium text-foreground">
-            Ease
+            Openspot
           </span>
         </Link>
       </header>

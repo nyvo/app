@@ -75,7 +75,7 @@ function DrawerHeader({
         )}
       </div>
       {description && (
-        <SheetDescription className="text-xs text-foreground-muted tabular-nums mt-1">
+        <SheetDescription className="text-sm text-foreground-muted tabular-nums mt-1">
           {description}
         </SheetDescription>
       )}

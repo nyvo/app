@@ -83,11 +83,13 @@ export function LocationsSection() {
           </Button>
         </div>
       ) : (
-        <ul className="divide-y divide-border">
-          {locations.map((loc) => (
-            <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
-          ))}
-        </ul>
+        <div className="overflow-hidden rounded-lg border border-border bg-surface">
+          <ul className="divide-y divide-border">
+            {locations.map((loc) => (
+              <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
+            ))}
+          </ul>
+        </div>
       )}
 
       <LocationDrawer
@@ -109,7 +111,7 @@ function LocationRow({
   onEdit: () => void;
 }) {
   return (
-    <li className="py-3">
+    <li className="px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

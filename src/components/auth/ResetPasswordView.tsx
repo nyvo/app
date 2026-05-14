@@ -141,10 +141,10 @@ export const ResetPasswordView = () => {
         <p className="text-xs text-foreground-muted">
           Trenger du hjelp? Send en e-post til{' '}
           <a
-            href="mailto:hei@ease.no"
+            href="mailto:hei@openspot.no"
             className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
           >
-            hei@ease.no
+            hei@openspot.no
           </a>
           .
         </p>

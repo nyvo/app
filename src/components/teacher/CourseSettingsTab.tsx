@@ -49,10 +49,6 @@ interface CourseSettingsTabProps {
   allowsDropIn: boolean;
   onAllowsDropInChange: (value: boolean) => void;
 
-  // Danger zone
-  refundPreview: { count: number };
-  onCancelCourse: () => void;
-
   // Actions
   isDirty: boolean;
   saveError: string | null;
@@ -81,8 +77,6 @@ export const CourseSettingsTab = ({
   courseFormat,
   allowsDropIn,
   onAllowsDropInChange,
-  refundPreview,
-  onCancelCourse,
   isDirty,
   saveError,
   onSave,
@@ -166,30 +160,9 @@ export const CourseSettingsTab = ({
           <p className="mt-1 text-sm text-foreground-muted">Navn, beskrivelse og forsidebilde.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
-          <div>
-            <label htmlFor="settings-title" className="text-sm font-medium mb-2 block text-foreground">Navn på kurs</label>
-            <Input
-              id="settings-title"
-              type="text"
-              value={settingsTitle}
-              onChange={(e) => onTitleChange(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="settings-description" className="text-sm font-medium mb-2 block text-foreground">Beskrivelse</label>
-            <Textarea
-              id="settings-description"
-              rows={6}
-              value={settingsDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-            />
-          </div>
           <div className="space-y-2">
-            <div>
-              <label className="text-sm font-medium text-foreground">Kursbilde</label>
-              <p className="text-xs text-foreground-muted">Vises på kurssiden og i oversikten.</p>
-            </div>
-            <div className="relative aspect-[16/10] max-w-sm overflow-hidden rounded-lg bg-muted">
+            <label className="text-sm font-medium text-foreground">Kursbilde</label>
+            <div className="relative aspect-[16/10] w-60 overflow-hidden rounded-lg">
               <ImageUpload
                 value={settingsImageUrl}
                 onChange={(file) => {
@@ -207,6 +180,24 @@ export const CourseSettingsTab = ({
                 className="absolute inset-0 h-full w-full"
               />
             </div>
+          </div>
+          <div>
+            <label htmlFor="settings-title" className="text-sm font-medium mb-2 block text-foreground">Navn på kurs</label>
+            <Input
+              id="settings-title"
+              type="text"
+              value={settingsTitle}
+              onChange={(e) => onTitleChange(e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor="settings-description" className="text-sm font-medium mb-2 block text-foreground">Beskrivelse</label>
+            <Textarea
+              id="settings-description"
+              rows={6}
+              value={settingsDescription}
+              onChange={(e) => onDescriptionChange(e.target.value)}
+            />
           </div>
         </div>
       </section>
@@ -322,59 +313,26 @@ export const CourseSettingsTab = ({
               </div>
             );
           })()}
-        </div>
-      </section>
-
-      {/* Drop-in — series only. The toggle merely *allows* drop-in; the
-          actual public-side surfacing requires (1) course has started and
-          (2) spots available. Price computed as base ÷ total weeks. */}
-      {courseFormat === 'series' && (
-        <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
-          <div>
-            <h3 className="text-base font-semibold text-foreground">Drop-in</h3>
-            <p className="mt-1 text-sm text-foreground-muted">
-              La nye deltakere bli med på en enkelt time etter at kurset er i gang.
-            </p>
-          </div>
-          <div className="md:col-span-2">
-            <label className="flex items-start gap-3 cursor-pointer">
+          {/* Drop-in — series only. Lives inside Tid og kapasitet because it's
+              an access/pricing modifier on the schedule, not a standalone
+              concern. Public-side surfacing requires (1) course has started
+              and (2) spots available. Price = base ÷ total weeks. */}
+          {courseFormat === 'series' && (
+            <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-medium text-foreground">Tillat drop-in</span>
+                <span className="block text-sm text-foreground-muted mt-0.5">
+                  La nye bli med på enkelttimer. Pris regnes per gang.
+                </span>
+              </span>
               <Switch
                 checked={allowsDropIn}
                 onCheckedChange={onAllowsDropInChange}
                 aria-label="Tillat drop-in"
-                className="mt-0.5"
+                className="mt-0.5 shrink-0"
               />
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-foreground">Tillat drop-in</span>
-                <span className="block text-xs text-foreground-muted mt-0.5">
-                  Vises i påmeldingen når kurset har startet og det er ledige plasser. Prisen
-                  regnes ut per gang (kurspris delt på antall ganger).
-                </span>
-              </span>
             </label>
-          </div>
-        </section>
-      )}
-
-      {/* Avlys kurs — destructive, isolated. No card chrome; the destructive
-          button + irreversibility copy carries the signal. */}
-      <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Avlys kurs</h3>
-          <p className="mt-1 text-sm text-foreground-muted">
-            {refundPreview.count > 0
-              ? <><span className="tabular-nums">{refundPreview.count}</span> {`deltaker${refundPreview.count !== 1 ? 'e' : ''} vil bli refundert og varslet. Dette kan ikke angres.`}</>
-              : 'Kurset vil bli avlyst. Dette kan ikke angres.'}
-          </p>
-        </div>
-        <div className="md:col-span-2">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={onCancelCourse}
-          >
-            Avlys kurs
-          </Button>
+          )}
         </div>
       </section>
 

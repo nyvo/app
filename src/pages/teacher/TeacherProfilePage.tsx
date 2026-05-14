@@ -175,7 +175,7 @@ const TeacherProfilePage = () => {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     await supabase.auth.signOut();
-    toast.info('Kontoen slettes. Kontakt hei@ease.no for å angre.');
+    toast.info('Kontoen slettes. Kontakt hei@openspot.no for å angre.');
     setIsDeletingAccount(false);
   };
 

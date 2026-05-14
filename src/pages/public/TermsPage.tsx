@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Infinity } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -16,12 +15,9 @@ const TermsPage = () => {
           </Button>
         </div>
         
-        <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground">
-            <Infinity className="size-3.5" />
-          </div>
+        <Link to="/" className="flex items-center select-none">
           <span className="text-base font-medium text-foreground">
-            Ease
+            Openspot
           </span>
         </Link>
 

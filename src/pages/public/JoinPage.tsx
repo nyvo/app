@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Infinity, ImageIcon } from '@/lib/icons';
+import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -44,11 +44,8 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
       <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center max-w-6xl mx-auto">
-        <Link to="/" className="flex items-center gap-2 select-none">
-          <div className="size-6 bg-foreground rounded-md flex items-center justify-center text-background">
-            <Infinity className="size-3.5" />
-          </div>
-          <span className="text-base font-medium text-foreground">Ease</span>
+        <Link to="/" className="flex items-center select-none">
+          <span className="text-base font-medium text-foreground">Openspot</span>
         </Link>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">

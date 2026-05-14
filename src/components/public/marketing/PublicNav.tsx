@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf } from '@/lib/icons';
 import { cn } from '@/lib/utils';
 
 interface PublicNavProps {
@@ -37,11 +36,8 @@ export function PublicNav({ studioName, studioSlug, overlay = false }: PublicNav
       )}
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="flex size-7 items-center justify-center rounded-md border border-border bg-background group-hover:bg-muted transition-colors">
-            <Leaf className="size-3.5 text-foreground" strokeWidth={1.75} />
-          </span>
-          <span className="text-base font-medium tracking-tight text-foreground">Ease</span>
+        <Link to="/" className="flex items-center group">
+          <span className="text-base font-medium tracking-tight text-foreground">Openspot</span>
         </Link>
 
         {studioName && studioSlug && (

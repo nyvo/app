@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Infinity,
   Check,
   CreditCard,
   Smartphone,
@@ -26,19 +25,16 @@ const LandingPage = () => {
     <div className="overflow-x-hidden bg-background text-foreground antialiased">
       <nav className="absolute top-0 w-full z-50 bg-transparent border-none" aria-label="Hovednavigasjon">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2" aria-label="Ease – til forsiden">
-            <div className="size-6 bg-primary rounded-md flex items-center justify-center text-primary-foreground" aria-hidden="true">
-              <Infinity className="size-3.5" />
-            </div>
+          <Link to="/" className="flex items-center" aria-label="Openspot – til forsiden">
             <span className="text-base font-medium text-foreground">
-              Ease
+              Openspot
             </span>
           </Link>
           <div className="flex items-center gap-6">
             <a href="#pricing" className="text-sm font-medium hidden text-foreground-muted transition-colors hover:text-foreground md:block">
               Pris
             </a>
-            <a href="mailto:hei@ease.no" className="text-sm font-medium hidden text-foreground-muted transition-colors hover:text-foreground md:block">
+            <a href="mailto:hei@openspot.no" className="text-sm font-medium hidden text-foreground-muted transition-colors hover:text-foreground md:block">
               Kontakt
             </a>
             <Link to="/login" className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground">
@@ -85,7 +81,7 @@ const LandingPage = () => {
             <div className="rounded-lg border border-border overflow-hidden bg-background">
               <img
                 src="/Screenshot_10.png"
-                alt="Ease kursside — påmelding for Morning Flow & Coffee"
+                alt="Openspot kursside — påmelding for Morning Flow og Coffee"
                 className="w-full h-auto"
               />
             </div>
@@ -439,7 +435,7 @@ const LandingPage = () => {
               Bygget for yogastudioer i Norge
             </h2>
             <p className="text-base text-foreground-muted max-w-xl mx-auto mb-12">
-              Ease håndterer påmelding, betaling og regnskap. Du fokuserer på undervisningen.
+              Openspot håndterer påmelding, betaling og regnskap. Du fokuserer på undervisningen.
             </p>
           </motion.div>
 
@@ -581,12 +577,9 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
             <div className="md:col-span-5">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="size-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
-                  <Infinity className="size-4" />
-                </div>
+              <div className="flex items-center mb-6">
                 <span className="text-xl font-semibold text-foreground">
-                  Ease
+                  Openspot
                 </span>
               </div>
               <p className="text-sm mb-6 max-w-sm text-foreground-muted leading-relaxed">
@@ -622,7 +615,7 @@ const LandingPage = () => {
               </h4>
               <ul className="text-sm space-y-4 text-foreground-muted">
                 <li>
-                  <a href="mailto:hei@ease.no" className="hover:text-foreground transition-colors">
+                  <a href="mailto:hei@openspot.no" className="hover:text-foreground transition-colors">
                     Kontakt
                   </a>
                 </li>
@@ -644,7 +637,7 @@ const LandingPage = () => {
 
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs text-foreground-muted">
-              © {new Date().getFullYear()} Ease AS. Alle rettigheter reservert.
+              © {new Date().getFullYear()} Openspot AS. Alle rettigheter reservert.
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">

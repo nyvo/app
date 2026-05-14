@@ -94,7 +94,7 @@ export const TeacherSidebar = () => {
           to={routes.dashboard}
           className="flex h-12 items-center rounded-md px-3 text-base font-semibold tracking-tight text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
         >
-          Ease
+          Openspot
         </Link>
       </SidebarHeader>
 
@@ -126,7 +126,7 @@ export const TeacherSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="border border-border text-foreground hover:bg-muted data-[state=open]:bg-muted data-[state=open]:text-foreground">
+                <SidebarMenuButton className="text-foreground hover:bg-muted data-[state=open]:bg-muted data-[state=open]:text-foreground">
                   <span className="flex-1 truncate">{profile?.name || currentSeller?.name || 'Konto'}</span>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Leaf, ImageIcon, Building } from '@/lib/icons';
+import { ImageIcon, Building } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -200,11 +200,8 @@ const CheckoutSuccessPage = () => {
       <div className="min-h-screen w-full bg-background">
         <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-surface-elevated backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
-                <Leaf className="size-5" />
-              </div>
-              <span className="text-base font-medium text-foreground">Ease</span>
+            <Link to="/" className="flex items-center">
+              <span className="text-base font-medium text-foreground">Openspot</span>
             </Link>
           </div>
         </header>
@@ -261,11 +258,8 @@ const CheckoutSuccessPage = () => {
     <div className="min-h-screen w-full bg-background">
       <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-surface-elevated backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to={studioUrl} className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-background border border-border text-primary">
-              <Leaf className="size-5" />
-            </div>
-            <span className="text-base font-medium text-foreground">Ease</span>
+          <Link to={studioUrl} className="flex items-center">
+            <span className="text-base font-medium text-foreground">Openspot</span>
           </Link>
         </div>
       </header>

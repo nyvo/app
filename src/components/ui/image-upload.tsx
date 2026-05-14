@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { ImagePlus, X, AlertCircle } from '@/lib/icons'
+import { ImagePlus, X } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -141,7 +141,7 @@ export function ImageUpload({
         // Image preview state
         <div className="relative group h-full">
           <div className="relative h-full rounded-lg overflow-hidden border border-border bg-muted">
-            <img src={displayUrl} alt="Kursbilde" className="w-full h-full object-cover" />
+            <img src={displayUrl} alt="" className="w-full h-full object-cover" />
             {/* Hover overlay */}
             <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <Button
@@ -198,13 +198,11 @@ export function ImageUpload({
             </span>
             {!dragActive && <span className="text-foreground-muted"> eller dra og slipp</span>}
           </p>
-          <p className="text-xs text-foreground-muted">PNG eller JPG · Maks 5 MB</p>
         </div>
       )}
 
       {displayError && (
-        <p className="mt-2 text-xs text-danger flex items-center gap-1">
-          <AlertCircle className="size-3" />
+        <p role="alert" className="mt-2 text-sm text-danger">
           {displayError}
         </p>
       )}

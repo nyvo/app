@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from '@/lib/icons';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
-import { updateTeam } from '@/services/teams';
+import { updateSeller } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/services/storage';
-import type { Team } from '@/types/database';
+import type { Seller, Team } from '@/types/database';
 
 // ---------------------------------------------------------------------------
 // "Min studio" — the seller's public storefront page (their team) plus the
@@ -54,7 +54,8 @@ const TeamsPage = () => {
 
         {currentTeam ? (
           <div>
-            {/* Studiosiden — inline-editable storefront. */}
+            {/* Studiosiden — inline-editable storefront. Leads the page so the
+                user lands on their public-facing identity first. */}
             <section
               aria-labelledby="studiosiden-heading"
               className="space-y-6"
@@ -69,7 +70,13 @@ const TeamsPage = () => {
               </div>
 
               <div>
-                <StudioSidenForm team={currentTeam} onSaved={refreshSellers} />
+                {currentSeller && (
+                  <StudioSidenForm
+                    team={currentTeam}
+                    seller={currentSeller}
+                    onSaved={refreshSellers}
+                  />
+                )}
               </div>
             </section>
 
@@ -114,10 +121,19 @@ const TeamsPage = () => {
 
 const COURSE_IMAGES_BUCKET = 'course-images';
 
-function StudioSidenForm({ team, onSaved }: { team: Team; onSaved: () => Promise<void> | void }) {
-  const [savingCover, setSavingCover] = useState(false);
+function StudioSidenForm({
+  team,
+  seller,
+  onSaved,
+}: {
+  team: Team;
+  seller: Seller;
+  onSaved: () => Promise<void> | void;
+}) {
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadCover = async (file: File): Promise<string> => {
+  const uploadPhoto = async (file: File): Promise<string> => {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
       throw new Error('Ugyldig filtype. Bruk JPG, PNG eller WebP.');
     }
@@ -125,7 +141,7 @@ function StudioSidenForm({ team, onSaved }: { team: Team; onSaved: () => Promise
       throw new Error('Bildet er for stort. Maks 5 MB');
     }
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `teams/${team.id}/${Date.now()}.${ext}`;
+    const path = `sellers/${seller.id}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from(COURSE_IMAGES_BUCKET)
       .upload(path, file, { cacheControl: '3600', upsert: false });
@@ -134,26 +150,29 @@ function StudioSidenForm({ team, onSaved }: { team: Team; onSaved: () => Promise
     return data.publicUrl;
   };
 
-  const handleCoverChange = async (file: File | null) => {
+  const handleFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
-    setSavingCover(true);
+
+    setSavingPhoto(true);
     try {
-      const url = await uploadCover(file);
-      const { error } = await updateTeam(team.id, { cover_image_url: url });
+      const url = await uploadPhoto(file);
+      const { error } = await updateSeller(seller.id, { logo_url: url });
       if (error) throw error;
       await onSaved();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Kunne ikke laste opp bildet';
       toast.error(msg);
     } finally {
-      setSavingCover(false);
+      setSavingPhoto(false);
     }
   };
 
-  const handleCoverRemove = async () => {
-    setSavingCover(true);
-    const { error } = await updateTeam(team.id, { cover_image_url: null });
-    setSavingCover(false);
+  const handlePhotoRemove = async () => {
+    setSavingPhoto(true);
+    const { error } = await updateSeller(seller.id, { logo_url: null });
+    setSavingPhoto(false);
     if (error) {
       toast.error('Kunne ikke fjerne bildet');
       return;
@@ -163,20 +182,53 @@ function StudioSidenForm({ team, onSaved }: { team: Team; onSaved: () => Promise
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-2">
-        <label className="text-sm font-medium text-foreground">Forsidebilde</label>
-        <ImageUpload
-          value={team.cover_image_url}
-          onChange={handleCoverChange}
-          onRemove={handleCoverRemove}
-          disabled={savingCover}
+      <div className="grid gap-3">
+        <span className="text-sm font-medium text-foreground">Profilbilde</span>
+        <div className="flex items-center gap-4">
+          <UserAvatar
+            src={seller.logo_url}
+            name={seller.name}
+            email={seller.email}
+            size="xl"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={savingPhoto}
+            >
+              {seller.logo_url ? 'Bytt bilde' : 'Last opp bilde'}
+            </Button>
+            {seller.logo_url && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handlePhotoRemove}
+                disabled={savingPhoto}
+                className="text-foreground-muted hover:text-foreground"
+              >
+                Fjern
+              </Button>
+            )}
+          </div>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+          onChange={handleFileSelected}
+          aria-label="Last opp profilbilde"
+          className="hidden"
         />
       </div>
 
       <div className="grid gap-2">
         <span className="text-sm font-medium text-foreground">URL</span>
         <div className="flex h-9 items-center rounded-md border border-border bg-surface text-sm">
-          <span className="pl-3 text-foreground-muted">framio.no</span>
+          <span className="pl-3 text-foreground-muted">openspot.no</span>
           <span className="px-1 text-foreground-muted">/</span>
           <span className="flex-1 min-w-0 truncate pr-3 text-foreground">{team.slug}</span>
         </div>

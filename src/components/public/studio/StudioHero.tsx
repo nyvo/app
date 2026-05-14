@@ -18,7 +18,7 @@ const TABS: { key: StudioTab; label: string }[] = [
 /**
  * Full-bleed banner that doubles as the page header. The studio's avatar
  * sits on top of the banner so the studio's identity is the first thing
- * the visitor sees — no Ease chrome above it.
+ * the visitor sees — no Openspot chrome above it.
  */
 export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroProps) {
   const initials = getInitials(organization.name);

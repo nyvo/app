@@ -2,8 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { FileText } from '@/lib/icons';
+import { FileText, MoreHorizontal } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -422,19 +428,42 @@ const CoursePage = () => {
               Tilbake til kurs
             </Link>
           </Button>
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {courseData.title}
-            </h1>
-            {courseData.status === 'cancelled' ? (
-              <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
-                Avlyst
-              </span>
-            ) : (
-              <StatusBadge
-                status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
-                className="shrink-0"
-              />
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                {courseData.title}
+              </h1>
+              {courseData.status === 'cancelled' ? (
+                <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
+                  Avlyst
+                </span>
+              ) : (
+                <StatusBadge
+                  status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
+                  className="shrink-0"
+                />
+              )}
+            </div>
+            {courseData.status !== 'cancelled' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="icon-sm"
+                    aria-label="Flere handlinger"
+                  >
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    className="text-danger"
+                    onClick={() => setShowCancelPreview(true)}
+                  >
+                    Avlys kurs
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </header>
@@ -520,8 +549,6 @@ const CoursePage = () => {
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
-              refundPreview={refundPreview}
-              onCancelCourse={() => setShowCancelPreview(true)}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}
