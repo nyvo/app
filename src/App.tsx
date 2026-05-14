@@ -32,6 +32,7 @@ const AuthCallbackPage = lazy(() => import('./pages/public/AuthCallbackPage'));
 const JoinPage = lazy(() => import('./pages/public/JoinPage'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 
+const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
 const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
@@ -155,6 +156,14 @@ function AppRoutes() {
 }
 
 const App = () => {
+  if (import.meta.env.VITE_COMING_SOON === 'true') {
+    return (
+      <Suspense fallback={<PageLoader variant="fullscreen" />}>
+        <ComingSoonPage />
+      </Suspense>
+    );
+  }
+
   return (
     <AuthProvider>
       <BrowserRouter>
