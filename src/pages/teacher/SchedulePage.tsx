@@ -348,7 +348,7 @@ function SessionCard({ session }: { session: SessionRow }) {
 
   return (
     <Link
-      to={{ search: `?kurs=${session.courseId}` }}
+      to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
         'block rounded-lg bg-muted p-4 outline-none transition-shadow ring-1 ring-transparent',
         'hover:ring-border',

@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { Link, useNavigate } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { motion } from 'framer-motion';
+import { Bell } from '@/lib/icons';
 import { DashboardSkeleton } from '@/components/teacher/DashboardSkeleton';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -31,7 +32,7 @@ import type {
 
 // Map session + course to dashboard Course format (has actual session date)
 function mapSessionForDashboard(session: CourseSession, course: CourseDB, signupCount?: number): DashboardCourse {
-  const styleType: DashboardCourseType = course.format;
+  const styleType: DashboardCourseType = course.format === 'series' ? 'course-series' : 'event';
   const subtitle = course.location || (course.format === 'series' ? 'Kursrekke' : 'Enkeltkurs');
 
   return {
@@ -200,10 +201,17 @@ const TeacherDashboard = () => {
               animate="animate"
               transition={pageTransition}
             >
-              <header className="mb-8">
+              <header className="mb-8 flex items-center justify-between border-b border-border pb-4">
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                   Oversikt
                 </h1>
+                <button
+                  type="button"
+                  aria-label="Varsler"
+                  className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-foreground-muted outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+                >
+                  <Bell className="size-5" />
+                </button>
               </header>
 
 
@@ -255,15 +263,22 @@ const TeacherDashboard = () => {
                   <UpcomingClassesCard courses={dashboardCourses} />
                 </motion.div>
               ) : (
-                <motion.div
-                  className="grid grid-cols-1 gap-6 lg:grid-cols-2"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={sectionTransition}
-                >
-                  <RecentActivityCard signups={recentSignupsRaw} />
-                  <UpcomingClassesCard courses={dashboardCourses} />
-                </motion.div>
+                <>
+                  <motion.div
+                    className="grid grid-cols-1 divide-y divide-border lg:grid-cols-2 lg:divide-y-0 lg:divide-x"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={sectionTransition}
+                  >
+                    <div className="pb-8 lg:pb-0 lg:pr-8">
+                      <RecentActivityCard signups={recentSignupsRaw} />
+                    </div>
+                    <div className="pt-8 lg:pt-0 lg:pl-8">
+                      <UpcomingClassesCard courses={dashboardCourses} />
+                    </div>
+                  </motion.div>
+                  <div className="mt-8 border-t border-border" />
+                </>
               )}
             </motion.div>
           </div>

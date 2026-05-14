@@ -1,11 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { X } from '@/lib/icons';
+import { Plus, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import {
@@ -18,116 +25,145 @@ import { cn } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Locations as a small, optional sub-section of the Studio page. Row list
-// where each row inline-expands to reveal an edit form on Rediger. No modal,
-// no card grid — sellers set this once and forget.
+// Locations as a small, optional sub-section of the Studio page. Row list;
+// Rediger / Legg til sted both open the same drawer for create + edit.
 // ---------------------------------------------------------------------------
-
-const DEFAULT_NEW_NAME = 'Nytt sted';
 
 export function LocationsSection() {
   const { currentSeller } = useAuth();
   const { locations, refetch } = useLocations(currentSeller?.id);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<TeacherLocation | null>(null);
 
   if (!currentSeller?.id) return null;
 
-  const handleAdd = async () => {
-    if (creating) return;
-    setCreating(true);
-    const { data, error } = await createLocation({
-      seller_id: currentSeller.id,
-      name: DEFAULT_NEW_NAME,
-      address: null,
-      rooms: [],
-    });
-    setCreating(false);
-    if (error || !data) {
-      toast.error('Kunne ikke opprette stedet');
-      return;
-    }
-    setOpenId(data.id);
-    refetch();
+  const openCreate = () => {
+    setEditing(null);
+    setDrawerOpen(true);
+  };
+
+  const openEdit = (loc: TeacherLocation) => {
+    setEditing(loc);
+    setDrawerOpen(true);
   };
 
   return (
-    <div>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="adresser-heading" className="text-base font-semibold text-foreground">
+            Adresser
+          </h2>
+          <p className="mt-1 text-sm text-foreground-muted">
+            Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          size="icon-sm"
+          onClick={openCreate}
+          aria-label="Legg til sted"
+          className="shrink-0"
+        >
+          <Plus />
+        </Button>
+      </div>
+
       {locations.length === 0 ? (
-        <p className="text-sm text-foreground-muted">
-          Du har ikke lagt til noen steder ennå.
-        </p>
+        <div className="rounded-md border border-dashed border-border p-8 text-center">
+          <p className="text-sm font-medium text-foreground mb-4">Du har ikke lagt til noen steder enda</p>
+          <Button
+            variant="outline-soft"
+            size="icon-sm"
+            onClick={openCreate}
+            aria-label="Legg til sted"
+            className="mx-auto"
+          >
+            <Plus />
+          </Button>
+        </div>
       ) : (
         <ul className="divide-y divide-border">
           {locations.map((loc) => (
-            <LocationRow
-              key={loc.id}
-              location={loc}
-              isOpen={openId === loc.id}
-              onToggle={() => setOpenId((id) => (id === loc.id ? null : loc.id))}
-              onChanged={refetch}
-              sellerId={currentSeller.id}
-            />
+            <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
           ))}
         </ul>
       )}
 
-      <div className={locations.length > 0 ? 'pt-4' : 'pt-2'}>
-        <Button
-          variant="outline-soft"
-          size="sm"
-          onClick={handleAdd}
-          loading={creating}
-          loadingText="Oppretter"
-        >
-          Legg til sted
-        </Button>
-      </div>
+      <LocationDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        sellerId={currentSeller.id}
+        location={editing}
+        onSaved={refetch}
+      />
     </div>
   );
 }
 
 function LocationRow({
   location,
-  isOpen,
-  onToggle,
-  onChanged,
-  sellerId,
+  onEdit,
 }: {
   location: TeacherLocation;
-  isOpen: boolean;
-  onToggle: () => void;
-  onChanged: () => void;
-  sellerId: string;
+  onEdit: () => void;
 }) {
-  const [name, setName] = useState(location.name);
-  const [address, setAddress] = useState(location.address ?? '');
-  const [rooms, setRooms] = useState<string[]>(location.rooms);
-  const [isFavorite, setIsFavorite] = useState(location.is_favorite);
+  return (
+    <li className="py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground truncate">{location.name}</span>
+            {location.is_favorite && (
+              <Badge variant="neutral" size="sm">Standard</Badge>
+            )}
+          </div>
+          {location.address && (
+            <p className="mt-0.5 text-sm text-foreground-muted truncate">{location.address}</p>
+          )}
+        </div>
+        <Button variant="outline-soft" size="sm" className="shrink-0" onClick={onEdit}>
+          Rediger
+        </Button>
+      </div>
+    </li>
+  );
+}
+
+function LocationDrawer({
+  open,
+  onOpenChange,
+  sellerId,
+  location,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sellerId: string;
+  location: TeacherLocation | null;
+  onSaved: () => void;
+}) {
+  const isEdit = location !== null;
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [rooms, setRooms] = useState<string[]>([]);
   const [newRoom, setNewRoom] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const nameRef = useRef<HTMLInputElement | null>(null);
-
-  // Re-sync when the underlying location changes or row opens/closes.
-  useEffect(() => {
-    setName(location.name);
-    setAddress(location.address ?? '');
-    setRooms(location.rooms);
-    setIsFavorite(location.is_favorite);
-    setNewRoom('');
-  }, [location.id, location.name, location.address, location.rooms, location.is_favorite, isOpen]);
+  const [nameError, setNameError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (isOpen && location.name === DEFAULT_NEW_NAME) {
-      // Newly created — focus + select the name field.
-      setTimeout(() => {
-        nameRef.current?.focus();
-        nameRef.current?.select();
-      }, 50);
+    if (open) {
+      setName(location?.name ?? '');
+      setAddress(location?.address ?? '');
+      setRooms(location?.rooms ?? []);
+      setNewRoom('');
+      setIsFavorite(location?.is_favorite ?? false);
+      setNameError(undefined);
     }
-  }, [isOpen, location.name]);
+  }, [open, location]);
 
   const addRoom = () => {
     const trimmed = newRoom.trim();
@@ -144,27 +180,51 @@ function LocationRow({
   };
 
   const handleSave = async () => {
-    const trimmedName = name.trim() || DEFAULT_NEW_NAME;
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setNameError('Skriv inn et navn');
+      return;
+    }
+
     setSaving(true);
-    const { error } = await updateLocation(location.id, {
+    const payload = {
       name: trimmedName,
       address: address.trim() || null,
       rooms,
-    });
-    if (error) {
-      toast.error('Kunne ikke lagre stedet');
-      setSaving(false);
-      return;
+    };
+
+    if (isEdit && location) {
+      const { error } = await updateLocation(location.id, payload);
+      if (error) {
+        toast.error('Kunne ikke lagre stedet');
+        setSaving(false);
+        return;
+      }
+      if (isFavorite !== location.is_favorite) {
+        await setFavoriteLocation(sellerId, isFavorite ? location.id : null);
+      }
+    } else {
+      const { data, error } = await createLocation({
+        seller_id: sellerId,
+        ...payload,
+      });
+      if (error || !data) {
+        toast.error('Kunne ikke opprette stedet');
+        setSaving(false);
+        return;
+      }
+      if (isFavorite) {
+        await setFavoriteLocation(sellerId, data.id);
+      }
     }
-    if (isFavorite !== location.is_favorite) {
-      await setFavoriteLocation(sellerId, isFavorite ? location.id : null);
-    }
+
     setSaving(false);
-    onChanged();
-    onToggle();
+    onSaved();
+    onOpenChange(false);
   };
 
   const handleDelete = async () => {
+    if (!location) return;
     setDeleting(true);
     const { error } = await deleteLocation(location.id);
     setDeleting(false);
@@ -174,53 +234,52 @@ function LocationRow({
       return;
     }
     toast.success('Stedet er slettet');
-    onChanged();
+    onSaved();
+    onOpenChange(false);
   };
 
   return (
-    <li className="py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground truncate">{location.name}</span>
-            {location.is_favorite && (
-              <Badge variant="neutral" size="xs" shape="rect">Standard</Badge>
-            )}
-          </div>
-          {location.address && !isOpen && (
-            <p className="mt-0.5 text-xs text-foreground-muted truncate">{location.address}</p>
-          )}
-        </div>
-        <Button
-          variant={isOpen ? 'ghost' : 'outline-soft'}
-          size="sm"
-          className="shrink-0"
-          onClick={onToggle}
-        >
-          {isOpen ? 'Lukk' : 'Rediger'}
-        </Button>
-      </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="flex flex-col gap-0 sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>{isEdit ? 'Rediger sted' : 'Legg til sted'}</SheetTitle>
+          <SheetDescription>
+            Lagre adresser og rom du bruker ofte.
+          </SheetDescription>
+        </SheetHeader>
 
-      {isOpen && (
-        <div className="mt-4 space-y-4 rounded-lg bg-muted p-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div className="grid gap-2">
-            <label htmlFor={`loc-name-${location.id}`} className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="loc-drawer-name"
+              data-error={!!nameError || undefined}
+              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+            >
               Navn
             </label>
             <Input
-              ref={nameRef}
-              id={`loc-name-${location.id}`}
+              id="loc-drawer-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(undefined);
+              }}
+              placeholder="Hovedstudio"
+              aria-invalid={!!nameError || undefined}
+              aria-describedby={nameError ? 'loc-drawer-name-error' : undefined}
+              autoFocus
             />
+            {nameError && (
+              <p id="loc-drawer-name-error" role="alert" className="text-sm text-danger">{nameError}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor={`loc-addr-${location.id}`} className="text-sm font-medium text-foreground">
+            <label htmlFor="loc-drawer-addr" className="text-sm font-medium text-foreground">
               Adresse
             </label>
             <Input
-              id={`loc-addr-${location.id}`}
+              id="loc-drawer-addr"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Storgata 1, 0123 Oslo"
@@ -284,10 +343,11 @@ function LocationRow({
             />
             <span className="text-sm text-foreground">Bruk som standard når jeg oppretter kurs</span>
           </label>
+        </div>
 
-          <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between gap-2 border-t border-border px-6 py-4">
+          {isEdit ? (
             <Button
-              type="button"
               variant="ghost"
               size="sm"
               className="text-danger hover:text-danger hover:bg-danger-subtle"
@@ -295,40 +355,33 @@ function LocationRow({
             >
               Slett sted
             </Button>
-            <div className="flex gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={onToggle}>
-                Avbryt
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSave}
-                loading={saving}
-                loadingText="Lagrer"
-              >
-                Lagre
-              </Button>
-            </div>
-          </div>
+          ) : (
+            <span />
+          )}
+          <Button size="sm" onClick={handleSave} loading={saving} loadingText="Lagrer">
+            {isEdit ? 'Lagre' : 'Lagre sted'}
+          </Button>
         </div>
-      )}
 
-      <ConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        ariaLabel="Slett sted"
-        headline="Stedet slettes. Det kan ikke angres."
-        scope={
-          <ConfirmScopeItem
-            name={location.name}
-            meta={location.address || (location.rooms.length > 0 ? `${location.rooms.length} rom` : 'Ingen adresse')}
+        {isEdit && location && (
+          <ConfirmDialog
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            ariaLabel="Slett sted"
+            headline="Stedet slettes. Det kan ikke angres."
+            scope={
+              <ConfirmScopeItem
+                name={location.name}
+                meta={location.address || (location.rooms.length > 0 ? `${location.rooms.length} rom` : 'Ingen adresse')}
+              />
+            }
+            actionLabel="Slett sted"
+            onConfirm={handleDelete}
+            loading={deleting}
+            loadingText="Sletter"
           />
-        }
-        actionLabel="Slett sted"
-        onConfirm={handleDelete}
-        loading={deleting}
-        loadingText="Sletter"
-      />
-    </li>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 }

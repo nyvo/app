@@ -1,9 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Eye,
-  EyeOff,
-} from '@/lib/icons';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +11,7 @@ import { isValidEmail } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const TeacherProfilePage = () => {
-  const { profile, refreshSellers, updatePassword } = useAuth();
+  const { profile, refreshSellers } = useAuth();
 
   // State for form fields - initialized from auth context
   const [firstName, setFirstName] = useState('');
@@ -160,15 +156,6 @@ const TeacherProfilePage = () => {
     setIsSaving(false);
   };
 
-  // Password change state
-  const [passwordExpanded, setPasswordExpanded] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-
   // Logout all devices
   const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
   const [logoutAllOpen, setLogoutAllOpen] = useState(false);
@@ -177,48 +164,6 @@ const TeacherProfilePage = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
-  // Password change handler
-  const handleChangePassword = async () => {
-    const errs: Record<string, string> = {};
-    if (!currentPassword) errs.currentPassword = 'Skriv inn nåværende passord';
-    if (!newPassword) errs.newPassword = 'Skriv inn nytt passord';
-    else if (newPassword.length < 12) errs.newPassword = 'Må være minst 12 tegn';
-
-    if (Object.keys(errs).length > 0) {
-      setPasswordErrors(errs);
-      return;
-    }
-
-    setIsChangingPassword(true);
-    setPasswordErrors({});
-
-    // Verify current password
-    const { error: verifyError } = await supabase.auth.signInWithPassword({
-      email: profile?.email || '',
-      password: currentPassword,
-    });
-    if (verifyError) {
-      setPasswordErrors({ currentPassword: 'Feil passord' });
-      setIsChangingPassword(false);
-      return;
-    }
-
-    const { error: updateError } = await updatePassword(newPassword);
-    if (updateError) {
-      toast.error('Kunne ikke oppdatere passordet. Prøv igjen.');
-      setIsChangingPassword(false);
-      return;
-    }
-
-    toast.success('Passord oppdatert');
-    setPasswordExpanded(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setShowCurrentPassword(false);
-    setShowNewPassword(false);
-    setIsChangingPassword(false);
-  };
 
   // Logout all devices handler
   const handleLogoutAllDevices = async () => {
@@ -243,7 +188,7 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="mx-auto w-full max-w-6xl px-6 pb-24 md:pb-8 lg:px-8"
+          className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
         >
           <div className="mb-8 pt-6 lg:pt-12">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -252,11 +197,11 @@ const TeacherProfilePage = () => {
           </div>
           <div>
                   {/* Personlig informasjon — first section, no top divider */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+                  <section className="space-y-6">
                     <div>
                       <h2 className="text-base font-semibold text-foreground">Personlig informasjon</h2>
                     </div>
-                    <div className="md:col-span-2">
+                    <div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="grid gap-2">
                             <label
@@ -317,12 +262,10 @@ const TeacherProfilePage = () => {
                                 onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
                                 onBlur={() => handleBlur('email')}
                                 aria-invalid={!!(errors.email && touched.email) || undefined}
-                                aria-describedby={errors.email && touched.email ? 'profile-email-error' : 'profile-email-hint'}
+                                aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
                             />
-                            {errors.email && touched.email ? (
+                            {errors.email && touched.email && (
                               <p id="profile-email-error" role="alert" className="text-sm text-danger">{errors.email}</p>
-                            ) : (
-                              <p id="profile-email-hint" className="text-sm text-foreground-muted">Vi sender deg en bekreftelse hvis du endrer e-posten.</p>
                             )}
                         </div>
 
@@ -330,138 +273,17 @@ const TeacherProfilePage = () => {
                     </div>
                   </section>
 
-                  {/* Konto & Sikkerhet */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
+                  {/* Konto og sikkerhet */}
+                  <section className="space-y-6 mt-10 pt-10 border-t border-border">
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">Konto & Sikkerhet</h2>
+                      <h2 className="text-base font-semibold text-foreground">Konto og sikkerhet</h2>
                     </div>
-                    <div className="md:col-span-2 divide-y divide-border">
-                          {/* Endre passord */}
-                          <div className="py-4">
-                              <div className="flex items-center justify-between">
-                                  <div>
-                                      <span className="text-sm font-medium block text-foreground">Endre passord</span>
-                                      <span className="text-xs block text-foreground-muted">Oppdater passordet ditt.</span>
-                                  </div>
-                                  <Button
-                                      variant={passwordExpanded ? 'ghost' : 'outline-soft'}
-                                      size="sm"
-                                      onClick={() => {
-                                          setPasswordExpanded(!passwordExpanded);
-                                          setPasswordErrors({});
-                                          setCurrentPassword('');
-                                          setNewPassword('');
-                                          setShowCurrentPassword(false);
-                                          setShowNewPassword(false);
-                                      }}
-                                      className="ml-4 shrink-0"
-                                  >
-                                      {passwordExpanded ? 'Avbryt' : 'Endre'}
-                                  </Button>
-                              </div>
-
-                              {/* Expanded password form */}
-                              {passwordExpanded && (
-                                  <div className="mt-4 space-y-4 rounded-lg bg-muted p-4">
-                                      <div className="grid gap-2">
-                                          <label
-                                            htmlFor="current-password"
-                                            data-error={!!passwordErrors.currentPassword || undefined}
-                                            className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                                          >
-                                            Nåværende passord
-                                          </label>
-                                          <div className="relative">
-                                              <Input
-                                                  id="current-password"
-                                                  type={showCurrentPassword ? 'text' : 'password'}
-                                                  value={currentPassword}
-                                                  onChange={(e) => { setCurrentPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.currentPassword; return n; }); }}
-                                                  aria-invalid={!!passwordErrors.currentPassword || undefined}
-                                                  aria-describedby={passwordErrors.currentPassword ? 'current-password-error' : undefined}
-                                                  autoComplete="current-password"
-                                                  className="pr-10"
-                                              />
-                                              <button
-                                                  type="button"
-                                                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-foreground-muted outline-none transition-colors duration-200 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-                                                  aria-label={showCurrentPassword ? 'Skjul passord' : 'Vis passord'}
-                                              >
-                                                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                                              </button>
-                                          </div>
-                                          {passwordErrors.currentPassword && (
-                                              <p id="current-password-error" role="alert" className="text-sm text-danger">{passwordErrors.currentPassword}</p>
-                                          )}
-                                      </div>
-
-                                      <div className="grid gap-2">
-                                          <label
-                                            htmlFor="new-password"
-                                            data-error={!!passwordErrors.newPassword || undefined}
-                                            className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                                          >
-                                            Nytt passord
-                                          </label>
-                                          <div className="relative">
-                                              <Input
-                                                  id="new-password"
-                                                  type={showNewPassword ? 'text' : 'password'}
-                                                  value={newPassword}
-                                                  onChange={(e) => { setNewPassword(e.target.value); setPasswordErrors(prev => { const n = { ...prev }; delete n.newPassword; return n; }); }}
-                                                  aria-invalid={!!passwordErrors.newPassword || undefined}
-                                                  aria-describedby={passwordErrors.newPassword ? 'new-password-error' : 'new-password-hint'}
-                                                  autoComplete="new-password"
-                                                  className="pr-10"
-                                              />
-                                              <button
-                                                  type="button"
-                                                  onClick={() => setShowNewPassword(!showNewPassword)}
-                                                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-foreground-muted outline-none transition-colors duration-200 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-                                                  aria-label={showNewPassword ? 'Skjul passord' : 'Vis passord'}
-                                              >
-                                                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                                              </button>
-                                          </div>
-                                          {passwordErrors.newPassword ? (
-                                              <p id="new-password-error" role="alert" className="text-sm text-danger">{passwordErrors.newPassword}</p>
-                                          ) : (
-                                              <p id="new-password-hint" className="text-sm text-foreground-muted">Må være minst 12 tegn</p>
-                                          )}
-                                      </div>
-
-                                      <div className="flex justify-end gap-2 pt-2">
-                                          <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => {
-                                                  setPasswordExpanded(false);
-                                                  setPasswordErrors({});
-                                                  setCurrentPassword('');
-                                                  setNewPassword('');
-                                              }}
-                                          >
-                                              Avbryt
-                                          </Button>
-                                          <Button
-                                              size="sm"
-                                              onClick={handleChangePassword}
-                                              loading={isChangingPassword}
-                                              loadingText="Oppdaterer"
-                                          >
-                                              Oppdater passord
-                                          </Button>
-                                      </div>
-                                  </div>
-                              )}
-                          </div>
-
+                    <div className="divide-y divide-border">
                           {/* Logg ut alle enheter */}
                           <div className="flex items-center justify-between py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Logg ut alle enheter</span>
-                                  <span className="text-xs block text-foreground-muted">Logger deg ut overalt.</span>
+                                  <span className="text-sm block text-foreground-muted">Logger deg ut overalt.</span>
                               </div>
                               <Button
                                   variant="outline-soft"
@@ -489,19 +311,12 @@ const TeacherProfilePage = () => {
                                   loadingText="Logger ut"
                               />
                           </div>
-                      </div>
-                  </section>
 
-                  {/* Slett konto */}
-                  <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground">Slett konto</h2>
-                    </div>
-                    <div className="md:col-span-2">
+                          {/* Slett konto */}
                           <div className="flex items-center justify-between py-4">
                               <div>
                                   <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>
-                                  <span className="text-xs block text-foreground-muted">All data slettes permanent.</span>
+                                  <span className="text-sm block text-foreground-muted">All data slettes permanent.</span>
                               </div>
                               <Button
                                   variant="destructive"

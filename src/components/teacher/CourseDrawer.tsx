@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MoreHorizontal } from '@/lib/icons';
@@ -27,8 +27,10 @@ import { useCourseDetail } from '@/hooks/use-course-detail';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
+import type { CourseSession } from '@/types/database';
 
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+const WEEKDAY_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
 
 function formatSessionDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -36,9 +38,58 @@ function formatSessionDate(dateStr: string): string {
   return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
+function formatScheduleLine(session: CourseSession, durationMinutes: number): string {
+  const d = new Date(session.session_date + 'T00:00:00');
+  if (isNaN(d.getTime())) return '';
+  const weekday = WEEKDAY_SHORT[d.getDay()];
+  const dayMonth = `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
+  const start = session.start_time?.slice(0, 5) ?? '';
+  const timePart = start ? ` · ${start}` : '';
+  const durationPart = durationMinutes ? ` (${durationMinutes} min)` : '';
+  return `${weekday} ${dayMonth}${timePart}${durationPart}`;
+}
+
+type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
+
+function DrawerHeader({
+  title,
+  status,
+  description,
+}: {
+  title: string;
+  status: string;
+  description?: ReactNode;
+}) {
+  return (
+    <SheetHeader className="px-6 py-4 border-b border-border">
+      <div className="flex items-start gap-3 flex-wrap">
+        <SheetTitle className="text-base font-semibold leading-tight">
+          {title}
+        </SheetTitle>
+        {status === 'cancelled' ? (
+          <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
+            Avlyst
+          </span>
+        ) : (
+          <StatusBadge status={status as CourseStatus} className="shrink-0" />
+        )}
+      </div>
+      {description && (
+        <SheetDescription className="text-xs text-foreground-muted tabular-nums mt-1">
+          {description}
+        </SheetDescription>
+      )}
+    </SheetHeader>
+  );
+}
+
 interface CourseDrawerProps {
   /** When undefined, drawer is closed. */
   courseId: string | undefined;
+  /** Origin of the open action — controls which body the drawer renders. */
+  origin?: 'schedule';
+  /** Specific session the user tapped (only meaningful when origin === 'schedule'). */
+  sessionId?: string;
   onClose: () => void;
 }
 
@@ -46,13 +97,15 @@ interface CourseDrawerProps {
  * CourseDrawer — quick-glance read-only drawer for a course.
  *
  * Studio rule (patterns.md § 15): drawers are supplementary, pages are
- * primary. This drawer carries operational signal only — title + status,
- * when/where, quick actions (publish/share/unpublish), a 5-person påmeldte
- * preview, and sessions if multi-day. Everything that requires editing,
- * configuration, or sustained attention lives on the full course page at
- * /courses/:id, reached via the "Åpne kursside →" footer link.
+ * primary. The body splits by `origin`:
+ *   - `schedule` → minimal session-framed quick view: title + status,
+ *     session date/time/location, top-5 påmeldte, single "Åpne kursside"
+ *     footer link. No course-management chrome.
+ *   - default (courses list) → full course-management quick view with
+ *     publish/share/unpublish, multi-day session list, etc.
+ * Anything that requires editing or configuration lives on /courses/:id.
  */
-export function CourseDrawer({ courseId, onClose }: CourseDrawerProps) {
+export function CourseDrawer({ courseId, origin, sessionId, onClose }: CourseDrawerProps) {
   const isOpen = !!courseId;
 
   return (
@@ -61,7 +114,16 @@ export function CourseDrawer({ courseId, onClose }: CourseDrawerProps) {
         side="right"
         className="flex flex-col gap-0 sm:max-w-[480px] w-full p-0"
       >
-        {courseId && <ViewMode courseId={courseId} onClose={onClose} />}
+        {courseId &&
+          (origin === 'schedule' ? (
+            <ScheduleQuickView
+              courseId={courseId}
+              sessionId={sessionId}
+              onClose={onClose}
+            />
+          ) : (
+            <ViewMode courseId={courseId} onClose={onClose} />
+          ))}
       </SheetContent>
     </Sheet>
   );
@@ -171,35 +233,24 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       : courseData.timeSchedule
     : null;
 
+  const headerDescription =
+    whenLine || courseData.location ? (
+      <>
+        {whenLine}
+        {whenLine && courseData.location && (
+          <span className="text-foreground-disabled mx-2">·</span>
+        )}
+        {courseData.location}
+      </>
+    ) : undefined;
+
   return (
     <>
-      {/* Header — title + status pill + compact when/where line */}
-      <SheetHeader className="px-6 py-4 border-b border-border">
-        <div className="flex items-start gap-3 flex-wrap">
-          <SheetTitle className="text-base font-semibold leading-tight">
-            {courseData.title}
-          </SheetTitle>
-          {courseData.status === 'cancelled' ? (
-            <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
-              Avlyst
-            </span>
-          ) : (
-            <StatusBadge
-              status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
-              className="shrink-0"
-            />
-          )}
-        </div>
-        {(whenLine || courseData.location) && (
-          <SheetDescription className="text-xs text-foreground-muted tabular-nums mt-1">
-            {whenLine}
-            {whenLine && courseData.location && (
-              <span className="text-foreground-disabled mx-2">·</span>
-            )}
-            {courseData.location}
-          </SheetDescription>
-        )}
-      </SheetHeader>
+      <DrawerHeader
+        title={courseData.title}
+        status={courseData.status}
+        description={headerDescription}
+      />
 
       {/* Body — scrollable */}
       <div className="flex-1 overflow-y-auto">
@@ -363,6 +414,134 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           courseTitle={courseData.title}
         />
       )}
+    </>
+  );
+}
+
+/**
+ * ScheduleQuickView — opened from /schedule. Session-framed peek with the
+ * fewest possible elements: course title + status, this session's
+ * date/time/location, who's coming, single deep-link to the full page.
+ * Course-management actions (publish, share, unpublish) intentionally
+ * absent — they belong on /courses/:id.
+ */
+function ScheduleQuickView({
+  courseId,
+  sessionId,
+  onClose,
+}: {
+  courseId: string;
+  sessionId: string | undefined;
+  onClose: () => void;
+}) {
+  const {
+    course: courseData,
+    sessions,
+    participants,
+    loading: isLoading,
+    error,
+  } = useCourseDetail(courseId);
+
+  if (isLoading) {
+    return (
+      <>
+        <SheetHeader className="px-6 py-4 border-b border-border">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="mt-2 h-4 w-32" />
+        </SheetHeader>
+        <div className="flex-1 px-6 py-6 space-y-3">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </>
+    );
+  }
+
+  if (error || !courseData) {
+    return (
+      <>
+        <SheetHeader className="px-6 py-4 border-b border-border">
+          <SheetTitle className="text-base font-semibold">Kurs ikke funnet</SheetTitle>
+        </SheetHeader>
+        <div className="flex-1 px-6 py-6">
+          <p className="text-sm text-foreground-muted">
+            {error || 'Kurset finnes ikke eller har blitt slettet.'}
+          </p>
+        </div>
+      </>
+    );
+  }
+
+  const currentSession = sessionId ? sessions.find((s) => s.id === sessionId) : undefined;
+
+  const sessionLine = currentSession
+    ? formatScheduleLine(currentSession, courseData.durationMinutes)
+    : courseData.timeSchedule
+      ? `${courseData.timeSchedule}${courseData.durationMinutes ? ` (${courseData.durationMinutes} min)` : ''}`
+      : '';
+
+  const headerDescription =
+    sessionLine || courseData.location ? (
+      <>
+        {sessionLine}
+        {sessionLine && courseData.location && (
+          <span className="text-foreground-disabled mx-2">·</span>
+        )}
+        {courseData.location}
+      </>
+    ) : undefined;
+
+  const visibleParticipants = participants.slice(0, 5);
+  const extraCount = Math.max(0, participants.length - visibleParticipants.length);
+
+  return (
+    <>
+      <DrawerHeader
+        title={courseData.title}
+        status={courseData.status}
+        description={headerDescription}
+      />
+
+      <div className="flex-1 overflow-y-auto">
+        <section className="px-6 py-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">
+            Påmeldte ({participants.length}
+            {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
+          </h3>
+          {participants.length === 0 ? (
+            <p className="text-sm text-foreground-muted">Ingen påmeldinger ennå.</p>
+          ) : (
+            <div className="space-y-1">
+              {visibleParticipants.map((p) => {
+                const name = p.participant_name || p.profile?.name || 'Ukjent';
+                const email = p.participant_email || p.profile?.email || '';
+                return (
+                  <div key={p.id} className="flex items-center gap-3 py-2">
+                    <UserAvatar name={name} email={email} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate text-foreground">{name}</p>
+                      <p className="text-xs truncate text-foreground-muted">{email}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {extraCount > 0 && (
+                <p className="pt-2 text-xs text-foreground-muted">+ {extraCount} flere</p>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="border-t border-border px-6 py-4 bg-background">
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <Link to={routes.course(courseId)} onClick={onClose}>
+            Åpne kursside
+          </Link>
+        </Button>
+      </div>
     </>
   );
 }

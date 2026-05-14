@@ -14,19 +14,30 @@ import { useAuth } from '@/contexts/AuthContext';
 function GlobalCourseDrawer() {
   const [searchParams, setSearchParams] = useSearchParams();
   const courseId = searchParams.get('kurs') || undefined;
+  const sessionId = searchParams.get('sess') || undefined;
+  const origin = searchParams.get('from') === 'schedule' ? 'schedule' : undefined;
 
   const close = useCallback(() => {
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev);
         next.delete('kurs');
+        next.delete('sess');
+        next.delete('from');
         return next;
       },
       { replace: true },
     );
   }, [setSearchParams]);
 
-  return <CourseDrawer courseId={courseId} onClose={close} />;
+  return (
+    <CourseDrawer
+      courseId={courseId}
+      sessionId={sessionId}
+      origin={origin}
+      onClose={close}
+    />
+  );
 }
 
 export default function TeacherLayout() {

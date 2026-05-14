@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Check, ChevronsUpDown, MapPin, DoorOpen } from '@/lib/icons';
+import { Check, ChevronsUpDown, MapPin } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, foldNorwegian } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';
@@ -20,7 +20,7 @@ interface LocationComboboxProps {
   'aria-label'?: string;
 }
 
-const SEPARATOR = ' \u2013 ';
+export const LOCATION_VALUE_SEPARATOR = ' \u2013 ';
 
 function buildOptions(locations: TeacherLocation[]): LocationOption[] {
   const options: LocationOption[] = [];
@@ -28,7 +28,7 @@ function buildOptions(locations: TeacherLocation[]): LocationOption[] {
     options.push({ value: loc.name, label: loc.name });
     for (const room of loc.rooms) {
       options.push({
-        value: `${loc.name}${SEPARATOR}${room}`,
+        value: `${loc.name}${LOCATION_VALUE_SEPARATOR}${room}`,
         label: room,
         group: loc.name,
       });
@@ -58,7 +58,7 @@ export function LocationCombobox({
     );
   }, [allOptions, search]);
 
-  // Group options by space
+  // Group options by venue for hierarchical rendering
   const grouped = useMemo(() => {
     const groups: Record<string, LocationOption[]> = {};
     const standalone: LocationOption[] = [];
@@ -118,66 +118,60 @@ export function LocationCombobox({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <div className="p-2">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Søk eller skriv nytt sted…"
-            className="flex h-8 w-full rounded-md border-0 bg-transparent px-2 text-sm font-medium placeholder:font-normal placeholder:text-foreground-muted focus:outline-none"
-            autoFocus
-          />
-        </div>
-        <div className="max-h-60 overflow-y-auto border-t border-border-subtle p-1">
-          {/* Standalone spaces */}
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Søk eller skriv nytt sted…"
+          className="block h-9 w-full border-0 bg-transparent px-3 text-sm font-medium placeholder:font-normal placeholder:text-foreground-muted focus:outline-none"
+          autoFocus
+        />
+        <div className="max-h-60 overflow-y-auto border-t border-border-subtle p-1 space-y-1">
+          {/* Standalone venues (no rooms) */}
           {grouped.standalone.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => handleSelect(opt.value)}
               className={cn(
-                'relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium outline-none hover:bg-accent',
+                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium outline-none hover:bg-accent',
                 value === opt.value && 'bg-accent'
               )}
             >
-              <MapPin className="size-3.5 shrink-0 text-foreground-muted" />
+              <MapPin className="size-4 shrink-0 text-foreground-muted" />
               <span className="flex-1 truncate">{opt.label}</span>
               {value === opt.value && <Check className="size-3.5 shrink-0" />}
             </button>
           ))}
 
-          {/* Grouped spaces with rooms */}
+          {/* Venues with rooms — venue row + tree-connected rooms below */}
           {Object.entries(grouped.groups).map(([groupName, rooms]) => (
-            <div key={groupName} className="mt-1">
-              {/* Space header — selectable as a location itself */}
+            <div key={groupName}>
               {!grouped.standalone.some((s) => s.value === groupName) && (
                 <button
-                  key={groupName}
                   type="button"
                   onClick={() => handleSelect(groupName)}
                   className={cn(
-                    'relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium outline-none hover:bg-accent',
+                    'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium outline-none hover:bg-accent',
                     value === groupName && 'bg-accent'
                   )}
                 >
-                  <MapPin className="size-3.5 shrink-0 text-foreground-muted" />
+                  <MapPin className="size-4 shrink-0 text-foreground-muted" />
                   <span className="flex-1 truncate">{groupName}</span>
                   {value === groupName && <Check className="size-3.5 shrink-0" />}
                 </button>
               )}
-              {/* Rooms indented under space */}
-              <div className="ml-4 border-l border-border pl-3">
+              <div className="ml-4 mt-1 border-l border-border pl-2 space-y-0.5">
                 {rooms.map((opt) => (
                   <button
                     key={opt.value}
                     type="button"
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
-                      'relative flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-accent',
-                      value === opt.value ? 'bg-accent font-medium' : 'text-foreground-muted'
+                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none hover:bg-accent',
+                      value === opt.value ? 'bg-accent font-medium text-foreground' : 'text-foreground-muted'
                     )}
                   >
-                    <DoorOpen className="size-3.5 shrink-0" />
                     <span className="flex-1 truncate">{opt.label}</span>
                     {value === opt.value && <Check className="size-3.5 shrink-0" />}
                   </button>

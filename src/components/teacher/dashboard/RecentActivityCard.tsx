@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom'
 import { UserPlus, type LucideIcon } from '@/lib/icons'
-import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardAction,
-  CardContent,
-} from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatRelativeTimePast } from '@/utils/dateFormatting'
@@ -53,21 +45,10 @@ export function RecentActivityCard({ signups }: RecentActivityCardProps) {
   const loading = signups === null
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Siste aktivitet</CardTitle>
-        <CardAction>
-          <Badge variant="secondary" className="text-foreground-muted">Denne måneden</Badge>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <ActivitySkeleton />
-        ) : (
-          <ActivityBody signups={signups} />
-        )}
-      </CardContent>
-    </Card>
+    <section>
+      <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">Siste aktivitet</h2>
+      {loading ? <ActivitySkeleton /> : <ActivityBody signups={signups} />}
+    </section>
   )
 }
 

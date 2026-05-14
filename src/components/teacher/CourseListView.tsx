@@ -311,8 +311,10 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                 {hasMore && (
                   <div className="flex justify-center py-3">
                     <Button
-                      variant="outline-soft"
-                      size="sm"
+                      variant="secondary"
+                      size="icon"
+                      aria-label="Vis flere"
+                      title="Vis flere"
                       onClick={() =>
                         setState(prev => ({
                           ...prev,
@@ -323,7 +325,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
                         }))
                       }
                     >
-                      Vis flere
+                      <ChevronDown />
                     </Button>
                   </div>
                 )}

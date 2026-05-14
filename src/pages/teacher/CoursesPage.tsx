@@ -12,6 +12,7 @@ import { CourseListView, CourseListSkeleton, PastCoursesList, COURSES_PER_PAGE }
 import { SearchInput } from '@/components/ui/search-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { ChevronDown } from '@/lib/icons';
 import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn, foldNorwegian, getShowEmptyState } from '@/lib/utils';
@@ -401,17 +402,22 @@ const CoursesPage = () => {
               )}
 
               {showLoadMore && (
-                <div className="mt-4 flex items-center justify-between gap-3">
+                <div className="mt-4 grid grid-cols-3 items-center">
                   <span className="text-xs text-foreground-muted tabular-nums">
                     Viser {visibleCount} av {filteredRows.length} kurs
                   </span>
-                  <Button
-                    variant="outline-soft"
-                    size="sm"
-                    onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
-                  >
-                    Vis flere
-                  </Button>
+                  <div className="flex justify-center">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      aria-label={`Vis flere kurs (${filteredRows.length - visibleCount} igjen)`}
+                      title="Vis flere"
+                      onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
+                    >
+                      <ChevronDown />
+                    </Button>
+                  </div>
+                  <div aria-hidden="true" />
                 </div>
               )}
             </>

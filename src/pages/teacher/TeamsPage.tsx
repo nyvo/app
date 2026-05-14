@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from '@/lib/icons';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
@@ -36,10 +38,18 @@ const TeamsPage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-6xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
       >
-        <div className="mb-8 pt-6 lg:pt-12">
+        <div className="mb-8 pt-6 lg:pt-12 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Studio</h1>
+          {publicUrl && (
+            <Button asChild size="sm" className="shrink-0">
+              <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink data-icon="inline-start" />
+                Vis min side
+              </a>
+            </Button>
+          )}
         </div>
 
         {currentTeam ? (
@@ -47,7 +57,7 @@ const TeamsPage = () => {
             {/* Studiosiden — inline-editable storefront. */}
             <section
               aria-labelledby="studiosiden-heading"
-              className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8"
+              className="space-y-6"
             >
               <div>
                 <h2 id="studiosiden-heading" className="text-base font-semibold text-foreground">
@@ -58,46 +68,23 @@ const TeamsPage = () => {
                 </p>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <StudioSidenForm team={currentTeam} onSaved={refreshSellers} />
-
-                {publicUrl && (
-                  <div className="mt-4">
-                    <a
-                      href={publicUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-xs text-foreground-muted hover:text-foreground transition-colors"
-                    >
-                      Vis offentlig side
-                    </a>
-                  </div>
-                )}
               </div>
             </section>
 
             {/* Adresser — physical addresses, still customer-relevant. */}
             <section
               aria-labelledby="adresser-heading"
-              className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border"
+              className="mt-10 pt-10 border-t border-border"
             >
-              <div>
-                <h2 id="adresser-heading" className="text-base font-semibold text-foreground">
-                  Adresser
-                </h2>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <LocationsSection />
-              </div>
+              <LocationsSection />
             </section>
 
             {/* Team — members of the studio (business) or studio you belong to (individual). */}
             <section
               aria-labelledby="team-heading"
-              className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border"
+              className="space-y-6 mt-10 pt-10 border-t border-border"
             >
               <div>
                 <h2 id="team-heading" className="text-base font-semibold text-foreground">
@@ -109,7 +96,7 @@ const TeamsPage = () => {
                     : 'Studioet du er medlem av. Alle kursene dine vises automatisk.'}
                 </p>
               </div>
-              <div className="md:col-span-2">
+              <div>
                 <AffiliationsSection />
               </div>
             </section>
@@ -187,19 +174,11 @@ function StudioSidenForm({ team, onSaved }: { team: Team; onSaved: () => Promise
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
-          URL
-        </label>
-        <div className="flex h-9 items-center rounded-md border border-border bg-surface text-sm focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15 transition-[color,border-color,box-shadow] duration-150 ease-out">
+        <span className="text-sm font-medium text-foreground">URL</span>
+        <div className="flex h-9 items-center rounded-md border border-border bg-surface text-sm">
           <span className="pl-3 text-foreground-muted">framio.no</span>
           <span className="px-1 text-foreground-muted">/</span>
-          <input
-            id="studio-slug"
-            value={team.slug}
-            readOnly
-            className="flex-1 min-w-0 bg-transparent pr-3 text-foreground outline-none"
-            aria-readonly="true"
-          />
+          <span className="flex-1 min-w-0 truncate pr-3 text-foreground">{team.slug}</span>
         </div>
       </div>
     </div>

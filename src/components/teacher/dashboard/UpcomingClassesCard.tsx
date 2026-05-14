@@ -1,11 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Clock, Users } from '@/lib/icons'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -57,14 +51,10 @@ function formatDayLabel(dateStr: string, today: Date, weekSunday: Date): string 
 
 export function UpcomingClassesCard({ courses }: UpcomingClassesCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Neste kurs</CardTitle>
-      </CardHeader>
-      <CardContent className="px-0">
-        {courses === null ? <UpcomingSkeleton /> : <UpcomingBody courses={courses} />}
-      </CardContent>
-    </Card>
+    <section>
+      <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">Neste kurs</h2>
+      {courses === null ? <UpcomingSkeleton /> : <UpcomingBody courses={courses} />}
+    </section>
   )
 }
 
@@ -114,30 +104,28 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
         return (
           <div
             key={`${course.id}-${course.date}-${course.time}`}
-            className="grid grid-cols-[theme(spacing.16)_1fr] px-6"
+            className="grid grid-cols-[theme(spacing.16)_1fr]"
           >
-            <span className="pt-2 text-xs font-medium tabular-nums text-foreground-muted">
+            <span className="pt-3 text-sm font-medium tabular-nums text-foreground-muted">
               {showLabel ? formatDayLabel(course.date!, today, weekSunday) : ''}
             </span>
             <Link
               to={routes.course(course.id)}
-              className="group rounded-lg border border-border bg-surface outline-none transition-colors duration-150 hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/15"
+              className="group rounded-lg bg-muted p-3 outline-none transition-opacity duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/15"
             >
-              <div className="p-2">
-                <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
-                <div className="mt-1 flex items-center gap-3 text-xs text-foreground-muted tabular-nums">
+              <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
+              <div className="mt-1 flex items-center gap-3 text-sm text-foreground-muted tabular-nums">
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="size-3.5 shrink-0" aria-hidden="true" />
+                  {course.time || '—'}
+                </span>
+                {hasAttendance && (
                   <span className="inline-flex items-center gap-1">
-                    <Clock className="size-3 shrink-0" aria-hidden="true" />
-                    {course.time || '—'}
+                    <Users className="size-3.5 shrink-0" aria-hidden="true" />
+                    {course.signups}/{course.capacity}
+                    {isFull && ' · Fullt'}
                   </span>
-                  {hasAttendance && (
-                    <span className="inline-flex items-center gap-1">
-                      <Users className="size-3 shrink-0" aria-hidden="true" />
-                      {course.signups}/{course.capacity}
-                      {isFull && ' · Fullt'}
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             </Link>
           </div>
@@ -149,11 +137,11 @@ function UpcomingBody({ courses }: { courses: Course[] }) {
 
 function UpcomingSkeleton() {
   return (
-    <div className="space-y-1 px-6">
+    <div className="space-y-2">
       {Array.from({ length: 3 }).map((_, i) => (
         <div key={i} className="grid grid-cols-[theme(spacing.16)_1fr]">
-          <Skeleton className="h-3 w-12 mt-2" />
-          <div className="p-2">
+          <Skeleton className="h-3 w-12 mt-3" />
+          <div className="p-3">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="mt-2 h-3 w-24" />
           </div>

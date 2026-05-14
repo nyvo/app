@@ -154,30 +154,30 @@ const PaymentsPage = () => {
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
-      <MobileTeacherHeader title="Betalinger" />
+      <MobileTeacherHeader title="Betalingskonto" />
 
       <motion.div
         variants={pageVariants}
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-6xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-8 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Betalinger</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Betalingskonto</h1>
         </div>
 
         <div className="space-y-8">
           {/* ─── State 1: Not started — minimal onboarding form ─── */}
           {!hasApproval && !isConnected && (
-            <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+            <section className="space-y-6">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Sett opp utbetalinger</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
                   Du fyller ut signering og bekreftelse på Dinteros side. Det tar 5–10 minutter.
                 </p>
               </div>
-              <Card className="md:col-span-2">
+              <Card>
                 <CardContent>
                   <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
                     <div className="grid gap-2">
@@ -278,14 +278,14 @@ const PaymentsPage = () => {
 
           {/* ─── State 2: Approval in progress ─── */}
           {hasApproval && !isConnected && (
-            <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+            <section className="space-y-6">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Fullfør hos Dintero</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
                   Status: {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Venter'}.
                 </p>
               </div>
-              <Card className="md:col-span-2">
+              <Card>
                 <CardContent>
                   {onboardingStatus === 'DECLINED' || onboardingStatus === 'TERMINATED' ? (
                     <p className="text-sm text-foreground">
@@ -324,14 +324,14 @@ const PaymentsPage = () => {
 
           {/* ─── State 3: Active — success card with Dintero link ─── */}
           {isConnected && (
-            <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
+            <section className="space-y-6">
               <div>
                 <h2 className="text-base font-semibold text-foreground">Utbetalinger er aktive</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
                   Avtalen med Dintero er på plass.
                 </p>
               </div>
-              <Card className="md:col-span-2">
+              <Card>
                 <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-subtle text-success">
                     <Check className="size-5" />

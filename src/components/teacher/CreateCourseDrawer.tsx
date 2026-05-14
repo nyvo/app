@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle } from '@/lib/icons';
@@ -19,13 +19,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox } from '@/components/ui/location-combobox';
+import { LocationCombobox, LOCATION_VALUE_SEPARATOR } from '@/components/ui/location-combobox';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { createCourse } from '@/services/courses';
 import { routes } from '@/lib/routes';
-import { cn } from '@/lib/utils';
+import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
 import type { CourseFormat } from '@/types/database';
 
@@ -90,6 +90,23 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Pre-fill location from the favorite address — only when the choice is
+  // unambiguous (0 or 1 rooms). Multi-room favorites stay empty so the
+  // teacher picks the room themselves.
+  useEffect(() => {
+    if (!open) return;
+    const favorite = locations.find((l) => l.is_favorite);
+    if (!favorite) return;
+    const value =
+      favorite.rooms.length === 0
+        ? favorite.name
+        : favorite.rooms.length === 1
+          ? `${favorite.name}${LOCATION_VALUE_SEPARATOR}${favorite.rooms[0]}`
+          : null;
+    if (value === null) return;
+    setLocation((prev) => (prev === '' ? value : prev));
+  }, [open, locations]);
 
   const errors = useMemo<FormErrors>(() => {
     const e: FormErrors = {};
@@ -167,7 +184,10 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
           location: location.trim(),
-          price: parseInt(price, 10) || 0,
+          price:
+            format === 'series'
+              ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
+              : parseInt(price, 10) || 0,
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
         },
@@ -198,7 +218,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       >
         <SheetHeader className="px-6 py-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">Opprett kurs</SheetTitle>
-          <SheetDescription className="text-xs text-foreground-muted">
+          <SheetDescription className="text-sm text-foreground-muted">
             Bare det viktigste — du kan endre alle detaljer på kurssiden etterpå.
           </SheetDescription>
         </SheetHeader>
@@ -373,10 +393,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           {/* Pris */}
           <div>
             <label htmlFor="cc-price" className="text-sm font-medium mb-2 block text-foreground">
-              Pris
-              <span className="ml-2 text-xs font-normal text-foreground-muted">
-                Sett til 0 for gratis
-              </span>
+              {format === 'series' ? 'Pris per gang' : 'Pris'}
             </label>
             <Input
               id="cc-price"
@@ -389,6 +406,11 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
               aria-required="true"
               className={cn(showError('price') && 'border-danger focus-visible:ring-danger')}
             />
+            {format === 'series' && price !== '' && weeks !== '' && !showError('price') && !showError('weeks') && (
+              <p className="mt-2 text-sm text-foreground-muted">
+                Totalt {formatKroner((parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0))} for {parseInt(weeks, 10) || 0} uker
+              </p>
+            )}
             {showError('price') && <FieldError>{errors.price}</FieldError>}
           </div>
 
