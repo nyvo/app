@@ -201,7 +201,7 @@ const TeacherDashboard = () => {
               animate="animate"
               transition={pageTransition}
             >
-              <header className="mb-8 flex items-center justify-between border-b border-border pb-4">
+              <header className="mb-12 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold tracking-tight text-foreground">
                   Oversikt
                 </h1>

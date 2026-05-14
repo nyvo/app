@@ -281,7 +281,7 @@ const CoursesPage = () => {
           transition={pageTransition}
           className="shrink-0 mx-auto w-full max-w-6xl px-6 lg:px-8 pt-6 lg:pt-12 pb-0"
         >
-          <div className="mb-8 flex items-end justify-between gap-4">
+          <div className="mb-12 flex items-end justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
             </div>

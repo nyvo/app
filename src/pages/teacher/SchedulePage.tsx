@@ -234,7 +234,7 @@ const SchedulePage = () => {
         transition={pageTransition}
         className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
       >
-        <div className="mb-8 pt-6 lg:pt-12">
+        <div className="mb-12 pt-6 lg:pt-12">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Timeplan</h1>
         </div>
 
