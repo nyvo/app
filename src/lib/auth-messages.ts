@@ -40,5 +40,5 @@ export const AUTH_HINTS = {
   passwordMinLength: 'Minst 12 tegn',
   studioNameHelper: 'Vises på din offentlige side. Du kan endre det senere.',
   checkSpam: 'Sjekk spam-mappen hvis du ikke finner den.',
-  checkSpamAlt: 'Hvis du ikke ser e-posten, sjekk søppelpost.',
+  checkSpamAlt: 'Hvis du ikke ser e-posten, sjekk spam-mappen.',
 } as const

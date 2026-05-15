@@ -44,7 +44,7 @@ export function ImageUpload({
       return 'Ugyldig filtype. Bruk JPG, PNG eller WebP.'
     }
     if (file.size > MAX_IMAGE_SIZE) {
-      return 'Bildet er for stort. Maks 5MB.'
+      return 'Bildet er for stort. Maks 5 MB.'
     }
     return null
   }

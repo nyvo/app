@@ -5,8 +5,8 @@
 //  1. Teacher submits their org number via the UI.
 //  2. We POST to /v1/accounts/{aid}/management/settings/approvals/payout-destinations.
 //  3. Dintero returns a hosted KYC URL in links[rel=contract_url].
-//  4. We save approval_id + contract_url on the organization.
-//  5. If `form_submitter.email` is provided, Dintero emails the teacher directly.
+//  4. We save approval_id + contract_url on the seller.
+//  5. Teacher fills bank details + identity inside Dintero's hosted KYC form.
 //
 // We return `contractUrl` so the client can open it in a new tab.
 
@@ -28,16 +28,9 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 interface SellerRequest {
-  /** Seller UUID. External name kept for client compatibility. */
-  organizationId: string
+  sellerId: string
   /** Norwegian organisation number — Dintero's vocabulary, kept literal. */
   organizationNumber: string
-  businessName: string
-  contactEmail: string
-  contactName?: string
-  bankAccountNumber: string
-  bankName: string
-  bankAccountType?: 'bban' | 'iban'
   sandboxAutoApprove?: boolean
 }
 
@@ -48,22 +41,14 @@ Deno.serve(async (req) => {
   try {
     const body = (await req.json()) as SellerRequest
 
-    if (!body.organizationId) {
-      return errorResponse('organizationId is required', 400, req)
+    if (!body.sellerId) {
+      return errorResponse('sellerId is required', 400, req)
     }
-    if (!body.organizationNumber || !body.businessName || !body.contactEmail) {
-      return errorResponse('Missing required fields: organizationNumber, businessName, contactEmail', 400, req)
-    }
-    if (!body.bankAccountNumber || !body.bankName) {
-      return errorResponse('Missing required fields: bankAccountNumber, bankName', 400, req)
+    if (!body.organizationNumber) {
+      return errorResponse('organizationNumber is required', 400, req)
     }
 
-    // Strip formatting from bank account (Norwegian BBAN commonly written as 1234.56.78901)
-    const normalizedBankAccount = body.bankAccountNumber.replace(/[^\dA-Z]/gi, '')
-    const accountType: 'bban' | 'iban' = body.bankAccountType
-      ?? (normalizedBankAccount.startsWith('NO') ? 'iban' : 'bban')
-
-    const auth = await verifyAuthAndOrgMembership(req, body.organizationId, ['owner', 'admin'])
+    const auth = await verifyAuthAndOrgMembership(req, body.sellerId, ['owner', 'admin'])
     if (!auth.authenticated) return errorResponse(auth.error || 'Not authenticated', 401, req)
     if (!auth.authorized) return errorResponse(auth.error || 'Not authorized', 403, req)
 
@@ -72,7 +57,7 @@ Deno.serve(async (req) => {
     const { data: seller, error: sellerError } = await supabase
       .from('sellers')
       .select('id, name, dintero_seller_id, dintero_approval_id, dintero_contract_url, dintero_onboarding_status')
-      .eq('id', body.organizationId)
+      .eq('id', body.sellerId)
       .single()
 
     if (sellerError || !seller) {
@@ -109,23 +94,14 @@ Deno.serve(async (req) => {
       country_code: 'NO',
       currency: 'NOK',
       organization_number: body.organizationNumber,
-      business_name: body.businessName,
       payout_destination_id: sellerId,
       payout_reference: sellerId,
-      payout_destination_name: body.businessName,
       bank_accounts: [
         {
-          account_number: normalizedBankAccount,
-          account_number_type: accountType,
-          bank_name: body.bankName,
           bank_account_currency: 'NOK',
           payout_currency: 'NOK',
         },
       ],
-      form_submitter: {
-        email: body.contactEmail,
-        name: body.contactName || body.businessName,
-      },
     }
 
     if (isSandbox() && body.sandboxAutoApprove) {
@@ -144,7 +120,7 @@ Deno.serve(async (req) => {
         dintero_onboarding_status: approval.case_status || 'PENDING',
         dintero_onboarding_complete: approval.case_status === 'ACTIVE',
       })
-      .eq('id', body.organizationId)
+      .eq('id', body.sellerId)
 
     if (updateError) {
       return errorResponse('Failed to persist Dintero seller record', 500, req)

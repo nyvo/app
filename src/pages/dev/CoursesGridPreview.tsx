@@ -315,7 +315,7 @@ function StatTile({ course }: { course: SampleCourse }) {
       <div className="flex items-end justify-between gap-4 pt-1">
         <div>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-semibold tabular-nums text-foreground">
+            <span className="text-2xl font-medium tabular-nums text-foreground">
               {course.signups}
             </span>
             {course.capacity != null && (

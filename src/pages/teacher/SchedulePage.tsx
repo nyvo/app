@@ -95,7 +95,7 @@ function formatDayLabel(dateStr: string): { primary: string; secondary: string }
 function formatTimeRange(start: string, end: string | null): string {
   const s = start.slice(0, 5);
   if (!end) return s;
-  return `${s} — ${end.slice(0, 5)}`;
+  return `${s}–${end.slice(0, 5)}`;
 }
 
 const SchedulePage = () => {

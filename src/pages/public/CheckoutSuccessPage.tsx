@@ -10,7 +10,7 @@ import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
 import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 
-const WEEKDAYS = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'] as const;
+const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
@@ -139,7 +139,7 @@ const CheckoutSuccessPage = () => {
           // Show softer fallback — payment succeeded but webhook is slow
           setBookingFailed(true);
           if (!toastShownRef.current) {
-            toast.info('Betalingen er bekreftet. Bekreftelse kommer på e-post.');
+            toast.info('Betalingen er bekreftet. Du får bekreftelsen på e-post.');
             toastShownRef.current = true;
           }
           setLoading(false);
@@ -242,7 +242,7 @@ const CheckoutSuccessPage = () => {
             Betalingen er bekreftet
           </h1>
           <p className="text-base text-foreground-muted mb-8">
-            Bekreftelsen tar litt tid. Du vil motta en bekreftelse på e-post når påmeldingen er klar.
+            Bekreftelsen tar litt tid. Vi sender deg en e-post når påmeldingen er klar.
           </p>
           <Button asChild variant="default">
             <Link to={failedStudioUrl}>
@@ -295,7 +295,7 @@ const CheckoutSuccessPage = () => {
                         <Building className="size-4" />
                       </div>
                     )}
-                    <span className="text-base font-semibold text-foreground">{orgName}</span>
+                    <span className="text-base font-medium text-foreground">{orgName}</span>
                   </div>
                 )}
 

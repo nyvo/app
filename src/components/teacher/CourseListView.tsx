@@ -44,9 +44,7 @@ function formatNextSession(sessionDate: string | null | undefined, startTime: st
 }
 
 function formatSeriesProgress(format: CourseFormat, totalWeeks: number | null | undefined, courseStartDate: string | null | undefined): string | null {
-  if (format !== 'series') {
-    return 'enkelttime';
-  }
+  if (format !== 'series') return null;
   if (!totalWeeks) return null;
   if (!courseStartDate) return totalWeeks === 1 ? '1 uke' : `${totalWeeks} uker`;
   const start = new Date(courseStartDate);
@@ -190,12 +188,14 @@ export function CourseRowCard({ course }: { course: SessionScheduleRow }) {
               </span>
             </span>
             {hasMax ? (
-              <span className="inline-flex items-center gap-1.5 text-foreground-muted">
-                <Users className="size-4 shrink-0" aria-hidden="true" />
-                <span className="tabular-nums">
-                  {course.signupsCount} / {course.maxParticipants}
+              status !== 'full' && (
+                <span className="inline-flex items-center gap-1.5 text-foreground-muted">
+                  <Users className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="tabular-nums">
+                    {course.signupsCount} / {course.maxParticipants}
+                  </span>
                 </span>
-              </span>
+              )
             ) : (
               <span className="inline-flex items-center gap-1.5 text-foreground-muted">
                 <Users className="size-4 shrink-0" aria-hidden="true" />
@@ -284,7 +284,7 @@ export function PastCoursesList({ courses }: { courses: SessionScheduleRow[] }) 
               aria-controls={sectionId}
               className="flex w-full items-center justify-between gap-3 rounded-md bg-muted px-3 py-2.5 text-left transition-colors duration-150 hover:bg-muted/80 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             >
-              <span className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
+              <span className="text-lg font-medium tracking-tight tabular-nums text-foreground">
                 {g.year}
               </span>
               <ChevronDown

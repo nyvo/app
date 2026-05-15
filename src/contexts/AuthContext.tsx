@@ -438,7 +438,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // doesn't get a team here. Those happen later in their respective forms.
   const setRole = useCallback(async (role: UserRole) => {
     const userId = userRef.current?.id
-    if (!userId) return { error: new Error('Ikke pålogget') }
+    if (!userId) return { error: new Error('Ikke logget inn') }
     const { error } = await supabase
       .from('profiles')
       .update({ role })
@@ -452,7 +452,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // and stamps onboarding_completed_at in one call.
   const completeBuyerOnboarding = useCallback(async (input: { name: string; phone?: string }) => {
     const userId = userRef.current?.id
-    if (!userId) return { error: new Error('Ikke pålogget') }
+    if (!userId) return { error: new Error('Ikke logget inn') }
     const patch = {
       name: input.name.trim(),
       phone: input.phone?.trim() || null,
@@ -468,7 +468,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // onboarding_completed_at (name + slug are persisted via ensureSeller).
   const markOnboardingComplete = useCallback(async () => {
     const userId = userRef.current?.id
-    if (!userId) return { error: new Error('Ikke pålogget') }
+    if (!userId) return { error: new Error('Ikke logget inn') }
     const stamp = new Date().toISOString()
     const { error } = await supabase
       .from('profiles')

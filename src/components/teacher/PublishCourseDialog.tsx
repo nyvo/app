@@ -34,7 +34,7 @@ export function PublishCourseDialog({
           <DialogTitle>Sett opp betalinger for å publisere</DialogTitle>
           <DialogDescription>
             {courseTitle && <span className="text-sm font-medium text-foreground">{courseTitle}</span>}
-            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp. Du kobles til Dintero — det tar bare noen minutter.
+            {courseTitle ? ' er lagret, men kan' : 'Kurset er lagret, men kan'} ikke ta imot påmeldinger før betalinger er satt opp. Du kobles til Dintero – det tar bare noen minutter.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

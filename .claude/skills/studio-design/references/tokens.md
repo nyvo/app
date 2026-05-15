@@ -149,15 +149,15 @@ Sentence case. 500 weight. Muted color. **Never** `uppercase` or `tracking-wider
 | Token | Px | Tailwind | Use |
 |-------|-----|----------|-----|
 | `--radius-sm` | 6 | `rounded-md` | **Inputs only** (text fields, selects, textareas) |
-| `--radius-md` | 8 | `rounded-lg` | **Cards, panels, list containers (THE surface radius)** |
-| `--radius-lg` | 12 | `rounded-xl` | Dialogs, modals, sheets |
+| `--radius-md` | 8 | `rounded-lg` | Tight surfaces only — list rows, badges, image thumbs, skeletons |
+| `--radius-lg` | 12 | `rounded-xl` | **Cards, panels, list containers, dialogs, modals, sheets (THE surface radius)** |
 | `--radius-full` | 9999 | `rounded-full` | **Buttons, badges, chips, avatars, indicator dots — pill is the button shape** |
 
 **Rules:**
 - **Buttons are pill-shaped.** Every button — primary, secondary, ghost, destructive — uses `rounded-full`. Adjacent buttons in a row read as one cluster of pills. The pill shape is the system's signature interactive shape.
 - **Inputs stay rect** (`rounded-md`, 6px). Text fields don't pill — pill inputs feel weird at 36px height with text inside. Inputs and buttons differ on shape, and that's intentional.
-- **Every surface is `rounded-lg` (8px).** Cards, panels, list containers — one radius for every surface.
-- **Reserve `rounded-xl` for floating overlays only.** Dialogs, modals.
+- **Every surface is `rounded-xl` (12px).** Cards, panels, list containers, dialogs, modals — one radius for every surface. The softer corner reads warmer and matches the Hashnode/Linear card era.
+- **`rounded-lg` (8px) is for tight surfaces only** — list rows inside a card, badges, image thumbs, skeletons. Anything ≤ 48px tall where 12px would dominate the shape.
 
 **Banned:** `rounded-[Npx]` arbitrary values. Use the four named tokens.
 
@@ -172,7 +172,7 @@ Sentence case. 500 weight. Muted color. **Never** `uppercase` or `tracking-wider
 | `--shadow-xs` | `0 1px 2px 0 rgb(0 0 0 / 0.04)` | Reserved — popover hover state |
 | `--shadow-sm` | `0 1px 3px 0 rgb(0 0 0 / 0.05)` | Dialogs, popovers, dropdown menus |
 
-Plain cards: `bg-surface border border-border rounded-lg` — no shadow.
+Plain cards: `bg-surface border border-border rounded-xl` — no shadow.
 
 ---
 

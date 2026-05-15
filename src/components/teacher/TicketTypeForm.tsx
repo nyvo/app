@@ -156,12 +156,12 @@ export function TicketTypeForm({
     if (!form.label.trim()) next.label = 'Skriv en tittel for billettypen'
     const priceNum = Number(form.price)
     if (!form.price || Number.isNaN(priceNum) || priceNum < 0) {
-      next.price = 'Pris må være 0 eller mer'
+      next.price = 'Skriv inn en pris (0 eller mer)'
     }
     if (form.ticket_kind === 'package') {
       const weeksNum = Number(form.weeks)
       if (!form.weeks || Number.isNaN(weeksNum) || weeksNum <= 0) {
-        next.weeks = 'Pakker må ha et antall uker'
+        next.weeks = 'Skriv inn antall uker'
       }
     }
     if (form.max_quantity) {
@@ -234,7 +234,7 @@ export function TicketTypeForm({
               {editing ? 'Rediger billettype' : 'Ny billettype'}
             </DialogTitle>
             <DialogDescription>
-              Hver billettype er én sellable variant — for eksempel «Hele kurset», «Student-rabatt» eller «Drop-in».
+              Hver billettype er én variant du selger – for eksempel «Hele kurset», «Studentrabatt» eller «Drop-in».
             </DialogDescription>
           </DialogHeader>
 
@@ -408,7 +408,7 @@ export function TicketTypeForm({
             >
               Avbryt
             </Button>
-            <Button type="submit" loading={submitting} loadingText="Lagrer …">
+            <Button type="submit" loading={submitting} loadingText="Lagrer">
               {editing ? 'Lagre' : 'Opprett'}
             </Button>
           </DialogFooter>

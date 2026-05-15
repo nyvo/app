@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ImageIcon, MoreVertical } from '@/lib/icons';
+import { Check, Copy, ImageIcon, MoreVertical } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { runWithUndo } from '@/lib/undo';
 import { cn } from '@/lib/utils';
 import { fetchTeamMembers, revokeAffiliation, type TeamMember } from '@/services/affiliations';
 import {
@@ -57,6 +58,7 @@ export function AffiliationsSection() {
 function BusinessView({ teamId }: { teamId: string }) {
   const [members, setMembers] = useState<TeamMember[] | null>(null);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   const refresh = useCallback(async () => {
     setLoadingMembers(true);
@@ -67,20 +69,41 @@ function BusinessView({ teamId }: { teamId: string }) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  const handleRevoke = (member: TeamMember) => {
+    runWithUndo({
+      message: `${member.name} ble fjernet fra teamet`,
+      hide: () => setHiddenIds((prev) => new Set(prev).add(member.sellerId)),
+      restore: () =>
+        setHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(member.sellerId);
+          return next;
+        }),
+      commit: async () => {
+        const { error } = await revokeAffiliation({ teamId, sellerId: member.sellerId });
+        if (!error) await refresh();
+        return { error };
+      },
+      errorOf: (r) => r.error,
+      errorMessage: 'Kunne ikke fjerne medlem',
+    });
+  };
+
+  const visibleMembers = members?.filter((m) => !hiddenIds.has(m.sellerId)) ?? null;
+  const hasAffiliates = !!visibleMembers?.some((m) => m.role === 'member');
+
   return (
     <div className="space-y-6">
       <InviteLinkPanel teamId={teamId} />
-      <MembersTable
-        members={members}
-        loading={loadingMembers}
-        kebabFor={(m) => (m.role === 'owner' ? null : (
-          <MemberActionsMenu
-            teamId={teamId}
-            member={m}
-            onRevoked={refresh}
-          />
-        ))}
-      />
+      {hasAffiliates && (
+        <MembersTable
+          members={visibleMembers}
+          loading={loadingMembers}
+          kebabFor={(m) => (m.role === 'owner' ? null : (
+            <MemberActionsMenu member={m} onRevoke={() => handleRevoke(m)} />
+          ))}
+        />
+      )}
     </div>
   );
 }
@@ -144,7 +167,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
       toast.error(error.message);
       return;
     }
-    toast.success('Du har forlatt teamet.');
+    toast.success('Du har forlatt teamet');
     setHost(null);
     setMembers(null);
   };
@@ -156,7 +179,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
   if (host === null) {
     return (
       <div className="rounded-md border border-dashed border-border p-8 text-center">
-        <p className="text-sm font-medium text-foreground">Du har ikke et team enda</p>
+        <p className="text-sm font-medium text-foreground">Du har ikke et team ennå</p>
         <p className="text-sm text-foreground-muted mt-1 max-w-xs mx-auto">
           Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
         </p>
@@ -183,7 +206,6 @@ function IndividualView({ sellerId }: { sellerId: string }) {
         <Button
           variant="outline-soft"
           size="sm"
-          className="text-danger"
           onClick={() => setConfirmLeave(true)}
         >
           Forlat team
@@ -194,13 +216,16 @@ function IndividualView({ sellerId }: { sellerId: string }) {
         open={confirmLeave}
         onOpenChange={setConfirmLeave}
         ariaLabel="Forlat team"
-        headline="Kursene dine slutter å vises på studio-siden. Du kan bli invitert på nytt senere."
-        scope={<ConfirmScopeItem name={host.name} meta="Medlem av teamet" />}
+        headline={`Forlat ${host.name}?`}
         actionLabel="Forlat team"
         onConfirm={handleLeave}
         loading={leaving}
         loadingText="Forlater"
-      />
+      >
+        <p className="text-sm text-foreground-muted">
+          Kursene dine forsvinner fra studio-siden. Du kan inviteres på nytt senere.
+        </p>
+      </ConfirmDialog>
     </div>
   );
 }
@@ -240,24 +265,14 @@ function MembersTable({
       </div>
     );
   }
-  if (members.length === 0) {
-    return (
-      <div className="rounded-md border border-border bg-surface p-4">
-        <p className="text-sm text-foreground-muted">Ingen medlemmer ennå.</p>
-      </div>
-    );
-  }
   const hasKebab = !!kebabFor;
+  const gridCols = hasKebab ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]';
   return (
     <ul className="rounded-md border border-border bg-surface overflow-hidden">
       {members.map((m, i) => (
         <li
           key={m.sellerId}
-          className={cn(
-            'grid items-center gap-4 px-4 py-3',
-            hasKebab ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]',
-            i > 0 && 'border-t border-border',
-          )}
+          className={cn('grid items-center gap-4 px-4 py-3', gridCols, i > 0 && 'border-t border-border')}
         >
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
@@ -278,63 +293,25 @@ function MembersTable({
 }
 
 function MemberActionsMenu({
-  teamId,
-  member,
-  onRevoked,
+  member: _member,
+  onRevoke,
 }: {
-  teamId: string;
   member: TeamMember;
-  onRevoked: () => void;
+  onRevoke: () => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const handleRevoke = async () => {
-    setDeleting(true);
-    const { error } = await revokeAffiliation({
-      teamId,
-      sellerId: member.sellerId,
-    });
-    setDeleting(false);
-    setConfirmOpen(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success('Fjernet fra teamet.');
-    onRevoked();
-  };
-
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Handlinger">
-            <MoreVertical className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-danger focus:text-danger"
-            onClick={() => setConfirmOpen(true)}
-          >
-            Fjern medlem
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        ariaLabel="Fjern fra team"
-        headline="Kursene blir fjernet fra studio-siden din."
-        scope={<ConfirmScopeItem name={member.name} meta="Medlem av teamet" />}
-        actionLabel="Fjern fra team"
-        onConfirm={handleRevoke}
-        loading={deleting}
-        loadingText="Fjerner"
-      />
-    </>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon-sm" aria-label="Handlinger">
+          <MoreVertical className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onRevoke}>
+          Fjern medlem
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -345,15 +322,36 @@ function MemberActionsMenu({
 function InviteLinkPanel({ teamId }: { teamId: string }) {
   const [link, setLink] = useState<TeamInviteLink | null | undefined>(undefined);
   const [creating, setCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const autoGenAttempted = useRef(false);
 
-  const refresh = useCallback(async () => {
-    const { data } = await fetchActiveInviteLink(teamId);
-    setLink(data);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data } = await fetchActiveInviteLink(teamId);
+      if (cancelled) return;
+      if (data) {
+        setLink(data);
+        return;
+      }
+      // No active link — lazily generate one so the panel is useful immediately.
+      if (autoGenAttempted.current) {
+        setLink(null);
+        return;
+      }
+      autoGenAttempted.current = true;
+      const { data: created, error } = await createInviteLink(teamId);
+      if (cancelled) return;
+      if (error || !created) {
+        setLink(null);
+        return;
+      }
+      setLink(created);
+    })();
+    return () => { cancelled = true; };
   }, [teamId]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
-
-  const handleGenerate = async () => {
+  const handleRegenerate = async () => {
     setCreating(true);
     const { data, error } = await createInviteLink(teamId);
     setCreating(false);
@@ -362,84 +360,71 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
       return;
     }
     setLink(data);
-    toast.success('Ny lenke laget.');
+    toast.success('Ny lenke laget');
   };
+
+  const fullUrl = link ? `${window.location.host}/join/${link.code}` : '';
 
   const handleCopy = async () => {
     if (!link) return;
-    const url = `${window.location.origin}/join/${link.code}`;
     try {
-      await navigator.clipboard.writeText(url);
-      toast.success('Lenke kopiert.');
+      await navigator.clipboard.writeText(`${window.location.origin}/join/${link.code}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('Kunne ikke kopiere — kopier manuelt.');
+      toast.error('Kunne ikke kopiere – kopier manuelt.');
     }
   };
 
-  // Loading shimmer
   if (link === undefined) {
-    return (
-      <div>
-        <div className="flex gap-2">
-          <div className="h-9 flex-1 rounded-md border border-border bg-muted" />
-          <div className="h-9 w-20 rounded-full bg-muted" />
-        </div>
-      </div>
-    );
+    return <div className="h-9 rounded-md border border-border bg-muted" />;
   }
 
   if (!link) {
     return (
       <div>
         <p className="text-sm text-foreground-muted mb-2">
-          Du har ikke en aktiv invitasjonslenke.
+          Kunne ikke opprette invitasjonslenke.
         </p>
-        <Button
-          size="sm"
-          onClick={() => void handleGenerate()}
-          loading={creating}
-          loadingText="Lager"
+        <button
+          type="button"
+          className="text-sm text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+          disabled={creating}
+          onClick={() => void handleRegenerate()}
         >
-          Lag invitasjonslenke
-        </Button>
+          {creating ? 'Prøver igjen…' : 'Prøv på nytt'}
+        </button>
       </div>
     );
   }
 
-  const host = window.location.host;
-  const expires = new Date(link.expires_at);
-  const daysLeft = Math.max(0, Math.ceil((expires.getTime() - Date.now()) / 86400000));
-
   return (
     <div>
-      <div className="flex gap-2">
-        <div className="flex h-9 flex-1 items-center rounded-md border border-border bg-surface text-sm overflow-hidden min-w-0">
-          <span className="pl-3 text-foreground-muted shrink-0">{host}</span>
-          <span className="px-1 text-foreground-muted shrink-0">/</span>
-          <span className="text-foreground-muted shrink-0">join</span>
-          <span className="px-1 text-foreground-muted shrink-0">/</span>
-          <input
-            readOnly
-            value={link.code}
-            className="flex-1 min-w-0 bg-transparent pr-3 text-foreground outline-none tabular-nums"
-            aria-label="Invitasjonskode"
-          />
-        </div>
-        <Button variant="outline-soft" size="sm" onClick={() => void handleCopy()}>
-          Kopier
-        </Button>
-      </div>
-      <p className="mt-2 text-xs text-foreground-muted">
-        Gyldig i {daysLeft} {daysLeft === 1 ? 'dag' : 'dager'}.{' '}
+      <div className="relative">
+        <input
+          readOnly
+          value={fullUrl}
+          onFocus={(e) => e.currentTarget.select()}
+          className="h-9 w-full rounded-md border border-border bg-surface pl-3 pr-10 text-sm text-foreground outline-none focus:border-foreground"
+          aria-label="Invitasjonslenke"
+        />
         <button
           type="button"
-          className="underline hover:text-foreground transition-colors disabled:opacity-50"
-          disabled={creating}
-          onClick={() => void handleGenerate()}
+          onClick={() => void handleCopy()}
+          aria-label="Kopier lenke"
+          className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-foreground-muted hover:text-foreground"
         >
-          {creating ? 'Lager …' : 'Lag ny lenke'}
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
         </button>
-      </p>
+      </div>
+      <button
+        type="button"
+        className="mt-2 text-xs text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
+        disabled={creating}
+        onClick={() => void handleRegenerate()}
+      >
+        {creating ? 'Lager…' : 'Lag ny lenke'}
+      </button>
     </div>
   );
 }
@@ -452,7 +437,7 @@ function LoadingRow() {
   return (
     <div className="flex items-center gap-2 text-sm text-foreground-muted">
       <Spinner size="sm" />
-      Laster …
+      Laster…
     </div>
   );
 }

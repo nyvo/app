@@ -90,9 +90,9 @@ export interface DinteroTransaction {
 }
 
 export interface DinteroBankAccount {
-  account_number: string
-  account_number_type: 'bban' | 'iban'
-  bank_name: string
+  account_number?: string
+  account_number_type?: 'bban' | 'iban'
+  bank_name?: string
   bank_account_currency: string
   payout_currency: string
   account_statement_url?: string
@@ -100,13 +100,13 @@ export interface DinteroBankAccount {
 }
 
 export interface DinteroSellerApprovalRequest {
-  country_code: string
-  organization_number: string
-  currency: string
+  country_code?: string
+  organization_number?: string
+  currency?: string
   payout_destination_id: string
   payout_reference: string
-  business_name: string
-  payout_destination_name: string
+  business_name?: string
+  payout_destination_name?: string
   payout_destination_description?: string
   payout_interval_type?: string
   bank_accounts: DinteroBankAccount[]

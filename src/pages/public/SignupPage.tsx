@@ -88,8 +88,8 @@ const SignupPage = () => {
 
   return (
     <AuthLayout
-      title="Opprett din konto"
-      subtitle="Administrer kurs, motta påmeldinger, og ta betalt — helt gratis."
+      title="Opprett konto"
+      subtitle="Administrer kurs, motta påmeldinger og ta betalt – helt gratis."
       footer={
         <p className="text-xs text-foreground-muted">
           Har du allerede en konto?{' '}

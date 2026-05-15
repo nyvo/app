@@ -68,7 +68,7 @@ function DatePill({ dateStr, isPast }: { dateStr: string; isPast: boolean }) {
       </span>
       <span
         className={cn(
-          'text-base font-semibold tabular-nums leading-none mt-1',
+          'text-base font-medium tabular-nums leading-none mt-1',
           isPast ? 'text-foreground-muted' : 'text-foreground',
         )}
       >
@@ -108,7 +108,7 @@ export const SessionList: React.FC<SessionListProps> = ({
     <div>
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-xl font-semibold text-foreground">Kursplan</h2>
+          <h2 className="text-xl font-medium tracking-tight text-foreground">Kursplan</h2>
           <p className="text-sm text-foreground-muted">
             Dette kurset varer i <span className="tabular-nums">{sessions.length}</span> {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
           </p>

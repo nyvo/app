@@ -371,7 +371,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
         {courseHeader}
         <div className="rounded-md bg-muted px-4 py-3 text-center">
           <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
-          <p className="text-xs mt-0.5 text-foreground-muted">Ingen ledige plasser igjen.</p>
+          <p className="text-sm mt-0.5 text-foreground-muted">Ingen ledige plasser igjen.</p>
         </div>
       </div>
     );

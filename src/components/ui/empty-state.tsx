@@ -36,7 +36,7 @@ export const EmptyState = React.memo(function EmptyState({
         className,
       )}
     >
-      <p className="text-base font-semibold text-foreground">{title}</p>
+      <p className="text-sm font-medium text-foreground">{title}</p>
       {description && (
         <p className="mt-1 text-sm text-foreground-muted">{description}</p>
       )}

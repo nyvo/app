@@ -2,18 +2,49 @@ import { cn } from '@/lib/utils';
 
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
 
+type DateBadgeSize = 'sm' | 'default';
+
 interface DateBadgeProps {
   /** Date string in YYYY-MM-DD format, or a Date object */
   dateStr?: string;
   date?: Date;
+  /** `default` = 48px (size-12), `sm` = 40px (size-10) — matches UserAvatar lg. */
+  size?: DateBadgeSize;
   className?: string;
 }
+
+const SIZE_CLASSES: Record<DateBadgeSize, {
+  container: string;
+  strip: string;
+  monthText: string;
+  dayText: string;
+}> = {
+  default: {
+    container: 'size-12',
+    strip: 'h-3.5',
+    monthText: 'text-xs',
+    dayText: 'text-base',
+  },
+  sm: {
+    container: 'size-10',
+    strip: 'h-4',
+    monthText: 'text-xs',
+    dayText: 'text-sm',
+  },
+};
 
 /**
  * Calendar-page style date display.
  * Colored month strip on top, day number below.
  */
-export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps) {
+export function DateBadge({
+  dateStr,
+  date: dateProp,
+  size = 'default',
+  className,
+}: DateBadgeProps) {
+  const sizes = SIZE_CLASSES[size];
+
   let date: Date;
   if (dateProp) {
     date = dateProp;
@@ -21,11 +52,11 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
     const parts = dateStr.split('-');
     date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   } else {
-    return <div className={cn("size-12 rounded-lg bg-muted", className)} />;
+    return <div className={cn(sizes.container, 'rounded-lg bg-muted', className)} />;
   }
 
   if (isNaN(date.getTime())) {
-    return <div className={cn("size-12 rounded-lg bg-muted", className)} />;
+    return <div className={cn(sizes.container, 'rounded-lg bg-muted', className)} />;
   }
 
   const month = MONTHS[date.getMonth()];
@@ -34,15 +65,20 @@ export function DateBadge({ dateStr, date: dateProp, className }: DateBadgeProps
   return (
     <div
       className={cn(
-        "flex size-12 shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background",
-        className
+        'flex shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-background',
+        sizes.container,
+        className,
       )}
     >
-      <div className="flex h-3.5 items-center justify-center bg-muted">
-        <span className="text-xs font-medium leading-none text-foreground-muted">{month}</span>
+      <div className={cn('flex items-center justify-center bg-muted', sizes.strip)}>
+        <span className={cn('font-medium leading-none text-foreground-muted', sizes.monthText)}>
+          {month}
+        </span>
       </div>
       <div className="flex flex-1 items-center justify-center">
-        <span className="text-base font-semibold leading-none text-foreground">{day}</span>
+        <span className={cn('font-medium leading-none text-foreground', sizes.dayText)}>
+          {day}
+        </span>
       </div>
     </div>
   );

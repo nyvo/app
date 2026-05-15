@@ -151,7 +151,7 @@ export default function JoinPage() {
         setPhase({ kind: 'idle' });
         return;
       default:
-        toast.error('Ukjent svar fra serveren.');
+        toast.error('Noe gikk galt. Prøv igjen.');
         setPhase({ kind: 'idle' });
     }
   };

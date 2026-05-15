@@ -214,7 +214,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-sm text-foreground-muted">
-            {error || 'Kurset finnes ikke eller har blitt slettet.'}
+            {error || 'Kurset finnes ikke eller er slettet.'}
           </p>
         </div>
       </>
@@ -275,7 +275,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                     size="xs"
                     onClick={() => navigate(routes.settingsPayouts)}
                   >
-                    Gjør ferdig oppsett
+                    Fullfør oppsettet
                   </Button>
                 </div>
               </div>
@@ -290,7 +290,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
               size="sm"
               onClick={handlePublish}
               loading={isPublishing}
-              loadingText="Publiserer …"
+              loadingText="Publiserer"
             >
               Publiser kurs
             </Button>
@@ -327,7 +327,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="text-base font-medium tracking-tight text-foreground">
               Påmeldte ({participants.length}
               {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
             </h3>
@@ -365,7 +365,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         {/* Sessions — only when multi-day. Read-only here; editing on /courses/:id. */}
         {isMultiDay && (
           <section className="px-6 py-6">
-            <h3 className="text-sm font-semibold text-foreground mb-4">
+            <h3 className="text-base font-medium tracking-tight text-foreground mb-4">
               Økter ({sessions.length})
             </h3>
             <div className="space-y-1">
@@ -467,7 +467,7 @@ function ScheduleQuickView({
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-sm text-foreground-muted">
-            {error || 'Kurset finnes ikke eller har blitt slettet.'}
+            {error || 'Kurset finnes ikke eller er slettet.'}
           </p>
         </div>
       </>
@@ -506,7 +506,7 @@ function ScheduleQuickView({
 
       <div className="flex-1 overflow-y-auto">
         <section className="px-6 py-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">
+          <h3 className="text-base font-medium tracking-tight text-foreground mb-4">
             Påmeldte ({participants.length}
             {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
           </h3>

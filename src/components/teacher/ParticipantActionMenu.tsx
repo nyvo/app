@@ -142,8 +142,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         ariaLabel="Avbestill påmelding"
         headline={
           signup.paymentStatus === 'paid' && signup.amountPaid != null && signup.amountPaid > 0
-            ? 'Påmeldingen avbestilles uten refusjon. Det kan ikke angres.'
-            : 'Påmeldingen avbestilles. Det kan ikke angres.'
+            ? 'Avbestill påmeldingen uten refusjon?'
+            : 'Avbestill påmeldingen?'
         }
         scope={
           <ConfirmScopeItem
@@ -167,8 +167,8 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
       <ConfirmDialog
         open={confirmDialog === 'cancel-with-refund'}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
-        ariaLabel="Avbestill med refusjon"
-        headline="Påmeldingen avbestilles og hele beløpet refunderes (5–10 virkedager)."
+        ariaLabel="Avbestill og refunder"
+        headline="Avbestill og refunder?"
         scope={
           <ConfirmScopeItem
             name={signup.participantName}
@@ -192,7 +192,7 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
         open={confirmDialog === 'resolve'}
         onOpenChange={(open) => !open && setConfirmDialog(null)}
         ariaLabel="Merk som betalt"
-        headline="Betalingen merkes som mottatt utenom betalingsløsningen (kontant, Vipps e.l.)."
+        headline="Merk som betalt?"
         scope={
           <ConfirmScopeItem
             name={signup.participantName}
@@ -205,7 +205,6 @@ export function ParticipantActionMenu({ signup, handlers }: ParticipantActionMen
           />
         }
         actionLabel="Merk som betalt"
-        actionVariant="default"
         onConfirm={() => {
           setConfirmDialog(null);
           runAction(() => handlers.onMarkResolved(signup.id));

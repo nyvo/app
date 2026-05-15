@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { SidebarSetupCard } from '@/components/teacher/SidebarSetupCard';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,7 +93,7 @@ export const TeacherSidebar = () => {
       <SidebarHeader>
         <Link
           to={routes.dashboard}
-          className="flex h-12 items-center rounded-md px-3 text-base font-semibold tracking-tight text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
+          className="flex h-12 items-center rounded-md px-3 text-base font-medium tracking-tight text-foreground outline-none focus-visible:ring-2 focus-visible:ring-foreground/15"
         >
           Openspot
         </Link>
@@ -122,6 +123,7 @@ export const TeacherSidebar = () => {
       </SidebarContent>
 
       <SidebarFooter>
+        {profile?.role === 'seller' && <SidebarSetupCard />}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

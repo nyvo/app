@@ -13,12 +13,6 @@ interface CreateSellerParams {
   // organizationNumber here = the legal/Brønnøysund org-nr of the business
   // signing up. Has nothing to do with the renamed `organizations` table.
   organizationNumber: string
-  businessName: string
-  contactEmail: string
-  contactName?: string
-  bankAccountNumber: string
-  bankName: string
-  bankAccountType?: 'bban' | 'iban'
   sandboxAutoApprove?: boolean
 }
 

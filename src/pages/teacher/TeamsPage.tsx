@@ -61,7 +61,7 @@ const TeamsPage = () => {
               className="space-y-6"
             >
               <div>
-                <h2 id="studiosiden-heading" className="text-base font-semibold text-foreground">
+                <h2 id="studiosiden-heading" className="text-base font-medium tracking-tight text-foreground">
                   Studiosiden
                 </h2>
                 <p className="mt-1 text-sm text-foreground-muted">
@@ -94,12 +94,12 @@ const TeamsPage = () => {
               className="space-y-6 mt-10 pt-10 border-t border-border"
             >
               <div>
-                <h2 id="team-heading" className="text-base font-semibold text-foreground">
+                <h2 id="team-heading" className="text-base font-medium tracking-tight text-foreground">
                   Team
                 </h2>
                 <p className="mt-1 text-sm text-foreground-muted">
                   {isBusiness
-                    ? 'Inviter andre instruktører til å la kursene sine vises på studio-siden din.'
+                    ? 'Inviter andre instruktører til å vise kursene sine på studiosiden din.'
                     : 'Studioet du er medlem av. Alle kursene dine vises automatisk.'}
                 </p>
               </div>
@@ -110,8 +110,8 @@ const TeamsPage = () => {
           </div>
         ) : (
           <p className="text-sm text-foreground-muted">
-            Ingen studio funnet. Logg ut og inn igjen, eller kontakt
-            support hvis problemet vedvarer.
+            Fant ingen studio. Logg ut og inn igjen, eller kontakt
+            brukerstøtte hvis problemet vedvarer.
           </p>
         )}
       </motion.div>

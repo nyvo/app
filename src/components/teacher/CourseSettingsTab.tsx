@@ -156,7 +156,7 @@ export const CourseSettingsTab = ({
       {/* Generelt — first section, no top divider */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Generelt</h3>
+          <h3 className="text-base font-medium tracking-tight text-foreground">Generelt</h3>
           <p className="mt-1 text-sm text-foreground-muted">Navn, beskrivelse og forsidebilde.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
@@ -205,7 +205,7 @@ export const CourseSettingsTab = ({
       {/* Tid og kapasitet */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Tid og kapasitet</h3>
+          <h3 className="text-base font-medium tracking-tight text-foreground">Tid og kapasitet</h3>
           <p className="mt-1 text-sm text-foreground-muted">Tidspunkt, varighet og antall plasser.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
@@ -350,7 +350,7 @@ export const CourseSettingsTab = ({
               ) : (
                 <span className="inline-flex items-center gap-2 text-sm text-foreground-muted">
                   <span className="size-2 rounded-full bg-foreground" aria-hidden />
-                  Du har endringer som ikke er lagret
+                  Du har ulagrede endringer
                 </span>
               )}
             </div>

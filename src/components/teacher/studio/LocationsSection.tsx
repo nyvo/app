@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Plus, X } from '@/lib/icons';
+import { X, Check, MapPin, ChevronRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Badge, badgeVariants } from '@/components/ui/badge';
+import { badgeVariants } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import {
   Sheet,
   SheetContent,
@@ -19,8 +17,8 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
-  setFavoriteLocation,
 } from '@/services/locations';
+import { runWithUndo } from '@/lib/undo';
 import { cn } from '@/lib/utils';
 import type { TeacherLocation } from '@/types/database';
 
@@ -34,6 +32,7 @@ export function LocationsSection() {
   const { locations, refetch } = useLocations(currentSeller?.id);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<TeacherLocation | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   if (!currentSeller?.id) return null;
 
@@ -47,11 +46,33 @@ export function LocationsSection() {
     setDrawerOpen(true);
   };
 
+  const handleDelete = (loc: TeacherLocation) => {
+    runWithUndo({
+      message: 'Stedet er slettet',
+      hide: () => setHiddenIds((prev) => new Set(prev).add(loc.id)),
+      restore: () =>
+        setHiddenIds((prev) => {
+          const next = new Set(prev);
+          next.delete(loc.id);
+          return next;
+        }),
+      commit: async () => {
+        const { error } = await deleteLocation(loc.id);
+        if (!error) await refetch();
+        return { error };
+      },
+      errorOf: (r) => r.error,
+      errorMessage: 'Kunne ikke slette stedet',
+    });
+  };
+
+  const visibleLocations = locations.filter((l) => !hiddenIds.has(l.id));
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="adresser-heading" className="text-base font-semibold text-foreground">
+          <h2 id="adresser-heading" className="text-base font-medium tracking-tight text-foreground">
             Adresser
           </h2>
           <p className="mt-1 text-sm text-foreground-muted">
@@ -60,32 +81,18 @@ export function LocationsSection() {
         </div>
         <Button
           variant="secondary"
-          size="icon-sm"
+          size="sm"
           onClick={openCreate}
-          aria-label="Legg til sted"
           className="shrink-0"
         >
-          <Plus />
+          Legg til sted
         </Button>
       </div>
 
-      {locations.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-8 text-center">
-          <p className="text-sm font-medium text-foreground mb-4">Du har ikke lagt til noen steder enda</p>
-          <Button
-            variant="outline-soft"
-            size="icon-sm"
-            onClick={openCreate}
-            aria-label="Legg til sted"
-            className="mx-auto"
-          >
-            <Plus />
-          </Button>
-        </div>
-      ) : (
+      {visibleLocations.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-border bg-surface">
           <ul className="divide-y divide-border">
-            {locations.map((loc) => (
+            {visibleLocations.map((loc) => (
               <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
             ))}
           </ul>
@@ -98,6 +105,7 @@ export function LocationsSection() {
         sellerId={currentSeller.id}
         location={editing}
         onSaved={refetch}
+        onDelete={handleDelete}
       />
     </div>
   );
@@ -111,23 +119,24 @@ function LocationRow({
   onEdit: () => void;
 }) {
   return (
-    <li className="px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
+    <li>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-background focus-visible:bg-background"
+        aria-label={`Rediger ${location.name}`}
+      >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground truncate">{location.name}</span>
-            {location.is_favorite && (
-              <Badge variant="neutral" size="sm">Standard</Badge>
-            )}
-          </div>
+          <span className="block truncate text-sm font-medium text-foreground">{location.name}</span>
           {location.address && (
-            <p className="mt-0.5 text-sm text-foreground-muted truncate">{location.address}</p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-foreground-muted">
+              <MapPin className="size-3.5 shrink-0" />
+              <span className="truncate">{location.address}</span>
+            </p>
           )}
         </div>
-        <Button variant="outline-soft" size="sm" className="shrink-0" onClick={onEdit}>
-          Rediger
-        </Button>
-      </div>
+        <ChevronRight className="size-4 shrink-0 text-foreground-muted" />
+      </button>
     </li>
   );
 }
@@ -138,22 +147,22 @@ function LocationDrawer({
   sellerId,
   location,
   onSaved,
+  onDelete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sellerId: string;
   location: TeacherLocation | null;
   onSaved: () => void;
+  onDelete: (loc: TeacherLocation) => void;
 }) {
   const isEdit = location !== null;
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [rooms, setRooms] = useState<string[]>([]);
   const [newRoom, setNewRoom] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [roomFocused, setRoomFocused] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [nameError, setNameError] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -162,7 +171,6 @@ function LocationDrawer({
       setAddress(location?.address ?? '');
       setRooms(location?.rooms ?? []);
       setNewRoom('');
-      setIsFavorite(location?.is_favorite ?? false);
       setNameError(undefined);
     }
   }, [open, location]);
@@ -202,21 +210,15 @@ function LocationDrawer({
         setSaving(false);
         return;
       }
-      if (isFavorite !== location.is_favorite) {
-        await setFavoriteLocation(sellerId, isFavorite ? location.id : null);
-      }
     } else {
-      const { data, error } = await createLocation({
+      const { error } = await createLocation({
         seller_id: sellerId,
         ...payload,
       });
-      if (error || !data) {
+      if (error) {
         toast.error('Kunne ikke opprette stedet');
         setSaving(false);
         return;
-      }
-      if (isFavorite) {
-        await setFavoriteLocation(sellerId, data.id);
       }
     }
 
@@ -225,19 +227,10 @@ function LocationDrawer({
     onOpenChange(false);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!location) return;
-    setDeleting(true);
-    const { error } = await deleteLocation(location.id);
-    setDeleting(false);
-    setConfirmDelete(false);
-    if (error) {
-      toast.error('Kunne ikke slette stedet');
-      return;
-    }
-    toast.success('Stedet er slettet');
-    onSaved();
     onOpenChange(false);
+    onDelete(location);
   };
 
   return (
@@ -266,7 +259,6 @@ function LocationDrawer({
                 setName(e.target.value);
                 if (nameError) setNameError(undefined);
               }}
-              placeholder="Hovedstudio"
               aria-invalid={!!nameError || undefined}
               aria-describedby={nameError ? 'loc-drawer-name-error' : undefined}
               autoFocus
@@ -284,7 +276,6 @@ function LocationDrawer({
               id="loc-drawer-addr"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Storgata 1, 0123 Oslo"
             />
           </div>
 
@@ -313,38 +304,49 @@ function LocationDrawer({
                 ))}
               </div>
             )}
-            <div className="flex items-center gap-2">
+            <div className="relative">
               <Input
                 value={newRoom}
                 onChange={(e) => setNewRoom(e.target.value)}
+                onFocus={() => setRoomFocused(true)}
+                onBlur={() => setRoomFocused(false)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     addRoom();
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setNewRoom('');
                   }
                 }}
-                placeholder="Sal 1"
-                className="flex-1"
+                className={cn((roomFocused || newRoom) && 'pr-16')}
               />
-              <Button
-                type="button"
-                variant="outline-soft"
-                size="sm"
-                onClick={addRoom}
-                disabled={!newRoom.trim()}
-              >
-                Legg til
-              </Button>
+              {(roomFocused || newRoom) && (
+                <div className="absolute inset-y-1 right-1 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setNewRoom('')}
+                    aria-label="Avbryt"
+                    className="flex h-7 w-7 items-center justify-center rounded text-foreground-muted transition-colors hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <X className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={addRoom}
+                    disabled={!newRoom.trim()}
+                    aria-label="Legg til rom"
+                    className="flex h-7 w-7 items-center justify-center rounded bg-foreground text-background transition-colors hover:bg-foreground/90 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-40 disabled:hover:bg-foreground"
+                  >
+                    <Check className="size-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox
-              checked={isFavorite}
-              onCheckedChange={(c) => setIsFavorite(!!c)}
-            />
-            <span className="text-sm text-foreground">Bruk som standard når jeg oppretter kurs</span>
-          </label>
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-border px-6 py-4">
@@ -352,8 +354,8 @@ function LocationDrawer({
             <Button
               variant="ghost"
               size="sm"
-              className="text-danger hover:text-danger hover:bg-danger-subtle"
-              onClick={() => setConfirmDelete(true)}
+              className="text-foreground-muted hover:text-foreground"
+              onClick={handleDelete}
             >
               Slett sted
             </Button>
@@ -364,25 +366,6 @@ function LocationDrawer({
             {isEdit ? 'Lagre' : 'Lagre sted'}
           </Button>
         </div>
-
-        {isEdit && location && (
-          <ConfirmDialog
-            open={confirmDelete}
-            onOpenChange={setConfirmDelete}
-            ariaLabel="Slett sted"
-            headline="Stedet slettes. Det kan ikke angres."
-            scope={
-              <ConfirmScopeItem
-                name={location.name}
-                meta={location.address || (location.rooms.length > 0 ? `${location.rooms.length} rom` : 'Ingen adresse')}
-              />
-            }
-            actionLabel="Slett sted"
-            onConfirm={handleDelete}
-            loading={deleting}
-            loadingText="Sletter"
-          />
-        )}
       </SheetContent>
     </Sheet>
   );

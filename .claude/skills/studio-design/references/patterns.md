@@ -556,84 +556,133 @@ For surfaces where toasts overlay rich content (image-heavy public pages, custom
 
 ---
 
-## 12. Destructive actions — undo first, confirm only when needed
+## 12. Destructive actions — undo first, monochrome second, type-to-confirm last
 
-**The trap:** Every destructive button shows an "Are you sure?" dialog. Users develop confirmation-fatigue and click through them without reading. The dialog stops being a safety net and becomes friction.
+**The trap:** Every destructive button shows an "Are you sure?" dialog with a red button. Users develop confirmation-fatigue and click through them. The dialog stops being a safety net and becomes friction. The red button screams alarm on a calm sand canvas.
 
-**The fix:** **Default to undo, not confirmation.** NN/g research is clear: well-designed undo is more user-friendly than a confirmation dialog. The dialog interrupts the user; undo trusts them and gives them recovery.
+**The system:** A three-tier ladder. Most reversible actions get **no modal at all**. Cross-system / multi-person actions get a **monochrome dialog** (no red — copy + position + scope card carry the signal). Catastrophic cascade actions get a **type-to-confirm gate**.
 
-### The decision tree
+### Decision flowchart (top-down; first YES wins)
 
 ```
-Action is destructive?
-│
-├─ Can the action be undone within ~10 seconds?
-│  YES → Just do it. Show a toast with undo action.
-│  NO  → Continue ↓
-│
-├─ Is the action genuinely irreversible (refund issued, email sent to all signups)?
-│  YES → Type-to-confirm dialog (user types course name to delete)
-│  NO  → Standard confirm dialog with restated action
+Is the action catastrophic AND irreversible AND cascades across the org
+(delete studio, close account, wipe all historical data)?
+  YES → Tier 3: type-to-confirm dialog
+  NO ↓
+Does it move real money, send emails to other people, or cross a trust
+boundary (refund, cancel-with-bookings, leave team)?
+  YES → Tier 2: monochrome AlertDialog
+  NO ↓
+Is it a reversible single-item op with no real-world side effects within
+a ~6s window (delete location, remove team member, hide draft)?
+  YES → Tier 1: optimistic + Sonner "Angre" toast
+  NO  → Tier 2 (default safe)
 ```
 
-### Pattern A — undo via toast (default)
+### Tier 1 — toast + undo (the default)
+
+Use `runWithUndo` from `@/lib/undo`. The pattern is delay-commit (Gmail Undo Send): hide the row optimistically, show a 6-second Sonner toast with an `Angre` action, and only fire the network call when the timer expires.
 
 ```ts
-// User clicks "Avbestill"
-cancelBookingOptimistic(id);
-toast.success("Påmelding avbestilt", {
-  duration: 8000,
-  action: {
-    label: "Angre",
-    onClick: () => restoreBooking(id),
+import { runWithUndo } from '@/lib/undo'
+
+runWithUndo({
+  message: 'Stedet er slettet',
+  hide: () => setHiddenIds((prev) => new Set(prev).add(loc.id)),
+  restore: () => setHiddenIds((prev) => { const n = new Set(prev); n.delete(loc.id); return n }),
+  commit: async () => {
+    const { error } = await deleteLocation(loc.id)
+    if (!error) await refetch()
+    return { error }
   },
-});
+  errorOf: (r) => r.error,
+  errorMessage: 'Kunne ikke slette stedet',
+})
 ```
 
-The booking is cancelled immediately. User sees toast with undo. If they click "Angre" within 8 seconds, it's restored. Most users won't need to undo — the small minority who clicked wrong have an out.
+**Window: 6 seconds.** Long enough to register a misclick, short enough that the row doesn't feel "stuck pending". `runWithUndo` clamps to 3000–10000 ms; don't go longer than 8s without a reason.
 
-### Pattern B — confirm dialog (when undo isn't enough)
+**Why delay-commit, not soft-delete:** no DB migration, no `deleted_at` columns, no undelete RPCs. The action *truly* didn't happen if Angre was pressed — auditable, no row to clean up. Matches Linear and Notion for low-stakes deletes.
 
-```html
-<dialog class="modal">
-  <h3>Slette kurset?</h3>
-  <p>"Vinyasa Flow" og alle 12 påmeldinger blir slettet. Dette kan ikke angres.</p>
-  <div class="actions">
-    <button class="btn btn-secondary">Avbryt</button>
-    <button class="btn btn-destructive">Slett kurs</button>
-  </div>
-</dialog>
+**Tier 1 edge cases:**
+- *Tab close during the 6s window*: the timer dies with the JS context, the commit doesn't fire. Acceptable — same as not having clicked at all.
+- *Optimistic UI*: filter the list through a `hiddenIds: Set<string>` in the parent. After the commit succeeds, `refetch` makes the hide permanent; the stale `hiddenIds` entry is harmless.
+- *Commit failure*: `restore` + `toast.error`. The row reappears.
+
+### Tier 2 — monochrome AlertDialog (`ConfirmDialog`)
+
+Use `ConfirmDialog` from `@/components/ui/confirm-dialog`. Compound headline (verb + object) above an outlined scope card. **Destructive button is sand-12 dark (`variant="default"`) — not red.** The destructive signal is carried by the copy ("Avlys kurs"), the scope card showing what's affected, and the right-side button position.
+
+```tsx
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  ariaLabel="Avlyse kurset"
+  headline={`Kurset avlyses og ${count} deltakere refunderes. Det kan ikke angres.`}
+  scope={
+    <ConfirmScopeItem
+      name={courseData.title}
+      meta={`${count} deltakere refunderes`}
+      trailing={formatKroner(totalAmount)}
+    />
+  }
+  actionLabel="Avlys kurs"
+  onConfirm={handleCancelCourse}
+  loading={isDeleting}
+  loadingText="Avlyser"
+/>
 ```
 
-**Rules for confirm dialogs:**
-- **Restate the action** in the heading. Not "Are you sure?" but "Slette kurset?"
-- **State the consequences** in the body. Number of items affected, what gets lost, whether it's reversible.
-- **Use destructive variant** on the confirm button. Not "OK" — "Slett kurs" (the actual verb of the action).
-- **Cancel goes left, destructive right.** Or both stacked on mobile, destructive on top. Don't put cancel in destructive's red — that's a mid-2010s pattern.
+**Rules:**
+- **Restate the action** in the headline. Not "Er du sikker?" — "Avlyse timen?" / "Avbestille påmeldingen?"
+- **State the consequences** in one sentence. Number of items, money moved, notifications sent, reversibility.
+- **Scope card** shows the specific thing (course title, participant name + amount). Visual confirmation the user is acting on the right object.
+- **Button labels are verbs** mirroring the action: "Slett sted" / "Avbestill og refunder" / "Avlys kurs". Never "OK" or "Bekreft".
+- **Cancel verb is positive** when the destructive verb is itself "Cancel": pair "Avlys" with "Avbryt" (default) — never "Avlys" with "Avlys". Likewise "Avbestill" pairs with "Avbryt".
+- **No red.** `variant="default"` on the destructive button. Red is reserved for `toast.error` and input validation borders.
+- **No warning icons** in the headline (no `AlertTriangle`, no `XCircle`). Dated.
+- **Cancel left, destructive right.** On mobile they stack with destructive on top — the `AlertDialogFooter` handles this automatically.
+- **Focus defaults to cancel.** Radix `AlertDialog` does this for free — do not override.
+- **ESC closes, outside-click does NOT.** Radix `AlertDialog` default.
+- **Add a checkbox gate** when the action sends notifications or moves money in bulk: `disabled={!acknowledged}` paired with a `<label>` + `<Checkbox>` between the scope card and the footer (e.g. cancel-course-with-refunds). Single-item refunds don't need the checkbox — the scope card already shows the specific person + amount.
 
-### Pattern C — type-to-confirm (truly irreversible only)
+### Tier 3 — type-to-confirm (catastrophic only)
 
-```html
-<dialog class="modal">
-  <h3>Slette studioet?</h3>
-  <p>Dette sletter alle 47 kurs, 312 påmeldinger og betalingshistorikken. Det kan ikke angres.</p>
-  <p>Skriv <strong>"Inspire Yogastudio"</strong> for å bekrefte:</p>
-  <input class="input" />
-  <div class="actions">
-    <button class="btn btn-secondary">Avbryt</button>
-    <button class="btn btn-destructive" disabled>Slett studio</button>
-  </div>
-</dialog>
+Reserve for cascade-and-irreversible actions where the user types the resource name verbatim to enable the destructive button. **At most two flows in Studio**: delete studio (organisation), delete account. Refunds alone do NOT trigger Tier 3 — refunds are Tier 2 with a checkbox gate.
+
+```tsx
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  ariaLabel="Slett konto"
+  headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
+  scope={<ConfirmScopeItem name={email} meta="Permanent sletting" />}
+  actionLabel="Slett konto"
+  onConfirm={handleDelete}
+  disabled={confirmText !== 'SLETT'}
+>
+  <label className="mt-1 flex flex-col gap-2 text-sm text-foreground-muted">
+    Skriv <span className="font-mono font-medium text-foreground">SLETT</span> for å bekrefte
+    <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+  </label>
+</ConfirmDialog>
 ```
 
-The button is disabled until the user types the exact studio name. Forces deliberate action. Reserve this for genuinely catastrophic destructive actions — not regular delete.
+For org-name confirmation (delete studio), show the literal name as a non-selectable label and disable until exact match — case-sensitive, accent-sensitive, trim whitespace.
 
-### What NOT to do
+### Anti-patterns
 
-- **Don't use confirmation dialogs as default.** They're for the small minority of irreversible destructive actions, not for every "delete" or "cancel" click.
-- **Don't write "Are you sure?"** — generic, ineffective, becomes auto-dismissable.
-- **Don't put cancel in destructive red.** The cancel action isn't destructive. Use `outline` or `ghost` variant.
-- **Don't make the cancel button bigger or more prominent than the confirm.** Both should be equal weight.
+- ❌ **Confirmation dialog as default.** Use Tier 1 for reversible operations.
+- ❌ **Red destructive button.** Sand-12 dark fill. The verb + scope card + position carry the signal.
+- ❌ **"Er du sikker?" / "Slette?"** Compound headline only — verb + object.
+- ❌ **Warning-triangle icons** in dialog headlines. Dated.
+- ❌ **OK / Avbryt** as button labels. Buttons describe the action: "Slett sted" / "Avlys kurs".
+- ❌ **"Avbryt" left and "Avbryt" right** when the destructive action is itself "Avbryt" — collision. Use a positive verb on the safe side ("Behold").
+- ❌ **Outside-click dismisses** a destructive dialog. Use `AlertDialog` (Radix), not `Dialog`.
+- ❌ **Default focus on the destructive button.** Always cancel. Radix `AlertDialog` does this — don't override.
+- ❌ **`tone="danger"` / red-themed destructive prop.** Removed from the system. Every destructive dialog is monochrome.
+- ❌ **Soft-delete migrations for Tier 1.** Use `runWithUndo` (delay-commit). No `deleted_at` columns needed.
+- ❌ **Multiple destructive buttons in one dialog.** Split into two flows or use a checkbox + single action.
 
 ---
 

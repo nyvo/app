@@ -48,35 +48,37 @@ export interface TeamMember {
 export async function fetchTeamMembers(
   teamId: string,
 ): Promise<{ data: TeamMember[]; error: Error | null }> {
-  // Owner — derived from teams.owner_seller_id.
   const { data: team, error: teamError } = await supabase
     .from('teams')
-    .select('owner_seller_id, owner:sellers!inner(id, name, email)')
+    .select('owner_seller_id')
     .eq('id', teamId)
     .maybeSingle();
 
   if (teamError) return { data: [], error: teamError as Error };
   if (!team) return { data: [], error: null };
 
-  const owner = (team as { owner: { id: string; name: string; email: string | null } | null }).owner;
+  const ownerSellerId = (team as { owner_seller_id: string }).owner_seller_id;
 
-  // Active affiliates.
-  const { data: rows, error: affErr } = await supabase
-    .from('team_affiliations')
-    .select('seller_id, seller:sellers!inner(id, name, email)')
-    .eq('team_id', teamId)
-    .eq('status', 'active');
+  const [{ data: owner, error: ownerErr }, { data: rows, error: affErr }] = await Promise.all([
+    supabase
+      .from('sellers')
+      .select('id, name, email')
+      .eq('id', ownerSellerId)
+      .maybeSingle(),
+    supabase
+      .from('team_affiliations')
+      .select('seller_id, seller:sellers!inner(id, name, email)')
+      .eq('team_id', teamId)
+      .eq('status', 'active'),
+  ]);
 
+  if (ownerErr) return { data: [], error: ownerErr as Error };
   if (affErr) return { data: [], error: affErr as Error };
 
   const members: TeamMember[] = [];
   if (owner) {
-    members.push({
-      sellerId: owner.id,
-      name: owner.name,
-      email: owner.email,
-      role: 'owner',
-    });
+    const o = owner as { id: string; name: string; email: string | null };
+    members.push({ sellerId: o.id, name: o.name, email: o.email, role: 'owner' });
   }
   for (const r of (rows ?? []) as Array<{
     seller_id: string;
@@ -193,7 +195,7 @@ export async function inviteAffiliateByEmail(input: {
   if (error) {
     // Friendlier message for unique-violation (already invited).
     if (error.code === '23505') {
-      return { error: new Error('Denne sammen er allerede invitert.') };
+      return { error: new Error('Denne personen er allerede invitert.') };
     }
     return { error: error as Error };
   }

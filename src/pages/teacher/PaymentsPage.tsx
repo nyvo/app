@@ -15,11 +15,7 @@ import {
 import { toast } from 'sonner';
 
 interface OnboardingFormState {
-  businessName: string;
   organizationNumber: string;
-  contactEmail: string;
-  bankAccountNumber: string;
-  bankName: string;
 }
 
 const STATUS_LABEL: Record<DinteroOnboardingStatus, string> = {
@@ -47,7 +43,7 @@ const DINTERO_BACKOFFICE_URL = 'https://backoffice.dintero.com/';
  * that on Dintero's own dashboard. Keeps this surface as small as possible.
  */
 const PaymentsPage = () => {
-  const { currentSeller, user, refreshSellers } = useAuth();
+  const { currentSeller, refreshSellers } = useAuth();
 
   const onboardingStatus =
     (currentSeller?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
@@ -56,11 +52,7 @@ const PaymentsPage = () => {
   const contractUrl = currentSeller?.dintero_contract_url || null;
 
   const [form, setForm] = useState<OnboardingFormState>({
-    businessName: currentSeller?.name || '',
     organizationNumber: '',
-    contactEmail: user?.email || '',
-    bankAccountNumber: '',
-    bankName: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -69,14 +61,8 @@ const PaymentsPage = () => {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!currentSeller?.id) return;
-      if (
-        !form.businessName.trim() ||
-        !form.organizationNumber.trim() ||
-        !form.contactEmail.trim() ||
-        !form.bankAccountNumber.trim() ||
-        !form.bankName.trim()
-      ) {
-        toast.error('Fyll ut alle feltene');
+      if (!form.organizationNumber.trim()) {
+        toast.error('Fyll ut organisasjonsnummeret');
         return;
       }
 
@@ -85,10 +71,6 @@ const PaymentsPage = () => {
       const { data, error } = await createDinteroSeller({
         sellerId: currentSeller.id,
         organizationNumber: form.organizationNumber.trim(),
-        businessName: form.businessName.trim(),
-        contactEmail: form.contactEmail.trim(),
-        bankAccountNumber: form.bankAccountNumber.trim(),
-        bankName: form.bankName.trim(),
         sandboxAutoApprove: autoApprove,
       });
       setSubmitting(false);
@@ -128,7 +110,7 @@ const PaymentsPage = () => {
     if (data?.onboardingComplete) {
       toast.success('Utbetalinger er klare');
     } else if (data?.status === 'DECLINED') {
-      toast.error('Søknaden ble avslått. Kontakt oss for hjelp.');
+      toast.error('Søknaden ble avslått. Send en e-post til hei@openspot.no.');
     } else {
       toast('Oppsettet er ikke fullført ennå. Sjekk e-posten din.');
     }
@@ -172,107 +154,37 @@ const PaymentsPage = () => {
           {!hasApproval && !isConnected && (
             <section className="space-y-6">
               <div>
-                <h2 className="text-base font-semibold text-foreground">Sett opp utbetalinger</h2>
+                <h2 className="text-base font-medium tracking-tight text-foreground">Sett opp utbetalinger</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
-                  Du fyller ut signering og bekreftelse på Dinteros side. Det tar 5–10 minutter.
+                  Vi bruker Dintero til å håndtere utbetalinger. Du fullfører oppsettet hos dem.
                 </p>
               </div>
-              <Card>
-                <CardContent>
-                  <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="businessName"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Selskapsnavn
-                      </label>
-                      <Input
-                        id="businessName"
-                        value={form.businessName}
-                        onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="organizationNumber"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Organisasjonsnummer
-                      </label>
-                      <Input
-                        id="organizationNumber"
-                        inputMode="numeric"
-                        pattern="\d{9}"
-                        placeholder="9 siffer"
-                        value={form.organizationNumber}
-                        onChange={(e) =>
-                          setForm({ ...form, organizationNumber: e.target.value })
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="grid gap-2">
-                        <label
-                          htmlFor="bankAccountNumber"
-                          className="text-sm font-medium text-foreground"
-                        >
-                          Kontonummer
-                        </label>
-                        <Input
-                          id="bankAccountNumber"
-                          inputMode="numeric"
-                          placeholder="11 siffer"
-                          value={form.bankAccountNumber}
-                          onChange={(e) =>
-                            setForm({ ...form, bankAccountNumber: e.target.value })
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label
-                          htmlFor="bankName"
-                          className="text-sm font-medium text-foreground"
-                        >
-                          Banknavn
-                        </label>
-                        <Input
-                          id="bankName"
-                          value={form.bankName}
-                          onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="contactEmail"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Kontakt-e-post
-                      </label>
-                      <Input
-                        id="contactEmail"
-                        type="email"
-                        value={form.contactEmail}
-                        onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-                        required
-                      />
-                      <p className="text-sm text-foreground-muted">
-                        Dintero sender signering og oppdateringer hit.
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-end pt-2">
-                      <Button type="submit" loading={submitting} loadingText="Oppretter">
-                        Fortsett til Dintero
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
+              <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
+                <div className="grid gap-2">
+                  <label
+                    htmlFor="organizationNumber"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    Organisasjonsnummer
+                  </label>
+                  <Input
+                    id="organizationNumber"
+                    inputMode="numeric"
+                    pattern="\d{9}"
+                    placeholder="9 siffer"
+                    value={form.organizationNumber}
+                    onChange={(e) =>
+                      setForm({ ...form, organizationNumber: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex items-center justify-end pt-2">
+                  <Button type="submit" loading={submitting} loadingText="Oppretter">
+                    Fortsett til Dintero
+                  </Button>
+                </div>
+              </form>
             </section>
           )}
 
@@ -280,7 +192,7 @@ const PaymentsPage = () => {
           {hasApproval && !isConnected && (
             <section className="space-y-6">
               <div>
-                <h2 className="text-base font-semibold text-foreground">Fullfør hos Dintero</h2>
+                <h2 className="text-base font-medium tracking-tight text-foreground">Fullfør hos Dintero</h2>
                 <p className="mt-1 text-sm text-foreground-muted">
                   Status: {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Venter'}.
                 </p>
@@ -296,7 +208,7 @@ const PaymentsPage = () => {
                   ) : (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-sm text-foreground">
-                        Sjekk e-posten fra Dintero og signer avtalen. Når den er godkjent
+                        Sjekk e-posten fra Dintero og signer avtalen. Når den er godkjent,
                         aktiverer vi utbetalinger automatisk.
                       </p>
                       <div className="flex items-center gap-2 shrink-0">
@@ -324,16 +236,10 @@ const PaymentsPage = () => {
 
           {/* ─── State 3: Active — success card with Dintero link ─── */}
           {isConnected && (
-            <section className="space-y-6">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Utbetalinger er aktive</h2>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  Avtalen med Dintero er på plass.
-                </p>
-              </div>
+            <section>
               <Card>
                 <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-subtle text-success">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground-muted">
                     <Check className="size-5" />
                   </div>
                   <div className="flex-1">

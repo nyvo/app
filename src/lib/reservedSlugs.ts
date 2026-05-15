@@ -77,6 +77,8 @@ export const RESERVED_SLUGS = new Set<string>([
   'dashboard',
   'oversikt',
   'overview',
+  'get-started',
+  'kom-i-gang',
   'app',
   'apps',
   'settings',

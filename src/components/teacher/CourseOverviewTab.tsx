@@ -182,7 +182,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             {/* Estimated revenue moved out of headline — surfaced as quiet meta */}
             {course.estimatedRevenue > 0 && (
               <p className="mt-4 pt-3 border-t border-border text-xs text-foreground-muted tabular-nums">
-                Estimerte inntekter for denne kursrekken:{' '}
+                Anslått inntekt for kursrekken:{' '}
                 <span className="text-foreground font-medium">{formatKroner(course.estimatedRevenue)}</span>
               </p>
             )}

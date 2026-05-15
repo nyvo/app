@@ -187,7 +187,9 @@
       "WebFetch(domain:mobbin.com)",
       "WebFetch(domain:www.eleken.co)",
       "WebFetch(domain:help.calendly.com)",
-      "WebFetch(domain:www.pencilandpaper.io)"
+      "WebFetch(domain:www.pencilandpaper.io)",
+      "WebFetch(domain:on.substack.com)",
+      "WebFetch(domain:vercel.com)"
     ],
     "deny": [],
     "ask": []

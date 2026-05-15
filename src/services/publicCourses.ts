@@ -484,7 +484,7 @@ export async function fetchPublicCourseBySlug(
   }
 
   if (!course) {
-    return { data: null, error: new Error('Kurs ikke funnet') }
+    return { data: null, error: new Error('Fant ikke kurset') }
   }
 
   const typedCourse = course as unknown as CourseQueryResult
@@ -499,7 +499,7 @@ export async function fetchPublicCourseBySlug(
     .eq('slug', teamSlug)
     .maybeSingle()
   if (teamErr || !team) {
-    return { data: null, error: new Error('Kurs ikke funnet') }
+    return { data: null, error: new Error('Fant ikke kurset') }
   }
   const teamRow = team as { id: string; owner_seller_id: string }
   if (teamRow.owner_seller_id !== typedCourse.seller_id) {
@@ -512,7 +512,7 @@ export async function fetchPublicCourseBySlug(
       .eq('course_id', typedCourse.id)
       .maybeSingle()
     if (!listing) {
-      return { data: null, error: new Error('Kurs ikke funnet') }
+      return { data: null, error: new Error('Fant ikke kurset') }
     }
   }
 

@@ -176,9 +176,9 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
           left, list of tiers on the right (col-span-2). */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Billettyper</h3>
+          <h3 className="text-base font-medium tracking-tight text-foreground">Billettyper</h3>
           <p className="mt-1 text-sm text-foreground-muted">
-            Lag en eller flere billettyper — for eksempel «Hele kurset», «Student-rabatt» og «Drop-in».
+            Lag en eller flere billettyper – for eksempel «Hele kurset», «Studentrabatt» og «Drop-in».
             Deltakerne ser bare aktive billetter på påmeldingssiden.
           </p>
         </div>
@@ -216,11 +216,11 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
       {archived.length > 0 && (
         <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
           <div>
-            <h3 className="text-base font-semibold text-foreground">
+            <h3 className="text-base font-medium tracking-tight text-foreground">
               Arkiverte <span className="text-foreground-muted tabular-nums font-normal">({archived.length})</span>
             </h3>
             <p className="mt-1 text-sm text-foreground-muted">
-              Skjult fra påmeldingssiden. Tidligere påmeldinger beholder fortsatt riktig billettlabel.
+              Skjult fra påmeldingssiden. Tidligere påmeldinger beholder riktig billettetikett.
             </p>
           </div>
           <div className="md:col-span-2 space-y-3">
@@ -255,7 +255,7 @@ export function CoursePricingTab({ courseId, courseTotalWeeks }: CoursePricingTa
             open={!!deletingId}
             onOpenChange={open => !open && setDeletingId(null)}
             ariaLabel="Slett billettype"
-            headline="Billettypen slettes permanent. Sletting fungerer kun hvis ingen påmeldinger viser til billetten — bruk «Arkiver» ellers."
+            headline="Slett billettypen permanent?"
             scope={
               deletingTier ? (
                 <ConfirmScopeItem
@@ -338,7 +338,7 @@ function TicketTypeRow({
             </span>
           )}
           <p className={cn(
-            'text-base font-semibold',
+            'text-base font-medium',
             archived ? 'text-foreground-muted' : 'text-foreground',
           )}>
             {tier.label}
@@ -367,7 +367,7 @@ function TicketTypeRow({
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Mer"
+            aria-label="Handlinger"
             className="shrink-0 -mr-2"
           >
             <MoreHorizontal className="size-4" />
@@ -420,7 +420,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
     <SharedEmptyState
       variant="compact"
-      title="Ingen billettyper enda"
+      title="Ingen billettyper ennå"
       description="Opprett minst én aktiv billettype for at studenter skal kunne melde seg på."
       action={
         <Button size="sm" onClick={onCreate}>

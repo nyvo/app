@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge, badgeVariants } from '@/components/ui/badge';
@@ -140,6 +141,7 @@ const CoursePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
+  const [cancelAcknowledged, setCancelAcknowledged] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
@@ -249,7 +251,7 @@ const CoursePage = () => {
 
       const { error: updateError } = await updateCourse(courseId, updateData);
       if (updateError) {
-        setSaveError(updateError.message || 'Kunne ikke lagre endringer. Prøv på nytt.');
+        setSaveError(updateError.message || 'Kunne ikke lagre endringer. Prøv igjen.');
         setIsSaving(false);
         return;
       }
@@ -280,7 +282,7 @@ const CoursePage = () => {
       setSettingsImageUrl(newImageUrl);
       toast.success('Endringer lagret');
     } catch {
-      setSaveError('Noe gikk galt. Prøv på nytt.');
+      setSaveError('Noe gikk galt. Prøv igjen.');
     } finally {
       setIsSaving(false);
     }
@@ -336,7 +338,7 @@ const CoursePage = () => {
         return;
       }
       const message = result
-        ? `Kurset er avlyst. ${result.refunds_processed} refusjoner behandlet, ${result.notifications_sent} deltakere varslet.`
+        ? `Kurset er avlyst. ${result.refunds_processed} ${result.refunds_processed === 1 ? 'refusjon' : 'refusjoner'} behandlet, ${result.notifications_sent} ${result.notifications_sent === 1 ? 'deltaker' : 'deltakere'} varslet.`
         : 'Kurset er avlyst.';
       setShowCancelPreview(false);
       toast.success('Kurs avlyst');
@@ -368,7 +370,7 @@ const CoursePage = () => {
 
   if (!courseId) {
     return <CoursePageState
-      title="Vi finner ikke det kurset du leter etter"
+      title="Vi finner ikke kurset du leter etter"
       message="Lenken er kanskje utdatert, eller kurset er flyttet."
     />;
   }
@@ -390,7 +392,7 @@ const CoursePage = () => {
   if (error || !courseData) {
     return <CoursePageState
       title="Vi finner ikke dette kurset"
-      message={error || 'Kurset finnes ikke eller har blitt slettet.'}
+      message={error || 'Kurset finnes ikke eller er slettet.'}
     />;
   }
 
@@ -587,7 +589,7 @@ const CoursePage = () => {
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
                   <p className="text-xs font-medium text-foreground-muted">Påmeldte</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums leading-none">
+                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {participantKpis.confirmed}
                     {courseData.capacity > 0 && (
                       <span> / {courseData.capacity}</span>
@@ -596,13 +598,13 @@ const CoursePage = () => {
                 </div>
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
                   <p className="text-xs font-medium text-foreground-muted">Avlyste</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums leading-none">
+                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {participantKpis.cancelled}
                   </p>
                 </div>
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
                   <p className="text-xs font-medium text-foreground-muted">Innbetalt</p>
-                  <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums leading-none">
+                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {formatKroner(participantKpis.revenue)}
                   </p>
                 </div>
@@ -629,7 +631,7 @@ const CoursePage = () => {
                         size="sm"
                         onClick={() => setIsAddParticipantOpen(true)}
                         disabled={isFull}
-                        title={isFull ? 'Kurset er fullt — øk kapasiteten under Detaljer for å legge til flere.' : undefined}
+                        title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Detaljer for å legge til flere.' : undefined}
                       >
                         Legg til deltaker
                       </Button>
@@ -638,7 +640,7 @@ const CoursePage = () => {
                 })()}
                 {sortedParticipants.length === 0 ? (
                   <div className="px-4 py-12 text-center text-sm text-foreground-muted">
-                    Deltakere som melder seg på dukker opp her.
+                    Deltakere som melder seg på, dukker opp her.
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
@@ -778,13 +780,12 @@ const CoursePage = () => {
 
       <ConfirmDialog
         open={showCancelPreview}
-        onOpenChange={setShowCancelPreview}
+        onOpenChange={(open) => {
+          setShowCancelPreview(open);
+          if (!open) setCancelAcknowledged(false);
+        }}
         ariaLabel="Avlyse kurset"
-        headline={
-          refundPreview.count > 0
-            ? `Kurset avlyses og ${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} refunderes. Det kan ikke angres.`
-            : 'Kurset avlyses. Det kan ikke angres.'
-        }
+        headline="Avlys kurset?"
         scope={
           refundPreview.count > 0 ? (
             <>
@@ -793,11 +794,11 @@ const CoursePage = () => {
                 meta={`${refundPreview.count} deltaker${refundPreview.count !== 1 ? 'e' : ''} refunderes`}
                 trailing={formatKroner(refundPreview.totalAmount)}
               />
-              <div className="max-h-[180px] overflow-y-auto border-t border-border">
+              <div className="max-h-[180px] overflow-y-auto border-t border-border/60">
                 {refundPreview.participants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between border-t border-border px-4 py-2 first:border-t-0 text-sm text-foreground tabular-nums"
+                    className="flex items-center justify-between border-t border-border/60 px-4 py-2.5 first:border-t-0 text-sm text-foreground tabular-nums sm:px-5"
                   >
                     <span className="truncate">{p.participant_name || p.participant_email}</span>
                     <span className="shrink-0">{formatKroner(p.amount_paid)}</span>
@@ -810,6 +811,7 @@ const CoursePage = () => {
           )
         }
         actionLabel="Avlys kurs"
+        disabled={refundPreview.count > 0 && !cancelAcknowledged}
         onConfirm={(e) => {
           e.preventDefault();
           handleCancelCourse();
@@ -817,10 +819,25 @@ const CoursePage = () => {
         loading={isDeleting}
         loadingText={
           refundPreview.count > 0
-            ? `Behandler ${refundPreview.count} refusjon${refundPreview.count > 1 ? 'er' : ''}`
+            ? `Behandler ${refundPreview.count} refusjon${refundPreview.count !== 1 ? 'er' : ''}`
             : 'Avlyser'
         }
-      />
+      >
+        {refundPreview.count > 0 ? (
+          <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-sm text-foreground sm:p-5">
+            <Checkbox
+              checked={cancelAcknowledged}
+              onCheckedChange={(v) => setCancelAcknowledged(v === true)}
+              className="mt-0.5"
+            />
+            <span className="leading-snug">
+              Jeg forstår at {refundPreview.count} deltaker
+              {refundPreview.count !== 1 ? 'e' : ''} får e-post og at{' '}
+              {formatKroner(refundPreview.totalAmount)} refunderes.
+            </span>
+          </label>
+        ) : null}
+      </ConfirmDialog>
     </div>
   );
 };

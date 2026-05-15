@@ -30,6 +30,7 @@ export const routes = {
   // ─── Authenticated dashboard ──────────────────────────────────────────
   // Logged-in users land here. Public landing at `/` auto-redirects.
   dashboard: '/overview',
+  getStarted: '/get-started',
   schedule: '/schedule',
 
   // Courses

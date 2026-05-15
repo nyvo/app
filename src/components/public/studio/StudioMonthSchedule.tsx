@@ -10,8 +10,8 @@ interface StudioMonthScheduleProps {
 
 const WEEKDAYS_SHORT = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'] as const;
 const MONTHS = [
-  'Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'Desember',
+  'januar', 'februar', 'mars', 'april', 'mai', 'juni',
+  'juli', 'august', 'september', 'oktober', 'november', 'desember',
 ] as const;
 
 const MIN_STRIP_DAYS = 14;

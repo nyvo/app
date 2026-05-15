@@ -82,7 +82,7 @@ export const ForgotPasswordView = () => {
           </h1>
           <p className="text-sm text-foreground-muted">
             Vi har sendt en lenke til{' '}
-            <span className="text-foreground">{formData.email}</span>
+            <span className="text-foreground">{formData.email}</span>.
           </p>
         </div>
 

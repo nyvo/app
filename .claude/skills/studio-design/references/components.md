@@ -1701,115 +1701,87 @@ Small dot (`size-2.5` = 10px), `bg-danger` (or `bg-success` for "online"), `ring
 
 ## Confirmation dialog (destructive)
 
-For destructive actions where toast-with-undo isn't enough. Two variants: **standard confirm** (irreversible-but-not-catastrophic) and **type-to-confirm** (catastrophic). Built from shadcn `<AlertDialog>`.
+For destructive actions where toast-with-undo (Tier 1) isn't enough. Use the `ConfirmDialog` wrapper at `@/components/ui/confirm-dialog` — it composes shadcn `<AlertDialog>` with the rules below baked in. Two variants: **standard confirm** (Tier 2, cross-system / multi-person actions) and **type-to-confirm** (Tier 3, catastrophic cascading actions).
 
-See `patterns.md` § 12 for the full doctrine — undo-first by default; confirm dialog is the second tier; type-to-confirm is rare.
+See `patterns.md` § 12 for the full doctrine — undo-first by default; standard dialog is monochrome; type-to-confirm is reserved for delete-studio and delete-account only.
 
-### Standard confirm — when undo isn't enough
+### Standard confirm — Tier 2
 
 ```tsx
-import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog'
 
-<AlertDialog>
-  <AlertDialogTrigger asChild>
-    <Button variant="destructive">Slett kurs</Button>
-  </AlertDialogTrigger>
-  <AlertDialogContent className="max-w-md">
-    <AlertDialogHeader>
-      <AlertDialogTitle className="text-base font-semibold">
-        Slette kurset?
-      </AlertDialogTitle>
-      <AlertDialogDescription className="text-sm text-foreground-muted">
-        «Vinyasa Flow» og 12 påmeldinger blir slettet. Dette kan ikke angres.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter className="gap-2">
-      <AlertDialogCancel>Avbryt</AlertDialogCancel>
-      <AlertDialogAction variant="destructive">Slett kurs</AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+<ConfirmDialog
+  open={open}
+  onOpenChange={setOpen}
+  ariaLabel="Avlyse kurset"
+  headline="Kurset avlyses og 12 deltakere refunderes. Det kan ikke angres."
+  scope={
+    <ConfirmScopeItem
+      name="Vinyasa Flow"
+      meta="12 deltakere refunderes"
+      trailing={formatKroner(5400)}
+    />
+  }
+  actionLabel="Avlys kurs"
+  onConfirm={handleCancelCourse}
+  loading={isDeleting}
+  loadingText="Avlyser"
+/>
 ```
 
 **Rules:**
-- **No visible title.** The action is conveyed by: (1) the trigger the user clicked, (2) the scope card showing what's affected, (3) the description stating consequences, (4) the destructive button's action verb. The title-question would be the FOURTH redundant signal — and it's the most recognizable AI-default element. Drop it.
-- **Accessibility via `aria-label`** on the dialog element — `aria-label="Slette kurset"`. Screen readers announce it; visual users don't see it.
-- **Scope visualization is an outlined card** (`border border-border rounded-sm`). No filled `bg-muted` (avoid the card-within-card tonal stack). A single thin outline is enough — the card holds the affected content together as one unit, separated from the dialog's body copy.
-- **Dialog headline above the card** — `text-sm font-medium text-foreground`, `mb-4` (16px breathing room before the card). One sentence that states what will happen and that it's irreversible: `Dette slettes og kan ikke angres`. This is the **dialog's voice**, not a card label — keep it at foreground color (not muted) and give it space so it doesn't attach to the card. The card below reads as the *answer* to the headline ("here's what gets deleted"), not as a labeled object. Consistent across both standard and type-to-confirm variants.
-- **Content inside the card is left-aligned like body text.** Item name, meta line, count rows — all flush to the card's left padding edge. Do NOT use a fixed-width right-aligned number column (`grid-template-columns: 60px 1fr` with `text-align: right`) — it leaves whitespace on the left and centers content visually inside the box, which reads as "floating."
-- **Single-item scope** (e.g., delete course): name on line 1 (`text-sm font-medium`), meta on line 2 (`text-xs text-foreground-muted`, `tabular-nums`). Both flush left. Card padding `p-3.5`.
-- **Multi-item scope** (e.g., delete studio with 47 courses + 312 signups): one row per item with **divider lines between rows** (`border-t` on every row except the first). Each row is a flex container — **label flush left, number flush right** (`flex justify-between`). Same weight, same color, same size for both — no bold numbers, no muted labels. The dividers and the structural left/right alignment do the work; type variation isn't needed and just adds noise. Use `tabular-nums` so digit columns stay consistent. Row padding `py-2.5 px-3.5`.
-- **No description paragraph below the card.** The compound mini-label (`Dette slettes og kan ikke angres`) absorbs the consequence note, so a separate `<p>` below the box would just repeat it. Card → input (type-to-confirm only) → footer. Resist the urge to add explanation text; the destructive button verb closes the loop.
-- **Description states reversibility only** — keep it short. The scope card carries the "what"; description carries "Det kan ikke angres" or similar consequence note.
-- **Destructive button uses the action verb** — `Slett kurs` not `OK` or `Bekreft`
-- **Default focus on Cancel** (Radix handles this automatically with AlertDialog)
-- **Cancel left, destructive right** — left-to-right reading flow, primary action lands where the eye ends
-- **Width: `max-w-md`** (~448px) — compact, sized for short content
-- **Border-radius: `rounded-xl`** (12px) — `--radius-lg`, the dialog tier (one step rounder than cards)
-- **Backdrop: `bg-foreground/30 backdrop-blur-sm`** — soft recession of the page behind. NOT a flat dim — the blur signals "the page is behind, attention here."
-- **Shadow: refined two-layer** — `0 1px 2px rgb(0 0 0 / 0.04), 0 12px 32px -8px rgb(0 0 0 / 0.16)`. Close shadow for definition + wider deep shadow for elevation. Don't use a single generic shadow — dialogs are floating overlays and deserve considered elevation.
+- **No visible title.** `ariaLabel` is announced by screen readers; sighted users see the compound headline + scope card below. The headline does what a title would, with specifics.
+- **Compound headline** — one sentence stating action + consequence + reversibility: "Påmeldingen avbestilles og hele beløpet refunderes (5–10 virkedager)." Foreground color, `text-sm font-semibold leading-snug`, `mb-5` breathing room before the scope card. **Wrapper handles this — don't override.**
+- **Scope card is tonal, not just outlined.** `bg-muted/40` + soft border (`border-border/60`), `rounded-lg`. The tonal lift gives the card real presence on the dialog surface. Wrapper handles this.
+- **Card content is left-aligned.** Item name on line 1 (`text-sm font-medium`), meta on line 2 (`text-xs text-foreground-muted tabular-nums`), optional trailing amount on the right (`text-sm font-medium tabular-nums`). Use `<ConfirmScopeItem>` — don't hand-roll.
+- **Multi-item scope** (e.g., refund preview with N participants): use `<ConfirmScopeRow>` for each row, with `flex justify-between` and soft dividers (`border-border/60`). Wrap in `<>` after a primary `<ConfirmScopeItem>` summary row. Cap height at `180–240px` with `overflow-y-auto` for long lists.
+- **No description paragraph below the card.** The headline absorbs the consequence note. Card → optional checkbox / type-to-confirm input → footer. Don't add explanatory `<p>` blocks.
+- **Destructive button is monochrome.** `variant="default"` (sand-12 dark fill) — never red. The verb ("Avlys kurs" / "Slett sted" / "Avbestill og refunder") + the scope card + right-side position carry the destructive signal. Red is reserved for `toast.error` and input validation borders. **Wrapper enforces this — there is no `tone` / `actionVariant` prop.**
+- **Cancel left, destructive right** on desktop; stacked with destructive on top on mobile. `AlertDialogFooter` handles this automatically.
+- **Default focus on Cancel.** Radix `AlertDialog` does this for free — never override.
+- **ESC closes; outside-click does NOT.** Radix `AlertDialog` default.
+- **Loading state on the destructive button** while the network call is in flight. Pass `loading` + `loadingText` props. Cancel button auto-disables.
+- **Width: `max-w-md`** (~448px) on desktop, `w-[calc(100vw-2rem)]` on mobile. Wrapper handles this.
+- **Backdrop: `bg-foreground/40 backdrop-blur-sm`** — 40 % black with blur, slightly weightier than a dim overlay. Wrapper handles this.
+- **Acknowledgement checkbox** when the action sends emails / moves money in bulk: pass a `<label>` + `<Checkbox>` as `children` between the scope card and the footer, gate the destructive button via the `disabled` prop. Example: cancel-course-with-refunds. Single-participant refunds don't need it — the scope card already shows the specific person + amount.
 
-### Type-to-confirm — for catastrophic actions
+### Type-to-confirm — Tier 3, catastrophic only
 
 ```tsx
-function DeleteStudioDialog() {
-  const [confirmText, setConfirmText] = useState("");
-  const studioName = "Inspire Yogastudio";
-  const canDelete = confirmText === studioName;
-
+function DeleteAccountDialog() {
+  const [confirmText, setConfirmText] = useState('')
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive">Slett studio</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Slette studioet?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Dette sletter <strong>alle 47 kurs, 312 påmeldinger</strong> og
-            betalingshistorikken. Det kan ikke angres.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        <div className="grid gap-2 py-2">
-          <Label htmlFor="confirm">
-            Skriv <strong>«{studioName}»</strong> for å bekrefte
-          </Label>
-          <Input
-            id="confirm"
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder={studioName}
-          />
-        </div>
-
-        <AlertDialogFooter className="gap-2">
-          <AlertDialogCancel>Avbryt</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" disabled={!canDelete}>
-            Slett studio
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+    <ConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      ariaLabel="Slett konto"
+      headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
+      scope={<ConfirmScopeItem name={email} meta="Permanent sletting" />}
+      actionLabel="Slett konto"
+      onConfirm={handleDelete}
+      disabled={confirmText !== 'SLETT'}
+    >
+      <label className="mt-1 flex flex-col gap-2 text-sm text-foreground-muted">
+        Skriv <span className="font-mono font-medium text-foreground">SLETT</span> for å bekrefte
+        <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+      </label>
+    </ConfirmDialog>
+  )
 }
 ```
 
 **Rules:**
-- **Type the resource name** (not "DELETE" or "CONFIRM") — research shows users prefer typing the name; it forces deliberate engagement with what they're deleting
-- **Confirm button disabled until exact match** — `value === studioName`
-- **Use sparingly** — only for genuinely catastrophic actions. Studio examples: delete studio, delete account, terminate subscription. Don't use for delete-course or refund — those are standard confirm.
+- **Type the resource name** for org-scoped actions (delete studio: type the studio name). Use a literal word (`SLETT`) only for account-level actions where there's no specific resource name to type.
+- **Disabled until exact match** — case-sensitive, accent-sensitive, trim whitespace.
+- **Reserved for catastrophic cascading actions only.** Studio: delete account (`SLETT`), delete studio (studio name). Refunds, cancel-course, delete-anything-else are Tier 2 — do not use type-to-confirm for them.
 
 ### When to use what
 
 | Action type | Pattern | Example |
 |------------|---------|---------|
-| Reversible / recoverable | Toast with undo (#11) | Cancel signup, archive course |
-| Irreversible, contained scope | Standard confirm | Delete course, refund payment |
-| Catastrophic, broad scope | Type-to-confirm | Delete studio, delete account |
+| Reversible single-item ops | Tier 1: `runWithUndo` + Sonner toast | Delete location, remove team member, hide draft |
+| Cross-system / multi-person actions | Tier 2: `ConfirmDialog` (monochrome) | Cancel signup, refund, cancel course, leave team |
+| Catastrophic cascading | Tier 3: `ConfirmDialog` + type-to-confirm gate | Delete account, delete studio |
 
 ---
 

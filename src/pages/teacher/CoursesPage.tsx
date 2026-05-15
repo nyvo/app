@@ -13,9 +13,8 @@ import { SearchInput } from '@/components/ui/search-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { ChevronDown } from '@/lib/icons';
-import { EmptyStateToggle } from '@/components/ui/EmptyStateToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn, foldNorwegian, getShowEmptyState } from '@/lib/utils';
+import { cn, foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
@@ -78,7 +77,6 @@ const DEFAULT_SORT_FOR_TAB: Record<ViewTab, SortKey> = {
 };
 
 const CoursesPage = () => {
-  const showEmptyState = getShowEmptyState();
   const { currentSeller } = useAuth();
   // `?new=1` opens the create drawer. The quick-glance `?kurs=:id` overlay
   // lives at the layout level (TeacherLayout) so it works on any page.
@@ -125,7 +123,7 @@ const CoursesPage = () => {
       const coursesResult = await fetchCourses(currentSeller.id);
 
       if (coursesResult.error) {
-        setError('Kunne ikke hente kurs. Sjekk nettforbindelsen og prøv på nytt.');
+        setError('Kunne ikke hente kurs. Sjekk nettet og prøv igjen.');
         return;
       }
 
@@ -182,7 +180,7 @@ const CoursesPage = () => {
         setDropInCourseIds(dropInIds);
       }
     } catch {
-      setError('Kunne ikke hente kurs. Prøv på nytt.');
+      setError('Kunne ikke hente kurs. Prøv igjen.');
     } finally {
       setIsLoading(false);
     }
@@ -247,7 +245,7 @@ const CoursesPage = () => {
       .map(({ row }) => row);
   }, [allRows, viewTab, searchQuery, sortKey]);
 
-  const showCoursesEmptyState = showEmptyState || (!isLoading && courses.length === 0 && !error);
+  const showCoursesEmptyState = !isLoading && courses.length === 0 && !error;
 
   useEffect(() => {
     setVisibleCount(COURSES_PER_PAGE);
@@ -379,7 +377,7 @@ const CoursesPage = () => {
               ) : filteredRows.length === 0 ? (
                 searchQuery ? (
                   <EmptyState
-                    title={`Ingen kurs matcher «${searchQuery}»`}
+                    title={`Fant ingen kurs for «${searchQuery}»`}
                     description="Prøv et annet søkeord."
                     action={
                       <Button variant="outline-soft" size="sm" onClick={() => setSearchQuery('')}>
@@ -423,8 +421,6 @@ const CoursesPage = () => {
             </>
           )}
         </div>
-        <EmptyStateToggle />
-
         <CreateCourseDrawer
           open={showCreateDrawer}
           onOpenChange={handleCreateOpenChange}

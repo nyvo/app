@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertCircle } from '@/lib/icons';
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox, LOCATION_VALUE_SEPARATOR } from '@/components/ui/location-combobox';
+import { LocationCombobox } from '@/components/ui/location-combobox';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
@@ -90,23 +90,6 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  // Pre-fill location from the favorite address — only when the choice is
-  // unambiguous (0 or 1 rooms). Multi-room favorites stay empty so the
-  // teacher picks the room themselves.
-  useEffect(() => {
-    if (!open) return;
-    const favorite = locations.find((l) => l.is_favorite);
-    if (!favorite) return;
-    const value =
-      favorite.rooms.length === 0
-        ? favorite.name
-        : favorite.rooms.length === 1
-          ? `${favorite.name}${LOCATION_VALUE_SEPARATOR}${favorite.rooms[0]}`
-          : null;
-    if (value === null) return;
-    setLocation((prev) => (prev === '' ? value : prev));
-  }, [open, locations]);
 
   const errors = useMemo<FormErrors>(() => {
     const e: FormErrors = {};
@@ -219,7 +202,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         <SheetHeader className="px-6 py-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">Opprett kurs</SheetTitle>
           <SheetDescription className="text-sm text-foreground-muted">
-            Bare det viktigste — du kan endre alle detaljer på kurssiden etterpå.
+            Bare det viktigste – du kan endre alle detaljer på kurssiden etterpå.
           </SheetDescription>
         </SheetHeader>
 
@@ -439,7 +422,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
             size="sm"
             onClick={handleSubmit}
             loading={isSubmitting}
-            loadingText="Oppretter…"
+            loadingText="Oppretter"
           >
             Opprett
           </Button>

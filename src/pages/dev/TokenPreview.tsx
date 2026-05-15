@@ -142,7 +142,7 @@ function Samples() {
       {/* Text hierarchy */}
       <div className="space-y-2 rounded-lg border border-border bg-surface p-6">
         <p className="text-xs font-medium tracking-wide uppercase text-foreground-muted">Inntekter</p>
-        <p className="text-3xl font-semibold tabular-nums text-foreground">42 800 kr</p>
+        <p className="text-3xl font-medium tabular-nums text-foreground">42 800 kr</p>
         <p className="text-sm text-foreground-muted">Denne måneden</p>
         <p className="text-xs text-foreground-muted">Oppdatert for 2 minutter siden</p>
       </div>
@@ -150,7 +150,7 @@ function Samples() {
       {/* Chart-2 accent surface */}
       <div className="rounded-lg bg-chart-2/10 p-4 flex items-center gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-chart-2/10 text-chart-2 ring-1 ring-chart-2/20">
-          <span className="text-sm font-semibold">YM</span>
+          <span className="text-sm font-medium">YM</span>
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">Yin Yoga</p>

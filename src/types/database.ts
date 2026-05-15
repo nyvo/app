@@ -704,7 +704,6 @@ export type Database = {
           address: string | null
           created_at: string
           id: string
-          is_favorite: boolean
           name: string
           rooms: string[]
           seller_id: string
@@ -714,7 +713,6 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
-          is_favorite?: boolean
           name: string
           rooms?: string[]
           seller_id: string
@@ -724,7 +722,6 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
-          is_favorite?: boolean
           name?: string
           rooms?: string[]
           seller_id?: string
@@ -794,7 +791,6 @@ export type Database = {
           code: string
           created_at: string
           created_by: string | null
-          expires_at: string
           id: string
           revoked_at: string | null
           team_id: string
@@ -803,7 +799,6 @@ export type Database = {
           code: string
           created_at?: string
           created_by?: string | null
-          expires_at: string
           id?: string
           revoked_at?: string | null
           team_id: string
@@ -812,7 +807,6 @@ export type Database = {
           code?: string
           created_at?: string
           created_by?: string | null
-          expires_at?: string
           id?: string
           revoked_at?: string | null
           team_id?: string
@@ -951,7 +945,7 @@ export type Database = {
         }[]
       }
       create_team_invite_link: {
-        Args: { p_team_id: string; p_expires_days?: number }
+        Args: { p_team_id: string }
         Returns: Database["public"]["Tables"]["team_invite_links"]["Row"]
       }
       redeem_team_invite_link: {

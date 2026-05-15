@@ -32,7 +32,7 @@ export async function uploadCourseImage(
   if (file.size > MAX_IMAGE_SIZE) {
     return {
       url: null,
-      error: new Error('Bildet er for stort. Maks 5 MB')
+      error: new Error('Bildet er for stort. Maks 5 MB.')
     }
   }
 
@@ -71,7 +71,7 @@ export async function deleteCourseImage(
     .single<{ seller_id: string }>()
 
   if (courseError || !course) {
-    return { error: new Error('Kurset ble ikke funnet') }
+    return { error: new Error('Fant ikke kurset.') }
   }
 
   if (course.seller_id !== sellerId) {
@@ -124,7 +124,7 @@ export async function uploadSellerLogo(
     return { url: null, error: new Error('Ugyldig filtype. Bruk JPG, PNG eller WebP.') }
   }
   if (file.size > MAX_IMAGE_SIZE) {
-    return { url: null, error: new Error('Bildet er for stort. Maks 5 MB') }
+    return { url: null, error: new Error('Bildet er for stort. Maks 5 MB.') }
   }
 
   const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'

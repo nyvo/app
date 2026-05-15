@@ -61,14 +61,14 @@ const TermsPage = () => {
                   Deltakelse på kurs skjer på eget ansvar. Instruktøren er ikke ansvarlig for skader som måtte oppstå under kurset.
                 </p>
                 <p className="text-base text-foreground-muted leading-relaxed">
-                  Ved eventuelle helseutfordringer anbefales det å konsultere lege før deltakelse.
+                  Har du helseutfordringer, bør du snakke med lege før du deltar.
                 </p>
               </section>
 
               <section className="space-y-4">
                 <h2 className="text-base font-semibold text-foreground">4. Personvern</h2>
                 <p className="text-base text-foreground-muted leading-relaxed">
-                  Vi behandler dine personopplysninger i henhold til gjeldende personvernlovgivning.
+                  Vi behandler personopplysningene dine etter gjeldende personvernlovgivning.
                   Opplysninger brukes kun til administrasjon av kurspåmelding og kommunikasjon relatert til kurset.
                 </p>
               </section>
@@ -77,7 +77,7 @@ const TermsPage = () => {
                 <h2 className="text-base font-semibold text-foreground">5. Endringer</h2>
                 <p className="text-base text-foreground-muted leading-relaxed">
                   Instruktøren forbeholder seg retten til å gjøre endringer i kursprogrammet eller vilkårene.
-                  Eventuelle endringer vil bli kommunisert til påmeldte deltakere.
+                  Endringer sender vi til alle påmeldte.
                 </p>
               </section>
             </div>

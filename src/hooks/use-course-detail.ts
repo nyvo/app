@@ -114,7 +114,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
         ]);
 
         if (courseResult.error || !courseResult.data) {
-          setError('Kurset ble ikke funnet');
+          setError('Fant ikke kurset.');
           return;
         }
 
@@ -122,7 +122,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
         setCourseData(mappedCourse);
         setMaxParticipants(mappedCourse.capacity);
       } catch {
-        setError('En feil oppstod');
+        setError('Noe gikk galt. Prøv igjen.');
       } finally {
         setIsLoading(false);
       }

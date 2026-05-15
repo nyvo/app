@@ -30,7 +30,6 @@ export async function fetchActiveInviteLink(
     .select('*')
     .eq('team_id', teamId)
     .is('revoked_at', null)
-    .gt('expires_at', new Date().toISOString())
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -42,11 +41,9 @@ export async function fetchActiveInviteLink(
 /** Generate a fresh link, revoking any prior active link. Admin-only (RLS). */
 export async function createInviteLink(
   teamId: string,
-  expiresDays = 7,
 ): Promise<{ data: TeamInviteLink | null; error: Error | null }> {
   const { data, error } = await supabase.rpc('create_team_invite_link', {
     p_team_id: teamId,
-    p_expires_days: expiresDays,
   });
   if (error) return { data: null, error: error as Error };
   return { data: (data as TeamInviteLink) ?? null, error: null };

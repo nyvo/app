@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
@@ -199,7 +199,7 @@ const TeacherProfilePage = () => {
                   {/* Personlig informasjon — first section, no top divider */}
                   <section className="space-y-6">
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">Personlig informasjon</h2>
+                      <h2 className="text-base font-medium tracking-tight text-foreground">Personlig informasjon</h2>
                     </div>
                     <div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -276,7 +276,7 @@ const TeacherProfilePage = () => {
                   {/* Konto og sikkerhet */}
                   <section className="space-y-6 mt-10 pt-10 border-t border-border">
                     <div>
-                      <h2 className="text-base font-semibold text-foreground">Konto og sikkerhet</h2>
+                      <h2 className="text-base font-medium tracking-tight text-foreground">Konto og sikkerhet</h2>
                     </div>
                     <div className="divide-y divide-border">
                           {/* Logg ut alle enheter */}
@@ -297,19 +297,16 @@ const TeacherProfilePage = () => {
                                   open={logoutAllOpen}
                                   onOpenChange={setLogoutAllOpen}
                                   ariaLabel="Logg ut alle enheter"
-                                  headline="Du blir logget ut fra alle nettlesere og enheter, inkludert denne."
-                                  scope={
-                                      <ConfirmScopeItem
-                                          name={email || 'Kontoen din'}
-                                          meta="Aktiv på alle påloggede enheter"
-                                      />
-                                  }
+                                  headline="Logg ut fra alle enheter?"
                                   actionLabel="Logg ut alle"
-                                  actionVariant="default"
                                   onConfirm={handleLogoutAllDevices}
                                   loading={isLoggingOutAll}
                                   loadingText="Logger ut"
-                              />
+                              >
+                                  <p className="text-sm text-foreground-muted">
+                                      Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
+                                  </p>
+                              </ConfirmDialog>
                           </div>
 
                           {/* Slett konto */}
@@ -333,28 +330,24 @@ const TeacherProfilePage = () => {
                                       if (!open) setDeleteConfirmText('');
                                   }}
                                   ariaLabel="Slett kontoen din"
-                                  headline="All data, inkludert kurs, påmeldinger og meldinger, slettes permanent. Dette kan ikke angres."
-                                  scope={
-                                      <ConfirmScopeItem
-                                          name={email || 'Kontoen din'}
-                                          meta="Permanent sletting"
-                                      />
-                                  }
+                                  headline="Slett kontoen din?"
                                   actionLabel="Slett konto"
                                   onConfirm={handleDeleteAccount}
                                   disabled={deleteConfirmText !== 'SLETT'}
                                   loading={isDeletingAccount}
                                   loadingText="Sletter"
                               >
+                                  <p className="text-sm text-foreground-muted">
+                                      Alle kurs, påmeldinger og meldinger slettes permanent. Dette kan ikke angres.
+                                  </p>
                                   <div className="grid gap-2">
-                                      <label htmlFor="delete-confirm" className="text-sm font-medium text-foreground">
-                                          Skriv SLETT for å bekrefte
+                                      <label htmlFor="delete-confirm" className="text-sm text-foreground-muted">
+                                          Skriv <span className="font-medium text-foreground">SLETT</span> for å bekrefte
                                       </label>
                                       <Input
                                           id="delete-confirm"
                                           value={deleteConfirmText}
                                           onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                          placeholder="SLETT"
                                           autoComplete="off"
                                       />
                                   </div>

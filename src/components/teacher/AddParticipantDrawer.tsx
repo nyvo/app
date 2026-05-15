@@ -138,7 +138,7 @@ export function AddParticipantDrawer({
 
     // Validate organizationId is present
     if (!organizationId) {
-      setSubmitError('Noe gikk galt. Last siden på nytt.');
+      setSubmitError('Noe gikk galt. Last inn siden på nytt.');
       return;
     }
 
@@ -149,7 +149,7 @@ export function AddParticipantDrawer({
       // Re-check capacity to handle race condition
       const { available } = await checkCourseAvailability(courseId);
       if (available <= 0) {
-        setSubmitError('Kurset er fullt. Kan ikke legge til flere deltakere.');
+        setSubmitError('Kurset er fullt.');
         setIsSubmitting(false);
         return;
       }

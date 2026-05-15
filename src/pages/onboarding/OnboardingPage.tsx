@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Building, Calendar, Check, ImageIcon, User } from '@/lib/icons'
+import { Building, Calendar, Check, ImageIcon, LogOut, User } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
@@ -39,7 +39,7 @@ function generateSlug(name: string): string {
 }
 
 export default function OnboardingPage() {
-  const { user, profile, isInitialized, isLoading } = useAuth()
+  const { user, profile, isInitialized, isLoading, signOut } = useAuth()
 
   // Auth gate. ProtectedRoute can't wrap this route because it lives outside
   // TeacherLayout; do the redirect inline.
@@ -61,6 +61,16 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col">
+      <header className="flex justify-end px-4 sm:px-6 pt-4">
+        <button
+          type="button"
+          onClick={() => { void signOut() }}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground-muted hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+        >
+          <LogOut className="size-3.5" strokeWidth={1.75} />
+          Logg ut
+        </button>
+      </header>
       {profile.role === null ? (
         <RoleChooser />
       ) : profile.role === 'buyer' ? (
@@ -95,20 +105,20 @@ function RoleChooser() {
   }
 
   return (
-    <div className="flex-1 flex items-start justify-center px-4 sm:px-6 py-12">
-      <form onSubmit={handleSubmit} className="w-full max-w-md">
+    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
+      <form onSubmit={handleSubmit} className="w-full max-w-2xl">
         <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
           Hva vil du gjøre?
         </h1>
 
-        <fieldset className="space-y-3">
+        <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <legend className="sr-only">Velg rolle</legend>
           {([
             {
               value: 'buyer' as const,
               icon: Calendar,
               title: 'Booke klasser',
-              body: 'Finn og book yoga, pilates eller andre klasser hos studios i nærheten.',
+              body: 'Finn og book yoga, pilates eller andre klasser hos studioer i nærheten.',
             },
             {
               value: 'seller' as const,
@@ -207,7 +217,7 @@ function BuyerSetup() {
   }
 
   return (
-    <div className="flex-1 flex items-start justify-center px-4 sm:px-6 py-12">
+    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
           Litt om deg
@@ -289,13 +299,13 @@ function SellerType({
   onContinue: () => void
 }) {
   return (
-    <div className="flex-1 flex items-start justify-center px-4 sm:px-6 py-12">
-      <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-md">
+    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
+      <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-2xl">
         <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
           Hvem er du?
         </h1>
 
-        <fieldset className="space-y-3">
+        <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <legend className="sr-only">Type virksomhet</legend>
           {([
             {
@@ -441,7 +451,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
   }
 
   return (
-    <div className="flex-1 flex items-start justify-center px-4 sm:px-6 py-12">
+    <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
         <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
           {kind === 'studio' ? 'Sett opp studioet' : 'Sett opp profilen'}
@@ -501,7 +511,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
               )}
             >
               <span className="px-3 flex items-center text-sm text-foreground-muted bg-muted border-r border-border select-none">
-                studio.no/
+                openspot.no/
               </span>
               <input
                 id="seller-slug"

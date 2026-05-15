@@ -12,6 +12,7 @@ import TeacherLayout from './layouts/TeacherLayout';
 
 // Lazy load all route components for code splitting
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
+const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
@@ -39,6 +40,10 @@ const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
 const CreateCoursePreview = lazy(() => import('./pages/dev/CreateCoursePreview'));
 const CoursesGridPreview = lazy(() => import('./pages/dev/CoursesGridPreview'));
 const MonthGridPreview = lazy(() => import('./pages/dev/MonthGridPreview'));
+const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
+const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
+const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
+const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 
 type RouterState = { backgroundLocation?: Location } | null;
 
@@ -91,6 +96,7 @@ function AppRoutes() {
             so the sidebar + topbar persist. */}
         <Route element={<TeacherLayout />}>
           <Route path="overview" element={<TeacherDashboard />} />
+          <Route path="get-started" element={<GetStartedPage />} />
           <Route path="schedule" element={<SchedulePage />} />
           <Route path="courses" element={<CoursesPage />} />
           <Route path="courses/:id" element={<CoursePage />} />
@@ -105,6 +111,10 @@ function AppRoutes() {
         <Route path="/dev/create-course-preview" element={<CreateCoursePreview />} />
         <Route path="/dev/courses-grid-preview" element={<CoursesGridPreview />} />
         <Route path="/dev/month-grid-preview" element={<MonthGridPreview />} />
+        <Route path="/dev/payout-preview" element={<PayoutPreview />} />
+        <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
+        <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
+        <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and
