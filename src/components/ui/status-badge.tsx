@@ -27,7 +27,9 @@ interface StatusBadgeProps {
 
 /**
  * StatusBadge — for course and generic signup status in tables / list rows.
- * Uses rect shape (slightly rounded) because it lives in data-dense surfaces.
+ * Pill shape system-wide; size + color do the work of distinguishing status
+ * badges from decorative meta. Modern dashboards (Stripe, Linear, Shopify,
+ * GitHub) all converged on pill for status — Studio follows.
  * For combined signup+payment state, use SignupStatusBadge. For payment state alone, use PaymentBadge.
  */
 export function StatusBadge({ status, size = 'sm', customLabel, className }: StatusBadgeProps) {
@@ -35,7 +37,7 @@ export function StatusBadge({ status, size = 'sm', customLabel, className }: Sta
   return (
     <Badge
       variant={variant}
-      shape="rect"
+      shape="pill"
       size={size}
       className={className}
       role="status"

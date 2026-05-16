@@ -19,8 +19,8 @@ export const AUTH_ERRORS = {
   invalidCredentials: 'E-post eller passord stemmer ikke',
   emailAlreadyRegistered: 'E-posten er allerede registrert',
   generic: 'Noe gikk galt. Prøv igjen.',
-  passwordNotUpdated: 'Passordet ble ikke oppdatert. Prøv igjen.',
-  accountNotCreated: 'Kontoen ble ikke opprettet. Prøv igjen.',
+  passwordNotUpdated: 'Vi kunne ikke oppdatere passordet. Prøv igjen.',
+  accountNotCreated: 'Vi kunne ikke opprette kontoen. Prøv igjen.',
   resendFailed: 'Kunne ikke sende e-post. Prøv igjen.',
   rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
 } as const

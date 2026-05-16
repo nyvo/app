@@ -44,6 +44,7 @@ const PayoutPreview = lazy(() => import('./pages/dev/PayoutPreview'));
 const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
+const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
 
 type RouterState = { backgroundLocation?: Location } | null;
 
@@ -115,6 +116,7 @@ function AppRoutes() {
         <Route path="/dev/income-chart-preview" element={<IncomeChartPreview />} />
         <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
         <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
+        <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and

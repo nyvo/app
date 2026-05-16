@@ -78,8 +78,8 @@ export function CourseHero({ course }: CourseHeroProps) {
 
   return (
     <header className="mx-auto max-w-6xl px-4 sm:px-8 pt-6 sm:pt-10">
-      {/* Image — rounded-lg, 16:10 (cards are surfaces, not overlays) */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-muted">
+      {/* Image — rounded-xl, 16:10 (surface radius per Studio tokens.md) */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-muted">
         {img ? (
           <img
             src={img}

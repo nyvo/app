@@ -1,9 +1,21 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { Badge, type badgeVariants } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
+import type { VariantProps } from 'class-variance-authority';
+
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
+type BadgeTone = 'full' | 'urgent' | 'lively' | 'soft';
+
+const TONE_TO_VARIANT: Record<BadgeTone, BadgeVariant> = {
+  full: 'inverted',
+  urgent: 'warning',
+  lively: 'destructive',
+  soft: 'neutral',
+};
 
 function placeholderLabel(format: CourseFormat, delivery: DeliveryMode): string {
   if (delivery === 'online') return 'Online';
@@ -109,11 +121,11 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
   return (
     <article
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-lg bg-surface outline-none',
-        'transition-transform duration-300',
-        'hover:-translate-y-0.5',
+        'group relative flex flex-col overflow-hidden rounded-xl bg-surface outline-none',
+        'ring-1 ring-border/0 transition-shadow duration-150',
+        'hover:ring-border',
         'focus-within:ring-2 focus-within:ring-ring',
-        isDisabled && 'bg-muted hover:translate-y-0',
+        isDisabled && 'bg-muted hover:ring-border/0',
         className,
       )}
     >
@@ -146,18 +158,14 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
         {imageBadges.length > 0 && (
           <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
             {imageBadges.map(b => (
-              <span
+              <Badge
                 key={b.label}
-                className={cn(
-                  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-relaxed',
-                  b.tone === 'full' && 'bg-foreground text-background backdrop-blur-md',
-                  b.tone === 'urgent' && 'bg-warning text-warning-foreground',
-                  b.tone === 'lively' && 'bg-danger text-danger-foreground',
-                  b.tone === 'soft' && 'bg-foreground-muted text-background',
-                )}
+                variant={TONE_TO_VARIANT[b.tone as BadgeTone]}
+                size="sm"
+                className={b.tone === 'full' ? 'backdrop-blur-md' : undefined}
               >
                 {b.label}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
@@ -186,7 +194,7 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
           <Link
             to={href}
             state={linkState}
-            className="outline-none focus-visible:underline underline-offset-2"
+            className="no-underline outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
           >
             {course.title}
           </Link>

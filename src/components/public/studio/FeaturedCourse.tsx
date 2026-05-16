@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ImageIcon, MapPin, User, Clock, Star } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -59,7 +60,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
       to={`/${studioSlug}/${course.slug}`}
       state={{ backgroundLocation: location }}
       className={cn(
-        'group relative grid overflow-hidden rounded-lg bg-surface outline-none',
+        'group relative grid overflow-hidden rounded-xl bg-surface outline-none',
         'ring-1 ring-border transition-all duration-300',
         'hover:ring-foreground',
         'focus-visible:ring-2 focus-visible:ring-ring',
@@ -67,10 +68,10 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
       )}
     >
       {/* Featured badge — inverted pill for "earned" emphasis, sentence case */}
-      <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-2.5 py-0.5 text-xs font-medium">
+      <Badge variant="inverted" size="sm" className="absolute top-4 left-4 z-10">
         <Star className="size-3" fill="currentColor" strokeWidth={0} />
         Fremhevet kurs
-      </span>
+      </Badge>
 
       {/* Image */}
       <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[440px] overflow-hidden bg-muted">

@@ -1,7 +1,8 @@
 import { useId, type ReactElement } from 'react'
-import { Area, AreaChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts'
 import { ChartContainer } from '@/components/ui/chart'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import { cn, formatKroner } from '@/lib/utils'
 import type { IncomePoint, IncomeRange, IncomeSeries } from '@/services/income'
 
@@ -99,8 +100,8 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
   const previousTotal = series?.previousTotal ?? 0
   const hasDelta = !isLoading && previousTotal > 0 && series !== null
   const delta = hasDelta ? ((total - previousTotal) / previousTotal) * 100 : 0
-  const deltaTone =
-    delta > 0 ? 'text-success' : delta < 0 ? 'text-destructive' : 'text-foreground-muted'
+  const deltaVariant: 'success' | 'warning' | 'neutral' =
+    delta > 0 ? 'success' : delta < 0 ? 'warning' : 'neutral'
 
   const points: IncomePoint[] = series?.points ?? buildPlaceholderPoints(range)
   const hasIncome = points.some((p) => p.amount > 0)
@@ -119,9 +120,9 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
               </span>
             )}
             {hasDelta && (
-              <span className={cn('text-sm font-medium tabular-nums', deltaTone)}>
+              <Badge variant={deltaVariant} size="sm" className="tabular-nums">
                 {formatPercent(delta)}
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -143,6 +144,12 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
                 <stop offset="100%" stopColor={FILL} stopOpacity={0} />
               </linearGradient>
             </defs>
+            <CartesianGrid
+              vertical={false}
+              stroke="var(--color-border)"
+              strokeDasharray="3 5"
+              strokeOpacity={0.55}
+            />
             <XAxis
               dataKey="key"
               axisLine={false}
@@ -234,7 +241,7 @@ function IncomeTooltip({
   if (!point) return null
   return (
     <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-xs shadow-xl">
-      <div className="text-foreground-muted">Inntekt</div>
+      <div className="text-foreground-muted">Sum hittil</div>
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-1.5">
           <span className="size-2 rounded-full" style={{ backgroundColor: STROKE }} />

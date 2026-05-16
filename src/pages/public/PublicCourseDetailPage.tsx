@@ -148,7 +148,7 @@ export default function PublicCourseDetailPage() {
                         <h2 className="text-xl font-semibold text-foreground mb-3.5">
                           Om kurset
                         </h2>
-                        <p className="text-[17px] leading-[1.6] text-foreground whitespace-pre-wrap">
+                        <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
                           {course.description}
                         </p>
                       </section>
@@ -159,29 +159,30 @@ export default function PublicCourseDetailPage() {
                       <BookingPanel course={course} studioSlug={slug || ''} />
                     </div>
 
-                    {course.location && (
-                      <section>
-                        <LocationCard location={course.location} />
-                      </section>
-                    )}
-
-                    {/* Dates accordion — collapsed by default, near the bottom */}
+                    {/* Dates — "when" matters more than "where" for the
+                        booking decision, so sessions sit above location. */}
                     {showDatesAccordion && (
-                      <Accordion type="single" collapsible className="rounded-lg border border-border bg-surface">
+                      <Accordion type="single" collapsible className="rounded-xl border border-border bg-surface">
                         <AccordionItem value="dates" className="not-last:border-b-0">
-                          <AccordionTrigger className="px-[18px] py-3.5 text-[15px] font-medium items-center hover:no-underline">
+                          <AccordionTrigger className="px-4 py-3.5 text-base font-medium items-center hover:no-underline">
                             <div className="flex flex-1 items-center justify-between mr-3">
                               <span className="text-foreground">Alle datoer</span>
-                              <span className="text-[13px] font-medium text-foreground-muted tabular-nums">
+                              <span className="text-sm font-medium text-foreground-muted tabular-nums">
                                 {sessions.length} {sessions.length === 1 ? 'gang' : 'ganger'}
                               </span>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent className="px-[18px] pb-[18px]">
+                          <AccordionContent className="px-4 pb-4">
                             <CourseSessions sessions={sessions} />
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
+                    )}
+
+                    {course.location && (
+                      <section>
+                        <LocationCard location={course.location} />
+                      </section>
                     )}
 
                     {/* Cross-sell shelf — only renders when there are other courses */}

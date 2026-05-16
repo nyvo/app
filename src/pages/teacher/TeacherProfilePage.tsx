@@ -64,7 +64,7 @@ const TeacherProfilePage = () => {
       newErrors.email = 'Skriv inn e-postadresse';
       isValid = false;
     } else if (!isValidEmail(email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
+      newErrors.email = 'Skriv en gyldig e-postadresse';
       isValid = false;
     }
 
@@ -93,7 +93,7 @@ const TeacherProfilePage = () => {
       if (!email.trim()) {
         newErrors.email = 'Skriv inn e-postadresse';
       } else if (!isValidEmail(email)) {
-        newErrors.email = 'Ugyldig e-postadresse';
+        newErrors.email = 'Skriv en gyldig e-postadresse';
       } else {
         delete newErrors.email;
       }

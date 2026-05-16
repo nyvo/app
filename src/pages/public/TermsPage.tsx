@@ -66,7 +66,7 @@ const TermsPage = () => {
               </section>
 
               <section className="space-y-4">
-                <h2 className="text-base font-semibold text-foreground">4. Personvern</h2>
+                <h2 id="personvern" className="scroll-mt-24 text-base font-semibold text-foreground">4. Personvern</h2>
                 <p className="text-base text-foreground-muted leading-relaxed">
                   Vi behandler personopplysningene dine etter gjeldende personvernlovgivning.
                   Opplysninger brukes kun til administrasjon av kurspåmelding og kommunikasjon relatert til kurset.

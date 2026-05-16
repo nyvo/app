@@ -44,7 +44,7 @@ export function PaymentBadge({
   return (
     <Badge
       variant={variant}
-      shape="rect"
+      shape="pill"
       size={size}
       className={className}
       role="status"

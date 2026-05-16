@@ -113,9 +113,9 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     base('yin', 'Yin & Meditasjon', weekly(4, 8), { time_schedule: '19:30-20:45' }),
     base('lunch', 'Lunsj-yoga — Open Flow', weekly(1, 8), { time_schedule: '12:00-13:00' }),
     base('nidra', 'Yoga Nidra & Avspenning', weekly(2, 6), { time_schedule: '17:30-18:30' }),
-    base('online', 'Kveldsmeditasjon Online', weekly(3, 8), { time_schedule: '20:00-20:30', delivery_mode: 'online' }),
-    base('fullmoon', 'Full Moon Workshop', single(3), { format: 'single', time_schedule: '19:00-21:00' }),
-    base('trial', 'Gratis Prøvetime', single(4), { format: 'single', price: 0, time_schedule: '10:00-11:00' }),
+    base('online', 'Kveldsmeditasjon online', weekly(3, 8), { time_schedule: '20:00-20:30', delivery_mode: 'online' }),
+    base('fullmoon', 'Fullmåne-workshop', single(3), { format: 'single', time_schedule: '19:00-21:00' }),
+    base('trial', 'Gratis prøvetime', single(4), { format: 'single', price: 0, time_schedule: '10:00-11:00' }),
   ];
 }
 

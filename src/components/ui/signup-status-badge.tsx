@@ -30,7 +30,7 @@ export function SignupStatusBadge({ status, paymentStatus, size = 'sm', classNam
   return (
     <Badge
       variant={variant}
-      shape="rect"
+      shape="pill"
       size={size}
       className={className}
       role="status"

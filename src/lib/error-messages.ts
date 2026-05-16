@@ -52,7 +52,7 @@ const MESSAGE_PATTERNS: [RegExp, string][] = [
   [/processing_error/i,
     'Betalingen kunne ikke behandles. Prøv igjen.'],
   [/payment_intent_authentication_failure|authentication_required/i,
-    'Betalingsgodkjenning mislyktes. Prøv igjen.'],
+    'Vi kunne ikke godkjenne betalingen. Prøv igjen.'],
   [/payment_method_not_available/i,
     'Betalingsmetoden er ikke tilgjengelig. Prøv en annen.'],
 ]

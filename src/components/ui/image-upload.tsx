@@ -194,7 +194,7 @@ export function ImageUpload({
           <ImagePlus className="size-5 text-foreground-muted" aria-hidden="true" />
           <p className="text-sm text-center">
             <span className="font-medium text-foreground">
-              {dragActive ? 'Slipp for å laste opp' : 'Klikk for å laste opp'}
+              {dragActive ? 'Slipp for å laste opp' : 'Last opp bilde'}
             </span>
             {!dragActive && <span className="text-foreground-muted"> eller dra og slipp</span>}
           </p>

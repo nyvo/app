@@ -189,7 +189,20 @@
       "WebFetch(domain:help.calendly.com)",
       "WebFetch(domain:www.pencilandpaper.io)",
       "WebFetch(domain:on.substack.com)",
-      "WebFetch(domain:vercel.com)"
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:www.fiken.no)",
+      "WebFetch(domain:css-tricks.com)",
+      "WebFetch(domain:tibber.com)",
+      "WebFetch(domain:ui.aceternity.com)",
+      "WebFetch(domain:www.fffuel.co)",
+      "WebFetch(domain:resend.com)",
+      "WebFetch(domain:attio.com)",
+      "WebFetch(domain:posthog.com)",
+      "WebFetch(domain:dintero.com)",
+      "WebFetch(domain:landdding.com)",
+      "WebFetch(domain:framiq.app)",
+      "WebFetch(domain:fresha.com)",
+      "WebFetch(domain:punchpass.com)"
     ],
     "deny": [],
     "ask": []

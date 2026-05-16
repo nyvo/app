@@ -85,7 +85,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
   const total = calculateTotalPrice(price);
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6">
+    <div className="rounded-xl border border-border bg-surface p-6">
       {/* Customer row — inline "Endre" replaces the detached "Tilbake" link */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

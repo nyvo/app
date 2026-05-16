@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
-import { PublicFooter } from '@/components/public/marketing/PublicFooter';
 import { Mail } from '@/lib/icons';
 import { StudioHero, type StudioTab } from '@/components/public/studio/StudioHero';
 import { StudioMonthSchedule } from '@/components/public/studio/StudioMonthSchedule';
@@ -129,7 +128,7 @@ const PublicCoursesPage = () => {
               ) : (
                 <div className="pt-10 pb-20 max-w-2xl">
                   <h2 className="text-xl font-semibold text-foreground">Om studioet</h2>
-                  <dl className="mt-6 space-y-5">
+                  <dl className="mt-6 space-y-6">
                     {organization.email && (
                       <div>
                         <dt className="text-xs font-medium text-foreground-muted">
@@ -153,8 +152,6 @@ const PublicCoursesPage = () => {
           </>
         )}
       </main>
-
-      <PublicFooter studioName={organization?.name} maxWidthClassName="max-w-5xl" />
     </div>
   );
 };

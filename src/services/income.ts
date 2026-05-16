@@ -62,6 +62,7 @@ function monthKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+
 interface BucketScaffold {
   point: IncomePoint
   /** Bucket key for the same offset one period earlier. */
@@ -194,8 +195,25 @@ export async function fetchIncomeSeries(
     }
   }
 
+  // Convert per-bucket amounts into a cumulative running total. Revenue is
+  // a stock-like figure on a hero card — the user's question is "where am I
+  // for this period?" not "what days did I sell?". Cumulative climbs to the
+  // period total at the right edge, plateaus on zero-income days (honest),
+  // and never produces the stalagmite-spike pattern of sparse daily data.
+  // Period-over-period comparison lives on the % delta badge, not in
+  // chart dips. Stripe's "Gross volume" uses the same pattern.
+  const points = scaffold.map((s) => s.point)
+  let runningCurrent = 0
+  let runningPrevious = 0
+  for (const point of points) {
+    runningCurrent += point.amount
+    point.amount = runningCurrent
+    runningPrevious += point.previousAmount
+    point.previousAmount = runningPrevious
+  }
+
   return {
-    data: { range, points: scaffold.map((s) => s.point), total, previousTotal },
+    data: { range, points, total, previousTotal },
     error: null,
   }
 }

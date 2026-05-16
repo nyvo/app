@@ -8,7 +8,6 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
-import { Button } from '@/components/ui/button';
 import { DateBadge } from '@/components/ui/date-badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -257,11 +256,6 @@ function UpcomingCoursesSection({
               variant="compact"
               title="Ingen kommende kurs"
               description="Opprett et kurs for å fylle timeplanen."
-              action={
-                <Button asChild size="sm" variant="outline">
-                  <Link to={routes.coursesNew}>Opprett kurs</Link>
-                </Button>
-              }
             />
           </div>
         ) : (
@@ -329,7 +323,7 @@ function RecentSignupsSection({
             <EmptyState
               variant="compact"
               title="Ingen påmeldinger ennå"
-              description="Nye påmeldinger vises her etter hvert som folk melder seg på."
+              description="Nye påmeldinger vises her."
             />
           </div>
         ) : (
@@ -356,7 +350,7 @@ function SignupRow({ signup }: { signup: SignupWithDetails }) {
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{name}</p>
         <p className="truncate text-sm text-foreground-muted">
-          {courseTitle ? `Meldte seg på ${courseTitle}` : 'Ny påmelding'}
+          {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
       <span className="shrink-0 text-xs tabular-nums text-foreground-muted">{when}</span>

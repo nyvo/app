@@ -1603,22 +1603,22 @@ Single primitive with three dimensions: `variant`, `shape`, `size`.
 
 ```html
 <!-- Success -->
-<span class="px-2 py-0.5 bg-success-subtle text-success text-xs font-medium rounded-md">
+<span class="px-2 py-0.5 bg-success-subtle text-success text-xs font-medium rounded-full">
   Betalt
 </span>
 
 <!-- Warning -->
-<span class="px-2 py-0.5 bg-warning-subtle text-warning text-xs font-medium rounded-md">
+<span class="px-2 py-0.5 bg-warning-subtle text-warning text-xs font-medium rounded-full">
   Venter
 </span>
 
 <!-- Destructive -->
-<span class="px-2 py-0.5 bg-danger-subtle text-danger text-xs font-medium rounded-md">
+<span class="px-2 py-0.5 bg-danger-subtle text-danger text-xs font-medium rounded-full">
   Avbrutt
 </span>
 ```
 
-**Shape rule:** decorative meta uses `pill` (`rounded-full`); status in tables/rows uses `rect` (`rounded-md`). Don't mix.
+**Shape rule:** **all badges are pill (`rounded-full`)** — status, decorative meta, counts, chips. Size and color carry the distinction, not shape. The `rect` variant exists on `<Badge>` for legacy edge cases but should not be used for new work; pill is the canonical Studio badge shape, matching Stripe / Linear / Shopify / GitHub / Notion conventions in 2025.
 
 **Silence-on-success rule:** in dense admin lists, render NOTHING for the happy-path state. Only show a status badge when there's a problem to flag.
 

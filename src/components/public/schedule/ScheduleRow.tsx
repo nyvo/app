@@ -75,10 +75,10 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
             {course.title}
           </span>
           {isCancelled && (
-            <Badge variant="warning" shape="rect" size="sm">Avlyst</Badge>
+            <Badge variant="warning" size="sm">Avlyst</Badge>
           )}
           {seriesBadge && !isCancelled && (
-            <Badge variant="neutral" shape="rect" size="sm">{seriesBadge}</Badge>
+            <Badge variant="neutral" size="sm">{seriesBadge}</Badge>
           )}
         </div>
 
@@ -105,7 +105,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
         </span>
         {spots && (
           <span className={cn(
-            'text-xs font-medium tracking-wide whitespace-nowrap',
+            'text-xs font-medium whitespace-nowrap',
             isFull ? 'text-foreground-muted' : 'text-warning',
           )}>
             {spots}

@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -157,9 +158,9 @@ export const SessionList: React.FC<SessionListProps> = ({
                       {weekday}
                     </span>
                     {!isPast && session.isNext && (
-                      <span className="inline-flex h-5 items-center rounded-full bg-foreground px-2 text-xs font-medium text-background shrink-0">
+                      <Badge variant="inverted" size="sm" className="shrink-0">
                         Neste
-                      </span>
+                      </Badge>
                     )}
                   </div>
 

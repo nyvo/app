@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
+import { Badge } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -191,7 +192,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
   return (
     <section className="space-y-6">
       <header>
-        <h2 className="text-xl font-semibold text-foreground">{monthLabel}</h2>
+        <h2 className="text-xl font-semibold capitalize text-foreground">{monthLabel}</h2>
       </header>
 
       <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
@@ -222,7 +223,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                 onClick={() => handleDayClick(key)}
                 aria-pressed={isSelected}
                 className={cn(
-                  'shrink-0 w-[112px] rounded-lg border border-border px-4 py-3 text-left transition-colors',
+                  'shrink-0 w-28 rounded-lg border border-border px-4 py-3 text-left transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40',
                   isSelected
                     ? 'bg-muted'
@@ -231,8 +232,13 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                       : 'bg-surface hover:bg-muted/40',
                 )}
               >
-                <div className="text-xs font-medium text-foreground-muted capitalize">
-                  {isToday ? 'i dag' : weekday}
+                <div
+                  className={cn(
+                    'text-xs font-medium text-foreground-muted',
+                    !isToday && 'capitalize',
+                  )}
+                >
+                  {isToday ? 'I dag' : weekday}
                 </div>
                 <div
                   className={cn(
@@ -284,7 +290,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                 to={`/${studioSlug}/${course.slug}`}
                 state={{ backgroundLocation: location }}
                 className={cn(
-                  'block rounded-lg border border-border bg-surface p-5 transition-colors',
+                  'block rounded-xl border border-border bg-surface p-6 transition-colors',
                   'hover:bg-muted/60',
                   (isFull || isCancelled) && 'text-foreground-muted',
                 )}
@@ -315,7 +321,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                   ) : course.location ? (
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="size-3.5" strokeWidth={1.75} />
-                      <span className="truncate max-w-[200px]">{course.location}</span>
+                      <span className="truncate max-w-xs">{course.location}</span>
                     </span>
                   ) : null}
                   {course.max_participants !== null && (
@@ -331,9 +337,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                     </span>
                   )}
                   {isCancelled && (
-                    <span className="text-xs font-medium text-foreground-muted border border-border rounded px-1.5 py-0.5">
-                      Avlyst
-                    </span>
+                    <Badge variant="outline" size="sm">Avlyst</Badge>
                   )}
                 </div>
               </Link>

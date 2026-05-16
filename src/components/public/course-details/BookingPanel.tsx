@@ -334,7 +334,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
 
   // Shared chrome — single hairline border, no shadow, overflow-hidden so
   // the rounded corners clip the bottom disclosure cleanly.
-  const panelClass = 'rounded-lg border border-border bg-surface p-6 overflow-hidden';
+  const panelClass = 'rounded-xl border border-border bg-surface p-6 overflow-hidden';
 
   // Reused header — meta line above title (12px tabular muted), then 16px
   // semibold title. Spots badge floats top-right.
@@ -582,7 +582,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
     </form>
     {lockBooking && (
       <div
-        className="absolute inset-0 flex items-center justify-center rounded-lg bg-surface-elevated"
+        className="absolute inset-0 flex items-center justify-center rounded-xl bg-surface-elevated"
         aria-live="polite"
       >
         <div className="rounded-full border border-border bg-background px-4 py-2.5 shadow-sm">

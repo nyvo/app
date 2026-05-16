@@ -418,18 +418,8 @@ const CoursePage = () => {
         transition={pageTransition}
         className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pb-24 md:pb-12"
       >
-        {/* Page header — back link above the title, status inline (baseline-aligned) */}
+        {/* Page header — title + inline status (baseline-aligned). */}
         <header className="pt-6 lg:pt-12 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className="-ml-2 mb-2 text-foreground-muted hover:text-foreground"
-          >
-            <Link to={routes.courses}>
-              Tilbake til kurs
-            </Link>
-          </Button>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-baseline gap-3 flex-wrap">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">

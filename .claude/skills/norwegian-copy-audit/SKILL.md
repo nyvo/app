@@ -223,6 +223,35 @@ When you see these patterns, the copy was probably translated from English (by a
 | Sentences starting with "I tillegg" / "Videre" / "Dessuten" stacked | English connector overuse | Norwegian prefers shorter sentences with fewer connectors |
 | Misplaced "ikke" in subordinate clauses ("…fordi jeg kan ikke se det") | Word-order error common in LLM output | "…fordi jeg ikke kan se det" |
 
+### 15. SaaS cringe — empty pep, overpromise, marketing clichés
+
+Translation correctness isn't enough. Copy can be grammatically perfect Norwegian and still read as embarrassing marketing-template fluff. These patterns make native readers cringe. Treat them as Minor unless they actively mislead, then Major.
+
+| Pattern | Why it cringes | Fix toward |
+|---|---|---|
+| **"fra første sekund" / "fra første dag" / "fra dag én"** | Hollow SaaS pep — nothing actually happens *at* that moment, the feature is just always-on | Drop entirely. `"Mobilvennlig fra første sekund"` → `"Mobilvennlig"` |
+| **"online" in product copy** ("Du er online på...", "Bli online") | Anglicism + slight overpromise vibe | `"i gang"`, `"klar"`, `"oppe"`. `"Du er online på fem minutter"` → `"Du er i gang på fem minutter"` |
+| **"med ett klikk" / "one-click X"** | Marketing cliché. Either trivially true (everything is "one click") or false | Be specific: `"Refusjon med ett klikk"` → `"Enkel refusjon"`. Drop the click-count claim. |
+| **"i sanntid"** | Tech buzzword used decoratively. Often inaccurate (most "real-time" is polled every 30s) | `"direkte"`, `"med en gang"`, `"løpende"`. Drop if the feature is just "fast enough". |
+| **"rett ut av boksen" / "out of the box"** | Direct English calque. Reads as translated SaaS-template | Drop or rephrase: `"klart med en gang"`, `"uten oppsett"`, or just remove. |
+| **Overpromise speed claims** ("X på 30 sekunder", "Sett opp på 2 minutter") | If false, breaks trust on first try. If true, sounds like every other SaaS | Drop the number, or be specific about what's instant: `"Du er i gang på minutter"` is softer than `"...på 2 minutter"`. |
+| **"Frigjør tiden din" / "Ta kontrollen tilbake" / "Få tiden tilbake"** | Direct calques of English marketing tropes ("Free up your time", "Take back control") | Be concrete about what you save. `"Slipp manuelle påminnelser"`, `"Aldri tast inn et beløp igjen"` |
+| **"Den smarte måten å X på"** | Calque of "The smart way to X". Empty boast | Just say what it does: `"Den smarte måten å fakturere på"` → `"Faktura med to klikk"` |
+| **"Designet for å..."** ("Designet for å hjelpe deg...") | "Designed to..." translation. Distancing — describes intent, not action | State what it does: `"Designet for å forenkle..."` → `"Forenkler..."` |
+| **"Drøm stort" / "Bygg større" / "Skap framtiden"** | Aspirational fluff that signals nothing | Cut. Show product, not slogans. |
+| **"Vi er stolte av å presentere..."** | Corporate-fluff opener | Open with the news: `"Vi er stolte av å presentere Openspot Pro"` → `"Openspot Pro er her."` |
+| **"Forbedre din opplevelse"** | "Improve your experience" — empty | Name the specific improvement. |
+| **"For deg som vil noe mer"** / **"For deg som tar X på alvor"** | Targeting via flattery. Reads as marketing-coach-spek | Describe the user concretely: `"For studioer i full drift"` (concrete tier-up signal) beats `"For deg som mener alvor"`. |
+| **Empty superlatives** ("Best", "Markedsledende", "Ledende") | Unverifiable claim — every SaaS says it | Cut. Replace with specifics: `"Brukt av 200+ studioer"` if true, otherwise nothing. |
+| **"Trygt og enkelt"** as a phrase | Twin-adjective filler. Two empty words pretending to be detail | Pick one and be concrete: `"Vipps-betaling, kryptert ende-til-ende"` |
+| **"Alt du trenger" + nothing else** | Standalone, it's empty. Works only when followed by a concrete list | `"Alt du trenger for å komme i gang"` is fine; `"Alt du trenger."` alone is filler. |
+| **Question-mark headlines that aren't really questions** ("Klar?", "Trenger du hjelp?", "Vil du vite mer?") | Sometimes punchy, sometimes flippant. Judge by audience: B2B SMB/consumer is fine, enterprise reads as flippant | Keep for casual/consumer surfaces; replace with declarative for formal B2B. Alternatives to `"Klar?"`: `"Kom i gang."`, `"La oss starte."`, `"Sett opp studioet."`, `"Klar når du er."` |
+| **Stacked exclamation marks / emoji decoration** in product copy | Norwegian SaaS is calmer than US SaaS. Exclamation marks read as desperate | One ! max per page. Zero is better. No emojis in product copy unless the brand voice explicitly calls for them. |
+
+**The cringe test, applied as a final pass:** read the copy out loud to a skeptical Norwegian friend. If they'd raise an eyebrow at any phrase, flag it. The bar isn't "is this technically correct Norwegian" — it's "would a native copywriter at Vipps or Fiken sign this off."
+
+**When in doubt, cut.** The most common cringe-fix is deletion. SaaS cringe almost always comes from over-explaining or over-promising. Norwegian voice prefers under-stating.
+
 ## Final pass — the 18-point checklist
 
 For every audited string, verify:
@@ -245,6 +274,7 @@ For every audited string, verify:
 16. No apostrophe-s genitives
 17. Postposed possessives in body copy, preposed sparingly
 18. Infinitive / definite-form register consistent across the product (conservative Bokmål unless brand says otherwise)
+19. No SaaS cringe (§15): no "fra første sekund/dag", no "med ett klikk", no "i sanntid" decorative, no "rett ut av boksen", no empty superlatives, no aspirational fluff. Apply the read-it-out-loud test.
 
 ## Output format
 

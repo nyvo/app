@@ -1,5 +1,5 @@
+import { Building } from '@/lib/icons';
 import { cn } from '@/lib/utils';
-import { getInitials } from '@/utils/stringUtils';
 import type { PublicSeller } from '@/services/sellers';
 
 export type StudioTab = 'kurs' | 'informasjon';
@@ -21,7 +21,6 @@ const TABS: { key: StudioTab; label: string }[] = [
  * the visitor sees — no Openspot chrome above it.
  */
 export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroProps) {
-  const initials = getInitials(organization.name);
   const coverUrl = organization.default_course_image_url;
 
   return (
@@ -42,7 +41,7 @@ export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroP
         )}
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="relative z-10 -mt-12 sm:-mt-14">
           {organization.logo_url ? (
             <div className="size-24 sm:size-28 rounded-full bg-background ring-4 ring-background overflow-hidden flex items-center justify-center shadow-sm">
@@ -56,12 +55,12 @@ export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroP
             <div
               className={cn(
                 'size-24 sm:size-28 rounded-full ring-4 ring-background shadow-sm',
-                'bg-foreground text-background',
-                'flex items-center justify-center text-2xl font-semibold tracking-tight',
+                'bg-muted text-foreground-muted',
+                'flex items-center justify-center',
               )}
               aria-label={organization.name}
             >
-              {initials}
+              <Building className="size-10 sm:size-12" strokeWidth={1.5} />
             </div>
           )}
         </div>
