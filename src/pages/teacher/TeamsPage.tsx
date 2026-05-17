@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ExternalLink } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -12,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { updateSeller } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/services/storage';
+import { friendlyError } from '@/lib/error-messages';
 import type { Seller, Team } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -23,7 +25,6 @@ import type { Seller, Team } from '@/types/database';
 
 const TeamsPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
-  const isBusiness = currentSeller?.seller_type === 'business';
 
   const publicUrl = currentTeam?.slug
     ? `${window.location.origin}/${currentTeam.slug}`
@@ -38,7 +39,7 @@ const TeamsPage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-4xl px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-12 pt-6 lg:pt-12 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">Studio</h1>
@@ -53,23 +54,15 @@ const TeamsPage = () => {
         </div>
 
         {currentTeam ? (
-          <div>
+          <div className="space-y-6">
             {/* Studiosiden — inline-editable storefront. Leads the page so the
                 user lands on their public-facing identity first. */}
-            <section
-              aria-labelledby="studiosiden-heading"
-              className="space-y-6"
-            >
-              <div>
-                <h2 id="studiosiden-heading" className="text-base font-medium tracking-tight text-foreground">
-                  Studiosiden
-                </h2>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  Slik ser kundene siden din.
-                </p>
-              </div>
-
-              <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Studiosiden</CardTitle>
+                <CardDescription>Slik ser kundene siden din.</CardDescription>
+              </CardHeader>
+              <CardContent>
                 {currentSeller && (
                   <StudioSidenForm
                     team={currentTeam}
@@ -77,36 +70,14 @@ const TeamsPage = () => {
                     onSaved={refreshSellers}
                   />
                 )}
-              </div>
-            </section>
+              </CardContent>
+            </Card>
 
             {/* Adresser — physical addresses, still customer-relevant. */}
-            <section
-              aria-labelledby="adresser-heading"
-              className="mt-10 pt-10 border-t border-border"
-            >
-              <LocationsSection />
-            </section>
+            <LocationsSection />
 
             {/* Team — members of the studio (business) or studio you belong to (individual). */}
-            <section
-              aria-labelledby="team-heading"
-              className="space-y-6 mt-10 pt-10 border-t border-border"
-            >
-              <div>
-                <h2 id="team-heading" className="text-base font-medium tracking-tight text-foreground">
-                  Team
-                </h2>
-                <p className="mt-1 text-sm text-foreground-muted">
-                  {isBusiness
-                    ? 'Inviter andre instruktører til å vise kursene sine på studiosiden din.'
-                    : 'Studioet du er medlem av. Alle kursene dine vises automatisk.'}
-                </p>
-              </div>
-              <div>
-                <AffiliationsSection />
-              </div>
-            </section>
+            <AffiliationsSection />
           </div>
         ) : (
           <p className="text-sm text-foreground-muted">
@@ -138,7 +109,7 @@ function StudioSidenForm({
       throw new Error('Ugyldig filtype. Bruk JPG, PNG eller WebP.');
     }
     if (file.size > MAX_IMAGE_SIZE) {
-      throw new Error('Bildet er for stort. Maks 5 MB');
+      throw new Error('Bildet er for stort. Maks 5 MB.');
     }
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const path = `sellers/${seller.id}/${Date.now()}.${ext}`;
@@ -162,8 +133,13 @@ function StudioSidenForm({
       if (error) throw error;
       await onSaved();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Kunne ikke laste opp bildet';
-      toast.error(msg);
+      // Local validation errors (file size / type) carry friendly Norwegian
+      // copy already; storage-layer errors go through friendlyError to avoid
+      // leaking raw Supabase strings.
+      const isLocalValidation =
+        err instanceof Error &&
+        (err.message.startsWith('Ugyldig filtype') || err.message.startsWith('Bildet er for stort'));
+      toast.error(isLocalValidation ? (err as Error).message : friendlyError(err, 'Kunne ikke laste opp bildet.'));
     } finally {
       setSavingPhoto(false);
     }

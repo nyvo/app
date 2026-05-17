@@ -453,18 +453,28 @@ The full label + input + helper + error structure. Studio commits to the shadcn 
 
 ### Error state — all four signals fire
 
-```html
-<div class="grid gap-2">
-  <label for="email" data-error="true"
-    class="text-sm font-medium text-foreground data-[error=true]:text-danger">
+```tsx
+import { FieldError } from '@/components/ui/field-error';
+
+<div className="grid gap-2">
+  <label
+    htmlFor="email"
+    data-error="true"
+    className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+  >
     E-postadresse
   </label>
-  <input id="email" type="email"
+  <input
+    id="email"
+    type="email"
     aria-invalid="true"
     aria-describedby="email-error"
-    class="h-9 w-full px-3 bg-surface border border-border rounded-md text-sm
-           aria-invalid:border-danger-fg aria-invalid:ring-2 aria-invalid:ring-danger-fg/20" />
-  <p id="email-error" class="text-sm text-danger">Skriv inn en gyldig e-postadresse.</p>
+    className="h-9 w-full px-3 bg-surface border border-border rounded-md text-sm
+               aria-invalid:border-danger-fg aria-invalid:ring-2 aria-invalid:ring-danger-fg/20"
+  />
+  <FieldError id="email-error" className="mt-0">
+    Skriv inn en gyldig e-postadresse.
+  </FieldError>
 </div>
 ```
 
@@ -472,9 +482,47 @@ The full label + input + helper + error structure. Studio commits to the shadcn 
 1. Label color → `text-danger`
 2. Input border → `border-danger-fg`
 3. Ring at 20% opacity → `ring-2 ring-danger-fg/20`
-4. Error text below in `text-danger`
+4. Error text below via `<FieldError>` — `text-xs font-medium text-danger` + `role="alert"`
 
 Driven by `aria-invalid="true"` + `data-error="true"` on the label. Both attributes set by the form library.
+
+### FieldError — the canonical primitive for inline validation errors
+
+`<FieldError>` lives at `@/components/ui/field-error` and is the single source of truth for inline form-field error text. Every form in the codebase uses it; do not hand-roll `<p className="text-danger">…</p>` inline.
+
+| Prop | Type | Purpose |
+|---|---|---|
+| `id` | `string?` | Stable id so the input can target it via `aria-describedby="<id>"` |
+| `children` | `ReactNode` | The error message — short, sentence case, no period unless multi-sentence |
+| `className` | `string?` | Margin override only. The default `mt-1.5` works for stacked layouts; use `mt-0` when the parent already provides gap (e.g. `grid gap-2`) |
+
+The component:
+- Always renders a `<p>` with `role="alert"` so screen readers announce on appearance
+- Default classes: `mt-1.5 text-xs font-medium text-danger`
+- No icon. The four-signal pattern (border / ring / label / text) is the visual signal; icons on field errors fragment the typographic surface
+
+```tsx
+// Stacked form (no parent gap) — default mt-1.5 is right:
+{errors.email && <FieldError id="email-error">{errors.email}</FieldError>}
+
+// Form with `grid gap-2` — override to mt-0 so the gap isn't doubled:
+{errors.email && (
+  <FieldError id="email-error" className="mt-0">{errors.email}</FieldError>
+)}
+```
+
+### When to use FieldError vs Alert
+
+Two different error scopes, two different primitives:
+
+| Scope | Primitive | Example |
+|---|---|---|
+| **Per-field validation** ("Fyll inn navn", "E-postadressen er ikke gyldig") | `<FieldError>` | Inline under the offending input |
+| **Form-level submission** ("Kunne ikke opprette kurset. Prøv igjen.") | `<Alert variant="error" size="sm">` | Below the last field, above the submit button |
+| **Section-level data load** ("Kunne ikke laste kursene") | `<ErrorState onRetry={...}>` | Replaces the card body or list |
+| **Transient post-action** ("Kunne ikke lagre — prøv igjen") | `toast.error()` | Bottom-center, auto-dismiss |
+
+The form-level `<Alert>` ships with its own icon (`AlertCircle`) — that's intentional for a multi-field summary. Field-level errors stay icon-free.
 
 ### Validation timing rule
 

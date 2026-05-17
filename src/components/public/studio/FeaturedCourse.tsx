@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ImageIcon, MapPin, User, Clock, Star } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
+import { htmlToPlainText } from '@/components/ui/rich-text-content';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface FeaturedCourseProps {
@@ -112,10 +113,11 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
             {course.title}
           </h3>
 
-          {/* Subtitle */}
+          {/* Subtitle — descriptions may now contain HTML from the editor,
+              but the teaser is line-clamped, so strip tags to plain text. */}
           {course.description && (
             <p className="text-base text-foreground-muted leading-relaxed line-clamp-3 max-w-prose">
-              {course.description}
+              {htmlToPlainText(course.description)}
             </p>
           )}
 

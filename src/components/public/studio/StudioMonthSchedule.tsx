@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -336,9 +336,7 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
                       )}
                     </span>
                   )}
-                  {isCancelled && (
-                    <Badge variant="outline" size="sm">Avlyst</Badge>
-                  )}
+                  {isCancelled && <StatusBadge status="cancelled" />}
                 </div>
               </Link>
             );

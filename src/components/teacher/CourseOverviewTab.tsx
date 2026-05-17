@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image } from '@/lib/icons';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
+import { RichTextContent } from '@/components/ui/rich-text-content';
 import { SessionList } from '@/components/teacher/SessionList';
 import { formatKroner } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -102,14 +103,16 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
 
             <div className="min-w-0 flex-1 space-y-4">
               {course.description && (
-                <p className="text-base text-foreground whitespace-pre-wrap">
-                  {course.description}
-                </p>
+                <RichTextContent
+                  html={course.description}
+                  className="text-base text-foreground"
+                />
               )}
               {course.description2 && (
-                <p className="text-sm text-foreground-muted whitespace-pre-wrap">
-                  {course.description2}
-                </p>
+                <RichTextContent
+                  html={course.description2}
+                  className="text-sm text-foreground-muted"
+                />
               )}
               {(course.level || course.courseType === 'kursrekke') && (
                 <div className="flex flex-wrap gap-2 pt-1">
@@ -123,7 +126,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               )}
               {!course.description && !course.description2 && (
                 <p className="text-sm text-foreground-muted italic">
-                  Ingen beskrivelse lagt til.
+                  Ingen beskrivelse enda.
                 </p>
               )}
             </div>

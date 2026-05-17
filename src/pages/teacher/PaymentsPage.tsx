@@ -12,6 +12,7 @@ import {
   checkDinteroSellerStatus,
   type DinteroOnboardingStatus,
 } from '@/services/dintero-seller';
+import { friendlyError } from '@/lib/error-messages';
 import { toast } from 'sonner';
 
 interface OnboardingFormState {
@@ -62,7 +63,7 @@ const PaymentsPage = () => {
       e.preventDefault();
       if (!currentSeller?.id) return;
       if (!form.organizationNumber.trim()) {
-        toast.error('Fyll ut organisasjonsnummeret');
+        toast.error('Skriv inn organisasjonsnummer');
         return;
       }
 
@@ -76,7 +77,7 @@ const PaymentsPage = () => {
       setSubmitting(false);
 
       if (error || !data) {
-        toast.error(error?.message || 'Kunne ikke starte oppsettet');
+        toast.error(friendlyError(error, 'Kunne ikke starte oppsettet.'));
         return;
       }
 

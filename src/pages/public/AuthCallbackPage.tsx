@@ -23,13 +23,12 @@ const AuthCallbackPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Parse `error_description` from the hash on mount — Supabase appends it
-  // when the magic-link token is expired or already redeemed.
+  // when the magic-link token is expired or already redeemed. The raw value
+  // is English-only, so we always render our own localized fallback.
   useEffect(() => {
     const hash = window.location.hash
     if (hash.includes('error_description=')) {
-      const params = new URLSearchParams(hash.replace(/^#/, ''))
-      const desc = params.get('error_description')
-      setErrorMessage(desc ? desc.replace(/\+/g, ' ') : 'Lenken er utløpt eller fungerer ikke.')
+      setErrorMessage('Lenken er utløpt eller fungerer ikke.')
       window.history.replaceState(null, '', window.location.pathname)
     }
   }, [])

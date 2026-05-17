@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { FieldError } from '@/components/ui/field-error'
 
 // No `Label` primitive in this codebase — using native `<label>` styled inline.
 function Label({ htmlFor, children, className }: { htmlFor?: string; children: React.ReactNode; className?: string }) {
@@ -264,7 +265,7 @@ export function TicketTypeForm({
                 onChange={e => update('label', e.target.value)}
                 aria-invalid={!!errors.label}
               />
-              {errors.label && <p className="text-xs font-medium text-danger">{errors.label}</p>}
+              {errors.label && <FieldError className="mt-0">{errors.label}</FieldError>}
             </div>
 
             <div className="space-y-2">
@@ -289,7 +290,7 @@ export function TicketTypeForm({
                   onChange={e => update('price', e.target.value)}
                   aria-invalid={!!errors.price}
                 />
-                {errors.price && <p className="text-xs font-medium text-danger">{errors.price}</p>}
+                {errors.price && <FieldError className="mt-0">{errors.price}</FieldError>}
               </div>
 
               <div className="space-y-2">
@@ -322,7 +323,7 @@ export function TicketTypeForm({
                   onChange={e => update('weeks', e.target.value)}
                   aria-invalid={!!errors.weeks}
                 />
-                {errors.weeks && <p className="text-xs font-medium text-danger">{errors.weeks}</p>}
+                {errors.weeks && <FieldError className="mt-0">{errors.weeks}</FieldError>}
               </div>
             )}
 
@@ -346,7 +347,7 @@ export function TicketTypeForm({
                   aria-invalid={!!errors.sales_ends_at}
                 />
                 {errors.sales_ends_at && (
-                  <p className="text-xs font-medium text-danger">{errors.sales_ends_at}</p>
+                  <FieldError className="mt-0">{errors.sales_ends_at}</FieldError>
                 )}
               </div>
             </div>
@@ -366,7 +367,7 @@ export function TicketTypeForm({
                 Tom = ubegrenset. Gjelder hele kurset, ikke per økt.
               </p>
               {errors.max_quantity && (
-                <p className="text-xs font-medium text-danger">{errors.max_quantity}</p>
+                <FieldError className="mt-0">{errors.max_quantity}</FieldError>
               )}
             </div>
 

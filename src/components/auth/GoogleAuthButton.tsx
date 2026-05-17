@@ -30,7 +30,7 @@ export function GoogleAuthButton({ redirectTo, label = 'Fortsett med Google' }: 
       const params = new URLSearchParams(hash.replace('#', ''))
       const errorDesc = params.get('error_description')
       if (errorDesc) {
-        toast.error('Innlogging feilet', {
+        toast.error('Innloggingen feilet', {
           description: errorDesc.replace(/\+/g, ' '),
         })
         // Clean up the hash

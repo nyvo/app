@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Badge, type badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
+import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
-import type { VariantProps } from 'class-variance-authority';
 
-type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
-type BadgeTone = 'full' | 'urgent' | 'lively' | 'soft';
-
-const TONE_TO_VARIANT: Record<BadgeTone, BadgeVariant> = {
-  full: 'inverted',
-  urgent: 'warning',
-  lively: 'destructive',
-  soft: 'neutral',
-};
+/**
+ * Image-overlay badges fall into two buckets:
+ *  - Status (`Avlyst`, `Fullt`) — defer to StatusBadge so the language is
+ *    consistent with the teacher list, drawers, and course pages.
+ *  - Decorative (`X igjen`, `Drop-in`) — derived counts / feature flags, not
+ *    a status. Stay as raw Badge with deliberate marketing tones (warning,
+ *    destructive) to catch the eye on a busy image.
+ */
+type DecorativeTone = 'urgent' | 'lively';
 
 function placeholderLabel(format: CourseFormat, delivery: DeliveryMode): string {
   if (delivery === 'online') return 'Online';
@@ -98,17 +98,20 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
     course.spots_available <= 3;
   const allowsDropIn = !!course.allows_drop_in;
 
-  // Cancelled/full take precedence and clear other badges.
-  // Otherwise low-spots and drop-in can coexist on the image.
-  const imageBadges: { label: string; tone: 'soft' | 'full' | 'urgent' | 'lively' }[] = [];
+  // Cancelled/full take precedence and clear other badges. Status badges
+  // (Avlyst / Fullt) delegate to StatusBadge for visual consistency. The
+  // decorative ones (X igjen / Drop-in) are derived signals, not status.
+  let statusOverlay: CourseStatus | null = null;
+  const decorativeBadges: { label: string; tone: DecorativeTone }[] = [];
   if (isCancelled) {
-    imageBadges.push({ label: 'Avlyst', tone: 'soft' });
+    statusOverlay = 'cancelled';
   } else if (isFull) {
-    imageBadges.push({ label: 'Fullt', tone: 'full' });
+    statusOverlay = 'full';
   } else {
-    if (lowSpots) imageBadges.push({ label: `${course.spots_available} igjen`, tone: 'urgent' });
-    if (allowsDropIn) imageBadges.push({ label: 'Drop-in', tone: 'lively' });
+    if (lowSpots) decorativeBadges.push({ label: `${course.spots_available} igjen`, tone: 'urgent' });
+    if (allowsDropIn) decorativeBadges.push({ label: 'Drop-in', tone: 'lively' });
   }
+  const hasOverlay = statusOverlay !== null || decorativeBadges.length > 0;
 
   const isDisabled = isCancelled || isFull;
 
@@ -155,14 +158,14 @@ export function CourseCard({ course, ratio = 'portrait', className }: CourseCard
           <CoursePlaceholder format={course.format} delivery={course.delivery_mode} />
         )}
 
-        {imageBadges.length > 0 && (
+        {hasOverlay && (
           <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
-            {imageBadges.map(b => (
+            {statusOverlay && <StatusBadge status={statusOverlay} />}
+            {decorativeBadges.map(b => (
               <Badge
                 key={b.label}
-                variant={TONE_TO_VARIANT[b.tone as BadgeTone]}
+                variant={b.tone === 'urgent' ? 'warning' : 'destructive'}
                 size="sm"
-                className={b.tone === 'full' ? 'backdrop-blur-md' : undefined}
               >
                 {b.label}
               </Badge>

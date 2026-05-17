@@ -447,5 +447,41 @@
   .touch-manipulation {
     touch-action: manipulation;
   }
+
+  /* Rich text — shared styles for the editor (.prose-editor) and the
+     read-only rendered output (.prose-content). Minimal: paragraphs,
+     bullet lists, bold, links. */
+  .prose-editor,
+  .prose-content {
+    & p {
+      margin-bottom: 0.75em;
+    }
+    & p:last-child {
+      margin-bottom: 0;
+    }
+    & ul {
+      list-style: disc;
+      margin: 0.5em 0 0.75em;
+      padding-left: 1.5em;
+    }
+    & li {
+      margin-bottom: 0.25em;
+    }
+    & li > p {
+      margin-bottom: 0;
+    }
+    & a {
+      color: var(--foreground);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+    & a:hover {
+      text-decoration-thickness: 2px;
+    }
+    & strong {
+      font-weight: 600;
+    }
+  }
 }
 

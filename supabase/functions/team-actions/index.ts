@@ -254,7 +254,7 @@ async function joinTeam(req: Request, userId: string, body: JoinRequest): Promis
     return errorResponse('Lookup failed', 500, req)
   }
   if (!team) {
-    return errorResponse('Ugyldig kode', 404, req)
+    return errorResponse('Fant ikke koden.', 404, req)
   }
 
   // Idempotent insert. If the seller is already a member (admin OR tenant) the

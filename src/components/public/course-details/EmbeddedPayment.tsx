@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { formatKroner } from '@/lib/utils';
+import { friendlyError } from '@/lib/error-messages';
 import { embedDinteroCheckout, type DinteroCheckoutInstance } from '@/lib/dintero';
 
 export interface EmbeddedPaymentProps {
@@ -69,7 +70,7 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
         checkoutRef.current = instance;
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : 'Kunne ikke laste betaling';
+        const message = friendlyError(err, 'Kunne ikke laste betaling.');
         setError(message);
         onPaymentError(message);
       });

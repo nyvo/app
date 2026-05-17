@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { X, Check, MapPin, ChevronRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { badgeVariants } from '@/components/ui/badge';
+import { Card, CardAction, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import {
   Sheet,
@@ -69,34 +71,32 @@ export function LocationsSection() {
   const visibleLocations = locations.filter((l) => !hiddenIds.has(l.id));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="adresser-heading" className="text-base font-medium tracking-tight text-foreground">
-            Adresser
-          </h2>
-          <p className="mt-1 text-sm text-foreground-muted">
-            Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={openCreate}
-          className="shrink-0"
-        >
-          Legg til sted
-        </Button>
-      </div>
-
+    <Card>
+      <CardHeader>
+        <CardTitle>Adresser</CardTitle>
+        <CardDescription>
+          Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
+        </CardDescription>
+        <CardAction>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={openCreate}
+          >
+            Legg til sted
+          </Button>
+        </CardAction>
+      </CardHeader>
       {visibleLocations.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border bg-surface">
-          <ul className="divide-y divide-border">
-            {visibleLocations.map((loc) => (
-              <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
-            ))}
-          </ul>
-        </div>
+        <CardContent>
+          <div className="overflow-hidden rounded-lg bg-muted">
+            <ul className="divide-y divide-border">
+              {visibleLocations.map((loc) => (
+                <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
+              ))}
+            </ul>
+          </div>
+        </CardContent>
       )}
 
       <LocationDrawer
@@ -107,7 +107,7 @@ export function LocationsSection() {
         onSaved={refetch}
         onDelete={handleDelete}
       />
-    </div>
+    </Card>
   );
 }
 
@@ -123,7 +123,7 @@ function LocationRow({
       <button
         type="button"
         onClick={onEdit}
-        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-background focus-visible:bg-background"
+        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left outline-none transition-shadow ring-1 ring-transparent hover:ring-border focus-visible:ring-2 focus-visible:ring-ring/50"
         aria-label={`Rediger ${location.name}`}
       >
         <div className="min-w-0 flex-1">
@@ -264,7 +264,7 @@ function LocationDrawer({
               autoFocus
             />
             {nameError && (
-              <p id="loc-drawer-name-error" role="alert" className="text-sm text-danger">{nameError}</p>
+              <FieldError id="loc-drawer-name-error" className="mt-0">{nameError}</FieldError>
             )}
           </div>
 

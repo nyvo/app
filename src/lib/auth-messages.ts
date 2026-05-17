@@ -12,15 +12,15 @@ export const AUTH_VALIDATION = {
   passwordNewRequired: 'Skriv inn et passord',
   passwordMismatch: 'Passordene er ikke like',
   nameRequired: 'Skriv inn navnet ditt',
-  studioNameRequired: 'Skriv inn navnet på studioet',
+  studioNameRequired: 'Skriv inn studionavn',
 } as const
 
 export const AUTH_ERRORS = {
   invalidCredentials: 'E-post eller passord stemmer ikke',
   emailAlreadyRegistered: 'E-posten er allerede registrert',
   generic: 'Noe gikk galt. Prøv igjen.',
-  passwordNotUpdated: 'Vi kunne ikke oppdatere passordet. Prøv igjen.',
-  accountNotCreated: 'Vi kunne ikke opprette kontoen. Prøv igjen.',
+  passwordNotUpdated: 'Kunne ikke oppdatere passordet. Prøv igjen.',
+  accountNotCreated: 'Kunne ikke opprette kontoen. Prøv igjen.',
   resendFailed: 'Kunne ikke sende e-post. Prøv igjen.',
   rateLimited: 'For mange forsøk. Vent litt før du prøver igjen.',
 } as const

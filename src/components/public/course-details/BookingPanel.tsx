@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { FieldError } from '@/components/ui/field-error';
 import { EmbeddedPayment } from '@/components/public/course-details/EmbeddedPayment';
 import { friendlyError } from '@/lib/error-messages';
+import { AUTH_VALIDATION } from '@/lib/auth-messages';
 import { formatKroner, isValidEmail } from '@/lib/utils';
 import { calculateServiceFee, calculateTotalPrice } from '@/lib/pricing';
 import { checkCourseAvailability, createFreeSignup } from '@/services/signups';
@@ -290,7 +292,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
       // Pin it to the email field so the user can correct it without a stray toast.
       if (status === 409 && paymentError) {
         setErrors(prev => ({ ...prev, email: true }));
-        setEmailMessage(paymentError.message || 'Kunne ikke fullføre påmeldingen.');
+        setEmailMessage(friendlyError(paymentError, 'Kunne ikke fullføre påmeldingen.'));
       } else {
         toast.error(friendlyError(paymentError, 'Kunne ikke starte betaling. Prøv igjen.'));
       }
@@ -509,7 +511,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             onChange={(e) => updateField('name', e.target.value)}
             aria-invalid={errors.name || undefined}
           />
-          {errors.name && <p role="alert" className="text-xs font-medium text-danger mt-1">Fyll inn navn.</p>}
+          {errors.name && <FieldError className="mt-1">Skriv inn navn.</FieldError>}
         </div>
 
         <div>
@@ -525,9 +527,9 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             aria-invalid={errors.email || undefined}
           />
           {errors.email && (
-            <p role="alert" className="text-xs font-medium text-danger mt-1">
-              {emailMessage ?? 'Fyll inn en gyldig e-postadresse.'}
-            </p>
+            <FieldError className="mt-1">
+              {emailMessage ?? AUTH_VALIDATION.emailInvalid}
+            </FieldError>
           )}
         </div>
       </div>
@@ -549,7 +551,7 @@ export function BookingPanel({ course, studioSlug }: BookingPanelProps) {
             .
           </label>
         </div>
-        {errors.terms && <p role="alert" className="text-xs font-medium text-danger">Du må godta vilkårene for å gå videre.</p>}
+        {errors.terms && <FieldError className="mt-0">Godta vilkårene for å fortsette.</FieldError>}
       </div>
 
       <Button

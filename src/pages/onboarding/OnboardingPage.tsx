@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Building, Calendar, Check, ImageIcon, LogOut, User } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/contexts/AuthContext'
@@ -236,7 +237,7 @@ function BuyerSetup() {
                 autoFocus
                 aria-invalid={!!errors.firstName || undefined}
               />
-              {errors.firstName && <p className="text-sm text-danger" role="alert">{errors.firstName}</p>}
+              {errors.firstName && <FieldError className="mt-0">{errors.firstName}</FieldError>}
             </div>
             <div className="grid gap-2">
               <label htmlFor="buyer-last-name" className="text-sm font-medium text-foreground">
@@ -248,7 +249,7 @@ function BuyerSetup() {
                 onChange={(e) => { setLastName(e.target.value); if (errors.lastName) setErrors((p) => ({ ...p, lastName: '' })) }}
                 aria-invalid={!!errors.lastName || undefined}
               />
-              {errors.lastName && <p className="text-sm text-danger" role="alert">{errors.lastName}</p>}
+              {errors.lastName && <FieldError className="mt-0">{errors.lastName}</FieldError>}
             </div>
           </div>
 
@@ -409,7 +410,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
     const next: Record<string, string> = {}
     if (!profileName.trim()) next.name = kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn navn'
     if (slugStatus.state === 'error') next.slug = slugStatus.message
-    if (!slugDraft) next.slug = 'Skriv inn studio-adresse'
+    if (!slugDraft) next.slug = 'Skriv inn studioadresse'
     setErrors(next)
     if (Object.keys(next).length > 0) return
 
@@ -420,7 +421,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
       logger.error('Onboarding: ensureSeller failed', error)
       const message = error?.message?.includes('Slug') || error?.message?.includes('taken')
         ? 'Denne adressen er opptatt. Velg en annen.'
-        : 'Kunne ikke fullføre. Prøv igjen.'
+        : 'Kunne ikke fullføre oppsettet. Prøv igjen.'
       toast.error(message)
       setSaving(false)
       return
@@ -469,7 +470,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
               autoFocus
               aria-invalid={!!errors.name || undefined}
             />
-            {errors.name && <p className="text-sm text-danger" role="alert">{errors.name}</p>}
+            {errors.name && <FieldError className="mt-0">{errors.name}</FieldError>}
           </div>
 
           <div className="grid gap-2">

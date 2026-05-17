@@ -251,7 +251,7 @@ const CoursePage = () => {
 
       const { error: updateError } = await updateCourse(courseId, updateData);
       if (updateError) {
-        setSaveError(updateError.message || 'Kunne ikke lagre endringer. Prøv igjen.');
+        setSaveError(friendlyError(updateError, 'Kunne ikke lagre endringer. Prøv igjen.'));
         setIsSaving(false);
         return;
       }
@@ -333,7 +333,7 @@ const CoursePage = () => {
         notify_participants: true,
       });
       if (cancelError) {
-        setSaveError(cancelError.message || 'Kunne ikke avlyse kurset');
+        setSaveError(friendlyError(cancelError, 'Kunne ikke avlyse kurset.'));
         setShowCancelPreview(false);
         return;
       }

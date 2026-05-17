@@ -181,7 +181,11 @@ const SchedulePage = () => {
 
   // Distinct YYYY-MM keys present in the loaded data, in display order.
   // For active tab: chronological ascending. For past: descending.
+  // Year is appended only when the option is outside the current year —
+  // mirrors how Apple/Google Calendar render month pickers ("Mai" stays
+  // bare, "Mai 2027" gets the year suffix to disambiguate).
   const monthOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
     const seen = new Set<string>();
     const ordered: string[] = [];
     for (const s of sessions) {
@@ -194,7 +198,8 @@ const SchedulePage = () => {
     return ordered.map((key) => {
       const [y, m] = key.split('-');
       const monthName = MONTH_NB[Number(m) - 1];
-      const label = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${y}`;
+      const capitalized = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}`;
+      const label = Number(y) === currentYear ? capitalized : `${capitalized} ${y}`;
       return { key, label };
     });
   }, [sessions]);

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Eye, EyeOff, Check } from '@/lib/icons'
 import { Input } from '@/components/ui/input'
+import { FieldError } from '@/components/ui/field-error'
 
 interface AuthFormFieldProps {
   id: string
@@ -91,7 +92,7 @@ export function AuthFormField({
       </div>
 
       {hasError ? (
-        <p id={`${id}-error`} role="alert" className="text-sm text-danger">{error}</p>
+        <FieldError id={`${id}-error`} className="mt-0">{error}</FieldError>
       ) : hint ? (
         <p id={`${id}-hint`} className="text-sm text-foreground-muted flex items-center gap-1 transition-colors duration-200">
           {hintMet && <Check className="size-3.5" />}

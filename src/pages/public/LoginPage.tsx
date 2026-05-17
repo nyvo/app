@@ -230,7 +230,7 @@ const LoginPage = () => {
           />
 
           {errors.general && (
-            <Alert variant="destructive" size="sm">
+            <Alert variant="error" size="sm">
               {errors.general}
             </Alert>
           )}
@@ -293,7 +293,7 @@ const LoginPage = () => {
           />
 
           {errors.general && (
-            <Alert variant="destructive" size="sm">
+            <Alert variant="error" size="sm">
               {errors.general}
             </Alert>
           )}

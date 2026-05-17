@@ -3,7 +3,8 @@ import { Info } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { FieldError } from '@/components/ui/field-error';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
@@ -14,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { Switch } from '@/components/ui/switch';
 
 interface CourseSettingsTabProps {
@@ -160,26 +160,23 @@ export const CourseSettingsTab = ({
           <p className="mt-1 text-sm text-foreground-muted">Navn, beskrivelse og forsidebilde.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Kursbilde</label>
-            <div className="relative aspect-[16/10] w-60 overflow-hidden rounded-lg">
-              <ImageUpload
-                value={settingsImageUrl}
-                onChange={(file) => {
-                  onImageFileChange(file);
-                  if (!file && settingsImageUrl) {
-                    onImageRemove();
-                  }
-                }}
-                onRemove={() => {
-                  if (settingsImageUrl) {
-                    onImageRemove();
-                  }
-                }}
-                disabled={isSaving}
-                className="absolute inset-0 h-full w-full"
-              />
-            </div>
+          <div className="relative aspect-[16/10] w-60 overflow-hidden rounded-lg">
+            <ImageUpload
+              value={settingsImageUrl}
+              onChange={(file) => {
+                onImageFileChange(file);
+                if (!file && settingsImageUrl) {
+                  onImageRemove();
+                }
+              }}
+              onRemove={() => {
+                if (settingsImageUrl) {
+                  onImageRemove();
+                }
+              }}
+              disabled={isSaving}
+              className="absolute inset-0 h-full w-full"
+            />
           </div>
           <div>
             <label htmlFor="settings-title" className="text-sm font-medium mb-2 block text-foreground">Navn på kurs</label>
@@ -191,12 +188,12 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label htmlFor="settings-description" className="text-sm font-medium mb-2 block text-foreground">Beskrivelse</label>
-            <Textarea
+            <label id="settings-description-label" className="text-sm font-medium mb-2 block text-foreground">Beskrivelse</label>
+            <RichTextEditor
               id="settings-description"
-              rows={6}
+              aria-labelledby="settings-description-label"
               value={settingsDescription}
-              onChange={(e) => onDescriptionChange(e.target.value)}
+              onChange={onDescriptionChange}
             />
           </div>
         </div>
@@ -276,7 +273,7 @@ export const CourseSettingsTab = ({
                   data-error={isBelowEnrolled ? 'true' : undefined}
                   className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
                 >
-                  Kapasitet
+                  Plasser
                 </label>
                 <Input
                   id="settings-capacity"
@@ -299,16 +296,9 @@ export const CourseSettingsTab = ({
                   className="text-left"
                 />
                 {isBelowEnrolled ? (
-                  <p className="mt-2 text-sm text-danger tabular-nums" role="alert">
-                    Kan ikke settes lavere enn {currentEnrolled} (antall påmeldte).
-                  </p>
-                ) : currentEnrolled > 0 ? (
-                  <div className="mt-2 flex items-center gap-2">
-                    <p className="text-xs tabular-nums text-foreground-muted">
-                      {currentEnrolled} påmeldt{currentEnrolled > 1 ? 'e' : ''} akkurat nå
-                    </p>
-                    <InfoTooltip content={`Kan ikke settes lavere enn ${currentEnrolled} fordi det allerede er ${currentEnrolled} påmeldt${currentEnrolled > 1 ? 'e' : ''}.`} />
-                  </div>
+                  <FieldError className="mt-2 tabular-nums">
+                    Kan ikke være lavere enn {currentEnrolled}. Så mange er allerede påmeldt.
+                  </FieldError>
                 ) : null}
               </div>
             );
@@ -322,7 +312,7 @@ export const CourseSettingsTab = ({
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-medium text-foreground">Tillat drop-in</span>
                 <span className="block text-sm text-foreground-muted mt-0.5">
-                  La nye bli med på enkelttimer. Pris regnes per gang.
+                  La nye bli med på enkelttimer. Vi regner ut pris per gang automatisk.
                 </span>
               </span>
               <Switch

@@ -719,25 +719,43 @@ The four signals on error:
 | **Label** | `data-[error=true]:text-danger` — label color shifts to danger-fg |
 | **Input border** | `aria-invalid:border-danger-fg` — destructive border |
 | **Ring** | `aria-invalid:ring-2 ring-danger-fg/20` — 20% opacity ring |
-| **Helper text** | text below input, `text-sm text-danger` |
+| **Error text** | `<FieldError>` primitive — `text-xs font-medium text-danger` + `role="alert"` |
 
-```html
-<div class="grid gap-2">
-  <label data-error="true" class="text-sm font-medium data-[error=true]:text-danger">
+```tsx
+import { FieldError } from '@/components/ui/field-error';
+
+<div className="grid gap-2">
+  <label data-error="true" className="text-sm font-medium data-[error=true]:text-danger">
     E-postadresse
   </label>
   <input
     aria-invalid="true"
-    class="h-9 px-3 rounded-md border bg-surface text-sm
-           border-border
-           aria-invalid:border-danger-fg aria-invalid:ring-2 aria-invalid:ring-danger-fg/20
-           focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    aria-describedby="email-error"
+    className="h-9 px-3 rounded-md border bg-surface text-sm
+               border-border
+               aria-invalid:border-danger-fg aria-invalid:ring-2 aria-invalid:ring-danger-fg/20
+               focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
   />
-  <p class="text-sm text-danger">Skriv inn en gyldig e-postadresse.</p>
+  <FieldError id="email-error" className="mt-0">
+    Skriv inn en gyldig e-postadresse.
+  </FieldError>
 </div>
 ```
 
 The trigger is `aria-invalid="true"` — set by your form library (React Hook Form, etc.) based on validation state. Don't manually class-toggle; let aria drive.
+
+**No hand-rolled error text.** All inline field errors use `<FieldError>` (see `components.md` § Form field group). Never write `<p className="text-danger">…</p>` ad-hoc — the primitive is the contract.
+
+**Required field indicators.** No red asterisks. The label color shift on `data-error="true"` is the entire indicator; `aria-required="true"` on the input carries the semantic. The asterisk pattern is old-school and adds chromatic noise for every required field in the form, all the time.
+
+**Field vs form vs section vs toast** — four scopes, four primitives. Don't reach for the wrong one:
+
+| Scope | Primitive |
+|---|---|
+| Per-field validation | `<FieldError>` |
+| Form-level submit failure | `<Alert variant="error" size="sm">` |
+| Section data load failure | `<ErrorState onRetry={…}>` (see § 13.4) |
+| Transient post-action failure | `toast.error(friendlyError(err))` |
 
 ### 13.3 Validation timing — the three-rule pattern
 

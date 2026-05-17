@@ -151,7 +151,7 @@ export const TeacherSidebar = () => {
                       <span className="text-sm font-medium truncate text-foreground">
                         {profile?.name || currentSeller?.name}
                       </span>
-                      <span className="text-xs truncate text-foreground-muted">
+                      <span className="text-sm truncate text-foreground-muted">
                         {profile?.email}
                       </span>
                     </div>

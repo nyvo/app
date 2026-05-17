@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
 import { lookupInviteLink, redeemInviteLink } from '@/services/invite-links';
+import { friendlyError } from '@/lib/error-messages';
 import type { LookupTeamInviteLinkResult } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -113,7 +114,7 @@ export default function JoinPage() {
     setPhase({ kind: 'redeeming' });
     const { data, error } = await redeemInviteLink(code, forceLeave);
     if (error || !data) {
-      toast.error(error?.message ?? 'Noe gikk galt. Prøv igjen.');
+      toast.error(friendlyError(error, 'Noe gikk galt. Prøv igjen.'));
       setPhase({ kind: 'idle' });
       return;
     }

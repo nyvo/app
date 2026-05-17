@@ -166,7 +166,7 @@ export const ResetPasswordView = () => {
         />
 
         {errors.general && (
-          <Alert variant="destructive" size="sm">
+          <Alert variant="error" size="sm">
             {errors.general}
           </Alert>
         )}

@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { cn, formatKroner } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
@@ -51,24 +51,15 @@ function deriveStatus(courseStatus: string, signups: number, max: number | null)
   return 'active';
 }
 
-function statusLabel(status: CourseRowStatus): string {
-  switch (status) {
-    case 'full': return 'Fullt';
-    case 'upcoming': return 'Kommende';
-    case 'draft': return 'Utkast';
-    case 'cancelled': return 'Avlyst';
-    default: return 'Aktiv';
-  }
-}
-
+/**
+ * Status pill on a course row. Hides for `active` since on the Aktive tab
+ * every row would otherwise repeat "Pågår" — pure noise. All visible states
+ * delegate to the shared StatusBadge so colors stay consistent with the
+ * schedule drawer and course drawer.
+ */
 function StatusPill({ status }: { status: CourseRowStatus }) {
   if (status === 'active') return null;
-  const variant = status === 'full' ? 'success' : 'neutral';
-  return (
-    <Badge variant={variant} shape="pill" size="sm">
-      {statusLabel(status)}
-    </Badge>
-  );
+  return <StatusBadge status={status} />;
 }
 
 export const COURSES_PER_PAGE = 6;
@@ -128,7 +119,7 @@ function SortableHeader({
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div className={cn(COLS, 'pb-3')}>
+    <div className={cn(COLS, 'pb-5')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       <SortableHeader label="Dato" columnKey="next" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />

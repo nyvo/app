@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Check, Copy, ImageIcon, MoreVertical } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { runWithUndo } from '@/lib/undo';
+import { friendlyError } from '@/lib/error-messages';
 import { cn } from '@/lib/utils';
 import { fetchTeamMembers, revokeAffiliation, type TeamMember } from '@/services/affiliations';
 import {
@@ -93,18 +95,28 @@ function BusinessView({ teamId }: { teamId: string }) {
   const hasAffiliates = !!visibleMembers?.some((m) => m.role === 'member');
 
   return (
-    <div className="space-y-6">
-      <InviteLinkPanel teamId={teamId} />
-      {hasAffiliates && (
-        <MembersTable
-          members={visibleMembers}
-          loading={loadingMembers}
-          kebabFor={(m) => (m.role === 'owner' ? null : (
-            <MemberActionsMenu member={m} onRevoke={() => handleRevoke(m)} />
-          ))}
-        />
-      )}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Team</CardTitle>
+        <CardDescription>
+          Inviter andre instruktører til å vise kursene sine på studiosiden din.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <InviteLinkPanel teamId={teamId} />
+          {hasAffiliates && (
+            <MembersTable
+              members={visibleMembers}
+              loading={loadingMembers}
+              kebabFor={(m) => (m.role === 'owner' ? null : (
+                <MemberActionsMenu member={m} onRevoke={() => handleRevoke(m)} />
+              ))}
+            />
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -164,7 +176,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
     setLeaving(false);
     setConfirmLeave(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error, 'Kunne ikke forlate teamet.'));
       return;
     }
     toast.success('Du har forlatt teamet');
@@ -172,61 +184,67 @@ function IndividualView({ sellerId }: { sellerId: string }) {
     setMembers(null);
   };
 
-  if (host === undefined) {
-    return <LoadingRow />;
-  }
-
-  if (host === null) {
-    return (
-      <div className="rounded-md border border-dashed border-border p-8 text-center">
-        <p className="text-sm font-medium text-foreground">Du har ikke et team ennå</p>
-        <p className="text-sm text-foreground-muted mt-1 max-w-xs mx-auto">
-          Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Host team header */}
-      <div className="flex items-center gap-3">
-        <HostCover url={host.cover_image_url} />
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{host.name}</p>
-          <p className="text-xs text-foreground-muted truncate">
-            {window.location.host}/{host.slug}
-          </p>
-        </div>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Team</CardTitle>
+        <CardDescription>
+          Studioet du er medlem av. Alle kursene dine vises automatisk.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {host === undefined ? (
+          <LoadingRow />
+        ) : host === null ? (
+          <div className="rounded-md border border-dashed border-border p-8 text-center">
+            <p className="text-sm font-medium text-foreground">Du har ikke et team ennå</p>
+            <p className="text-sm text-foreground-muted mt-1 max-w-xs mx-auto">
+              Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Host team header */}
+            <div className="flex items-center gap-3">
+              <HostCover url={host.cover_image_url} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{host.name}</p>
+                <p className="text-xs text-foreground-muted truncate">
+                  {window.location.host}/{host.slug}
+                </p>
+              </div>
+            </div>
 
-      <MembersTable members={members} loading={loadingMembers} />
+            <MembersTable members={members} loading={loadingMembers} />
 
-      <div className="flex justify-end">
-        <Button
-          variant="outline-soft"
-          size="sm"
-          onClick={() => setConfirmLeave(true)}
-        >
-          Forlat team
-        </Button>
-      </div>
+            <div className="flex justify-end">
+              <Button
+                variant="outline-soft"
+                size="sm"
+                onClick={() => setConfirmLeave(true)}
+              >
+                Forlat team
+              </Button>
+            </div>
 
-      <ConfirmDialog
-        open={confirmLeave}
-        onOpenChange={setConfirmLeave}
-        ariaLabel="Forlat team"
-        headline={`Forlat ${host.name}?`}
-        actionLabel="Forlat team"
-        onConfirm={handleLeave}
-        loading={leaving}
-        loadingText="Forlater"
-      >
-        <p className="text-sm text-foreground-muted">
-          Kursene dine forsvinner fra studio-siden. Du kan inviteres på nytt senere.
-        </p>
-      </ConfirmDialog>
-    </div>
+            <ConfirmDialog
+              open={confirmLeave}
+              onOpenChange={setConfirmLeave}
+              ariaLabel="Forlat team"
+              headline={`Forlat ${host.name}?`}
+              actionLabel="Forlat team"
+              onConfirm={handleLeave}
+              loading={leaving}
+              loadingText="Forlater"
+            >
+              <p className="text-sm text-foreground-muted">
+                Kursene dine forsvinner fra studio-siden. Du kan inviteres på nytt senere.
+              </p>
+            </ConfirmDialog>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -356,7 +374,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
     const { data, error } = await createInviteLink(teamId);
     setCreating(false);
     if (error || !data) {
-      toast.error(error?.message ?? 'Kunne ikke lage lenke.');
+      toast.error(friendlyError(error, 'Kunne ikke lage lenke.'));
       return;
     }
     setLink(data);

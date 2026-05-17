@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { MapPin, User } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface ScheduleRowProps {
@@ -74,9 +75,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
           <span className="text-sm font-medium text-foreground truncate">
             {course.title}
           </span>
-          {isCancelled && (
-            <Badge variant="warning" size="sm">Avlyst</Badge>
-          )}
+          {isCancelled && <StatusBadge status="cancelled" />}
           {seriesBadge && !isCancelled && (
             <Badge variant="neutral" size="sm">{seriesBadge}</Badge>
           )}

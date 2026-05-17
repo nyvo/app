@@ -71,7 +71,7 @@ const SignupPage = () => {
             ),
           })
         } else {
-          setErrors({ general: 'Kunne ikke opprette konto. Prøv igjen.' })
+          setErrors({ general: AUTH_ERRORS.accountNotCreated })
         }
         setIsSubmitting(false)
         return
@@ -137,7 +137,7 @@ const SignupPage = () => {
         />
 
         {errors.general && (
-          <Alert variant="destructive" size="sm">
+          <Alert variant="error" size="sm">
             {errors.general}
           </Alert>
         )}

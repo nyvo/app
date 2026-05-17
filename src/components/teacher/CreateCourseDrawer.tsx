@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AlertCircle } from '@/lib/icons';
 import {
   Sheet,
   SheetContent,
@@ -9,8 +8,11 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Select,
   SelectContent,
@@ -24,6 +26,7 @@ import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/use-locations';
 import { createCourse } from '@/services/courses';
+import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import { formatLocalDateKey } from '@/utils/dateUtils';
@@ -66,11 +69,12 @@ function timeToMin(t: string): number {
 const ALL_TIME_SLOTS = generateTimeSlots();
 
 /**
- * Quick-create drawer — the minimum viable course. Six required fields
+ * Quick-create drawer — the minimum viable course. Required fields
  * (type, title, date, time, location, capacity, price) get the teacher to
- * a draft course in under a minute. All advanced configuration —
- * description, image, additional ticket tiers — lives on the full course
- * page at /courses/:id where the user lands after creation.
+ * a draft course in under a minute. Description is optional and inline so
+ * the teacher can write the storefront copy in the same pass. Cover image
+ * and additional ticket tiers still live on the full course page at
+ * /courses/:id where the user lands after creation.
  */
 export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerProps) {
   const navigate = useNavigate();
@@ -79,6 +83,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
   const [format, setFormat] = useState<FormatType>('single');
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -123,6 +128,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const reset = () => {
     setFormat('single');
     setTitle('');
+    setDescription('');
     setStartDate(undefined);
     setStartTime('');
     setEndTime('');
@@ -161,6 +167,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         {
           seller_id: currentSeller.id,
           title: title.trim(),
+          description: description.trim() || null,
           format: dbFormat,
           start_date: formatLocalDateKey(startDate),
           time_schedule: timeSchedule,
@@ -178,7 +185,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       );
 
       if (error || !created) {
-        setSubmitError(error?.message || 'Kunne ikke opprette kurset');
+        setSubmitError(friendlyError(error, 'Kunne ikke opprette kurset.'));
         setIsSubmitting(false);
         return;
       }
@@ -239,6 +246,19 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
               className={cn(showError('title') && 'border-danger focus-visible:ring-danger')}
             />
             {showError('title') && <FieldError>{errors.title}</FieldError>}
+          </div>
+
+          {/* Beskrivelse — optional, can be edited later on the course page */}
+          <div>
+            <label id="cc-description-label" className="text-sm font-medium mb-2 block text-foreground">
+              Beskrivelse
+            </label>
+            <RichTextEditor
+              id="cc-description"
+              aria-labelledby="cc-description-label"
+              value={description}
+              onChange={setDescription}
+            />
           </div>
 
           {/* Dato */}
@@ -398,26 +418,12 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           </div>
 
           {submitError && (
-            <p
-              className="text-xs font-medium flex items-center gap-1 text-danger"
-              role="alert"
-            >
-              <AlertCircle className="size-3" aria-hidden />
-              {submitError}
-            </p>
+            <Alert variant="error" size="sm">{submitError}</Alert>
           )}
         </div>
 
-        {/* Sticky footer */}
-        <div className="border-t border-border px-6 py-4 flex items-center justify-end gap-2 bg-background">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            Avbryt
-          </Button>
+        {/* Sticky footer — primary action only; the sheet's X closes. */}
+        <div className="border-t border-border px-6 py-4 flex items-center justify-end bg-background">
           <Button
             size="sm"
             onClick={handleSubmit}
@@ -432,14 +438,3 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   );
 }
 
-function FieldError({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="text-xs font-medium mt-2 flex items-center gap-1 text-danger"
-      role="alert"
-    >
-      <AlertCircle className="size-3" aria-hidden />
-      {children}
-    </p>
-  );
-}

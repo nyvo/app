@@ -99,7 +99,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
   useEffect(() => {
     async function loadCourse() {
       if (!courseId) {
-        setError('Ugyldig kurs-ID');
+        setError('Fant ikke kurset.');
         setIsLoading(false);
         return;
       }

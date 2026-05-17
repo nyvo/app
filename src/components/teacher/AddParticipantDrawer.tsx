@@ -12,8 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
+import { FieldError } from '@/components/ui/field-error';
 import { checkCourseAvailability, createSignup } from '@/services/signups';
 import { friendlyError } from '@/lib/error-messages';
+import { AUTH_VALIDATION } from '@/lib/auth-messages';
 import { isValidEmail } from '@/lib/utils';
 
 
@@ -113,9 +115,9 @@ export function AddParticipantDrawer({
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Skriv inn e-post';
+      newErrors.email = AUTH_VALIDATION.emailRequired;
     } else if (!isValidEmail(formData.email)) {
-      newErrors.email = 'Skriv inn en gyldig e-postadresse';
+      newErrors.email = AUTH_VALIDATION.emailInvalid;
     }
 
     setErrors(newErrors);
@@ -183,7 +185,7 @@ export function AddParticipantDrawer({
       onSuccess(); // Trigger refresh
       toast.success('Deltaker lagt til');
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Noe gikk galt. Prøv igjen.');
+      setSubmitError(friendlyError(err, 'Noe gikk galt. Prøv igjen.'));
       setIsSubmitting(false);
     }
   };
@@ -229,9 +231,10 @@ export function AddParticipantDrawer({
               <div>
                 <label
                   htmlFor="firstName"
-                  className="text-xs font-medium mb-1.5 block text-foreground"
+                  data-error={(errors.firstName && touched.firstName) || undefined}
+                  className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
                 >
-                  Fornavn <span className="text-danger">*</span>
+                  Fornavn
                 </label>
                 <Input
                   id="firstName"
@@ -253,13 +256,7 @@ export function AddParticipantDrawer({
                   }
                 />
                 {errors.firstName && touched.firstName && (
-                  <p
-                    id="firstName-error"
-                    role="alert"
-                    className="text-xs mt-1.5 text-danger"
-                  >
-                    {errors.firstName}
-                  </p>
+                  <FieldError id="firstName-error">{errors.firstName}</FieldError>
                 )}
               </div>
 
@@ -267,9 +264,10 @@ export function AddParticipantDrawer({
               <div>
                 <label
                   htmlFor="lastName"
-                  className="text-xs font-medium mb-1.5 block text-foreground"
+                  data-error={(errors.lastName && touched.lastName) || undefined}
+                  className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
                 >
-                  Etternavn <span className="text-danger">*</span>
+                  Etternavn
                 </label>
                 <Input
                   id="lastName"
@@ -291,21 +289,19 @@ export function AddParticipantDrawer({
                   }
                 />
                 {errors.lastName && touched.lastName && (
-                  <p
-                    id="lastName-error"
-                    role="alert"
-                    className="text-xs mt-1.5 text-danger"
-                  >
-                    {errors.lastName}
-                  </p>
+                  <FieldError id="lastName-error">{errors.lastName}</FieldError>
                 )}
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="text-xs font-medium mb-1.5 block text-foreground">
-                E-post <span className="text-danger">*</span>
+              <label
+                htmlFor="email"
+                data-error={(errors.email && touched.email) || undefined}
+                className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+              >
+                E-post
               </label>
               <Input
                 id="email"
@@ -325,13 +321,7 @@ export function AddParticipantDrawer({
                 }
               />
               {errors.email && touched.email && (
-                <p
-                  id="email-error"
-                  role="alert"
-                  className="text-xs mt-1.5 text-danger"
-                >
-                  {errors.email}
-                </p>
+                <FieldError id="email-error">{errors.email}</FieldError>
               )}
             </div>
 

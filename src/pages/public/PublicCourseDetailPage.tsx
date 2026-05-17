@@ -17,6 +17,7 @@ import { CourseSessions } from '@/components/public/course-details/CourseSession
 import { OtherCoursesShelf } from '@/components/public/course-details/OtherCoursesShelf';
 import { BookingPanel } from '@/components/public/course-details/BookingPanel';
 import { MobilePriceBar } from '@/components/public/course-details/MobilePriceBar';
+import { RichTextContent } from '@/components/ui/rich-text-content';
 import {
   fetchPublicCourseBySlug,
   type PublicCourseWithDetails,
@@ -148,9 +149,10 @@ export default function PublicCourseDetailPage() {
                         <h2 className="text-xl font-semibold text-foreground mb-3.5">
                           Om kurset
                         </h2>
-                        <p className="text-base leading-relaxed text-foreground whitespace-pre-wrap">
-                          {course.description}
-                        </p>
+                        <RichTextContent
+                          html={course.description}
+                          className="text-base leading-relaxed text-foreground"
+                        />
                       </section>
                     )}
 

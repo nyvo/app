@@ -40,7 +40,7 @@ const PublicCoursesPage = () => {
   useEffect(() => {
     async function loadData() {
       if (!slug) {
-        setError('Ugyldig lenke');
+        setError('Fant ikke siden.');
         setLoading(false);
         return;
       }
@@ -49,7 +49,7 @@ const PublicCoursesPage = () => {
 
       const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
       if (sellerError || !sellerData) {
-        setError('Fant ikke studioet');
+        setError('Fant ikke studioet.');
         setLoading(false);
         return;
       }
@@ -57,7 +57,7 @@ const PublicCoursesPage = () => {
 
       const activeResult = await fetchPublicCourses({ teamSlug: slug });
       if (activeResult.error) {
-        setError('Kunne ikke laste kurs');
+        setError('Kunne ikke laste kurs.');
         setLoading(false);
         return;
       }
@@ -111,7 +111,7 @@ const PublicCoursesPage = () => {
               onTabChange={setActiveTab}
             />
 
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               {activeTab === 'kurs' ? (
                 visible.length === 0 ? (
                   <div className="py-16">

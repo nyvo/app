@@ -75,13 +75,13 @@ export async function deleteCourseImage(
   }
 
   if (course.seller_id !== sellerId) {
-    return { error: new Error('Du har ikke tilgang til å slette dette bildet') }
+    return { error: new Error('Mangler tilgang til å slette dette bildet.') }
   }
 
   // 2. Extract file path from URL
   const urlParts = imageUrl.split(`${COURSE_IMAGES_BUCKET}/`)
   if (urlParts.length !== 2) {
-    return { error: new Error('Ugyldig bilde-URL') }
+    return { error: new Error('Bildet kunne ikke slettes. Prøv igjen.') }
   }
 
   const filePath = urlParts[1]
@@ -89,7 +89,7 @@ export async function deleteCourseImage(
   // 3. Verify the file path belongs to this course (prevent path traversal)
   const expectedPrefix = `courses/${courseId}/`
   if (!filePath.startsWith(expectedPrefix)) {
-    return { error: new Error('Bilde tilhører ikke dette kurset') }
+    return { error: new Error('Bildet tilhører ikke dette kurset.') }
   }
 
   // 4. Delete the file

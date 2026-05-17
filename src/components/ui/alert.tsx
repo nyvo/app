@@ -10,12 +10,10 @@ const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-surface text-foreground",
-        destructive:
-          "bg-surface text-danger *:data-[slot=alert-description]:text-danger *:[svg]:text-current",
         info: "bg-surface [&_svg]:text-info",
         success: "bg-surface [&_svg]:text-success",
         warning: "bg-surface [&_svg]:text-warning",
-        error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger",
+        error: "bg-surface text-danger *:data-[slot=alert-description]:text-danger *:[svg]:text-current",
         neutral: "bg-surface [&_svg]:text-foreground-muted",
       },
       size: {
@@ -36,7 +34,6 @@ const variantTextColor: Record<string, string> = {
   success: "text-success",
   warning: "text-warning",
   error: "text-danger",
-  destructive: "text-danger",
   neutral: "text-foreground",
 }
 
@@ -47,11 +44,10 @@ const defaultIcons: Record<string, IconComponent> = {
   success: CheckCircle2,
   warning: AlertTriangle,
   error: AlertCircle,
-  destructive: AlertCircle,
   neutral: Info,
 }
 
-type AlertVariant = "default" | "destructive" | "info" | "success" | "warning" | "error" | "neutral"
+type AlertVariant = "default" | "info" | "success" | "warning" | "error" | "neutral"
 
 interface AlertProps
   extends Omit<React.ComponentProps<"div">, "size">,
@@ -68,7 +64,7 @@ function Alert({
   ...props
 }: AlertProps) {
   const role =
-    variant === "error" || variant === "warning" || variant === "destructive" ? "alert" : "status"
+    variant === "error" || variant === "warning" ? "alert" : "status"
 
   let iconNode: React.ReactNode = null
   if (icon !== false) {
