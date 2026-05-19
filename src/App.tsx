@@ -10,9 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Persistent layouts (no lazy — always mounted)
 import TeacherLayout from './layouts/TeacherLayout';
+import { RoleRoute } from './components/RoleRoute';
 
 // Lazy load all route components for code splitting
-const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
+const DashboardRouter = lazy(() => import('./pages/teacher/DashboardRouter'));
 const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
@@ -94,16 +95,24 @@ function AppRoutes() {
 
         {/* Authenticated dashboard — slug-less namespace, English URLs,
             Norwegian UI copy (Time2Book-style). All under TeacherLayout
-            so the sidebar + topbar persist. */}
+            so the sidebar + topbar persist.
+
+            /overview and /settings/profile are shared between buyers and
+            sellers. Everything else is seller-only and sits behind
+            RoleRoute — a buyer hitting /courses by URL bounces to
+            /overview instead of seeing a half-broken seller page. */}
         <Route element={<TeacherLayout />}>
-          <Route path="overview" element={<TeacherDashboard />} />
-          <Route path="get-started" element={<GetStartedPage />} />
-          <Route path="schedule" element={<SchedulePage />} />
-          <Route path="courses" element={<CoursesPage />} />
-          <Route path="courses/:id" element={<CoursePage />} />
-          <Route path="studio" element={<TeamsPage />} />
+          <Route path="overview" element={<DashboardRouter />} />
           <Route path="settings/profile" element={<TeacherProfilePage />} />
-          <Route path="settings/payouts" element={<PaymentsPage />} />
+
+          <Route element={<RoleRoute allow="seller" />}>
+            <Route path="get-started" element={<GetStartedPage />} />
+            <Route path="schedule" element={<SchedulePage />} />
+            <Route path="courses" element={<CoursesPage />} />
+            <Route path="courses/:id" element={<CoursePage />} />
+            <Route path="studio" element={<TeamsPage />} />
+            <Route path="settings/payouts" element={<PaymentsPage />} />
+          </Route>
         </Route>
 
         {/* Dev preview (no auth, direct-URL only) */}

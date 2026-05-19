@@ -5,7 +5,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
-import { Mail } from '@/lib/icons';
 import { StudioHero, type StudioTab } from '@/components/public/studio/StudioHero';
 import { StudioMonthSchedule } from '@/components/public/studio/StudioMonthSchedule';
 
@@ -118,24 +117,6 @@ const PublicCoursesPage = () => {
               ) : (
                 <div className="pt-10 pb-20 max-w-2xl">
                   <h2 className="text-xl font-semibold text-foreground">Om studioet</h2>
-                  <dl className="mt-6 space-y-6">
-                    {organization.email && (
-                      <div>
-                        <dt className="text-xs font-medium text-foreground-muted">
-                          E-post
-                        </dt>
-                        <dd className="mt-1 flex items-center gap-2 text-sm text-foreground">
-                          <Mail className="size-3.5 shrink-0 text-foreground-muted" strokeWidth={1.75} />
-                          <a
-                            href={`mailto:${organization.email}`}
-                            className="underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-                          >
-                            {organization.email}
-                          </a>
-                        </dd>
-                      </div>
-                    )}
-                  </dl>
                 </div>
               )}
             </div>

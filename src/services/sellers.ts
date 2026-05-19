@@ -5,7 +5,7 @@ import type { Seller, SellerUpdate } from '@/types/database'
  * Public seller fields — a subset of Seller safe to expose on public
  * (anon-accessible) studio pages, merged with the team's display fields
  * (slug, default_course_image_url). Excludes Dintero internals and audit
- * columns.
+ * columns. Email is intentionally excluded from direct public seller reads.
  *
  * Note: `slug` and `default_course_image_url` actually live on `teams`, not
  * `sellers`. We merge them here to keep the public-rendering surface
@@ -16,7 +16,6 @@ export interface PublicSeller {
   name: string
   slug: string
   logo_url: string | null
-  email: string | null
   default_course_image_url: string | null
   dintero_onboarding_complete: boolean
 }
@@ -45,7 +44,7 @@ export async function fetchSellerBySlug(
 
   const { data, error } = await supabase
     .from('sellers')
-    .select('id, name, logo_url, email, dintero_onboarding_complete')
+    .select('id, name, logo_url, dintero_onboarding_complete')
     .eq('id', teamRow.owner_seller_id)
     .maybeSingle()
 
@@ -71,7 +70,7 @@ export async function updateSeller(
   const { data, error } = await typedFrom('sellers')
     .update(updates)
     .eq('id', id)
-    .select('id, name, logo_url, email, dintero_onboarding_complete, created_at')
+    .select('id, name, logo_url, dintero_onboarding_complete, created_at')
     .single()
 
   if (error) {
@@ -80,7 +79,7 @@ export async function updateSeller(
 
   const row = data as Pick<
     Seller,
-    'id' | 'name' | 'logo_url' | 'email' | 'dintero_onboarding_complete' | 'created_at'
+    'id' | 'name' | 'logo_url' | 'dintero_onboarding_complete' | 'created_at'
   >
 
   const { data: operational } = await fetchSellerOperational(id)
@@ -88,6 +87,7 @@ export async function updateSeller(
   return {
     data: {
       ...row,
+      email: null,
       phone: null,
       dintero_seller_id: operational?.dintero_seller_id ?? null,
       dintero_approval_id: null,

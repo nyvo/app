@@ -40,7 +40,6 @@ export interface OutgoingAffiliate {
 export interface TeamMember {
   sellerId: string;
   name: string;
-  email: string | null;
   role: 'owner' | 'member';
 }
 
@@ -62,12 +61,12 @@ export async function fetchTeamMembers(
   const [{ data: owner, error: ownerErr }, { data: rows, error: affErr }] = await Promise.all([
     supabase
       .from('sellers')
-      .select('id, name, email')
+      .select('id, name')
       .eq('id', ownerSellerId)
       .maybeSingle(),
     supabase
       .from('team_affiliations')
-      .select('seller_id, seller:sellers!inner(id, name, email)')
+      .select('seller_id, seller:sellers!inner(id, name)')
       .eq('team_id', teamId)
       .eq('status', 'active'),
   ]);
@@ -77,17 +76,16 @@ export async function fetchTeamMembers(
 
   const members: TeamMember[] = [];
   if (owner) {
-    const o = owner as { id: string; name: string; email: string | null };
-    members.push({ sellerId: o.id, name: o.name, email: o.email, role: 'owner' });
+    const o = owner as { id: string; name: string };
+    members.push({ sellerId: o.id, name: o.name, role: 'owner' });
   }
   for (const r of (rows ?? []) as Array<{
     seller_id: string;
-    seller: { id: string; name: string; email: string | null };
+    seller: { id: string; name: string };
   }>) {
     members.push({
       sellerId: r.seller.id,
       name: r.seller.name,
-      email: r.seller.email,
       role: 'member',
     });
   }

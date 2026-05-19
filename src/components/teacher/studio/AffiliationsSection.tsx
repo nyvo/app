@@ -299,9 +299,6 @@ function MembersTable({
         >
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
-            {m.email && (
-              <p className="text-xs text-foreground-muted truncate">{m.email}</p>
-            )}
           </div>
           {m.role === 'owner' ? (
             <Badge variant="inverted" shape="pill">Eier</Badge>

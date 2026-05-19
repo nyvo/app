@@ -42,6 +42,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const LEGACY_CURRENT_SELLER_KEY = 'currentSellerId'
+
+function currentSellerStorageKey(userId: string): string {
+  return `currentSellerId:${userId}`
+}
+
+function getStoredCurrentSellerId(userId: string): string | null {
+  return localStorage.getItem(currentSellerStorageKey(userId)) ?? localStorage.getItem(LEGACY_CURRENT_SELLER_KEY)
+}
+
+function setStoredCurrentSellerId(userId: string, sellerId: string): void {
+  localStorage.setItem(currentSellerStorageKey(userId), sellerId)
+  localStorage.removeItem(LEGACY_CURRENT_SELLER_KEY)
+}
+
+function clearStoredCurrentSellerId(userId?: string): void {
+  if (userId) localStorage.removeItem(currentSellerStorageKey(userId))
+  localStorage.removeItem(LEGACY_CURRENT_SELLER_KEY)
+}
+
 // Helper functions outside component
 async function fetchProfileData(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -73,7 +93,6 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
         id,
         name,
         logo_url,
-        email,
         created_at,
         dintero_onboarding_complete
       )
@@ -95,7 +114,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
       id: s.id as string,
       name: s.name as string,
       logo_url: (s.logo_url ?? null) as string | null,
-      email: (s.email ?? null) as string | null,
+      email: null,
       phone: null,
       dintero_seller_id: null,
       dintero_approval_id: null,
@@ -200,14 +219,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTeamsBySellerId(teamMap)
 
     if (loadedSellers.length > 0 && !currentSellerRef.current) {
-      const savedSellerId = localStorage.getItem('currentSellerId')
+      const savedSellerId = getStoredCurrentSellerId(userId)
       const savedSeller = loadedSellers.find((s) => s.id === savedSellerId)
       const sellerToSet = savedSeller || loadedSellers[0]
 
       const hydrated = await hydrateSellerOperational(sellerToSet)
       setCurrentSeller(hydrated)
       setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
-      localStorage.setItem('currentSellerId', hydrated.id)
+      setStoredCurrentSellerId(userId, hydrated.id)
 
       const membership = memberships.find((m) => m.seller?.id === hydrated.id)
       setUserRole(membership?.role || null)
@@ -264,6 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (event === 'SIGNED_OUT' || !newSession) {
+          const signedOutUserId = userRef.current?.id
           setSession(null)
           setUser(null)
           setProfile(null)
@@ -271,7 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCurrentSeller(null)
           setTeamsBySellerId({})
           setUserRole(null)
-          localStorage.removeItem('currentSellerId')
+          clearStoredCurrentSellerId(signedOutUserId)
           return
         }
 
@@ -368,6 +388,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign out
   const signOut = useCallback(async () => {
+    const signingOutUserId = userRef.current?.id
+
     // Clear state first
     setUser(null)
     setProfile(null)
@@ -376,7 +398,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentSeller(null)
     setTeamsBySellerId({})
     setUserRole(null)
-    localStorage.removeItem('currentSellerId')
+    clearStoredCurrentSellerId(signingOutUserId)
 
     await supabase.auth.signOut()
   }, [])
@@ -442,7 +464,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     setCurrentSeller(seller)
     setUserRole(row.member_role)
-    localStorage.setItem('currentSellerId', seller.id)
+    if (userRef.current?.id) setStoredCurrentSellerId(userRef.current.id, seller.id)
 
     // Stub a Team entry so consumers (currentTeam) work immediately. Full team
     // data loads on next refreshSellers/loadUserData call.
@@ -468,12 +490,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setRole = useCallback(async (role: UserRole | null) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('id', userId)
+    const { data, error } = await (supabase.rpc as unknown as (
+      fn: string, args: { p_role: UserRole | null }
+    ) => ReturnType<typeof supabase.rpc>)('set_user_role', {
+      p_role: role,
+    })
     if (error) return { error: error as Error }
-    setProfile((prev) => (prev ? { ...prev, role } : prev))
+    const updatedProfile = data as Profile | null
+    setProfile((prev) => updatedProfile ?? (prev ? { ...prev, role } : prev))
     return { error: null }
   }, [])
 
@@ -482,14 +506,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const completeBuyerOnboarding = useCallback(async (input: { name: string; phone?: string }) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const patch = {
-      name: input.name.trim(),
-      phone: input.phone?.trim() || null,
-      onboarding_completed_at: new Date().toISOString(),
-    }
-    const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
+    const { data, error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args: { p_name: string; p_phone: string | null }
+    ) => ReturnType<typeof supabase.rpc>)('complete_buyer_onboarding', {
+      p_name: input.name.trim(),
+      p_phone: input.phone?.trim() || null,
+    })
     if (error) return { error: error as Error }
-    setProfile((prev) => (prev ? { ...prev, ...patch } : prev))
+    const updatedProfile = data as Profile | null
+    setProfile((prev) => updatedProfile ?? prev)
     return { error: null }
   }, [])
 
@@ -498,13 +524,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const markOnboardingComplete = useCallback(async () => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
-    const stamp = new Date().toISOString()
-    const { error } = await supabase
-      .from('profiles')
-      .update({ onboarding_completed_at: stamp })
-      .eq('id', userId)
+    const { data, error } = await (supabase.rpc as unknown as (
+      fn: string,
+      args?: Record<string, never>
+    ) => ReturnType<typeof supabase.rpc>)('mark_seller_onboarding_complete')
     if (error) return { error: error as Error }
-    setProfile((prev) => (prev ? { ...prev, onboarding_completed_at: stamp } : prev))
+    const updatedProfile = data as Profile | null
+    setProfile((prev) => updatedProfile ?? prev)
     return { error: null }
   }, [])
 
@@ -513,7 +539,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const seller = sellersRef.current.find((s) => s.id === sellerId)
     if (seller && userRef.current?.id) {
       setCurrentSeller(seller)
-      localStorage.setItem('currentSellerId', seller.id)
+      setStoredCurrentSellerId(userRef.current.id, seller.id)
 
       // Hydrate operational fields for the newly active seller. Fire-and-forget;
       // UI consumers fall back to the public columns until this resolves.

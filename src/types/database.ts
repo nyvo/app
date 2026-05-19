@@ -1064,6 +1064,10 @@ export type Database = {
         }[]
       }
       cleanup_old_webhook_events: { Args: never; Returns: number }
+      complete_buyer_onboarding: {
+        Args: { p_name: string; p_phone?: string | null }
+        Returns: Database["public"]["Tables"]["profiles"]["Row"]
+      }
       count_signups_by_ticket_type: {
         Args: { p_course_id: string; p_ticket_type_id: string }
         Returns: number
@@ -1183,6 +1187,14 @@ export type Database = {
       is_team_admin: {
         Args: { p_team_id: string; p_user_id: string }
         Returns: boolean
+      }
+      mark_seller_onboarding_complete: {
+        Args: never
+        Returns: Database["public"]["Tables"]["profiles"]["Row"]
+      }
+      set_user_role: {
+        Args: { p_role: string | null }
+        Returns: Database["public"]["Tables"]["profiles"]["Row"]
       }
       lookup_team_invite_link: {
         Args: { p_code: string }

@@ -13,6 +13,7 @@ import { extractTimeFromSchedule } from '@/utils/timeExtraction';
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
 const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
+const SUPPORT_EMAIL = 'hei@openspot.no';
 
 // Today, Norwegian short form: "26. apr 2026". Used in the receipt footer.
 function formatBookingDate(d: Date): string {
@@ -44,12 +45,12 @@ interface SignupDetails {
     /**
      * Studio identity — RPC populates this from the seller (legal/billing
      * entity) plus the slug from the team owned by that seller. The seller
-     * name, email, logo_url come from `sellers`; `team_slug` is the public
-     * URL fragment.
+     * name and logo_url come from `sellers`; `team_slug` is the public URL
+     * fragment. Seller email is intentionally not returned to anonymous
+     * receipt lookups.
      */
     seller: {
       name: string;
-      email?: string | null;
       logo_url?: string | null;
       team_slug: string;
     };
@@ -232,7 +233,6 @@ const CheckoutSuccessPage = () => {
           {(() => {
             const dateLong = formatDate(signup?.course.start_date ?? null);
             const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
-            const orgEmail = signup?.course.seller?.email ?? null;
             const courseImage = signup?.course.image_url ?? null;
             const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
             const bookedAt = signup?.created_at ? new Date(signup.created_at) : new Date();
@@ -305,19 +305,17 @@ const CheckoutSuccessPage = () => {
                     </>
                   )}
 
-                  {/* Support — contact studio if anything's off */}
-                  {orgEmail && (
-                    <p className="mt-6 text-sm text-foreground-muted">
-                      Trenger du hjelp? Send en e-post til{' '}
-                      <a
-                        href={`mailto:${orgEmail}`}
-                        className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
-                      >
-                        {orgEmail}
-                      </a>
-                      .
-                    </p>
-                  )}
+                  {/* Support — use platform support so seller emails stay private. */}
+                  <p className="mt-6 text-sm text-foreground-muted">
+                    Trenger du hjelp? Send en e-post til{' '}
+                    <a
+                      href={`mailto:${SUPPORT_EMAIL}`}
+                      className="text-foreground underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground"
+                    >
+                      {SUPPORT_EMAIL}
+                    </a>
+                    .
+                  </p>
                 </div>
 
                 {/* Policy footer inset — separated by hairline, muted bg.
