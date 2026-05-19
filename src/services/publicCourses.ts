@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import type { CourseFormat, DeliveryMode, CourseStatus, CourseLevel } from '@/types/database'
+import type { CourseFormat, DeliveryMode, CourseStatus } from '@/types/database'
 
 interface PublicCourseInstructor {
   id: string
@@ -41,7 +41,6 @@ interface CourseQueryResult {
   format: string
   delivery_mode: string
   status: string
-  level: string | null
   location: string | null
   time_schedule: string | null
   duration: number | null
@@ -72,7 +71,6 @@ export interface PublicCourseWithDetails {
   format: CourseFormat
   delivery_mode: DeliveryMode
   status: CourseStatus
-  level: CourseLevel | null
   location: string | null
   time_schedule: string | null
   duration: number | null
@@ -148,7 +146,6 @@ async function fetchTeamMetaBySellerIds(
 }
 
 export interface PublicCoursesFilters {
-  level?: string
   fromDate?: string
   /** Filter to courses owned by the seller whose team has this slug. */
   teamSlug?: string
@@ -218,7 +215,6 @@ export async function fetchPublicCourses(
       format,
       delivery_mode,
       status,
-      level,
       location,
       time_schedule,
       duration,
@@ -236,9 +232,6 @@ export async function fetchPublicCourses(
     .order('start_date', { ascending: true })
 
   // Apply filters
-  if (filters?.level) {
-    query = query.eq('level', filters.level as CourseLevel)
-  }
   if (filters?.fromDate) {
     query = query.gte('start_date', filters.fromDate)
   }
@@ -391,6 +384,10 @@ export async function fetchPublicCourses(
     const courseStarted = !!course.start_date && course.start_date <= today
     const isEligibleSeries = course.format === 'series' && courseStarted && spotsAvailable > 0
     const dropInActive = hasDropInTier && isEligibleSeries
+    // Drop-in price is computed at read time as course.price / total_weeks —
+    // mirroring `available_ticket_types` RPC (migration 20260513180000). The
+    // stored `price` column on the tier row is intentionally dead for drop-ins
+    // (see syncCourseDropInTier in services/courses.ts). Don't read it here.
     const dropInPrice = !dropInActive
       ? null
       : (course.price && course.total_weeks ? Math.round(course.price / course.total_weeks) : null)
@@ -413,7 +410,6 @@ export async function fetchPublicCourses(
       format: course.format as CourseFormat,
       delivery_mode: course.delivery_mode as DeliveryMode,
       status: course.status as CourseStatus,
-      level: course.level as CourseLevel | null,
       location: course.location,
       time_schedule: course.time_schedule,
       duration: course.duration,
@@ -461,7 +457,6 @@ export async function fetchPublicCourseBySlug(
       format,
       delivery_mode,
       status,
-      level,
       location,
       time_schedule,
       duration,
@@ -541,7 +536,9 @@ export async function fetchPublicCourseBySlug(
 
   // Drop-in availability: an active drop-in tier exists (teacher policy)
   // AND the series has started + has spots open. Price always computed
-  // from the course base — no snapshot, no drift.
+  // from course.price / total_weeks — mirroring `available_ticket_types`
+  // RPC (migration 20260513180000). The stored tier price is intentionally
+  // dead for drop-ins.
   const today = new Date().toISOString().split('T')[0]
   const courseStarted = !!typedCourse.start_date && typedCourse.start_date <= today
   const isEligibleSeries = typedCourse.format === 'series' && courseStarted && spotsAvailable > 0
@@ -574,7 +571,6 @@ export async function fetchPublicCourseBySlug(
     format: typedCourse.format as CourseFormat,
     delivery_mode: typedCourse.delivery_mode as DeliveryMode,
     status: typedCourse.status as CourseStatus,
-    level: typedCourse.level as CourseLevel | null,
     location: typedCourse.location,
     time_schedule: typedCourse.time_schedule,
     duration: typedCourse.duration,

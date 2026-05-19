@@ -20,7 +20,6 @@ export type CourseStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'canc
 export type SignupStatus = 'confirmed' | 'cancelled' | 'course_cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type SellerMemberRole = 'owner' | 'admin'
-export type CourseLevel = 'alle' | 'nybegynner' | 'viderekommen'
 export type SessionStatus = 'upcoming' | 'completed' | 'cancelled'
 export type ExceptionType = 'payment_failed' | 'pending_payment'
 // Ticket-type model — every priced unit (course, package, drop-in) is a row in
@@ -232,7 +231,6 @@ export type Database = {
           idempotency_key: string | null
           image_url: string | null
           instructor_id: string | null
-          level: Database["public"]["Enums"]["course_level"] | null
           location: string | null
           max_participants: number | null
           price: number | null
@@ -256,7 +254,6 @@ export type Database = {
           idempotency_key?: string | null
           image_url?: string | null
           instructor_id?: string | null
-          level?: Database["public"]["Enums"]["course_level"] | null
           location?: string | null
           max_participants?: number | null
           price?: number | null
@@ -280,7 +277,6 @@ export type Database = {
           idempotency_key?: string | null
           image_url?: string | null
           instructor_id?: string | null
-          level?: Database["public"]["Enums"]["course_level"] | null
           location?: string | null
           max_participants?: number | null
           price?: number | null
@@ -306,6 +302,75 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: number
+          recipient_id: string
+          seller_id: string
+          actor_id: string | null
+          type: string
+          action_required: boolean
+          dedupe_key: string | null
+          title: string
+          body: string | null
+          action_url: string
+          metadata: Json
+          seen_at: string | null
+          read_at: string | null
+          resolved_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          recipient_id: string
+          seller_id: string
+          actor_id?: string | null
+          type: string
+          action_required?: boolean
+          dedupe_key?: string | null
+          title: string
+          body?: string | null
+          action_url: string
+          metadata?: Json
+          seen_at?: string | null
+          read_at?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          recipient_id?: string
+          seller_id?: string
+          actor_id?: string | null
+          type?: string
+          action_required?: boolean
+          dedupe_key?: string | null
+          title?: string
+          body?: string | null
+          action_url?: string
+          metadata?: Json
+          seen_at?: string | null
+          read_at?: string | null
+          resolved_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -901,6 +966,27 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -959,7 +1045,6 @@ export type Database = {
     }
     Enums: {
       course_format: "single" | "series"
-      course_level: "alle" | "nybegynner" | "viderekommen"
       course_status: "draft" | "upcoming" | "active" | "completed" | "cancelled"
       delivery_mode: "in_person" | "online"
       payment_status: "pending" | "paid" | "failed" | "refunded"
@@ -1040,6 +1125,24 @@ export type CourseTeamListingUpdate = Database['public']['Tables']['course_team_
 export type TeamInviteLink = Database['public']['Tables']['team_invite_links']['Row']
 export type TeamInviteLinkInsert = Database['public']['Tables']['team_invite_links']['Insert']
 export type TeamInviteLinkUpdate = Database['public']['Tables']['team_invite_links']['Update']
+
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type NotificationInsert = Database['public']['Tables']['notifications']['Insert']
+export type NotificationUpdate = Database['public']['Tables']['notifications']['Update']
+
+// In-app notification event taxonomy — mirrors the Deno-side renderer in
+// supabase/functions/_shared/notifications.ts. Use this union when narrowing
+// on `notification.type` to ensure exhaustive matching.
+export type NotificationType =
+  | 'booking.created'
+  | 'booking.waitlist_promoted'
+  | 'payment.failed'
+  | 'refund.completed'
+  | 'payout.sent'
+  | 'dintero_seller.action_required'
+  | 'dintero_seller.approved'
+  | 'dintero_seller.rejected'
+  | 'team.invite_accepted'
 
 // RPC payload shapes — kept narrow so the discriminated unions in callers
 // stay exhaustive.

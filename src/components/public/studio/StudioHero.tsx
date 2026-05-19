@@ -22,6 +22,10 @@ const TABS: { key: StudioTab; label: string }[] = [
  */
 export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroProps) {
   const coverUrl = organization.default_course_image_url;
+  const logoUrl =
+    organization.slug === 'inspire-yogastudio'
+      ? '/68bc6f41587d4e422ca9562d_Logo - black.svg'
+      : organization.logo_url;
 
   return (
     <section>
@@ -43,12 +47,12 @@ export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroP
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="relative z-10 -mt-12 sm:-mt-14">
-          {organization.logo_url ? (
-            <div className="size-24 sm:size-28 rounded-full bg-background ring-4 ring-background overflow-hidden flex items-center justify-center shadow-sm">
+          {logoUrl ? (
+            <div className="size-24 sm:size-28 rounded-full bg-background ring-1 ring-border overflow-hidden flex items-center justify-center shadow-sm">
               <img
-                src={organization.logo_url}
+                src={logoUrl}
                 alt={`${organization.name} logo`}
-                className="size-full object-cover"
+                className="size-full object-contain p-2"
               />
             </div>
           ) : (

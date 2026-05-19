@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Info } from '@/lib/icons';
-import { Spinner } from '@/components/ui/spinner';
+import { formatKroner } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FieldError } from '@/components/ui/field-error';
@@ -43,9 +43,16 @@ interface CourseSettingsTabProps {
   onMaxParticipantsChange: (value: number) => void;
   currentEnrolled: number;
 
+  // Pricing — for series the input is per-gang; the stored value (passed in
+  // via `price`) is the total (per-gang × total_weeks), matching the create
+  // flow's convention.
+  courseFormat: 'single' | 'series';
+  totalWeeks: number;
+  price: number;
+  onPriceChange: (totalPrice: number) => void;
+
   // Drop-in — series-only. When true on a started, non-full series the
   // public BookingPanel exposes a drop-in option (price = base ÷ weeks).
-  courseFormat: 'single' | 'series';
   allowsDropIn: boolean;
   onAllowsDropInChange: (value: boolean) => void;
 
@@ -75,6 +82,9 @@ export const CourseSettingsTab = ({
   onMaxParticipantsChange,
   currentEnrolled,
   courseFormat,
+  totalWeeks,
+  price,
+  onPriceChange,
   allowsDropIn,
   onAllowsDropInChange,
   isDirty,
@@ -84,6 +94,15 @@ export const CourseSettingsTab = ({
 }: CourseSettingsTabProps) => {
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
+
+  // Per-gang for series, total for single. Mirrors create-course's input shape.
+  const perGangPrice = useMemo(() => {
+    if (courseFormat === 'series' && totalWeeks > 0) {
+      return Math.round(price / totalWeeks);
+    }
+    return price;
+  }, [courseFormat, totalWeeks, price]);
+  const [priceInput, setPriceInput] = useState(String(perGangPrice));
 
   // Time slot helpers (matching CreateCoursePage)
   const allTimeSlots = useMemo(() => {
@@ -130,6 +149,29 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(maxParticipants));
   }, [maxParticipants]);
 
+  useEffect(() => {
+    setPriceInput(String(perGangPrice));
+  }, [perGangPrice]);
+
+  const commitPriceInput = () => {
+    const trimmed = priceInput.trim();
+    if (trimmed === '') {
+      setPriceInput(String(perGangPrice));
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setPriceInput(String(perGangPrice));
+      return;
+    }
+    const normalized = Math.floor(parsed);
+    const totalPrice = courseFormat === 'series' ? normalized * (totalWeeks || 1) : normalized;
+    if (totalPrice !== price) {
+      onPriceChange(totalPrice);
+    }
+    setPriceInput(String(normalized));
+  };
+
   const commitParticipantsInput = () => {
     const trimmed = participantsInput.trim();
 
@@ -157,7 +199,7 @@ export const CourseSettingsTab = ({
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
         <div>
           <h3 className="text-base font-medium tracking-tight text-foreground">Generelt</h3>
-          <p className="mt-1 text-sm text-foreground-muted">Navn, beskrivelse og forsidebilde.</p>
+          <p className="mt-1 text-sm text-foreground-muted">Slik fremstår kurset på kurssiden og i oversikter.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
           <div className="relative aspect-[16/10] w-60 overflow-hidden rounded-lg">
@@ -199,11 +241,11 @@ export const CourseSettingsTab = ({
         </div>
       </section>
 
-      {/* Tid og kapasitet */}
+      {/* Tid og plasser */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
         <div>
-          <h3 className="text-base font-medium tracking-tight text-foreground">Tid og kapasitet</h3>
-          <p className="mt-1 text-sm text-foreground-muted">Tidspunkt, varighet og antall plasser.</p>
+          <h3 className="text-base font-medium tracking-tight text-foreground">Tid og plasser</h3>
+          <p className="mt-1 text-sm text-foreground-muted">Når kurset går og hvor mange som kan delta.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
           <div>
@@ -297,22 +339,53 @@ export const CourseSettingsTab = ({
                 />
                 {isBelowEnrolled ? (
                   <FieldError className="mt-2 tabular-nums">
-                    Kan ikke være lavere enn {currentEnrolled}. Så mange er allerede påmeldt.
+                    {currentEnrolled} er allerede påmeldt — kan ikke være lavere.
                   </FieldError>
                 ) : null}
               </div>
             );
           })()}
-          {/* Drop-in — series only. Lives inside Tid og kapasitet because it's
-              an access/pricing modifier on the schedule, not a standalone
-              concern. Public-side surfacing requires (1) course has started
-              and (2) spots available. Price = base ÷ total weeks. */}
+        </div>
+      </section>
+
+      {/* Pris og påmelding */}
+      <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
+        <div>
+          <h3 className="text-base font-medium tracking-tight text-foreground">Pris og påmelding</h3>
+          <p className="mt-1 text-sm text-foreground-muted">Hva deltakere betaler og hvilke billetter de kan velge.</p>
+        </div>
+        <div className="md:col-span-2 space-y-4">
+          <div>
+            <label htmlFor="settings-price" className="text-sm font-medium mb-2 block text-foreground">
+              {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
+            </label>
+            <Input
+              id="settings-price"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value.replace(/[^\d]/g, ''))}
+              onBlur={commitPriceInput}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  commitPriceInput();
+                }
+              }}
+            />
+            {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
+              <p className="mt-2 text-sm text-foreground-muted">
+                Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
+              </p>
+            )}
+          </div>
           {courseFormat === 'series' && (
             <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-medium text-foreground">Tillat drop-in</span>
                 <span className="block text-sm text-foreground-muted mt-0.5">
-                  La nye bli med på enkelttimer. Vi regner ut pris per gang automatisk.
+                  La nye bli med på enkelttimer. Pris per gang regnes ut automatisk.
                 </span>
               </span>
               <Switch
@@ -351,7 +424,7 @@ export const CourseSettingsTab = ({
                 onClick={onCancel}
                 disabled={isSaving}
               >
-                Forkast
+                Avbryt
               </Button>
               <Button
                 size="sm"
@@ -359,16 +432,11 @@ export const CourseSettingsTab = ({
                   commitParticipantsInput();
                   onSave();
                 }}
-                disabled={isSaving || !isDirty}
+                disabled={!isDirty}
+                loading={isSaving}
+                loadingText="Lagrer"
               >
-                {isSaving ? (
-                  <>
-                    <Spinner size="sm" />
-                    Lagrer
-                  </>
-                ) : (
-                  'Lagre endringer'
-                )}
+                Lagre endringer
               </Button>
             </div>
           </div>

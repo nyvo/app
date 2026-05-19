@@ -24,13 +24,9 @@ interface AuthContextType {
   userRole: SellerMemberRole | null
 
   // Auth methods
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: Error | null }>
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signInWithGoogle: (redirectTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   sendMagicLink: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
-  resetPassword: (email: string, redirectTo?: string) => Promise<{ error: Error | null }>
-  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
 
   // Seller methods
   ensureSeller: (name: string, slug: string, sellerType?: string) => Promise<{ seller: Seller | null; error: Error | null }>
@@ -38,7 +34,7 @@ interface AuthContextType {
   refreshSellers: () => Promise<void>
 
   // Onboarding methods
-  setRole: (role: UserRole) => Promise<{ error: Error | null }>
+  setRole: (role: UserRole | null) => Promise<{ error: Error | null }>
   completeBuyerOnboarding: (input: { name: string; phone?: string }) => Promise<{ error: Error | null }>
   markOnboardingComplete: () => Promise<{ error: Error | null }>
 }
@@ -62,11 +58,26 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
 }
 
 async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
+  // Explicit column list (not `*`). Sensitive fields — dintero_approval_id,
+  // dintero_contract_url, phone, organization_number — are now revoked from
+  // the authenticated role and must go through get_seller_private (a
+  // member-gated RPC). Reading them as a regular column would error.
   const { data: memberships, error: memberError } = await supabase
     .from('seller_members')
     .select(`
       role,
-      seller:sellers(*)
+      seller:sellers(
+        id,
+        name,
+        logo_url,
+        email,
+        seller_type,
+        created_at,
+        updated_at,
+        dintero_onboarding_complete,
+        dintero_seller_id,
+        dintero_onboarding_status
+      )
     `)
     .eq('user_id', userId)
 
@@ -284,22 +295,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Sign up
-  const signUp = useCallback(async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name } }
-    })
-    return { error: error as Error | null }
-  }, [])
-
-  // Sign in
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error as Error | null }
-  }, [])
-
   // Sign in with Google OAuth
   const signInWithGoogle = useCallback(async (redirectTo?: string) => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -319,21 +314,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.dashboard}`,
       },
     })
-    return { error: error as Error | null }
-  }, [])
-
-  // Reset password — redirectTo defaults to teacher reset route.
-  // Student pages pass their own redirectTo for context isolation.
-  const resetPassword = useCallback(async (email: string, redirectTo?: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${window.location.origin}/reset-password`,
-    })
-    return { error: error as Error | null }
-  }, [])
-
-  // Update password for authenticated user
-  const updatePassword = useCallback(async (newPassword: string) => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
     return { error: error as Error | null }
   }, [])
 
@@ -436,7 +416,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Onboarding — write the role the user picked in the RoleChooser step.
   // No auto-side-effects: a buyer doesn't get a seller stub here, a seller
   // doesn't get a team here. Those happen later in their respective forms.
-  const setRole = useCallback(async (role: UserRole) => {
+  const setRole = useCallback(async (role: UserRole | null) => {
     const userId = userRef.current?.id
     if (!userId) return { error: new Error('Ikke logget inn') }
     const { error } = await supabase
@@ -525,13 +505,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentTeam,
     sellers,
     userRole,
-    signUp,
-    signIn,
     signInWithGoogle,
     signOut,
     sendMagicLink,
-    resetPassword,
-    updatePassword,
     ensureSeller,
     switchSeller,
     refreshSellers,
@@ -540,7 +516,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     markOnboardingComplete,
   }), [
     user?.id,
-    profile?.id,
+    profile,
     session?.access_token,
     isLoading,
     isInitialized,
@@ -548,13 +524,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     currentTeam,
     sellersKey,
     userRole,
-    signUp,
-    signIn,
     signInWithGoogle,
     signOut,
     sendMagicLink,
-    resetPassword,
-    updatePassword,
     ensureSeller,
     switchSeller,
     refreshSellers,

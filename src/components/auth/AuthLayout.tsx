@@ -25,16 +25,16 @@ export function AuthLayout({
   children,
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen w-full text-foreground antialiased flex flex-col bg-background selection:bg-muted selection:text-foreground">
-      <header className="w-full pt-8 pb-4 px-6 flex items-center justify-center z-50 max-w-6xl mx-auto">
-        <Link to="/" className="flex items-center select-none mx-auto">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground antialiased selection:bg-muted selection:text-foreground">
+      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
+        <Link to="/" className="flex select-none items-center">
           <span className="text-base font-medium text-foreground">
             Openspot
           </span>
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12 sm:px-6">
+      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
         <motion.div
           variants={authPageVariants}
           initial="initial"
@@ -48,8 +48,8 @@ export function AuthLayout({
             </div>
           ) : (
             <div className="flex flex-col">
-              <div className="mb-8 space-y-2">
-                <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <div className="mb-8 space-y-2 text-center">
+                <h1 className="text-2xl font-medium tracking-tight text-foreground">
                   {title}
                 </h1>
                 {subtitle && (
@@ -64,7 +64,7 @@ export function AuthLayout({
       </main>
 
       {footer && (
-        <footer className="py-6 text-center bg-background">
+        <footer className="py-8 text-center">
           {footer}
         </footer>
       )}

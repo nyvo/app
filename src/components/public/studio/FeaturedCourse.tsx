@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ImageIcon, MapPin, User, Clock, Star } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
@@ -7,6 +7,10 @@ import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/pub
 
 interface FeaturedCourseProps {
   course: PublicCourseWithDetails;
+  /** Viewing storefront — carried as state so the detail back-link returns
+   * here even in syndicated cases. */
+  viewingSlug?: string;
+  viewingName?: string | null;
 }
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
@@ -45,8 +49,7 @@ function formatDuration(duration: number | null): string {
  * On mobile: vertical stack, image on top. On md+: split half/half.
  * Featured is signaled by a lavender "Fremhevet kurs" badge inside the card.
  */
-export function FeaturedCourse({ course }: FeaturedCourseProps) {
-  const location = useLocation();
+export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCourseProps) {
   const studioSlug = course.seller?.slug ?? '';
   const img = resolveCourseImage(course);
   const date = course.next_session?.session_date ?? course.start_date;
@@ -59,7 +62,7 @@ export function FeaturedCourse({ course }: FeaturedCourseProps) {
   return (
     <Link
       to={`/${studioSlug}/${course.slug}`}
-      state={{ backgroundLocation: location }}
+      state={{ fromSlug: viewingSlug ?? studioSlug, fromName: viewingName ?? course.seller?.name ?? null }}
       className={cn(
         'group relative grid overflow-hidden rounded-xl bg-surface outline-none',
         'ring-1 ring-border transition-all duration-300',

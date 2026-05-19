@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge, type CourseStatus } from '@/components/ui/status-badge';
@@ -39,6 +39,11 @@ interface CourseCardProps {
   course: PublicCourseWithDetails;
   ratio?: 'portrait' | 'landscape';
   className?: string;
+  /** Storefront the user is viewing; carried as state so the detail page's
+   * back link returns here even in syndicated cases (URL canonicalizes to
+   * the course owner). */
+  viewingSlug?: string;
+  viewingName?: string | null;
 }
 
 const WEEKDAYS_SHORT = ['Søn', 'Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør'] as const;
@@ -78,11 +83,13 @@ function extractTime(timeSchedule: string | null): string {
  * Date chip + meta line each follow the "one weight, one color" rule:
  * fragments on the same line share a treatment.
  */
-export function CourseCard({ course, ratio = 'portrait', className }: CourseCardProps) {
-  const location = useLocation();
+export function CourseCard({ course, ratio = 'portrait', className, viewingSlug, viewingName }: CourseCardProps) {
   const studioSlug = course.seller?.slug ?? '';
   const href = `/${studioSlug}/${course.slug}`;
-  const linkState = { backgroundLocation: location };
+  const linkState = {
+    fromSlug: viewingSlug ?? studioSlug,
+    fromName: viewingName ?? course.seller?.name ?? null,
+  };
   const [imgFailed, setImgFailed] = useState(false);
 
   const img = resolveCourseImage(course);

@@ -54,7 +54,13 @@ export function OtherCoursesShelf({
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {courses.map(course => (
-          <CourseCard key={course.id} course={course} ratio="landscape" />
+          <CourseCard
+            key={course.id}
+            course={course}
+            ratio="landscape"
+            viewingSlug={organizationSlug}
+            viewingName={organizationName}
+          />
         ))}
       </div>
     </section>

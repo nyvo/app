@@ -27,11 +27,11 @@ export function PublicFooter({ studioName, maxWidthClassName = 'max-w-6xl' }: Pu
           <div className="flex flex-col gap-3 text-sm font-medium text-foreground-muted sm:flex-row sm:gap-8">
             {studioName && <span className="text-foreground">{studioName}</span>}
             <Link to="/terms" className="hover:text-foreground transition-colors">Vilkår</Link>
-            <Link to="/" className="hover:text-foreground transition-colors">Forsiden</Link>
+            <Link to="/personvern" className="hover:text-foreground transition-colors">Personvern</Link>
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border flex items-center justify-between text-xs text-foreground-disabled">
+        <div className="mt-10 pt-6 border-t border-border flex items-center justify-between text-sm text-foreground-disabled">
           <span>© {new Date().getFullYear()} Openspot</span>
           <span className="font-medium">Laget i Norge</span>
         </div>

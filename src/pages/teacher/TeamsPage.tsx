@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ExternalLink } from '@/lib/icons';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
@@ -39,14 +38,13 @@ const TeamsPage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-4xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-12 pt-6 lg:pt-12 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Studio</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-foreground">Studio</h1>
           {publicUrl && (
             <Button asChild size="sm" className="shrink-0">
               <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink data-icon="inline-start" />
                 Vis min side
               </a>
             </Button>

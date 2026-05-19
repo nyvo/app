@@ -21,12 +21,13 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import {
-  captureTransaction,
+  captureIfAuthorized,
   getTransaction,
   voidTransaction,
   type DinteroTransaction,
 } from '../_shared/dintero.ts'
 import { getCorsHeaders, handleCors } from '../_shared/auth.ts'
+import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -151,7 +152,7 @@ Deno.serve(async (req: Request) => {
     if (attempt.existing_signup_id) {
       if (transaction.status === 'AUTHORIZED') {
         try {
-          await captureTransaction(transactionId, transaction.amount)
+          await captureIfAuthorized(transactionId, transaction.amount)
         } catch (err) {
           const message = err instanceof Error ? err.message : 'capture failed'
           await supabase
@@ -184,6 +185,8 @@ Deno.serve(async (req: Request) => {
         .update({ status: 'captured', dintero_transaction_id: transactionId })
         .eq('id', attempt.id)
 
+      await deliverBookingConfirmations(supabase, attempt.existing_signup_id, attempt, amountNok)
+
       return json({ signup_id: attempt.existing_signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
     }
 
@@ -213,21 +216,11 @@ Deno.serve(async (req: Request) => {
     })
 
     if (!signupResult || !signupResult.success) {
-      // Race lost OR duplicate signup. If duplicate, the signup already exists
-      // (already_signed_up); the short-circuit at the top should have caught it
-      // but belt-and-braces: return the existing one if we can find it.
-      if (signupResult?.error === 'already_signed_up') {
-        const { data: existing } = await supabase
-          .from('signups')
-          .select('id')
-          .eq('dintero_transaction_id', transactionId)
-          .maybeSingle()
-        if (existing) {
-          return json({ signup_id: existing.id, status: 'already_processed' } satisfies FinalizeResult, 200)
-        }
-      }
-
-      // Capacity loss / sales window expired / tier sold out → void (if still authorized).
+      // The RPC serializes same-transaction callers on an advisory lock and
+      // short-circuits to success when the signup already exists, so any
+      // failure here is a real reject: capacity loss, sales window expired,
+      // tier sold out, or genuine duplicate booking (already_signed_up).
+      // All warrant a void if the auth is still live.
       if (transaction.status === 'AUTHORIZED') {
         try {
           await voidTransaction(transactionId)
@@ -249,10 +242,20 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // Race-loser fast path: the RPC found an existing signup for this
+    // transaction (the webhook won). Return it without re-capturing or
+    // re-firing side effects — the winner already did both.
+    if (signupResult.status === 'already_processed') {
+      return json(
+        { signup_id: signupResult.signup_id, status: 'already_processed' } satisfies FinalizeResult,
+        200,
+      )
+    }
+
     // Capture (only if still AUTHORIZED — CAPTURED means someone already captured, just confirm).
     if (transaction.status === 'AUTHORIZED') {
       try {
-        await captureTransaction(transactionId, transaction.amount)
+        await captureIfAuthorized(transactionId, transaction.amount)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'capture failed'
         await supabase
@@ -271,6 +274,8 @@ Deno.serve(async (req: Request) => {
       .from('payment_attempts')
       .update({ status: 'captured', dintero_transaction_id: transactionId })
       .eq('id', attempt.id)
+
+    await deliverBookingConfirmations(supabase, signupResult.signup_id, attempt, amountNok)
 
     return json({ signup_id: signupResult.signup_id, status: 'confirmed' } satisfies FinalizeResult, 200)
   } catch (err) {

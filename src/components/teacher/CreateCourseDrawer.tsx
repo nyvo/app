@@ -108,7 +108,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     if (format === 'series') {
       const w = parseInt(weeks, 10);
       if (!weeks) e.weeks = 'Skriv inn antall uker';
-      else if (isNaN(w) || w < 1 || w > 50) e.weeks = 'Mellom 1 og 50';
+      else if (isNaN(w) || w < 2 || w > 50) e.weeks = 'Mellom 2 og 50';
     }
     if (!location.trim()) e.location = 'Velg sted';
     const cap = parseInt(capacity, 10);
@@ -207,7 +207,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         className="flex flex-col gap-0 sm:max-w-[480px] w-full p-0"
       >
         <SheetHeader className="px-6 py-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">Opprett kurs</SheetTitle>
+          <SheetTitle>Opprett kurs</SheetTitle>
           <SheetDescription className="text-sm text-foreground-muted">
             Bare det viktigste – du kan endre alle detaljer på kurssiden etterpå.
           </SheetDescription>
@@ -288,7 +288,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
                 id="cc-weeks"
                 type="number"
                 inputMode="numeric"
-                min="1"
+                min="2"
                 max="50"
                 value={weeks}
                 onChange={(e) => setWeeks(e.target.value)}

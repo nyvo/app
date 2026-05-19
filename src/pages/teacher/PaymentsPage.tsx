@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import {
   createDinteroSeller,
   checkDinteroSellerStatus,
@@ -50,7 +51,28 @@ const PaymentsPage = () => {
     (currentSeller?.dintero_onboarding_status as DinteroOnboardingStatus | null) || null;
   const isConnected = !!currentSeller?.dintero_onboarding_complete;
   const hasApproval = !!currentSeller?.dintero_seller_id;
-  const contractUrl = currentSeller?.dintero_contract_url || null;
+
+  // dintero_contract_url is no longer on the public sellers row — it's a KYC
+  // URL that's gated to seller members only. Fetch it through the
+  // get_seller_private RPC, which checks membership server-side.
+  const [contractUrl, setContractUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!currentSeller?.id || isConnected) {
+      setContractUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase.rpc as any)('get_seller_private', {
+        p_seller_id: currentSeller.id,
+      });
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : null;
+      setContractUrl(row?.dintero_contract_url ?? null);
+    })();
+    return () => { cancelled = true };
+  }, [currentSeller?.id, isConnected, onboardingStatus]);
 
   const [form, setForm] = useState<OnboardingFormState>({
     organizationNumber: '',
@@ -144,10 +166,10 @@ const PaymentsPage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-12 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Betalingskonto</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-foreground">Betalingskonto</h1>
         </div>
 
         <div className="space-y-8">

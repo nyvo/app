@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/ui/button';
+import { useParams } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PageState } from '@/components/page-state/page-state';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
 import { Mail } from '@/lib/icons';
 import { StudioHero, type StudioTab } from '@/components/public/studio/StudioHero';
 import { StudioMonthSchedule } from '@/components/public/studio/StudioMonthSchedule';
+
+type ErrorKind = 'not-found' | 'load-failed';
 
 const CANCELLED_GRACE_DAYS = 30;
 
@@ -34,22 +36,22 @@ const PublicCoursesPage = () => {
   const [organization, setOrganization] = useState<PublicSeller | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
   const [activeTab, setActiveTab] = useState<StudioTab>('kurs');
 
   useEffect(() => {
     async function loadData() {
       if (!slug) {
-        setError('Fant ikke siden.');
+        setErrorKind('not-found');
         setLoading(false);
         return;
       }
       setLoading(true);
-      setError(null);
+      setErrorKind(null);
 
       const { data: sellerData, error: sellerError } = await fetchSellerBySlug(slug);
       if (sellerError || !sellerData) {
-        setError('Fant ikke studioet.');
+        setErrorKind('not-found');
         setLoading(false);
         return;
       }
@@ -57,7 +59,7 @@ const PublicCoursesPage = () => {
 
       const activeResult = await fetchPublicCourses({ teamSlug: slug });
       if (activeResult.error) {
-        setError('Kunne ikke laste kurs.');
+        setErrorKind('load-failed');
         setLoading(false);
         return;
       }
@@ -77,34 +79,18 @@ const PublicCoursesPage = () => {
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden flex flex-col">
       <main className="flex-1">
-        {loading && (
-          <div className="flex items-center justify-center py-32">
-            <Spinner size="lg" />
-          </div>
+        {loading && <StudioPageSkeleton />}
+
+        {errorKind === 'not-found' && !loading && (
+          <PageState variant="public-team" />
         )}
 
-        {error && !loading && (
-          <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
-            <h1 className="text-2xl font-semibold tracking-tight max-w-md text-foreground">
-              {error}
-            </h1>
-            <p className="mt-3 text-sm text-foreground-muted max-w-md">
-              Lenken er kanskje utdatert, eller studioet er flyttet.
-            </p>
-            <Button size="sm" className="mt-7" onClick={() => window.location.reload()}>
-              Prøv igjen
-            </Button>
-            <Link
-              to="/"
-              className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
-            >
-              eller gå til startsiden →
-            </Link>
-          </main>
+        {errorKind === 'load-failed' && !loading && (
+          <PageState variant="server-error" />
         )}
 
-        {organization && !loading && !error && (
-          <>
+        {organization && !loading && !errorKind && (
+          <div className="animate-in fade-in duration-150">
             <StudioHero
               organization={organization}
               activeTab={activeTab}
@@ -122,7 +108,11 @@ const PublicCoursesPage = () => {
                   </div>
                 ) : (
                   <div className="pt-10 pb-20">
-                    <StudioMonthSchedule courses={sorted} />
+                    <StudioMonthSchedule
+                      courses={sorted}
+                      viewingSlug={slug}
+                      viewingName={organization.name}
+                    />
                   </div>
                 )
               ) : (
@@ -149,11 +139,46 @@ const PublicCoursesPage = () => {
                 </div>
               )}
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>
   );
 };
+
+function StudioPageSkeleton() {
+  return (
+    <div
+      className="animate-in fade-in duration-150"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="sr-only">Laster…</span>
+      {/* Hero block — matches StudioHero cover + identity */}
+      <Skeleton className="h-48 w-full rounded-none sm:h-64" />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="pt-8 pb-6 space-y-3">
+          <Skeleton className="h-7 w-56" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+        </div>
+        {/* Day strip — matches StudioMonthSchedule scroller */}
+        <div className="pt-4 space-y-6">
+          <Skeleton className="h-6 w-32" />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-[88px] w-28 shrink-0 rounded-lg" />
+            ))}
+          </div>
+        </div>
+        {/* Class card list */}
+        <div className="pt-8 pb-20 space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[92px] w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default PublicCoursesPage;

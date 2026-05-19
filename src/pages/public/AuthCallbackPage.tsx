@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
@@ -47,35 +46,41 @@ const AuthCallbackPage = () => {
 
   if (errorMessage) {
     return (
-      <AuthLayout title="" customContent>
-        <div className="w-full space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground max-w-md">
+      <AuthLayout
+        title=""
+        customContent
+        footer={
+          <p className="text-sm text-foreground-muted">
+            Trenger du hjelp?{' '}
+            <a href="mailto:hei@openspot.no" className="font-medium text-foreground hover:underline">
+              hei@openspot.no
+            </a>
+          </p>
+        }
+      >
+        <div className="mb-8 w-full space-y-2 text-center">
+          <h1 className="text-2xl font-medium tracking-tight text-foreground">
             Ugyldig lenke
           </h1>
-          <p className="text-sm text-foreground-muted max-w-md">
+          <p className="text-sm text-foreground-muted">
             {errorMessage}
           </p>
         </div>
 
-        <div className="mt-7 w-full">
-          <Button asChild size="cta" className="w-full">
-            <Link to={AUTH_ROUTES.login}>Tilbake til innlogging</Link>
+        <div className="w-full">
+          <Button asChild size="lg" className="w-full">
+            <Link to={AUTH_ROUTES.auth}>Tilbake til innlogging</Link>
           </Button>
         </div>
       </AuthLayout>
     )
   }
 
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label="Logger inn"
-      className="min-h-screen w-full bg-background text-foreground antialiased flex items-center justify-center"
-    >
-      <Spinner size="xl" />
-    </div>
-  )
+  // Callback resolution is fast (Supabase parses the URL hash and writes the
+  // session synchronously). Rendering nothing avoids the full-screen-spinner
+  // flash (Studio § 10). On the rare slow init the user briefly sees blank
+  // — the navigate fires as soon as `isInitialized` flips true.
+  return null
 }
 
 export default AuthCallbackPage

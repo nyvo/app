@@ -1,14 +1,13 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, ChevronUp } from '@/lib/icons';
 import { motion } from 'framer-motion';
 import { cn, formatKroner } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/ui/status-badge';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { CourseFormat, DeliveryMode } from '@/types/database';
 import { routes } from '@/lib/routes';
-
-const MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'] as const;
 
 const FORMAT_LABEL: Record<CourseFormat, string> = {
   series: 'Kursrekke',
@@ -21,45 +20,33 @@ function typeLabel(format: CourseFormat, delivery: DeliveryMode): string {
 }
 
 /**
- * Next session as `22. mai · 18:00` (or `I dag · 18:00` / `I morgen · 18:00`).
- * One line, no weekday name — date + time is enough at scan speed.
+ * Publish-state badge — neutral pill. Silent on the healthy state (Publisert);
+ * only renders for states the teacher might need to notice. Uses the Badge
+ * primitive per the studio Badge spec.
  */
-function formatNextSession(sessionDate: string | null | undefined, startTime: string | null | undefined): string {
-  if (!sessionDate) return '—';
-  const date = new Date(sessionDate);
-  if (isNaN(date.getTime())) return '—';
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(date);
-  target.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  const time = startTime ? ` · ${startTime}` : '';
-  if (diffDays === 0) return `I dag${time}`;
-  if (diffDays === 1) return `I morgen${time}`;
-  return `${date.getDate()}. ${MONTHS_SHORT[date.getMonth()]}${time}`;
+function statusLabel(courseStatus: string): { text: string; live: boolean } {
+  switch (courseStatus) {
+    case 'draft':
+      return { text: 'Utkast', live: false };
+    case 'cancelled':
+      return { text: 'Avlyst', live: false };
+    case 'completed':
+      return { text: 'Fullført', live: false };
+    case 'upcoming':
+    case 'active':
+    default:
+      return { text: 'Publisert', live: true };
+  }
 }
 
-type CourseRowStatus = 'active' | 'full' | 'upcoming' | 'draft' | 'cancelled';
-
-function deriveStatus(courseStatus: string, signups: number, max: number | null): CourseRowStatus {
-  if (courseStatus === 'draft') return 'draft';
-  if (courseStatus === 'cancelled') return 'cancelled';
-  if (max !== null && signups >= max) return 'full';
-  if (courseStatus === 'upcoming') return 'upcoming';
-  return 'active';
-}
-
-/**
- * Status pill on a course row. Hides for `active` since on the Aktive tab
- * every row would otherwise repeat "Pågår" — pure noise. All visible states
- * delegate to the shared StatusBadge so colors stay consistent with the
- * schedule drawer and course drawer.
- */
-function StatusPill({ status }: { status: CourseRowStatus }) {
-  if (status === 'active') return null;
-  return <StatusBadge status={status} />;
+function StatusBadgeRow({ courseStatus }: { courseStatus: string }) {
+  const { text, live } = statusLabel(courseStatus);
+  if (live) return null;
+  return (
+    <Badge variant="neutral" shape="pill" size="sm">
+      {text}
+    </Badge>
+  );
 }
 
 export const COURSES_PER_PAGE = 6;
@@ -74,7 +61,7 @@ export const COURSES_PER_PAGE = 6;
 export type SortKey = 'name' | 'next' | 'signups' | 'price';
 export type SortDir = 'asc' | 'desc';
 
-const COLS = 'grid grid-cols-[minmax(0,1fr)_140px] items-center gap-6 md:grid-cols-[minmax(0,1fr)_180px_120px_120px]';
+const COLS = 'grid grid-cols-[minmax(0,1fr)_100px_80px] items-center gap-6 md:grid-cols-[minmax(0,1fr)_120px_120px_120px]';
 
 interface TableHeaderProps {
   sortKey: SortKey;
@@ -121,7 +108,7 @@ function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
     <div className={cn(COLS, 'pb-5')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <SortableHeader label="Dato" columnKey="next" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
+      <span className="text-sm text-foreground-muted">Status</span>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
       <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
     </div>
@@ -129,8 +116,6 @@ function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
 }
 
 function TableRow({ course }: { course: SessionScheduleRow }) {
-  const status = deriveStatus(course.courseStatus, course.signupsCount, course.maxParticipants);
-  const nextSession = status === 'draft' ? '—' : formatNextSession(course.sessionDate, course.startTime);
   const roster = course.maxParticipants
     ? `${course.signupsCount} / ${course.maxParticipants}`
     : `${course.signupsCount}`;
@@ -144,17 +129,14 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       )}
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-sm font-medium text-foreground">{course.courseTitle}</h3>
-          <StatusPill status={status} />
-        </div>
+        <h3 className="truncate text-sm font-medium text-foreground">{course.courseTitle}</h3>
         <p className="mt-0.5 truncate text-sm text-foreground-muted">
           {typeLabel(course.courseFormat, course.deliveryMode)}
         </p>
       </div>
-      <span className="hidden whitespace-nowrap text-sm text-foreground tabular-nums md:inline">
-        {nextSession}
-      </span>
+      <div>
+        <StatusBadgeRow courseStatus={course.courseStatus} />
+      </div>
       <span className="hidden whitespace-nowrap text-sm text-foreground tabular-nums md:inline">
         {roster}
       </span>
@@ -193,13 +175,20 @@ interface CourseListViewProps {
   sortKey: SortKey;
   sortDir: SortDir;
   onSort: (key: SortKey) => void;
+  /** Rendered in place of the body when `courses` is empty. The header stays
+   * visible so the table structure doesn't disappear between tab switches. */
+  emptyState?: ReactNode;
 }
 
-export function CourseListView({ courses, sortKey, sortDir, onSort }: CourseListViewProps) {
+export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
   return (
     <div>
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <TableBody courses={courses} />
+      {courses.length === 0 && emptyState ? (
+        <div className="border-t border-border">{emptyState}</div>
+      ) : (
+        <TableBody courses={courses} />
+      )}
     </div>
   );
 }
@@ -209,7 +198,7 @@ export function CourseListSkeleton() {
     <div>
       <div className={cn(COLS, 'pb-3 text-sm text-foreground-muted')}>
         <span>Navn</span>
-        <span className="hidden md:inline">Dato</span>
+        <span>Status</span>
         <span className="hidden md:inline">Påmeldte</span>
         <span>Pris</span>
       </div>
@@ -220,7 +209,7 @@ export function CourseListSkeleton() {
               <Skeleton className="h-4 w-48 max-w-full" />
               <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />
             </div>
-            <Skeleton className="hidden h-4 w-32 md:inline-block" />
+            <Skeleton className="h-5 w-20 rounded-full" />
             <Skeleton className="hidden h-4 w-16 md:inline-block" />
             <Skeleton className="h-4 w-16" />
           </div>

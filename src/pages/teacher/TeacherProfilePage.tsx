@@ -9,7 +9,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
-import { isValidEmail } from '@/lib/utils';
+import { isValidEmail, resolveDisplayName } from '@/lib/utils';
 import { AUTH_VALIDATION } from '@/lib/auth-messages';
 import { toast } from 'sonner';
 
@@ -17,15 +17,12 @@ const TeacherProfilePage = () => {
   const { profile, refreshSellers } = useAuth();
 
   // State for form fields - initialized from auth context
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
   useEffect(() => {
     if (profile) {
-      const nameParts = profile.name?.split(' ') || [];
-      setFirstName(nameParts[0] || '');
-      setLastName(nameParts.slice(1).join(' ') || '');
+      setName(resolveDisplayName(profile.name, profile.email));
       setEmail(profile.email || '');
     }
   }, [profile]);
@@ -33,17 +30,10 @@ const TeacherProfilePage = () => {
   // Dirty state tracking
   const isDirty = useMemo(() => {
     if (!profile) return false;
-    const nameParts = profile.name?.split(' ') || [];
-    const origFirst = nameParts[0] || '';
-    const origLast = nameParts.slice(1).join(' ') || '';
+    const origName = resolveDisplayName(profile.name, profile.email);
     const origEmail = profile.email || '';
-
-    return (
-      firstName !== origFirst ||
-      lastName !== origLast ||
-      email !== origEmail
-    );
-  }, [profile, firstName, lastName, email]);
+    return name !== origName || email !== origEmail;
+  }, [profile, name, email]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -52,16 +42,6 @@ const TeacherProfilePage = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     let isValid = true;
-
-    if (!firstName.trim()) {
-      newErrors.firstName = 'Skriv inn fornavn';
-      isValid = false;
-    }
-
-    if (!lastName.trim()) {
-      newErrors.lastName = 'Skriv inn etternavn';
-      isValid = false;
-    }
 
     if (!email.trim()) {
       newErrors.email = AUTH_VALIDATION.emailRequired;
@@ -79,18 +59,6 @@ const TeacherProfilePage = () => {
     setTouched(prev => ({ ...prev, [field]: true }));
 
     const newErrors = { ...errors };
-
-    if (field === 'firstName' && !firstName.trim()) {
-      newErrors.firstName = 'Skriv inn fornavn';
-    } else if (field === 'firstName') {
-      delete newErrors.firstName;
-    }
-
-    if (field === 'lastName' && !lastName.trim()) {
-      newErrors.lastName = 'Skriv inn etternavn';
-    } else if (field === 'lastName') {
-      delete newErrors.lastName;
-    }
 
     if (field === 'email') {
       if (!email.trim()) {
@@ -117,9 +85,7 @@ const TeacherProfilePage = () => {
 
   const handleCancel = () => {
     if (profile) {
-      const nameParts = profile.name?.split(' ') || [];
-      setFirstName(nameParts[0] || '');
-      setLastName(nameParts.slice(1).join(' ') || '');
+      setName(resolveDisplayName(profile.name, profile.email));
       setEmail(profile.email || '');
     }
     setErrors({});
@@ -127,7 +93,7 @@ const TeacherProfilePage = () => {
   };
 
   const handleSave = async () => {
-    setTouched({ firstName: true, lastName: true, email: true });
+    setTouched({ name: true, email: true });
 
     if (!validateForm()) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement;
@@ -139,11 +105,12 @@ const TeacherProfilePage = () => {
 
     setIsSaving(true);
 
-    // Save profile name
+    // Save profile name. Empty input clears the column (NULL) — the trigger
+    // seeds it from Google's display name on signup, but the user can wipe it.
     if (profile?.id) {
-      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+      const trimmed = name.trim();
       const { error: profileError } = await typedFrom('profiles')
-        .update({ name: fullName })
+        .update({ name: trimmed || null })
         .eq('id', profile.id);
 
       if (profileError) {
@@ -174,12 +141,18 @@ const TeacherProfilePage = () => {
     await supabase.auth.signOut({ scope: 'global' });
   };
 
-  // Delete account handler (deferred — signs out + instructs to contact support)
+  // Delete account handler — calls edge function that anonymizes payment
+  // records (bokføringsloven 5-yr retention) and deletes everything else.
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
+    const { error } = await supabase.functions.invoke('delete-account');
+    if (error) {
+      toast.error('Kunne ikke slette kontoen. Prøv igjen.');
+      setIsDeletingAccount(false);
+      return;
+    }
     await supabase.auth.signOut();
-    toast.info('Kontoen slettes. Kontakt hei@openspot.no for å angre.');
-    setIsDeletingAccount(false);
+    toast.success('Kontoen din er slettet');
   };
 
   return (
@@ -191,10 +164,10 @@ const TeacherProfilePage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="mx-auto w-full max-w-4xl px-6 pb-24 md:pb-8 lg:px-8"
+          className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
         >
           <div className="mb-12 pt-6 lg:pt-12">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-medium tracking-tight text-foreground">
               Innstillinger
             </h1>
           </div>
@@ -206,52 +179,23 @@ const TeacherProfilePage = () => {
                 <CardTitle>Personlig informasjon</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                   <div className="grid gap-2">
                     <label
-                      htmlFor="profile-firstname"
-                      data-error={(errors.firstName && touched.firstName) || undefined}
-                      className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                      htmlFor="profile-name"
+                      className="text-sm font-medium text-foreground"
                     >
-                      Fornavn
+                      Navn
                     </label>
                     <Input
-                      id="profile-firstname"
+                      id="profile-name"
                       type="text"
-                      value={firstName}
-                      onChange={(e) => { setFirstName(e.target.value); clearError('firstName'); }}
-                      onBlur={() => handleBlur('firstName')}
-                      aria-invalid={!!(errors.firstName && touched.firstName) || undefined}
-                      aria-describedby={errors.firstName && touched.firstName ? 'profile-firstname-error' : undefined}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                     />
-                    {errors.firstName && touched.firstName && (
-                      <FieldError id="profile-firstname-error" className="mt-0">{errors.firstName}</FieldError>
-                    )}
                   </div>
 
                   <div className="grid gap-2">
-                    <label
-                      htmlFor="profile-lastname"
-                      data-error={(errors.lastName && touched.lastName) || undefined}
-                      className="text-sm font-medium text-foreground data-[error=true]:text-danger"
-                    >
-                      Etternavn
-                    </label>
-                    <Input
-                      id="profile-lastname"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => { setLastName(e.target.value); clearError('lastName'); }}
-                      onBlur={() => handleBlur('lastName')}
-                      aria-invalid={!!(errors.lastName && touched.lastName) || undefined}
-                      aria-describedby={errors.lastName && touched.lastName ? 'profile-lastname-error' : undefined}
-                    />
-                    {errors.lastName && touched.lastName && (
-                      <FieldError id="profile-lastname-error" className="mt-0">{errors.lastName}</FieldError>
-                    )}
-                  </div>
-
-                  <div className="grid gap-2 md:col-span-2">
                     <label
                       htmlFor="profile-email"
                       data-error={(errors.email && touched.email) || undefined}

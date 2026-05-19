@@ -1,4 +1,4 @@
-import { MapPin } from '@/lib/icons';
+import { ArrowUpRight } from '@/lib/icons';
 
 interface LocationCardProps {
   /** The course's location string — usually "Studio · Sal" or a full address. */
@@ -6,27 +6,41 @@ interface LocationCardProps {
 }
 
 /**
- * Sted — outlined card, no heading. MapPin icon self-identifies the card
- * as a location block. Maps link sits below.
+ * Sted — map preview + address + directions/copy actions. The embed uses
+ * Google Maps' keyless search URL, so any location string works (full
+ * address, studio name, etc.) without needing an API key.
  */
 export function LocationCard({ location }: LocationCardProps) {
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+  // The stored string combines venue + room (e.g. "InSPIRE Yogastudio · Sal 1").
+  // The room part isn't geocodable and confuses Google's search, so we strip
+  // it before building the map URLs. Display + copy still use the full label.
+  const geocodeQuery = location.split('·')[0].trim() || location;
+  const encoded = encodeURIComponent(geocodeQuery);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+  const embedUrl = `https://maps.google.com/maps?q=${encoded}&z=15&output=embed`;
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-6">
-      <div className="flex items-start gap-3.5">
-        <MapPin className="size-4 shrink-0 mt-0.5 text-foreground" strokeWidth={1.75} />
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-medium text-foreground">{location}</p>
-          <a
-            href={mapsUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center text-sm text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-          >
-            Få veibeskrivelse
-          </a>
-        </div>
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="aspect-[16/9] w-full bg-muted">
+        <iframe
+          title="Kart over kurslokasjonen"
+          src={embedUrl}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="size-full border-0"
+        />
+      </div>
+      <div className="p-6">
+        <p className="text-base font-medium text-foreground">{location}</p>
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+        >
+          Veibeskrivelse
+          <ArrowUpRight className="size-3.5" strokeWidth={1.75} />
+        </a>
       </div>
     </div>
   );

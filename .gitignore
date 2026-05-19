@@ -42,3 +42,9 @@ supabase/.temp/
 
 # MCP config (contains tokens)
 .mcp.json
+
+# Local research/scratch notes
+tasks/
+checkout-success-refs/
+*-preview.html
+.claude/scheduled_tasks.lock

@@ -795,69 +795,52 @@ When a single card or list fails to load, that section should error gracefully w
 - **Per-section, not per-page.** If the schedule card fails but the bookings card loads, only the schedule card retries.
 - **Show the user the retry option.** Don't auto-retry silently. Honest communication beats hidden retries.
 
-### 13.5 Page-level states — one shell, four variants
+### 13.5 Page-level states — one shell, contextual variants
 
-When the whole route can't render (404, 500, no permission, or still loading), the same shell handles all four. Same layout, different copy and treatment. Studio's audience never has to learn multiple page-error designs.
+When the whole route can't render (404, 500, no permission, or still loading), the same shell handles all of it. Same layout, different copy. Studio's audience never has to learn multiple page-error designs.
 
-#### The shell — page-level, no card chrome
+#### The shell — page-level, no card chrome, no dual button
 
-**No card around the content. No eyebrow. No dual-button.** The error page lives directly on the page canvas. Single primary action; secondary becomes an inline link below.
+**No card around the content. No eyebrow. No dual-button. No inline secondary link by default.** The error page lives directly on the page canvas. Illustration → headline → optional supporting line → **at most one** action.
 
-Three reasons:
+Four reasons:
 1. The error itself IS the page — wrapping it in a card adds chrome that says "boxed UI element," not "the entire current state of this page."
-2. Dual-button layouts (primary pill + ghost button side-by-side) is the canonical AI/SaaS template render for error pages — every shadcn-default error page ships exactly this. Single primary + inline link is calmer and reduces decision-load for non-power-users.
-3. No eyebrow ("404", "500", "Error") — these are developer-speak. The headline already says what happened in plain language.
+2. Dual-button layouts (primary pill + ghost button side-by-side) are the canonical AI/SaaS template render for error pages — every shadcn-default error page ships exactly this.
+3. The earlier Studio shell paired primary + inline arrow link below. That still reads as a two-decision page. The browser's back button + URL bar + global nav are always present; an in-page action is only added when there's a useful contextual destination (a deleted course → "Til kursoversikten" makes sense; a typo'd URL → there is no useful destination, so render no button at all).
+4. No eyebrow ("404", "500", "Error") — these are developer-speak. The headline already says what happened in plain language.
 
 ```html
 <main class="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
+  <div class="mb-8">{{ illustration — optional line-art slot, ~120–160px }}</div>
   <h1 class="text-2xl font-semibold tracking-tight max-w-md">
     {{ headline — what happened, in one plain sentence }}
   </h1>
   <p class="mt-3 text-sm text-foreground-muted max-w-md">
     {{ supporting — optional context }}
   </p>
-  <button class="mt-7 btn btn-primary btn-sm">{{ primary action }}</button>
-  <a class="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted">
-    {{ secondary inline link, optional }} →
-  </a>
+  <!-- One action, ONLY when the variant supplies a useful destination -->
+  <div class="mt-7">{{ optional single primary action }}</div>
 </main>
 ```
 
-#### 404 — page not found
+#### The primitive — `<PageState>`
 
-The user's concern was real: a "back to homepage" button isn't always helpful (deleted course → home is wrong destination). The fix is a **smart fallback button** that's context-aware:
+Always reach for the primitive at `@/components/page-state/not-found-state` rather than re-implementing the shell. Variants supply pre-set copy + action:
 
-```ts
-function handleBackOrFallback(fallbackUrl = '/kurs') {
-  // Came from inside the app? Go back to where they were.
-  if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
-    window.history.back();
-    return;
-  }
-  // Came from external link → land them on the courses listing where they can find what they wanted
-  window.location.href = fallbackUrl;
-}
-```
+| Variant | When | Headline | Default action |
+|---------|------|----------|----------------|
+| `generic` | Catch-all 404 / typo'd URL | `Vi finner ikke denne siden` | none (browser back is enough) |
+| `course` | Teacher-side course route with missing/deleted id | `Vi finner ikke dette kurset` | `Til kursoversikten` → `/courses` |
+| `public-course` | Public course page with bad slug | `Kurset er ikke lenger tilgjengelig` | none |
+| `public-team` | Public team page with bad slug | `Vi finner ikke dette studioet` | none |
+| `permission` | Signed-out / wrong-account guard | `Du har ikke tilgang til denne siden` | `Logg inn` → `/auth` |
+| `server-error` | ErrorBoundary fallback / load-failed page | `Noe gikk galt` | `Last på nytt` → reload |
 
-Copy:
-- Headline: `Vi finner ikke den siden du leter etter`
-- Supporting: `Lenken er kanskje utdatert, eller siden er flyttet.`
-- Primary action: `Gå tilbake` (calls `handleBackOrFallback()`)
-- Inline link: `eller gå til startsiden →` (for the very-confused case)
+Override any field via props. Pass `null` to hide a default (`description={null}`, `action={null}`). For non-404 page failures (network errors, etc.) override `title` + `description` + `action` rather than inventing a new shell.
 
-#### 500 — server error
+#### Smart-fallback button — when to use it
 
-- Headline: `Noe gikk galt`
-- Supporting: `Prøv igjen om noen sekunder. Hvis problemet vedvarer, ta kontakt.`
-- Primary action: `Last på nytt` (`window.location.reload()`)
-- Inline link: `eller gå til startsiden →`
-
-#### Permission denied / not signed in
-
-- Headline: `Du har ikke tilgang til denne siden`
-- Supporting: contextual — `Logg inn med en konto som har tilgang, eller be eieren invitere deg.`
-- Primary action: `Logg inn` (or `Gå til startsiden` depending on context)
-- Inline link: `eller gå til startsiden →` (when primary is `Logg inn`)
+Older Studio shipped a `handleBackOrFallback()` helper that called `window.history.back()` if the referrer was internal. **Don't reach for this anymore.** Most variants render no in-page action, so the browser's back button handles it. The remaining variants point at a *known* destination (the courses list, the login page), so smart-back guessing isn't useful — the user already wants that specific place.
 
 #### Page-level loading — full skeleton template
 
@@ -902,7 +885,8 @@ The bans for this whole pattern, in one list:
 - **No infinite retry loops** in section error boundaries. Cap at 3 attempts with backoff.
 - **No "Are you sure?" generic dialogs** — see #12, undo first
 - **No persistent system alerts.** Studio has no banner system, no sidebar attention dots, no notifications inbox. State system-level facts in plain prose on the page where the user would act.
-- **No "Go to homepage" as the only 404 action** when the user came from a deleted resource — use the smart-fallback pattern
+- **No "Go to homepage" as the only 404 action** when the user came from a deleted resource — use a context-aware `<PageState>` variant (e.g. `course` → courses list)
+- **No dual-action 404s** (primary button + inline arrow link below). One action, only when the variant has a useful destination. Otherwise, no action — the browser back button suffices.
 - **No skeleton + spinner together** on the same loading state. Pick one.
 - **No shimmer animation** — pulse only (matches Studio's calm aesthetic)
 - **No status-code eyebrow on error pages.** "404", "500", "Error 403" above the headline reads as developer-speak leaking into UI. The headline says what happened in plain language; the eyebrow adds nothing for the user.
@@ -1753,7 +1737,7 @@ Wellness research is consistent: the instructor is one of the strongest trust si
 
 ### 18.6 Description
 
-Plain typography section. Body copy at **`text-[17px] leading-[1.65]`** — slightly larger than dashboard 14px, generous line-height for comfortable reading on a public surface. No card wrapper.
+Plain typography section. Body copy at **`text-base leading-relaxed`** (16px / ~1.625) — the public-surface body default. No card wrapper.
 
 ### 18.7 Datoer — collapsed by default, expandable
 

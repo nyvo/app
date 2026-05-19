@@ -1,15 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ImageIcon, Clock, Calendar } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { resolveCourseImage, type PublicCourseWithDetails } from '@/services/publicCourses';
-import type { CourseLevel } from '@/types/database';
-
-const LEVEL_LABELS: Record<CourseLevel, string> = {
-  alle: 'Alle nivåer',
-  nybegynner: 'Nybegynner',
-  viderekommen: 'Viderekommen',
-};
 
 const WEEKDAYS = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
 const MONTHS = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'] as const;
@@ -135,11 +127,6 @@ export function CourseHero({ course }: CourseHeroProps) {
               />
               <span>{instructor?.name ?? studio?.name}</span>
             </span>
-          )}
-          {course.level && (
-            <Badge variant="secondary" shape="pill" size="sm">
-              {LEVEL_LABELS[course.level]}
-            </Badge>
           )}
         </div>
       </div>

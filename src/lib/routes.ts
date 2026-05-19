@@ -19,13 +19,9 @@
 export const routes = {
   // ─── Public ────────────────────────────────────────────────────────────
   home: '/',
-  login: '/login',
-  signup: '/signup',
-  forgotPassword: '/forgot-password',
-  resetPassword: '/reset-password',
+  auth: '/auth',
   terms: '/terms',
   checkoutSuccess: '/checkout/success',
-  confirmEmail: '/confirm-email',
 
   // ─── Authenticated dashboard ──────────────────────────────────────────
   // Logged-in users land here. Public landing at `/` auto-redirects.

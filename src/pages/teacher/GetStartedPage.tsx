@@ -22,7 +22,7 @@ export default function GetStartedPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Kom i gang" />
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
         <motion.div
           variants={pageVariants}
           initial="initial"
@@ -30,7 +30,7 @@ export default function GetStartedPage() {
           transition={pageTransition}
         >
           <header className="mb-8 flex items-baseline justify-between gap-4">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-medium tracking-tight text-foreground">
               Kom i gang
             </h1>
             <p className="text-sm text-foreground-muted tabular-nums">

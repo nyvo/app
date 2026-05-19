@@ -65,15 +65,14 @@ function mapCourseToRow(
   };
 }
 
-type ViewTab = 'active' | 'past' | 'draft';
+type ViewTab = 'active' | 'past';
 
 // Default sort key + direction per tab — picked for what's most scannable.
 // Active: next session ascending (soonest first). Past: next session descending
-// (most recently ended first). Draft: name A-Å.
+// (most recently ended first).
 const DEFAULT_SORT_FOR_TAB: Record<ViewTab, { key: SortKey; dir: SortDir }> = {
   active: { key: 'next', dir: 'asc' },
   past: { key: 'next', dir: 'desc' },
-  draft: { key: 'name', dir: 'asc' },
 };
 
 const CoursesPage = () => {
@@ -198,11 +197,6 @@ const CoursesPage = () => {
     }));
   }, [courses, signupsCounts, nextSessionDates, dropInCourseIds]);
 
-  const draftCount = useMemo(
-    () => allRows.reduce((n, { course }) => n + (course.status === 'draft' ? 1 : 0), 0),
-    [allRows],
-  );
-
   const filteredRows = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const q = foldNorwegian(searchQuery.trim());
@@ -214,13 +208,12 @@ const CoursesPage = () => {
 
     return allRows
       .filter(({ row, course }) => {
-        if (viewTab === 'draft') {
-          if (course.status !== 'draft') return false;
-        } else if (viewTab === 'past') {
+        // Drafts no longer have their own tab — they live in Active and are
+        // distinguished by the Status column ("Utkast" vs "Synlig").
+        if (viewTab === 'past') {
           if (course.status === 'draft') return false;
           if (!isPast(course)) return false;
         } else {
-          if (course.status === 'draft') return false;
           if (isPast(course)) return false;
         }
 
@@ -286,11 +279,9 @@ const CoursesPage = () => {
   const showLoadMore = !isLoading && !error && filteredRows.length > 0 && hasMoreRows;
 
   const emptyTitle = 'Ingen kurs her';
-  const emptyDescription = viewTab === 'draft'
-    ? 'Du har ingen utkast.'
-    : viewTab === 'past'
-      ? 'Ingen fullførte kurs ennå.'
-      : 'Ingen aktive eller kommende kurs akkurat nå.';
+  const emptyDescription = viewTab === 'past'
+    ? 'Ingen fullførte kurs ennå.'
+    : 'Ingen aktive eller kommende kurs akkurat nå.';
 
   return (
       <div className="flex-1 flex flex-col min-h-full overflow-y-auto bg-background">
@@ -302,11 +293,11 @@ const CoursesPage = () => {
           initial="initial"
           animate="animate"
           transition={pageTransition}
-          className="shrink-0 mx-auto w-full max-w-6xl px-6 lg:px-8 pt-6 lg:pt-12 pb-0"
+          className="shrink-0 mx-auto w-full max-w-7xl px-6 lg:px-8 pt-6 lg:pt-12 pb-0"
         >
           <div className="mb-12 flex items-end justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">Mine kurs</h1>
+              <h1 className="text-2xl font-medium tracking-tight text-foreground">Mine kurs</h1>
             </div>
             {!showCoursesEmptyState && (
               <Button
@@ -329,7 +320,7 @@ const CoursesPage = () => {
           </div>
         </motion.header>
 
-        <div className="flex-1 mx-auto w-full max-w-6xl px-6 lg:px-8 pb-6 lg:pb-8">
+        <div className="flex-1 mx-auto w-full max-w-7xl px-6 lg:px-8 pb-6 lg:pb-8">
           {showCoursesEmptyState ? (
             <CoursesEmptyState />
           ) : (
@@ -337,9 +328,8 @@ const CoursesPage = () => {
               {/* Toolbar — underline tabs (matches Timeplan), sort + search inline */}
               <div className="mb-5 flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
                 <nav role="tablist" aria-label="Filtrer kurs" className="flex gap-6">
-                  {(['active', 'past', 'draft'] as const).map((key) => {
-                    const label = key === 'active' ? 'Aktive' : key === 'past' ? 'Fullførte' : 'Utkast';
-                    const count = key === 'draft' && draftCount > 0 ? draftCount : null;
+                  {(['active', 'past'] as const).map((key) => {
+                    const label = key === 'active' ? 'Aktive' : 'Fullførte';
                     const isActive = viewTab === key;
                     return (
                       <button
@@ -356,11 +346,6 @@ const CoursesPage = () => {
                         )}
                       >
                         {label}
-                        {count != null && (
-                          <span className="text-xs tabular-nums text-foreground-muted">
-                            {count}
-                          </span>
-                        )}
                       </button>
                     );
                   })}
@@ -388,31 +373,32 @@ const CoursesPage = () => {
                   message={error}
                   onRetry={loadData}
                 />
-              ) : filteredRows.length === 0 ? (
-                searchQuery ? (
-                  <EmptyState
-                    title={`Fant ingen kurs for «${searchQuery}»`}
-                    description="Prøv et annet søkeord."
-                    action={
-                      <Button variant="outline-soft" size="sm" onClick={() => setSearchQuery('')}>
-                        Tøm søk
-                      </Button>
-                    }
-                    className="py-16"
-                  />
-                ) : (
-                  <EmptyState
-                    title={emptyTitle}
-                    description={emptyDescription}
-                    className="py-16"
-                  />
-                )
               ) : (
                 <CourseListView
                   courses={visibleRows}
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
+                  emptyState={
+                    searchQuery ? (
+                      <EmptyState
+                        title={`Fant ingen kurs for «${searchQuery}»`}
+                        description="Prøv et annet søkeord."
+                        action={
+                          <Button variant="outline-soft" size="sm" onClick={() => setSearchQuery('')}>
+                            Tøm søk
+                          </Button>
+                        }
+                        className="py-16"
+                      />
+                    ) : (
+                      <EmptyState
+                        title={emptyTitle}
+                        description={emptyDescription}
+                        className="py-16"
+                      />
+                    )
+                  }
                 />
               )}
 

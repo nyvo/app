@@ -83,7 +83,6 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     format: 'series',
     delivery_mode: 'in_person',
     status: 'active',
-    level: null,
     location: 'Studio, Oslo',
     time_schedule: '18:00-19:00',
     duration: 60,

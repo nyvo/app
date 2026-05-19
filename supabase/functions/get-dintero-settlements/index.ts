@@ -16,6 +16,7 @@ import {
   successResponse,
 } from '../_shared/auth.ts'
 import { getAccountId, isSandbox } from '../_shared/dintero.ts'
+import { enqueueNotification } from '../_shared/notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -157,6 +158,28 @@ Deno.serve(async (req) => {
       amount: b.amount ?? 0,
       currency: b.currency ?? 'NOK',
     }))
+
+    // Best-effort: insert a notification for each completed transfer we've
+    // never seen before. dedupe_key on (payout.sent, transfer.id) makes this
+    // safely idempotent — subsequent page loads collapse to no-op. Limitation:
+    // notifications only fire when the owner opens the payouts page. A proper
+    // cron polling for new transfers would catch this independently of UI
+    // activity; not added in v1 to keep scope contained.
+    for (const t of transfers) {
+      if (!t.id) continue
+      const isCompleted = (t.status ?? '').toLowerCase().includes('paid') ||
+        (t.status ?? '').toLowerCase().includes('completed') ||
+        (t.status ?? '').toLowerCase().includes('settled')
+      if (!isCompleted) continue
+      const amountNok = (t.amount ?? 0) / 100
+      if (amountNok <= 0) continue
+      await enqueueNotification(supabase, {
+        type: 'payout.sent',
+        sellerId: body.organizationId,
+        settlementId: t.id,
+        amount: amountNok,
+      })
+    }
 
     return successResponse({
       balance: { available, pending },

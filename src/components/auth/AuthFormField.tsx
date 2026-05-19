@@ -21,6 +21,8 @@ interface AuthFormFieldProps {
   onBlur: () => void
   /** Slot rendered inline with the label (e.g., forgot-password link) */
   labelExtra?: React.ReactNode
+  /** Visually hide the label (still announced to screen readers) */
+  hideLabel?: boolean
 }
 
 /**
@@ -44,6 +46,7 @@ export function AuthFormField({
   onChange,
   onBlur,
   labelExtra,
+  hideLabel,
 }: AuthFormFieldProps) {
   const [showPassword, setShowPassword] = useState(false)
   const hasError = !!(touched && error)
@@ -52,7 +55,7 @@ export function AuthFormField({
 
   return (
     <div className="grid gap-2">
-      <div className="flex items-center justify-between">
+      <div className={hideLabel ? 'sr-only' : 'flex items-center justify-between'}>
         <label
           htmlFor={id}
           data-error={hasError || undefined}
@@ -79,7 +82,7 @@ export function AuthFormField({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-foreground-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
             aria-label={showPassword ? 'Skjul passord' : 'Vis passord'}
           >
             {showPassword ? (

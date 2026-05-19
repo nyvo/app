@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Check } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { Grain } from '@/components/ui/grain';
+import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
+import { WaitlistForm } from '@/components/public/marketing/WaitlistForm';
 import { formatKroner } from '@/lib/utils';
 import {
   scrollVariants,
@@ -10,44 +12,23 @@ import {
   scrollTransition,
 } from '@/lib/motion';
 
-// =============================================================================
-// Screenshot placeholder — drop the real image in /public/screenshots/ and
-// swap the <ScreenshotSlot> for an <img>. The label inside tells you what
-// goes where.
-// =============================================================================
-function ScreenshotSlot({
-  label,
-  hint,
-  aspect = 'aspect-[16/10]',
-}: {
-  label: string;
-  hint: string;
-  aspect?: string;
-}) {
-  return (
-    <div
-      className={`${aspect} relative w-full overflow-hidden rounded-lg border border-dashed border-border bg-muted/50`}
-    >
-      <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div className="text-center">
-          <p className="text-sm font-medium text-foreground">{label}</p>
-          <p className="mt-1 text-xs font-medium tracking-wide text-foreground-muted">
-            {hint}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+const PRELAUNCH = import.meta.env.VITE_PRELAUNCH === 'true';
 
 // =============================================================================
 // ProductFrame — the "card within a card" pattern. A muted sand panel
 // holds a screenshot floating inside it. Monochrome, palette-aligned,
 // textured via grain (not gradient).
 // =============================================================================
-function ProductFrame({ children }: { children: React.ReactNode }) {
+function ProductFrame({
+  children,
+  tight = false,
+}: {
+  children: React.ReactNode;
+  tight?: boolean;
+}) {
+  const padding = tight ? 'p-1.5 sm:p-3 md:p-4' : 'p-3 sm:p-6 md:p-8';
   return (
-    <div className="relative isolate overflow-hidden rounded-2xl bg-muted p-3 sm:p-6 md:p-8">
+    <div className={`relative isolate overflow-hidden rounded-2xl bg-muted ${padding}`}>
       <Grain opacity={0.6} baseFrequency={0.7} />
       <div className="relative overflow-hidden rounded-lg border border-border bg-background shadow-[0_30px_60px_-15px_rgba(0,0,0,0.18)]">
         {children}
@@ -75,15 +56,11 @@ const LandingPage = () => {
             >
               Pris
             </a>
-            <Link
-              to="/login"
-              className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground"
-            >
-              Logg inn
-            </Link>
-            <Button asChild size="sm" variant="secondary">
-              <Link to="/signup">Opprett konto</Link>
-            </Button>
+            {!PRELAUNCH && (
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/auth">Logg inn</Link>
+              </Button>
+            )}
           </div>
         </div>
       </nav>
@@ -93,34 +70,68 @@ const LandingPage = () => {
       {/* ============================================================ */}
       <section className="bg-background pt-32 pb-16 md:pt-40 md:pb-24">
         <div className="mx-auto w-full max-w-6xl px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <motion.h1
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl"
-            >
-              Driv yogastudioet enklere.
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-4 text-base text-foreground-muted"
-            >
-              Mindre admin. Mer tid til undervisningen.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8"
-            >
-              <Button asChild size="cta">
-                <Link to="/signup">Kom i gang</Link>
-              </Button>
-            </motion.div>
-          </div>
+          {PRELAUNCH ? (
+            <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+                >
+                  Driv yogastudioet enklere.
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  className="mt-4 text-base text-foreground-muted"
+                >
+                  Mindre admin. Mer tid til undervisningen.
+                </motion.p>
+              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <WaitlistForm
+                  source="hero"
+                  className="md:mx-0"
+                  helperText="Vi åpner snart. Legg igjen e-posten din, så sier vi fra."
+                />
+              </motion.div>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-2xl text-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
+              >
+                Driv yogastudioet enklere.
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-4 text-base text-foreground-muted"
+              >
+                Mindre admin. Mer tid til undervisningen.
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-8"
+              >
+                <Button asChild size="cta">
+                  <Link to="/auth">Kom i gang</Link>
+                </Button>
+              </motion.div>
+            </div>
+          )}
 
           {/* Hero — product on gradient frame */}
           <motion.div
@@ -131,7 +142,7 @@ const LandingPage = () => {
           >
             <ProductFrame>
               <img
-                src="/screenshots/hero-overview.png"
+                src="/localhost_5173_overview (1).png"
                 alt="Openspot — oversikt over inntekter og kommende kurs"
                 className="block w-full"
                 style={{ imageRendering: '-webkit-optimize-contrast' }}
@@ -148,11 +159,13 @@ const LandingPage = () => {
         title="Deltakerne finner deg."
         description="Del kursene dine med én lenke."
         align="left"
+        frameTight
       >
-        <ScreenshotSlot
-          aspect="aspect-[4/3]"
-          label="Public studio page"
-          hint="public/screenshots/public-studio.png · 4:3"
+        <img
+          src="/localhost_5173_inspire-yogastudio (2).png"
+          alt="Offentlig studio-side i Openspot"
+          className="block w-full h-auto"
+          style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
       </FeatureSplit>
 
@@ -160,7 +173,7 @@ const LandingPage = () => {
       {/* 3. SPLIT — Booking + Dintero (product left / text right) */}
       {/* ============================================================ */}
       <FeatureSplit
-        title="Påmelding og Vipps."
+        title="Enkel påmelding."
         description="Deltakeren velger time og betaler — alt på én side."
         bullets={[
           'Vipps og kort',
@@ -168,11 +181,13 @@ const LandingPage = () => {
           'Enkel refusjon',
         ]}
         align="right"
+        frameTight
       >
-        <ScreenshotSlot
-          aspect="aspect-[4/3]"
-          label="Booking + embedded payment"
-          hint="public/screenshots/booking-payment.png · 4:3"
+        <img
+          src="/localhost_5173_inspire-yogastudio_seed-lunsj-yoga_pamelding_billett=drop-in.png"
+          alt="Påmelding og betaling i Openspot"
+          className="block w-full h-auto"
+          style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
       </FeatureSplit>
 
@@ -184,9 +199,9 @@ const LandingPage = () => {
         body="Hver påmelding havner i oversikten."
       >
         <img
-          src="/screenshots/courses.png"
+          src="/localhost_5173_courses_5139ffe5-7dcb-462d-ab71-cd9ad39a2c7e.png"
           alt="Openspot — kursoversikt"
-          className="block aspect-[16/10] w-full object-cover object-top"
+          className="block w-full"
           style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
       </FeatureWide>
@@ -204,7 +219,7 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="mx-auto mb-16 max-w-2xl text-center"
           >
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
               Enkel og forutsigbar pris.
             </h2>
             <p className="mt-3 text-base text-foreground-muted">
@@ -231,8 +246,10 @@ const LandingPage = () => {
                   'Egen studioside',
                   'Refusjoner og avbestillinger',
                 ],
-                cta: { label: 'Start gratis', to: '/signup' },
-                caption: 'Ingen kort nødvendig.',
+                cta: PRELAUNCH
+                  ? { label: 'Bli varslet', to: '#varsle' }
+                  : { label: 'Start gratis', to: '/auth' },
+                caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen kort nødvendig.',
               }}
             />
             <PricingTier
@@ -248,8 +265,10 @@ const LandingPage = () => {
                   'Egne maler for e-post',
                   'Prioritert kundestøtte',
                 ],
-                cta: { label: 'Velg Pro', to: '/signup' },
-                caption: 'Ingen bindingstid.',
+                cta: PRELAUNCH
+                  ? { label: 'Bli varslet', to: '#varsle' }
+                  : { label: 'Velg Pro', to: '/auth' },
+                caption: PRELAUNCH ? 'Kommer snart.' : 'Ingen bindingstid.',
               }}
             />
           </motion.div>
@@ -259,7 +278,7 @@ const LandingPage = () => {
       {/* ============================================================ */}
       {/* 8. FINAL CTA */}
       {/* ============================================================ */}
-      <section className="bg-background py-12 md:py-16">
+      <section id="varsle" className="scroll-mt-16 bg-background py-12 md:py-16">
         <div className="mx-auto max-w-6xl px-6">
           <motion.div
             initial="hidden"
@@ -269,12 +288,16 @@ const LandingPage = () => {
             transition={scrollTransition}
             className="flex flex-col items-center justify-between gap-8 rounded-3xl bg-muted px-8 py-16 md:flex-row md:gap-12 md:px-16 md:py-20"
           >
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Klar?
+            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
+              {PRELAUNCH ? 'Bli med fra start.' : 'Klar?'}
             </h2>
-            <Button asChild size="cta">
-              <Link to="/signup">Kom i gang</Link>
-            </Button>
+            {PRELAUNCH ? (
+              <WaitlistForm source="final-cta" className="md:mx-0" />
+            ) : (
+              <Button asChild size="cta">
+                <Link to="/auth">Kom i gang</Link>
+              </Button>
+            )}
           </motion.div>
         </div>
       </section>
@@ -292,7 +315,7 @@ const LandingPage = () => {
                 <br />
                 Bygget i Norge.
               </p>
-              <div className="mt-6 space-y-1.5 text-xs text-foreground-muted">
+              <div className="mt-6 space-y-1.5 text-sm text-foreground-muted">
                 <p>Framio AS</p>
                 <p>Org.nr 935 967 511</p>
                 <p>
@@ -316,12 +339,7 @@ const LandingPage = () => {
               <h4 className="mb-6 text-sm font-medium text-foreground">Konto</h4>
               <ul className="space-y-4 text-sm text-foreground-muted">
                 <li>
-                  <Link to="/signup" className="transition-colors hover:text-foreground">
-                    Opprett konto
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login" className="transition-colors hover:text-foreground">
+                  <Link to="/auth" className="transition-colors hover:text-foreground">
                     Logg inn
                   </Link>
                 </li>
@@ -336,7 +354,7 @@ const LandingPage = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/terms#personvern" className="transition-colors hover:text-foreground">
+                  <Link to="/personvern" className="transition-colors hover:text-foreground">
                     Personvern
                   </Link>
                 </li>
@@ -345,13 +363,10 @@ const LandingPage = () => {
           </div>
 
           <div className="flex flex-col items-center justify-between gap-6 border-t border-border pt-8 md:flex-row">
-            <p className="text-xs text-foreground-muted">
+            <p className="text-sm text-foreground-muted">
               © {new Date().getFullYear()} Openspot
             </p>
-            <div className="flex items-center gap-2">
-              <div className="size-2 rounded-full bg-success" />
-              <span className="text-xs text-foreground-muted">Systemet er operativt</span>
-            </div>
+            <DinteroPaymentBadge className="max-w-md" />
           </div>
         </div>
       </footer>
@@ -370,12 +385,16 @@ function FeatureSplit({
   description,
   bullets,
   align = 'left',
+  frame = true,
+  frameTight = false,
   children,
 }: {
   title: string;
   description: string;
   bullets?: string[];
   align?: 'left' | 'right';
+  frame?: boolean;
+  frameTight?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -386,14 +405,14 @@ function FeatureSplit({
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
           variants={scrollStaggerVariants}
-          className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16"
+          className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-16"
         >
           <motion.div
             variants={scrollVariants}
             transition={scrollTransition}
-            className={align === 'right' ? 'lg:order-2' : ''}
+            className={`lg:col-span-5 ${align === 'right' ? 'lg:order-2' : ''}`}
           >
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
               {title}
             </h2>
             <p className="mt-3 text-base text-foreground-muted">{description}</p>
@@ -414,9 +433,9 @@ function FeatureSplit({
           <motion.div
             variants={scrollVariants}
             transition={scrollTransition}
-            className={align === 'right' ? 'lg:order-1' : ''}
+            className={`lg:col-span-7 ${align === 'right' ? 'lg:order-1' : ''}`}
           >
-            <ProductFrame>{children}</ProductFrame>
+            {frame ? <ProductFrame tight={frameTight}>{children}</ProductFrame> : children}
           </motion.div>
         </motion.div>
       </div>
@@ -449,7 +468,7 @@ function FeatureWide({
           transition={scrollTransition}
           className="mx-auto mb-12 max-w-xl text-center"
         >
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+          <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
             {title}
           </h2>
           <p className="mt-2 text-base text-foreground-muted">{body}</p>
@@ -522,7 +541,7 @@ function PricingTier({ tier }: { tier: Tier }) {
       </ul>
 
       <Button asChild className="mt-auto h-12 w-full">
-        <Link to={tier.cta.to}>{tier.cta.label}</Link>
+        <a href={tier.cta.to}>{tier.cta.label}</a>
       </Button>
       {tier.caption && (
         <p className="mt-4 text-center text-sm text-foreground-muted">

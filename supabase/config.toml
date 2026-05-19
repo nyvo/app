@@ -12,3 +12,9 @@ verify_jwt = false
 
 [functions.sweep-pending-payments]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-pending-confirmations]
+verify_jwt = false

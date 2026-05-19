@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { Link, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import { ImageIcon, Building } from '@/lib/icons';
+import { ImageIcon, Check } from '@/lib/icons';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { PageState } from '@/components/page-state/page-state';
 import { supabase } from '@/lib/supabase';
 import { finalizeDinteroTransaction } from '@/services/checkout';
 import { formatKroner } from '@/lib/utils';
@@ -69,16 +69,11 @@ const CheckoutSuccessPage = () => {
   const [error, _setError] = useState<string | null>(null);
   const [bookingFailed, setBookingFailed] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
-  const toastShownRef = useRef(false);
 
   useEffect(() => {
     async function fetchSignupDetails() {
       if (!lookupId) {
         // No identifier — free signup or generic success
-        if (!toastShownRef.current) {
-          toast.success(isFreeSignup ? 'Påmelding fullført' : 'Betaling fullført');
-          toastShownRef.current = true;
-        }
         setLoading(false);
         return;
       }
@@ -120,10 +115,6 @@ const CheckoutSuccessPage = () => {
 
         if (data && !fetchError) {
           setSignup(data as unknown as SignupDetails);
-          if (!toastShownRef.current) {
-            toast.success('Betaling fullført');
-            toastShownRef.current = true;
-          }
           setLoading(false);
           return;
         }
@@ -138,10 +129,6 @@ const CheckoutSuccessPage = () => {
 
           // Show softer fallback — payment succeeded but webhook is slow
           setBookingFailed(true);
-          if (!toastShownRef.current) {
-            toast.info('Betalingen er bekreftet. Du får bekreftelsen på e-post.');
-            toastShownRef.current = true;
-          }
           setLoading(false);
           return;
         }
@@ -162,18 +149,11 @@ const CheckoutSuccessPage = () => {
 
 
   if (loading) {
-    // Show progressive feedback based on how long we've been waiting
-    const getLoadingMessage = () => {
-      if (attemptCount <= 3) {
-        return 'Bekrefter betaling';
-      } else if (attemptCount <= 6) {
-        return 'Behandler betaling';
-      } else if (attemptCount <= 10) {
-        return 'Vent litt';
-      } else {
-        return 'Dette tar litt tid';
-      }
-    };
+    // Two tiers only — the headline stays the same; after ~8 attempts we
+    // add a quiet line acknowledging the longer wait (Studio § 10 threshold
+    // gradient). Verbose cycling labels ("Vent litt", "Dette tar litt tid")
+    // were noise dressed up as progress.
+    const isLongWait = attemptCount > 8;
 
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center">
@@ -181,15 +161,12 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
             <Spinner size="xl" className="text-foreground" />
           </div>
-          <p className="text-sm font-medium mb-2 text-foreground">{getLoadingMessage()}</p>
+          <p className="text-sm font-medium mb-2 text-foreground">Bekrefter betaling</p>
           <p className="text-sm text-foreground-muted">
-            Bekrefter med banken. Ikke lukk denne siden.
+            {isLongWait
+              ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
+              : 'Vi bekrefter med banken. Ikke lukk denne siden.'}
           </p>
-          {attemptCount > 8 && (
-            <p className="text-xs mt-4 text-foreground-muted">
-              Du får beskjed når betalingen er klar.
-            </p>
-          )}
         </div>
       </div>
     );
@@ -205,21 +182,9 @@ const CheckoutSuccessPage = () => {
             </Link>
           </div>
         </header>
-        <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12 pt-24">
-          <h1 className="text-2xl font-semibold tracking-tight max-w-md text-foreground">
-            Noe gikk galt
-          </h1>
-          <p className="mt-3 text-sm text-foreground-muted max-w-md">{error}</p>
-          <Button size="sm" className="mt-7" onClick={() => window.location.reload()}>
-            Last på nytt
-          </Button>
-          <Link
-            to="/"
-            className="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted"
-          >
-            eller gå til startsiden →
-          </Link>
-        </main>
+        <div className="pt-16">
+          <PageState variant="server-error" description={error} />
+        </div>
       </div>
     );
   }
@@ -238,7 +203,7 @@ const CheckoutSuccessPage = () => {
     return (
       <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <h1 className="text-3xl font-semibold tracking-tight mb-3 text-foreground">
+          <h1 className="text-3xl font-medium tracking-tight mb-3 text-foreground">
             Betalingen er bekreftet
           </h1>
           <p className="text-base text-foreground-muted mb-8">
@@ -255,22 +220,18 @@ const CheckoutSuccessPage = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 border-b border-border bg-surface-elevated backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to={studioUrl} className="flex items-center">
-            <span className="text-base font-medium text-foreground">Openspot</span>
-          </Link>
-        </div>
+    <div className="flex min-h-screen w-full flex-col bg-background">
+      <header className="flex w-full items-center justify-center px-4 py-8 sm:px-6">
+        <Link to={studioUrl} className="flex select-none items-center">
+          <span className="text-base font-medium text-foreground">Openspot</span>
+        </Link>
       </header>
 
-      <main className="pt-24 px-4 sm:px-6 pb-24">
-        <div className="mx-auto max-w-xl">
+      <main className="flex-1 px-4 pb-16 sm:px-6">
+        <div className="mx-auto w-full max-w-xl">
           {(() => {
             const dateLong = formatDate(signup?.course.start_date ?? null);
             const time = extractTimeFromSchedule(signup?.course.time_schedule)?.time ?? null;
-            const orgName = signup?.course.seller?.name ?? null;
-            const orgLogo = signup?.course.seller?.logo_url ?? null;
             const orgEmail = signup?.course.seller?.email ?? null;
             const courseImage = signup?.course.image_url ?? null;
             const isFree = isFreeSignup || (signup?.amount_paid ?? 0) === 0;
@@ -278,44 +239,27 @@ const CheckoutSuccessPage = () => {
             const whenLine = [dateLong, time ? `kl. ${time}` : null].filter(Boolean).join(' · ');
 
             return (
-              <>
-                {/* Studio brand chip — centered above the success card, tells the
-                    user "this confirmation is from {studio}". Falls back to a
-                    monogram tile when the studio has no uploaded logo. */}
-                {orgName && (
-                  <div className="flex items-center justify-center gap-2.5 pt-4 sm:pt-8">
-                    {orgLogo ? (
-                      <img
-                        src={orgLogo}
-                        alt=""
-                        className="size-8 rounded-md object-cover bg-muted"
-                      />
-                    ) : (
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-foreground-muted">
-                        <Building className="size-4" />
-                      </div>
-                    )}
-                    <span className="text-base font-medium text-foreground">{orgName}</span>
+              <div className="overflow-hidden rounded-lg border border-border bg-surface">
+                <div className="p-6 sm:p-8">
+                  {/* Title block — green check, title, description, all centered. */}
+                  <div className="flex flex-col items-center text-center">
+                    <div
+                      aria-hidden="true"
+                      className="flex size-8 items-center justify-center rounded-full bg-success text-success-foreground"
+                    >
+                      <Check className="size-4" strokeWidth={2.5} />
+                    </div>
+                    <h1 className="mt-4 text-base font-medium text-foreground">Du er påmeldt</h1>
+                    <p className="mt-1 text-sm text-foreground-muted">
+                      {signup
+                        ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
+                        : 'Vi har sendt en bekreftelse til e-posten din.'}
+                    </p>
                   </div>
-                )}
-
-                {/* Confirmation card — calm, no celebration chrome.
-                    Per patterns.md §19.4a: no green check, no shadow,
-                    no ring. Typography carries the moment. */}
-                <div className="mt-8 sm:mt-10 rounded-lg border border-border bg-surface p-6 sm:p-10">
-                  {/* Heading carries the success moment */}
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                    Du er påmeldt
-                  </h1>
-                  <p className="mt-3 text-base text-foreground-muted">
-                    {signup
-                      ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
-                      : 'Vi har sendt en bekreftelse til e-posten din.'}
-                  </p>
 
                   {signup && (
                     <>
-                      {/* Course card — image + title + date/time. Nested card-in-card. */}
+                      {/* Course pane — image + title + date/time. */}
                       <div className="mt-8 flex items-center gap-4 rounded-lg border border-border bg-background p-3.5">
                         <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
                           {courseImage ? (
@@ -361,18 +305,9 @@ const CheckoutSuccessPage = () => {
                     </>
                   )}
 
-                  {/* Cancellation policy reinforcement — per patterns.md §19.4.
-                      Stated plainly so customers who missed it during booking
-                      find it on the receipt. */}
-                  {!isFree && (
-                    <p className="mt-6 border-t border-border pt-6 text-sm text-foreground-muted">
-                      Avbestill innen 24 timer før kurset for full refusjon.
-                    </p>
-                  )}
-
                   {/* Support — contact studio if anything's off */}
                   {orgEmail && (
-                    <p className="mt-3 text-sm text-foreground-muted">
+                    <p className="mt-6 text-sm text-foreground-muted">
                       Trenger du hjelp? Send en e-post til{' '}
                       <a
                         href={`mailto:${orgEmail}`}
@@ -385,16 +320,17 @@ const CheckoutSuccessPage = () => {
                   )}
                 </div>
 
-                {/* Single quiet CTA — back to the studio, NOT a "book another"
-                    upsell. Per patterns.md §19.4. */}
-                <div className="mt-8 flex justify-center">
-                  <Button asChild variant="ghost" size="default">
-                    <Link to={studioUrl}>
-                      {orgName ? `Tilbake til ${orgName}` : 'Tilbake til studioet'}
-                    </Link>
-                  </Button>
-                </div>
-              </>
+                {/* Policy footer inset — separated by hairline, muted bg.
+                    Cal.com pattern: cancellation reinforcement gets its own
+                    block so customers who missed it during booking find it. */}
+                {!isFree && (
+                  <div className="border-t border-border-subtle bg-muted px-6 py-4 sm:px-8 text-center">
+                    <p className="text-xs text-foreground-muted">
+                      Avbestill innen 24 timer før kurset for full refusjon.
+                    </p>
+                  </div>
+                )}
+              </div>
             );
           })()}
         </div>

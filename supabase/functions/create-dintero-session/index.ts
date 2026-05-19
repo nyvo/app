@@ -51,6 +51,9 @@ interface SessionRequestBody {
 type TicketKind = 'package' | 'drop_in' | 'pass'
 type TicketAudience = 'standard' | 'student' | 'senior' | 'staff'
 
+// Shape returned by the available_ticket_types(p_course_id) RPC — the
+// authoritative buyable view. Drop-in price is already computed as
+// ROUND(course.price / course.total_weeks) when applicable.
 interface TicketTypeRow {
   id: string
   course_id: string
@@ -60,10 +63,6 @@ interface TicketTypeRow {
   weeks: number | null
   ticket_kind: TicketKind
   audience: TicketAudience
-  is_active: boolean
-  sales_starts_at: string | null
-  sales_ends_at: string | null
-  max_quantity: number | null
 }
 
 Deno.serve(async (req: Request) => {
@@ -158,30 +157,26 @@ Deno.serve(async (req: Request) => {
       return errorResponse('Payment is not set up for this seller', 400, req)
     }
 
-    // Load + validate the ticket type. Re-checking the sales window server-side
-    // matters because the tier row may have flipped to inactive or expired
-    // between the booking page render and the form submission.
-    const { data: tier, error: tierError } = await supabase
-      .from('course_signup_packages')
-      .select('id, course_id, label, description, price, weeks, ticket_kind, audience, is_active, sales_starts_at, sales_ends_at, max_quantity')
-      .eq('id', ticketTypeId)
-      .eq('course_id', courseId)
-      .maybeSingle()
-
-    if (tierError || !tier) {
-      return errorResponse('Billettypen finnes ikke', 404, req)
+    // Resolve the ticket type via available_ticket_types(courseId). The RPC is
+    // the single source of truth used by the booking page — it applies the
+    // is_active filter, sales-window check, and (critically) computes drop-in
+    // price as ROUND(course.price / course.total_weeks) when applicable.
+    // Going through the same function here guarantees the buyer is charged
+    // exactly what they saw. If the tier isn't in the returned set, it's not
+    // currently buyable for any reason (inactive, out of window, drop-in for a
+    // non-series course, etc.) — we don't try to enumerate the reasons.
+    const { data: availableTiers, error: tiersError } = await supabase.rpc(
+      'available_ticket_types',
+      { p_course_id: courseId },
+    )
+    if (tiersError) {
+      return errorResponse('Kunne ikke hente billettyper', 500, req)
     }
-    const typedTier = tier as TicketTypeRow
-
-    if (!typedTier.is_active) {
-      return errorResponse('Denne billetten er ikke lenger tilgjengelig', 400, req)
-    }
-    const now = new Date()
-    if (typedTier.sales_starts_at && new Date(typedTier.sales_starts_at) > now) {
-      return errorResponse('Denne billetten er ikke i salg ennå', 400, req)
-    }
-    if (typedTier.sales_ends_at && new Date(typedTier.sales_ends_at) <= now) {
-      return errorResponse('Tilbudet er utløpt', 400, req)
+    const typedTier = ((availableTiers ?? []) as TicketTypeRow[]).find(
+      (t) => t.id === ticketTypeId,
+    )
+    if (!typedTier) {
+      return errorResponse('Denne billetten er ikke tilgjengelig', 400, req)
     }
 
     if (typedTier.price <= 0) {

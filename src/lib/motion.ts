@@ -81,3 +81,27 @@ export const slideTransitionFast: Transition = {
   duration: dur(80),
   ease,
 };
+
+// Onboarding step transition — direction-aware horizontal slide + crossfade.
+// Custom prop = 1 (forward) or -1 (back). Apple's drawer curve decelerates
+// evenly without the snap-and-settle feel of stronger ease-outs. Subtle 16px
+// offset keeps it elegant. Exit is faster than enter (Emil's asymmetric
+// principle) — system responds fast, new content settles in.
+const stepEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
+
+export const stepVariants: Variants = {
+  enter: (direction: number) => ({
+    opacity: 0,
+    x: 16 * direction,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: dur(220), ease: stepEase },
+  },
+  exit: (direction: number) => ({
+    opacity: 0,
+    x: -16 * direction,
+    transition: { duration: dur(160), ease: stepEase },
+  }),
+};

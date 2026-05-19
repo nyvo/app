@@ -202,7 +202,13 @@
       "WebFetch(domain:landdding.com)",
       "WebFetch(domain:framiq.app)",
       "WebFetch(domain:fresha.com)",
-      "WebFetch(domain:punchpass.com)"
+      "WebFetch(domain:punchpass.com)",
+      "WebFetch(domain:www.smashingmagazine.com)",
+      "WebFetch(domain:www.magicbell.com)",
+      "WebFetch(domain:www.courier.com)",
+      "Bash(wait)",
+      "Bash(supabase db *)",
+      "Bash(xargs head *)"
     ],
     "deny": [],
     "ask": []

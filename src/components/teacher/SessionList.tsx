@@ -3,7 +3,6 @@ import { MoreHorizontal, Check } from '@/lib/icons';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { Info } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
@@ -242,16 +241,11 @@ export const SessionList: React.FC<SessionListProps> = ({
                           size="sm"
                           className="flex-1"
                           onClick={() => handleSave(session.id)}
-                          disabled={savingSessionId === session.id || !hasRealSessions || !sessionEdits[session.id]}
+                          disabled={!hasRealSessions || !sessionEdits[session.id]}
+                          loading={savingSessionId === session.id}
+                          loadingText="Lagrer"
                         >
-                          {savingSessionId === session.id ? (
-                            <>
-                              <Spinner size="xs" />
-                              Lagrer
-                            </>
-                          ) : (
-                            'Lagre endringer'
-                          )}
+                          Lagre endringer
                         </Button>
                       </div>
                     </div>

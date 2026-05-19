@@ -3,11 +3,7 @@
 // in app-level dashboard routing. `dashboard` here is the post-login
 // destination — must stay in sync with routes.dashboard.
 export const AUTH_ROUTES = {
-  login: '/login',
-  signup: '/signup',
-  forgotPassword: '/forgot-password',
-  resetPassword: '/reset-password',
-  confirmEmail: '/confirm-email',
+  auth: '/auth',
   callback: '/auth/callback',
   dashboard: '/overview',
 } as const

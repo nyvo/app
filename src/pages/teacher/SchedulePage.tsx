@@ -237,10 +237,10 @@ const SchedulePage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-3xl px-6 pb-24 md:pb-8 lg:px-8"
+        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
       >
         <div className="mb-12 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Timeplan</h1>
+          <h1 className="text-2xl font-medium tracking-tight text-foreground">Timeplan</h1>
         </div>
 
         {/* Underline tabs — active vs past. Course filter as a secondary lens. */}

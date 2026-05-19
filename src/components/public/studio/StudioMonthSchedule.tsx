@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { cn, formatCoursePrice } from '@/lib/utils';
@@ -7,6 +7,12 @@ import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface StudioMonthScheduleProps {
   courses: PublicCourseWithDetails[];
+  /** The storefront slug + name the user is currently viewing. Passed to
+   * detail-page navigation as `state.fromSlug` / `state.fromName` so the
+   * back link resolves to where the user came from (not the course owner)
+   * in syndicated cases. */
+  viewingSlug?: string;
+  viewingName?: string | null;
 }
 
 const WEEKDAYS_SHORT = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'] as const;
@@ -56,9 +62,7 @@ function formatTimeRange(startTime: string, durationMinutes: number | null): str
  * a month label. Tapping a day filters the class list below. Studio
  * stays monochrome — the success dot is the one status signal we allow.
  */
-export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
-  const location = useLocation();
-
+export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: StudioMonthScheduleProps) {
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -282,13 +286,17 @@ export function StudioMonthSchedule({ courses }: StudioMonthScheduleProps) {
           {selectedCourses.map(course => {
             const time = extractTime(course.time_schedule);
             const studioSlug = course.seller?.slug ?? '';
+            // URL goes to the canonical owner; state carries the viewing
+            // storefront so the back-link can return there.
+            const fromSlug = viewingSlug ?? studioSlug;
+            const fromName = viewingName ?? course.seller?.name ?? null;
             const isFull = course.max_participants !== null && course.spots_available <= 0;
             const isCancelled = course.status === 'cancelled';
             return (
               <Link
                 key={course.id}
                 to={`/${studioSlug}/${course.slug}`}
-                state={{ backgroundLocation: location }}
+                state={{ fromSlug, fromName }}
                 className={cn(
                   'block rounded-xl border border-border bg-surface p-6 transition-colors',
                   'hover:bg-muted/60',

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "npm:react@19.2.6"
+  },
+  "imports": {
+    "react": "npm:react@19.2.6",
+    "react-dom": "npm:react-dom@19.2.6",
+    "@react-email/components": "npm:@react-email/components@1.0.12",
+    "@react-email/render": "npm:@react-email/render@2.0.8",
+    "resend": "npm:resend@4.7.0"
+  }
+}

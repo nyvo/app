@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { ImageIcon } from '@/lib/icons';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { authPageVariants, authPageTransition } from '@/lib/motion';
 import { supabase } from '@/lib/supabase';
@@ -160,13 +160,25 @@ export default function JoinPage() {
   // ─── Render ──────────────────────────────────────────────────────────
 
   if (lookup.status === 'loading' || !isInitialized) {
-    return <Shell><div className="flex justify-center py-8"><Spinner size="lg" /></div></Shell>;
+    return (
+      <Shell>
+        <div role="status" aria-live="polite" className="space-y-6">
+          <span className="sr-only">Laster…</span>
+          <Skeleton className="aspect-[3/1] w-full rounded-md" />
+          <div className="space-y-3">
+            <Skeleton className="mx-auto h-8 w-56" />
+            <Skeleton className="mx-auto h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-11 w-full rounded-full" />
+        </div>
+      </Shell>
+    );
   }
 
   if (lookup.status === 'not_found') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Lenken finnes ikke
         </h1>
         <p className="text-base text-foreground-muted">
@@ -179,7 +191,7 @@ export default function JoinPage() {
   if (lookup.status === 'expired') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Lenken er utløpt
         </h1>
         <p className="text-base text-foreground-muted">
@@ -196,7 +208,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.team_cover_image_url} />
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Bli med i {team.team_name}
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -204,18 +216,10 @@ export default function JoinPage() {
         </p>
         <Button
           size="cta"
-          className="w-full mb-2"
-          onClick={() => navigate('/login', { state: { from: location } })}
+          className="w-full"
+          onClick={() => navigate('/auth', { state: { from: location } })}
         >
           Logg inn
-        </Button>
-        <Button
-          variant="ghost"
-          size="cta"
-          className="w-full"
-          onClick={() => navigate('/signup', { state: { from: location } })}
-        >
-          Opprett konto
         </Button>
       </Shell>
     );
@@ -226,7 +230,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.team_cover_image_url} />
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Du er allerede med
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -244,7 +248,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.team_cover_image_url} />
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Velkommen til {team.team_name}
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -261,7 +265,7 @@ export default function JoinPage() {
   if (phase.kind === 'own_team') {
     return (
       <Shell>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Dette er ditt eget studio
         </h1>
         <p className="text-base text-foreground-muted mb-8">
@@ -280,7 +284,7 @@ export default function JoinPage() {
     return (
       <Shell>
         <Cover url={team.team_cover_image_url} />
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+        <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
           Bli med i {team.team_name}
         </h1>
         <p className="text-base text-foreground-muted mb-6">
@@ -304,7 +308,7 @@ export default function JoinPage() {
   return (
     <Shell>
       <Cover url={team.team_cover_image_url} />
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-3">
+      <h1 className="text-3xl font-medium tracking-tight text-foreground mb-3">
         Bli med i {team.team_name}
       </h1>
       <p className="text-base text-foreground-muted mb-8">

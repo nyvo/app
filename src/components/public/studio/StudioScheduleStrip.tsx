@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Clock } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
 interface StudioScheduleStripProps {
   courses: PublicCourseWithDetails[];
+  /** Viewing storefront — carried as state so the detail back-link returns
+   * here even in syndicated cases. */
+  viewingSlug?: string;
+  viewingName?: string | null;
 }
 
 const WEEKDAYS_LONG = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'] as const;
@@ -51,9 +55,7 @@ interface DayBucket {
  * a single fine rule between days. Mirrors the visual logic of a printed
  * timetable.
  */
-export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
-  const location = useLocation();
-
+export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: StudioScheduleStripProps) {
   const buckets = useMemo<DayBucket[]>(() => {
     const map = new Map<string, PublicCourseWithDetails[]>();
     for (const c of courses) {
@@ -105,7 +107,7 @@ export function StudioScheduleStrip({ courses }: StudioScheduleStripProps) {
                   <Link
                     key={course.id}
                     to={`/${studioSlug}/${course.slug}`}
-                    state={{ backgroundLocation: location }}
+                    state={{ fromSlug: viewingSlug ?? studioSlug, fromName: viewingName ?? course.seller?.name ?? null }}
                     className={cn(
                       'group flex items-center gap-4 sm:gap-6 py-3 px-2 -mx-2 rounded-md',
                       'transition-colors duration-200',

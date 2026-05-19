@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { FieldError } from '@/components/ui/field-error';
@@ -198,9 +197,10 @@ export function AddParticipantDrawer({
         </SheetHeader>
 
         {isCheckingCapacity ? (
-          <div className="flex flex-1 items-center justify-center py-8">
-            <Spinner size="lg" className="text-foreground-muted" />
-          </div>
+          // Capacity check resolves in <200ms — render nothing in the body
+          // rather than flash a spinner (Studio § 10). The SheetHeader above
+          // keeps the drawer feeling anchored during the brief wait.
+          <div className="flex-1" aria-hidden="true" />
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">

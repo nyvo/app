@@ -36,14 +36,6 @@ function mapCourseToComponentFormat(
     estimatedRevenue: estimatedRevenue,
     description: descriptionParts[0] || '',
     description2: descriptionParts[1] || '',
-    level: (() => {
-      switch (courseData.level) {
-        case 'nybegynner': return 'Nybegynner';
-        case 'viderekommen': return 'Viderekommen';
-        case 'alle': return 'Alle nivåer';
-        default: return 'Alle nivåer';
-      }
-    })(),
     duration: formatDuration(),
     durationMinutes: courseData.duration || 60,
     courseType: courseTypeLabel,

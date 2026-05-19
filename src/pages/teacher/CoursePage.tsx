@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { FileText, MoreHorizontal } from '@/lib/icons';
@@ -17,9 +17,10 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
+import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
-import { CoursePricingTab } from '@/components/teacher/CoursePricingTab';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import {
   ParticipantActionMenu,
@@ -33,6 +34,8 @@ import {
   fetchCourseSessions,
   updateCourseSession,
   syncCourseDropInTier,
+  publishCourse,
+  unpublishCourse,
 } from '@/services/courses';
 import {
   teacherCancelSignup,
@@ -75,27 +78,18 @@ function exceptionFor(payment: PaymentStatus, status: SignupStatus): ExceptionTy
   return null;
 }
 
-type TabKey = 'detaljer' | 'priser' | 'pameldte';
+type TabKey = 'detaljer' | 'pameldte';
 
 /**
- * Page State Shell — canonical Studio pattern (components.md § Page state shell).
- * Bare layout on the canvas, no card chrome, single primary + inline link.
+ * Course not-found shell — wraps the canonical NotFoundState in the
+ * teacher-layout scroll container + mobile header so chrome stays consistent
+ * with the rest of the dashboard.
  */
-function CoursePageState({ title, message }: { title: string; message: string }) {
+function CourseNotFound({ description }: { description?: string }) {
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Kurs" />
-      <main className="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground max-w-md">
-          {title}
-        </h1>
-        <p className="mt-3 text-sm text-foreground-muted max-w-md">
-          {message}
-        </p>
-        <Button size="sm" asChild className="mt-7">
-          <Link to={routes.courses}>Tilbake til kurs</Link>
-        </Button>
-      </main>
+      <PageState variant="course" description={description} />
     </div>
   );
 }
@@ -106,12 +100,12 @@ function CoursePageState({ title, message }: { title: string; message: string })
  * The drawer's "Åpne kursside →" escape target. Three underline tabs slice
  * the course into its three concerns: Detaljer (the editable form),
  * Priser (ticket tiers), and Påmeldte (the participants list). Page shell
- * follows the dashboard convention (max-w-6xl centered, lg:px-8 padding).
+ * follows the dashboard convention (max-w-7xl centered, lg:px-8 padding).
  */
 const CoursePage = () => {
   const navigate = useNavigate();
   const { id: courseId } = useParams<{ id: string }>();
-  const { currentSeller } = useAuth();
+  const { currentSeller, currentTeam } = useAuth();
 
   const {
     course: courseData,
@@ -138,11 +132,13 @@ const CoursePage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(undefined);
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const [settingsAllowsDropIn, setSettingsAllowsDropIn] = useState(false);
+  const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
   const [cancelAcknowledged, setCancelAcknowledged] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
@@ -155,6 +151,7 @@ const CoursePage = () => {
     if (timeMatch) setSettingsTime(timeMatch[1]);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsAllowsDropIn(courseData.allowsDropIn);
+    setSettingsPrice(courseData.price);
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
   }, [courseData]);
 
@@ -166,6 +163,7 @@ const CoursePage = () => {
     if (settingsImageFile !== null) return true;
     if (imageToDelete !== null) return true;
     if (maxParticipants !== courseData.capacity) return true;
+    if (settingsPrice !== courseData.price) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
     const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
     const currDate = settingsDate ? settingsDate.toDateString() : '';
@@ -179,7 +177,7 @@ const CoursePage = () => {
   }, [
     courseData, settingsTitle, settingsDescription, settingsImageUrl,
     settingsImageFile, imageToDelete, maxParticipants, settingsDuration,
-    settingsDate, settingsTime,
+    settingsDate, settingsTime, settingsPrice,
   ]);
 
   const refundPreview = useMemo(() => {
@@ -244,6 +242,7 @@ const CoursePage = () => {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
         max_participants: maxParticipants,
+        price: settingsPrice,
         time_schedule: timeSchedule,
         image_url: newImageUrl,
         duration: settingsDuration,
@@ -272,6 +271,7 @@ const CoursePage = () => {
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
               capacity: maxParticipants,
+              price: settingsPrice,
               timeSchedule: timeSchedule || prev.timeSchedule,
               imageUrl: newImageUrl,
               durationMinutes: settingsDuration || prev.durationMinutes,
@@ -351,6 +351,50 @@ const CoursePage = () => {
     }
   };
 
+  // Publish flow — mirrors CourseDrawer. Dintero gate is enforced upstream
+  // by the Alert + payouts link; if a teacher bypasses that, the RPC will
+  // refuse and friendlyError surfaces it.
+  const handlePublish = async () => {
+    if (!courseId || !courseData) return;
+    setIsPublishing(true);
+    const { error: pubError } = await publishCourse(courseId);
+    if (pubError) {
+      toast.error(friendlyError(pubError, 'Kunne ikke publisere kurset'));
+      setIsPublishing(false);
+      return;
+    }
+    setCourseData((prev) => (prev ? { ...prev, status: 'upcoming' } : prev));
+    toast.success('Kurset er publisert');
+    setIsPublishing(false);
+  };
+
+  // Tier 1 — toast+undo. Status flip is reversible, signups unaffected.
+  const handleUnpublish = async () => {
+    if (!courseId || !courseData) return;
+    const previousStatus = courseData.status;
+    setCourseData((prev) => (prev ? { ...prev, status: 'draft' } : prev));
+    const { error: unpubError } = await unpublishCourse(courseId);
+    if (unpubError) {
+      setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev));
+      toast.error(friendlyError(unpubError, 'Kunne ikke avpublisere kurset'));
+      return;
+    }
+    toast.success('Kurset er lagret som utkast', {
+      duration: 8000,
+      action: {
+        label: 'Angre',
+        onClick: async () => {
+          setCourseData((prev) => (prev ? { ...prev, status: previousStatus } : prev));
+          const { error: revertError } = await publishCourse(courseId);
+          if (revertError) {
+            setCourseData((prev) => (prev ? { ...prev, status: 'draft' } : prev));
+            toast.error(friendlyError(revertError, 'Kunne ikke gjenopprette publisering'));
+          }
+        },
+      },
+    });
+  };
+
   const handleDiscard = () => {
     if (!courseData) return;
     setSettingsTitle(courseData.title);
@@ -369,17 +413,14 @@ const CoursePage = () => {
   };
 
   if (!courseId) {
-    return <CoursePageState
-      title="Vi finner ikke kurset du leter etter"
-      message="Lenken er kanskje utdatert, eller kurset er flyttet."
-    />;
+    return <CourseNotFound />;
   }
 
   if (isLoading) {
     return (
       <div className="flex-1 overflow-y-auto bg-background h-full">
         <MobileTeacherHeader title="Kurs" />
-        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 lg:pt-12 space-y-6">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-7 w-64" />
           <Skeleton className="h-10 w-full max-w-md" />
@@ -390,22 +431,19 @@ const CoursePage = () => {
   }
 
   if (error || !courseData) {
-    return <CoursePageState
-      title="Vi finner ikke dette kurset"
-      message={error || 'Kurset finnes ikke eller er slettet.'}
-    />;
+    return <CourseNotFound description={error || undefined} />;
   }
 
-  // Priser tab is hidden until the template integration is wired up
-  // (per-course toggle / override against /priser library, plus updating
-  // every read path — BookingPanel, publicCourses, signup creation — to
-  // compute the kr value from the rule). Tab definition kept here for
-  // when we re-enable post-launch.
   const tabs: { key: TabKey; label: string; count?: number }[] = [
     { key: 'detaljer', label: 'Detaljer' },
-    // { key: 'priser', label: 'Priser' },
     { key: 'pameldte', label: 'Påmeldte', count: participantKpis.confirmed },
   ];
+
+  const courseUrl =
+    currentTeam?.slug && courseData.slug
+      ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
+      : '';
+  const canShare = courseData.status !== 'draft' && courseData.status !== 'cancelled' && courseUrl;
 
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
@@ -416,13 +454,13 @@ const CoursePage = () => {
         initial="initial"
         animate="animate"
         transition={pageTransition}
-        className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pb-24 md:pb-12"
+        className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-24 md:pb-12"
       >
         {/* Page header — title + inline status (baseline-aligned). */}
         <header className="pt-6 lg:pt-12 mb-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-baseline gap-3 flex-wrap">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-2xl font-medium tracking-tight text-foreground">
                 {courseData.title}
               </h1>
               {courseData.status === 'cancelled' ? (
@@ -437,25 +475,49 @@ const CoursePage = () => {
               )}
             </div>
             {courseData.status !== 'cancelled' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2">
+                {courseData.status === 'draft' ? (
                   <Button
-                    variant="secondary"
-                    size="icon-sm"
-                    aria-label="Flere handlinger"
+                    size="sm"
+                    onClick={handlePublish}
+                    loading={isPublishing}
+                    loadingText="Publiserer"
                   >
-                    <MoreHorizontal />
+                    Publiser kurs
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    className="text-danger"
-                    onClick={() => setShowCancelPreview(true)}
-                  >
-                    Avlys kurs
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                ) : (
+                  canShare && (
+                    <ShareCoursePopover
+                      courseUrl={courseUrl}
+                      courseTitle={courseData.title}
+                    />
+                  )
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="icon-sm"
+                      aria-label="Flere handlinger"
+                    >
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {courseData.status !== 'draft' && (
+                      <DropdownMenuItem onClick={handleUnpublish}>
+                        Gjør til utkast
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      className="text-danger"
+                      onClick={() => setShowCancelPreview(true)}
+                    >
+                      Avlys kurs
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
         </header>
@@ -539,27 +601,15 @@ const CoursePage = () => {
               onMaxParticipantsChange={setMaxParticipants}
               currentEnrolled={courseData.enrolled || 0}
               courseFormat={courseData.format === 'series' ? 'series' : 'single'}
+              totalWeeks={courseData.totalWeeks || 0}
+              price={settingsPrice}
+              onPriceChange={setSettingsPrice}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}
               onCancel={handleDiscard}
-            />
-          )}
-        </div>
-
-        {/* Priser panel */}
-        <div
-          role="tabpanel"
-          id="course-tab-priser"
-          aria-labelledby="course-tab-trigger-priser"
-          hidden={activeTab !== 'priser'}
-        >
-          {activeTab === 'priser' && (
-            <CoursePricingTab
-              courseId={courseId}
-              courseTotalWeeks={courseData.totalWeeks ?? null}
             />
           )}
         </div>
@@ -663,11 +713,12 @@ const CoursePage = () => {
                     };
                     const isNoteOpen = expandedNoteId === p.id;
                     return (
-                      <div key={p.id} className={cn('px-4', isCancelled && 'opacity-60')}>
+                      <div key={p.id} className="px-4">
                         <div
                           className={cn(
                             'grid items-center gap-4 py-3',
                             'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_auto_32px]',
+                            isCancelled && 'opacity-60',
                           )}
                         >
                           <UserAvatar name={name} email={email} size="sm" />

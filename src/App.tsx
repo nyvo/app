@@ -1,9 +1,10 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams, type Location } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from './contexts/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { PageLoader } from './components/ui/page-loader';
+import { DelayedFallback } from './components/ui/delayed-fallback';
+import { PageSkeleton } from './components/ui/page-skeleton';
 import { RESERVED_SLUGS } from '@/lib/reservedSlugs';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -21,19 +22,16 @@ const PaymentsPage = lazy(() => import('./pages/teacher/PaymentsPage'));
 const TeamsPage = lazy(() => import('./pages/teacher/TeamsPage'));
 const PublicCoursesPage = lazy(() => import('./pages/public/PublicCoursesPage'));
 const PublicCourseDetailPage = lazy(() => import('./pages/public/PublicCourseDetailPage'));
+const CheckoutPage = lazy(() => import('./pages/public/CheckoutPage'));
 const LandingPage = lazy(() => import('./pages/public/LandingPage'));
-const SignupPage = lazy(() => import('./pages/public/SignupPage'));
-const LoginPage = lazy(() => import('./pages/public/LoginPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
+const AuthPage = lazy(() => import('./pages/public/AuthPage'));
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
-const ConfirmEmailPage = lazy(() => import('./pages/public/ConfirmEmailPage'));
 const AuthCallbackPage = lazy(() => import('./pages/public/AuthCallbackPage'));
 const JoinPage = lazy(() => import('./pages/public/JoinPage'));
 const OnboardingPage = lazy(() => import('./pages/onboarding/OnboardingPage'));
 
-const ComingSoonPage = lazy(() => import('./pages/ComingSoonPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const TokenPreview = lazy(() => import('./pages/dev/TokenPreview'));
 const OnboardingPreview = lazy(() => import('./pages/dev/OnboardingPreview'));
@@ -45,8 +43,9 @@ const IncomeChartPreview = lazy(() => import('./pages/dev/IncomeChartPreview'));
 const EntityCardPreview = lazy(() => import('./pages/dev/EntityCardPreview'));
 const DashboardPreview = lazy(() => import('./pages/dev/DashboardPreview'));
 const CoursesListPreview = lazy(() => import('./pages/dev/CoursesListPreview'));
-
-type RouterState = { backgroundLocation?: Location } | null;
+const CheckoutReworkPreview = lazy(() => import('./pages/dev/CheckoutReworkPreview'));
+const CheckoutFormReworkPreview = lazy(() => import('./pages/dev/CheckoutFormReworkPreview'));
+const DetailReworkPreview = lazy(() => import('./pages/dev/DetailReworkPreview'));
 
 // Public team page at root: only renders if the slug is NOT a reserved word.
 // Reserved words 404 (since they should hit a literal route higher in the
@@ -66,28 +65,29 @@ function FlatTeamRoute({ children }: { children: React.ReactNode }) {
  */
 function RootRoute() {
   const { isInitialized, user } = useAuth();
-  if (!isInitialized) return <PageLoader variant="fullscreen" />;
+  // Auth init is cached and usually <200ms — render nothing rather than flash
+  // a loader (Studio § 10). On the rare slow init the user briefly sees blank;
+  // far calmer than a full-screen spinner that flickers in and out.
+  if (!isInitialized) return null;
   if (user) return <Navigate to="/overview" replace />;
   return <LandingPage />;
 }
 
 function AppRoutes() {
-  const location = useLocation();
-  const state = location.state as RouterState;
-  const backgroundLocation = state?.backgroundLocation;
-
   return (
     <>
-      <Routes location={backgroundLocation || location}>
+      <Routes>
         {/* Public Routes */}
         <Route path="/" element={<RootRoute />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route
+          path="/auth"
+          element={
+            import.meta.env.VITE_PRELAUNCH === 'true' ? <Navigate to="/" replace /> : <AuthPage />
+          }
+        />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/personvern" element={<PrivacyPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-        <Route path="/confirm-email" element={<ConfirmEmailPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/join/:code" element={<JoinPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
@@ -117,6 +117,9 @@ function AppRoutes() {
         <Route path="/dev/entity-card-preview" element={<EntityCardPreview />} />
         <Route path="/dev/dashboard-preview" element={<DashboardPreview />} />
         <Route path="/dev/courses-list-preview" element={<CoursesListPreview />} />
+        <Route path="/dev/checkout-rework" element={<CheckoutReworkPreview />} />
+        <Route path="/dev/checkout-form-rework" element={<CheckoutFormReworkPreview />} />
+        <Route path="/dev/detail-rework" element={<DetailReworkPreview />} />
 
         {/* Flat-slug team pages at root — `ourapp.no/<team-slug>[/courseId]`.
             FlatTeamRoute checks the slug against the reserved-words list and
@@ -138,44 +141,23 @@ function AppRoutes() {
             </FlatTeamRoute>
           }
         />
+        <Route
+          path="/:slug/:courseSlug/pamelding"
+          element={
+            <FlatTeamRoute>
+              <CheckoutPage />
+            </FlatTeamRoute>
+          }
+        />
 
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-
-      {/* Overlay layer — only mounted when navigating from a team card
-          (which passes state.backgroundLocation). Renders the course detail
-          page as a fixed overlay on top of the team overview that's
-          mounted underneath via the first Routes block, so the back button
-          returns to the exact team-page scroll position. Direct URL
-          visits skip this layer entirely — the first Routes block already
-          rendered the detail page as a normal scrollable document. */}
-      {backgroundLocation && (
-        <Routes>
-          <Route
-            path="/:slug/:courseSlug"
-            element={
-              <FlatTeamRoute>
-                <PublicCourseDetailPage />
-              </FlatTeamRoute>
-            }
-          />
-          <Route path="*" element={null} />
-        </Routes>
-      )}
     </>
   );
 }
 
 const App = () => {
-  if (import.meta.env.VITE_COMING_SOON === 'true') {
-    return (
-      <Suspense fallback={<PageLoader variant="fullscreen" />}>
-        <ComingSoonPage />
-      </Suspense>
-    );
-  }
-
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -184,7 +166,7 @@ const App = () => {
           theme="light"
         />
         <ErrorBoundary>
-          <Suspense fallback={<PageLoader variant="fullscreen" />}>
+          <Suspense fallback={<DelayedFallback><PageSkeleton /></DelayedFallback>}>
             <AppRoutes />
           </Suspense>
         </ErrorBoundary>

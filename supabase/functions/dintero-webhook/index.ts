@@ -19,13 +19,17 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import {
-  captureTransaction,
+  captureIfAuthorized,
   getTransaction,
   voidTransaction,
   verifyCallbackSignatureDetailed,
   signCallbackForTest,
   type DinteroTransaction,
 } from '../_shared/dintero.ts'
+import { enqueueNotification } from '../_shared/notifications.ts'
+import { sendEmail } from '../_shared/email.ts'
+import { formatKroner, formatNorwegianDate, shortBookingId } from '../_shared/format.ts'
+import { deliverBookingConfirmations } from '../_shared/booking-notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
@@ -92,6 +96,29 @@ async function markEventResult(
     .from('processed_webhook_events')
     .update({ result })
     .eq('event_id', eventId)
+}
+
+// Best-effort notification for payment failures that affect an actual signup.
+// Skips embedded-flow authorization declines (no signup exists yet — declined
+// cards aren't worth notifying about). Only fires when there's a signup at
+// risk: capture failures or payment-link authorization declines.
+async function notifyPaymentFailed(
+  supabase: SupabaseClient,
+  signupId: string,
+  attempt: { seller_id: string; course_id: string; participant_name: string | null },
+  transactionId: string,
+  amountNok: number,
+): Promise<void> {
+  if (!attempt.participant_name) return
+  await enqueueNotification(supabase, {
+    type: 'payment.failed',
+    sellerId: attempt.seller_id,
+    signupId,
+    courseId: attempt.course_id,
+    transactionId,
+    buyerName: attempt.participant_name,
+    amount: amountNok,
+  })
 }
 
 /**
@@ -267,7 +294,7 @@ Deno.serve(async (req: Request) => {
         // Payment-link flow: we have an existing signup — just update + capture
         if (attempt.existing_signup_id) {
           try {
-            await captureTransaction(transaction.id, transaction.amount)
+            await captureIfAuthorized(transaction.id, transaction.amount)
           } catch (captureErr) {
             const message = captureErr instanceof Error ? captureErr.message : 'Unknown'
             await supabase
@@ -278,6 +305,13 @@ Deno.serve(async (req: Request) => {
               .from('payment_attempts')
               .update({ status: 'failed' })
               .eq('id', attempt.id)
+            await notifyPaymentFailed(
+              supabase,
+              attempt.existing_signup_id,
+              attempt,
+              transaction.id,
+              amountNok,
+            )
             await markEventResult(supabase, transaction.id, status, {
               type: 'payment_link',
               error: 'capture_failed',
@@ -303,6 +337,8 @@ Deno.serve(async (req: Request) => {
             .from('payment_attempts')
             .update({ status: 'captured' })
             .eq('id', attempt.id)
+
+          await deliverBookingConfirmations(supabase, attempt.existing_signup_id, attempt, amountNok)
 
           await markEventResult(supabase, transaction.id, status, {
             type: 'payment_link',
@@ -345,6 +381,11 @@ Deno.serve(async (req: Request) => {
 
         if (!signupResult || !signupResult.success) {
           const errorType = (signupResult && signupResult.error) || 'unknown'
+
+          // The RPC serializes same-transaction callers on an advisory lock
+          // and short-circuits to success when the signup already exists, so
+          // 'already_signed_up' now means exactly one thing: the buyer has a
+          // confirmed non-drop-in signup for this course already. Void.
           try {
             await voidTransaction(transaction.id)
           } catch (_voidErr) {
@@ -363,9 +404,21 @@ Deno.serve(async (req: Request) => {
           return new Response('OK', { status: 200 })
         }
 
+        // Race-loser fast path: the RPC found an existing signup for this
+        // transaction (the other path won). The winner has already captured
+        // and fired side effects — exit without re-doing the work.
+        if (signupResult.status === 'already_processed') {
+          await markEventResult(supabase, transaction.id, status, {
+            type: 'embedded',
+            signup_id: signupResult.signup_id,
+            status: 'already_processed',
+          })
+          return new Response('OK', { status: 200 })
+        }
+
         // Signup created — capture
         try {
-          await captureTransaction(transaction.id, transaction.amount)
+          await captureIfAuthorized(transaction.id, transaction.amount)
         } catch (captureErr) {
           const message = captureErr instanceof Error ? captureErr.message : 'Unknown'
           await supabase
@@ -376,6 +429,13 @@ Deno.serve(async (req: Request) => {
             .from('payment_attempts')
             .update({ status: 'failed' })
             .eq('id', attempt.id)
+          await notifyPaymentFailed(
+            supabase,
+            signupResult.signup_id,
+            attempt,
+            transaction.id,
+            amountNok,
+          )
           await markEventResult(supabase, transaction.id, status, {
             type: 'embedded',
             signup_id: signupResult.signup_id,
@@ -389,6 +449,8 @@ Deno.serve(async (req: Request) => {
           .from('payment_attempts')
           .update({ status: 'captured' })
           .eq('id', attempt.id)
+
+        await deliverBookingConfirmations(supabase, signupResult.signup_id, attempt, amountNok)
 
         await markEventResult(supabase, transaction.id, status, {
           type: 'embedded',
@@ -406,6 +468,22 @@ Deno.serve(async (req: Request) => {
 
       case 'REFUNDED': {
         const refundAmountNok = transaction.amount / 100
+
+        // Read current state BEFORE the update. If refunded_at is already set,
+        // this webhook is the echo of an app-initiated refund (the owner used
+        // cancel-course or teacher-cancel-signup, which set refunded_at first).
+        // Skip the notification — owners don't get notified about their own
+        // actions. If refunded_at is null, the refund originated outside the
+        // app (Dintero compliance reversal, dispute resolution) and is worth
+        // surfacing.
+        const { data: signupBefore } = await supabase
+          .from('signups')
+          .select('id, seller_id, course_id, participant_name, participant_email, refunded_at')
+          .eq('dintero_transaction_id', transaction.id)
+          .maybeSingle()
+
+        const wasAppInitiated = !!signupBefore?.refunded_at
+
         await supabase
           .from('signups')
           .update({
@@ -415,6 +493,61 @@ Deno.serve(async (req: Request) => {
             refunded_at: new Date().toISOString(),
           })
           .eq('dintero_transaction_id', transaction.id)
+
+        if (signupBefore && !wasAppInitiated && signupBefore.participant_name) {
+          await enqueueNotification(supabase, {
+            type: 'refund.completed',
+            sellerId: signupBefore.seller_id,
+            signupId: signupBefore.id,
+            courseId: signupBefore.course_id,
+            // Synthetic refund key — stable per (transaction, amount) so
+            // webhook retries dedupe but distinct partial refunds don't.
+            refundId: `${transaction.id}:${transaction.amount}`,
+            buyerName: signupBefore.participant_name,
+            amount: refundAmountNok,
+          })
+        }
+
+        // Buyer always gets a refund-receipt email, regardless of who
+        // initiated. The webhook is the canonical "money has actually moved"
+        // event — firing on the request side would email before the refund
+        // is real. Best-effort: errors logged, never block the webhook ack.
+        if (signupBefore?.participant_email && signupBefore.participant_name) {
+          const [{ data: course }, { data: seller }] = await Promise.all([
+            supabase
+              .from('courses')
+              .select('title')
+              .eq('id', signupBefore.course_id)
+              .maybeSingle(),
+            supabase
+              .from('sellers')
+              .select('name')
+              .eq('id', signupBefore.seller_id)
+              .maybeSingle(),
+          ])
+          if (course?.title && seller?.name) {
+            const result = await sendEmail({
+              template: 'refund-receipt',
+              to: signupBefore.participant_email,
+              props: {
+                buyerName: signupBefore.participant_name,
+                studioName: seller.name,
+                courseTitle: course.title,
+                amount: formatKroner(refundAmountNok),
+                refundDate: formatNorwegianDate(new Date()),
+                bookingId: shortBookingId(signupBefore.id),
+              },
+            })
+            if (result.error) {
+              console.error('[refund-receipt email] send failed', {
+                signupId: signupBefore.id,
+                to: signupBefore.participant_email,
+                error: result.error,
+              })
+            }
+          }
+        }
+
         await markEventResult(supabase, transaction.id, status, { type: 'refund_full' })
         return new Response('OK', { status: 200 })
       }
@@ -435,11 +568,14 @@ Deno.serve(async (req: Request) => {
 
       case 'FAILED':
       case 'DECLINED': {
-        // Payment-link flow may have an existing signup to mark as failed
+        // Payment-link flow may have an existing signup to mark as failed.
+        // Embedded-flow declines never reach a signup so we don't notify
+        // those — declined cards are normal customer experience, not
+        // money-at-risk for the studio.
         if (merchantReference) {
           const { data: attempt } = await supabase
             .from('payment_attempts')
-            .select('existing_signup_id')
+            .select('existing_signup_id, seller_id, course_id, participant_name')
             .eq('id', merchantReference)
             .single()
           if (attempt?.existing_signup_id) {
@@ -447,6 +583,13 @@ Deno.serve(async (req: Request) => {
               .from('signups')
               .update({ payment_status: 'failed' })
               .eq('id', attempt.existing_signup_id)
+            await notifyPaymentFailed(
+              supabase,
+              attempt.existing_signup_id,
+              attempt,
+              transaction.id,
+              transaction.amount / 100,
+            )
           }
           await supabase
             .from('payment_attempts')
@@ -458,11 +601,16 @@ Deno.serve(async (req: Request) => {
       }
 
       case 'AUTHORIZATION_VOIDED': {
+        // Guard against a stale/duplicate VOIDED webhook flipping a captured
+        // attempt's status back to 'voided' — only transition from non-terminal
+        // states (pending/authorized). Captured/failed/refunded rows are kept
+        // intact; this is purely defensive against out-of-order delivery.
         if (merchantReference) {
           await supabase
             .from('payment_attempts')
             .update({ status: 'voided' })
             .eq('id', merchantReference)
+            .in('status', ['pending', 'authorized'])
         }
         await markEventResult(supabase, transaction.id, status, { type: 'voided' })
         return new Response('OK', { status: 200 })

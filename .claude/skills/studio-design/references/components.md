@@ -1459,69 +1459,59 @@ Built from shadcn `<Input type="number">` with an absolutely-positioned suffix l
 
 ## Page state shell
 
-One layout, four variants — 404, 500, permission denied, page-loading. Same shell handles all four; they differ only in headline / supporting / actions. Users never have to learn multiple page-error designs.
+One layout for every page that can't render — 404, 500, permission denied, page-loading. Same shell, contextual copy.
 
-### The shell — page-level, no card chrome
+### `<PageState>` — the canonical primitive
 
-The page-level state lives directly on the page canvas — **no card border around it**. Single primary CTA; secondary path is an **inline arrow link below**, not a side-by-side ghost button.
+Import from `@/components/page-state/page-state`. The primitive renders the shell; the `variant` prop supplies pre-set copy + action. Don't re-implement the shell inline.
 
-**No "404" eyebrow, no "Error" eyebrow** — eyebrows are developer-speak. The headline already says what happened in plain language.
+```tsx
+<PageState variant="course" />
+<PageState variant="public-team" />
+<PageState
+  variant="generic"
+  title="Ditt eget tilfelle"
+  description={null}        // pass null to hide the default description
+  action={null}             // pass null to hide the default action
+  illustration={<LineArt />} // optional line-art slot, ~120–160px
+/>
+```
+
+### Variant copy table
+
+| Variant | When | Headline | Default action |
+|---------|------|----------|----------------|
+| `generic` | Catch-all 404, typo'd URL | `Vi finner ikke denne siden` | none — browser back is enough |
+| `course` | Teacher course route w/ missing id | `Vi finner ikke dette kurset` | `Til kursoversikten` → `/courses` |
+| `public-course` | Public course page w/ bad slug | `Kurset er ikke lenger tilgjengelig` | none |
+| `public-team` | Public team page w/ bad slug | `Vi finner ikke dette studioet` | none |
+| `permission` | Signed-out / wrong account | `Du har ikke tilgang til denne siden` | `Logg inn` → `/auth` |
+| `server-error` | Render crash (ErrorBoundary) or load-failed page | `Noe gikk galt` | `Last på nytt` → `window.location.reload()` |
+
+### Shell contract — no card, no dual button, at most one action
+
+- **No card chrome.** The shell lives directly on the page canvas. Wrapping in a `<Card>` adds "boxed UI element" semantics that fight the "this IS the page" reading.
+- **No status-code eyebrow** ("404", "500", "Error"). Eyebrows are developer-speak.
+- **No dual button.** The earlier shell paired a primary pill with an inline arrow link below. That's still two-decision UI. Render one action (when the variant has a useful destination) or none.
+- **Illustration slot above the headline.** Default: empty. Pass a line-art SVG via `illustration` prop when available; the slot just gives it consistent spacing (`mb-8`).
+- **`text-sm` description, `text-2xl font-semibold` headline.** Same scale on dashboard and public surface — the shell is meta-content, not page body, so it doesn't follow the 14px/16px split.
 
 ```html
+<!-- Output of <PageState /> -->
 <main class="min-h-[60vh] flex flex-col items-center justify-center text-center px-6 py-12">
+  <!-- optional: <div class="mb-8">{ illustration }</div> -->
   <h1 class="text-2xl font-semibold tracking-tight max-w-md">{{ headline }}</h1>
   <p class="mt-3 text-sm text-foreground-muted max-w-md">{{ supporting }}</p>
-  <button class="mt-7 btn btn-primary btn-sm">{{ primary action }}</button>
-  <a class="mt-3 text-sm text-foreground-muted underline decoration-foreground-muted/40 underline-offset-2 hover:decoration-foreground-muted">
-    {{ secondary inline link, optional }} →
-  </a>
+  <!-- optional, only when variant has a useful destination -->
+  <div class="mt-7">{{ action }}</div>
 </main>
 ```
 
-**Why no card:**
-- The error IS the page — wrapping it in a card adds chrome that says "boxed UI element," not "current page state"
-- Cards-around-error-pages is the canonical AI/SaaS template render
-- Removing the card matches Linear, Vercel, GitHub, Notion's actual error pages
+### When NOT to use `<PageState>`
 
-**Why single CTA + inline link (not dual button):**
-- Two side-by-side buttons (primary pill + ghost) gives competing visual weight to two paths
-- Inline arrow link is a calmer secondary — clearly available, doesn't compete with the primary
-- For non-power-users, one obvious action wins
-
-### 404 — page not found
-
-The user's concern was real: a generic "Til startsiden" button can take someone to the wrong place if they came from a deleted course URL. The fix is a **smart fallback button** that's context-aware:
-
-```ts
-function handleBackOrFallback(fallbackUrl = '/kurs') {
-  // Came from inside the app? Go back to where they were.
-  if (window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
-    window.history.back();
-    return;
-  }
-  // Came from external link → land them on the courses listing where they can find what they wanted
-  window.location.href = fallbackUrl;
-}
-```
-
-- Headline: `Vi finner ikke den siden du leter etter`
-- Supporting: `Lenken er kanskje utdatert, eller siden er flyttet.`
-- Primary: `Gå tilbake` → `handleBackOrFallback('/kurs')`
-- Inline link: `eller gå til startsiden →`
-
-### 500 — server error
-
-- Headline: `Noe gikk galt`
-- Supporting: `Prøv igjen om noen sekunder. Hvis problemet vedvarer, ta kontakt.`
-- Primary: `Last på nytt` → `window.location.reload()`
-- Inline link: `eller gå til startsiden →`
-
-### Permission denied
-
-- Headline: `Du har ikke tilgang til denne siden`
-- Supporting: contextual — `Logg inn med en konto som har tilgang, eller be eieren invitere deg.`
-- Primary: `Logg inn` (when sign-in is the path) or `Gå til startsiden`
-- Inline link: `eller gå til startsiden →` (when primary is `Logg inn`)
+- **Section-scoped error** (one card on a dashboard failed to load) → use the section-error pattern in `patterns.md` § 13.4, not this shell.
+- **Inline form / field errors** → see `patterns.md` § 13.2.
+- **Empty list state** (a section that loaded fine but has no rows yet) → that's an empty state, not a page state. Use `<EmptyState>`.
 
 ### Page-level loading — full skeleton matching the page
 

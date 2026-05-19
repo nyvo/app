@@ -7,10 +7,29 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { listSellerApprovals } from '../_shared/dintero.ts'
+import { enqueueNotification, type NotificationInput } from '../_shared/notifications.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const cronSecret = Deno.env.get('DINTERO_CRON_SECRET') || ''
+
+function notificationForStatus(
+  caseStatus: string,
+  sellerId: string,
+): NotificationInput | null {
+  switch (caseStatus) {
+    case 'ACTIVE':
+      return { type: 'dintero_seller.approved', sellerId }
+    case 'REJECTED':
+    case 'DECLINED':
+      return { type: 'dintero_seller.rejected', sellerId }
+    case 'WAITING_FOR_DECLARATION':
+    case 'WAITING_FOR_SIGNATURE':
+      return { type: 'dintero_seller.action_required', sellerId }
+    default:
+      return null
+  }
+}
 
 Deno.serve(async (req: Request) => {
   // Require cron secret OR service role key
@@ -61,6 +80,15 @@ Deno.serve(async (req: Request) => {
             dintero_onboarding_complete: caseStatus === 'ACTIVE',
           })
           .eq('id', seller.id)
+
+        // Fire a notification for the meaningful transitions. The dedupe_keys
+        // make this idempotent: approved/rejected fire once per seller forever;
+        // action_required uses a daily key so it re-surfaces each day the
+        // seller leaves docs unhandled (intentional — keeps the amber dot
+        // from going stale).
+        const event = notificationForStatus(caseStatus, seller.id)
+        if (event) await enqueueNotification(supabase, event)
+
         synced++
       }
     }

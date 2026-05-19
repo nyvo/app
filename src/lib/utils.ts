@@ -42,3 +42,20 @@ export function foldNorwegian(value: string): string {
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '');
 }
+
+/**
+ * When Supabase auto-creates a profile from an email, it seeds `name` with the
+ * local-part of the email (`kristian@example.com` → `kristian`). That's a
+ * placeholder, not a real name. Treat it as empty so inputs default to blank
+ * instead of pre-filling with a half-name the user didn't type.
+ */
+export function resolveDisplayName(
+  name: string | null | undefined,
+  email: string | null | undefined,
+): string {
+  const trimmed = name?.trim();
+  if (!trimmed) return '';
+  const emailPrefix = email?.split('@')[0];
+  if (emailPrefix && trimmed.toLowerCase() === emailPrefix.toLowerCase()) return '';
+  return trimmed;
+}

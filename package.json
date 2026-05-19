@@ -12,10 +12,14 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
-    "test:e2e:headed": "npx playwright test --headed"
+    "test:e2e:headed": "npx playwright test --headed",
+    "email:preview": "email dev --dir supabase/functions/send-email/templates"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.8",
+    "@react-email/ui": "^6.1.4",
     "@tailwindcss/postcss": "^4.1.17",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
@@ -27,6 +31,7 @@
     "autoprefixer": "^10.4.22",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.6",
+    "react-email": "^6.1.4",
     "shadcn": "^4.2.0",
     "supabase": "^2.72.8",
     "tailwindcss": "^4.1.17",
@@ -62,6 +67,7 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.3",
     "framer-motion": "^12.23.24",
+    "input-otp": "^1.4.2",
     "lucide-react": "^1.8.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.0",

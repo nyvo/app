@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    return <Navigate to={AUTH_ROUTES.login} state={{ from: location }} replace />
+    return <Navigate to={AUTH_ROUTES.auth} state={{ from: location }} replace />
   }
 
   return <>{children}</>

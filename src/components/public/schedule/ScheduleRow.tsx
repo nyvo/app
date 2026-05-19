@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { MapPin, User } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,10 @@ interface ScheduleRowProps {
   course: PublicCourseWithDetails;
   /** The session date we're displaying this row under — used to compute week-of-N badge */
   displayDate: string;
+  /** Viewing storefront — carried as state so the detail back-link returns
+   * here even in syndicated cases. */
+  viewingSlug?: string;
+  viewingName?: string | null;
 }
 
 const DAY_MS = 1000 * 60 * 60 * 24;
@@ -36,8 +40,7 @@ function spotsLabel(spotsAvailable: number, max: number | null): string | null {
   return null;
 }
 
-export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
-  const location = useLocation();
+export function ScheduleRow({ course, displayDate, viewingSlug, viewingName }: ScheduleRowProps) {
   const time = extractTime(course.time_schedule);
   const instructorName = course.instructors[0]?.name || course.instructor?.name || null;
   // Link target is always the owning seller's team slug, regardless of whether
@@ -56,7 +59,7 @@ export function ScheduleRow({ course, displayDate }: ScheduleRowProps) {
   return (
     <Link
       to={`/${studioSlug}/${course.slug}`}
-      state={{ backgroundLocation: location }}
+      state={{ fromSlug: viewingSlug ?? studioSlug, fromName: viewingName ?? course.seller?.name ?? null }}
       className={cn(
         'group flex items-center gap-4 px-3 py-3 transition-colors duration-150',
         'hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',

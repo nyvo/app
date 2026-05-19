@@ -30,7 +30,6 @@ interface CourseOverviewTabProps {
     estimatedRevenue: number;
     description: string;
     description2: string;
-    level: string;
     duration: string;
     durationMinutes: number;
     courseType: string;
@@ -114,14 +113,9 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                   className="text-sm text-foreground-muted"
                 />
               )}
-              {(course.level || course.courseType === 'kursrekke') && (
+              {course.courseType === 'kursrekke' && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {course.level && (
-                    <Badge variant="neutral" shape="pill">{course.level}</Badge>
-                  )}
-                  {course.courseType === 'kursrekke' && (
-                    <Badge variant="neutral" shape="pill">Voksne</Badge>
-                  )}
+                  <Badge variant="neutral" shape="pill">Voksne</Badge>
                 </div>
               )}
               {!course.description && !course.description2 && (

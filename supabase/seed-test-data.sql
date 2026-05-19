@@ -59,7 +59,7 @@ BEGIN
   -- ============================================
   -- LOOK UP SELLER FOR THE TEST USER
   -- ============================================
-  v_user_id := '5b9e6705-a7fd-4785-8476-c0eb4ea88ce9'; -- nyvo77@gmail.com — REPLACE
+  v_user_id := 'a358f2c1-a16d-4b8d-919a-7809b487ecb4'; -- nyvo77@gmail.com — REPLACE
 
   SELECT sm.seller_id INTO v_seller_id
   FROM public.seller_members sm
@@ -103,12 +103,12 @@ BEGIN
 
   -- SCENARIO 1: Active series, FULL (3/3). Mid-run, 8 weeks. Long desc.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_full, v_seller_id, 'seed-vinyasa-mandager',
     'Vinyasa Flow — Mandager',
     'Dynamisk vinyasa der pust og bevegelse smelter sammen. Passer for deg som har litt erfaring og ønsker styrke, fleksibilitet og fokus.',
-    'series', 'in_person', 'active', 'alle',
+    'series', 'in_person', 'active',
     'Studio 1, Parkveien 5, Oslo', 'Mandager 18:00-19:15', 75, 3, 2400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days'))::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '49 days')::DATE,
@@ -116,12 +116,12 @@ BEGIN
 
   -- SCENARIO 2: Active series, available (5/12).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_available, v_seller_id, 'seed-hatha-onsdager',
     'Hatha Yoga — Onsdager',
     'Klassisk hatha med fokus på riktig teknikk og kroppskjennskap. Perfekt for nybegynnere.',
-    'series', 'in_person', 'active', 'nybegynner',
+    'series', 'in_person', 'active',
     'Studio 2, Parkveien 5, Oslo', 'Onsdager 10:00-11:00', 60, 12, 1800.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE,
@@ -129,12 +129,12 @@ BEGIN
 
   -- SCENARIO 3: Almost full (5/6 — 1 left). Tests low-spots badge.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_almost_full, v_seller_id, 'seed-yoga-nidra',
     'Yoga Nidra & Avspenning',
     'Dyp avspenning og guidet meditasjon. Liggende praksis — kommer du sliten, går du uthvilt.',
-    'series', 'in_person', 'active', 'alle',
+    'series', 'in_person', 'active',
     'Studio 2, Parkveien 5, Oslo', 'Tirsdager 17:30-18:30', 60, 6, 1600.00, 6,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '1 day')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '36 days')::DATE,
@@ -142,12 +142,12 @@ BEGIN
 
   -- SCENARIO 4: Upcoming series (starts in 2 weeks, 3 pre-signups).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_upcoming, v_seller_id, 'seed-yin-fredager',
     'Yin Yoga — Nybegynnerkurs',
     'Stille, langsom praksis der hver stilling holdes 3–5 minutter. Slipper spenninger i bindevev og fascia.',
-    'series', 'in_person', 'upcoming', 'nybegynner',
+    'series', 'in_person', 'upcoming',
     'Studio 2, Parkveien 5, Oslo', 'Fredager 17:00-18:15', 75, 15, 1500.00, 6,
     (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '4 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '14 days') + INTERVAL '39 days')::DATE,
@@ -155,12 +155,12 @@ BEGIN
 
   -- SCENARIO 5: Draft (not published).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_draft, v_seller_id, 'seed-yoga-gravide',
     'Yoga for Gravide',
     'Trygg yoga gjennom svangerskapet. Tilpasset hver trimester.',
-    'series', 'in_person', 'draft', 'alle',
+    'series', 'in_person', 'draft',
     'Studio 2, Parkveien 5, Oslo', 'Lørdager 11:00-12:00', 60, 8, 2000.00, 8,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '54 days')::DATE,
@@ -168,12 +168,12 @@ BEGIN
 
   -- SCENARIO 6: Completed (3 months ago).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_completed, v_seller_id, 'seed-vinyasa-vinter',
     'Vinyasa Grunnkurs — Forrige sesong',
     'Dynamisk vinyasa for nybegynnere. Ferdig sesong.',
-    'series', 'in_person', 'completed', 'nybegynner',
+    'series', 'in_person', 'completed',
     'Studio 1, Parkveien 5, Oslo', 'Onsdager 18:00-19:15', 75, 10, 2200.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '90 days') + INTERVAL '51 days')::DATE,
@@ -181,12 +181,12 @@ BEGIN
 
   -- SCENARIO 7: Cancelled (signups become course_cancelled).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_cancelled, v_seller_id, 'seed-aerial-intro',
     'Aerial Yoga Intro',
     'Akrobatisk yoga med silketøy. Avlyst pga. utstyrslevering.',
-    'series', 'in_person', 'cancelled', 'alle',
+    'series', 'in_person', 'cancelled',
     'Studio 3, Parkveien 5, Oslo', 'Søndager 14:00-15:30', 90, 8, 2800.00, 6,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '6 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '41 days')::DATE,
@@ -194,12 +194,12 @@ BEGIN
 
   -- SCENARIO 8: Series with drop-in tier available.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_dropin, v_seller_id, 'seed-lunsj-yoga',
     'Lunsj-yoga — Open Flow',
     'Energigivende lunsjpause. Kan kjøpes som kurs eller drop-in per gang.',
-    'series', 'in_person', 'active', 'alle',
+    'series', 'in_person', 'active',
     'Studio 1, Parkveien 5, Oslo', 'Mandager 12:00-13:00', 60, 18, 1400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days'))::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '49 days')::DATE,
@@ -207,12 +207,12 @@ BEGIN
 
   -- SCENARIO 9: Expensive series with multiple ticket tiers.
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_expensive, v_seller_id, 'seed-yogalarer-200',
     'Yogalærerutdanning 200t',
     'Yoga Alliance-sertifisert lærerutdanning. 10 helgesamlinger over 5 måneder.',
-    'series', 'in_person', 'upcoming', 'viderekommen',
+    'series', 'in_person', 'upcoming',
     'Storsalen, Kulturhuset, Youngs gate 6, Oslo', 'Lørdager 09:00-16:00', 420, 16, 18500.00, 10,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '21 days') + INTERVAL '68 days')::DATE,
@@ -220,12 +220,12 @@ BEGIN
 
   -- SCENARIO 10: Payment exceptions (failed / pending / refunded mix).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_payments, v_seller_id, 'seed-yin-meditasjon',
     'Yin & Meditasjon',
     'Stille praksis kombinert med guidet meditasjon.',
-    'series', 'in_person', 'active', 'alle',
+    'series', 'in_person', 'active',
     'Studio 1, Parkveien 5, Oslo', 'Torsdager 19:30-20:45', 75, 8, 2400.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '3 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '14 days') + INTERVAL '52 days')::DATE,
@@ -233,12 +233,12 @@ BEGIN
 
   -- SCENARIO 11: Online series — Zoom (no physical location).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_online, v_seller_id, 'seed-kveldsmeditasjon',
     'Kveldsmeditasjon Online',
     'Guidet meditasjon hjemmefra. Zoom-lenke sendes på e-post etter påmelding.',
-    'series', 'online', 'active', 'alle',
+    'series', 'online', 'active',
     NULL, 'Onsdager 20:00-20:30', 30, 50, 600.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '2 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '21 days') + INTERVAL '51 days')::DATE,
@@ -246,14 +246,14 @@ BEGIN
 
   -- SCENARIO 12: Long-description course (tests collapse/expand).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, total_weeks, start_date, end_date, instructor_id)
   VALUES (c_series_long_desc, v_seller_id, 'seed-helhetlig-yoga',
     'Helhetlig Yoga — Kropp, Pust & Sinn',
     'Et kurs som utforsker yoga som helhetlig praksis. Vi dykker inn i et nytt tema hver uke: grounding og stabilitet, ryggradens bevegelighet, pust og pranayama, meditasjon, og hjemmepraksis.'
     || E'\n\n'
     || 'Kurset passer for alle nivåer. Har du aldri prøvd yoga før? Perfekt — vi starter fra begynnelsen. Har du praktisert i årevis? Du vil oppdage nye dimensjoner av praksisen din.',
-    'series', 'in_person', 'active', 'alle',
+    'series', 'in_person', 'active',
     'Studio 1, Parkveien 5, Oslo', 'Torsdager 10:00-11:30', 90, 10, 2200.00, 8,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '3 days')::DATE,
     (date_trunc('week', CURRENT_DATE - INTERVAL '28 days') + INTERVAL '52 days')::DATE,
@@ -261,12 +261,12 @@ BEGIN
 
   -- SCENARIO 13: Single in-person event (workshop).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, start_date, end_date, instructor_id)
   VALUES (c_single_event, v_seller_id, 'seed-fullmane-workshop',
     'Full Moon Workshop',
     'En kveld dedikert til fullmånen. Sirkel, intensjonssetting, lett yoga og meditasjon.',
-    'single', 'in_person', 'upcoming', 'alle',
+    'single', 'in_person', 'upcoming',
     'Friluftshuset, Frognerparken, Oslo', 'Lørdag 19:00-21:00', 120, 25, 450.00,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '5 days')::DATE,
@@ -274,12 +274,12 @@ BEGIN
 
   -- SCENARIO 14: Single online event (webinar).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, start_date, end_date, instructor_id)
   VALUES (c_single_online, v_seller_id, 'seed-webinar-pust',
     'Pustewebinar — Introduksjon',
     'En times innføring i diafragmatisk pust og nervesystemets respons. Zoom.',
-    'single', 'online', 'upcoming', 'alle',
+    'single', 'online', 'upcoming',
     NULL, 'Tirsdag 19:00-20:00', 60, 100, 250.00,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '1 day')::DATE,
     (date_trunc('week', CURRENT_DATE + INTERVAL '7 days') + INTERVAL '1 day')::DATE,
@@ -287,12 +287,12 @@ BEGIN
 
   -- SCENARIO 15: Free single event (price 0).
   INSERT INTO public.courses (id, seller_id, slug, title, description,
-    format, delivery_mode, status, level, location, time_schedule, duration,
+    format, delivery_mode, status, location, time_schedule, duration,
     max_participants, price, start_date, end_date, instructor_id)
   VALUES (c_single_free, v_seller_id, 'seed-gratis-provetime',
     'Gratis Prøvetime',
     'Kom og prøv! Helt gratis åpen klasse for å bli kjent med studioet og lærerne.',
-    'single', 'in_person', 'upcoming', 'alle',
+    'single', 'in_person', 'upcoming',
     'Studio 1, Parkveien 5, Oslo', 'Søndag 10:00-11:00', 60, 20, 0,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,
     (date_trunc('week', CURRENT_DATE) + INTERVAL '6 days')::DATE,

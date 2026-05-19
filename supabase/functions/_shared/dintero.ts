@@ -244,6 +244,32 @@ export function captureTransaction(
   )
 }
 
+/**
+ * Idempotent capture. Re-fetches the live transaction first and short-circuits
+ * if it's already CAPTURED or PARTIALLY_CAPTURED — that happens when both the
+ * webhook and the client-driven finalize race to capture the same authorization.
+ * Without this guard, the loser treats Dintero's "already captured" error as a
+ * capture failure and stomps signups.payment_status back to 'failed'.
+ *
+ * Returns the final transaction state (whatever capture path produced it).
+ */
+export async function captureIfAuthorized(
+  transactionId: string,
+  amount: number,
+  captureReference?: string,
+): Promise<DinteroTransaction> {
+  const current = await getTransaction(transactionId)
+  if (current.status === 'CAPTURED' || current.status === 'PARTIALLY_CAPTURED') {
+    return current
+  }
+  if (current.status !== 'AUTHORIZED') {
+    throw new Error(
+      `cannot capture transaction in status ${current.status}`,
+    )
+  }
+  return captureTransaction(transactionId, amount, captureReference)
+}
+
 export function refundTransaction(
   transactionId: string,
   amount: number,

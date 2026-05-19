@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { Building, Calendar, Check, ImageIcon, LogOut, User } from '@/lib/icons'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, ChevronLeft, ImageIcon, LogOut } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
-import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
-import { cn } from '@/lib/utils'
+import { cn, resolveDisplayName } from '@/lib/utils'
+import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
 import { uploadSellerLogo, ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/services/storage'
@@ -29,6 +30,22 @@ import type { UserRole } from '@/types/database'
 
 type SellerKind = 'individual' | 'studio'
 
+// Top-left ghost back link. Same shape as CheckoutPage so the back affordance
+// reads identically across the app's multi-step flows.
+function BackLink({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="mb-8 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <ChevronLeft className="size-4" strokeWidth={1.75} />
+      Tilbake
+    </button>
+  )
+}
+
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -45,15 +62,13 @@ export default function OnboardingPage() {
   // Auth gate. ProtectedRoute can't wrap this route because it lives outside
   // TeacherLayout; do the redirect inline.
   if (!isLoading && isInitialized && !user) {
-    return <Navigate to={AUTH_ROUTES.login} replace />
+    return <Navigate to={AUTH_ROUTES.auth} replace />
   }
 
+  // Auth init is cached and typically <200ms. Render nothing during the gap
+  // rather than flashing a full-screen loader (Studio § 10).
   if (isLoading || !isInitialized || !profile) {
-    return (
-      <main className="min-h-screen w-full bg-background flex items-center justify-center">
-        <Spinner size="xl" />
-      </main>
-    )
+    return null
   }
 
   if (profile.onboarding_completed_at) {
@@ -62,7 +77,34 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="flex justify-end px-4 sm:px-6 pt-4">
+      <header className="flex justify-center px-4 sm:px-6 pt-8">
+        <Link to="/" className="flex select-none items-center">
+          <span className="text-base font-medium text-foreground">Openspot</span>
+        </Link>
+      </header>
+      <div className="flex-1 relative overflow-hidden">
+        <AnimatePresence mode="wait" custom={1} initial={false}>
+          <motion.div
+            key={profile.role ?? 'role'}
+            custom={1}
+            variants={stepVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            style={{ willChange: 'transform, opacity' }}
+            className="absolute inset-0 flex"
+          >
+            {profile.role === null ? (
+              <RoleChooser />
+            ) : profile.role === 'buyer' ? (
+              <BuyerSetup />
+            ) : (
+              <SellerFlow />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      <footer className="flex justify-center px-4 sm:px-6 py-8">
         <button
           type="button"
           onClick={() => { void signOut() }}
@@ -71,14 +113,7 @@ export default function OnboardingPage() {
           <LogOut className="size-3.5" strokeWidth={1.75} />
           Logg ut
         </button>
-      </header>
-      {profile.role === null ? (
-        <RoleChooser />
-      ) : profile.role === 'buyer' ? (
-        <BuyerSetup />
-      ) : (
-        <SellerFlow />
-      )}
+      </footer>
     </main>
   )
 }
@@ -108,8 +143,8 @@ function RoleChooser() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-2xl">
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
-          Hva vil du gjøre?
+        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
+          Velg det som passer best
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -117,15 +152,13 @@ function RoleChooser() {
           {([
             {
               value: 'buyer' as const,
-              icon: Calendar,
               title: 'Booke klasser',
-              body: 'Finn og book yoga, pilates eller andre klasser hos studioer i nærheten.',
+              body: 'Finn klasser hos studioer i nærheten.',
             },
             {
               value: 'seller' as const,
-              icon: Building,
               title: 'Drive et studio',
-              body: 'Sett opp ditt eget studio, lag kurs, og motta påmeldinger.',
+              body: 'Lag kurs og ta imot påmeldinger.',
             },
           ]).map((opt) => {
             const isSelected = pick === opt.value
@@ -133,8 +166,8 @@ function RoleChooser() {
               <label
                 key={opt.value}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-ring',
-                  isSelected ? 'border-foreground bg-muted' : 'border-border hover:bg-muted',
+                  'flex items-start gap-3 rounded-lg bg-muted p-4 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
+                  isSelected && 'ring-2 ring-foreground',
                 )}
               >
                 <input
@@ -145,15 +178,9 @@ function RoleChooser() {
                   onChange={() => setPick(opt.value)}
                   className="sr-only"
                 />
-                <div className={cn(
-                  'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md',
-                  isSelected ? 'bg-background border border-border' : 'bg-muted',
-                )}>
-                  <opt.icon className="size-4 text-foreground-muted" strokeWidth={1.75} />
-                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -174,24 +201,27 @@ function RoleChooser() {
 // ---------------------------------------------------------------------------
 
 function BuyerSetup() {
-  const { profile, completeBuyerOnboarding } = useAuth()
+  const { profile, completeBuyerOnboarding, setRole } = useAuth()
   const navigate = useNavigate()
 
-  // Don't prefill the name if the only existing value is the email prefix
-  // (Supabase's auto-fill behavior when no display name is given).
-  const prefillName = useMemo(() => {
-    const name = profile?.name?.trim()
-    if (!name) return ''
-    const emailPrefix = profile?.email?.split('@')[0]
-    if (emailPrefix && name.toLowerCase() === emailPrefix.toLowerCase()) return ''
-    return name
-  }, [profile])
+  const prefillName = useMemo(
+    () => resolveDisplayName(profile?.name, profile?.email),
+    [profile],
+  )
 
   const [firstName, setFirstName] = useState(() => prefillName.split(' ')[0] || '')
   const [lastName, setLastName] = useState(() => prefillName.split(' ').slice(1).join(' ') || '')
   const [phone, setPhone] = useState(() => profile?.phone || '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+
+  const handleBack = async () => {
+    const { error } = await setRole(null)
+    if (error) {
+      logger.error('Onboarding: setRole(null) failed', error)
+      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -220,7 +250,8 @@ function BuyerSetup() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
+        <BackLink onClick={() => { void handleBack() }} disabled={saving} />
+        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
           Litt om deg
         </h1>
 
@@ -281,29 +312,67 @@ function BuyerSetup() {
 // ---------------------------------------------------------------------------
 
 function SellerFlow() {
+  const { setRole } = useAuth()
   const [stage, setStage] = useState<'type' | 'profile'>('type')
+  const [direction, setDirection] = useState(1)
   const [kind, setKind] = useState<SellerKind>('individual')
 
-  if (stage === 'type') {
-    return <SellerType kind={kind} setKind={setKind} onContinue={() => setStage('profile')} />
+  const goToProfile = () => { setDirection(1); setStage('profile') }
+  const goBackToType = () => { setDirection(-1); setStage('type') }
+
+  const exitToRole = async () => {
+    const { error } = await setRole(null)
+    if (error) {
+      logger.error('Onboarding: setRole(null) failed', error)
+      toast.error('Kunne ikke gå tilbake. Prøv igjen.')
+    }
   }
-  return <SellerProfile kind={kind} onBack={() => setStage('type')} />
+
+  return (
+    <div className="flex-1 relative overflow-hidden">
+      <AnimatePresence mode="wait" custom={direction} initial={false}>
+        <motion.div
+          key={stage}
+          custom={direction}
+          variants={stepVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          className="absolute inset-0 flex"
+        >
+          {stage === 'type' ? (
+            <SellerType
+              kind={kind}
+              setKind={setKind}
+              onContinue={goToProfile}
+              onBack={() => { void exitToRole() }}
+            />
+          ) : (
+            <SellerProfile kind={kind} onBack={goBackToType} />
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  )
 }
 
 function SellerType({
   kind,
   setKind,
   onContinue,
+  onBack,
 }: {
   kind: SellerKind
   setKind: (k: SellerKind) => void
   onContinue: () => void
+  onBack: () => void
 }) {
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={(e) => { e.preventDefault(); onContinue() }} className="w-full max-w-2xl">
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
-          Hvem er du?
+        <BackLink onClick={onBack} />
+        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
+          Hvordan jobber du?
         </h1>
 
         <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -311,15 +380,13 @@ function SellerType({
           {([
             {
               value: 'individual' as const,
-              icon: User,
               title: 'Individuell lærer',
-              body: 'Jeg holder kurs i mitt eget navn. Frilans, ENK eller helt nystartet.',
+              body: 'Jeg holder kurs i eget navn. Frilans eller ENK.',
             },
             {
               value: 'studio' as const,
-              icon: Building,
               title: 'Studio',
-              body: 'Jeg representerer et studio, en bedrift eller en organisasjon.',
+              body: 'Jeg representerer et studio eller en bedrift.',
             },
           ]).map((opt) => {
             const isSelected = kind === opt.value
@@ -327,8 +394,8 @@ function SellerType({
               <label
                 key={opt.value}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg border p-4 cursor-pointer transition-colors duration-150 focus-within:ring-2 focus-within:ring-ring',
-                  isSelected ? 'border-foreground bg-muted' : 'border-border hover:bg-muted',
+                  'flex items-start gap-3 rounded-lg bg-muted p-4 cursor-pointer transition-shadow duration-150 hover:bg-muted/70 focus-within:ring-2 focus-within:ring-ring',
+                  isSelected && 'ring-2 ring-foreground',
                 )}
               >
                 <input
@@ -339,15 +406,9 @@ function SellerType({
                   onChange={() => setKind(opt.value)}
                   className="sr-only"
                 />
-                <div className={cn(
-                  'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md',
-                  isSelected ? 'bg-background border border-border' : 'bg-muted',
-                )}>
-                  <opt.icon className="size-4 text-foreground-muted" strokeWidth={1.75} />
-                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-xs text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -367,7 +428,9 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
   const { profile, ensureSeller, markOnboardingComplete } = useAuth()
   const navigate = useNavigate()
 
-  const [profileName, setProfileName] = useState(() => profile?.name?.trim() || '')
+  const [profileName, setProfileName] = useState(() =>
+    kind === 'individual' ? resolveDisplayName(profile?.name, profile?.email) : '',
+  )
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [slugDraft, setSlugDraft] = useState('')
@@ -385,14 +448,14 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
     if (!slugDraft) return { state: 'idle' as const, message: '' }
     if (slugDraft.length < 3) return { state: 'error' as const, message: 'Minst 3 tegn.' }
     if (slugDraft.length > 40) return { state: 'error' as const, message: 'Maks 40 tegn.' }
-    return { state: 'ok' as const, message: 'Tilgjengelig' }
+    return { state: 'idle' as const, message: '' }
   }, [slugDraft])
 
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      toast.error('Ugyldig filtype. Bruk JPG, PNG eller WebP.')
+      toast.error('Filtypen støttes ikke. Bruk JPG, PNG eller WebP.')
       return
     }
     if (file.size > MAX_IMAGE_SIZE) {
@@ -454,7 +517,8 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
   return (
     <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
       <form onSubmit={handleSubmit} className="w-full max-w-lg">
-        <h1 className="mb-8 text-3xl font-semibold tracking-tight text-foreground">
+        <BackLink onClick={onBack} disabled={saving} />
+        <h1 className="mb-8 text-3xl font-medium tracking-tight text-foreground">
           {kind === 'studio' ? 'Sett opp studioet' : 'Sett opp profilen'}
         </h1>
 
@@ -503,7 +567,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
 
           <div className="grid gap-2">
             <label htmlFor="seller-slug" className="text-sm font-medium text-foreground">
-              Studio-adresse
+              Studioadresse
             </label>
             <div
               className={cn(
@@ -526,20 +590,8 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
                 aria-invalid={slugStatus.state === 'error' || !!errors.slug || undefined}
               />
             </div>
-            {(slugStatus.state !== 'idle' || errors.slug) && (
-              <p className={cn(
-                'text-sm',
-                slugStatus.state === 'error' || errors.slug ? 'text-danger' : 'text-foreground-muted',
-              )}>
-                {slugStatus.state === 'ok' && !errors.slug ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Check className="size-3.5" />
-                    {slugStatus.message}
-                  </span>
-                ) : (
-                  errors.slug || slugStatus.message
-                )}
-              </p>
+            {errors.slug && (
+              <p className="text-sm text-danger">{errors.slug}</p>
             )}
           </div>
         </div>
@@ -547,14 +599,6 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
         <Button type="submit" size="cta" loading={saving} className="mt-6 w-full">
           Fullfør oppsett
         </Button>
-
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-3 w-full text-center text-sm text-foreground-muted hover:text-foreground transition-colors"
-        >
-          Tilbake
-        </button>
       </form>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { MoreHorizontal } from '@/lib/icons';
+import { MoreHorizontal, Calendar, Clock, MapPin } from '@/lib/icons';
 import {
   Sheet,
   SheetContent,
@@ -38,15 +38,22 @@ function formatSessionDate(dateStr: string): string {
   return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 }
 
-function formatScheduleLine(session: CourseSession, durationMinutes: number): string {
+function formatSessionDateLabel(session: CourseSession): string {
   const d = new Date(session.session_date + 'T00:00:00');
   if (isNaN(d.getTime())) return '';
   const weekday = WEEKDAY_SHORT[d.getDay()];
-  const dayMonth = `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
-  const start = session.start_time?.slice(0, 5) ?? '';
-  const timePart = start ? ` · ${start}` : '';
-  const durationPart = durationMinutes ? ` (${durationMinutes} min)` : '';
-  return `${weekday} ${dayMonth}${timePart}${durationPart}`;
+  return `${weekday} ${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
+function buildTimeRange(startTime: string, durationMinutes: number): string {
+  const start = startTime.slice(0, 5);
+  if (!durationMinutes || durationMinutes <= 0) return start;
+  const [h, m] = start.split(':').map(Number);
+  const total = h * 60 + m + durationMinutes;
+  const endH = Math.floor(total / 60) % 24;
+  const endM = total % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${start}–${pad(endH)}:${pad(endM)}`;
 }
 
 type CourseStatus = 'draft' | 'active' | 'upcoming' | 'completed';
@@ -63,7 +70,7 @@ function DrawerHeader({
   return (
     <SheetHeader className="px-6 py-4 border-b border-border">
       <div className="flex items-start gap-3 flex-wrap">
-        <SheetTitle className="text-base font-semibold leading-tight">
+        <SheetTitle className="leading-tight">
           {title}
         </SheetTitle>
         {status === 'cancelled' ? (
@@ -75,8 +82,8 @@ function DrawerHeader({
         )}
       </div>
       {description && (
-        <SheetDescription className="text-sm text-foreground-muted tabular-nums mt-1">
-          {description}
+        <SheetDescription asChild>
+          <div className="mt-1">{description}</div>
         </SheetDescription>
       )}
     </SheetHeader>
@@ -141,6 +148,12 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     setCourse,
   } = useCourseDetail(courseId);
 
+  // Filter out cancelled/refunded — they shouldn't inflate the X / capacity
+  // ratio or appear in the top-5 preview (was reading e.g. "16 / 10" because
+  // cancellations weren't filtered out).
+  const confirmedParticipants = participants.filter((p) => p.status === 'confirmed');
+  const confirmedCount = confirmedParticipants.length;
+
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
 
@@ -197,10 +210,32 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           <Skeleton className="h-6 w-48" />
           <Skeleton className="mt-2 h-4 w-32" />
         </SheetHeader>
-        <div className="flex-1 px-6 py-6 space-y-4">
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-24 w-full" />
+        <div
+          className="flex-1 overflow-y-auto"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="sr-only">Laster…</span>
+          {/* Action cluster — primary button + 1-2 outline buttons */}
+          <section className="px-6 py-6 flex items-center gap-2 border-b border-border">
+            <Skeleton className="h-8 w-28 rounded-full" />
+            <Skeleton className="h-8 w-20 rounded-full" />
+          </section>
+          {/* Påmeldte — heading + 3 participant rows */}
+          <section className="px-6 py-6 border-b border-border">
+            <Skeleton className="h-5 w-32 mb-4" />
+            <div className="space-y-1">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-2">
+                  <Skeleton className="size-8 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-3 w-48 max-w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </>
     );
@@ -210,7 +245,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     return (
       <>
         <SheetHeader className="px-6 py-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">Kurs ikke funnet</SheetTitle>
+          <SheetTitle>Kurs ikke funnet</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-sm text-foreground-muted">
@@ -328,17 +363,17 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
         <section className="px-6 py-6 border-b border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-medium tracking-tight text-foreground">
-              Påmeldte ({participants.length}
+              Påmeldte ({confirmedCount}
               {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
             </h3>
           </div>
-          {participants.length === 0 ? (
+          {confirmedCount === 0 ? (
             <p className="text-sm text-foreground-muted">
               Ingen påmeldinger ennå.
             </p>
           ) : (
             <div className="space-y-1">
-              {participants.slice(0, 5).map((p) => {
+              {confirmedParticipants.slice(0, 5).map((p) => {
                 const name = p.participant_name || p.profile?.name || 'Ukjent';
                 const email = p.participant_email || p.profile?.email || '';
                 return (
@@ -463,7 +498,7 @@ function ScheduleQuickView({
     return (
       <>
         <SheetHeader className="px-6 py-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">Kurs ikke funnet</SheetTitle>
+          <SheetTitle>Kurs ikke funnet</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
           <p className="text-sm text-foreground-muted">
@@ -476,25 +511,41 @@ function ScheduleQuickView({
 
   const currentSession = sessionId ? sessions.find((s) => s.id === sessionId) : undefined;
 
-  const sessionLine = currentSession
-    ? formatScheduleLine(currentSession, courseData.durationMinutes)
-    : courseData.timeSchedule
-      ? `${courseData.timeSchedule}${courseData.durationMinutes ? ` (${courseData.durationMinutes} min)` : ''}`
-      : '';
+  const sessionDateLabel = currentSession
+    ? formatSessionDateLabel(currentSession)
+    : null;
+  const sessionTimeRange = currentSession?.start_time
+    ? buildTimeRange(currentSession.start_time, courseData.durationMinutes)
+    : null;
 
   const headerDescription =
-    sessionLine || courseData.location ? (
-      <>
-        {sessionLine}
-        {sessionLine && courseData.location && (
-          <span className="text-foreground-disabled mx-2">·</span>
+    sessionDateLabel || sessionTimeRange || courseData.location ? (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+        {sessionDateLabel && (
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="size-3.5" strokeWidth={1.75} />
+            {sessionDateLabel}
+          </span>
         )}
-        {courseData.location}
-      </>
+        {sessionTimeRange && (
+          <span className="inline-flex items-center gap-1.5 tabular-nums">
+            <Clock className="size-3.5" strokeWidth={1.75} />
+            {sessionTimeRange}
+          </span>
+        )}
+        {courseData.location && (
+          <span className="inline-flex items-center gap-1.5">
+            <MapPin className="size-3.5" strokeWidth={1.75} />
+            {courseData.location}
+          </span>
+        )}
+      </div>
     ) : undefined;
 
-  const visibleParticipants = participants.slice(0, 5);
-  const extraCount = Math.max(0, participants.length - visibleParticipants.length);
+  const confirmedParticipants = participants.filter((p) => p.status === 'confirmed');
+  const confirmedCount = confirmedParticipants.length;
+  const visibleParticipants = confirmedParticipants.slice(0, 5);
+  const extraCount = Math.max(0, confirmedCount - visibleParticipants.length);
 
   return (
     <>
@@ -507,10 +558,10 @@ function ScheduleQuickView({
       <div className="flex-1 overflow-y-auto">
         <section className="px-6 py-6">
           <h3 className="text-base font-medium tracking-tight text-foreground mb-4">
-            Påmeldte ({participants.length}
+            Påmeldte ({confirmedCount}
             {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
           </h3>
-          {participants.length === 0 ? (
+          {confirmedCount === 0 ? (
             <p className="text-sm text-foreground-muted">Ingen påmeldinger ennå.</p>
           ) : (
             <div className="space-y-1">

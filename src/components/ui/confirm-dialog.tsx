@@ -174,7 +174,7 @@ function ConfirmDrawer({
 
 function Headline({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-base font-semibold leading-snug text-foreground">{children}</p>
+    <p className="text-lg font-medium tracking-tight leading-snug text-foreground">{children}</p>
   )
 }
 

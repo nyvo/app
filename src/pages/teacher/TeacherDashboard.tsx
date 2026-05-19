@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
 import { motion } from 'framer-motion';
-import { Bell } from '@/lib/icons';
+import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
@@ -187,7 +187,7 @@ const TeacherDashboard = () => {
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Oversikt" />
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
         <motion.div
           variants={pageVariants}
           initial="initial"
@@ -195,14 +195,8 @@ const TeacherDashboard = () => {
           transition={pageTransition}
         >
           <header className="mb-12 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Oversikt</h1>
-            <button
-              type="button"
-              aria-label="Varsler"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-foreground-muted outline-none transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-            >
-              <Bell className="size-5" />
-            </button>
+            <h1 className="text-2xl font-medium tracking-tight text-foreground">Oversikt</h1>
+            <NotificationsPopover />
           </header>
 
           {loadError ? (

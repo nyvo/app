@@ -4,7 +4,7 @@ import { Check, Copy, ImageIcon, MoreVertical } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   DropdownMenu,
@@ -194,7 +194,16 @@ function IndividualView({ sellerId }: { sellerId: string }) {
       </CardHeader>
       <CardContent>
         {host === undefined ? (
-          <LoadingRow />
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-10 rounded-md" />
+              <div className="min-w-0 space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-56 max-w-full" />
+              </div>
+            </div>
+            <MembersTableSkeleton />
+          </div>
         ) : host === null ? (
           <div className="rounded-md border border-dashed border-border p-8 text-center">
             <p className="text-sm font-medium text-foreground">Du har ikke et team ennå</p>
@@ -277,11 +286,7 @@ function MembersTable({
   kebabFor?: (m: TeamMember) => React.ReactNode;
 }) {
   if (loading || members === null) {
-    return (
-      <div className="rounded-md border border-border bg-surface">
-        <div className="p-4"><LoadingRow /></div>
-      </div>
-    );
+    return <MembersTableSkeleton />;
   }
   const hasKebab = !!kebabFor;
   const gridCols = hasKebab ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]';
@@ -451,11 +456,30 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
 // Misc
 // ───────────────────────────────────────────────────────────────────────────
 
-function LoadingRow() {
+function MembersTableSkeleton() {
   return (
-    <div className="flex items-center gap-2 text-sm text-foreground-muted">
-      <Spinner size="sm" />
-      Laster…
-    </div>
+    <ul
+      className="rounded-md border border-border bg-surface overflow-hidden"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="sr-only">Laster…</span>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <li
+          key={i}
+          className={cn(
+            'grid items-center gap-4 px-4 py-3 grid-cols-[1fr_auto]',
+            i > 0 && 'border-t border-border',
+          )}
+          aria-hidden="true"
+        >
+          <div className="min-w-0 space-y-1.5">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-56 max-w-full" />
+          </div>
+          <Skeleton className="h-5 w-14 rounded-full" />
+        </li>
+      ))}
+    </ul>
   );
 }
