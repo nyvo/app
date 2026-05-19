@@ -2,7 +2,15 @@
  * Auto-generated Supabase types + convenience aliases.
  *
  * Regenerate with: supabase gen types typescript --project-id nollnnkksgicsvuthnjq
- * Last generated: 2026-04-28 (post-YAGNI cleanup)
+ * Last generated: 2026-05-19 (post-H2 narrow sellers grants)
+ *
+ * Caveat: generated Row types describe the table SCHEMA, not your role's
+ * column-level grants. A `select('phone')` against `sellers` compiles here
+ * but fails at runtime with 42501. Private seller columns (phone,
+ * organization_number, dintero_approval_id, dintero_contract_url, settings)
+ * are only readable by members via get_seller_private(). Operational
+ * fields (dintero_seller_id, dintero_onboarding_status, seller_type,
+ * updated_at) flow through get_seller_operational().
  */
 
 export type Json =
@@ -69,6 +77,8 @@ export interface SignupDisplay {
 }
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
@@ -308,69 +318,69 @@ export type Database = {
       }
       notifications: {
         Row: {
-          id: number
-          recipient_id: string
-          seller_id: string
-          actor_id: string | null
-          type: string
           action_required: boolean
-          dedupe_key: string | null
-          title: string
-          body: string | null
           action_url: string
-          metadata: Json
-          seen_at: string | null
-          read_at: string | null
-          resolved_at: string | null
+          actor_id: string | null
+          body: string | null
           created_at: string
+          dedupe_key: string | null
+          id: number
+          metadata: Json
+          read_at: string | null
+          recipient_id: string
+          resolved_at: string | null
+          seen_at: string | null
+          seller_id: string
+          title: string
+          type: string
         }
         Insert: {
-          id?: number
-          recipient_id: string
-          seller_id: string
-          actor_id?: string | null
-          type: string
           action_required?: boolean
-          dedupe_key?: string | null
-          title: string
-          body?: string | null
           action_url: string
-          metadata?: Json
-          seen_at?: string | null
-          read_at?: string | null
-          resolved_at?: string | null
+          actor_id?: string | null
+          body?: string | null
           created_at?: string
+          dedupe_key?: string | null
+          id?: never
+          metadata?: Json
+          read_at?: string | null
+          recipient_id: string
+          resolved_at?: string | null
+          seen_at?: string | null
+          seller_id: string
+          title: string
+          type: string
         }
         Update: {
-          id?: number
-          recipient_id?: string
-          seller_id?: string
-          actor_id?: string | null
-          type?: string
           action_required?: boolean
-          dedupe_key?: string | null
-          title?: string
-          body?: string | null
           action_url?: string
-          metadata?: Json
-          seen_at?: string | null
-          read_at?: string | null
-          resolved_at?: string | null
+          actor_id?: string | null
+          body?: string | null
           created_at?: string
+          dedupe_key?: string | null
+          id?: never
+          metadata?: Json
+          read_at?: string | null
+          recipient_id?: string
+          resolved_at?: string | null
+          seen_at?: string | null
+          seller_id?: string
+          title?: string
+          type?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "notifications_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "notifications_actor_id_fkey"
             columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -463,10 +473,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payment_attempts_course_session_id_fkey"
+            columns: ["course_session_id"]
+            isOneToOne: false
+            referencedRelation: "course_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_attempts_existing_signup_id_fkey"
+            columns: ["existing_signup_id"]
+            isOneToOne: false
+            referencedRelation: "signups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payment_attempts_seller_id_fkey"
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_attempts_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "course_signup_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -502,7 +533,22 @@ export type Database = {
           signup_id?: string
           via_external?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_audit_log_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_audit_log_signup_id_fkey"
+            columns: ["signup_id"]
+            isOneToOne: false
+            referencedRelation: "signups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       processed_webhook_events: {
         Row: {
@@ -658,6 +704,7 @@ export type Database = {
         Row: {
           amount_paid: number | null
           buyer_id: string | null
+          confirmation_sent_at: string | null
           course_id: string
           course_session_id: string | null
           created_at: string | null
@@ -684,6 +731,7 @@ export type Database = {
         Insert: {
           amount_paid?: number | null
           buyer_id?: string | null
+          confirmation_sent_at?: string | null
           course_id: string
           course_session_id?: string | null
           created_at?: string | null
@@ -710,6 +758,7 @@ export type Database = {
         Update: {
           amount_paid?: number | null
           buyer_id?: string | null
+          confirmation_sent_at?: string | null
           course_id?: string
           course_session_id?: string | null
           created_at?: string | null
@@ -746,6 +795,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signups_course_session_id_fkey"
+            columns: ["course_session_id"]
+            isOneToOne: false
+            referencedRelation: "course_sessions"
             referencedColumns: ["id"]
           },
           {
@@ -886,42 +942,6 @@ export type Database = {
           },
         ]
       }
-      team_members: {
-        Row: {
-          joined_at: string
-          role: string
-          seller_id: string
-          team_id: string
-        }
-        Insert: {
-          joined_at?: string
-          role?: string
-          seller_id: string
-          team_id: string
-        }
-        Update: {
-          joined_at?: string
-          role?: string
-          seller_id?: string
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_members_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "sellers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "team_members_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       teams: {
         Row: {
           cover_image_url: string | null
@@ -960,7 +980,7 @@ export type Database = {
           {
             foreignKeyName: "teams_owner_seller_id_fkey"
             columns: ["owner_seller_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
@@ -988,7 +1008,9 @@ export type Database = {
         Relationships: []
       }
     }
-    Views: { [_ in never]: never }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       available_ticket_types: {
         Args: { p_course_id: string }
@@ -1009,8 +1031,118 @@ export type Database = {
           weeks: number
         }[]
       }
+      calculate_package_end_date: {
+        Args: { p_course_start_date: string; p_package_weeks: number }
+        Returns: string
+      }
+      check_session_conflict: {
+        Args: {
+          p_end_time: string
+          p_exclude_course_id?: string
+          p_seller_id: string
+          p_session_date: string
+          p_start_time: string
+        }
+        Returns: {
+          conflicting_course_id: string
+          conflicting_course_title: string
+          conflicting_end: string
+          conflicting_start: string
+          has_conflict: boolean
+        }[]
+      }
+      check_sessions_conflicts: {
+        Args: {
+          p_exclude_course_id?: string
+          p_seller_id: string
+          p_sessions: Json
+        }
+        Returns: {
+          conflicting_course_id: string
+          conflicting_course_title: string
+          conflicting_end: string
+          conflicting_start: string
+          has_conflict: boolean
+          session_date: string
+        }[]
+      }
+      cleanup_old_webhook_events: { Args: never; Returns: number }
+      count_signups_by_ticket_type: {
+        Args: { p_course_id: string; p_ticket_type_id: string }
+        Returns: number
+      }
+      count_signups_for_session: {
+        Args: { p_course_session_id: string }
+        Returns: number
+      }
+      create_course_idempotent: {
+        Args: {
+          p_delivery_mode?: string
+          p_description?: string
+          p_duration?: number
+          p_end_date?: string
+          p_format?: string
+          p_idempotency_key: string
+          p_image_url?: string
+          p_instructor_id?: string
+          p_level?: string
+          p_location?: string
+          p_max_participants?: number
+          p_price?: number
+          p_seller_id: string
+          p_start_date?: string
+          p_status?: string
+          p_style_id?: string
+          p_time_schedule?: string
+          p_title: string
+          p_total_weeks?: number
+        }
+        Returns: Json
+      }
+      create_signup_if_available: {
+        Args: {
+          p_amount_paid: number
+          p_buyer_id?: string
+          p_course_id: string
+          p_course_session_id?: string
+          p_dintero_merchant_reference: string
+          p_dintero_session_id: string
+          p_dintero_transaction_id: string
+          p_participant_email: string
+          p_participant_name: string
+          p_participant_phone: string
+          p_seller_id: string
+          p_ticket_type_id: string
+        }
+        Returns: Json
+      }
+      create_team_invite_link: {
+        Args: { p_team_id: string }
+        Returns: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          revoked_at: string | null
+          team_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "team_invite_links"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      delete_course_cascade: {
+        Args: { p_course_id: string }
+        Returns: undefined
+      }
       ensure_seller_for_user: {
-        Args: { p_seller_name: string; p_seller_type?: string; p_team_slug: string }
+        Args: {
+          p_seller_name: string
+          p_seller_type?: string
+          p_team_slug: string
+        }
         Returns: {
           member_role: Database["public"]["Enums"]["seller_member_role"]
           seller_id: string
@@ -1020,26 +1152,64 @@ export type Database = {
           was_created: boolean
         }[]
       }
+      get_seller_operational: {
+        Args: { p_seller_id: string }
+        Returns: {
+          dintero_onboarding_status: string
+          dintero_seller_id: string
+          seller_type: string
+          updated_at: string
+        }[]
+      }
+      get_seller_private: {
+        Args: { p_seller_id: string }
+        Returns: {
+          dintero_approval_id: string
+          dintero_contract_url: string
+          organization_number: string
+          phone: string
+        }[]
+      }
+      get_signup_by_dintero_id: {
+        Args: { p_merchant_reference?: string; p_transaction_id?: string }
+        Returns: Json
+      }
+      is_platform_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_seller_member: {
+        Args: { p_seller_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_seller_owner: {
+        Args: { p_seller_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_team_admin: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
       lookup_team_invite_link: {
         Args: { p_code: string }
         Returns: {
           status: string
-          team_id: string | null
-          team_slug: string | null
-          team_name: string | null
-          team_cover_image_url: string | null
+          team_cover_image_url: string
+          team_id: string
+          team_name: string
+          team_slug: string
         }[]
       }
-      create_team_invite_link: {
-        Args: { p_team_id: string }
-        Returns: Database["public"]["Tables"]["team_invite_links"]["Row"]
+      public_signup_counts: {
+        Args: { p_course_ids: string[] }
+        Returns: {
+          confirmed_count: number
+          course_id: string
+        }[]
       }
       redeem_team_invite_link: {
         Args: { p_code: string; p_force_leave?: boolean }
         Returns: {
+          existing_team_id: string
           status: string
-          team_id: string | null
-          existing_team_id: string | null
+          team_id: string
         }[]
       }
     }
@@ -1053,9 +1223,143 @@ export type Database = {
       ticket_audience_t: "standard" | "student" | "senior" | "staff"
       ticket_kind_t: "package" | "drop_in" | "pass"
     }
-    CompositeTypes: { [_ in never]: never }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      course_format: ["single", "series"],
+      course_status: ["draft", "upcoming", "active", "completed", "cancelled"],
+      delivery_mode: ["in_person", "online"],
+      payment_status: ["pending", "paid", "failed", "refunded"],
+      seller_member_role: ["owner", "admin"],
+      signup_status: ["confirmed", "cancelled", "course_cancelled"],
+      ticket_audience_t: ["standard", "student", "senior", "staff"],
+      ticket_kind_t: ["package", "drop_in", "pass"],
+    },
+  },
+} as const
 
 // ============================================================================
 // Convenience aliases
