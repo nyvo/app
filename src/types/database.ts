@@ -2,7 +2,7 @@
  * Auto-generated Supabase types + convenience aliases.
  *
  * Regenerate with: supabase gen types typescript --project-id nollnnkksgicsvuthnjq
- * Last generated: 2026-05-19 (post-H2 narrow sellers grants)
+ * Last generated: 2026-05-19 (post-M1-final: dropped payment_audit_log.changed_by + idx_signups_package_end_date)
  *
  * Caveat: generated Row types describe the table SCHEMA, not your role's
  * column-level grants. A `select('phone')` against `sellers` compiles here
@@ -505,7 +505,6 @@ export type Database = {
       payment_audit_log: {
         Row: {
           changed_at: string
-          changed_by: string | null
           id: string
           new_status: Database["public"]["Enums"]["payment_status"]
           old_status: Database["public"]["Enums"]["payment_status"] | null
@@ -515,7 +514,6 @@ export type Database = {
         }
         Insert: {
           changed_at?: string
-          changed_by?: string | null
           id?: string
           new_status: Database["public"]["Enums"]["payment_status"]
           old_status?: Database["public"]["Enums"]["payment_status"] | null
@@ -525,7 +523,6 @@ export type Database = {
         }
         Update: {
           changed_at?: string
-          changed_by?: string | null
           id?: string
           new_status?: Database["public"]["Enums"]["payment_status"]
           old_status?: Database["public"]["Enums"]["payment_status"] | null
