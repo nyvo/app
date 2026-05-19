@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Profile, Seller, SellerMemberRole, Team, UserRole } from '@/types/database'
 import { logger } from '@/lib/logger'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { fetchSellerOperational } from '@/services/sellers'
 
 // Type for seller membership with seller data
 interface SellerMembership {
@@ -58,10 +59,12 @@ async function fetchProfileData(userId: string): Promise<Profile | null> {
 }
 
 async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], memberships: SellerMembership[] }> {
-  // Explicit column list (not `*`). Sensitive fields — dintero_approval_id,
-  // dintero_contract_url, phone, organization_number — are now revoked from
-  // the authenticated role and must go through get_seller_private (a
-  // member-gated RPC). Reading them as a regular column would error.
+  // Explicit column list — only the public grant set is selected here.
+  // Operational fields (dintero_seller_id, dintero_onboarding_status,
+  // seller_type, updated_at) are hydrated separately via
+  // get_seller_operational for the active seller.
+  // Sensitive fields (dintero_approval_id, dintero_contract_url, phone,
+  // organization_number) remain gated behind get_seller_private.
   const { data: memberships, error: memberError } = await supabase
     .from('seller_members')
     .select(`
@@ -71,12 +74,8 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
         name,
         logo_url,
         email,
-        seller_type,
         created_at,
-        updated_at,
-        dintero_onboarding_complete,
-        dintero_seller_id,
-        dintero_onboarding_status
+        dintero_onboarding_complete
       )
     `)
     .eq('user_id', userId)
@@ -86,10 +85,54 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
     return { sellers: [], memberships: [] }
   }
 
-  const typedMemberships = (memberships || []) as unknown as SellerMembership[]
+  // The embedded select returns only the public columns; the Seller type
+  // expects the operational/sensitive fields too. Fill the gaps with safe
+  // defaults — hydrateSellerOperational replaces them for the active seller.
+  const typedMemberships = (memberships || []).map((m) => {
+    const s = (m as { role: SellerMemberRole; seller: Partial<Seller> | null }).seller
+    if (!s) return { role: (m as { role: SellerMemberRole }).role, seller: null as unknown as Seller }
+    const seller: Seller = {
+      id: s.id as string,
+      name: s.name as string,
+      logo_url: (s.logo_url ?? null) as string | null,
+      email: (s.email ?? null) as string | null,
+      phone: null,
+      dintero_seller_id: null,
+      dintero_approval_id: null,
+      dintero_contract_url: null,
+      dintero_onboarding_status: null,
+      dintero_onboarding_complete: (s.dintero_onboarding_complete ?? false) as boolean,
+      settings: {},
+      seller_type: 'individual',
+      organization_number: null,
+      created_at: (s.created_at ?? null) as string | null,
+      updated_at: (s.created_at ?? null) as string | null,
+    }
+    return { role: (m as { role: SellerMemberRole }).role, seller }
+  }) as SellerMembership[]
   const sellers = typedMemberships.map((m) => m.seller).filter(Boolean)
 
   return { sellers, memberships: typedMemberships }
+}
+
+// Hydrate operational fields (Dintero IDs, onboarding status, seller_type,
+// updated_at) for a single seller via the member-gated RPC. Returns the
+// seller unchanged on RPC failure or non-member access — UI degrades to
+// the public columns only.
+async function hydrateSellerOperational(seller: Seller): Promise<Seller> {
+  const { data, error } = await fetchSellerOperational(seller.id)
+  if (error) {
+    logger.error('Error hydrating seller operational fields:', error)
+    return seller
+  }
+  if (!data) return seller
+  return {
+    ...seller,
+    dintero_seller_id: data.dintero_seller_id,
+    dintero_onboarding_status: data.dintero_onboarding_status,
+    seller_type: data.seller_type,
+    updated_at: data.updated_at,
+  }
 }
 
 // Fetch teams owned by the given sellers. One row per seller (1:1 ownership).
@@ -161,10 +204,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const savedSeller = loadedSellers.find((s) => s.id === savedSellerId)
       const sellerToSet = savedSeller || loadedSellers[0]
 
-      setCurrentSeller(sellerToSet)
-      localStorage.setItem('currentSellerId', sellerToSet.id)
+      const hydrated = await hydrateSellerOperational(sellerToSet)
+      setCurrentSeller(hydrated)
+      setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
+      localStorage.setItem('currentSellerId', hydrated.id)
 
-      const membership = memberships.find((m) => m.seller?.id === sellerToSet.id)
+      const membership = memberships.find((m) => m.seller?.id === hydrated.id)
       setUserRole(membership?.role || null)
     }
 
@@ -285,10 +330,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTeamsBySellerId(teamMap)
 
     if (currentSellerRef.current) {
-      // Update currentSeller with fresh data (e.g. after Dintero onboarding)
+      // Update currentSeller with fresh data (e.g. after Dintero onboarding).
+      // Hydrate operational fields via the member-gated RPC so consumers
+      // (PaymentsPage, AffiliationsSection) see fresh dintero status / seller_type.
       const freshSeller = loadedSellers.find((s) => s.id === currentSellerRef.current?.id)
       if (freshSeller) {
-        setCurrentSeller(freshSeller)
+        const hydrated = await hydrateSellerOperational(freshSeller)
+        setCurrentSeller(hydrated)
+        setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
       }
       const membership = memberships.find((m) => m.seller?.id === currentSellerRef.current?.id)
       setUserRole(membership?.role || null)
@@ -465,6 +514,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (seller && userRef.current?.id) {
       setCurrentSeller(seller)
       localStorage.setItem('currentSellerId', seller.id)
+
+      // Hydrate operational fields for the newly active seller. Fire-and-forget;
+      // UI consumers fall back to the public columns until this resolves.
+      void hydrateSellerOperational(seller).then((hydrated) => {
+        setCurrentSeller((prev) => (prev?.id === hydrated.id ? hydrated : prev))
+        setSellers((prev) => prev.map((s) => (s.id === hydrated.id ? hydrated : s)))
+      })
 
       supabase
         .from('seller_members')
