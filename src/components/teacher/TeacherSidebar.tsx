@@ -53,7 +53,7 @@ const SELLER_NAV_ITEMS: NavItem[] = [
   { icon: BookOpen02Icon, label: 'Kurs', href: routes.courses },
   { icon: Building03Icon, label: 'Studio', href: routes.studio },
   { icon: CreditCardIcon, label: 'Betalingskonto', href: routes.settingsPayouts },
-  { icon: UserCircleIcon, label: 'Konto', href: routes.settingsProfile },
+  { icon: UserCircleIcon, label: 'Innstillinger', href: routes.settingsProfile },
 ];
 
 // Buyer sidebar — minimal. Until the buyer dashboard build-out (deferred

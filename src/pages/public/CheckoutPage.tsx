@@ -84,6 +84,17 @@ const CheckoutPage = () => {
         setLoading(false);
         return;
       }
+
+      const ownerSlug = courseData.seller?.slug;
+      if (ownerSlug && ownerSlug !== slug) {
+        const query = searchParams.toString();
+        navigate(
+          `/${ownerSlug}/${courseSlug}/pamelding${query ? `?${query}` : ''}`,
+          { replace: true },
+        );
+        return;
+      }
+
       setCourse(courseData);
 
       // Load all standard-audience tiers via public RPC.
@@ -118,7 +129,7 @@ const CheckoutPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [slug, courseSlug, searchParams]);
+  }, [slug, courseSlug, searchParams, navigate]);
 
   const isFree = !course?.price || course.price <= 0;
   const isCancelled = course?.status === 'cancelled';
@@ -572,35 +583,33 @@ function CheckoutSummary({
         {selectedTier && (
           <>
             <div className="border-t border-border" />
-            <div className="space-y-2 text-sm">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-foreground">{selectedTier.label}</span>
-                <span className="tabular-nums text-foreground">
-                  {isFree ? 'Gratis' : formatKroner(subtotal)}
-                </span>
-              </div>
-              {!isFree && (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-foreground-muted">Tjenestegebyr</span>
-                  <span className="tabular-nums text-foreground-muted">
-                    {formatKroner(fee)}
-                  </span>
+            {!isFree && (
+              <>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-foreground">{selectedTier.label}</span>
+                    <span className="tabular-nums text-foreground">
+                      {formatKroner(subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-foreground-muted">Tjenestegebyr</span>
+                    <span className="tabular-nums text-foreground-muted">
+                      {formatKroner(fee)}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="border-t border-border" />
+                <div className="border-t border-border" />
+              </>
+            )}
             <div className="flex items-baseline justify-between gap-3">
               <span className="text-base font-medium text-foreground">Totalt</span>
               <span className="text-base font-semibold tabular-nums text-foreground">
-                {isFree ? 'Gratis' : formatKroner(total)}
+                {formatKroner(total)}
               </span>
             </div>
           </>
         )}
-      </div>
-
-      <div className="border-t border-border-subtle bg-muted px-5 py-3.5 text-center text-xs text-foreground-muted">
-        <p>Avbestill inntil 24 timer før klassen for full refusjon.</p>
       </div>
     </div>
   );

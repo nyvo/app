@@ -317,17 +317,6 @@ const CheckoutSuccessPage = () => {
                     .
                   </p>
                 </div>
-
-                {/* Policy footer inset — separated by hairline, muted bg.
-                    Cal.com pattern: cancellation reinforcement gets its own
-                    block so customers who missed it during booking find it. */}
-                {!isFree && (
-                  <div className="border-t border-border-subtle bg-muted px-6 py-4 sm:px-8 text-center">
-                    <p className="text-xs text-foreground-muted">
-                      Avbestill innen 24 timer før kurset for full refusjon.
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })()}

@@ -272,6 +272,11 @@ function Step2SellerProfile({ kind }: { kind: SellerKind }) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [slugDraft, setSlugDraft] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
+  const nameLabel = kind === 'studio' ? 'Studionavn' : 'Navn på profilen'
+  const nameHint =
+    kind === 'studio'
+      ? 'Vises offentlig på profilen og kursene dine.'
+      : 'Bruk navnet deltakerne kjenner deg som.'
 
   // Auto-generate slug from name until the user types it themselves
   useEffect(() => {
@@ -304,13 +309,17 @@ function Step2SellerProfile({ kind }: { kind: SellerKind }) {
         <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
           <div className="grid gap-2">
             <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
-              {kind === 'studio' ? 'Navn på studio' : 'Ditt navn'}
+              {nameLabel}
             </label>
             <Input
               id="seller-name"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
+              aria-describedby="seller-name-hint"
             />
+            <p id="seller-name-hint" className="text-sm text-foreground-muted">
+              {nameHint}
+            </p>
           </div>
 
           <div className="grid gap-2">
@@ -386,7 +395,7 @@ function Step2SellerProfile({ kind }: { kind: SellerKind }) {
             )}
           </div>
 
-          <Button type="submit" size="cta" className="mt-3 w-full">Fullfør oppsett</Button>
+          <Button type="submit" size="cta" className="mt-3 w-full">Fullfør</Button>
         </form>
       </div>
     </div>

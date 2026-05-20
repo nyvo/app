@@ -470,10 +470,6 @@ function CheckoutSummary({
           </>
         )}
       </div>
-
-      <div className="border-t border-border-subtle bg-muted px-5 py-3.5 text-center text-xs text-foreground-muted">
-        <p>Avbestilling inntil 24 timer før gir full refusjon.</p>
-      </div>
     </div>
   );
 }
@@ -572,6 +568,7 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
     price: 1990,
     allows_drop_in: true,
     drop_in_price: 249,
+    accepts_late_signups: true,
     total_weeks: 8,
     start_date: '2026-04-08',
     end_date: '2026-06-03',
@@ -585,6 +582,7 @@ function makeMockCourse(variant: Variant): PublicCourseWithDetails {
       dintero_onboarding_complete: true,
       default_course_image_url: null,
     },
+    instructor_name: null,
     instructor: null,
     instructors: [],
     next_session: {

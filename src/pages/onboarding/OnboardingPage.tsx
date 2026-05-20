@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronLeft, ImageIcon, LogOut } from '@/lib/icons'
+import { Check, ChevronLeft, LogOut } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/ui/field-error'
 import { Input } from '@/components/ui/input'
@@ -11,8 +11,6 @@ import { cn, resolveDisplayName } from '@/lib/utils'
 import { stepVariants } from '@/lib/motion'
 import { toast } from 'sonner'
 import { AUTH_ROUTES } from '@/lib/auth-routes'
-import { uploadSellerLogo, ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/services/storage'
-import { updateSeller } from '@/services/sellers'
 import type { UserRole } from '@/types/database'
 
 /**
@@ -135,9 +133,11 @@ function RoleChooser() {
       logger.error('Onboarding: setRole failed', error)
       toast.error('Kunne ikke lagre valget. Prøv igjen.')
       setSaving(false)
+      return
     }
     // No navigate — the surrounding component re-renders on profile change
     // and switches branch automatically.
+    setSaving(false)
   }
 
   return (
@@ -427,89 +427,52 @@ function SellerType({
 function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void }) {
   const { profile, ensureSeller, markOnboardingComplete } = useAuth()
   const navigate = useNavigate()
+  const nameLabel = kind === 'studio' ? 'Studionavn' : 'Navn på profilen'
+  const nameHint =
+    kind === 'studio'
+      ? 'Vises offentlig på profilen og kursene dine.'
+      : 'Bruk navnet deltakerne kjenner deg som.'
 
-  const [profileName, setProfileName] = useState(() =>
+  const [name, setName] = useState(() =>
     kind === 'individual' ? resolveDisplayName(profile?.name, profile?.email) : '',
   )
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-  const [slugDraft, setSlugDraft] = useState('')
-  const [slugTouched, setSlugTouched] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  // Auto-suggest the slug from the name until the user edits it themselves.
-  useEffect(() => {
-    if (slugTouched) return
-    setSlugDraft(generateSlug(profileName))
-  }, [profileName, slugTouched])
-
-  const slugStatus = useMemo(() => {
-    if (!slugDraft) return { state: 'idle' as const, message: '' }
-    if (slugDraft.length < 3) return { state: 'error' as const, message: 'Minst 3 tegn.' }
-    if (slugDraft.length > 40) return { state: 'error' as const, message: 'Maks 40 tegn.' }
-    return { state: 'idle' as const, message: '' }
-  }, [slugDraft])
-
-  const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      toast.error('Filtypen støttes ikke. Bruk JPG, PNG eller WebP.')
-      return
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error('Bildet er for stort. Maks 5 MB.')
-      return
-    }
-    setPhotoFile(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
-  }, [])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const next: Record<string, string> = {}
-    if (!profileName.trim()) next.name = kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn navn'
-    if (slugStatus.state === 'error') next.slug = slugStatus.message
-    if (!slugDraft) next.slug = 'Skriv inn studioadresse'
-    setErrors(next)
-    if (Object.keys(next).length > 0) return
+    const trimmed = name.trim()
+    const slug = generateSlug(trimmed)
+    if (!trimmed) {
+      setErrors({ name: kind === 'studio' ? 'Skriv inn studionavn' : 'Skriv inn navn på profilen' })
+      return
+    }
+    if (slug.length < 3) {
+      setErrors({ name: 'Bruk minst 3 bokstaver.' })
+      return
+    }
 
     setSaving(true)
     const sellerType = kind === 'studio' ? 'business' : 'individual'
-    const { seller, error } = await ensureSeller(profileName.trim(), slugDraft, sellerType)
+    const { seller, error } = await ensureSeller(trimmed, slug, sellerType)
     if (error || !seller) {
       logger.error('Onboarding: ensureSeller failed', error)
-      const message = error?.message?.includes('Slug') || error?.message?.includes('taken')
-        ? 'Denne adressen er opptatt. Velg en annen.'
-        : 'Kunne ikke fullføre oppsettet. Prøv igjen.'
-      toast.error(message)
+      const msg = error?.message ?? ''
+      if (msg.includes('already taken') || msg.includes('reserved')) {
+        setErrors({ name: 'Dette navnet er opptatt. Velg et annet.' })
+      } else if (msg.includes('Slug')) {
+        setErrors({ name: 'Velg et gyldig navn.' })
+      } else {
+        toast.error('Kunne ikke fullføre oppsettet. Prøv igjen.')
+      }
       setSaving(false)
       return
-    }
-
-    // Photo upload — non-fatal. The image is the seller's canonical logo,
-    // used on the public studio page and as the instructor avatar on course
-    // tiles. One image, one column (sellers.logo_url). If the upload fails
-    // the seller is already created and the user can re-upload from settings.
-    if (photoFile) {
-      const { url, error: uploadError } = await uploadSellerLogo(seller.id, photoFile)
-      if (uploadError || !url) {
-        logger.error('Onboarding: photo upload failed', uploadError)
-        toast.error('Kunne ikke laste opp bildet, men profilen er lagret. Du kan prøve igjen senere.')
-      } else {
-        const { error: patchError } = await updateSeller(seller.id, { logo_url: url })
-        if (patchError) logger.error('Onboarding: sellers.logo_url patch failed', patchError)
-      }
     }
 
     const { error: stampError } = await markOnboardingComplete()
     if (stampError) {
       logger.error('Onboarding: markOnboardingComplete failed', stampError)
-      // Non-fatal — the seller is created, just route to dashboard and let
-      // the user re-onboard if needed.
+      // Non-fatal — the seller is created, just route to dashboard.
     }
     navigate(AUTH_ROUTES.dashboard, { replace: true })
   }
@@ -522,82 +485,31 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
           {kind === 'studio' ? 'Sett opp studioet' : 'Sett opp profilen'}
         </h1>
 
-        <div className="space-y-5">
-          <div className="grid gap-2">
-            <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
-              {kind === 'studio' ? 'Navn på studio' : 'Ditt navn'}
-            </label>
-            <Input
-              id="seller-name"
-              value={profileName}
-              onChange={(e) => { setProfileName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: '' })) }}
-              autoFocus
-              aria-invalid={!!errors.name || undefined}
-            />
-            {errors.name && <FieldError className="mt-0">{errors.name}</FieldError>}
-          </div>
-
-          <div className="grid gap-2">
-            <span className="text-sm font-medium text-foreground">
-              Profilbilde <span className="text-foreground-muted font-normal">(valgfritt)</span>
-            </span>
-            <label
-              htmlFor="seller-photo"
-              className="flex items-center gap-4 rounded-lg border border-dashed border-border p-4 cursor-pointer hover:bg-muted transition-colors"
-            >
-              <div className="size-14 shrink-0 rounded-full overflow-hidden bg-muted grid place-items-center">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="" className="size-full object-cover" />
-                ) : (
-                  <ImageIcon className="size-5 text-foreground-muted" strokeWidth={1.75} />
-                )}
-              </div>
-              <p className="text-sm font-medium text-foreground">
-                {photoPreview ? 'Bytt bilde' : 'Last opp bilde'}
-              </p>
-              <input
-                id="seller-photo"
-                type="file"
-                accept="image/png,image/jpeg"
-                className="sr-only"
-                onChange={handlePhotoChange}
-              />
-            </label>
-          </div>
-
-          <div className="grid gap-2">
-            <label htmlFor="seller-slug" className="text-sm font-medium text-foreground">
-              Studioadresse
-            </label>
-            <div
-              className={cn(
-                'flex items-stretch rounded-md border bg-surface overflow-hidden focus-within:ring-2 focus-within:ring-ring',
-                (slugStatus.state === 'error' || errors.slug) ? 'border-danger-fg' : 'border-border',
-              )}
-            >
-              <span className="px-3 flex items-center text-sm text-foreground-muted bg-muted border-r border-border select-none">
-                openspot.no/
-              </span>
-              <input
-                id="seller-slug"
-                value={slugDraft}
-                onChange={(e) => {
-                  setSlugTouched(true)
-                  setSlugDraft(generateSlug(e.target.value))
-                  if (errors.slug) setErrors((p) => ({ ...p, slug: '' }))
-                }}
-                className="flex-1 h-9 px-3 bg-transparent text-sm text-foreground outline-none"
-                aria-invalid={slugStatus.state === 'error' || !!errors.slug || undefined}
-              />
-            </div>
-            {errors.slug && (
-              <p className="text-sm text-danger">{errors.slug}</p>
-            )}
-          </div>
+        <div className="grid gap-2">
+          <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
+            {nameLabel}
+          </label>
+          <Input
+            id="seller-name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (errors.name) setErrors({})
+            }}
+            autoFocus
+            aria-invalid={!!errors.name || undefined}
+            aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
+          />
+          <p id="seller-name-hint" className="text-sm text-foreground-muted">
+            {nameHint}
+          </p>
+          {errors.name && (
+            <FieldError id="seller-name-error" className="mt-0">{errors.name}</FieldError>
+          )}
         </div>
 
         <Button type="submit" size="cta" loading={saving} className="mt-6 w-full">
-          Fullfør oppsett
+          Fullfør
         </Button>
       </form>
     </div>

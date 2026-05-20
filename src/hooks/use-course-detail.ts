@@ -48,6 +48,7 @@ function mapCourseToComponentFormat(
     createdAt: courseData.created_at || null,
     format: courseData.format,
     allowsDropIn,
+    acceptsLateSignups: courseData.accepts_late_signups,
   };
 }
 

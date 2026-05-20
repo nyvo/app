@@ -100,7 +100,7 @@ async function fetchSellersData(userId: string): Promise<{ sellers: Seller[], me
     .eq('user_id', userId)
 
   if (memberError) {
-    logger.error('Error fetching sellers:', memberError)
+    logger.error('Error fetching seller memberships:', memberError)
     return { sellers: [], memberships: [] }
   }
 
@@ -369,7 +369,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.dashboard}`,
+        redirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
       },
     })
     return { error: error as Error | null }
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.dashboard}`,
+        emailRedirectTo: redirectTo || `${window.location.origin}${AUTH_ROUTES.callback}`,
       },
     })
     return { error: error as Error | null }

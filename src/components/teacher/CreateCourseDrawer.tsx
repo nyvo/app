@@ -66,6 +66,25 @@ function timeToMin(t: string): number {
   return h * 60 + m;
 }
 
+function normalizeTeacherName(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(' ')
+    .map((part) =>
+      part
+        .split('-')
+        .map((piece) => {
+          const trimmed = piece.trim();
+          if (!trimmed) return '';
+          return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+        })
+        .join('-')
+    )
+    .filter(Boolean)
+    .join(' ');
+}
+
 const ALL_TIME_SLOTS = generateTimeSlots();
 
 /**
@@ -80,10 +99,12 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const navigate = useNavigate();
   const { currentSeller } = useAuth();
   const { locations } = useLocations(currentSeller?.id);
+  const showInstructorField = currentSeller?.seller_type === 'business';
 
   const [format, setFormat] = useState<FormatType>('single');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [instructorName, setInstructorName] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -129,6 +150,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     setFormat('single');
     setTitle('');
     setDescription('');
+    setInstructorName('');
     setStartDate(undefined);
     setStartTime('');
     setEndTime('');
@@ -168,6 +190,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           seller_id: currentSeller.id,
           title: title.trim(),
           description: description.trim() || null,
+          instructor_name: showInstructorField ? (normalizeTeacherName(instructorName) || null) : null,
           format: dbFormat,
           start_date: formatLocalDateKey(startDate),
           time_schedule: timeSchedule,
@@ -260,6 +283,22 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
               onChange={setDescription}
             />
           </div>
+
+          {showInstructorField && (
+            <div>
+              <label htmlFor="cc-instructor" className="text-sm font-medium mb-2 block text-foreground">
+                Lærer
+              </label>
+              <Input
+                id="cc-instructor"
+                type="text"
+                value={instructorName}
+                onChange={(e) => setInstructorName(e.target.value)}
+                onBlur={() => setInstructorName((value) => normalizeTeacherName(value))}
+                placeholder="Kari Nordmann"
+              />
+            </div>
+          )}
 
           {/* Dato */}
           <div>

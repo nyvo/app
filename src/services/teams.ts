@@ -1,4 +1,4 @@
-import { typedFrom } from '@/lib/supabase'
+import { supabase, typedFrom } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Team } from '@/types/database'
 
@@ -48,4 +48,28 @@ export async function updateTeam(
     return { data: null, error: error as Error }
   }
   return { data: data as Team, error: null }
+}
+
+/**
+ * Rename a team's public slug. The previous slug is archived in
+ * team_slug_aliases so links shared in the wild keep resolving via a
+ * client-side redirect on the public storefront.
+ *
+ * RPC enforces owner-only writes, the same normalization + reserved-list as
+ * onboarding, and uniqueness against both current slugs and archived aliases.
+ * Returns the canonical normalized slug on success.
+ */
+export async function renameTeamSlug(
+  teamId: string,
+  newSlug: string,
+): Promise<{ slug: string | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('rename_team_slug', {
+    p_team_id: teamId,
+    p_new_slug: newSlug,
+  })
+
+  if (error) {
+    return { slug: null, error: error as Error }
+  }
+  return { slug: data as string, error: null }
 }

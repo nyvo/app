@@ -20,12 +20,6 @@ interface PublicCourseSeller {
   default_course_image_url: string | null
 }
 
-// Internal type for the joined course query result
-interface InstructorProfileJoinRow {
-  id: string
-  name: string | null
-}
-
 interface SellerJoinRow {
   id: string
   name: string
@@ -50,9 +44,22 @@ interface CourseQueryResult {
   start_date: string | null
   end_date: string | null
   image_url: string | null
+  instructor_name: string | null
+  accepts_late_signups: boolean
   seller_id: string
   seller: SellerJoinRow | null
-  instructor: InstructorProfileJoinRow | null
+}
+
+interface StorefrontSellerScopeRow {
+  team_id: string
+  owner_seller_id: string
+  seller_id: string
+}
+
+interface StorefrontSellerScope {
+  teamId: string
+  ownerSellerId: string
+  sellerIds: string[]
 }
 
 // Next session info for ongoing courses
@@ -82,6 +89,10 @@ export interface PublicCourseWithDetails {
   start_date: string | null
   end_date: string | null
   image_url: string | null
+  instructor_name: string | null
+  /** Series-only opt-in policy: when false, the package tier is hidden once
+   * the first session has ended. Drop-in (if enabled) still works. */
+  accepts_late_signups: boolean
   seller_id: string
   spots_available: number
   /** Seller info enriched with slug + default_course_image_url from the seller's team. */
@@ -95,12 +106,12 @@ export interface PublicCourseWithDetails {
   upcoming_session_dates: string[]
 }
 
-/** Wrap the single primary instructor (from courses.instructor_id) as a PublicCourseInstructor array. */
-function flattenInstructors(profile: InstructorProfileJoinRow | null | undefined): PublicCourseInstructor[] {
-  if (!profile) return []
+/** Wrap the explicit display-name instructor as a PublicCourseInstructor array. */
+function flattenInstructors(courseId: string, instructorName: string | null | undefined): PublicCourseInstructor[] {
+  if (!instructorName) return []
   return [{
-    id: profile.id,
-    name: profile.name,
+    id: `${courseId}:primary-instructor`,
+    name: instructorName,
     role: 'primary',
     display_order: 0,
   }]
@@ -145,6 +156,43 @@ async function fetchTeamMetaBySellerIds(
   return result
 }
 
+/**
+ * Public storefront scope. The RPC intentionally exposes only seller IDs, not
+ * team_affiliations rows. A storefront includes its owner seller plus active
+ * collaborator sellers.
+ */
+async function fetchStorefrontSellerScope(
+  teamSlug: string,
+): Promise<{ data: StorefrontSellerScope | null; error: Error | null }> {
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: { p_team_slug: string },
+  ) => Promise<{ data: StorefrontSellerScopeRow[] | null; error: Error | null }>)(
+    'public_storefront_seller_ids',
+    { p_team_slug: teamSlug },
+  )
+
+  if (error) {
+    logger.error('Error fetching storefront seller scope:', error)
+    return { data: null, error }
+  }
+
+  const rows = data ?? []
+  if (rows.length === 0) {
+    return { data: null, error: null }
+  }
+
+  const first = rows[0]
+  return {
+    data: {
+      teamId: first.team_id,
+      ownerSellerId: first.owner_seller_id,
+      sellerIds: Array.from(new Set(rows.map((row) => row.seller_id))),
+    },
+    error: null,
+  }
+}
+
 export interface PublicCoursesFilters {
   fromDate?: string
   /** Filter to courses owned by the seller whose team has this slug. */
@@ -167,42 +215,21 @@ export async function fetchPublicCourses(
   error: Error | null
   count?: number
 }> {
-  // If filtering by team slug, resolve to the owner seller_id first AND
-  // include any courses syndicated onto the team's storefront via the
-  // course_team_listings table (storefront syndication, 2026-04-29).
-  //
-  // Resulting predicate: courses WHERE seller_id = owner OR id IN (listed)
+  // If filtering by team slug, include the storefront owner and all active
+  // collaborators. The storefront controls display; the course seller still
+  // owns payments, signups, and management.
   let sellerIdFilter: string[] | null = null
-  let extraListedCourseIds: string[] | null = null
   if (filters?.sellerIds && filters.sellerIds.length > 0) {
     sellerIdFilter = filters.sellerIds
   } else if (filters?.teamSlug) {
-    const { data: team, error: teamError } = await supabase
-      .from('teams')
-      .select('id, owner_seller_id')
-      .eq('slug', filters.teamSlug)
-      .maybeSingle()
-    if (teamError) {
-      return { data: null, error: teamError as Error }
+    const { data: scope, error: scopeError } = await fetchStorefrontSellerScope(filters.teamSlug)
+    if (scopeError) {
+      return { data: null, error: scopeError }
     }
-    if (!team) {
+    if (!scope) {
       return { data: [], error: null, count: 0 }
     }
-    const teamRow = team as { id: string; owner_seller_id: string }
-    sellerIdFilter = [teamRow.owner_seller_id]
-
-    // Pull syndicated course ids — courses owned by OTHER sellers that an
-    // active team_affiliation lets appear on this team's storefront.
-    const { data: listingRows, error: listingError } = await supabase
-      .from('course_team_listings')
-      .select('course_id')
-      .eq('team_id', teamRow.id)
-    if (listingError) {
-      // Non-fatal — fall back to owner-only courses if listings can't load.
-      logger.warn('publicCourses: course_team_listings fetch failed', listingError)
-    } else if (listingRows && listingRows.length > 0) {
-      extraListedCourseIds = (listingRows as Array<{ course_id: string }>).map((r) => r.course_id)
-    }
+    sellerIdFilter = scope.sellerIds
   }
 
   let query = supabase
@@ -224,9 +251,10 @@ export async function fetchPublicCourses(
       start_date,
       end_date,
       image_url,
+      instructor_name,
+      accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, dintero_onboarding_complete),
-      instructor:profiles!instructor_id(id, name)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete)
     `, { count: filters?.limit ? 'exact' : undefined })
     .in('status', ['active', 'upcoming', 'cancelled'])
     .order('start_date', { ascending: true })
@@ -236,16 +264,7 @@ export async function fetchPublicCourses(
     query = query.gte('start_date', filters.fromDate)
   }
   if (sellerIdFilter) {
-    if (extraListedCourseIds && extraListedCourseIds.length > 0) {
-      // Courses owned by the team's seller, OR syndicated via listings.
-      // PostgREST `.in` inside `.or` needs comma-separated values in the
-      // group; the seller filter has at most one value here (set above).
-      const listedClause = `id.in.(${extraListedCourseIds.join(',')})`
-      const sellerClause = `seller_id.in.(${sellerIdFilter.join(',')})`
-      query = query.or(`${sellerClause},${listedClause}`)
-    } else {
-      query = query.in('seller_id', sellerIdFilter)
-    }
+    query = query.in('seller_id', sellerIdFilter)
   }
 
   // Apply past/active date filter in the DB query (not client-side) so pagination works correctly
@@ -374,7 +393,7 @@ export async function fetchPublicCourses(
     const maxParticipants = course.max_participants || 0
     const confirmedCount = signupCountMap[course.id] || 0
     const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
-    const instructors = flattenInstructors(course.instructor)
+    const instructors = flattenInstructors(course.id, course.instructor_name)
     const teamMeta = teamMetaMap[course.seller_id]
     // Drop-in availability mirrors the RPC's gating: there must be an active
     // drop-in tier row (the teacher's policy) AND the series must be
@@ -422,6 +441,8 @@ export async function fetchPublicCourses(
       start_date: course.start_date,
       end_date: course.end_date,
       image_url: course.image_url,
+      instructor_name: course.instructor_name,
+      accepts_late_signups: course.accepts_late_signups,
       seller_id: course.seller_id,
       seller: sellerEnriched,
       instructor: instructors[0] ?? null,
@@ -466,9 +487,10 @@ export async function fetchPublicCourseBySlug(
       start_date,
       end_date,
       image_url,
+      instructor_name,
+      accepts_late_signups,
       seller_id,
-      seller:sellers(id, name, logo_url, dintero_onboarding_complete),
-      instructor:profiles!instructor_id(id, name)
+      seller:sellers(id, name, logo_url, dintero_onboarding_complete)
     `)
     .eq('slug', courseSlug)
     .neq('status', 'cancelled')
@@ -484,31 +506,15 @@ export async function fetchPublicCourseBySlug(
 
   const typedCourse = course as unknown as CourseQueryResult
 
-  // Verify the course actually belongs on the requested team's public page.
-  // Either the team owns the seller (canonical case) OR the seller is a
-  // tenant member of the team. Otherwise 404 — prevents probing courses
-  // through unrelated team URLs.
-  const { data: team, error: teamErr } = await supabase
-    .from('teams')
-    .select('id, owner_seller_id')
-    .eq('slug', teamSlug)
-    .maybeSingle()
-  if (teamErr || !team) {
+  // Verify the course belongs on the requested storefront. This allows the
+  // owner storefront and any active collaborator storefront, while unrelated
+  // storefront URLs still 404.
+  const { data: scope, error: scopeError } = await fetchStorefrontSellerScope(teamSlug)
+  if (scopeError || !scope) {
     return { data: null, error: new Error('Fant ikke kurset') }
   }
-  const teamRow = team as { id: string; owner_seller_id: string }
-  if (teamRow.owner_seller_id !== typedCourse.seller_id) {
-    // The course isn't owned by this team — check if it's syndicated here
-    // via the team_affiliations / course_team_listings model.
-    const { data: listing } = await supabase
-      .from('course_team_listings')
-      .select('course_id')
-      .eq('team_id', teamRow.id)
-      .eq('course_id', typedCourse.id)
-      .maybeSingle()
-    if (!listing) {
-      return { data: null, error: new Error('Fant ikke kurset') }
-    }
+  if (!scope.sellerIds.includes(typedCourse.seller_id)) {
+    return { data: null, error: new Error('Fant ikke kurset') }
   }
 
   // Get signup count, drop-in tier, and team meta in parallel.
@@ -550,7 +556,7 @@ export async function fetchPublicCourseBySlug(
         ? Math.round(typedCourse.price / typedCourse.total_weeks)
         : null)
 
-  const instructors = flattenInstructors(typedCourse.instructor)
+  const instructors = flattenInstructors(typedCourse.id, typedCourse.instructor_name)
   const teamMeta = teamMetaMap[typedCourse.seller_id]
 
   const sellerEnriched: PublicCourseSeller | null = typedCourse.seller
@@ -582,6 +588,8 @@ export async function fetchPublicCourseBySlug(
     start_date: typedCourse.start_date,
     end_date: typedCourse.end_date,
     image_url: typedCourse.image_url,
+    instructor_name: typedCourse.instructor_name,
+    accepts_late_signups: typedCourse.accepts_late_signups,
     seller_id: typedCourse.seller_id,
     seller: sellerEnriched,
     instructor: instructors[0] ?? null,

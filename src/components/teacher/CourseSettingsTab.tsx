@@ -56,6 +56,12 @@ interface CourseSettingsTabProps {
   allowsDropIn: boolean;
   onAllowsDropInChange: (value: boolean) => void;
 
+  // Late signups — series-only. When true the package tier stays buyable
+  // after the series starts, prorated to remaining sessions. Off → buyers
+  // see only drop-in (if enabled) once the first session has ended.
+  acceptsLateSignups: boolean;
+  onAcceptsLateSignupsChange: (value: boolean) => void;
+
   // Actions
   isDirty: boolean;
   saveError: string | null;
@@ -87,6 +93,8 @@ export const CourseSettingsTab = ({
   onPriceChange,
   allowsDropIn,
   onAllowsDropInChange,
+  acceptsLateSignups,
+  onAcceptsLateSignupsChange,
   isDirty,
   saveError,
   onSave,
@@ -392,6 +400,22 @@ export const CourseSettingsTab = ({
                 checked={allowsDropIn}
                 onCheckedChange={onAllowsDropInChange}
                 aria-label="Tillat drop-in"
+                className="mt-0.5 shrink-0"
+              />
+            </label>
+          )}
+          {courseFormat === 'series' && (
+            <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-medium text-foreground">Tillat påmelding etter oppstart</span>
+                <span className="block text-sm text-foreground-muted mt-0.5">
+                  La nye bli med selv om kurset er i gang. Prisen regnes ut fra ukene som er igjen.
+                </span>
+              </span>
+              <Switch
+                checked={acceptsLateSignups}
+                onCheckedChange={onAcceptsLateSignupsChange}
+                aria-label="Tillat påmelding etter oppstart"
                 className="mt-0.5 shrink-0"
               />
             </label>

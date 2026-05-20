@@ -194,20 +194,8 @@ function CourseHeader({
   nextSessionDate: string | null;
   sessions: CourseSession[];
 }) {
-  const studio = course.seller;
-
   return (
     <header className="space-y-3">
-      {studio && (
-        <p className="text-sm text-foreground-muted">
-          <Link
-            to={`/${studio.slug}`}
-            className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
-          >
-            {studio.name}
-          </Link>
-        </p>
-      )}
       <h1 className="text-3xl font-medium tracking-tight text-foreground">
         {course.title}
       </h1>

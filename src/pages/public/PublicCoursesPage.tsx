@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
@@ -32,6 +32,7 @@ function getDisplayDateMs(course: PublicCourseWithDetails): number {
 
 const PublicCoursesPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [organization, setOrganization] = useState<PublicSeller | null>(null);
   const [courses, setCourses] = useState<PublicCourseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,9 +55,18 @@ const PublicCoursesPage = () => {
         setLoading(false);
         return;
       }
+
+      // The URL slug may be an archived alias — rewrite to the canonical slug
+      // so shares/bookmarks settle on the current URL. The effect re-runs with
+      // the new param, so bail out here and let the next pass do the work.
+      if (sellerData.slug !== slug) {
+        navigate(`/${sellerData.slug}`, { replace: true });
+        return;
+      }
+
       setOrganization(sellerData);
 
-      const activeResult = await fetchPublicCourses({ teamSlug: slug });
+      const activeResult = await fetchPublicCourses({ teamSlug: sellerData.slug });
       if (activeResult.error) {
         setErrorKind('load-failed');
         setLoading(false);
@@ -66,7 +76,7 @@ const PublicCoursesPage = () => {
       setLoading(false);
     }
     loadData();
-  }, [slug]);
+  }, [slug, navigate]);
 
   const visible = useMemo(() => courses.filter(isVisible), [courses]);
 

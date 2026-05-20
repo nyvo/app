@@ -123,9 +123,8 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
   const isDisabled = isCancelled || isFull;
 
   // One image per teacher (sellers.logo_url is canonical). The instructor
-  // name still falls through to the seller name when no specific instructor
-  // is set on a course.
-  const personName = instructor?.name ?? course.seller?.name ?? null;
+  // row only renders when an explicit instructor name is set on the course.
+  const personName = instructor?.name ?? null;
   const personAvatar = course.seller?.logo_url ?? null;
 
   return (

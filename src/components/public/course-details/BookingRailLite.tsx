@@ -134,7 +134,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             </dl>
           )}
           <Button asChild className="w-full">
-            <Link to={href}>Meld deg på</Link>
+            <Link to={href}>Reserver</Link>
           </Button>
         </>
       )}
@@ -201,19 +201,32 @@ function buildTiles(
   remainingSessions: number,
 ): TicketTile[] {
   const isFree = !course.price || course.price === 0;
-  if (isFree) return [];
+  const isSeries = course.format === 'series';
+
+  // Free courses still show a tile so the booking card has the same shape
+  // as paid flows — single row, "0 kr" via formatKroner.
+  if (isFree) {
+    return [{
+      id: 'free',
+      label: isSeries ? 'Hele kurspakken' : 'Enkelttime',
+      sublabel: isSeries && course.total_weeks ? `${course.total_weeks} uker` : null,
+      amount: 0,
+    }];
+  }
 
   const tiles: TicketTile[] = [];
-  const isSeries = course.format === 'series';
 
   // Series + started: prorate the package to the sessions that are still
   // ahead. Per-week rate matches drop-in (price ÷ total_weeks), mirroring
   // the SQL in migration 20260520160000. At ≤1 session left the package
   // would be priced identically to drop-in — skip the tile to avoid a
-  // duplicate, drop-in carries the last session if enabled.
+  // duplicate, drop-in carries the last session if enabled. Teachers can
+  // also opt out entirely via course.accepts_late_signups (mirrors the
+  // RPC gate added in migration 20260520170000).
   if (isSeries && seriesStarted) {
     if (
-      remainingSessions > 1
+      course.accepts_late_signups
+      && remainingSessions > 1
       && course.total_weeks
       && course.total_weeks > 0
       && course.price

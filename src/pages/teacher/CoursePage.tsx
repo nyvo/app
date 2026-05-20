@@ -22,6 +22,7 @@ import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
+import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import {
   ParticipantActionMenu,
   type ActionableParticipant,
@@ -132,6 +133,7 @@ const CoursePage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(undefined);
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const [settingsAllowsDropIn, setSettingsAllowsDropIn] = useState(false);
+  const [settingsAcceptsLateSignups, setSettingsAcceptsLateSignups] = useState(true);
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -139,6 +141,7 @@ const CoursePage = () => {
   const [cancelAcknowledged, setCancelAcknowledged] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
   const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
@@ -151,6 +154,7 @@ const CoursePage = () => {
     if (timeMatch) setSettingsTime(timeMatch[1]);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsAllowsDropIn(courseData.allowsDropIn);
+    setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
   }, [courseData]);
@@ -325,6 +329,23 @@ const CoursePage = () => {
     toast.success(next ? 'Drop-in slått på' : 'Drop-in slått av');
   };
 
+  // Late-join toggle is instant-commit like drop-in. Persists straight to
+  // courses.accepts_late_signups; the public RPC reads it at booking time.
+  const handleToggleAcceptsLateSignups = async (next: boolean) => {
+    if (!courseId) return;
+    const previous = settingsAcceptsLateSignups;
+    setSettingsAcceptsLateSignups(next);
+    setCourseData((prev) => (prev ? { ...prev, acceptsLateSignups: next } : prev));
+    const { error } = await updateCourse(courseId, { accepts_late_signups: next });
+    if (error) {
+      setSettingsAcceptsLateSignups(previous);
+      setCourseData((prev) => (prev ? { ...prev, acceptsLateSignups: previous } : prev));
+      toast.error(friendlyError(error, 'Kunne ikke oppdatere innstillingen.'));
+      return;
+    }
+    toast.success(next ? 'Påmelding etter oppstart slått på' : 'Påmelding etter oppstart slått av');
+  };
+
   const handleCancelCourse = async () => {
     if (!courseId) return;
     setIsDeleting(true);
@@ -351,11 +372,15 @@ const CoursePage = () => {
     }
   };
 
-  // Publish flow — mirrors CourseDrawer. Dintero gate is enforced upstream
-  // by the Alert + payouts link; if a teacher bypasses that, the RPC will
-  // refuse and friendlyError surfaces it.
+  // Publish flow — mirrors CourseDrawer. The DB trigger
+  // enforce_course_publish_requires_dintero is the authoritative gate; this
+  // client check just keeps teachers out of a guaranteed-to-fail request.
   const handlePublish = async () => {
     if (!courseId || !courseData) return;
+    if (!currentSeller?.dintero_onboarding_complete) {
+      setShowPublishDialog(true);
+      return;
+    }
     setIsPublishing(true);
     const { error: pubError } = await publishCourse(courseId);
     if (pubError) {
@@ -606,6 +631,8 @@ const CoursePage = () => {
               onPriceChange={setSettingsPrice}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
+              acceptsLateSignups={settingsAcceptsLateSignups}
+              onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}
@@ -818,6 +845,12 @@ const CoursePage = () => {
           onSuccess={refetchParticipants}
         />
       )}
+
+      <PublishCourseDialog
+        open={showPublishDialog}
+        onOpenChange={setShowPublishDialog}
+        courseTitle={courseData.title}
+      />
 
       <ConfirmDialog
         open={showCancelPreview}

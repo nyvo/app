@@ -90,6 +90,7 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     price: 220,
     allows_drop_in: null,
     drop_in_price: null,
+    accepts_late_signups: true,
     total_weeks: 8,
     start_date: dates[0],
     end_date: dates[dates.length - 1],
@@ -97,6 +98,7 @@ function makeMockCourses(): PublicCourseWithDetails[] {
     seller_id: 'mock',
     spots_available: 8,
     seller: { name: 'Mock Studio', slug: 'mock', logo_url: null, dintero_onboarding_complete: false, default_course_image_url: null },
+    instructor_name: null,
     instructor: null,
     instructors: [],
     next_session: dates[0]

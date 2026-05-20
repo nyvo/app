@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { useAuth } from '@/contexts/AuthContext'
-import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
 
 /**
  * Magic-link / OAuth callback handler.
@@ -18,7 +18,8 @@ import { AUTH_ROUTES } from '@/lib/auth-routes'
  */
 const AuthCallbackPage = () => {
   const navigate = useNavigate()
-  const { user, isInitialized } = useAuth()
+  const [searchParams] = useSearchParams()
+  const { user, profile, isInitialized } = useAuth()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Parse `error_description` from the hash on mount — Supabase appends it
@@ -32,17 +33,19 @@ const AuthCallbackPage = () => {
     }
   }, [])
 
-  // Once auth has initialized and we have a user, route to dashboard.
+  // Once auth has initialized, resolve the right destination from the
+  // profile state. `?next=` preserves a deep-link target from before login.
   useEffect(() => {
     if (errorMessage) return
     if (!isInitialized) return
     if (user) {
-      navigate(AUTH_ROUTES.dashboard, { replace: true })
+      const next = searchParams.get('next') ?? AUTH_ROUTES.dashboard
+      navigate(resolvePostAuthDestination(profile, next), { replace: true })
     } else {
       // Initialized but no user — token failed silently or wasn't present.
       setErrorMessage('Lenken er utløpt eller fungerer ikke.')
     }
-  }, [isInitialized, user, errorMessage, navigate])
+  }, [isInitialized, user, profile, searchParams, errorMessage, navigate])
 
   if (errorMessage) {
     return (

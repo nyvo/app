@@ -1,18 +1,22 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { FieldError } from '@/components/ui/field-error';
+import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateSeller } from '@/services/sellers';
-import { supabase } from '@/lib/supabase';
-import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '@/services/storage';
+import { renameTeamSlug, updateTeam } from '@/services/teams';
+import { uploadSellerLogo, ACCEPTED_IMAGE_TYPES } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
+import { logger } from '@/lib/logger';
 import type { Seller, Team } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -88,8 +92,6 @@ const TeamsPage = () => {
   );
 };
 
-const COURSE_IMAGES_BUCKET = 'course-images';
-
 function StudioSidenForm({
   team,
   seller,
@@ -102,21 +104,105 @@ function StudioSidenForm({
   const [savingPhoto, setSavingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadPhoto = async (file: File): Promise<string> => {
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      throw new Error('Ugyldig filtype. Bruk JPG, PNG eller WebP.');
+  // Local state for the editable identity fields. Inputs re-sync from props
+  // whenever the parent refreshes after a successful save.
+  const [name, setName] = useState(seller.name);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [savingName, setSavingName] = useState(false);
+  useEffect(() => {
+    setName(seller.name);
+  }, [seller.name]);
+
+  const [slug, setSlug] = useState(team.slug);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [savingSlug, setSavingSlug] = useState(false);
+  useEffect(() => {
+    setSlug(team.slug);
+  }, [team.slug]);
+
+  const isNameDirty = name !== seller.name;
+  const isSlugDirty = slug !== team.slug;
+
+  const handleNameCancel = () => {
+    setName(seller.name);
+    setNameError(null);
+  };
+
+  const handleSlugCancel = () => {
+    setSlug(team.slug);
+    setSlugError(null);
+  };
+
+  const handleNameSave = async () => {
+    if (savingName) return;
+    const trimmed = name.trim();
+    if (trimmed === seller.name) {
+      setName(seller.name);
+      setNameError(null);
+      return;
     }
-    if (file.size > MAX_IMAGE_SIZE) {
-      throw new Error('Bildet er for stort. Maks 5 MB.');
+    if (!trimmed) {
+      setNameError('Skriv inn et navn.');
+      return;
     }
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `sellers/${seller.id}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from(COURSE_IMAGES_BUCKET)
-      .upload(path, file, { cacheControl: '3600', upsert: false });
-    if (error) throw new Error(error.message);
-    const { data } = supabase.storage.from(COURSE_IMAGES_BUCKET).getPublicUrl(path);
-    return data.publicUrl;
+    setNameError(null);
+    setSavingName(true);
+
+    try {
+      const { error } = await updateSeller(seller.id, { name: trimmed });
+      if (error) {
+        setNameError(friendlyError(error, 'Kunne ikke lagre navnet.'));
+        return;
+      }
+      // Keep teams.name aligned. Best-effort: the seller name is the source of
+      // truth for public rendering; a transient team-row lag is harmless.
+      void updateTeam(team.id, { name: trimmed }).catch((err) => {
+        logger.warn('Failed to mirror seller name onto team row:', err);
+      });
+      setName(trimmed);
+      await onSaved();
+      toast.success('Navnet er oppdatert.');
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleSlugSave = async () => {
+    if (savingSlug) return;
+    const trimmed = slug.trim();
+    if (trimmed === team.slug) {
+      setSlug(team.slug);
+      setSlugError(null);
+      return;
+    }
+    if (!trimmed) {
+      setSlugError('Skriv inn en adresse.');
+      return;
+    }
+    setSlugError(null);
+    setSavingSlug(true);
+
+    try {
+      const { slug: nextSlug, error } = await renameTeamSlug(team.id, trimmed);
+      if (error || !nextSlug) {
+        const msg = error?.message ?? '';
+        if (msg.includes('already taken')) {
+          setSlugError('Denne adressen er opptatt. Velg en annen.');
+        } else if (msg.includes('reserved')) {
+          setSlugError('Denne adressen er reservert. Velg en annen.');
+        } else if (msg.includes('at least 3')) {
+          setSlugError('Bruk minst 3 tegn.');
+        } else {
+          setSlugError(friendlyError(error, 'Kunne ikke endre adressen.'));
+        }
+        return;
+      }
+      setSlug(nextSlug);
+      await onSaved();
+      toast.success('Adressen er oppdatert. Den gamle lenken videresender automatisk.');
+    } finally {
+      setSavingSlug(false);
+    }
   };
 
   const handleFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +212,10 @@ function StudioSidenForm({
 
     setSavingPhoto(true);
     try {
-      const url = await uploadPhoto(file);
+      const { url, error: uploadError } = await uploadSellerLogo(seller.id, file);
+      if (uploadError || !url) {
+        throw uploadError ?? new Error('Kunne ikke laste opp bildet.');
+      }
       const { error } = await updateSeller(seller.id, { logo_url: url });
       if (error) throw error;
       await onSaved();
@@ -200,12 +289,109 @@ function StudioSidenForm({
       </div>
 
       <div className="grid gap-2">
-        <span className="text-sm font-medium text-foreground">URL</span>
-        <div className="flex h-9 items-center rounded-md border border-border bg-surface text-sm">
-          <span className="pl-3 text-foreground-muted">openspot.no</span>
-          <span className="px-1 text-foreground-muted">/</span>
-          <span className="flex-1 min-w-0 truncate pr-3 text-foreground">{team.slug}</span>
+        <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
+          Navn
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+          <Input
+            id="studio-name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (nameError) setNameError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                void handleNameSave();
+              }
+              if (e.key === 'Escape') {
+                handleNameCancel();
+              }
+            }}
+            disabled={savingName}
+            aria-invalid={!!nameError || undefined}
+            aria-describedby={nameError ? 'studio-name-error' : undefined}
+          />
+          {isNameDirty && (
+            <div className="flex shrink-0 justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleNameCancel}
+                disabled={savingName}
+              >
+                Avbryt
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleNameSave}
+                loading={savingName}
+                loadingText="Lagrer"
+              >
+                Lagre
+              </Button>
+            </div>
+          )}
         </div>
+        {nameError && <FieldError id="studio-name-error">{nameError}</FieldError>}
+      </div>
+
+      <div className="grid gap-2">
+        <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
+          URL
+        </label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+          <InputGroup data-disabled={savingSlug || undefined}>
+            <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
+            <InputGroupInput
+              id="studio-slug"
+              type="text"
+              value={slug}
+              onChange={(e) => {
+                setSlug(e.target.value);
+                if (slugError) setSlugError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleSlugSave();
+                }
+                if (e.key === 'Escape') {
+                  handleSlugCancel();
+                }
+              }}
+              disabled={savingSlug}
+              aria-invalid={!!slugError || undefined}
+              aria-describedby={slugError ? 'studio-slug-error' : undefined}
+            />
+          </InputGroup>
+          {isSlugDirty && (
+            <div className="flex shrink-0 justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleSlugCancel}
+                disabled={savingSlug}
+              >
+                Avbryt
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSlugSave}
+                loading={savingSlug}
+                loadingText="Lagrer"
+              >
+                Lagre
+              </Button>
+            </div>
+          )}
+        </div>
+        {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
       </div>
     </div>
   );

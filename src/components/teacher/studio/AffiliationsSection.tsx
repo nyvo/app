@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Check, Copy, ImageIcon, MoreVertical } from '@/lib/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -191,6 +191,17 @@ function IndividualView({ sellerId }: { sellerId: string }) {
         <CardDescription>
           Studioet du er medlem av. Alle kursene dine vises automatisk.
         </CardDescription>
+        {host && (
+          <CardAction>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setConfirmLeave(true)}
+            >
+              Forlat team
+            </Button>
+          </CardAction>
+        )}
       </CardHeader>
       <CardContent>
         {host === undefined ? (
@@ -225,16 +236,6 @@ function IndividualView({ sellerId }: { sellerId: string }) {
             </div>
 
             <MembersTable members={members} loading={loadingMembers} />
-
-            <div className="flex justify-end">
-              <Button
-                variant="outline-soft"
-                size="sm"
-                onClick={() => setConfirmLeave(true)}
-              >
-                Forlat team
-              </Button>
-            </div>
 
             <ConfirmDialog
               open={confirmLeave}

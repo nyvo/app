@@ -112,6 +112,7 @@ CREATE TABLE courses (
   end_date DATE,
 
   instructor_id UUID REFERENCES profiles(id),
+  instructor_name TEXT,
   image_url TEXT,
 
   -- Client-generated key to prevent duplicate course creation on retries
@@ -463,7 +464,7 @@ CREATE OR REPLACE FUNCTION create_course_idempotent(
   p_price NUMERIC DEFAULT NULL, p_allows_drop_in BOOLEAN DEFAULT FALSE,
   p_drop_in_price NUMERIC DEFAULT NULL, p_total_weeks INTEGER DEFAULT NULL,
   p_start_date DATE DEFAULT NULL, p_end_date DATE DEFAULT NULL,
-  p_instructor_id UUID DEFAULT NULL, p_image_url TEXT DEFAULT NULL,
+  p_instructor_id UUID DEFAULT NULL, p_instructor_name TEXT DEFAULT NULL, p_image_url TEXT DEFAULT NULL,
   p_style_id UUID DEFAULT NULL
 ) RETURNS JSON LANGUAGE plpgsql AS $$
 DECLARE v_existing_course RECORD; v_new_course_id UUID;
@@ -475,8 +476,8 @@ BEGIN
       RETURN json_build_object('success', true, 'course_id', v_existing_course.id, 'already_existed', true, 'message', 'Kurset eksisterer allerede');
     END IF;
   END IF;
-  INSERT INTO courses (organization_id, idempotency_key, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, start_date, end_date, instructor_id, image_url, style_id)
-  VALUES (p_organization_id, p_idempotency_key, p_title, p_description, p_course_type::course_type, p_status::course_status, p_level::course_level, p_location, p_time_schedule, p_duration, p_max_participants, p_price, p_allows_drop_in, p_drop_in_price, p_total_weeks, p_start_date, p_end_date, p_instructor_id, p_image_url, p_style_id)
+  INSERT INTO courses (organization_id, idempotency_key, title, description, course_type, status, level, location, time_schedule, duration, max_participants, price, allows_drop_in, drop_in_price, total_weeks, start_date, end_date, instructor_id, instructor_name, image_url, style_id)
+  VALUES (p_organization_id, p_idempotency_key, p_title, p_description, p_course_type::course_type, p_status::course_status, p_level::course_level, p_location, p_time_schedule, p_duration, p_max_participants, p_price, p_allows_drop_in, p_drop_in_price, p_total_weeks, p_start_date, p_end_date, p_instructor_id, p_instructor_name, p_image_url, p_style_id)
   RETURNING id INTO v_new_course_id;
   RETURN json_build_object('success', true, 'course_id', v_new_course_id, 'already_existed', false, 'message', 'Kurs opprettet');
 EXCEPTION

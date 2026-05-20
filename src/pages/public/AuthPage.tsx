@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useFormValidation } from '@/hooks/use-form-validation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthFormField } from '@/components/auth/AuthFormField'
-import { AUTH_ROUTES } from '@/lib/auth-routes'
+import { AUTH_ROUTES, resolvePostAuthDestination } from '@/lib/auth-routes'
 import { AUTH_VALIDATION, AUTH_ERRORS, AUTH_PLACEHOLDERS } from '@/lib/auth-messages'
 import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton'
 import { Separator } from '@/components/ui/separator'
@@ -29,11 +29,15 @@ const ROUTES = AUTH_ROUTES
 const AuthPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { sendMagicLink, user, isLoading: authLoading } = useAuth()
+  const { sendMagicLink, user, profile, isLoading: authLoading } = useAuth()
 
   const locationState = location.state as { email?: string; from?: Location } | null
   const prefillEmail = locationState?.email ?? ''
   const redirectAfterLogin = locationState?.from?.pathname ?? ROUTES.dashboard
+  // Provider-side redirect (magic link / OAuth) must come back through the
+  // callback so the post-auth gate runs once, with `next` preserving the
+  // deep-link target if there was one.
+  const callbackUrl = `${window.location.origin}${ROUTES.callback}?next=${encodeURIComponent(redirectAfterLogin)}`
 
   // Two-step: identify (enter email) → sent (enter OTP / click email link)
   const [step, setStep] = useState<'identify' | 'sent'>('identify')
@@ -61,9 +65,9 @@ const AuthPage = () => {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate(redirectAfterLogin, { replace: true })
+      navigate(resolvePostAuthDestination(profile, redirectAfterLogin), { replace: true })
     }
-  }, [user, authLoading, navigate, redirectAfterLogin])
+  }, [user, profile, authLoading, navigate, redirectAfterLogin])
 
   // Auto-verify once the user types all 6 digits.
   // Note: `isVerifying` is intentionally NOT in deps — flipping it inside the
@@ -109,8 +113,7 @@ const AuthPage = () => {
 
     setIsSubmitting(true)
     try {
-      const redirectOrigin = `${window.location.origin}${ROUTES.callback}`
-      const { error } = await sendMagicLink(formData.email, redirectOrigin)
+      const { error } = await sendMagicLink(formData.email, callbackUrl)
 
       if (error) {
         if (error.message.includes('rate') || (error as { status?: number }).status === 429) {
@@ -135,8 +138,7 @@ const AuthPage = () => {
   const handleResend = async () => {
     if (isResending) return
     setIsResending(true)
-    const redirectOrigin = `${window.location.origin}${ROUTES.callback}`
-    const { error } = await sendMagicLink(formData.email, redirectOrigin)
+    const { error } = await sendMagicLink(formData.email, callbackUrl)
     setIsResending(false)
     if (error) {
       toast.error(AUTH_ERRORS.generic)
@@ -212,7 +214,7 @@ const AuthPage = () => {
       }
     >
       <div className="w-full">
-        <GoogleAuthButton redirectTo={`${window.location.origin}${redirectAfterLogin}`} />
+        <GoogleAuthButton redirectTo={callbackUrl} />
       </div>
 
       <div className="my-6 flex items-center gap-3" aria-hidden="true">

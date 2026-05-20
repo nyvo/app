@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, MapPin, Monitor, Users } from '@/lib/icons';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { Clock, MapPin, Users } from '@/lib/icons';
 import { cn, formatCoursePrice } from '@/lib/utils';
 import type { PublicCourseWithDetails } from '@/services/publicCourses';
 
@@ -282,74 +281,104 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
           Ingen klasser denne dagen.
         </p>
       ) : (
-        <div className="space-y-3">
+        <ul className="divide-y divide-border">
           {selectedCourses.map(course => {
             const time = extractTime(course.time_schedule);
-            const studioSlug = course.seller?.slug ?? '';
-            // URL goes to the canonical owner; state carries the viewing
-            // storefront so the back-link can return there.
-            const fromSlug = viewingSlug ?? studioSlug;
+            const ownerSlug = course.seller?.slug ?? '';
+            // Link to the storefront the visitor is currently on. The detail
+            // page canonicalizes to the owner's slug when it differs. For
+            // affiliated teachers (no owning team of their own) ownerSlug is
+            // empty — without this fallback the Link gets `//<slug>` which
+            // browsers parse as a protocol-relative host.
+            const linkSlug = viewingSlug || ownerSlug;
+            const fromSlug = viewingSlug ?? ownerSlug;
             const fromName = viewingName ?? course.seller?.name ?? null;
             const isFull = course.max_participants !== null && course.spots_available <= 0;
             const isCancelled = course.status === 'cancelled';
+            // Series started + no buyable tier (teacher disabled late signups
+            // AND drop-in isn't offered) → bookings are closed even though
+            // the course still appears in the list. Mirrors the
+            // BookingRailLite "closed" state on the detail page.
+            const todayKey = toKey(today);
+            const seriesStarted =
+              course.format === 'series'
+              && !!course.start_date
+              && course.start_date <= todayKey;
+            const isClosed =
+              !isFull
+              && !isCancelled
+              && seriesStarted
+              && !course.accepts_late_signups
+              && !course.allows_drop_in;
+            const isDisabled = isFull || isCancelled || isClosed;
+            const ctaLabel = isCancelled
+              ? 'Avlyst'
+              : isFull
+                ? 'Fullt'
+                : isClosed
+                  ? 'Stengt'
+                  : 'Reserver';
             return (
-              <Link
-                key={course.id}
-                to={`/${studioSlug}/${course.slug}`}
-                state={{ fromSlug, fromName }}
-                className={cn(
-                  'block rounded-xl border border-border bg-surface p-6 transition-colors',
-                  'hover:bg-muted/60',
-                  (isFull || isCancelled) && 'text-foreground-muted',
-                )}
-              >
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="text-base font-medium text-foreground truncate">
-                    {course.title}
-                  </h3>
-                  <span className="text-sm font-medium tabular-nums text-foreground whitespace-nowrap">
-                    {formatCoursePrice(course.price)}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-foreground-muted">
-                  {time && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock className="size-3.5" strokeWidth={1.75} />
-                      <span className="tabular-nums">
-                        {formatTimeRange(time, course.duration)}
-                      </span>
-                    </span>
+              <li key={course.id}>
+                <Link
+                  to={`/${linkSlug}/${course.slug}`}
+                  state={{ fromSlug, fromName }}
+                  className={cn(
+                    'group flex items-center justify-between gap-4 py-5',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40 rounded-sm',
                   )}
-                  {course.delivery_mode === 'online' ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Monitor className="size-3.5" strokeWidth={1.75} />
-                      <span>Online</span>
-                    </span>
-                  ) : course.location ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <MapPin className="size-3.5" strokeWidth={1.75} />
-                      <span className="truncate max-w-xs">{course.location}</span>
-                    </span>
-                  ) : null}
-                  {course.max_participants !== null && (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Users className="size-3.5" strokeWidth={1.75} />
-                      {isFull ? (
-                        <span>Fullt</span>
-                      ) : (
-                        <span>
-                          {course.spots_available}/{course.max_participants} plasser
+                  aria-disabled={isDisabled || undefined}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-medium truncate text-foreground">
+                      {course.title}
+                    </h3>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground-muted">
+                      {time && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="size-3.5" strokeWidth={1.75} />
+                          <span className="tabular-nums">
+                            {formatTimeRange(time, course.duration)}
+                          </span>
                         </span>
                       )}
-                    </span>
-                  )}
-                  {isCancelled && <StatusBadge status="cancelled" />}
-                </div>
-              </Link>
+                      {course.delivery_mode === 'online' ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <MapPin className="size-3.5" strokeWidth={1.75} />
+                          <span>Online</span>
+                        </span>
+                      ) : course.location ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <MapPin className="size-3.5" strokeWidth={1.75} />
+                          <span className="truncate max-w-xs">{course.location}</span>
+                        </span>
+                      ) : null}
+                      {course.max_participants !== null && !isFull && (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Users className="size-3.5" strokeWidth={1.75} />
+                          <span>
+                            {course.spots_available}/{course.max_participants} plasser
+                          </span>
+                        </span>
+                      )}
+                      <span className="tabular-nums">{formatCoursePrice(course.price)}</span>
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      'shrink-0 inline-flex items-center justify-center h-8 px-3 rounded-full text-sm font-medium',
+                      'bg-muted text-foreground',
+                      isDisabled && 'opacity-60',
+                    )}
+                    aria-hidden
+                  >
+                    {ctaLabel}
+                  </span>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </section>
   );

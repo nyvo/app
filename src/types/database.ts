@@ -231,6 +231,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          accepts_late_signups: boolean
           created_at: string | null
           delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           description: string | null
@@ -241,6 +242,7 @@ export type Database = {
           idempotency_key: string | null
           image_url: string | null
           instructor_id: string | null
+          instructor_name: string | null
           location: string | null
           max_participants: number | null
           price: number | null
@@ -254,6 +256,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          accepts_late_signups?: boolean
           created_at?: string | null
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
@@ -264,6 +267,7 @@ export type Database = {
           idempotency_key?: string | null
           image_url?: string | null
           instructor_id?: string | null
+          instructor_name?: string | null
           location?: string | null
           max_participants?: number | null
           price?: number | null
@@ -277,6 +281,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          accepts_late_signups?: boolean
           created_at?: string | null
           delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           description?: string | null
@@ -287,6 +292,7 @@ export type Database = {
           idempotency_key?: string | null
           image_url?: string | null
           instructor_id?: string | null
+          instructor_name?: string | null
           location?: string | null
           max_participants?: number | null
           price?: number | null
@@ -939,6 +945,32 @@ export type Database = {
           },
         ]
       }
+      team_slug_aliases: {
+        Row: {
+          old_slug: string
+          team_id: string
+          archived_at: string
+        }
+        Insert: {
+          old_slug: string
+          team_id: string
+          archived_at?: string
+        }
+        Update: {
+          old_slug?: string
+          team_id?: string
+          archived_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_slug_aliases_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           cover_image_url: string | null
@@ -1220,6 +1252,10 @@ export type Database = {
           status: string
           team_id: string
         }[]
+      }
+      rename_team_slug: {
+        Args: { p_team_id: string; p_new_slug: string }
+        Returns: string
       }
     }
     Enums: {

@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading, isInitialized } = useAuth()
+  const { user, profile, isLoading, isInitialized } = useAuth()
   const location = useLocation()
 
   if (isLoading || !isInitialized) {
@@ -16,6 +16,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to={AUTH_ROUTES.auth} state={{ from: location }} replace />
+  }
+
+  if (profile && !profile.onboarding_completed_at) {
+    return <Navigate to={AUTH_ROUTES.onboarding} replace />
   }
 
   return <>{children}</>

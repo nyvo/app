@@ -22,10 +22,10 @@ const TABS: { key: StudioTab; label: string }[] = [
  */
 export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroProps) {
   const coverUrl = organization.default_course_image_url;
-  const logoUrl =
-    organization.slug === 'inspire-yogastudio'
-      ? '/68bc6f41587d4e422ca9562d_Logo - black.svg'
-      : organization.logo_url;
+  const hasLogoOverride = organization.slug === 'inspire-yogastudio';
+  const logoUrl = hasLogoOverride
+    ? '/68bc6f41587d4e422ca9562d_Logo - black.svg'
+    : organization.logo_url;
 
   return (
     <section>
@@ -52,7 +52,10 @@ export function StudioHero({ organization, activeTab, onTabChange }: StudioHeroP
               <img
                 src={logoUrl}
                 alt={`${organization.name} logo`}
-                className="size-full object-contain p-2"
+                className={cn(
+                  'size-full',
+                  hasLogoOverride ? 'object-contain p-2' : 'object-cover',
+                )}
               />
             </div>
           ) : (

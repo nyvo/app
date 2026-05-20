@@ -23,23 +23,57 @@ export interface PublicSeller {
 export async function fetchSellerBySlug(
   slug: string
 ): Promise<{ data: PublicSeller | null; error: Error | null }> {
+  const lookupSlug = slug.trim().toLowerCase()
+
   // Slug now lives on the team (one team per seller). Resolve seller via
-  // the team's owner_seller_id.
+  // the team's owner_seller_id. On miss, fall back to team_slug_aliases so
+  // previously shared URLs keep resolving — callers compare `slug` to the
+  // returned `PublicSeller.slug` and 301-style replace if they differ.
   const { data: team, error: teamError } = await supabase
     .from('teams')
     .select('owner_seller_id, slug, default_course_image_url')
-    .eq('slug', slug)
+    .eq('slug', lookupSlug)
     .maybeSingle()
 
   if (teamError) {
     return { data: null, error: teamError as Error }
   }
-  if (!team) return { data: null, error: null }
 
-  const teamRow = team as {
-    owner_seller_id: string
-    slug: string
-    default_course_image_url: string | null
+  let teamRow:
+    | { owner_seller_id: string; slug: string; default_course_image_url: string | null }
+    | null = team
+    ? (team as { owner_seller_id: string; slug: string; default_course_image_url: string | null })
+    : null
+
+  if (!teamRow) {
+    const { data: alias, error: aliasError } = await supabase
+      .from('team_slug_aliases')
+      .select('team_id')
+      .eq('old_slug', lookupSlug)
+      .maybeSingle()
+
+    if (aliasError) {
+      return { data: null, error: aliasError as Error }
+    }
+    if (!alias) return { data: null, error: null }
+
+    const aliasRow = alias as { team_id: string }
+    const { data: aliasedTeam, error: aliasedTeamError } = await supabase
+      .from('teams')
+      .select('owner_seller_id, slug, default_course_image_url')
+      .eq('id', aliasRow.team_id)
+      .maybeSingle()
+
+    if (aliasedTeamError) {
+      return { data: null, error: aliasedTeamError as Error }
+    }
+    if (!aliasedTeam) return { data: null, error: null }
+
+    teamRow = aliasedTeam as {
+      owner_seller_id: string
+      slug: string
+      default_course_image_url: string | null
+    }
   }
 
   const { data, error } = await supabase

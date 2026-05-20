@@ -24,6 +24,11 @@ dist-ssr
 *.sw?
 .vercel
 
+# Env files (keep .env.example only)
+.env
+.env.*
+!.env.example
+
 # Claude Code MCP config (contains secrets)
 .claude/mcp.json
 

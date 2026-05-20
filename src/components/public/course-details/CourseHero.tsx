@@ -117,15 +117,15 @@ export function CourseHero({ course }: CourseHeroProps) {
               {whenLabel}
             </span>
           )}
-          {(instructor?.name || studio?.name) && (
+          {instructor?.name && (
             <span className="inline-flex items-center gap-2">
               <UserAvatar
                 size="xs"
-                name={instructor?.name ?? studio?.name ?? null}
+                name={instructor.name}
                 src={studio?.logo_url ?? null}
                 className="shrink-0"
               />
-              <span>{instructor?.name ?? studio?.name}</span>
+              <span>{instructor.name}</span>
             </span>
           )}
         </div>
