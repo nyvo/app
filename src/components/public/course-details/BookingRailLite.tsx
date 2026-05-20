@@ -16,9 +16,13 @@ interface BookingRailLiteProps {
   dropInSublabel?: string | null;
   /** Compact meta line shown under the course title (e.g. "13. april · 06:45–07:30"). */
   metaLabel?: string | null;
-  /** True when the first session has already ended — the "Hele kurspakken"
-   * tile is dropped so customers can't buy a series they've already missed. */
+  /** True when the first session has already ended. The package tile stays
+   * available but is prorated to the sessions that are still ahead. */
   seriesStarted?: boolean;
+  /** Non-cancelled sessions whose end is still in the future. Used to prorate
+   * the package price when `seriesStarted` is true. Mirrors the SQL in
+   * migration 20260520160000 so display matches what the RPC will charge. */
+  remainingSessions?: number;
 }
 
 export type TicketId = 'main' | 'drop-in' | 'free';
@@ -36,12 +40,12 @@ interface TicketTile {
  * Per the modern conversion-optimized pattern: decide here, identify +
  * pay on /pamelding.
  */
-export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublabel, metaLabel, seriesStarted = false }: BookingRailLiteProps) {
+export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublabel, metaLabel, seriesStarted = false, remainingSessions = 0 }: BookingRailLiteProps) {
   const spotsLeft = course.spots_available;
   const lowStock = spotsLeft > 0 && spotsLeft <= 3;
   const soldOut = spotsLeft === 0;
 
-  const tiles = buildTiles(course, dropInSublabel ?? null, seriesStarted);
+  const tiles = buildTiles(course, dropInSublabel ?? null, seriesStarted, remainingSessions);
   const closed = !soldOut && tiles.length === 0 && seriesStarted;
   const [selectedId, setSelectedId] = useState<TicketId>(tiles[0]?.id ?? 'main');
 
@@ -92,17 +96,19 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
       ) : closed ? (
         <div className="rounded-lg bg-muted px-4 py-6 text-center space-y-1">
           <p className="text-sm font-medium text-foreground">Påmelding stengt</p>
-          <p className="text-sm text-foreground-muted">Kursrekken er allerede i gang.</p>
+          <p className="text-sm text-foreground-muted">Kurset har startet.</p>
         </div>
       ) : (
         <>
           {tiles.length > 0 && (
-            <div className="space-y-2" role={tiles.length > 1 ? 'radiogroup' : undefined}>
+            <div className="space-y-2" role="radiogroup">
+              <p className="text-sm font-medium tracking-tight text-foreground-muted">
+                Velg billett
+              </p>
               {tiles.map((tile) => (
                 <TicketTileButton
                   key={tile.id}
                   tile={tile}
-                  selectable={tiles.length > 1}
                   selected={selectedId === tile.id}
                   onSelect={() => setSelectedId(tile.id)}
                 />
@@ -133,65 +139,19 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
         </>
       )}
       </div>
-
-      {!soldOut && (
-        <div className="border-t border-border-subtle bg-muted px-6 py-3 text-center text-xs text-foreground-muted">
-          <p>Avbestill inntil 24 timer før klassen for full refusjon.</p>
-        </div>
-      )}
     </div>
   );
 }
 
 function TicketTileButton({
   tile,
-  selectable,
   selected,
   onSelect,
 }: {
   tile: TicketTile;
-  selectable: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const body = (
-    <div className="flex items-baseline justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          {tile.label}
-        </p>
-        {tile.sublabel && (
-          <p className="text-sm text-foreground-muted truncate">
-            {tile.sublabel}
-          </p>
-        )}
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <p className="text-sm text-foreground tabular-nums whitespace-nowrap">
-          {formatKroner(tile.amount)}
-        </p>
-        {selectable && (
-          <Check
-            className={cn(
-              'size-4 transition-opacity',
-              selected ? 'opacity-100 text-foreground' : 'opacity-0',
-            )}
-            strokeWidth={2}
-            aria-hidden
-          />
-        )}
-      </div>
-    </div>
-  );
-
-  if (!selectable) {
-    return (
-      <div className="rounded-lg border border-border px-4 py-3">
-        {body}
-      </div>
-    );
-  }
-
   return (
     <button
       type="button"
@@ -205,21 +165,68 @@ function TicketTileButton({
           : 'border-border hover:border-foreground-muted',
       )}
     >
-      {body}
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            {tile.label}
+          </p>
+          {tile.sublabel && (
+            <p className="text-sm text-foreground-muted truncate">
+              {tile.sublabel}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <p className="text-sm text-foreground tabular-nums whitespace-nowrap">
+            {formatKroner(tile.amount)}
+          </p>
+          <Check
+            className={cn(
+              'size-4 transition-opacity',
+              selected ? 'opacity-100 text-foreground' : 'opacity-0',
+            )}
+            strokeWidth={2}
+            aria-hidden
+          />
+        </div>
+      </div>
     </button>
   );
 }
 
-function buildTiles(course: PublicCourseWithDetails, dropInSublabel: string | null, seriesStarted: boolean): TicketTile[] {
+function buildTiles(
+  course: PublicCourseWithDetails,
+  dropInSublabel: string | null,
+  seriesStarted: boolean,
+  remainingSessions: number,
+): TicketTile[] {
   const isFree = !course.price || course.price === 0;
   if (isFree) return [];
 
   const tiles: TicketTile[] = [];
   const isSeries = course.format === 'series';
 
-  // Skip the series-package tile once the series has started — customers
-  // can't retroactively buy missed sessions.
-  if (!(isSeries && seriesStarted)) {
+  // Series + started: prorate the package to the sessions that are still
+  // ahead. Per-week rate matches drop-in (price ÷ total_weeks), mirroring
+  // the SQL in migration 20260520160000. At ≤1 session left the package
+  // would be priced identically to drop-in — skip the tile to avoid a
+  // duplicate, drop-in carries the last session if enabled.
+  if (isSeries && seriesStarted) {
+    if (
+      remainingSessions > 1
+      && course.total_weeks
+      && course.total_weeks > 0
+      && course.price
+    ) {
+      const perWeek = Math.round(course.price / course.total_weeks);
+      tiles.push({
+        id: 'main',
+        label: 'Kurspakke',
+        sublabel: `${remainingSessions} uker igjen`,
+        amount: perWeek * remainingSessions,
+      });
+    }
+  } else {
     tiles.push({
       id: 'main',
       label: isSeries ? 'Hele kurspakken' : 'Enkelttime',

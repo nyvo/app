@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Clock, Calendar, ChevronLeft } from '@/lib/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import { BookingRailLite } from '@/components/public/course-details/BookingRailL
 import { RichTextContent } from '@/components/ui/rich-text-content';
 import { PageState } from '@/components/page-state/page-state';
 import { resolveCourseImage, fetchPublicCourseBySlug, type PublicCourseWithDetails } from '@/services/publicCourses';
+import { fetchSellerBySlug } from '@/services/sellers';
 import { supabase } from '@/lib/supabase';
 import type { CourseSession } from '@/types/database';
 
@@ -40,6 +42,18 @@ export default function PublicCourseDetailPage() {
       if (!slug || !courseSlug) return;
       setLoading(true);
       setError(null);
+
+      // If the team-slug segment is an archived alias, redirect to the
+      // canonical storefront URL first — the course lookup below scopes to a
+      // current team slug, so passing the alias through would 404. The effect
+      // re-runs after the redirect.
+      const sellerLookup = await fetchSellerBySlug(slug);
+      if (!active) return;
+      if (sellerLookup.data && sellerLookup.data.slug !== slug) {
+        navigate(`/${sellerLookup.data.slug}/${courseSlug}`, { replace: true, state: location.state });
+        return;
+      }
+
       const courseRes = await fetchPublicCourseBySlug(slug, courseSlug);
       if (!active) return;
       if (courseRes.error || !courseRes.data) {
@@ -147,6 +161,7 @@ export default function PublicCourseDetailPage() {
                     dropInSublabel={course.allows_drop_in ? buildDropInSublabel(sessions) : null}
                     metaLabel={buildCardMeta(course, nextSessionDate)}
                     seriesStarted={course.format === 'series' && hasSeriesStarted(sessions, course.duration)}
+                    remainingSessions={countRemainingSessions(sessions, course.duration)}
                   />
                 </div>
               </aside>
@@ -179,8 +194,20 @@ function CourseHeader({
   nextSessionDate: string | null;
   sessions: CourseSession[];
 }) {
+  const studio = course.seller;
+
   return (
     <header className="space-y-3">
+      {studio && (
+        <p className="text-sm text-foreground-muted">
+          <Link
+            to={`/${studio.slug}`}
+            className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
+          >
+            {studio.name}
+          </Link>
+        </p>
+      )}
       <h1 className="text-3xl font-medium tracking-tight text-foreground">
         {course.title}
       </h1>
@@ -201,7 +228,7 @@ function MetaStrip({
   const timeRange = resolveTimeRange(course.time_schedule, course.duration);
   const nextDateLabel = formatRelativeDate(nextSessionDate);
 
-  const instructor = course.instructors[0]?.name ?? course.instructor?.name ?? null;
+  const instructor = course.instructors[0] ?? course.instructor ?? null;
   const showScheduleLink = course.format === 'series' && sessions.length > 1;
 
   return (
@@ -224,10 +251,15 @@ function MetaStrip({
           {timeRange}
         </span>
       )}
-      {instructor && (
-        <Badge variant="neutral" shape="pill" size="sm">
-          Med {instructor}
-        </Badge>
+      {instructor?.name && (
+        <span className="inline-flex items-center gap-2">
+          <UserAvatar
+            size="xs"
+            name={instructor.name}
+            className="shrink-0"
+          />
+          <span>{instructor.name}</span>
+        </span>
       )}
     </div>
   );
@@ -394,18 +426,30 @@ function buildCardMeta(course: PublicCourseWithDetails, nextSessionDate: string 
   return dateLabel || timeRange || null;
 }
 
-/** A series counts as "started" once the first non-cancelled session's end
- * time has passed. Booking the full package after that doesn't make sense —
- * the customer would be paying for sessions they can't attend. Drop-in
- * stays available (per-session purchases of remaining classes). */
+/** A session is "remaining" when it isn't cancelled and hasn't ended yet —
+ * a class that's underway but not over still counts. Mirrors the SQL in
+ * `available_ticket_types` (migration 20260520160000) so the prorated price
+ * shown on the booking card matches what the RPC charges at checkout. */
+function isSessionRemaining(s: CourseSession, durationMinutes: number | null): boolean {
+  if (s.status === 'cancelled') return false;
+  const startIso = `${s.session_date}T${s.start_time ?? '00:00:00'}`;
+  const startMs = new Date(startIso).getTime();
+  if (isNaN(startMs)) return false;
+  const endMs = startMs + (durationMinutes ?? 60) * 60000;
+  return endMs > Date.now();
+}
+
+/** Series counts as "started" once the first non-cancelled session's end
+ * time has passed. After that the package is offered at a prorated price
+ * for the remaining sessions instead of being hidden. */
 function hasSeriesStarted(sessions: CourseSession[], durationMinutes: number | null): boolean {
   const first = sessions.find((s) => s.status !== 'cancelled');
   if (!first) return false;
-  const startIso = `${first.session_date}T${first.start_time ?? '00:00:00'}`;
-  const startMs = new Date(startIso).getTime();
-  if (isNaN(startMs)) return false;
-  const endMs = startMs + (durationMinutes ?? 0) * 60000;
-  return Date.now() > endMs;
+  return !isSessionRemaining(first, durationMinutes);
+}
+
+function countRemainingSessions(sessions: CourseSession[], durationMinutes: number | null): number {
+  return sessions.reduce((n, s) => (isSessionRemaining(s, durationMinutes) ? n + 1 : n), 0);
 }
 
 /** First non-cancelled session whose start instant is still in the future.
@@ -434,4 +478,3 @@ function buildDropInSublabel(sessions: CourseSession[]): string | null {
   if (dateLabel && time) return `${dateLabel} · ${time}`;
   return dateLabel || time || null;
 }
-
