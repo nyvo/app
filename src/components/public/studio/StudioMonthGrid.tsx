@@ -109,7 +109,7 @@ export function StudioMonthGrid({ courses, onSelectDay }: StudioMonthGridProps) 
         </div>
       </header>
 
-      <div className="grid grid-cols-7 gap-1 text-xs font-medium text-foreground-muted">
+      <div className="grid grid-cols-7 gap-1 text-sm font-medium text-foreground-muted">
         {WEEKDAY_HEADERS.map(d => (
           <div key={d} className="py-2 text-center capitalize">{d}</div>
         ))}

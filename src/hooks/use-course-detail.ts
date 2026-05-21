@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCourseById, fetchCourseSessions, fetchDropInTierActive } from '@/services/courses';
+import { fetchCourseById, fetchCourseSessions, fetchDropInTier } from '@/services/courses';
 import { fetchSignupsByCourseWithProfiles, type SignupWithProfile } from '@/services/signups';
 import { useRealtimeSubscription } from '@/hooks/use-realtime-subscription';
 import type { Course, CourseSession } from '@/types/database';
@@ -8,6 +8,7 @@ import type { Course, CourseSession } from '@/types/database';
 function mapCourseToComponentFormat(
   courseData: Course & { signups_count: number },
   allowsDropIn: boolean,
+  dropInPrice: number,
 ) {
   const priceNumber = courseData.price || 0;
   const estimatedRevenue = priceNumber * courseData.signups_count;
@@ -48,6 +49,7 @@ function mapCourseToComponentFormat(
     createdAt: courseData.created_at || null,
     format: courseData.format,
     allowsDropIn,
+    dropInPrice,
     acceptsLateSignups: courseData.accepts_late_signups,
   };
 }
@@ -101,9 +103,9 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
       setError(null);
 
       try {
-        const [courseResult, dropInActive] = await Promise.all([
+        const [courseResult, dropInTier] = await Promise.all([
           fetchCourseById(courseId),
-          fetchDropInTierActive(courseId),
+          fetchDropInTier(courseId),
         ]);
 
         if (courseResult.error || !courseResult.data) {
@@ -111,7 +113,7 @@ export function useCourseDetail(courseId: string | undefined): UseCourseDetailRe
           return;
         }
 
-        const mappedCourse = mapCourseToComponentFormat(courseResult.data, dropInActive);
+        const mappedCourse = mapCourseToComponentFormat(courseResult.data, dropInTier.active, dropInTier.price);
         setCourseData(mappedCourse);
         setMaxParticipants(mappedCourse.capacity);
       } catch {

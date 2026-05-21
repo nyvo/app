@@ -291,7 +291,7 @@ export default function JoinPage() {
           Du kan være med i ett team om gangen. Blir du med her, forlater du:
         </p>
         <div className="border border-border rounded-md bg-surface p-4 mb-8 text-left">
-          <div className="text-sm font-medium text-foreground">{leavingName}</div>
+          <div className="text-base font-medium text-foreground">{leavingName}</div>
         </div>
         <Button
           size="cta"

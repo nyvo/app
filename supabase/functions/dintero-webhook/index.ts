@@ -377,6 +377,7 @@ Deno.serve(async (req: Request) => {
           p_dintero_session_id: attempt.dintero_session_id ?? payload.sessionId ?? null,
           p_dintero_merchant_reference: merchantReference,
           p_course_session_id: attempt.course_session_id,
+          p_note: attempt.note ?? null,
         })
 
         if (!signupResult || !signupResult.success) {

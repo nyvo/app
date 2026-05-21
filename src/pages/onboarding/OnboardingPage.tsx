@@ -179,8 +179,8 @@ function RoleChooser() {
                   className="sr-only"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="text-base font-medium text-foreground">{opt.title}</p>
+                  <p className="mt-1 text-base text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -258,7 +258,7 @@ function BuyerSetup() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label htmlFor="buyer-first-name" className="text-sm font-medium text-foreground">
+              <label htmlFor="buyer-first-name" className="text-base font-medium text-foreground">
                 Fornavn
               </label>
               <Input
@@ -271,7 +271,7 @@ function BuyerSetup() {
               {errors.firstName && <FieldError className="mt-0">{errors.firstName}</FieldError>}
             </div>
             <div className="grid gap-2">
-              <label htmlFor="buyer-last-name" className="text-sm font-medium text-foreground">
+              <label htmlFor="buyer-last-name" className="text-base font-medium text-foreground">
                 Etternavn
               </label>
               <Input
@@ -285,7 +285,7 @@ function BuyerSetup() {
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="buyer-phone" className="text-sm font-medium text-foreground">
+            <label htmlFor="buyer-phone" className="text-base font-medium text-foreground">
               Telefonnummer
             </label>
             <Input
@@ -407,8 +407,8 @@ function SellerType({
                   className="sr-only"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{opt.title}</p>
-                  <p className="mt-1 text-sm text-foreground-muted leading-relaxed">{opt.body}</p>
+                  <p className="text-base font-medium text-foreground">{opt.title}</p>
+                  <p className="mt-1 text-base text-foreground-muted leading-relaxed">{opt.body}</p>
                 </div>
                 {isSelected && <Check className="size-4 text-foreground shrink-0 mt-1" />}
               </label>
@@ -486,7 +486,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
         </h1>
 
         <div className="grid gap-2">
-          <label htmlFor="seller-name" className="text-sm font-medium text-foreground">
+          <label htmlFor="seller-name" className="text-base font-medium text-foreground">
             {nameLabel}
           </label>
           <Input
@@ -500,7 +500,7 @@ function SellerProfile({ kind, onBack }: { kind: SellerKind; onBack: () => void 
             aria-invalid={!!errors.name || undefined}
             aria-describedby={`seller-name-hint${errors.name ? ' seller-name-error' : ''}`}
           />
-          <p id="seller-name-hint" className="text-sm text-foreground-muted">
+          <p id="seller-name-hint" className="text-base text-foreground-muted">
             {nameHint}
           </p>
           {errors.name && (

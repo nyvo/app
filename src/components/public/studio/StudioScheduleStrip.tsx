@@ -81,7 +81,7 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
         <h2 className="text-xl font-semibold text-foreground">
           Hele timeplanen
         </h2>
-        <p className="text-sm text-foreground-muted leading-snug max-w-md">
+        <p className="text-base text-foreground-muted leading-snug max-w-md">
           Alt som er åpent for påmelding, sortert kronologisk.
         </p>
       </header>
@@ -90,7 +90,7 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
         {buckets.map(bucket => (
           <div key={bucket.dateStr} className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4 md:gap-10 py-6">
             <div className="md:pt-2">
-              <h3 className="text-sm font-semibold text-foreground">
+              <h3 className="text-base font-semibold text-foreground">
                 {formatDayHeading(bucket.dateStr)}
               </h3>
             </div>
@@ -115,7 +115,7 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
                       (isFull || isCancelled) && 'text-foreground-muted',
                     )}
                   >
-                    <div className="w-14 shrink-0 text-sm font-medium tabular-nums text-foreground">
+                    <div className="w-14 shrink-0 text-base font-medium tabular-nums text-foreground">
                       {time || '—'}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -124,12 +124,12 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
                           {course.title}
                         </span>
                         {isCancelled && (
-                          <span className="text-xs font-medium text-foreground-muted border border-border rounded px-1.5 py-0.5">
+                          <span className="text-sm font-medium text-foreground-muted border border-border rounded px-1.5 py-0.5">
                             Avlyst
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-x-3 text-xs text-foreground-muted">
+                      <div className="mt-0.5 flex items-center gap-x-3 text-sm text-foreground-muted">
                         {instructor && <span className="truncate">{instructor}</span>}
                         {course.location && (
                           <span className="hidden sm:inline truncate">· {course.location}</span>
@@ -143,16 +143,16 @@ export function StudioScheduleStrip({ courses, viewingSlug, viewingName }: Studi
                       </div>
                     </div>
                     <div className="shrink-0 flex flex-col items-end">
-                      <span className="text-sm font-medium tabular-nums text-foreground whitespace-nowrap">
+                      <span className="text-base font-medium tabular-nums text-foreground whitespace-nowrap">
                         {formatCoursePrice(course.price)}
                       </span>
                       {lowSpots && !isFull && (
-                        <span className="text-xs font-medium text-warning">
+                        <span className="text-sm font-medium text-warning">
                           {course.spots_available} igjen
                         </span>
                       )}
                       {isFull && !isCancelled && (
-                        <span className="text-xs font-medium text-foreground-muted">
+                        <span className="text-sm font-medium text-foreground-muted">
                           Fullt
                         </span>
                       )}

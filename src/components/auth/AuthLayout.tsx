@@ -53,7 +53,7 @@ export function AuthLayout({
                   {title}
                 </h1>
                 {subtitle && (
-                  <p className="text-sm text-foreground-muted">{subtitle}</p>
+                  <p className="text-base text-foreground-muted">{subtitle}</p>
                 )}
               </div>
 

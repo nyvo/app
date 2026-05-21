@@ -252,6 +252,7 @@ export async function createFreeSignup(input: {
   participantEmail: string
   /** Optional. Public signup form no longer collects phone (2026-04-25). */
   participantPhone?: string
+  participantNote?: string
 }): Promise<{ data: { signupId: string } | null; error: Error | null }> {
   try {
     const { data, error } = await supabase.functions.invoke('create-free-signup', {
@@ -292,4 +293,3 @@ export async function markPaymentResolved(
     return { error: err instanceof Error ? err : new Error('Ukjent feil') }
   }
 }
-

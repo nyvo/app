@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageState } from '@/components/page-state/page-state';
+import { FilterChips, type FilterChip } from '@/components/ui/filter-chips';
 import { fetchPublicCourses, type PublicCourseWithDetails } from '@/services/publicCourses';
 import { fetchSellerBySlug, type PublicSeller } from '@/services/sellers';
 import { StudioHero, type StudioTab } from '@/components/public/studio/StudioHero';
 import { StudioMonthSchedule } from '@/components/public/studio/StudioMonthSchedule';
 
 type ErrorKind = 'not-found' | 'load-failed';
+type CourseTypeFilter = 'all' | 'series' | 'workshop' | 'drop-in' | 'online';
 
 const CANCELLED_GRACE_DAYS = 30;
 
@@ -38,6 +40,7 @@ const PublicCoursesPage = () => {
   const [loading, setLoading] = useState(true);
   const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
   const [activeTab, setActiveTab] = useState<StudioTab>('kurs');
+  const [typeFilter, setTypeFilter] = useState<CourseTypeFilter>('all');
 
   useEffect(() => {
     async function loadData() {
@@ -85,6 +88,27 @@ const PublicCoursesPage = () => {
     [visible],
   );
 
+  const typeChips = useMemo<FilterChip<CourseTypeFilter>[]>(() => {
+    const count = (filter: CourseTypeFilter) => (
+      filter === 'all'
+        ? visible.length
+        : visible.filter((course) => matchesTypeFilter(course, filter)).length
+    );
+    const chips: FilterChip<CourseTypeFilter>[] = [
+      { key: 'all', label: 'Alle', count: count('all') },
+      { key: 'series', label: 'Kursrekker', count: count('series') },
+      { key: 'workshop', label: 'Workshops', count: count('workshop') },
+      { key: 'drop-in', label: 'Drop-in', count: count('drop-in') },
+      { key: 'online', label: 'Online', count: count('online') },
+    ];
+    return chips.filter((chip) => chip.key === 'all' || (chip.count ?? 0) > 0);
+  }, [visible]);
+
+  const filteredCourses = useMemo(
+    () => sorted.filter((course) => matchesTypeFilter(course, typeFilter)),
+    [sorted, typeFilter],
+  );
+
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden flex flex-col">
       <main className="flex-1">
@@ -117,11 +141,27 @@ const PublicCoursesPage = () => {
                   </div>
                 ) : (
                   <div className="pt-10 pb-20">
-                    <StudioMonthSchedule
-                      courses={sorted}
-                      viewingSlug={slug}
-                      viewingName={organization.name}
-                    />
+                    <>
+                      <FilterChips
+                        value={typeFilter}
+                        onChange={setTypeFilter}
+                        chips={typeChips}
+                        ariaLabel="Filtrer kurs"
+                        className="mb-8"
+                      />
+                      {filteredCourses.length === 0 ? (
+                        <EmptyState
+                          title="Ingen kurs i filteret"
+                          description="Velg et annet filter for å se flere kurs."
+                        />
+                      ) : (
+                        <StudioMonthSchedule
+                          courses={filteredCourses}
+                          viewingSlug={slug}
+                          viewingName={organization.name}
+                        />
+                      )}
+                    </>
                   </div>
                 )
               ) : (
@@ -170,6 +210,15 @@ function StudioPageSkeleton() {
       </div>
     </div>
   );
+}
+
+function matchesTypeFilter(course: PublicCourseWithDetails, filter: CourseTypeFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'series') return course.format === 'series';
+  if (filter === 'workshop') return course.format === 'single';
+  if (filter === 'drop-in') return !!course.allows_drop_in;
+  if (filter === 'online') return course.delivery_mode === 'online';
+  return true;
 }
 
 export default PublicCoursesPage;

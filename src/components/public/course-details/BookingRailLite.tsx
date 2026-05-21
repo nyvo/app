@@ -69,7 +69,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             {course.title}
           </h2>
           {metaLabel && (
-            <p className="mt-0.5 text-sm text-foreground-muted tabular-nums">
+            <p className="mt-0.5 text-base text-foreground-muted tabular-nums">
               {metaLabel}
             </p>
           )}
@@ -83,11 +83,11 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
 
       {soldOut ? (
         <div className="rounded-lg bg-muted px-4 py-6 text-center space-y-1">
-          <p className="text-sm font-medium text-foreground">Kurset er fullt</p>
+          <p className="text-base font-medium text-foreground">Kurset er fullt</p>
           {course.seller?.name && (
             <Link
               to={`/${studioSlug}`}
-              className="text-sm text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
+              className="text-base text-foreground-muted underline decoration-foreground-disabled underline-offset-2 hover:text-foreground hover:decoration-foreground transition-colors"
             >
               Se andre kurs fra {course.seller.name}
             </Link>
@@ -95,14 +95,14 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
         </div>
       ) : closed ? (
         <div className="rounded-lg bg-muted px-4 py-6 text-center space-y-1">
-          <p className="text-sm font-medium text-foreground">Påmelding stengt</p>
-          <p className="text-sm text-foreground-muted">Kurset har startet.</p>
+          <p className="text-base font-medium text-foreground">Påmelding stengt</p>
+          <p className="text-base text-foreground-muted">Kurset har startet.</p>
         </div>
       ) : (
         <>
           {tiles.length > 0 && (
             <div className="space-y-2" role="radiogroup">
-              <p className="text-sm font-medium tracking-tight text-foreground-muted">
+              <p className="text-base font-medium tracking-tight text-foreground-muted">
                 Velg billett
               </p>
               {tiles.map((tile) => (
@@ -116,7 +116,7 @@ export function BookingRailLite({ course, studioSlug, checkoutHref, dropInSublab
             </div>
           )}
           {selectedTile && ticketPrice > 0 && (
-            <dl className="space-y-1.5 text-sm tabular-nums">
+            <dl className="space-y-1.5 text-base tabular-nums">
               <div className="flex justify-between text-foreground-muted">
                 <dt>{selectedTile.label}</dt>
                 <dd>{formatKroner(ticketPrice)}</dd>
@@ -167,17 +167,17 @@ function TicketTileButton({
     >
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">
+          <p className="text-base font-medium text-foreground truncate">
             {tile.label}
           </p>
           {tile.sublabel && (
-            <p className="text-sm text-foreground-muted truncate">
+            <p className="text-base text-foreground-muted truncate">
               {tile.sublabel}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <p className="text-sm text-foreground tabular-nums whitespace-nowrap">
+          <p className="text-base text-foreground tabular-nums whitespace-nowrap">
             {formatKroner(tile.amount)}
           </p>
           <Check
@@ -217,12 +217,10 @@ function buildTiles(
   const tiles: TicketTile[] = [];
 
   // Series + started: prorate the package to the sessions that are still
-  // ahead. Per-week rate matches drop-in (price ÷ total_weeks), mirroring
-  // the SQL in migration 20260520160000. At ≤1 session left the package
-  // would be priced identically to drop-in — skip the tile to avoid a
-  // duplicate, drop-in carries the last session if enabled. Teachers can
-  // also opt out entirely via course.accepts_late_signups (mirrors the
-  // RPC gate added in migration 20260520170000).
+  // ahead. The per-week package rate is price ÷ total_weeks, mirroring the
+  // SQL in available_ticket_types. At ≤1 session left the package is hidden;
+  // drop-in carries the last session if enabled. Teachers can also opt out
+  // entirely via course.accepts_late_signups.
   if (isSeries && seriesStarted) {
     if (
       course.accepts_late_signups

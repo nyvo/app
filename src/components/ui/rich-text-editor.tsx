@@ -144,7 +144,7 @@ export function RichTextEditor({
         ...(ariaLabelledBy ? { 'aria-labelledby': ariaLabelledBy } : {}),
         class: cn(
           'prose-editor min-h-32 px-3 py-2.5 outline-none',
-          'text-base md:text-sm leading-relaxed text-foreground',
+          'text-base leading-relaxed text-foreground',
         ),
       },
     },

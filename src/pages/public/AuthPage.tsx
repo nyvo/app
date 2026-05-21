@@ -157,7 +157,7 @@ const AuthPage = () => {
           <h1 className="text-2xl font-medium tracking-tight text-foreground">
             Sjekk e-posten din
           </h1>
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             Klikk lenken eller skriv inn koden.
           </p>
         </div>
@@ -179,12 +179,12 @@ const AuthPage = () => {
           </InputOTP>
 
           {verifyError && (
-            <p className="text-sm text-danger" role="alert">
+            <p className="text-base text-danger" role="alert">
               {verifyError}
             </p>
           )}
 
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             Fikk du ikke e-post?{' '}
             <button
               type="button"
@@ -204,7 +204,7 @@ const AuthPage = () => {
     <AuthLayout
       title="Logg inn"
       footer={
-        <p className="text-xs text-foreground-muted">
+        <p className="text-sm text-foreground-muted">
           Ved å fortsette godtar du{' '}
           <Link to="/terms" className="underline hover:text-foreground">
             vilkårene
@@ -219,7 +219,7 @@ const AuthPage = () => {
 
       <div className="my-6 flex items-center gap-3" aria-hidden="true">
         <Separator className="flex-1" />
-        <span className="text-xs text-foreground-muted">eller</span>
+        <span className="text-sm text-foreground-muted">eller</span>
         <Separator className="flex-1" />
       </div>
 
@@ -238,7 +238,7 @@ const AuthPage = () => {
         />
 
         {errors.general && (
-          <p className="text-sm text-danger" role="alert">
+          <p className="text-base text-danger" role="alert">
             {errors.general}
           </p>
         )}

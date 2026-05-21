@@ -98,7 +98,7 @@ export function PageState({
         {resolvedTitle}
       </h1>
       {resolvedDescription ? (
-        <p className="mt-3 text-sm text-foreground-muted max-w-md">
+        <p className="mt-3 text-base text-foreground-muted max-w-md">
           {resolvedDescription}
         </p>
       ) : null}

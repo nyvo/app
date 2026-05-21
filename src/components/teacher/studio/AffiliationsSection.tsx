@@ -217,8 +217,8 @@ function IndividualView({ sellerId }: { sellerId: string }) {
           </div>
         ) : host === null ? (
           <div className="rounded-md border border-dashed border-border p-8 text-center">
-            <p className="text-sm font-medium text-foreground">Du har ikke et team ennå</p>
-            <p className="text-sm text-foreground-muted mt-1 max-w-xs mx-auto">
+            <p className="text-base font-medium text-foreground">Du har ikke et team ennå</p>
+            <p className="text-base text-foreground-muted mt-1 max-w-xs mx-auto">
               Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
             </p>
           </div>
@@ -228,8 +228,8 @@ function IndividualView({ sellerId }: { sellerId: string }) {
             <div className="flex items-center gap-3">
               <HostCover url={host.cover_image_url} />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{host.name}</p>
-                <p className="text-xs text-foreground-muted truncate">
+                <p className="text-base font-medium text-foreground truncate">{host.name}</p>
+                <p className="text-sm text-foreground-muted truncate">
                   {window.location.host}/{host.slug}
                 </p>
               </div>
@@ -247,7 +247,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
               loading={leaving}
               loadingText="Forlater"
             >
-              <p className="text-sm text-foreground-muted">
+              <p className="text-base text-foreground-muted">
                 Kursene dine forsvinner fra studio-siden. Du kan inviteres på nytt senere.
               </p>
             </ConfirmDialog>
@@ -299,7 +299,7 @@ function MembersTable({
           className={cn('grid items-center gap-4 px-4 py-3', gridCols, i > 0 && 'border-t border-border')}
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+            <p className="text-base font-medium text-foreground truncate">{m.name}</p>
           </div>
           {m.role === 'owner' ? (
             <Badge variant="inverted" shape="pill">Eier</Badge>
@@ -404,12 +404,12 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
   if (!link) {
     return (
       <div>
-        <p className="text-sm text-foreground-muted mb-2">
+        <p className="text-base text-foreground-muted mb-2">
           Kunne ikke opprette invitasjonslenke.
         </p>
         <button
           type="button"
-          className="text-sm text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+          className="text-base text-foreground underline-offset-4 hover:underline disabled:opacity-50"
           disabled={creating}
           onClick={() => void handleRegenerate()}
         >
@@ -426,7 +426,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
           readOnly
           value={fullUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="h-9 w-full rounded-md border border-border bg-surface pl-3 pr-10 text-sm text-foreground outline-none focus:border-foreground"
+          className="h-9 w-full rounded-md border border-border bg-surface pl-3 pr-10 text-base text-foreground outline-none focus:border-foreground"
           aria-label="Invitasjonslenke"
         />
         <button
@@ -440,7 +440,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
       </div>
       <button
         type="button"
-        className="mt-2 text-xs text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
+        className="mt-2 text-sm text-foreground-muted underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
         disabled={creating}
         onClick={() => void handleRegenerate()}
       >

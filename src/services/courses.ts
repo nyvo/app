@@ -398,20 +398,19 @@ export async function updateCourse(courseId: string, courseData: CourseUpdate): 
  * Toggle drop-in availability for a course. Single source of truth — the
  * existence of an `is_active=true` drop-in tier row on `course_signup_packages`
  * is the policy. The RPC `available_ticket_types` gates the runtime exposure
- * (course must be a series, started, with spots open) and computes the price
- * on read as `course.price ÷ course.total_weeks` — no snapshot, no drift.
+ * (course must be a series, started, with spots open) and returns the explicit
+ * drop-in price stored on the tier row.
  *
  * - `enabled=true` upserts/reactivates the drop-in tier.
  * - `enabled=false` deactivates it (preserves the row so past signups' FKs
  *   remain valid).
  *
- * The stored `price` column on the tier row is functionally dead for drop-in
- * tiers (the RPC overrides it on every read), but we write `0` on upsert to
- * satisfy NOT NULL and signal explicitly that the value isn't trusted.
+ * The stored `price` column on the tier row is what buyers see and pay.
  */
 export async function syncCourseDropInTier(
   courseId: string,
   enabled: boolean,
+  price: number = 0,
 ): Promise<{ error: Error | null }> {
   const { data: existing, error: fetchError } = await supabase
     .from('course_signup_packages')
@@ -437,6 +436,7 @@ export async function syncCourseDropInTier(
       .update({
         is_active: true,
         label: 'Drop-in',
+        price,
         updated_at: new Date().toISOString(),
       })
       .eq('id', existing.id)
@@ -450,7 +450,7 @@ export async function syncCourseDropInTier(
       label: 'Drop-in',
       ticket_kind: 'drop_in',
       audience: 'standard',
-      price: 0, // ignored by the RPC; computed at read time
+      price,
       is_active: true,
       is_default: false,
     })
@@ -458,18 +458,18 @@ export async function syncCourseDropInTier(
 }
 
 /**
- * Returns true when the course currently has an active drop-in tier row.
+ * Returns the active drop-in tier row for the course.
  * This is the canonical "is drop-in offered?" check the teacher UI reads.
  */
-export async function fetchDropInTierActive(courseId: string): Promise<boolean> {
+export async function fetchDropInTier(courseId: string): Promise<{ active: boolean; price: number }> {
   const { data } = await supabase
     .from('course_signup_packages')
-    .select('id')
+    .select('id, price')
     .eq('course_id', courseId)
     .eq('ticket_kind', 'drop_in')
     .eq('is_active', true)
     .maybeSingle()
-  return !!data
+  return { active: !!data, price: data ? Number((data as { price: number }).price) : 0 }
 }
 
 // Publish a draft course (sets status to 'upcoming')
@@ -659,5 +659,3 @@ export interface SessionScheduleRow {
   imageUrl?: string | null
   allowsDropIn?: boolean | null
 }
-
-

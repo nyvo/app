@@ -15,6 +15,7 @@ import { RoleRoute } from './components/RoleRoute';
 // Lazy load all route components for code splitting
 const DashboardRouter = lazy(() => import('./pages/teacher/DashboardRouter'));
 const GetStartedPage = lazy(() => import('./pages/teacher/GetStartedPage'));
+const HelpPage = lazy(() => import('./pages/teacher/HelpPage'));
 const SchedulePage = lazy(() => import('./pages/teacher/SchedulePage'));
 const CoursesPage = lazy(() => import('./pages/teacher/CoursesPage'));
 const CoursePage = lazy(() => import('./pages/teacher/CoursePage'));
@@ -28,6 +29,7 @@ const LandingPage = lazy(() => import('./pages/public/LandingPage'));
 const AuthPage = lazy(() => import('./pages/public/AuthPage'));
 const TermsPage = lazy(() => import('./pages/public/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'));
+const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const CheckoutSuccessPage = lazy(() => import('./pages/public/CheckoutSuccessPage'));
 const AuthCallbackPage = lazy(() => import('./pages/public/AuthCallbackPage'));
 const JoinPage = lazy(() => import('./pages/public/JoinPage'));
@@ -87,6 +89,7 @@ function AppRoutes() {
           }
         />
         <Route path="/terms" element={<TermsPage />} />
+        <Route path="/om-oss" element={<AboutPage />} />
         <Route path="/personvern" element={<PrivacyPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -103,6 +106,7 @@ function AppRoutes() {
             /overview instead of seeing a half-broken seller page. */}
         <Route element={<TeacherLayout />}>
           <Route path="overview" element={<DashboardRouter />} />
+          <Route path="help" element={<HelpPage />} />
           <Route path="settings/profile" element={<TeacherProfilePage />} />
 
           <Route element={<RoleRoute allow="seller" />}>

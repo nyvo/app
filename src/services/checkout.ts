@@ -9,6 +9,7 @@ interface CreateSessionParams {
   customerEmail: string
   customerName: string
   customerPhone?: string
+  customerNote?: string
   /** Required only when the picked ticket type is a drop-in. */
   sessionId?: string
 }

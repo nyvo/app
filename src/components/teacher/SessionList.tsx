@@ -63,7 +63,7 @@ function DatePill({ dateStr, isPast }: { dateStr: string; isPast: boolean }) {
         isPast ? 'bg-muted border border-transparent' : 'bg-surface border border-border',
       )}
     >
-      <span className="text-xs font-medium text-foreground-muted leading-none lowercase">
+      <span className="text-sm font-medium text-foreground-muted leading-none lowercase">
         {month}
       </span>
       <span
@@ -109,7 +109,7 @@ export const SessionList: React.FC<SessionListProps> = ({
       <div className="mb-3 flex items-end justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-xl font-medium tracking-tight text-foreground">Kursplan</h2>
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             Dette kurset varer i <span className="tabular-nums">{sessions.length}</span> {sessions.length === 1 ? 'uke' : 'uker'}. Du kan endre dato eller tidspunkt under Innstillinger.
           </p>
         </div>
@@ -150,7 +150,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                   <div className="min-w-0 flex items-center gap-2">
                     <span
                       className={cn(
-                        'text-sm font-medium truncate',
+                        'text-base font-medium truncate',
                         isPast ? 'text-foreground-muted' : 'text-foreground',
                       )}
                     >
@@ -165,7 +165,7 @@ export const SessionList: React.FC<SessionListProps> = ({
 
                   <span
                     className={cn(
-                      'text-sm tabular-nums text-right',
+                      'text-base tabular-nums text-right',
                       isPast ? 'text-foreground-muted' : 'text-foreground-muted',
                     )}
                   >
@@ -203,7 +203,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                     <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label id={`session-${session.id}-date-label`} className="text-sm font-medium mb-2 block text-foreground">Dato</label>
+                          <label id={`session-${session.id}-date-label`} className="text-base font-medium mb-2 block text-foreground">Dato</label>
                           <DatePicker
                             aria-labelledby={`session-${session.id}-date-label`}
                             value={sessionEdits[session.id]?.date || (session.originalDate ? new Date(session.originalDate) : undefined)}
@@ -214,7 +214,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                           />
                         </div>
                         <div>
-                          <label id={`session-${session.id}-time-label`} className="text-sm font-medium mb-2 block text-foreground">Tidspunkt</label>
+                          <label id={`session-${session.id}-time-label`} className="text-base font-medium mb-2 block text-foreground">Tidspunkt</label>
                           <TimePicker
                             aria-labelledby={`session-${session.id}-time-label`}
                             value={sessionEdits[session.id]?.time || session.time.split(' - ')[0]}
@@ -224,7 +224,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                       </div>
 
                       <Alert variant="neutral" size="sm" icon={Info}>
-                        <p className="text-xs text-foreground-muted">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
+                        <p className="text-sm text-foreground-muted">Endring i dato eller tidspunkt sendes på e-post til alle påmeldte deltakere.</p>
                       </Alert>
 
                       <div className="flex gap-2">

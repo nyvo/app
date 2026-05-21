@@ -110,7 +110,7 @@ export function IncomeChart({ series, isLoading, range, onRangeChange, tooltipCo
     <section className="rounded-xl border border-border bg-background p-6 sm:p-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-foreground-muted">Inntekt</p>
+          <p className="text-base font-medium text-foreground-muted">Inntekt</p>
           <div className="mt-2 flex items-baseline gap-3">
             {isLoading ? (
               <Skeleton className="h-9 w-40" />
@@ -210,7 +210,7 @@ function QuietRangeToggle({
             aria-selected={isActive}
             onClick={() => onChange(opt.key)}
             className={cn(
-              'rounded-md px-2 py-1 text-xs font-medium outline-none transition-colors duration-150',
+              'rounded-md px-2 py-1 text-sm font-medium outline-none transition-colors duration-150',
               'focus-visible:ring-2 focus-visible:ring-foreground/15',
               isActive
                 ? 'bg-muted text-foreground'
@@ -240,7 +240,7 @@ function IncomeTooltip({
   const point = payload[0]?.payload
   if (!point) return null
   return (
-    <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-xs shadow-xl">
+    <div className="min-w-[180px] rounded-lg border border-border-subtle bg-background px-3 py-2 text-sm shadow-xl">
       <div className="text-foreground-muted">Sum hittil</div>
       <div className="mt-1.5 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-1.5">

@@ -257,7 +257,7 @@ const SchedulePage = () => {
                   aria-selected={isActive}
                   onClick={() => setRangeFilter(key)}
                   className={cn(
-                    'inline-flex items-center py-3 text-sm border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
+                    'inline-flex items-center py-3 text-base border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
                     isActive
                       ? 'font-medium border-foreground text-foreground'
                       : 'border-transparent text-foreground-muted hover:text-foreground',
@@ -324,7 +324,7 @@ const SchedulePage = () => {
                     className="mb-3 flex items-baseline gap-2"
                   >
                     <span className="text-lg font-medium text-foreground">{label.primary}</span>
-                    <span className="text-sm text-foreground-muted">{label.secondary}</span>
+                    <span className="text-base text-foreground-muted">{label.secondary}</span>
                   </h2>
                   <div className="space-y-2">
                     {daySessions.map((s) => (
@@ -360,11 +360,11 @@ function SessionCard({ session }: { session: SessionRow }) {
         'focus-visible:ring-2 focus-visible:ring-ring/50',
       )}
     >
-      <p className="text-sm font-medium text-foreground truncate">
+      <p className="text-base font-medium text-foreground truncate">
         {session.courseTitle}
       </p>
 
-      <div className="mt-1 flex items-center gap-4 text-sm text-foreground-muted tabular-nums">
+      <div className="mt-1 flex items-center gap-4 text-base text-foreground-muted tabular-nums">
         <span className="inline-flex items-center gap-1.5">
           <Clock className="size-4 shrink-0" aria-hidden="true" />
           {formatTimeRange(session.startTime, session.endTime)}

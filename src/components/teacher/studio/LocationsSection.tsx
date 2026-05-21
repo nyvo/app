@@ -127,9 +127,9 @@ function LocationRow({
         aria-label={`Rediger ${location.name}`}
       >
         <div className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-foreground">{location.name}</span>
+          <span className="block truncate text-base font-medium text-foreground">{location.name}</span>
           {location.address && (
-            <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-foreground-muted">
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-base text-foreground-muted">
               <MapPin className="size-3.5 shrink-0" />
               <span className="truncate">{location.address}</span>
             </p>
@@ -248,7 +248,7 @@ function LocationDrawer({
             <label
               htmlFor="loc-drawer-name"
               data-error={!!nameError || undefined}
-              className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+              className="text-base font-medium text-foreground data-[error=true]:text-danger"
             >
               Navn
             </label>
@@ -269,7 +269,7 @@ function LocationDrawer({
           </div>
 
           <div className="grid gap-2">
-            <label htmlFor="loc-drawer-addr" className="text-sm font-medium text-foreground">
+            <label htmlFor="loc-drawer-addr" className="text-base font-medium text-foreground">
               Adresse
             </label>
             <Input
@@ -280,7 +280,7 @@ function LocationDrawer({
           </div>
 
           <div className="grid gap-2">
-            <span className="text-sm font-medium text-foreground">Rom</span>
+            <span className="text-base font-medium text-foreground">Rom</span>
             {rooms.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {rooms.map((room) => (

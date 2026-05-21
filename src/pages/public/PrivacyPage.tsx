@@ -130,7 +130,7 @@ const PrivacyPage = () => {
             </section>
           </div>
 
-          <p className="text-xs text-foreground-muted">
+          <p className="text-sm text-foreground-muted">
             Sist oppdatert: 19. mai 2026
           </p>
         </div>

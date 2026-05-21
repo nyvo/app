@@ -207,7 +207,7 @@ export function AddParticipantDrawer({
             {/* Mental-model note — manual signups bypass the integrated
                 payment flow. Muted fill, no border, no icon — this is
                 context, not an alert. */}
-            <div className="rounded-md bg-muted px-3 py-2.5 text-sm text-foreground-muted leading-relaxed">
+            <div className="rounded-md bg-muted px-3 py-2.5 text-base text-foreground-muted leading-relaxed">
               Manuelle påmeldinger registreres som betalt. Du håndterer betalingen selv (Vipps, kontant, faktura).
             </div>
 
@@ -232,7 +232,7 @@ export function AddParticipantDrawer({
                 <label
                   htmlFor="firstName"
                   data-error={(errors.firstName && touched.firstName) || undefined}
-                  className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+                  className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
                 >
                   Fornavn
                 </label>
@@ -265,7 +265,7 @@ export function AddParticipantDrawer({
                 <label
                   htmlFor="lastName"
                   data-error={(errors.lastName && touched.lastName) || undefined}
-                  className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+                  className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
                 >
                   Etternavn
                 </label>
@@ -299,7 +299,7 @@ export function AddParticipantDrawer({
               <label
                 htmlFor="email"
                 data-error={(errors.email && touched.email) || undefined}
-                className="text-xs font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
+                className="text-sm font-medium mb-1.5 block text-foreground data-[error=true]:text-danger"
               >
                 E-post
               </label>
@@ -327,7 +327,7 @@ export function AddParticipantDrawer({
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="text-xs font-medium mb-1.5 block text-foreground">
+              <label htmlFor="phone" className="text-sm font-medium mb-1.5 block text-foreground">
                 Telefonnummer <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Input
@@ -342,7 +342,7 @@ export function AddParticipantDrawer({
 
             {/* Note */}
             <div>
-              <label htmlFor="note" className="text-xs font-medium mb-1.5 block text-foreground">
+              <label htmlFor="note" className="text-sm font-medium mb-1.5 block text-foreground">
                 Notat <span className="text-foreground-muted">(valgfritt)</span>
               </label>
               <Textarea

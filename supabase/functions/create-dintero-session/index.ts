@@ -44,6 +44,7 @@ interface SessionRequestBody {
   customerEmail: string
   customerName: string
   customerPhone?: string
+  customerNote?: string
   /** Required only when the ticket's kind is 'drop_in'. */
   sessionId?: string
 }
@@ -52,8 +53,7 @@ type TicketKind = 'package' | 'drop_in' | 'pass'
 type TicketAudience = 'standard' | 'student' | 'senior' | 'staff'
 
 // Shape returned by the available_ticket_types(p_course_id) RPC — the
-// authoritative buyable view. Drop-in price is already computed as
-// ROUND(course.price / course.total_weeks) when applicable.
+// authoritative buyable view. Drop-in price is the explicit tier price.
 interface TicketTypeRow {
   id: string
   course_id: string
@@ -80,6 +80,7 @@ Deno.serve(async (req: Request) => {
       customerEmail,
       customerName,
       customerPhone,
+      customerNote,
       sessionId,
     } = body
 
@@ -105,6 +106,9 @@ Deno.serve(async (req: Request) => {
     }
     if (customerPhone && customerPhone.length > 30) {
       return errorResponse('customerPhone exceeds 30 characters', 400, req)
+    }
+    if (customerNote && customerNote.length > 1000) {
+      return errorResponse('customerNote exceeds 1000 characters', 400, req)
     }
     if (!/^[a-z0-9-]{1,64}$/.test(organizationSlug)) {
       return errorResponse('Invalid organizationSlug', 400, req)
@@ -159,8 +163,8 @@ Deno.serve(async (req: Request) => {
 
     // Resolve the ticket type via available_ticket_types(courseId). The RPC is
     // the single source of truth used by the booking page — it applies the
-    // is_active filter, sales-window check, and (critically) computes drop-in
-    // price as ROUND(course.price / course.total_weeks) when applicable.
+    // is_active filter, sales-window check, and returns the explicit drop-in
+    // tier price set by the teacher.
     // Going through the same function here guarantees the buyer is charged
     // exactly what they saw. If the tier isn't in the returned set, it's not
     // currently buyable for any reason (inactive, out of window, drop-in for a
@@ -266,6 +270,7 @@ Deno.serve(async (req: Request) => {
         participant_name: customerName,
         participant_email: customerEmail,
         participant_phone: customerPhone ?? null,
+        note: customerNote?.trim() || null,
         course_session_id: courseSession?.id ?? null,
         ticket_type_id: typedTier.id,
         ticket_label_snapshot: typedTier.label,

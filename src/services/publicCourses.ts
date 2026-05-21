@@ -397,19 +397,12 @@ export async function fetchPublicCourses(
     const teamMeta = teamMetaMap[course.seller_id]
     // Drop-in availability mirrors the RPC's gating: there must be an active
     // drop-in tier row (the teacher's policy) AND the series must be
-    // started + have spots open. Price is computed at read time — never
-    // snapshotted, so it tracks the course base price.
+    // started + have spots open. Price is the explicit tier price set by the teacher.
     const hasDropInTier = course.id in dropInPriceMap
     const courseStarted = !!course.start_date && course.start_date <= today
     const isEligibleSeries = course.format === 'series' && courseStarted && spotsAvailable > 0
     const dropInActive = hasDropInTier && isEligibleSeries
-    // Drop-in price is computed at read time as course.price / total_weeks —
-    // mirroring `available_ticket_types` RPC (migration 20260513180000). The
-    // stored `price` column on the tier row is intentionally dead for drop-ins
-    // (see syncCourseDropInTier in services/courses.ts). Don't read it here.
-    const dropInPrice = !dropInActive
-      ? null
-      : (course.price && course.total_weeks ? Math.round(course.price / course.total_weeks) : null)
+    const dropInPrice = dropInActive ? dropInPriceMap[course.id] : null
 
     const sellerEnriched: PublicCourseSeller | null = course.seller
       ? {
@@ -541,20 +534,14 @@ export async function fetchPublicCourseBySlug(
   const spotsAvailable = Math.max(0, maxParticipants - confirmedCount)
 
   // Drop-in availability: an active drop-in tier exists (teacher policy)
-  // AND the series has started + has spots open. Price always computed
-  // from course.price / total_weeks — mirroring `available_ticket_types`
-  // RPC (migration 20260513180000). The stored tier price is intentionally
-  // dead for drop-ins.
+  // AND the series has started + has spots open. Price is the explicit tier
+  // price set by the teacher.
   const today = new Date().toISOString().split('T')[0]
   const courseStarted = !!typedCourse.start_date && typedCourse.start_date <= today
   const isEligibleSeries = typedCourse.format === 'series' && courseStarted && spotsAvailable > 0
   const dropInTier = dropInResult.data as { price: number } | null
   const dropInActive = !!dropInTier && isEligibleSeries
-  const dropInPrice = !dropInActive
-    ? null
-    : (typedCourse.price && typedCourse.total_weeks
-        ? Math.round(typedCourse.price / typedCourse.total_weeks)
-        : null)
+  const dropInPrice = dropInActive ? Number(dropInTier.price) : null
 
   const instructors = flattenInstructors(typedCourse.id, typedCourse.instructor_name)
   const teamMeta = teamMetaMap[typedCourse.seller_id]

@@ -28,7 +28,7 @@ function CoursePlaceholder({ format, delivery }: { format: CourseFormat; deliver
       className="absolute inset-0 flex items-center justify-center bg-muted transition-transform duration-700 ease-out group-hover:scale-[1.04]"
       aria-hidden
     >
-      <span className="text-xs font-medium text-foreground-muted">
+      <span className="text-sm font-medium text-foreground-muted">
         {placeholderLabel(format, delivery)}
       </span>
     </div>
@@ -186,7 +186,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
         {/* When line — single tier, sentence case, tabular */}
         {(dateChip || time) && (
           <div className={cn(
-            'inline-flex items-baseline gap-1.5 text-xs font-medium tabular-nums',
+            'inline-flex items-baseline gap-1.5 text-sm font-medium tabular-nums',
             isDisabled ? 'text-foreground-muted' : 'text-foreground-muted',
           )}>
             {dateChip && <span>{dateChip.label}</span>}
@@ -211,7 +211,7 @@ export function CourseCard({ course, ratio = 'portrait', className, viewingSlug,
 
         {/* Meta line — single tier: avatar + name on the left, price on the right.
             Falls back to studio name when no instructor is set. */}
-        <div className="mt-auto pt-1.5 flex items-center gap-2 text-xs text-foreground-muted tabular-nums">
+        <div className="mt-auto pt-1.5 flex items-center gap-2 text-sm text-foreground-muted tabular-nums">
           {personName && (
             <>
               <UserAvatar

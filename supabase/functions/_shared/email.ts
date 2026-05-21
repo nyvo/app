@@ -45,10 +45,21 @@ export interface ClassReminderEmailProps {
   courseLocation?: string
 }
 
+export interface SupportMessageEmailProps {
+  userId: string
+  senderName?: string
+  senderEmail: string
+  sellerId?: string
+  sellerName?: string
+  supportSubject: string
+  message: string
+}
+
 export type SendEmailInput =
-  | { template: 'order-confirm'; to: string; props: OrderConfirmEmailProps; subject?: string }
-  | { template: 'refund-receipt'; to: string; props: RefundReceiptEmailProps; subject?: string }
-  | { template: 'class-reminder'; to: string; props: ClassReminderEmailProps; subject?: string }
+  | { template: 'order-confirm'; to: string; props: OrderConfirmEmailProps; subject?: string; replyTo?: string }
+  | { template: 'refund-receipt'; to: string; props: RefundReceiptEmailProps; subject?: string; replyTo?: string }
+  | { template: 'class-reminder'; to: string; props: ClassReminderEmailProps; subject?: string; replyTo?: string }
+  | { template: 'support-message'; to: string; props: SupportMessageEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string

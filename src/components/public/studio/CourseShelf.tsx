@@ -56,7 +56,7 @@ export function CourseShelf({ title, description, courses, ratio = 'portrait' }:
             {title}
           </h2>
           {description && (
-            <p className="text-sm text-foreground-muted max-w-md leading-snug">
+            <p className="text-base text-foreground-muted max-w-md leading-snug">
               {description}
             </p>
           )}

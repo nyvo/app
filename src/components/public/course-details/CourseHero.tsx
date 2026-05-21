@@ -88,7 +88,7 @@ export function CourseHero({ course }: CourseHeroProps) {
       <div className="mt-8 sm:mt-10 max-w-3xl">
         {/* Quiet subtitle — studio link only */}
         {studio && (
-          <p className="mb-3 text-sm text-foreground-muted">
+          <p className="mb-3 text-base text-foreground-muted">
             <Link
               to={`/${studio.slug}`}
               className="text-foreground underline decoration-foreground-disabled underline-offset-2 hover:decoration-foreground"
@@ -104,7 +104,7 @@ export function CourseHero({ course }: CourseHeroProps) {
         </h1>
 
         {/* Meta strip — date range, when + duration, instructor, level */}
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground-muted">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-base text-foreground-muted">
           {dateRange && (
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="size-3.5" strokeWidth={1.75} />

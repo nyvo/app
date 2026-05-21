@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -22,6 +23,7 @@ interface FormState {
   name: string;
   email: string;
   phone: string;
+  note: string;
   terms: boolean;
 }
 
@@ -48,7 +50,7 @@ const CheckoutPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedTierId, setSelectedTierId] = useState<string | null>(null);
-  const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', terms: false });
+  const [form, setForm] = useState<FormState>({ name: '', email: '', phone: '', note: '', terms: false });
   const [submitting, setSubmitting] = useState(false);
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   // Two-step in-place flow: 'contact' shows the kontaktinfo form, 'payment'
@@ -211,6 +213,7 @@ const CheckoutPage = () => {
       customerEmail: form.email.trim(),
       customerName: form.name.trim(),
       customerPhone: form.phone.trim() || undefined,
+      customerNote: form.note.trim() || undefined,
     });
     if (payErr || !data) {
       // 4xx errors from the edge function are already user-friendly Norwegian.
@@ -244,6 +247,7 @@ const CheckoutPage = () => {
       participantName: form.name.trim(),
       participantEmail: form.email.trim(),
       participantPhone: form.phone.trim() || undefined,
+      participantNote: form.note.trim() || undefined,
     });
     if (signupErr) {
       toast.error(friendlyError(signupErr, 'Kunne ikke fullføre påmelding. Prøv igjen.'));
@@ -282,7 +286,7 @@ const CheckoutPage = () => {
               navigate(backHref);
             }
           }}
-          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+          className="mb-8 px-2 sm:px-6 inline-flex items-center gap-1.5 text-base text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
           Tilbake
@@ -304,19 +308,12 @@ const CheckoutPage = () => {
           </Alert>
         )}
 
-        {(step === 'contact' || isFree) && (
-          <h2
-            className="px-2 sm:px-6 max-w-[552px] mb-6 text-xl font-semibold tracking-tight text-[#171717]"
-            style={{ fontFamily: 'Inter, -apple-system, system-ui, sans-serif' }}
-          >
-            Kontaktinfo
-          </h2>
-        )}
-
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:gap-6 md:items-start lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <div className="space-y-6 max-w-[552px] min-w-0">
             {step === 'contact' || isFree ? (
               <>
+                <CheckoutStepHeader step={2} />
+
                 <div className="px-2 sm:px-6">
                   <div className="space-y-4">
                     <Field label="Fullt navn" htmlFor="name">
@@ -344,7 +341,7 @@ const CheckoutPage = () => {
                         aria-invalid={!!emailMessage}
                       />
                       {emailMessage && (
-                        <p className="text-xs text-danger mt-1">{emailMessage}</p>
+                        <p className="text-sm text-danger mt-1">{emailMessage}</p>
                       )}
                     </Field>
                     <Field label="Telefon" htmlFor="phone">
@@ -356,7 +353,16 @@ const CheckoutPage = () => {
                         onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                       />
                     </Field>
-                    <label className="flex items-start gap-3 cursor-pointer text-sm text-foreground pt-1">
+                    <Field label="Notat til studioet" htmlFor="note">
+                      <Textarea
+                        id="note"
+                        value={form.note}
+                        onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                        placeholder="Allergier, skader eller annet vi bør vite."
+                        rows={4}
+                      />
+                    </Field>
+                    <label className="flex items-start gap-3 cursor-pointer text-base text-foreground pt-1">
                       <Checkbox
                         checked={form.terms}
                         onCheckedChange={(v) =>
@@ -397,7 +403,7 @@ const CheckoutPage = () => {
                         {submitting ? 'Et øyeblikk…' : 'Fortsett til betaling'}
                       </Button>
                       {sessionError && (
-                        <p className="text-xs text-danger text-center">{sessionError}</p>
+                        <p className="text-sm text-danger text-center">{sessionError}</p>
                       )}
                     </>
                   )}
@@ -405,6 +411,8 @@ const CheckoutPage = () => {
               </>
             ) : (
               <>
+                <CheckoutStepHeader step={3} />
+
                 <div id="payment" className="scroll-mt-6">
                   <DinteroEmbed
                     sid={session?.sid ?? null}
@@ -443,6 +451,15 @@ const CheckoutPage = () => {
 
 // ── Sub-components ───────────────────────────────────────────────────────
 
+function CheckoutStepHeader({ step }: { step: 2 | 3 }) {
+  return (
+    <div className="px-2 sm:px-6">
+      <h1 className="text-base font-medium tracking-tight text-foreground">Påmelding</h1>
+      <p className="mt-1 text-base text-foreground-muted">Steg {step} av 3</p>
+    </div>
+  );
+}
+
 function Field({
   label,
   htmlFor,
@@ -454,7 +471,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium text-foreground">
+      <label htmlFor={htmlFor} className="text-base font-medium text-foreground">
         {label}
       </label>
       {children}
@@ -528,7 +545,7 @@ function DinteroEmbed({
   if (!enabled) {
     return (
       <div className="rounded-xl border border-border bg-surface p-5 opacity-50">
-        <p className="text-sm text-foreground-muted">
+        <p className="text-base text-foreground-muted">
           Fyll ut kontaktinfo og godta vilkår.
         </p>
       </div>
@@ -571,12 +588,12 @@ function CheckoutSummary({
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="p-5 space-y-5">
         <div>
-          <p className="text-sm text-foreground-muted">{course.seller?.name}</p>
+          <p className="text-base text-foreground-muted">{course.seller?.name}</p>
           <h3 className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
             {course.title}
           </h3>
           {meta && (
-            <p className="mt-2 text-sm text-foreground-muted">{meta}</p>
+            <p className="mt-2 text-base text-foreground-muted">{meta}</p>
           )}
         </div>
 
@@ -585,7 +602,7 @@ function CheckoutSummary({
             <div className="border-t border-border" />
             {!isFree && (
               <>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-base">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-foreground">{selectedTier.label}</span>
                     <span className="tabular-nums text-foreground">

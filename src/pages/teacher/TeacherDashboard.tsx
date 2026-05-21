@@ -280,11 +280,11 @@ function UpcomingCourseRow({ course }: { course: DashboardCourse }) {
     >
       <DateBadge dateStr={course.date} size="sm" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{course.title}</p>
-        <p className="truncate text-sm text-foreground-muted">{when || '—'}</p>
+        <p className="truncate text-base font-medium text-foreground">{course.title}</p>
+        <p className="truncate text-base text-foreground-muted">{when || '—'}</p>
       </div>
       {hasCapacity && (
-        <span className="shrink-0 text-xs tabular-nums text-foreground-muted">
+        <span className="shrink-0 text-sm tabular-nums text-foreground-muted">
           {course.signups} / {course.capacity}
         </span>
       )}
@@ -342,12 +342,12 @@ function SignupRow({ signup }: { signup: SignupWithDetails }) {
     <>
       <UserAvatar name={name} size="lg" />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">{name}</p>
-        <p className="truncate text-sm text-foreground-muted">
+        <p className="truncate text-base font-medium text-foreground">{name}</p>
+        <p className="truncate text-base text-foreground-muted">
           {courseTitle ?? 'Ny påmelding'}
         </p>
       </div>
-      <span className="shrink-0 text-xs tabular-nums text-foreground-muted">{when}</span>
+      <span className="shrink-0 text-sm tabular-nums text-foreground-muted">{when}</span>
     </>
   );
 

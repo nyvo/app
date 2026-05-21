@@ -6,6 +6,7 @@ import { Grain } from '@/components/ui/grain';
 import { DinteroPaymentBadge } from '@/components/public/DinteroPaymentBadge';
 import { WaitlistForm } from '@/components/public/marketing/WaitlistForm';
 import { formatKroner } from '@/lib/utils';
+import { COMPANY } from '@/lib/company';
 import {
   scrollVariants,
   scrollStaggerVariants,
@@ -79,7 +80,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                   className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
                 >
-                  Driv yogastudioet enklere.
+                  Driv ditt yogastudio enklere.
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
@@ -87,7 +88,7 @@ const LandingPage = () => {
                   transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-4 text-base text-foreground-muted"
                 >
-                  Mindre admin. Mer tid til undervisningen.
+                  Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted.
                 </motion.p>
               </div>
               <motion.div
@@ -110,7 +111,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 className="text-3xl font-medium tracking-tight text-foreground md:text-4xl"
               >
-                Driv yogastudioet enklere.
+                Driv ditt yogastudio enklere.
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -118,7 +119,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className="mt-4 text-base text-foreground-muted"
               >
-                Mindre admin. Mer tid til undervisningen.
+                Hold orden på kurs, påmeldinger, betaling og deltakere på ett sted.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -310,34 +311,37 @@ const LandingPage = () => {
           <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-12">
             <div className="md:col-span-5">
               <span className="text-xl font-semibold text-foreground">Openspot</span>
-              <p className="mt-6 max-w-sm text-sm leading-relaxed text-foreground-muted">
-                Påmelding og betaling for yogastudioer.
+              <p className="mt-6 max-w-sm text-base leading-relaxed text-foreground-muted">
+                Påmelding, betaling og kursoversikt for yogastudioer.
                 <br />
                 Bygget i Norge.
               </p>
-              <div className="mt-6 space-y-1.5 text-sm text-foreground-muted">
-                <p>Framio AS</p>
-                <p>Org.nr 935 967 511</p>
+              <div className="mt-6 space-y-1.5 text-base text-foreground-muted">
                 <p>
-                  <a href="mailto:hei@framio.no" className="hover:text-foreground">
-                    hei@framio.no
+                  <a href={`mailto:${COMPANY.email}`} className="hover:text-foreground">
+                    {COMPANY.email}
                   </a>
                 </p>
               </div>
             </div>
             <div className="md:col-span-2 md:col-start-7">
-              <h4 className="mb-6 text-sm font-medium text-foreground">Produkt</h4>
-              <ul className="space-y-4 text-sm text-foreground-muted">
+              <h4 className="mb-6 text-base font-medium text-foreground">Produkt</h4>
+              <ul className="space-y-4 text-base text-foreground-muted">
                 <li>
                   <a href="#pricing" className="transition-colors hover:text-foreground">
                     Pris
                   </a>
                 </li>
+                <li>
+                  <Link to="/om-oss" className="transition-colors hover:text-foreground">
+                    Om oss
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="mb-6 text-sm font-medium text-foreground">Konto</h4>
-              <ul className="space-y-4 text-sm text-foreground-muted">
+              <h4 className="mb-6 text-base font-medium text-foreground">Konto</h4>
+              <ul className="space-y-4 text-base text-foreground-muted">
                 <li>
                   <Link to="/auth" className="transition-colors hover:text-foreground">
                     Logg inn
@@ -346,8 +350,8 @@ const LandingPage = () => {
               </ul>
             </div>
             <div className="md:col-span-2">
-              <h4 className="mb-6 text-sm font-medium text-foreground">Juridisk</h4>
-              <ul className="space-y-4 text-sm text-foreground-muted">
+              <h4 className="mb-6 text-base font-medium text-foreground">Juridisk</h4>
+              <ul className="space-y-4 text-base text-foreground-muted">
                 <li>
                   <Link to="/terms" className="transition-colors hover:text-foreground">
                     Vilkår
@@ -363,8 +367,8 @@ const LandingPage = () => {
           </div>
 
           <div className="flex flex-col items-center justify-between gap-6 border-t border-border pt-8 md:flex-row">
-            <p className="text-sm text-foreground-muted">
-              © {new Date().getFullYear()} Openspot
+            <p className="text-base text-foreground-muted">
+              © {new Date().getFullYear()} Openspot. Laget av {COMPANY.legalName}.
             </p>
             <DinteroPaymentBadge className="max-w-md" />
           </div>
@@ -509,10 +513,10 @@ function PricingTier({ tier }: { tier: Tier }) {
       className="flex flex-col rounded-xl border border-border bg-background p-8"
     >
       <div className="mb-6">
-        <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-sm font-semibold text-foreground">
+        <h3 className="inline-flex items-center rounded-full bg-muted px-3 py-0.5 text-base font-semibold text-foreground">
           {tier.name}
         </h3>
-        <p className="mt-3 text-sm text-foreground-muted">{tier.description}</p>
+        <p className="mt-3 text-base text-foreground-muted">{tier.description}</p>
       </div>
 
       <div className="mb-8 border-b border-border pb-8">
@@ -521,7 +525,7 @@ function PricingTier({ tier }: { tier: Tier }) {
             {tier.price}
           </span>
           {tier.priceSub && (
-            <span className="text-sm text-foreground-muted">{tier.priceSub}</span>
+            <span className="text-base text-foreground-muted">{tier.priceSub}</span>
           )}
         </div>
       </div>
@@ -530,7 +534,7 @@ function PricingTier({ tier }: { tier: Tier }) {
         {tier.features.map((feature) => (
           <li
             key={feature}
-            className="flex items-start gap-3 text-sm text-foreground-muted"
+            className="flex items-start gap-3 text-base text-foreground-muted"
           >
             <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-muted">
               <Check className="size-3.5 text-foreground" />
@@ -544,7 +548,7 @@ function PricingTier({ tier }: { tier: Tier }) {
         <a href={tier.cta.to}>{tier.cta.label}</a>
       </Button>
       {tier.caption && (
-        <p className="mt-4 text-center text-sm text-foreground-muted">
+        <p className="mt-4 text-center text-base text-foreground-muted">
           {tier.caption}
         </p>
       )}

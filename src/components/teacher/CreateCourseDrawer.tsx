@@ -231,32 +231,32 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       >
         <SheetHeader className="px-6 py-4 border-b border-border">
           <SheetTitle>Opprett kurs</SheetTitle>
-          <SheetDescription className="text-sm text-foreground-muted">
+          <SheetDescription className="text-base text-foreground-muted">
             Bare det viktigste – du kan endre alle detaljer på kurssiden etterpå.
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-          {/* Type — Én gang / Flere ganger */}
+          {/* Type — Enkeltkurs / Kursserie */}
           <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">
-              Hvor mange ganger?
+            <label className="text-base font-medium mb-2 block text-foreground">
+              Type
             </label>
             <SegmentedTabs<FormatType>
               value={format}
               onChange={setFormat}
               tabs={[
-                { key: 'single', label: 'Én gang' },
-                { key: 'series', label: 'Flere ganger' },
+                { key: 'single', label: 'Enkeltkurs' },
+                { key: 'series', label: 'Kursserie' },
               ]}
-              ariaLabel="Kursformat"
+              ariaLabel="Type"
               stretch
             />
           </div>
 
           {/* Tittel */}
           <div>
-            <label htmlFor="cc-title" className="text-sm font-medium mb-2 block text-foreground">
+            <label htmlFor="cc-title" className="text-base font-medium mb-2 block text-foreground">
               Tittel
             </label>
             <Input
@@ -273,7 +273,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Beskrivelse — optional, can be edited later on the course page */}
           <div>
-            <label id="cc-description-label" className="text-sm font-medium mb-2 block text-foreground">
+            <label id="cc-description-label" className="text-base font-medium mb-2 block text-foreground">
               Beskrivelse
             </label>
             <RichTextEditor
@@ -286,8 +286,8 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {showInstructorField && (
             <div>
-              <label htmlFor="cc-instructor" className="text-sm font-medium mb-2 block text-foreground">
-                Lærer
+              <label htmlFor="cc-instructor" className="text-base font-medium mb-2 block text-foreground">
+                Instruktør
               </label>
               <Input
                 id="cc-instructor"
@@ -302,7 +302,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Dato */}
           <div>
-            <label htmlFor="cc-date" className="text-sm font-medium mb-2 block text-foreground">
+            <label htmlFor="cc-date" className="text-base font-medium mb-2 block text-foreground">
               {format === 'single' ? 'Dato' : 'Startdato'}
             </label>
             <DatePicker
@@ -320,7 +320,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           {/* Antall uker — only for series */}
           {format === 'series' && (
             <div>
-              <label htmlFor="cc-weeks" className="text-sm font-medium mb-2 block text-foreground">
+              <label htmlFor="cc-weeks" className="text-base font-medium mb-2 block text-foreground">
                 Antall uker
               </label>
               <Input
@@ -341,7 +341,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Tidspunkt — start + slutt */}
           <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">Tidspunkt</label>
+            <label className="text-base font-medium mb-2 block text-foreground">Tidspunkt</label>
             <div className="flex items-center gap-2">
               <Select
                 value={startTime}
@@ -368,7 +368,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
                   ))}
                 </SelectContent>
               </Select>
-              <span aria-hidden="true" className="shrink-0 text-sm font-medium text-foreground-muted">
+              <span aria-hidden="true" className="shrink-0 text-base font-medium text-foreground-muted">
                 –
               </span>
               <Select value={endTime} onValueChange={setEndTime}>
@@ -401,7 +401,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Sted */}
           <div>
-            <label className="text-sm font-medium mb-2 block text-foreground">Sted</label>
+            <label className="text-base font-medium mb-2 block text-foreground">Sted</label>
             <LocationCombobox
               value={location}
               onChange={setLocation}
@@ -415,7 +415,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Antall plasser */}
           <div>
-            <label htmlFor="cc-capacity" className="text-sm font-medium mb-2 block text-foreground">
+            <label htmlFor="cc-capacity" className="text-base font-medium mb-2 block text-foreground">
               Antall plasser
             </label>
             <Input
@@ -434,7 +434,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
           {/* Pris */}
           <div>
-            <label htmlFor="cc-price" className="text-sm font-medium mb-2 block text-foreground">
+            <label htmlFor="cc-price" className="text-base font-medium mb-2 block text-foreground">
               {format === 'series' ? 'Pris per gang' : 'Pris'}
             </label>
             <Input
@@ -449,7 +449,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
               className={cn(showError('price') && 'border-danger focus-visible:ring-danger')}
             />
             {format === 'series' && price !== '' && weeks !== '' && !showError('price') && !showError('weeks') && (
-              <p className="mt-2 text-sm text-foreground-muted">
+              <p className="mt-2 text-base text-foreground-muted">
                 Totalt {formatKroner((parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0))} for {parseInt(weeks, 10) || 0} uker
               </p>
             )}

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { COMPANY } from '@/lib/company';
 
 const TermsPage = () => {
   return (
@@ -18,54 +19,128 @@ const TermsPage = () => {
 
           <div className="space-y-8">
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">1. Påmelding og betaling</h2>
+              <h2 className="text-lg font-medium tracking-tight text-foreground">1. Hvem du handler med</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Ved påmelding til kurs godtar du å betale det oppgitte beløpet. Påmeldingen er bindende når betalingen er fullført.
+                Openspot driftes av {COMPANY.legalName}, org.nr. {COMPANY.organizationNumber}.
+                Registrert adresse er {COMPANY.registeredAddress}.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Du vil motta en bekreftelse på e-post når påmeldingen er bekreftet.
-              </p>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">2. Avbestilling og refusjon</h2>
-              <p className="text-base text-foreground-muted leading-relaxed">
-                Trenger du å avbestille, ta kontakt med studioet du har meldt deg på hos. Refusjon avgjøres av studioet fra sak til sak.
-              </p>
-              <p className="text-base text-foreground-muted leading-relaxed">
-                Instruktøren forbeholder seg retten til å avlyse kurset ved for få påmeldte. Ved avlysning fra instruktørens side refunderes hele kursavgiften automatisk.
+                Spørsmål om betaling, vilkår eller bruk av tjenesten kan sendes til{' '}
+                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                  {COMPANY.email}
+                </a>.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">3. Ansvar</h2>
+              <h2 className="text-lg font-medium tracking-tight text-foreground">2. Hva Openspot er</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Deltakelse på kurs skjer på eget ansvar. Instruktøren er ikke ansvarlig for skader som måtte oppstå under kurset.
+                Openspot er en digital påmeldings- og betalingsplattform for kurs, timer og arrangementer.
+                Studioer og arrangører bruker Openspot til å vise kurs, ta imot påmeldinger og håndtere betaling.
               </p>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Har du helseutfordringer, bør du snakke med lege før du deltar.
+                Selve kurset leveres av studioet eller arrangøren som står oppført på kurssiden.
+                Openspot står for den tekniske løsningen for påmelding, betaling og kvittering.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 id="personvern" className="scroll-mt-24 text-lg font-medium tracking-tight text-foreground">4. Personvern</h2>
+              <h2 className="text-lg font-medium tracking-tight text-foreground">3. Påmelding og betaling</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Før du betaler ser du kursnavn, pris, eventuell tjenesteavgift og totalbeløp.
+                Ved påmelding godtar du å betale beløpet som vises i checkout.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Betalingen gjennomføres når du fullfører betalingen hos betalingsleverandøren.
+                Påmeldingen bekreftes etter godkjent betaling. Du får bekreftelse og kvittering på e-post.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Openspot sender ikke fysiske varer. Returadresse er derfor kun relevant ved skriftlig
+                henvendelse, og er samme som registrert adresse: {COMPANY.registeredAddress}.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium tracking-tight text-foreground">4. Levering</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                For kurs, timer og arrangementer skjer levering på datoen, tidspunktet og stedet som vises
+                på kurssiden og i bekreftelsen du mottar på e-post.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                For digitale tjenester fra Openspot gis tilgang når konto eller påmelding er opprettet,
+                med mindre noe annet er avtalt.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium tracking-tight text-foreground">5. Avbestilling, angrerett og refusjon</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Trenger du å avbestille, tar du kontakt med studioet eller arrangøren du har meldt deg på hos.
+                Du kan også sende en e-post til {COMPANY.email}, så hjelper vi deg videre.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Refusjon følger vilkårene som gjelder for kurset du har meldt deg på. Ved avlysning fra
+                studioet eller arrangøren refunderes betalt kursavgift.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Angreretten kan være begrenset for kurs, timer og arrangementer som skjer på en bestemt dato
+                eller i en bestemt periode. Hvis du er usikker på hva som gjelder for din påmelding, kontakt
+                oss eller arrangøren før du betaler.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium tracking-tight text-foreground">6. Klager</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Hvis noe er feil med en betaling, påmelding eller tjenesten, kan du klage til{' '}
+                <a href={`mailto:${COMPANY.email}`} className="underline underline-offset-2">
+                  {COMPANY.email}
+                </a>.
+                Beskriv hva saken gjelder, hvilken påmelding det gjelder, og hvilken løsning du ønsker.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Vi svarer så raskt vi kan og normalt innen rimelig tid. Gjelder klagen selve kurset,
+                kan vi sette deg i kontakt med studioet eller arrangøren.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-lg font-medium tracking-tight text-foreground">7. Ansvar</h2>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Deltakelse på kurs skjer på eget ansvar. Studioet eller arrangøren er ansvarlig for
+                gjennomføring av kurset, innholdet i undervisningen og praktisk informasjon om oppmøte.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Har du helseutfordringer, bør du snakke med lege eller arrangøren før du deltar.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <h2 id="personvern" className="scroll-mt-24 text-lg font-medium tracking-tight text-foreground">8. Personvern</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
                 Vi behandler personopplysningene dine etter gjeldende personvernlovgivning.
-                Opplysninger brukes kun til administrasjon av kurspåmelding og kommunikasjon relatert til kurset.
+                Opplysninger brukes til å administrere påmelding, betaling, kvittering og kommunikasjon
+                knyttet til kurset.
+              </p>
+              <p className="text-base text-foreground-muted leading-relaxed">
+                Les mer i vår{' '}
+                <Link to="/personvern" className="underline underline-offset-2">
+                  personvernerklæring
+                </Link>.
               </p>
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-medium tracking-tight text-foreground">5. Endringer</h2>
+              <h2 className="text-lg font-medium tracking-tight text-foreground">9. Endringer</h2>
               <p className="text-base text-foreground-muted leading-relaxed">
-                Instruktøren forbeholder seg retten til å gjøre endringer i kursprogrammet eller vilkårene.
-                Endringer sender vi til alle påmeldte.
+                Vi kan oppdatere vilkårene ved behov. Vesentlige endringer publiseres på denne siden
+                eller sendes til berørte brukere på e-post.
               </p>
             </section>
           </div>
 
-          <p className="text-xs text-foreground-muted">
-            Sist oppdatert: januar 2026
+          <p className="text-sm text-foreground-muted">
+            Sist oppdatert: 21. mai 2026
           </p>
         </div>
       </main>

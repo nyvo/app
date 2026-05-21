@@ -59,7 +59,7 @@ export function AuthFormField({
         <label
           htmlFor={id}
           data-error={hasError || undefined}
-          className="text-sm font-medium block text-foreground data-[error=true]:text-danger"
+          className="text-base font-medium block text-foreground data-[error=true]:text-danger"
         >
           {label}
         </label>
@@ -97,7 +97,7 @@ export function AuthFormField({
       {hasError ? (
         <FieldError id={`${id}-error`} className="mt-0">{error}</FieldError>
       ) : hint ? (
-        <p id={`${id}-hint`} className="text-sm text-foreground-muted flex items-center gap-1 transition-colors duration-200">
+        <p id={`${id}-hint`} className="text-base text-foreground-muted flex items-center gap-1 transition-colors duration-200">
           {hintMet && <Check className="size-3.5" />}
           {hintMet ? (hintMetText ?? hint) : hint}
         </p>

@@ -1,112 +1,105 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { ImagePlus, X } from '@/lib/icons'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { ImagePlus, User } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   ACCEPTED_IMAGE_TYPES,
   MAX_IMAGE_SIZE,
   createImagePreviewUrl,
-  revokeImagePreviewUrl
+  revokeImagePreviewUrl,
 } from '@/services/storage'
 
-interface ImageUploadProps {
-  value?: string | null // Current image URL
-  onChange: (file: File | null) => void // Called when file selected
-  onRemove?: () => void // Called when remove clicked (for existing images)
+type ImageFieldVariant = 'cover' | 'avatar'
+
+const MAX_IMAGE_SIZE_MB = Math.round(MAX_IMAGE_SIZE / (1024 * 1024))
+
+interface ImageFieldProps {
+  value?: string | null
+  onChange: (file: File | null) => void
+  onRemove?: () => void
+  variant?: ImageFieldVariant
   disabled?: boolean
-  error?: string
+  loading?: boolean
+  error?: string | null
+  label?: string
+  description?: string
+  uploadLabel?: string
+  changeLabel?: string
+  removeLabel?: string
+  emptyLabel?: string
+  ariaLabel?: string
   className?: string
 }
 
-export function ImageUpload({
+function validateFile(file: File): string | null {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    return 'Dette bildet kan ikke lastes opp. Prøv et annet bilde.'
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    return `Bildet er for stort. Maks ${MAX_IMAGE_SIZE_MB} MB.`
+  }
+  return null
+}
+
+export function ImageField({
   value,
   onChange,
   onRemove,
+  variant = 'cover',
   disabled = false,
+  loading = false,
   error,
-  className = ''
-}: ImageUploadProps) {
+  label,
+  description,
+  uploadLabel = 'Last opp bilde',
+  changeLabel = 'Bytt bilde',
+  removeLabel = 'Fjern',
+  emptyLabel,
+  ariaLabel,
+  className,
+}: ImageFieldProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Cleanup preview URL on unmount
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        revokeImagePreviewUrl(previewUrl)
-      }
+      if (previewUrl) revokeImagePreviewUrl(previewUrl)
     }
   }, [previewUrl])
 
-  const validateFile = (file: File): string | null => {
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      return 'Ugyldig filtype. Bruk JPG, PNG eller WebP.'
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      return 'Bildet er for stort. Maks 5 MB.'
-    }
-    return null
-  }
+  const isAvatar = variant === 'avatar'
+  const displayUrl = previewUrl || value || null
+  const displayError = validationError || error
+  const isDisabled = disabled || loading
+
+  const openPicker = useCallback(() => {
+    if (!isDisabled) inputRef.current?.click()
+  }, [isDisabled])
 
   const handleFile = useCallback(
     (file: File) => {
-      const error = validateFile(file)
-      if (error) {
-        setValidationError(error)
+      const nextError = validateFile(file)
+      if (nextError) {
+        setValidationError(nextError)
         return
       }
 
       setValidationError(null)
+      if (previewUrl) revokeImagePreviewUrl(previewUrl)
 
-      // Cleanup old preview
-      if (previewUrl) {
-        revokeImagePreviewUrl(previewUrl)
-      }
-
-      // Create new preview
-      const newPreviewUrl = createImagePreviewUrl(file)
-      setPreviewUrl(newPreviewUrl)
+      const nextPreviewUrl = createImagePreviewUrl(file)
+      setPreviewUrl(nextPreviewUrl)
       onChange(file)
     },
-    [onChange, previewUrl]
+    [onChange, previewUrl],
   )
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragActive(false)
-
-      if (disabled) return
-
-      const file = e.dataTransfer.files[0]
-      if (file) {
-        handleFile(file)
-      }
-    },
-    [disabled, handleFile]
-  )
-
-  const handleDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      if (!disabled) {
-        setDragActive(true)
-      }
-    },
-    [disabled]
-  )
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragActive(false)
-  }, [])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      handleFile(file)
-    }
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) handleFile(file)
   }
 
   const handleRemove = () => {
@@ -114,95 +107,144 @@ export function ImageUpload({
       revokeImagePreviewUrl(previewUrl)
       setPreviewUrl(null)
     }
+    setValidationError(null)
     onChange(null)
     onRemove?.()
-    if (inputRef.current) {
-      inputRef.current.value = ''
-    }
   }
 
-  const displayUrl = previewUrl || value
+  const handleDrop = useCallback(
+    (event: DragEvent) => {
+      event.preventDefault()
+      setDragActive(false)
+      if (isDisabled) return
 
-  const displayError = validationError || error
+      const file = event.dataTransfer.files[0]
+      if (file) handleFile(file)
+    },
+    [handleFile, isDisabled],
+  )
 
-  return (
-    <div className={`h-full ${className}`}>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_IMAGE_TYPES.join(',')}
-        onChange={handleInputChange}
-        disabled={disabled}
-        aria-label="Last opp kursbilde"
-        className="hidden"
-      />
+  const handleDragOver = useCallback(
+    (event: DragEvent) => {
+      event.preventDefault()
+      if (!isDisabled) setDragActive(true)
+    },
+    [isDisabled],
+  )
 
-      {displayUrl ? (
-        // Image preview state
-        <div className="relative group h-full">
-          <div className="relative h-full rounded-lg overflow-hidden border border-border bg-muted">
-            <img src={displayUrl} alt="" className="w-full h-full object-cover" />
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => inputRef.current?.click()}
-                disabled={disabled}
-              >
-                Bytt bilde
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleRemove}
-                disabled={disabled}
-                aria-label="Fjern bilde"
-              >
-                <X className="size-4" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Upload dropzone state
-        <div
-          role="button"
-          tabIndex={disabled ? -1 : 0}
-          aria-label="Legg til bilde – klikk eller dra og slipp"
-          aria-disabled={disabled}
-          onClick={() => !disabled && inputRef.current?.click()}
-          onKeyDown={(e) => { if (!disabled && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); inputRef.current?.click(); } }}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`
-            relative h-full rounded-lg border border-dashed
-            flex flex-col items-center justify-center gap-2 cursor-pointer p-6
-            transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15
-            ${
-              dragActive
-                ? 'border-foreground bg-muted'
-                : 'border-border hover:bg-muted'
-            }
-            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${displayError ? 'border-danger' : ''}
-          `}
-        >
-          <ImagePlus className="size-5 text-foreground-muted" aria-hidden="true" />
-          <p className="text-sm text-center font-medium text-foreground">
-            {dragActive ? 'Slipp for å laste opp' : 'Last opp bilde eller dra og slipp'}
-          </p>
-        </div>
+  const handleDragLeave = useCallback((event: DragEvent) => {
+    event.preventDefault()
+    setDragActive(false)
+  }, [])
+
+  const labelBlock = (label || description) ? (
+    <div className="flex flex-col gap-1">
+      {label && <span className="text-base font-medium text-foreground">{label}</span>}
+      {description && <p className="text-sm text-foreground-muted">{description}</p>}
+    </div>
+  ) : null
+
+  const hiddenInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={ACCEPTED_IMAGE_TYPES.join(',')}
+      onChange={handleInputChange}
+      disabled={isDisabled}
+      aria-label={ariaLabel ?? uploadLabel}
+      className="hidden"
+    />
+  )
+
+  const pickerButton = (
+    <button
+      type="button"
+      onClick={openPicker}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      disabled={isDisabled}
+      aria-label={ariaLabel ?? (displayUrl ? changeLabel : uploadLabel)}
+      aria-invalid={displayError ? true : undefined}
+      className={cn(
+        'group relative shrink-0 overflow-hidden bg-muted transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 disabled:cursor-not-allowed disabled:opacity-50',
+        isAvatar ? 'size-24 rounded-full' : 'aspect-[16/10] w-full rounded-lg',
+        displayError && 'ring-2 ring-danger/20',
+        dragActive && 'bg-active',
+        !displayUrl && 'hover:bg-active',
       )}
+    >
+      {displayUrl ? (
+        <>
+          <img src={displayUrl} alt="" className="size-full object-cover" />
+          <span className="absolute inset-0 bg-foreground/0 transition-colors group-hover:bg-foreground/10" />
+        </>
+      ) : (
+        <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center text-foreground-muted">
+          {isAvatar ? (
+            <User className="size-8" aria-hidden="true" />
+          ) : (
+            <ImagePlus className="size-6" aria-hidden="true" />
+          )}
+          {!isAvatar && (
+            <span className="text-sm font-medium text-foreground">
+              {dragActive ? 'Slipp for å laste opp' : emptyLabel ?? uploadLabel}
+            </span>
+          )}
+        </span>
+      )}
+    </button>
+  )
+
+  const actionsBlock = (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={openPicker} disabled={isDisabled} loading={loading}>
+          {displayUrl ? changeLabel : uploadLabel}
+        </Button>
+        {displayUrl && onRemove && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleRemove}
+            disabled={isDisabled}
+            className="hover:text-danger"
+          >
+            {removeLabel}
+          </Button>
+        )}
+      </div>
 
       {displayError && (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="text-sm text-danger">
           {displayError}
         </p>
       )}
+    </>
+  )
+
+  if (isAvatar) {
+    return (
+      <div className={cn('flex items-center gap-4', className)}>
+        {hiddenInput}
+        {pickerButton}
+        <div className="flex min-w-0 flex-col gap-2">
+          {labelBlock}
+          {actionsBlock}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn('flex w-full flex-col gap-3', className)}>
+      {labelBlock}
+      {hiddenInput}
+      {pickerButton}
+      {actionsBlock}
     </div>
   )
 }
+
+export const ImageUpload = ImageField

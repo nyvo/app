@@ -178,7 +178,7 @@ const PaymentsPage = () => {
             <section className="space-y-6">
               <div>
                 <h2 className="text-base font-medium tracking-tight text-foreground">Sett opp utbetalinger</h2>
-                <p className="mt-1 text-sm text-foreground-muted">
+                <p className="mt-1 text-base text-foreground-muted">
                   Vi bruker Dintero til å håndtere utbetalinger. Du fullfører oppsettet hos dem.
                 </p>
               </div>
@@ -186,7 +186,7 @@ const PaymentsPage = () => {
                 <div className="grid gap-2">
                   <label
                     htmlFor="organizationNumber"
-                    className="text-sm font-medium text-foreground"
+                    className="text-base font-medium text-foreground"
                   >
                     Organisasjonsnummer
                   </label>
@@ -216,21 +216,21 @@ const PaymentsPage = () => {
             <section className="space-y-6">
               <div>
                 <h2 className="text-base font-medium tracking-tight text-foreground">Fullfør hos Dintero</h2>
-                <p className="mt-1 text-sm text-foreground-muted">
+                <p className="mt-1 text-base text-foreground-muted">
                   Status: {onboardingStatus ? STATUS_LABEL[onboardingStatus] : 'Venter'}.
                 </p>
               </div>
               <Card>
                 <CardContent>
                   {onboardingStatus === 'DECLINED' || onboardingStatus === 'TERMINATED' ? (
-                    <p className="text-sm text-foreground">
+                    <p className="text-base text-foreground">
                       {onboardingStatus === 'DECLINED'
                         ? 'Søknaden ble avslått. Kontakt oss for hjelp.'
                         : 'Avtalen er avsluttet. Kontakt oss for hjelp.'}
                     </p>
                   ) : (
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm text-foreground">
+                      <p className="text-base text-foreground">
                         Sjekk e-posten fra Dintero og signer avtalen. Når den er godkjent,
                         aktiverer vi utbetalinger automatisk.
                       </p>
@@ -269,7 +269,7 @@ const PaymentsPage = () => {
                     <p className="text-base font-semibold text-foreground">
                       Utbetalinger er klare
                     </p>
-                    <p className="mt-1 text-sm text-foreground-muted">
+                    <p className="mt-1 text-base text-foreground-muted">
                       Dintero håndterer utbetalingene direkte til bankkontoen din. Saldo,
                       transaksjoner og innstillinger ser du på din Dintero-konto.
                     </p>

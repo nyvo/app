@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { FileText, MoreHorizontal } from '@/lib/icons';
+import { FileText, Mail, MoreHorizontal } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -133,6 +133,7 @@ const CoursePage = () => {
   const [settingsDate, setSettingsDate] = useState<Date | undefined>(undefined);
   const [settingsDuration, setSettingsDuration] = useState<number | null>(60);
   const [settingsAllowsDropIn, setSettingsAllowsDropIn] = useState(false);
+  const [settingsDropInPrice, setSettingsDropInPrice] = useState(0);
   const [settingsAcceptsLateSignups, setSettingsAcceptsLateSignups] = useState(true);
   const [settingsPrice, setSettingsPrice] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -154,6 +155,7 @@ const CoursePage = () => {
     if (timeMatch) setSettingsTime(timeMatch[1]);
     setSettingsDuration(courseData.durationMinutes);
     setSettingsAllowsDropIn(courseData.allowsDropIn);
+    setSettingsDropInPrice(courseData.dropInPrice);
     setSettingsAcceptsLateSignups(courseData.acceptsLateSignups);
     setSettingsPrice(courseData.price);
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
@@ -168,6 +170,7 @@ const CoursePage = () => {
     if (imageToDelete !== null) return true;
     if (maxParticipants !== courseData.capacity) return true;
     if (settingsPrice !== courseData.price) return true;
+    if (settingsDropInPrice !== courseData.dropInPrice) return true;
     if (settingsDuration !== courseData.durationMinutes) return true;
     const origDate = courseData.startDate ? new Date(courseData.startDate).toDateString() : '';
     const currDate = settingsDate ? settingsDate.toDateString() : '';
@@ -182,6 +185,7 @@ const CoursePage = () => {
     courseData, settingsTitle, settingsDescription, settingsImageUrl,
     settingsImageFile, imageToDelete, maxParticipants, settingsDuration,
     settingsDate, settingsTime, settingsPrice,
+    settingsDropInPrice,
   ]);
 
   const refundPreview = useMemo(() => {
@@ -213,6 +217,23 @@ const CoursePage = () => {
     }
     return { confirmed, cancelled, revenue };
   }, [participants]);
+
+  const participantEmails = useMemo(
+    () => Array.from(new Set(
+      participants
+        .filter((p) => p.status === 'confirmed')
+        .map((p) => (p.participant_email || p.profile?.email || '').trim())
+        .filter(Boolean),
+    )),
+    [participants],
+  );
+
+  const handleMessageAllParticipants = () => {
+    if (participantEmails.length === 0) return;
+    const subject = encodeURIComponent(courseData?.title ? `Melding om ${courseData.title}` : 'Melding fra studioet');
+    const bcc = encodeURIComponent(participantEmails.join(','));
+    window.location.href = `mailto:?bcc=${bcc}&subject=${subject}`;
+  };
 
   const handleSave = async () => {
     if (!courseId || !courseData) return;
@@ -259,6 +280,15 @@ const CoursePage = () => {
         return;
       }
 
+      if (settingsAllowsDropIn) {
+        const { error: dropInError } = await syncCourseDropInTier(courseId, true, settingsDropInPrice);
+        if (dropInError) {
+          setSaveError(friendlyError(dropInError, 'Kunne ikke lagre drop-in pris.'));
+          setIsSaving(false);
+          return;
+        }
+      }
+
       if (settingsTime && sessions.length > 0) {
         const oldTime = sessions[0]?.start_time;
         if (oldTime && oldTime !== settingsTime) {
@@ -280,6 +310,7 @@ const CoursePage = () => {
               imageUrl: newImageUrl,
               durationMinutes: settingsDuration || prev.durationMinutes,
               allowsDropIn: settingsAllowsDropIn,
+              dropInPrice: settingsDropInPrice,
             }
           : null,
       );
@@ -319,7 +350,7 @@ const CoursePage = () => {
     const previous = settingsAllowsDropIn;
     setSettingsAllowsDropIn(next);
     setCourseData((prev) => (prev ? { ...prev, allowsDropIn: next } : prev));
-    const { error } = await syncCourseDropInTier(courseId, next);
+    const { error } = await syncCourseDropInTier(courseId, next, settingsDropInPrice);
     if (error) {
       setSettingsAllowsDropIn(previous);
       setCourseData((prev) => (prev ? { ...prev, allowsDropIn: previous } : prev));
@@ -429,6 +460,7 @@ const CoursePage = () => {
     setImageToDelete(null);
     setMaxParticipants(courseData.capacity);
     setSettingsDuration(courseData.durationMinutes);
+    setSettingsDropInPrice(courseData.dropInPrice);
     // Drop-in is instant-commit, so it's intentionally NOT reset by Forkast —
     // any drop-in change has already been persisted independently.
     if (courseData.startDate) setSettingsDate(new Date(courseData.startDate));
@@ -489,7 +521,7 @@ const CoursePage = () => {
                 {courseData.title}
               </h1>
               {courseData.status === 'cancelled' ? (
-                <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
+                <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through shrink-0">
                   Avlyst
                 </span>
               ) : (
@@ -569,7 +601,7 @@ const CoursePage = () => {
                 tabIndex={active ? 0 : -1}
                 onClick={() => setActiveTab(t.key)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 py-2 -mb-px text-sm border-b-2 bg-transparent transition-colors outline-none focus-visible:text-foreground',
+                  'inline-flex items-center gap-1.5 py-2 -mb-px text-base border-b-2 bg-transparent transition-colors outline-none focus-visible:text-foreground',
                   active
                     ? 'font-medium text-foreground border-foreground'
                     : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
@@ -577,7 +609,7 @@ const CoursePage = () => {
               >
                 {t.label}
                 {typeof t.count === 'number' && t.count > 0 && (
-                  <span className="inline-flex items-center px-[7px] py-px bg-muted text-foreground text-xs font-medium rounded-full tabular-nums">
+                  <span className="inline-flex items-center px-[7px] py-px bg-muted text-foreground text-sm font-medium rounded-full tabular-nums">
                     {t.count}
                   </span>
                 )}
@@ -631,6 +663,8 @@ const CoursePage = () => {
               onPriceChange={setSettingsPrice}
               allowsDropIn={settingsAllowsDropIn}
               onAllowsDropInChange={handleToggleDropIn}
+              dropInPrice={settingsDropInPrice}
+              onDropInPriceChange={setSettingsDropInPrice}
               acceptsLateSignups={settingsAcceptsLateSignups}
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               isDirty={isSettingsDirty}
@@ -651,11 +685,11 @@ const CoursePage = () => {
           {activeTab === 'pameldte' && (
             <section className="space-y-4">
               {/* KPI strip — full-width, three small cards. Label on top
-                  (text-xs muted), value below (text-2xl tabular-nums). No
+                  (text-sm muted), value below (text-2xl tabular-nums). No
                   delta chip; this isn't a hero metric row. */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-xs font-medium text-foreground-muted">Påmeldte</p>
+                  <p className="text-sm font-medium text-foreground-muted">Påmeldte</p>
                   <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {participantKpis.confirmed}
                     {courseData.capacity > 0 && (
@@ -664,13 +698,13 @@ const CoursePage = () => {
                   </p>
                 </div>
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-xs font-medium text-foreground-muted">Avlyste</p>
+                  <p className="text-sm font-medium text-foreground-muted">Avlyste</p>
                   <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {participantKpis.cancelled}
                   </p>
                 </div>
                 <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-xs font-medium text-foreground-muted">Innbetalt</p>
+                  <p className="text-sm font-medium text-foreground-muted">Innbetalt</p>
                   <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
                     {formatKroner(participantKpis.revenue)}
                   </p>
@@ -689,24 +723,35 @@ const CoursePage = () => {
                     courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
                   return (
                     <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
-                      <p className="text-sm text-foreground-muted">
+                      <p className="text-base text-foreground-muted">
                         {participantKpis.confirmed === 0
                           ? 'Ingen deltakere ennå'
                           : `${participantKpis.confirmed} ${participantKpis.confirmed === 1 ? 'deltaker' : 'deltakere'}`}
                       </p>
-                      <Button
-                        size="sm"
-                        onClick={() => setIsAddParticipantOpen(true)}
-                        disabled={isFull}
-                        title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Detaljer for å legge til flere.' : undefined}
-                      >
-                        Legg til deltaker
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleMessageAllParticipants}
+                          disabled={participantEmails.length === 0}
+                        >
+                          <Mail data-icon="inline-start" />
+                          Send melding
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => setIsAddParticipantOpen(true)}
+                          disabled={isFull}
+                          title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Detaljer for å legge til flere.' : undefined}
+                        >
+                          Legg til deltaker
+                        </Button>
+                      </div>
                     </div>
                   );
                 })()}
                 {sortedParticipants.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-sm text-foreground-muted">
+                  <div className="px-4 py-12 text-center text-base text-foreground-muted">
                     Deltakere som melder seg på, dukker opp her.
                   </div>
                 ) : (
@@ -753,7 +798,7 @@ const CoursePage = () => {
                             <div className="flex items-center gap-2">
                               <p
                                 className={cn(
-                                  'text-sm font-medium truncate',
+                                  'text-base font-medium truncate',
                                   isCancelled ? 'text-foreground-muted' : 'text-foreground',
                                 )}
                               >
@@ -782,7 +827,7 @@ const CoursePage = () => {
                                 </button>
                               )}
                             </div>
-                            <p className="text-xs text-foreground-muted truncate mt-0.5">{email}</p>
+                            <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
                           </div>
                           {/* Right info strip — reserved for payment state +
                               price. Ticket tag lives with the identity column
@@ -794,7 +839,7 @@ const CoursePage = () => {
                             {expectedPrice != null && (
                               <span
                                 className={cn(
-                                  'text-sm font-medium tabular-nums leading-none w-[72px] text-right',
+                                  'text-base font-medium tabular-nums leading-none w-[72px] text-right',
                                   paymentStatus === 'refunded'
                                     ? 'text-foreground-muted line-through decoration-foreground-muted/60'
                                     : 'text-foreground',
@@ -819,7 +864,7 @@ const CoursePage = () => {
                         {isNoteOpen && p.note && (
                           <div className="pb-3 pl-12">
                             <div className="rounded-md bg-muted px-3 py-2">
-                              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                              <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
                                 {p.note}
                               </p>
                             </div>
@@ -872,7 +917,7 @@ const CoursePage = () => {
                 {refundPreview.participants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between border-t border-border/60 px-4 py-2.5 first:border-t-0 text-sm text-foreground tabular-nums sm:px-5"
+                    className="flex items-center justify-between border-t border-border/60 px-4 py-2.5 first:border-t-0 text-base text-foreground tabular-nums sm:px-5"
                   >
                     <span className="truncate">{p.participant_name || p.participant_email}</span>
                     <span className="shrink-0">{formatKroner(p.amount_paid)}</span>
@@ -898,7 +943,7 @@ const CoursePage = () => {
         }
       >
         {refundPreview.count > 0 ? (
-          <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-sm text-foreground sm:p-5">
+          <label className="mt-1 flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 bg-muted/40 p-4 text-base text-foreground sm:p-5">
             <Checkbox
               checked={cancelAcknowledged}
               onCheckedChange={(v) => setCancelAcknowledged(v === true)}

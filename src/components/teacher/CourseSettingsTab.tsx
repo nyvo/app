@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FieldError } from '@/components/ui/field-error';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { ImageField } from '@/components/ui/image-upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
@@ -52,9 +52,11 @@ interface CourseSettingsTabProps {
   onPriceChange: (totalPrice: number) => void;
 
   // Drop-in — series-only. When true on a started, non-full series the
-  // public BookingPanel exposes a drop-in option (price = base ÷ weeks).
+  // public booking flow exposes a drop-in option at the explicit tier price.
   allowsDropIn: boolean;
   onAllowsDropInChange: (value: boolean) => void;
+  dropInPrice: number;
+  onDropInPriceChange: (value: number) => void;
 
   // Late signups — series-only. When true the package tier stays buyable
   // after the series starts, prorated to remaining sessions. Off → buyers
@@ -93,6 +95,8 @@ export const CourseSettingsTab = ({
   onPriceChange,
   allowsDropIn,
   onAllowsDropInChange,
+  dropInPrice,
+  onDropInPriceChange,
   acceptsLateSignups,
   onAcceptsLateSignupsChange,
   isDirty,
@@ -111,6 +115,7 @@ export const CourseSettingsTab = ({
     return price;
   }, [courseFormat, totalWeeks, price]);
   const [priceInput, setPriceInput] = useState(String(perGangPrice));
+  const [dropInPriceInput, setDropInPriceInput] = useState(String(dropInPrice || ''));
 
   // Time slot helpers (matching CreateCoursePage)
   const allTimeSlots = useMemo(() => {
@@ -161,6 +166,10 @@ export const CourseSettingsTab = ({
     setPriceInput(String(perGangPrice));
   }, [perGangPrice]);
 
+  useEffect(() => {
+    setDropInPriceInput(dropInPrice > 0 ? String(dropInPrice) : '');
+  }, [dropInPrice]);
+
   const commitPriceInput = () => {
     const trimmed = priceInput.trim();
     if (trimmed === '') {
@@ -201,35 +210,44 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(normalized));
   };
 
+  const commitDropInPriceInput = () => {
+    const trimmed = dropInPriceInput.trim();
+    const parsed = trimmed === '' ? 0 : Number(trimmed);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setDropInPriceInput(dropInPrice > 0 ? String(dropInPrice) : '');
+      return;
+    }
+    const normalized = Math.floor(parsed);
+    onDropInPriceChange(normalized);
+    setDropInPriceInput(normalized > 0 ? String(normalized) : '');
+  };
+
   return (
     <div>
       {/* Generelt — first section, no top divider */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
         <div>
           <h3 className="text-base font-medium tracking-tight text-foreground">Generelt</h3>
-          <p className="mt-1 text-sm text-foreground-muted">Slik fremstår kurset på kurssiden og i oversikter.</p>
+          <p className="mt-1 text-base text-foreground-muted">Slik fremstår kurset på kurssiden og i oversikter.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
-          <div className="relative aspect-[16/10] w-60 overflow-hidden rounded-lg">
-            <ImageUpload
-              value={settingsImageUrl}
-              onChange={(file) => {
-                onImageFileChange(file);
-                if (!file && settingsImageUrl) {
-                  onImageRemove();
-                }
-              }}
-              onRemove={() => {
-                if (settingsImageUrl) {
-                  onImageRemove();
-                }
-              }}
-              disabled={isSaving}
-              className="absolute inset-0 h-full w-full"
-            />
-          </div>
+          <ImageField
+            value={settingsImageUrl}
+            onChange={(file) => {
+              onImageFileChange(file);
+            }}
+            onRemove={() => {
+              if (settingsImageUrl) {
+                onImageRemove();
+              }
+            }}
+            disabled={isSaving}
+            label="Bilde"
+            description="Vises på kurssiden, i timeplanen og på studiosiden."
+            className="max-w-sm"
+          />
           <div>
-            <label htmlFor="settings-title" className="text-sm font-medium mb-2 block text-foreground">Navn på kurs</label>
+            <label htmlFor="settings-title" className="text-base font-medium mb-2 block text-foreground">Tittel</label>
             <Input
               id="settings-title"
               type="text"
@@ -238,7 +256,7 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label id="settings-description-label" className="text-sm font-medium mb-2 block text-foreground">Beskrivelse</label>
+            <label id="settings-description-label" className="text-base font-medium mb-2 block text-foreground">Beskrivelse</label>
             <RichTextEditor
               id="settings-description"
               aria-labelledby="settings-description-label"
@@ -253,11 +271,11 @@ export const CourseSettingsTab = ({
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
         <div>
           <h3 className="text-base font-medium tracking-tight text-foreground">Tid og plasser</h3>
-          <p className="mt-1 text-sm text-foreground-muted">Når kurset går og hvor mange som kan delta.</p>
+          <p className="mt-1 text-base text-foreground-muted">Når kurset går og hvor mange som kan delta.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
           <div>
-            <label id="settings-date-label" className="text-sm font-medium mb-2 block text-foreground">Dato</label>
+            <label id="settings-date-label" className="text-base font-medium mb-2 block text-foreground">Dato</label>
             <DatePicker
               aria-labelledby="settings-date-label"
               value={settingsDate}
@@ -266,7 +284,7 @@ export const CourseSettingsTab = ({
             />
           </div>
           <div>
-            <label id="settings-time-label" className="text-sm font-medium mb-2 block text-foreground">Tidspunkt</label>
+            <label id="settings-time-label" className="text-base font-medium mb-2 block text-foreground">Tidspunkt</label>
             <div className="flex items-center gap-2">
               <Select
                 value={settingsTime}
@@ -289,7 +307,7 @@ export const CourseSettingsTab = ({
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              <span className="text-sm font-medium shrink-0 text-foreground-muted">–</span>
+              <span className="text-base font-medium shrink-0 text-foreground-muted">–</span>
               <Select
                 value={endTime}
                 onValueChange={handleEndTimeChange}
@@ -321,7 +339,7 @@ export const CourseSettingsTab = ({
                 <label
                   htmlFor="settings-capacity"
                   data-error={isBelowEnrolled ? 'true' : undefined}
-                  className="text-sm font-medium mb-2 block text-foreground data-[error=true]:text-danger"
+                  className="text-base font-medium mb-2 block text-foreground data-[error=true]:text-danger"
                 >
                   Plasser
                 </label>
@@ -360,11 +378,11 @@ export const CourseSettingsTab = ({
       <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
         <div>
           <h3 className="text-base font-medium tracking-tight text-foreground">Pris og påmelding</h3>
-          <p className="mt-1 text-sm text-foreground-muted">Hva deltakere betaler og hvilke billetter de kan velge.</p>
+          <p className="mt-1 text-base text-foreground-muted">Hva deltakere betaler og hvilke billetter de kan velge.</p>
         </div>
         <div className="md:col-span-2 space-y-4">
           <div>
-            <label htmlFor="settings-price" className="text-sm font-medium mb-2 block text-foreground">
+            <label htmlFor="settings-price" className="text-base font-medium mb-2 block text-foreground">
               {courseFormat === 'series' ? 'Pris per gang' : 'Pris'}
             </label>
             <Input
@@ -383,32 +401,57 @@ export const CourseSettingsTab = ({
               }}
             />
             {courseFormat === 'series' && priceInput !== '' && totalWeeks > 0 && (
-              <p className="mt-2 text-sm text-foreground-muted">
+              <p className="mt-2 text-base text-foreground-muted">
                 Totalt {formatKroner((parseInt(priceInput, 10) || 0) * totalWeeks)} for {totalWeeks} uker
               </p>
             )}
           </div>
           {courseFormat === 'series' && (
-            <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-foreground">Tillat drop-in</span>
-                <span className="block text-sm text-foreground-muted mt-0.5">
-                  La nye bli med på enkelttimer. Pris per gang regnes ut automatisk.
+            <div className="pt-2">
+              <label className="flex items-start justify-between gap-4 cursor-pointer">
+                <span className="flex-1 min-w-0">
+                  <span className="block text-base font-medium text-foreground">Tillat drop-in</span>
+                  <span className="block text-base text-foreground-muted mt-0.5">
+                    La nye bli med på enkelttimer med egen drop-in pris.
+                  </span>
                 </span>
-              </span>
-              <Switch
-                checked={allowsDropIn}
-                onCheckedChange={onAllowsDropInChange}
-                aria-label="Tillat drop-in"
-                className="mt-0.5 shrink-0"
-              />
-            </label>
+                <Switch
+                  checked={allowsDropIn}
+                  onCheckedChange={onAllowsDropInChange}
+                  aria-label="Tillat drop-in"
+                  className="mt-0.5 shrink-0"
+                />
+              </label>
+              {allowsDropIn && (
+                <div className="mt-3">
+                  <label htmlFor="settings-drop-in-price" className="text-base font-medium mb-2 block text-foreground">
+                    Drop-in pris
+                  </label>
+                  <Input
+                    id="settings-drop-in-price"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={dropInPriceInput}
+                    onChange={(e) => setDropInPriceInput(e.target.value.replace(/[^\d]/g, ''))}
+                    onBlur={commitDropInPriceInput}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        commitDropInPriceInput();
+                      }
+                    }}
+                    placeholder="Pris per enkelttime"
+                  />
+                </div>
+              )}
+            </div>
           )}
           {courseFormat === 'series' && (
             <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-foreground">Tillat påmelding etter oppstart</span>
-                <span className="block text-sm text-foreground-muted mt-0.5">
+                <span className="block text-base font-medium text-foreground">Tillat påmelding etter oppstart</span>
+                <span className="block text-base text-foreground-muted mt-0.5">
                   La nye bli med selv om kurset er i gang. Prisen regnes ut fra ukene som er igjen.
                 </span>
               </span>
@@ -430,12 +473,12 @@ export const CourseSettingsTab = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               {saveError ? (
-                <span className="inline-flex items-center gap-2 text-sm text-danger" role="alert">
+                <span className="inline-flex items-center gap-2 text-base text-danger" role="alert">
                   <Info className="size-4 shrink-0" aria-hidden />
                   {saveError}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-2 text-sm text-foreground-muted">
+                <span className="inline-flex items-center gap-2 text-base text-foreground-muted">
                   <span className="size-2 rounded-full bg-foreground" aria-hidden />
                   Du har ulagrede endringer
                 </span>
@@ -454,6 +497,7 @@ export const CourseSettingsTab = ({
                 size="sm"
                 onClick={() => {
                   commitParticipantsInput();
+                  commitDropInPriceInput();
                   onSave();
                 }}
                 disabled={!isDirty}

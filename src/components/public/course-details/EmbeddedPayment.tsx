@@ -90,8 +90,8 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
       {/* Customer row — inline "Endre" replaces the detached "Tilbake" link */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{customerName}</p>
-          <p className="text-sm text-foreground-muted truncate mt-0.5">{customerEmail}</p>
+          <p className="text-base font-medium text-foreground truncate">{customerName}</p>
+          <p className="text-base text-foreground-muted truncate mt-0.5">{customerEmail}</p>
         </div>
         <Button variant="plain" size="xs" type="button" onClick={onBack}>
           Endre
@@ -100,18 +100,18 @@ export const EmbeddedPayment: React.FC<EmbeddedPaymentProps> = ({
 
       {/* Course block */}
       <div className="mt-4 border-t border-border pt-4">
-        <p className="text-sm font-medium text-foreground">{courseName}</p>
-        {courseMeta && <p className="text-sm text-foreground-muted mt-0.5">{courseMeta}</p>}
+        <p className="text-base font-medium text-foreground">{courseName}</p>
+        {courseMeta && <p className="text-base text-foreground-muted mt-0.5">{courseMeta}</p>}
       </div>
 
       {/* Price breakdown — same shape as step 1, locked */}
       <div className="mt-4 border-t border-border pt-4 space-y-2">
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-base">
           <span className="text-foreground">{ticketLabel}</span>
           <span className="tabular-nums text-foreground">{formatKroner(price)}</span>
         </div>
         {fee > 0 && (
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-base">
             <span className="text-foreground-muted">Tjenestegebyr</span>
             <span className="tabular-nums text-foreground-muted">{formatKroner(fee)}</span>
           </div>

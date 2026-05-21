@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
@@ -7,14 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { ImageField } from '@/components/ui/image-upload';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { updateSeller } from '@/services/sellers';
 import { renameTeamSlug, updateTeam } from '@/services/teams';
-import { uploadSellerLogo, ACCEPTED_IMAGE_TYPES } from '@/services/storage';
+import { uploadSellerLogo } from '@/services/storage';
 import { friendlyError } from '@/lib/error-messages';
 import { logger } from '@/lib/logger';
 import type { Seller, Team } from '@/types/database';
@@ -82,7 +82,7 @@ const TeamsPage = () => {
             <AffiliationsSection />
           </div>
         ) : (
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             Fant ingen studio. Logg ut og inn igjen, eller kontakt
             brukerstøtte hvis problemet vedvarer.
           </p>
@@ -102,7 +102,10 @@ function StudioSidenForm({
   onSaved: () => Promise<void> | void;
 }) {
   const [savingPhoto, setSavingPhoto] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [logoUrl, setLogoUrl] = useState(seller.logo_url);
+  useEffect(() => {
+    setLogoUrl(seller.logo_url);
+  }, [seller.logo_url]);
 
   // Local state for the editable identity fields. Inputs re-sync from props
   // whenever the parent refreshes after a successful save.
@@ -205,9 +208,7 @@ function StudioSidenForm({
     }
   };
 
-  const handleFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const handlePhotoSelected = async (file: File | null) => {
     if (!file) return;
 
     setSavingPhoto(true);
@@ -218,6 +219,7 @@ function StudioSidenForm({
       }
       const { error } = await updateSeller(seller.id, { logo_url: url });
       if (error) throw error;
+      setLogoUrl(url);
       await onSaved();
     } catch (err) {
       // Local validation errors (file size / type) carry friendly Norwegian
@@ -240,56 +242,27 @@ function StudioSidenForm({
       toast.error('Kunne ikke fjerne bildet');
       return;
     }
+    setLogoUrl(null);
     await onSaved();
   };
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3">
-        <span className="text-sm font-medium text-foreground">Profilbilde</span>
-        <div className="flex items-center gap-4">
-          <UserAvatar
-            src={seller.logo_url}
-            name={seller.name}
-            email={seller.email}
-            size="xl"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={savingPhoto}
-            >
-              {seller.logo_url ? 'Bytt bilde' : 'Last opp bilde'}
-            </Button>
-            {seller.logo_url && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handlePhotoRemove}
-                disabled={savingPhoto}
-                className="text-foreground-muted hover:text-foreground"
-              >
-                Fjern
-              </Button>
-            )}
-          </div>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={ACCEPTED_IMAGE_TYPES.join(',')}
-          onChange={handleFileSelected}
-          aria-label="Last opp profilbilde"
-          className="hidden"
+        <span className="text-base font-medium text-foreground">Profilbilde</span>
+        <ImageField
+          variant="avatar"
+          value={logoUrl}
+          onChange={handlePhotoSelected}
+          onRemove={handlePhotoRemove}
+          loading={savingPhoto}
+          ariaLabel="Last opp profilbilde"
+          description="Bildet vises på studiosiden."
         />
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="studio-name" className="text-sm font-medium text-foreground">
+        <label htmlFor="studio-name" className="text-base font-medium text-foreground">
           Navn
         </label>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
@@ -340,7 +313,7 @@ function StudioSidenForm({
       </div>
 
       <div className="grid gap-2">
-        <label htmlFor="studio-slug" className="text-sm font-medium text-foreground">
+        <label htmlFor="studio-slug" className="text-base font-medium text-foreground">
           URL
         </label>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">

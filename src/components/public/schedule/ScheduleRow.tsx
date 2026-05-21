@@ -68,14 +68,14 @@ export function ScheduleRow({ course, displayDate, viewingSlug, viewingName }: S
       aria-label={`${course.title}${time ? `, kl. ${time}` : ''}`}
     >
       {/* Time (fixed width on sm+) */}
-      <div className="w-14 shrink-0 text-sm font-medium text-foreground tabular-nums">
+      <div className="w-14 shrink-0 text-base font-medium text-foreground tabular-nums">
         {time || '—'}
       </div>
 
       {/* Title + meta */}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="text-sm font-medium text-foreground truncate">
+          <span className="text-base font-medium text-foreground truncate">
             {course.title}
           </span>
           {isCancelled && <StatusBadge status="cancelled" />}
@@ -84,7 +84,7 @@ export function ScheduleRow({ course, displayDate, viewingSlug, viewingName }: S
           )}
         </div>
 
-        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-xs text-foreground-muted">
+        <div className="mt-0.5 flex items-center gap-x-3 gap-y-0 text-sm text-foreground-muted">
           {instructorName && (
             <span className="flex items-center gap-1 truncate">
               <User className="size-3.5 shrink-0" />
@@ -102,12 +102,12 @@ export function ScheduleRow({ course, displayDate, viewingSlug, viewingName }: S
 
       {/* Right: price + spots */}
       <div className="shrink-0 flex flex-col items-end gap-0.5">
-        <span className="text-sm font-medium text-foreground whitespace-nowrap tabular-nums">
+        <span className="text-base font-medium text-foreground whitespace-nowrap tabular-nums">
           {formatCoursePrice(course.price)}
         </span>
         {spots && (
           <span className={cn(
-            'text-xs font-medium whitespace-nowrap',
+            'text-sm font-medium whitespace-nowrap',
             isFull ? 'text-foreground-muted' : 'text-warning',
           )}>
             {spots}

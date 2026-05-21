@@ -148,19 +148,21 @@ export const TeacherSidebar = () => {
                       className="text-foreground-muted shrink-0 mt-px"
                     />
                     <div className="grid flex-1 leading-tight">
-                      <span className="text-sm font-medium truncate text-foreground">
+                      <span className="text-base font-medium truncate text-foreground">
                         {profile?.name || currentSeller?.name}
                       </span>
-                      <span className="text-sm truncate text-foreground-muted">
+                      <span className="text-base truncate text-foreground-muted">
                         {profile?.email}
                       </span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <HugeiconsIcon icon={HelpCircleIcon} size={16} strokeWidth={1.75} />
-                  Hjelp
+                <DropdownMenuItem asChild>
+                  <Link to={routes.help}>
+                    <HugeiconsIcon icon={HelpCircleIcon} size={16} strokeWidth={1.75} />
+                    Hjelp
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>

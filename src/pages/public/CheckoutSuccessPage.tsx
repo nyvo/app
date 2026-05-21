@@ -162,8 +162,8 @@ const CheckoutSuccessPage = () => {
           <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-muted">
             <Spinner size="xl" className="text-foreground" />
           </div>
-          <p className="text-sm font-medium mb-2 text-foreground">Bekrefter betaling</p>
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base font-medium mb-2 text-foreground">Bekrefter betaling</p>
+          <p className="text-base text-foreground-muted">
             {isLongWait
               ? 'Det tar litt lenger tid enn vanlig. Du får bekreftelsen på e-post om vi ikke blir ferdige her.'
               : 'Vi bekrefter med banken. Ikke lukk denne siden.'}
@@ -250,7 +250,7 @@ const CheckoutSuccessPage = () => {
                       <Check className="size-4" strokeWidth={2.5} />
                     </div>
                     <h1 className="mt-4 text-base font-medium text-foreground">Du er påmeldt</h1>
-                    <p className="mt-1 text-sm text-foreground-muted">
+                    <p className="mt-1 text-base text-foreground-muted">
                       {signup
                         ? `Vi har sendt en bekreftelse til ${signup.participant_email}.`
                         : 'Vi har sendt en bekreftelse til e-posten din.'}
@@ -275,18 +275,18 @@ const CheckoutSuccessPage = () => {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-foreground">{signup.course.title}</p>
+                          <p className="truncate text-base font-medium text-foreground">{signup.course.title}</p>
                           {whenLine && (
-                            <p className="mt-0.5 text-xs text-foreground-muted tabular-nums">{whenLine}</p>
+                            <p className="mt-0.5 text-sm text-foreground-muted tabular-nums">{whenLine}</p>
                           )}
                           {signup.course.location && (
-                            <p className="mt-0.5 text-xs text-foreground-muted truncate">{signup.course.location}</p>
+                            <p className="mt-0.5 text-sm text-foreground-muted truncate">{signup.course.location}</p>
                           )}
                         </div>
                       </div>
 
                       {/* Discreet meta row — booking date + paid amount */}
-                      <div className="mt-6 border-t border-border pt-6 space-y-2.5 text-sm">
+                      <div className="mt-6 border-t border-border pt-6 space-y-2.5 text-base">
                         <div className="flex items-center justify-between">
                           <span className="text-foreground-muted">Påmeldt</span>
                           <span className="font-medium text-foreground">{formatBookingDate(bookedAt)}</span>
@@ -306,7 +306,7 @@ const CheckoutSuccessPage = () => {
                   )}
 
                   {/* Support — use platform support so seller emails stay private. */}
-                  <p className="mt-6 text-sm text-foreground-muted">
+                  <p className="mt-6 text-base text-foreground-muted">
                     Trenger du hjelp? Send en e-post til{' '}
                     <a
                       href={`mailto:${SUPPORT_EMAIL}`}

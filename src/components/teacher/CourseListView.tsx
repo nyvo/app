@@ -93,7 +93,7 @@ function SortableHeader({
       aria-label={`Sorter etter ${label}`}
       aria-sort={isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
       className={cn(
-        'inline-flex items-center gap-1 text-left text-sm text-foreground-muted outline-none transition-colors',
+        'inline-flex items-center gap-1 text-left text-base text-foreground-muted outline-none transition-colors',
         'hover:text-foreground focus-visible:text-foreground',
         className,
       )}
@@ -108,7 +108,7 @@ function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
     <div className={cn(COLS, 'pb-5')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <span className="text-sm text-foreground-muted">Status</span>
+      <span className="text-base text-foreground-muted">Status</span>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
       <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
     </div>
@@ -129,18 +129,18 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       )}
     >
       <div className="min-w-0">
-        <h3 className="truncate text-sm font-medium text-foreground">{course.courseTitle}</h3>
-        <p className="mt-0.5 truncate text-sm text-foreground-muted">
+        <h3 className="truncate text-base font-medium text-foreground">{course.courseTitle}</h3>
+        <p className="mt-0.5 truncate text-base text-foreground-muted">
           {typeLabel(course.courseFormat, course.deliveryMode)}
         </p>
       </div>
       <div>
         <StatusBadgeRow courseStatus={course.courseStatus} />
       </div>
-      <span className="hidden whitespace-nowrap text-sm text-foreground tabular-nums md:inline">
+      <span className="hidden whitespace-nowrap text-base text-foreground tabular-nums md:inline">
         {roster}
       </span>
-      <span className="whitespace-nowrap text-sm text-foreground tabular-nums">
+      <span className="whitespace-nowrap text-base text-foreground tabular-nums">
         {formatKroner(course.price)}
       </span>
       <ChevronRight
@@ -196,7 +196,7 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }
 export function CourseListSkeleton() {
   return (
     <div>
-      <div className={cn(COLS, 'pb-3 text-sm text-foreground-muted')}>
+      <div className={cn(COLS, 'pb-3 text-base text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>
         <span className="hidden md:inline">Påmeldte</span>

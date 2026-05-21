@@ -27,8 +27,8 @@ export function SidebarSetupCard() {
       )}
     >
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-sm font-medium text-foreground">Kom i gang</p>
-        <p className="text-xs text-foreground-muted tabular-nums">
+        <p className="text-base font-medium text-foreground">Kom i gang</p>
+        <p className="text-sm text-foreground-muted tabular-nums">
           {completedCount}/{totalCount}
         </p>
       </div>

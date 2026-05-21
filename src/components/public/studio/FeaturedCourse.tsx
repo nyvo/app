@@ -99,7 +99,7 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
         <div className="space-y-6">
           {/* When line — single tier, sentence case, tabular */}
           {longDate && (
-            <div className="inline-flex items-center gap-2 text-sm font-medium text-foreground tabular-nums">
+            <div className="inline-flex items-center gap-2 text-base font-medium text-foreground tabular-nums">
               <span className="size-1.5 rounded-full bg-success" />
               {longDate}
               {time && (
@@ -125,7 +125,7 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
           )}
 
           {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-foreground-muted pt-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-base text-foreground-muted pt-2">
             {instructor && (
               <span className="inline-flex items-center gap-1.5">
                 <User className="size-3.5" strokeWidth={1.75} />
@@ -154,14 +154,14 @@ export function FeaturedCourse({ course, viewingSlug, viewingName }: FeaturedCou
               {formatCoursePrice(course.price)}
             </div>
             {isSeries && course.total_weeks && (
-              <div className="text-xs text-foreground-muted">for hele rekken</div>
+              <div className="text-sm text-foreground-muted">for hele rekken</div>
             )}
           </div>
           {/* Visual-only — the whole card is the Link, so the button can't be a real <button> */}
           <span
             className={cn(
               'inline-flex items-center rounded-full bg-primary text-primary-foreground',
-              'h-10 px-6 text-sm font-medium',
+              'h-10 px-6 text-base font-medium',
               'transition-transform duration-300 group-hover:translate-x-0.5',
               isFull && 'bg-muted text-foreground-muted',
             )}

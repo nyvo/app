@@ -63,9 +63,9 @@ export function EntityCard({
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-medium text-foreground">{title}</h3>
           {subtitle && (
-            <p className="truncate text-sm text-foreground-muted">{subtitle}</p>
+            <p className="truncate text-base text-foreground-muted">{subtitle}</p>
           )}
-          {meta && <p className="mt-3 text-sm text-foreground-muted">{meta}</p>}
+          {meta && <p className="mt-3 text-base text-foreground-muted">{meta}</p>}
         </div>
       </div>
     </>

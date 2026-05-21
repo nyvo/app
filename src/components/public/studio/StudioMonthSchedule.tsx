@@ -237,7 +237,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
               >
                 <div
                   className={cn(
-                    'text-xs font-medium text-foreground-muted',
+                    'text-sm font-medium text-foreground-muted',
                     !isToday && 'capitalize',
                   )}
                 >
@@ -251,7 +251,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                 >
                   {day.getDate()}
                 </div>
-                <div className="mt-3 flex items-center gap-1.5 text-xs">
+                <div className="mt-3 flex items-center gap-1.5 text-sm">
                   {hasClasses ? (
                     <>
                       <span className="size-1.5 rounded-full bg-success" aria-hidden />
@@ -277,7 +277,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
       </div>
 
       {selectedCourses.length === 0 ? (
-        <p className="py-10 text-center text-sm text-foreground-muted">
+        <p className="py-10 text-center text-base text-foreground-muted">
           Ingen klasser denne dagen.
         </p>
       ) : (
@@ -333,7 +333,7 @@ export function StudioMonthSchedule({ courses, viewingSlug, viewingName }: Studi
                     <h3 className="text-base font-medium truncate text-foreground">
                       {course.title}
                     </h3>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground-muted">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-base text-foreground-muted">
                       {time && (
                         <span className="inline-flex items-center gap-1.5">
                           <Clock className="size-3.5" strokeWidth={1.75} />

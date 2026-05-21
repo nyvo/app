@@ -42,7 +42,7 @@ export function FilterChips<T extends string>({
             onClick={() => onChange(c.key)}
             aria-pressed={active}
             className={cn(
-              'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium',
+              'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-base font-medium',
               'transition-colors duration-150 outline-none',
               'focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15',
               active
@@ -54,7 +54,7 @@ export function FilterChips<T extends string>({
             {c.count !== undefined && (
               <span
                 className={cn(
-                  'tabular-nums text-xs',
+                  'tabular-nums text-sm',
                   active ? 'text-background' : 'text-foreground-muted',
                 )}
               >

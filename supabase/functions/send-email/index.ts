@@ -18,6 +18,7 @@ import { handleCors, errorResponse, successResponse } from '../_shared/auth.ts'
 import OrderConfirm, { type OrderConfirmProps } from './templates/order-confirm.tsx'
 import RefundReceipt, { type RefundReceiptProps } from './templates/refund-receipt.tsx'
 import ClassReminder, { type ClassReminderProps } from './templates/class-reminder.tsx'
+import SupportMessage, { type SupportMessageProps } from './templates/support-message.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -25,14 +26,16 @@ const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Openspot'
 const fromAddress = fromEmail ? `${fromName} <${fromEmail}>` : ''
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-type EmailTemplate = 'order-confirm' | 'refund-receipt' | 'class-reminder'
+type EmailTemplate = 'order-confirm' | 'refund-receipt' | 'class-reminder' | 'support-message'
 
 interface SendEmailRequest {
   template: EmailTemplate
   to: string
-  props: OrderConfirmProps | RefundReceiptProps | ClassReminderProps
+  props: OrderConfirmProps | RefundReceiptProps | ClassReminderProps | SupportMessageProps
   /** Optional override for the auto-generated subject line */
   subject?: string
+  /** Optional reply-to address, used for support messages. */
+  replyTo?: string
 }
 
 function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props']): string {
@@ -43,6 +46,8 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
       return `Refusjon utbetalt — ${(props as RefundReceiptProps).amount}`
     case 'class-reminder':
       return `Påminnelse: ${(props as ClassReminderProps).courseTitle}`
+    case 'support-message':
+      return `Hjelp: ${(props as SupportMessageProps).supportSubject}`
   }
 }
 
@@ -54,6 +59,8 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return RefundReceipt(props as RefundReceiptProps)
     case 'class-reminder':
       return ClassReminder(props as ClassReminderProps)
+    case 'support-message':
+      return SupportMessage(props as SupportMessageProps)
   }
 }
 
@@ -82,13 +89,13 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Invalid JSON', 400, req)
   }
 
-  const { template, to, props, subject } = body
+  const { template, to, props, subject, replyTo } = body
 
   if (!template || !to || !props) {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 
@@ -98,12 +105,14 @@ Deno.serve(async (req: Request) => {
     const text = await render(element, { plainText: true })
 
     const resend = new Resend(resendApiKey)
+    const normalizedReplyTo = replyTo?.trim() || undefined
     const { data, error } = await resend.emails.send({
       from: fromAddress,
       to,
       subject: subject || defaultSubject(template, props),
       html,
       text,
+      replyTo: normalizedReplyTo,
     })
 
     if (error) {

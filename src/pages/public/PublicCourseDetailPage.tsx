@@ -220,7 +220,7 @@ function MetaStrip({
   const showScheduleLink = course.format === 'series' && sessions.length > 1;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground-muted">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-base text-foreground-muted">
       {nextDateLabel && (
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="size-3.5" strokeWidth={1.75} />
@@ -289,7 +289,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
                   <div className="flex items-baseline justify-between gap-4">
                     <h3
                       className={cn(
-                        'text-sm font-medium text-foreground capitalize',
+                        'text-base font-medium text-foreground capitalize',
                         isCancelled && 'line-through text-foreground-muted',
                       )}
                     >
@@ -298,7 +298,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
                     {timeRange && (
                       <span
                         className={cn(
-                          'text-sm tabular-nums text-foreground-muted whitespace-nowrap',
+                          'text-base tabular-nums text-foreground-muted whitespace-nowrap',
                           isCancelled && 'line-through',
                         )}
                       >
@@ -307,7 +307,7 @@ function SchedulePeek({ sessions, duration }: { sessions: CourseSession[]; durat
                     )}
                   </div>
                   {(s.notes || isCancelled) && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground-muted">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-base text-foreground-muted">
                       {isCancelled && (
                         <Badge variant="warning" shape="pill" size="sm">
                           Avlyst

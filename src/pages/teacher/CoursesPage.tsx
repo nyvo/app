@@ -339,7 +339,7 @@ const CoursesPage = () => {
                         aria-selected={isActive}
                         onClick={() => setViewTab(key)}
                         className={cn(
-                          'inline-flex items-center gap-2 py-3 text-sm border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
+                          'inline-flex items-center gap-2 py-3 text-base border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
                           isActive
                             ? 'font-medium border-foreground text-foreground'
                             : 'border-transparent text-foreground-muted hover:text-foreground',
@@ -404,7 +404,7 @@ const CoursesPage = () => {
 
               {showLoadMore && (
                 <div className="mt-4 grid grid-cols-3 items-center">
-                  <span className="text-xs text-foreground-muted tabular-nums">
+                  <span className="text-sm text-foreground-muted tabular-nums">
                     Viser {visibleCount} av {filteredRows.length} kurs
                   </span>
                   <div className="flex justify-center">

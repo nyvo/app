@@ -183,7 +183,7 @@ const TeacherProfilePage = () => {
                   <div className="grid gap-2">
                     <label
                       htmlFor="profile-name"
-                      className="text-sm font-medium text-foreground"
+                      className="text-base font-medium text-foreground"
                     >
                       Navn
                     </label>
@@ -199,7 +199,7 @@ const TeacherProfilePage = () => {
                     <label
                       htmlFor="profile-email"
                       data-error={(errors.email && touched.email) || undefined}
-                      className="text-sm font-medium text-foreground data-[error=true]:text-danger"
+                      className="text-base font-medium text-foreground data-[error=true]:text-danger"
                     >
                       E-post
                     </label>
@@ -230,8 +230,8 @@ const TeacherProfilePage = () => {
                   {/* Logg ut alle enheter */}
                   <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
                     <div>
-                      <span className="text-sm font-medium block text-foreground">Logg ut alle enheter</span>
-                      <span className="text-sm block text-foreground-muted">Logger deg ut overalt.</span>
+                      <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
+                      <span className="text-base block text-foreground-muted">Logger deg ut overalt.</span>
                     </div>
                     <Button
                       variant="outline-soft"
@@ -251,7 +251,7 @@ const TeacherProfilePage = () => {
                       loading={isLoggingOutAll}
                       loadingText="Logger ut"
                     >
-                      <p className="text-sm text-foreground-muted">
+                      <p className="text-base text-foreground-muted">
                         Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
                       </p>
                     </ConfirmDialog>
@@ -260,8 +260,8 @@ const TeacherProfilePage = () => {
                   {/* Slett konto */}
                   <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
                     <div>
-                      <span className="text-sm font-medium block text-foreground">Slett kontoen din</span>
-                      <span className="text-sm block text-foreground-muted">All data slettes permanent.</span>
+                      <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
+                      <span className="text-base block text-foreground-muted">All data slettes permanent.</span>
                     </div>
                     <Button
                       variant="destructive"
@@ -285,11 +285,11 @@ const TeacherProfilePage = () => {
                       loading={isDeletingAccount}
                       loadingText="Sletter"
                     >
-                      <p className="text-sm text-foreground-muted">
+                      <p className="text-base text-foreground-muted">
                         Alle kurs, påmeldinger og meldinger slettes permanent. Dette kan ikke angres.
                       </p>
                       <div className="grid gap-2">
-                        <label htmlFor="delete-confirm" className="text-sm text-foreground-muted">
+                        <label htmlFor="delete-confirm" className="text-base text-foreground-muted">
                           Skriv <span className="font-medium text-foreground">SLETT</span> for å bekrefte
                         </label>
                         <Input

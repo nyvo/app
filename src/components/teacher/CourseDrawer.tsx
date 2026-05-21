@@ -74,7 +74,7 @@ function DrawerHeader({
           {title}
         </SheetTitle>
         {status === 'cancelled' ? (
-          <span className="inline-flex items-center px-2 h-5 rounded-md text-xs font-medium bg-muted text-foreground-muted line-through shrink-0">
+          <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through shrink-0">
             Avlyst
           </span>
         ) : (
@@ -248,7 +248,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           <SheetTitle>Kurs ikke funnet</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             {error || 'Kurset finnes ikke eller er slettet.'}
           </p>
         </div>
@@ -368,7 +368,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
             </h3>
           </div>
           {confirmedCount === 0 ? (
-            <p className="text-sm text-foreground-muted">
+            <p className="text-base text-foreground-muted">
               Ingen påmeldinger ennå.
             </p>
           ) : (
@@ -383,10 +383,10 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
                   >
                     <UserAvatar name={name} email={email} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate text-foreground">
+                      <p className="text-base font-medium truncate text-foreground">
                         {name}
                       </p>
-                      <p className="text-xs truncate text-foreground-muted">
+                      <p className="text-sm truncate text-foreground-muted">
                         {email}
                       </p>
                     </div>
@@ -407,7 +407,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
               {sessions.map((s, i) => (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between gap-3 py-2 text-sm"
+                  className="flex items-center justify-between gap-3 py-2 text-base"
                 >
                   <span className="text-foreground-muted tabular-nums">
                     Uke {String(i + 1).padStart(2, '0')}
@@ -501,7 +501,7 @@ function ScheduleQuickView({
           <SheetTitle>Kurs ikke funnet</SheetTitle>
         </SheetHeader>
         <div className="flex-1 px-6 py-6">
-          <p className="text-sm text-foreground-muted">
+          <p className="text-base text-foreground-muted">
             {error || 'Kurset finnes ikke eller er slettet.'}
           </p>
         </div>
@@ -520,7 +520,7 @@ function ScheduleQuickView({
 
   const headerDescription =
     sessionDateLabel || sessionTimeRange || courseData.location ? (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-base text-foreground-muted">
         {sessionDateLabel && (
           <span className="inline-flex items-center gap-1.5">
             <Calendar className="size-3.5" strokeWidth={1.75} />
@@ -562,7 +562,7 @@ function ScheduleQuickView({
             {courseData.capacity > 0 ? ` / ${courseData.capacity}` : ''})
           </h3>
           {confirmedCount === 0 ? (
-            <p className="text-sm text-foreground-muted">Ingen påmeldinger ennå.</p>
+            <p className="text-base text-foreground-muted">Ingen påmeldinger ennå.</p>
           ) : (
             <div className="space-y-1">
               {visibleParticipants.map((p) => {
@@ -572,14 +572,14 @@ function ScheduleQuickView({
                   <div key={p.id} className="flex items-center gap-3 py-2">
                     <UserAvatar name={name} email={email} size="sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate text-foreground">{name}</p>
-                      <p className="text-xs truncate text-foreground-muted">{email}</p>
+                      <p className="text-base font-medium truncate text-foreground">{name}</p>
+                      <p className="text-sm truncate text-foreground-muted">{email}</p>
                     </div>
                   </div>
                 );
               })}
               {extraCount > 0 && (
-                <p className="pt-2 text-xs text-foreground-muted">+ {extraCount} flere</p>
+                <p className="pt-2 text-sm text-foreground-muted">+ {extraCount} flere</p>
               )}
             </div>
           )}

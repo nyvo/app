@@ -110,7 +110,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
               {course.description2 && (
                 <RichTextContent
                   html={course.description2}
-                  className="text-sm text-foreground-muted"
+                  className="text-base text-foreground-muted"
                 />
               )}
               {course.courseType === 'kursrekke' && (
@@ -119,7 +119,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 </div>
               )}
               {!course.description && !course.description2 && (
-                <p className="text-sm text-foreground-muted italic">
+                <p className="text-base text-foreground-muted italic">
                   Ingen beskrivelse enda.
                 </p>
               )}
@@ -152,7 +152,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <button
                   type="button"
                   onClick={onJumpToParticipants}
-                  className="inline-flex items-center text-sm font-medium text-foreground hover:underline underline-offset-4"
+                  className="inline-flex items-center text-base font-medium text-foreground hover:underline underline-offset-4"
                 >
                   Se alle {totalParticipantCount}
                 </button>
@@ -165,8 +165,8 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
                 <div key={p.id} className="grid grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 py-3">
                   <UserAvatar name={p.name} email={p.email} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate text-foreground">{p.name}</p>
-                    <p className="text-xs truncate text-foreground-muted">{p.email}</p>
+                    <p className="text-base font-medium truncate text-foreground">{p.name}</p>
+                    <p className="text-sm truncate text-foreground-muted">{p.email}</p>
                   </div>
                   <SignupStatusBadge
                     status={p.status}
@@ -178,7 +178,7 @@ export const CourseOverviewTab: React.FC<CourseOverviewTabProps> = ({
             </div>
             {/* Estimated revenue moved out of headline — surfaced as quiet meta */}
             {course.estimatedRevenue > 0 && (
-              <p className="mt-4 pt-3 border-t border-border text-xs text-foreground-muted tabular-nums">
+              <p className="mt-4 pt-3 border-t border-border text-sm text-foreground-muted tabular-nums">
                 Anslått inntekt for kursrekken:{' '}
                 <span className="text-foreground font-medium">{formatKroner(course.estimatedRevenue)}</span>
               </p>

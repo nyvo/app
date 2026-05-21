@@ -15,6 +15,7 @@ interface CreateFreeSignupRequest {
   participantName: string
   participantEmail: string
   participantPhone: string
+  participantNote?: string
 }
 
 Deno.serve(async (req: Request) => {
@@ -23,7 +24,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body: CreateFreeSignupRequest = await req.json()
-    const { courseId, participantName, participantEmail, participantPhone } = body
+    const { courseId, participantName, participantEmail, participantPhone, participantNote } = body
 
     if (!courseId || !participantName || !participantEmail || !participantPhone) {
       return errorResponse('Missing required fields', 400, req)
@@ -83,6 +84,7 @@ Deno.serve(async (req: Request) => {
       p_dintero_transaction_id: null,
       p_dintero_session_id: null,
       p_dintero_merchant_reference: null,
+      p_note: participantNote?.trim() || null,
     })
 
     if (rpcError) {

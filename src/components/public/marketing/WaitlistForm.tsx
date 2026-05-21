@@ -97,11 +97,11 @@ export function WaitlistForm({
         </Button>
       </div>
       {status === 'error' && error ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
+        <p role="alert" className="mt-2 text-base text-danger">
           {error}
         </p>
       ) : helperText ? (
-        <p className="mt-3 text-sm text-foreground-muted">{helperText}</p>
+        <p className="mt-3 text-base text-foreground-muted">{helperText}</p>
       ) : null}
     </form>
   );

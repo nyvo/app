@@ -28,6 +28,7 @@ export const routes = {
   dashboard: '/overview',
   getStarted: '/get-started',
   schedule: '/schedule',
+  help: '/help',
 
   // Courses
   // `/courses` is the list page. `?kurs=:id` opens the quick-glance drawer

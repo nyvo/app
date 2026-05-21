@@ -33,7 +33,7 @@ export default function GetStartedPage() {
             <h1 className="text-2xl font-medium tracking-tight text-foreground">
               Kom i gang
             </h1>
-            <p className="text-sm text-foreground-muted tabular-nums">
+            <p className="text-base text-foreground-muted tabular-nums">
               {completedCount} av {totalCount} fullført
             </p>
           </header>
@@ -66,7 +66,7 @@ export default function GetStartedPage() {
                     >
                       {step.title}
                     </p>
-                    <p className="text-sm text-foreground-muted">{step.description}</p>
+                    <p className="text-base text-foreground-muted">{step.description}</p>
                   </div>
                   <HugeiconsIcon
                     icon={ArrowRight01Icon}
