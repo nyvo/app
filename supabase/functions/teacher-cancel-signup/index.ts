@@ -69,7 +69,14 @@ Deno.serve(async (req: Request) => {
       return errorResponse('You do not have permission to cancel signups for this seller', 403, req)
     }
 
-    if (signup.status === 'cancelled' || signup.status === 'course_cancelled') {
+    // Allow refund-only on already-cancelled signups (studio decides to refund
+    // after the fact). The signup's `status` doesn't change in that path —
+    // only the payment state moves to 'refunded'. Reject if the caller asked
+    // for a plain cancel on something already cancelled (nothing to do).
+    const alreadyCancelled = signup.status === 'cancelled' || signup.status === 'course_cancelled'
+    const refundOnly = alreadyCancelled && body.refund === true
+
+    if (alreadyCancelled && !refundOnly) {
       return errorResponse('Signup is already cancelled', 400, req)
     }
 
@@ -98,8 +105,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const updateData: Record<string, unknown> = {
-      status: 'cancelled',
       updated_at: new Date().toISOString(),
+    }
+    // Only flip status when this is a fresh cancellation. Refund-only on an
+    // already-cancelled signup keeps the existing status.
+    if (!alreadyCancelled) {
+      updateData.status = 'cancelled'
     }
     if (refundSucceeded) {
       updateData.payment_status = 'refunded'
@@ -127,7 +138,9 @@ Deno.serve(async (req: Request) => {
       refunded: refundSucceeded,
       refund_amount: refundSucceeded && signup.amount_paid ? signup.amount_paid : 0,
       message: refundSucceeded
-        ? 'Påmelding avmeldt. Refusjon vil bli behandlet.'
+        ? alreadyCancelled
+          ? 'Refusjon behandlet.'
+          : 'Påmelding avmeldt. Refusjon vil bli behandlet.'
         : 'Påmelding avmeldt.',
     }, 200, req)
   } catch (error) {

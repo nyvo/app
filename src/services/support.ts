@@ -5,6 +5,8 @@ interface SendSupportMessageParams {
   subject: string;
   message: string;
   sellerId?: string | null;
+  courseId?: string | null;
+  signupId?: string | null;
 }
 
 export async function sendSupportMessage(

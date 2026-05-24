@@ -16,6 +16,8 @@ interface SupportMessageRequest {
   subject: string
   message: string
   sellerId?: string | null
+  courseId?: string | null
+  signupId?: string | null
 }
 
 const SUBJECTS = new Set([
@@ -49,6 +51,8 @@ Deno.serve(async (req: Request) => {
   const subject = (body.subject ?? '').trim()
   const message = (body.message ?? '').trim()
   const sellerId = (body.sellerId ?? '').trim()
+  const courseId = (body.courseId ?? '').trim()
+  const signupId = (body.signupId ?? '').trim()
 
   if (!SUBJECTS.has(subject)) {
     return errorResponse('Invalid subject', 400, req)
@@ -72,6 +76,14 @@ Deno.serve(async (req: Request) => {
   const senderEmail = (profile as { email: string; name: string | null }).email
   const senderName = (profile as { email: string; name: string | null }).name ?? ''
   let sellerName = ''
+  let verifiedSellerId = ''
+  let courseTitle = ''
+  let verifiedCourseId = ''
+  let verifiedSignupId = ''
+  let participantName = ''
+  let participantEmail = ''
+  let signupStatus = ''
+  let paymentStatus = ''
 
   if (sellerId) {
     const { data: membership, error: membershipError } = await supabase
@@ -88,6 +100,80 @@ Deno.serve(async (req: Request) => {
     const seller = (membership as { seller?: { id: string; name: string } | null } | null)?.seller
     if (seller) {
       sellerName = seller.name
+      verifiedSellerId = seller.id
+    }
+  }
+
+  if (courseId) {
+    const { data: course, error: courseError } = await supabase
+      .from('courses')
+      .select('id, title, seller_id')
+      .eq('id', courseId)
+      .maybeSingle()
+
+    if (courseError) {
+      console.error('[send-support-message] course lookup failed', courseError)
+    }
+
+    const courseRow = course as { id: string; title: string; seller_id: string } | null
+    if (courseRow) {
+      const courseSellerId = courseRow.seller_id
+      const sellerIsVerified =
+        verifiedSellerId && verifiedSellerId === courseSellerId
+
+      if (!sellerIsVerified) {
+        const { data: membership, error: membershipError } = await supabase
+          .from('seller_members')
+          .select('seller:sellers(id, name)')
+          .eq('user_id', auth.userId)
+          .eq('seller_id', courseSellerId)
+          .maybeSingle()
+
+        if (membershipError) {
+          console.error('[send-support-message] course seller membership lookup failed', membershipError)
+        }
+
+        const seller = (membership as { seller?: { id: string; name: string } | null } | null)?.seller
+        if (seller) {
+          verifiedSellerId = seller.id
+          sellerName = seller.name
+        }
+      }
+
+      if (verifiedSellerId === courseSellerId) {
+        verifiedCourseId = courseRow.id
+        courseTitle = courseRow.title
+      }
+    }
+  }
+
+  if (signupId && verifiedCourseId) {
+    const { data: signup, error: signupError } = await supabase
+      .from('signups')
+      .select('id, course_id, seller_id, participant_name, participant_email, status, payment_status')
+      .eq('id', signupId)
+      .eq('course_id', verifiedCourseId)
+      .eq('seller_id', verifiedSellerId)
+      .maybeSingle()
+
+    if (signupError) {
+      console.error('[send-support-message] signup lookup failed', signupError)
+    }
+
+    const signupRow = signup as {
+      id: string
+      participant_name: string
+      participant_email: string
+      status: string
+      payment_status: string | null
+    } | null
+
+    if (signupRow) {
+      verifiedSignupId = signupRow.id
+      participantName = signupRow.participant_name
+      participantEmail = signupRow.participant_email
+      signupStatus = signupRow.status
+      paymentStatus = signupRow.payment_status ?? ''
     }
   }
 
@@ -99,8 +185,15 @@ Deno.serve(async (req: Request) => {
       userId: auth.userId,
       senderName,
       senderEmail,
-      sellerId: sellerName ? sellerId : undefined,
+      sellerId: verifiedSellerId || undefined,
       sellerName,
+      courseId: verifiedCourseId || undefined,
+      courseTitle,
+      signupId: verifiedSignupId || undefined,
+      participantName,
+      participantEmail,
+      signupStatus,
+      paymentStatus,
       supportSubject: subject,
       message,
     },

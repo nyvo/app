@@ -549,6 +549,77 @@ export async function updateCourseSession(
   return { data: data as CourseSession, error: null }
 }
 
+/**
+ * Permanently delete a course and all its dependent rows (sessions,
+ * tickets, etc.). Wraps the `delete_course_cascade` Postgres function,
+ * which enforces ownership via SECURITY DEFINER + an explicit check.
+ *
+ * Destructive — no undo. Caller must confirm before invoking.
+ */
+export async function deleteCourse(courseId: string): Promise<{ error: Error | null }> {
+  const { error } = await supabase.rpc('delete_course_cascade', { p_course_id: courseId })
+  if (error) return { error: error as Error }
+  return { error: null }
+}
+
+/**
+ * Send a custom message from the teacher to every confirmed participant
+ * on a course. Goes through the send-course-message edge function which
+ * validates ownership and fans out via the course-message email template.
+ *
+ * Returns the count of emails dispatched. Failures are reported in
+ * `failed` — individual email failures do not abort the run.
+ */
+export async function sendCourseMessage(input: {
+  courseId: string
+  body: string
+}): Promise<{ data: { notified: number; failed: number } | null; error: Error | null }> {
+  const { data, error } = await supabase.functions.invoke('send-course-message', {
+    body: {
+      course_id: input.courseId,
+      body: input.body,
+    },
+  })
+
+  if (error) return { data: null, error: error as Error }
+  const result = data as { notified?: number; failed?: number }
+  return { data: { notified: result.notified ?? 0, failed: result.failed ?? 0 }, error: null }
+}
+
+/**
+ * Reschedule a single session (date + start/end time) AND notify every
+ * confirmed participant via the session-rescheduled email template.
+ *
+ * Goes through the `update-session` Edge Function (not direct table UPDATE)
+ * because the notification fan-out needs the service role to read profile
+ * emails. Use this from Oversikt's per-session edit modal.
+ */
+export async function rescheduleCourseSession(input: {
+  sessionId: string
+  newDate: string       // YYYY-MM-DD
+  newStartTime: string  // HH:MM or HH:MM:SS
+  newEndTime?: string
+}): Promise<{ data: { notified: number; failed: number } | null; error: Error | null }> {
+  const { data, error } = await supabase.functions.invoke('update-session', {
+    body: {
+      session_id: input.sessionId,
+      new_date: input.newDate,
+      new_start_time: input.newStartTime,
+      new_end_time: input.newEndTime,
+    },
+  })
+
+  if (error) {
+    return { data: null, error: error as Error }
+  }
+
+  const result = data as { notified?: number; failed?: number }
+  return {
+    data: { notified: result.notified ?? 0, failed: result.failed ?? 0 },
+    error: null,
+  }
+}
+
 // Fetch the next N upcoming sessions (future only, no week limit)
 export async function fetchNextSessions(sellerId: string, limit = 3): Promise<{
   data: Array<{

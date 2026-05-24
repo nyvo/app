@@ -208,7 +208,8 @@
       "WebFetch(domain:www.courier.com)",
       "Bash(wait)",
       "Bash(supabase db *)",
-      "Bash(xargs head *)"
+      "Bash(xargs head *)",
+      "mcp__supabase__deploy_edge_function"
     ],
     "deny": [],
     "ask": []

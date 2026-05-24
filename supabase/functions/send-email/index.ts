@@ -19,6 +19,8 @@ import OrderConfirm, { type OrderConfirmProps } from './templates/order-confirm.
 import RefundReceipt, { type RefundReceiptProps } from './templates/refund-receipt.tsx'
 import ClassReminder, { type ClassReminderProps } from './templates/class-reminder.tsx'
 import SupportMessage, { type SupportMessageProps } from './templates/support-message.tsx'
+import SessionRescheduled, { type SessionRescheduledProps } from './templates/session-rescheduled.tsx'
+import CourseMessage, { type CourseMessageProps } from './templates/course-message.tsx'
 
 const resendApiKey = Deno.env.get('RESEND_API_KEY') || ''
 const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || ''
@@ -26,12 +28,24 @@ const fromName = Deno.env.get('RESEND_FROM_NAME') || 'Openspot'
 const fromAddress = fromEmail ? `${fromName} <${fromEmail}>` : ''
 const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
-type EmailTemplate = 'order-confirm' | 'refund-receipt' | 'class-reminder' | 'support-message'
+type EmailTemplate =
+  | 'order-confirm'
+  | 'refund-receipt'
+  | 'class-reminder'
+  | 'support-message'
+  | 'session-rescheduled'
+  | 'course-message'
 
 interface SendEmailRequest {
   template: EmailTemplate
   to: string
-  props: OrderConfirmProps | RefundReceiptProps | ClassReminderProps | SupportMessageProps
+  props:
+    | OrderConfirmProps
+    | RefundReceiptProps
+    | ClassReminderProps
+    | SupportMessageProps
+    | SessionRescheduledProps
+    | CourseMessageProps
   /** Optional override for the auto-generated subject line */
   subject?: string
   /** Optional reply-to address, used for support messages. */
@@ -48,6 +62,12 @@ function defaultSubject(template: EmailTemplate, props: SendEmailRequest['props'
       return `Påminnelse: ${(props as ClassReminderProps).courseTitle}`
     case 'support-message':
       return `Hjelp: ${(props as SupportMessageProps).supportSubject}`
+    case 'session-rescheduled': {
+      const p = props as SessionRescheduledProps
+      return `Ny tid: ${p.courseTitle} — ${p.newDate}`
+    }
+    case 'course-message':
+      return (props as CourseMessageProps).subject
   }
 }
 
@@ -61,6 +81,10 @@ function renderTemplate(template: EmailTemplate, props: SendEmailRequest['props'
       return ClassReminder(props as ClassReminderProps)
     case 'support-message':
       return SupportMessage(props as SupportMessageProps)
+    case 'session-rescheduled':
+      return SessionRescheduled(props as SessionRescheduledProps)
+    case 'course-message':
+      return CourseMessage(props as CourseMessageProps)
   }
 }
 
@@ -95,7 +119,7 @@ Deno.serve(async (req: Request) => {
     return errorResponse('Missing required fields: template, to, props', 400, req)
   }
 
-  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message'].includes(template)) {
+  if (!['order-confirm', 'refund-receipt', 'class-reminder', 'support-message', 'session-rescheduled', 'course-message'].includes(template)) {
     return errorResponse(`Unknown template: ${template}`, 400, req)
   }
 

@@ -45,12 +45,40 @@ export interface ClassReminderEmailProps {
   courseLocation?: string
 }
 
+export interface CourseMessageEmailProps {
+  buyerName: string
+  studioName: string
+  courseTitle: string
+  subject: string
+  body: string
+}
+
+export interface SessionRescheduledEmailProps {
+  buyerName: string
+  studioName: string
+  courseTitle: string
+  /** Pre-formatted Norwegian date, e.g. "onsdag 21. mai" */
+  oldDate: string
+  /** Pre-formatted time, e.g. "18:00" */
+  oldTime: string
+  newDate: string
+  newTime: string
+  courseLocation?: string
+}
+
 export interface SupportMessageEmailProps {
   userId: string
   senderName?: string
   senderEmail: string
   sellerId?: string
   sellerName?: string
+  courseId?: string
+  courseTitle?: string
+  signupId?: string
+  participantName?: string
+  participantEmail?: string
+  signupStatus?: string
+  paymentStatus?: string
   supportSubject: string
   message: string
 }
@@ -60,6 +88,8 @@ export type SendEmailInput =
   | { template: 'refund-receipt'; to: string; props: RefundReceiptEmailProps; subject?: string; replyTo?: string }
   | { template: 'class-reminder'; to: string; props: ClassReminderEmailProps; subject?: string; replyTo?: string }
   | { template: 'support-message'; to: string; props: SupportMessageEmailProps; subject?: string; replyTo?: string }
+  | { template: 'session-rescheduled'; to: string; props: SessionRescheduledEmailProps; subject?: string; replyTo?: string }
+  | { template: 'course-message'; to: string; props: CourseMessageEmailProps; subject?: string; replyTo?: string }
 
 export interface SendEmailResult {
   id?: string

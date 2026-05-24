@@ -7,6 +7,7 @@ import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import {
   Select,
   SelectContent,
@@ -245,29 +246,17 @@ const SchedulePage = () => {
 
         {/* Underline tabs — active vs past. Course filter as a secondary lens. */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border">
-          <nav role="tablist" aria-label="Status" className="flex gap-6">
-            {(['active', 'past'] as const).map((key) => {
-              const label = key === 'active' ? 'Aktive' : 'Fullførte';
-              const isActive = rangeFilter === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setRangeFilter(key)}
-                  className={cn(
-                    'inline-flex items-center py-3 text-base border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
-                    isActive
-                      ? 'font-medium border-foreground text-foreground'
-                      : 'border-transparent text-foreground-muted hover:text-foreground',
-                  )}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </nav>
+          <PageTabs ariaLabel="Status" className="border-b-0">
+            {(['active', 'past'] as const).map((key) => (
+              <PageTab
+                key={key}
+                active={rangeFilter === key}
+                onClick={() => setRangeFilter(key)}
+              >
+                {key === 'active' ? 'Aktive' : 'Fullførte'}
+              </PageTab>
+            ))}
+          </PageTabs>
 
           <Select value={monthFilter} onValueChange={setMonthFilter}>
             <SelectTrigger className="h-9 w-48 mb-2">
@@ -355,8 +344,8 @@ function SessionCard({ session }: { session: SessionRow }) {
     <Link
       to={{ search: `?kurs=${session.courseId}&sess=${session.id}&from=schedule` }}
       className={cn(
-        'block rounded-lg bg-muted p-4 outline-none transition-shadow ring-1 ring-transparent',
-        'hover:ring-border',
+        'block rounded-lg border border-border bg-[var(--sand-2)] p-4 outline-none transition-colors',
+        'hover:bg-muted',
         'focus-visible:ring-2 focus-visible:ring-ring/50',
       )}
     >

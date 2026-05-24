@@ -93,7 +93,7 @@ function SortableHeader({
       aria-label={`Sorter etter ${label}`}
       aria-sort={isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
       className={cn(
-        'inline-flex items-center gap-1 text-left text-base text-foreground-muted outline-none transition-colors',
+        'inline-flex items-center gap-1 text-left text-sm text-foreground-muted outline-none transition-colors',
         'hover:text-foreground focus-visible:text-foreground',
         className,
       )}
@@ -106,9 +106,9 @@ function SortableHeader({
 
 function TableHeader({ sortKey, sortDir, onSort }: TableHeaderProps) {
   return (
-    <div className={cn(COLS, 'pb-5')}>
+    <div className={cn(COLS, 'px-4 py-3 border-b border-border bg-surface')}>
       <SortableHeader label="Navn" columnKey="name" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
-      <span className="text-base text-foreground-muted">Status</span>
+      <span className="text-sm text-foreground-muted">Status</span>
       <SortableHeader label="Påmeldte" columnKey="signups" sortKey={sortKey} sortDir={sortDir} onSort={onSort} className="hidden md:inline-flex" />
       <SortableHeader label="Pris" columnKey="price" sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
     </div>
@@ -125,7 +125,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
       to={routes.course(course.courseId)}
       className={cn(
         COLS,
-        'group relative py-4 no-underline outline-none focus-visible:bg-muted/40',
+        'group relative px-4 py-3 no-underline outline-none transition-colors hover:bg-muted focus-visible:bg-muted',
       )}
     >
       <div className="min-w-0">
@@ -153,7 +153,7 @@ function TableRow({ course }: { course: SessionScheduleRow }) {
 
 function TableBody({ courses }: { courses: SessionScheduleRow[] }) {
   return (
-    <div className="divide-y divide-border border-t border-border">
+    <div className="divide-y divide-border">
       {courses.map((c) => (
         <motion.div
           key={c.sessionId}
@@ -182,10 +182,10 @@ interface CourseListViewProps {
 
 export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }: CourseListViewProps) {
   return (
-    <div>
+    <div className="rounded-lg border border-border overflow-hidden">
       <TableHeader sortKey={sortKey} sortDir={sortDir} onSort={onSort} />
       {courses.length === 0 && emptyState ? (
-        <div className="border-t border-border">{emptyState}</div>
+        <div>{emptyState}</div>
       ) : (
         <TableBody courses={courses} />
       )}
@@ -195,16 +195,16 @@ export function CourseListView({ courses, sortKey, sortDir, onSort, emptyState }
 
 export function CourseListSkeleton() {
   return (
-    <div>
-      <div className={cn(COLS, 'pb-3 text-base text-foreground-muted')}>
+    <div className="rounded-lg border border-border overflow-hidden">
+      <div className={cn(COLS, 'px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
         <span>Navn</span>
         <span>Status</span>
         <span className="hidden md:inline">Påmeldte</span>
         <span>Pris</span>
       </div>
-      <div className="divide-y divide-border border-t border-border">
+      <div className="divide-y divide-border">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className={cn(COLS, 'py-4')}>
+          <div key={i} className={cn(COLS, 'px-4 py-3')}>
             <div className="min-w-0">
               <Skeleton className="h-4 w-48 max-w-full" />
               <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />

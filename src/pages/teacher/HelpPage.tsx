@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
@@ -15,6 +15,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { pageTransition, pageVariants } from '@/lib/motion';
 import { sendSupportMessage } from '@/services/support';
+import {
+  fetchSupportCourses,
+  fetchSupportSignups,
+  type SupportCourseOption,
+  type SupportSignupOption,
+} from '@/services/support-context';
 
 const SUBJECTS = [
   'Kurs og påmeldinger',
@@ -24,13 +30,72 @@ const SUBJECTS = [
   'Annet',
 ] as const;
 
+const COURSE_SIGNUP_SUBJECT = 'Kurs og påmeldinger';
+
 export default function HelpPage() {
   const { currentSeller } = useAuth();
   const [subject, setSubject] = useState<string>('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [courses, setCourses] = useState<SupportCourseOption[]>([]);
+  const [signups, setSignups] = useState<SupportSignupOption[]>([]);
+  const [courseId, setCourseId] = useState('');
+  const [signupId, setSignupId] = useState('');
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [loadingSignups, setLoadingSignups] = useState(false);
 
   const canSubmit = subject.length > 0 && message.trim().length > 0;
+  const showCourseFields = subject === COURSE_SIGNUP_SUBJECT && !!currentSeller?.id;
+
+  useEffect(() => {
+    setCourseId('');
+    setSignupId('');
+    setSignups([]);
+
+    if (subject !== COURSE_SIGNUP_SUBJECT || !currentSeller?.id) {
+      setCourses([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingCourses(true);
+    void fetchSupportCourses(currentSeller.id).then(({ data, error }) => {
+      if (cancelled) return;
+      setLoadingCourses(false);
+      if (error) {
+        toast.error('Kunne ikke hente kurs');
+        return;
+      }
+      setCourses(data);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subject, currentSeller?.id]);
+
+  useEffect(() => {
+    setSignupId('');
+    setSignups([]);
+
+    if (!courseId) return;
+
+    let cancelled = false;
+    setLoadingSignups(true);
+    void fetchSupportSignups(courseId).then(({ data, error }) => {
+      if (cancelled) return;
+      setLoadingSignups(false);
+      if (error) {
+        toast.error('Kunne ikke hente påmeldinger');
+        return;
+      }
+      setSignups(data);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,6 +106,8 @@ export default function HelpPage() {
       subject,
       message: message.trim(),
       sellerId: currentSeller?.id ?? null,
+      courseId: courseId || null,
+      signupId: signupId || null,
     });
     setSubmitting(false);
 
@@ -51,6 +118,8 @@ export default function HelpPage() {
 
     setSubject('');
     setMessage('');
+    setCourseId('');
+    setSignupId('');
     toast.success('Meldingen er sendt');
   }
 
@@ -68,7 +137,7 @@ export default function HelpPage() {
         <div className="mb-12 pt-6 lg:pt-12">
           <h1 className="text-2xl font-medium tracking-tight text-foreground">Hjelp</h1>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground-muted">
-            Send oss en kort melding om hva du står fast på, så svarer vi på e-posten du er logget inn med.
+            Send oss en melding, så hjelper vi deg videre.
           </p>
         </div>
 
@@ -94,6 +163,52 @@ export default function HelpPage() {
               </Select>
             </div>
 
+            {showCourseFields && (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="help-course" className="text-base font-medium text-foreground">
+                    Gjelder kurs
+                  </label>
+                  <Select value={courseId} onValueChange={setCourseId} disabled={loadingCourses}>
+                    <SelectTrigger id="help-course" className="w-full">
+                      <SelectValue placeholder={loadingCourses ? 'Henter kurs...' : 'Velg kurs'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {courses.map((course) => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.title}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {courseId && (
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="help-signup" className="text-base font-medium text-foreground">
+                      Gjelder påmelding
+                    </label>
+                    <Select value={signupId} onValueChange={setSignupId} disabled={loadingSignups}>
+                      <SelectTrigger id="help-signup" className="w-full">
+                        <SelectValue placeholder={loadingSignups ? 'Henter påmeldinger...' : 'Valgfritt'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {signups.map((signup) => (
+                            <SelectItem key={signup.id} value={signup.id}>
+                              {signup.participantName} · {signup.participantEmail}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="flex flex-col gap-1.5">
               <label htmlFor="help-message" className="text-base font-medium text-foreground">
                 Melding
@@ -103,7 +218,7 @@ export default function HelpPage() {
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 rows={8}
-                placeholder="Skriv kort hva du prøver å gjøre, og hva som ikke fungerer."
+                placeholder="Hva trenger du hjelp med?"
               />
             </div>
 

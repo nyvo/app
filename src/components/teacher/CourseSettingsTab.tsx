@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 
 interface CourseSettingsTabProps {
   // General info
@@ -51,24 +50,23 @@ interface CourseSettingsTabProps {
   price: number;
   onPriceChange: (totalPrice: number) => void;
 
-  // Drop-in — series-only. When true on a started, non-full series the
-  // public booking flow exposes a drop-in option at the explicit tier price.
-  allowsDropIn: boolean;
-  onAllowsDropInChange: (value: boolean) => void;
-  dropInPrice: number;
-  onDropInPriceChange: (value: number) => void;
-
-  // Late signups — series-only. When true the package tier stays buyable
-  // after the series starts, prorated to remaining sessions. Off → buyers
-  // see only drop-in (if enabled) once the first session has ended.
-  acceptsLateSignups: boolean;
-  onAcceptsLateSignupsChange: (value: boolean) => void;
+  // Drop-in (allowsDropIn, dropInPrice) and late-signups (acceptsLateSignups)
+  // toggles moved to Oversikt tab — they're instant-commit operational
+  // switches, not part of this saveable form.
 
   // Actions
   isDirty: boolean;
   saveError: string | null;
   onSave: () => void;
   onCancel: () => void;
+
+  // Faresone — destructive course-level actions. Only show the ones that
+  // apply to the current course state (e.g., Gjør til utkast is hidden on a
+  // draft, Avlys/Slett are hidden once the course is cancelled).
+  courseStatus: string;
+  onRequestUnpublish: () => void;
+  onRequestCancel: () => void;
+  onRequestDelete: () => void;
 }
 
 export const CourseSettingsTab = ({
@@ -93,16 +91,14 @@ export const CourseSettingsTab = ({
   totalWeeks,
   price,
   onPriceChange,
-  allowsDropIn,
-  onAllowsDropInChange,
-  dropInPrice,
-  onDropInPriceChange,
-  acceptsLateSignups,
-  onAcceptsLateSignupsChange,
   isDirty,
   saveError,
   onSave,
   onCancel,
+  courseStatus,
+  onRequestUnpublish,
+  onRequestCancel,
+  onRequestDelete,
 }: CourseSettingsTabProps) => {
   const minParticipants = Math.max(currentEnrolled || 1, 1);
   const [participantsInput, setParticipantsInput] = useState(String(maxParticipants));
@@ -115,7 +111,6 @@ export const CourseSettingsTab = ({
     return price;
   }, [courseFormat, totalWeeks, price]);
   const [priceInput, setPriceInput] = useState(String(perGangPrice));
-  const [dropInPriceInput, setDropInPriceInput] = useState(String(dropInPrice || ''));
 
   // Time slot helpers (matching CreateCoursePage)
   const allTimeSlots = useMemo(() => {
@@ -166,10 +161,6 @@ export const CourseSettingsTab = ({
     setPriceInput(String(perGangPrice));
   }, [perGangPrice]);
 
-  useEffect(() => {
-    setDropInPriceInput(dropInPrice > 0 ? String(dropInPrice) : '');
-  }, [dropInPrice]);
-
   const commitPriceInput = () => {
     const trimmed = priceInput.trim();
     if (trimmed === '') {
@@ -210,17 +201,6 @@ export const CourseSettingsTab = ({
     setParticipantsInput(String(normalized));
   };
 
-  const commitDropInPriceInput = () => {
-    const trimmed = dropInPriceInput.trim();
-    const parsed = trimmed === '' ? 0 : Number(trimmed);
-    if (Number.isNaN(parsed) || parsed < 0) {
-      setDropInPriceInput(dropInPrice > 0 ? String(dropInPrice) : '');
-      return;
-    }
-    const normalized = Math.floor(parsed);
-    onDropInPriceChange(normalized);
-    setDropInPriceInput(normalized > 0 ? String(normalized) : '');
-  };
 
   return (
     <div>
@@ -253,6 +233,7 @@ export const CourseSettingsTab = ({
               type="text"
               value={settingsTitle}
               onChange={(e) => onTitleChange(e.target.value)}
+              className="text-base"
             />
           </div>
           <div>
@@ -406,65 +387,47 @@ export const CourseSettingsTab = ({
               </p>
             )}
           </div>
-          {courseFormat === 'series' && (
-            <div className="pt-2">
-              <label className="flex items-start justify-between gap-4 cursor-pointer">
-                <span className="flex-1 min-w-0">
-                  <span className="block text-base font-medium text-foreground">Tillat drop-in</span>
-                  <span className="block text-base text-foreground-muted mt-0.5">
-                    La nye bli med på enkelttimer med egen drop-in pris.
-                  </span>
-                </span>
-                <Switch
-                  checked={allowsDropIn}
-                  onCheckedChange={onAllowsDropInChange}
-                  aria-label="Tillat drop-in"
-                  className="mt-0.5 shrink-0"
-                />
-              </label>
-              {allowsDropIn && (
-                <div className="mt-3">
-                  <label htmlFor="settings-drop-in-price" className="text-base font-medium mb-2 block text-foreground">
-                    Drop-in pris
-                  </label>
-                  <Input
-                    id="settings-drop-in-price"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={dropInPriceInput}
-                    onChange={(e) => setDropInPriceInput(e.target.value.replace(/[^\d]/g, ''))}
-                    onBlur={commitDropInPriceInput}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        commitDropInPriceInput();
-                      }
-                    }}
-                    placeholder="Pris per enkelttime"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          {courseFormat === 'series' && (
-            <label className="flex items-start justify-between gap-4 cursor-pointer pt-2">
-              <span className="flex-1 min-w-0">
-                <span className="block text-base font-medium text-foreground">Tillat påmelding etter oppstart</span>
-                <span className="block text-base text-foreground-muted mt-0.5">
-                  La nye bli med selv om kurset er i gang. Prisen regnes ut fra ukene som er igjen.
-                </span>
-              </span>
-              <Switch
-                checked={acceptsLateSignups}
-                onCheckedChange={onAcceptsLateSignupsChange}
-                aria-label="Tillat påmelding etter oppstart"
-                className="mt-0.5 shrink-0"
-              />
-            </label>
-          )}
+          {/* Drop-in toggle and "tillat påmelding etter oppstart" moved to
+              Oversikt tab. They're operational switches (instant-commit),
+              not part of the saveable form. */}
         </div>
       </section>
+
+      {/* Andre handlinger — destructive course-level actions. Calm presentation,
+          matches the sibling section structure (3-col grid, same heading scale,
+          same divider). The destructive buttons themselves communicate gravity. */}
+      {courseStatus !== 'cancelled' && (
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8 mt-10 pt-10 border-t border-border">
+          <div>
+            <h3 className="text-base font-medium tracking-tight text-foreground">Andre handlinger</h3>
+            <p className="mt-1 text-base text-foreground-muted">Avslutt eller fjern kurset.</p>
+          </div>
+          <div className="md:col-span-2 space-y-3">
+            {courseStatus !== 'draft' && (
+              <ActionRow
+                title="Gjør kurset til utkast"
+                sub="Tar kurset av studiosiden. Påmeldte beholdes."
+                buttonLabel="Gjør til utkast"
+                onClick={onRequestUnpublish}
+              />
+            )}
+            <ActionRow
+              title="Avlys kurset"
+              sub="Stenger påmelding og refunderer alle påmeldte."
+              buttonLabel="Avlys kurs"
+              onClick={onRequestCancel}
+              tone="danger"
+            />
+            <ActionRow
+              title="Slett kurset"
+              sub="Fjerner kurset og all tilhørende data permanent."
+              buttonLabel="Slett kurs"
+              onClick={onRequestDelete}
+              tone="danger"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Sticky save bar — only visible when there are unsaved changes.
           Sits at the bottom of the scrollable parent. */}
@@ -497,7 +460,6 @@ export const CourseSettingsTab = ({
                 size="sm"
                 onClick={() => {
                   commitParticipantsInput();
-                  commitDropInPriceInput();
                   onSave();
                 }}
                 disabled={!isDirty}
@@ -513,3 +475,30 @@ export const CourseSettingsTab = ({
     </div>
   );
 };
+
+interface ActionRowProps {
+  title: string;
+  sub: string;
+  buttonLabel: string;
+  onClick: () => void;
+  tone?: 'default' | 'danger';
+}
+
+function ActionRow({ title, sub, buttonLabel, onClick, tone = 'default' }: ActionRowProps) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 py-3 border-b border-border-subtle last:border-b-0">
+      <div className="min-w-0">
+        <p className="text-base font-medium text-foreground">{title}</p>
+        <p className="text-base text-foreground-muted mt-0.5">{sub}</p>
+      </div>
+      <Button
+        variant={tone === 'danger' ? 'destructive' : 'outline'}
+        size="sm"
+        onClick={onClick}
+        className="shrink-0"
+      >
+        {buttonLabel}
+      </Button>
+    </div>
+  );
+}

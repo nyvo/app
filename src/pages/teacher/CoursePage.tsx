@@ -2,31 +2,25 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { FileText, Mail, MoreHorizontal } from '@/lib/icons';
+import { ChevronRight, FileText, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Badge, badgeVariants } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { SignupStatusBadge } from '@/components/ui/signup-status-badge';
 import { ShareCoursePopover } from '@/components/ui/share-course-popover';
 import { CourseSettingsTab } from '@/components/teacher/CourseSettingsTab';
+import { CourseOverviewTab } from '@/components/teacher/CourseOverviewTab';
+import { SessionsModal } from '@/components/teacher/SessionsModal';
+import { PageTabs, PageTab } from '@/components/ui/page-tabs';
+import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageDrawer';
+import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
-import {
-  ParticipantActionMenu,
-  type ActionableParticipant,
-} from '@/components/teacher/ParticipantActionMenu';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import {
@@ -37,11 +31,11 @@ import {
   syncCourseDropInTier,
   publishCourse,
   unpublishCourse,
+  deleteCourse,
 } from '@/services/courses';
 import {
   teacherCancelSignup,
   markPaymentResolved,
-  type SignupWithProfile,
 } from '@/services/signups';
 import { uploadCourseImage, deleteCourseImage } from '@/services/storage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,37 +43,11 @@ import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
 import { cn, formatKroner } from '@/lib/utils';
 import type {
-  ExceptionType,
   PaymentStatus,
   SignupStatus,
-  TicketAudience,
 } from '@/types/database';
 
-const AUDIENCE_LABEL: Record<TicketAudience, string> = {
-  standard: 'Standard',
-  student: 'Student',
-  senior: 'Honnør',
-  staff: 'Personale',
-};
-
-/** Returns a ticket tag only when notable — drop-in, or a non-standard audience.
- *  "Standard" is the default and would just be noise on every row. */
-function ticketTagFor(p: SignupWithProfile): string | null {
-  if (p.ticket_kind_snapshot === 'drop_in') return 'Drop-in';
-  if (p.ticket_audience_snapshot && p.ticket_audience_snapshot !== 'standard') {
-    return AUDIENCE_LABEL[p.ticket_audience_snapshot];
-  }
-  return null;
-}
-
-function exceptionFor(payment: PaymentStatus, status: SignupStatus): ExceptionType | null {
-  if (status === 'cancelled' || status === 'course_cancelled') return null;
-  if (payment === 'failed') return 'payment_failed';
-  if (payment === 'pending') return 'pending_payment';
-  return null;
-}
-
-type TabKey = 'detaljer' | 'pameldte';
+type TabKey = 'oversikt' | 'pameldte' | 'rediger';
 
 /**
  * Course not-found shell — wraps the canonical NotFoundState in the
@@ -99,7 +67,7 @@ function CourseNotFound({ description }: { description?: string }) {
  * CoursePage — full course detail / configuration page.
  *
  * The drawer's "Åpne kursside →" escape target. Three underline tabs slice
- * the course into its three concerns: Detaljer (the editable form),
+ * the course into its three concerns: Oversikt (at-a-glance + ops), Rediger (editable form),
  * Priser (ticket tiers), and Påmeldte (the participants list). Page shell
  * follows the dashboard convention (max-w-7xl centered, lg:px-8 padding).
  */
@@ -119,9 +87,13 @@ const CoursePage = () => {
     setMaxParticipants,
     maxParticipants,
     refetchParticipants,
+    refetch,
   } = useCourseDetail(courseId);
 
-  const [activeTab, setActiveTab] = useState<TabKey>('detaljer');
+  const [activeTab, setActiveTab] = useState<TabKey>('oversikt');
+  const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
+  const [messageDrawerOpen, setMessageDrawerOpen] = useState(false);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
 
   // ── Form state (lifted from legacy CourseDrawer.EditMode) ──────────────
   const [settingsTitle, setSettingsTitle] = useState('');
@@ -139,12 +111,13 @@ const CoursePage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showCancelPreview, setShowCancelPreview] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingCourse, setIsDeletingCourse] = useState(false);
   const [cancelAcknowledged, setCancelAcknowledged] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isAddParticipantOpen, setIsAddParticipantOpen] = useState(false);
-  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!courseData) return;
@@ -230,9 +203,7 @@ const CoursePage = () => {
 
   const handleMessageAllParticipants = () => {
     if (participantEmails.length === 0) return;
-    const subject = encodeURIComponent(courseData?.title ? `Melding om ${courseData.title}` : 'Melding fra studioet');
-    const bcc = encodeURIComponent(participantEmails.join(','));
-    window.location.href = `mailto:?bcc=${bcc}&subject=${subject}`;
+    setMessageDrawerOpen(true);
   };
 
   const handleSave = async () => {
@@ -347,13 +318,21 @@ const CoursePage = () => {
   // update fires immediately; revert + error toast on failure.
   const handleToggleDropIn = async (next: boolean) => {
     if (!courseId) return;
-    const previous = settingsAllowsDropIn;
+    const previousAllows = settingsAllowsDropIn;
+    const previousPrice = courseData?.dropInPrice ?? 0;
+    // Sync allowsDropIn AND dropInPrice into courseData together. A bare
+    // allowsDropIn update would trigger the courseData → settings useEffect
+    // and reset settingsDropInPrice back to the (stale) courseData value.
     setSettingsAllowsDropIn(next);
-    setCourseData((prev) => (prev ? { ...prev, allowsDropIn: next } : prev));
+    setCourseData((prev) =>
+      prev ? { ...prev, allowsDropIn: next, dropInPrice: settingsDropInPrice } : prev,
+    );
     const { error } = await syncCourseDropInTier(courseId, next, settingsDropInPrice);
     if (error) {
-      setSettingsAllowsDropIn(previous);
-      setCourseData((prev) => (prev ? { ...prev, allowsDropIn: previous } : prev));
+      setSettingsAllowsDropIn(previousAllows);
+      setCourseData((prev) =>
+        prev ? { ...prev, allowsDropIn: previousAllows, dropInPrice: previousPrice } : prev,
+      );
       toast.error(friendlyError(error, 'Kunne ikke oppdatere drop-in.'));
       return;
     }
@@ -375,6 +354,20 @@ const CoursePage = () => {
       return;
     }
     toast.success(next ? 'Påmelding etter oppstart slått på' : 'Påmelding etter oppstart slått av');
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!courseId) return;
+    setIsDeletingCourse(true);
+    const { error: deleteError } = await deleteCourse(courseId);
+    setIsDeletingCourse(false);
+    if (deleteError) {
+      toast.error(friendlyError(deleteError, 'Kunne ikke slette kurset.'));
+      return;
+    }
+    setShowDeleteConfirm(false);
+    toast.success('Kurset er slettet');
+    navigate(routes.courses);
   };
 
   const handleCancelCourse = async () => {
@@ -492,8 +485,9 @@ const CoursePage = () => {
   }
 
   const tabs: { key: TabKey; label: string; count?: number }[] = [
-    { key: 'detaljer', label: 'Detaljer' },
+    { key: 'oversikt', label: 'Oversikt' },
     { key: 'pameldte', label: 'Påmeldte', count: participantKpis.confirmed },
+    { key: 'rediger', label: 'Rediger' },
   ];
 
   const courseUrl =
@@ -531,51 +525,29 @@ const CoursePage = () => {
                 />
               )}
             </div>
-            {courseData.status !== 'cancelled' && (
-              <div className="flex items-center gap-2">
-                {courseData.status === 'draft' ? (
-                  <Button
-                    size="sm"
-                    onClick={handlePublish}
-                    loading={isPublishing}
-                    loadingText="Publiserer"
-                  >
-                    Publiser kurs
-                  </Button>
-                ) : (
-                  canShare && (
-                    <ShareCoursePopover
-                      courseUrl={courseUrl}
-                      courseTitle={courseData.title}
-                    />
-                  )
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      size="icon-sm"
-                      aria-label="Flere handlinger"
-                    >
-                      <MoreHorizontal />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {courseData.status !== 'draft' && (
-                      <DropdownMenuItem onClick={handleUnpublish}>
-                        Gjør til utkast
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      className="text-danger"
-                      onClick={() => setShowCancelPreview(true)}
-                    >
-                      Avlys kurs
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+            {/* Header action — single primary button per state. Destructive
+                actions (Gjør til utkast / Avlys / Slett) live in the Faresone
+                section on the Rediger tab. Per audience-design memory: keep
+                the header airy, one clear thing to do at a time. */}
+            {courseData.status === 'draft' && (
+              <Button
+                size="sm"
+                onClick={handlePublish}
+                loading={isPublishing}
+                loadingText="Publiserer"
+              >
+                <Send data-icon="inline-start" />
+                Publiser kurs
+              </Button>
             )}
+            {courseData.status !== 'draft' &&
+              courseData.status !== 'cancelled' &&
+              canShare && (
+                <ShareCoursePopover
+                  courseUrl={courseUrl}
+                  courseTitle={courseData.title}
+                />
+              )}
           </div>
         </header>
 
@@ -583,51 +555,57 @@ const CoursePage = () => {
             -mb-px on each tab so the 2px active border overlaps the parent's 1px
             border (otherwise the active underline sits stacked below the line).
             no-scrollbar keeps the line clean when tabs overflow on mobile. */}
+        <PageTabs ariaLabel="Kursseksjoner" className="mb-8">
+          {tabs.map((t) => (
+            <PageTab
+              key={t.key}
+              active={activeTab === t.key}
+              onClick={() => setActiveTab(t.key)}
+              count={t.count}
+              id={`course-tab-trigger-${t.key}`}
+              ariaControls={`course-tab-${t.key}`}
+            >
+              {t.label}
+            </PageTab>
+          ))}
+        </PageTabs>
+
+        {/* Oversikt panel — at-a-glance state + ops surfaces (publish blocker,
+            kursplan section, drop-in/sen-påmelding toggles). See
+            CourseOverviewTab for the per-state rendering. */}
         <div
-          role="tablist"
-          aria-label="Kursseksjoner"
-          className="border-b border-border flex gap-6 mb-8 overflow-x-auto no-scrollbar"
+          role="tabpanel"
+          id="course-tab-oversikt"
+          aria-labelledby="course-tab-trigger-oversikt"
+          hidden={activeTab !== 'oversikt'}
         >
-          {tabs.map((t) => {
-            const active = activeTab === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                aria-controls={`course-tab-${t.key}`}
-                id={`course-tab-trigger-${t.key}`}
-                tabIndex={active ? 0 : -1}
-                onClick={() => setActiveTab(t.key)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 py-2 -mb-px text-base border-b-2 bg-transparent transition-colors outline-none focus-visible:text-foreground',
-                  active
-                    ? 'font-medium text-foreground border-foreground'
-                    : 'font-normal text-foreground-muted hover:text-foreground border-transparent',
-                )}
-              >
-                {t.label}
-                {typeof t.count === 'number' && t.count > 0 && (
-                  <span className="inline-flex items-center px-[7px] py-px bg-muted text-foreground text-sm font-medium rounded-full tabular-nums">
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          {activeTab === 'oversikt' && (
+            <CourseOverviewTab
+              course={courseData}
+              dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
+              dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
+              allowsDropIn={settingsAllowsDropIn}
+              onAllowsDropInChange={handleToggleDropIn}
+              dropInPrice={settingsDropInPrice}
+              onDropInPriceChange={setSettingsDropInPrice}
+              acceptsLateSignups={settingsAcceptsLateSignups}
+              onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
+              onOpenKursplan={() => setSessionsModalOpen(true)}
+              onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
+            />
+          )}
         </div>
 
-        {/* Detaljer panel — sectioned form using the canonical Studio 3-col
+        {/* Rediger panel — sectioned form using the canonical Studio 3-col
             grid pattern (TeacherProfilePage convention). Section heading on the
             left, fields in a card on the right spanning 2 cols. */}
         <div
           role="tabpanel"
-          id="course-tab-detaljer"
-          aria-labelledby="course-tab-trigger-detaljer"
-          hidden={activeTab !== 'detaljer'}
+          id="course-tab-rediger"
+          aria-labelledby="course-tab-trigger-rediger"
+          hidden={activeTab !== 'rediger'}
         >
-          {activeTab === 'detaljer' && (
+          {activeTab === 'rediger' && (
             <CourseSettingsTab
               settingsTitle={settingsTitle}
               onTitleChange={setSettingsTitle}
@@ -661,16 +639,14 @@ const CoursePage = () => {
               totalWeeks={courseData.totalWeeks || 0}
               price={settingsPrice}
               onPriceChange={setSettingsPrice}
-              allowsDropIn={settingsAllowsDropIn}
-              onAllowsDropInChange={handleToggleDropIn}
-              dropInPrice={settingsDropInPrice}
-              onDropInPriceChange={setSettingsDropInPrice}
-              acceptsLateSignups={settingsAcceptsLateSignups}
-              onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               isDirty={isSettingsDirty}
               saveError={saveError}
               onSave={handleSave}
               onCancel={handleDiscard}
+              courseStatus={courseData.status}
+              onRequestUnpublish={handleUnpublish}
+              onRequestCancel={() => setShowCancelPreview(true)}
+              onRequestDelete={() => setShowDeleteConfirm(true)}
             />
           )}
         </div>
@@ -683,199 +659,132 @@ const CoursePage = () => {
           hidden={activeTab !== 'pameldte'}
         >
           {activeTab === 'pameldte' && (
-            <section className="space-y-4">
-              {/* KPI strip — full-width, three small cards. Label on top
-                  (text-sm muted), value below (text-2xl tabular-nums). No
-                  delta chip; this isn't a hero metric row. */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-sm font-medium text-foreground-muted">Påmeldte</p>
-                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
-                    {participantKpis.confirmed}
-                    {courseData.capacity > 0 && (
-                      <span> / {courseData.capacity}</span>
-                    )}
-                  </p>
-                </div>
-                <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-sm font-medium text-foreground-muted">Avlyste</p>
-                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
-                    {participantKpis.cancelled}
-                  </p>
-                </div>
-                <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-sm font-medium text-foreground-muted">Innbetalt</p>
-                  <p className="mt-1 text-2xl font-medium text-foreground tabular-nums leading-none">
-                    {formatKroner(participantKpis.revenue)}
-                  </p>
-                </div>
-              </div>
+            <section>
+              {/* Minimal table + drawer pattern. Rows show only identity +
+                  flags (note icon, status badge). Click a row to open the
+                  participant drawer with full details + actions. */}
+              {(() => {
+                const isFull =
+                  courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
 
-              {/* List frame — Stripe-style toolbar row inside the frame's
-                  top-right (summary text left, primary action right), then
-                  divided rows below. Frame always renders so the action is
-                  reachable even before the first signup. */}
-              <div className="rounded-lg border border-border overflow-hidden">
-                {(() => {
-                  // Course is full when capacity is set and confirmed signups
-                  // reach it. Capacity 0/null = unlimited, button never disables.
-                  const isFull =
-                    courseData.capacity > 0 && participantKpis.confirmed >= courseData.capacity;
-                  return (
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
-                      <p className="text-base text-foreground-muted">
-                        {participantKpis.confirmed === 0
-                          ? 'Ingen deltakere ennå'
-                          : `${participantKpis.confirmed} ${participantKpis.confirmed === 1 ? 'deltaker' : 'deltakere'}`}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={handleMessageAllParticipants}
-                          disabled={participantEmails.length === 0}
-                        >
-                          <Mail data-icon="inline-start" />
-                          Send melding
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => setIsAddParticipantOpen(true)}
-                          disabled={isFull}
-                          title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Detaljer for å legge til flere.' : undefined}
-                        >
-                          Legg til deltaker
-                        </Button>
-                      </div>
+                // Filter chips — derive counts from participants. 'attention'
+                // groups everything that needs a teacher action (failed/pending
+                // payments, waitlist). 'cancelled' is its own bucket.
+                const visible = sortedParticipants;
+
+                const PARTICIPANT_COLS =
+                  'grid grid-cols-[minmax(0,1fr)_24px] items-center gap-4 ' +
+                  'md:grid-cols-[minmax(0,1fr)_80px_160px_20px] md:gap-8';
+
+                return (
+                  <>
+                    {/* Section header card — count on the left, actions on the
+                        right. Sits above the table card with breathing room so
+                        the summary reads as its own anchored surface, separate
+                        from the table data. */}
+                    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
+                      <span className="text-sm font-medium text-foreground tabular-nums mr-auto">
+                        {courseData.capacity > 0
+                          ? `${participantKpis.confirmed} av ${courseData.capacity} plasser fylt`
+                          : `${participantKpis.confirmed} påmeldt`}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleMessageAllParticipants}
+                        disabled={participantEmails.length === 0}
+                      >
+                        Send melding
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setIsAddParticipantOpen(true)}
+                        disabled={isFull}
+                        title={isFull ? 'Kurset er fullt. Øk kapasiteten i fanen Rediger for å legge til flere.' : undefined}
+                      >
+                        Legg til deltaker
+                      </Button>
                     </div>
-                  );
-                })()}
-                {sortedParticipants.length === 0 ? (
-                  <div className="px-4 py-12 text-center text-base text-foreground-muted">
-                    Deltakere som melder seg på, dukker opp her.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {sortedParticipants.map((p) => {
-                    const name = p.participant_name || p.profile?.name || 'Ukjent';
-                    const email = p.participant_email || p.profile?.email || '';
-                    const status = p.status as SignupStatus;
-                    const paymentStatus = p.payment_status as PaymentStatus;
-                    const isCancelled = status === 'cancelled' || status === 'course_cancelled';
-                    const ticketTag = ticketTagFor(p);
-                    const isHappyPath = paymentStatus === 'paid' && status === 'confirmed';
-                    // Expected price: actual amount paid when known, else the
-                    // ticket type's list price (pending / failed haven't moved
-                    // money yet). Mirrors Stripe / Polar — amount always present.
-                    const expectedPrice =
-                      p.amount_paid != null ? p.amount_paid : p.ticket_type?.price ?? null;
-                    const actionable: ActionableParticipant = {
-                      id: p.id,
-                      participantName: name,
-                      participantEmail: email,
-                      className: courseData.title,
-                      paymentStatus,
-                      amountPaid: p.amount_paid,
-                      status,
-                      exceptionType: exceptionFor(paymentStatus, status),
-                      // Only present for signups that went through the
-                      // integrated payment flow. Manual adds have null here
-                      // — refund actions are gated on this.
-                      dinteroTransactionId: p.dintero_transaction_id,
-                    };
-                    const isNoteOpen = expandedNoteId === p.id;
-                    return (
-                      <div key={p.id} className="px-4">
-                        <div
-                          className={cn(
-                            'grid items-center gap-4 py-3',
-                            'grid-cols-[32px_minmax(0,1fr)_32px] md:grid-cols-[32px_minmax(0,1fr)_auto_32px]',
-                            isCancelled && 'opacity-60',
-                          )}
-                        >
-                          <UserAvatar name={name} email={email} size="sm" />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p
-                                className={cn(
-                                  'text-base font-medium truncate',
-                                  isCancelled ? 'text-foreground-muted' : 'text-foreground',
-                                )}
-                              >
-                                {name}
-                              </p>
-                              {/* Ticket tag — a property of the person, sits
-                                  inline with the name. Keeps the right strip
-                                  reserved for payment state + price only. */}
-                              {ticketTag && (
-                                <Badge variant="outline" shape="pill" size="sm" className="shrink-0">
-                                  {ticketTag}
-                                </Badge>
-                              )}
-                              {p.note && (
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedNoteId(isNoteOpen ? null : p.id)}
-                                  aria-expanded={isNoteOpen}
-                                  className={cn(
-                                    badgeVariants({ variant: 'neutral', shape: 'rect', size: 'sm' }),
-                                    'shrink-0 cursor-pointer text-foreground transition-colors outline-none hover:bg-foreground/10 focus-visible:ring-2 focus-visible:ring-foreground/15',
-                                  )}
-                                >
-                                  <FileText className="size-3" strokeWidth={2} aria-hidden="true" />
-                                  {isNoteOpen ? 'Skjul notat' : 'Les notat'}
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
-                          </div>
-                          {/* Right info strip — reserved for payment state +
-                              price. Ticket tag lives with the identity column
-                              so the two pill types have distinct lanes. */}
-                          <div className="hidden md:flex items-center justify-end gap-4">
-                            {!isHappyPath && (
-                              <SignupStatusBadge status={status} paymentStatus={paymentStatus} />
-                            )}
-                            {expectedPrice != null && (
-                              <span
-                                className={cn(
-                                  'text-base font-medium tabular-nums leading-none w-[72px] text-right',
-                                  paymentStatus === 'refunded'
-                                    ? 'text-foreground-muted line-through decoration-foreground-muted/60'
-                                    : 'text-foreground',
-                                )}
-                              >
-                                {expectedPrice > 0 ? formatKroner(expectedPrice) : 'Gratis'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex justify-end">
-                            <ParticipantActionMenu
-                              signup={actionable}
-                              handlers={{
-                                onCancelEnrollment: handleCancelEnrollment,
-                                onMarkResolved: handleMarkResolved,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        {/* Inline note — aligns with the identity column
-                            (32px avatar + 16px gap = 48px indent). */}
-                        {isNoteOpen && p.note && (
-                          <div className="pb-3 pl-12">
-                            <div className="rounded-md bg-muted px-3 py-2">
-                              <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
-                                {p.note}
-                              </p>
-                            </div>
-                          </div>
-                        )}
+
+                    <div className="rounded-lg border border-border overflow-hidden">
+                      {visible.length === 0 ? (
+                      <div className="px-4 py-12 text-center text-base text-foreground-muted">
+                        {sortedParticipants.length === 0
+                          ? 'Deltakere som melder seg på, dukker opp her.'
+                          : 'Ingen påmeldte i dette filteret.'}
                       </div>
-                    );
-                    })}
-                  </div>
-                )}
-              </div>
+                    ) : (
+                      <div>
+                        {/* Column header — anchored at the leading edge so the
+                            "Navn" label sits above the avatar+name unit. */}
+                        <div className={cn(PARTICIPANT_COLS, 'hidden md:grid px-4 py-3 border-b border-border bg-surface text-sm text-foreground-muted')}>
+                          <span>Navn</span>
+                          <span>Notat</span>
+                          <span>Status</span>
+                          <span aria-hidden />
+                        </div>
+
+                        <div className="divide-y divide-border">
+                          {visible.map((p) => {
+                            const name = p.participant_name || p.profile?.name || 'Ukjent';
+                            const email = p.participant_email || p.profile?.email || '';
+                            const status = p.status as SignupStatus;
+                            const paymentStatus = p.payment_status as PaymentStatus;
+                            const isCancelled = status === 'cancelled' || status === 'course_cancelled';
+                            const isHappyPath = paymentStatus === 'paid' && status === 'confirmed';
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => setSelectedParticipantId(p.id)}
+                                className={cn(
+                                  PARTICIPANT_COLS,
+                                  'w-full text-left px-4 py-3 transition-colors cursor-pointer',
+                                  'hover:bg-muted focus-visible:bg-muted outline-none',
+                                  isCancelled && 'opacity-60',
+                                )}
+                              >
+                                {/* Identity — avatar + name + email as one unit */}
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <UserAvatar name={name} email={email} size="sm" />
+                                  <div className="min-w-0">
+                                    <p
+                                      className={cn(
+                                        'text-base font-medium truncate',
+                                        isCancelled ? 'text-foreground-muted' : 'text-foreground',
+                                      )}
+                                    >
+                                      {name}
+                                    </p>
+                                    <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
+                                  </div>
+                                </div>
+                                {/* Notat — icon only when a note exists, aligned to start to sit under the header. */}
+                                <div className="hidden md:flex items-center justify-start text-foreground">
+                                  {p.note && <FileText className="size-4" aria-label="Har notat" />}
+                                </div>
+                                {/* Status — empty when healthy, badge otherwise */}
+                                <div className="hidden md:flex min-w-0">
+                                  {!isHappyPath && (
+                                    <SignupStatusBadge status={status} paymentStatus={paymentStatus} />
+                                  )}
+                                </div>
+                                {/* Chevron — indicates the row opens a drawer */}
+                                <ChevronRight
+                                  className="size-4 text-foreground-muted shrink-0"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    </div>
+                  </>
+                );
+              })()}
             </section>
           )}
         </div>
@@ -895,6 +804,33 @@ const CoursePage = () => {
         open={showPublishDialog}
         onOpenChange={setShowPublishDialog}
         courseTitle={courseData.title}
+      />
+
+      <SessionsModal
+        open={sessionsModalOpen}
+        onOpenChange={setSessionsModalOpen}
+        sessions={sessions}
+        defaultDurationMinutes={courseData.durationMinutes}
+        onSessionUpdated={refetch}
+      />
+
+      {courseId && (
+        <SendCourseMessageDrawer
+          open={messageDrawerOpen}
+          onOpenChange={setMessageDrawerOpen}
+          courseId={courseId}
+          courseTitle={courseData.title}
+          recipientCount={participantEmails.length}
+        />
+      )}
+
+      <ParticipantDetailDrawer
+        open={selectedParticipantId !== null}
+        onOpenChange={(open) => !open && setSelectedParticipantId(null)}
+        signup={participants.find((p) => p.id === selectedParticipantId) ?? null}
+        courseTitle={courseData.title}
+        onCancelEnrollment={handleCancelEnrollment}
+        onMarkResolved={handleMarkResolved}
       />
 
       <ConfirmDialog
@@ -956,6 +892,21 @@ const CoursePage = () => {
             </span>
           </label>
         ) : null}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        ariaLabel="Slette kurset"
+        headline="Slett kurset permanent?"
+        actionLabel="Slett kurs"
+        loading={isDeletingCourse}
+        loadingText="Sletter"
+        onConfirm={handleDeleteCourse}
+      >
+        <p className="text-base text-foreground-muted">
+          {courseData.title} og all tilhørende data blir fjernet. Dette kan ikke angres.
+        </p>
       </ConfirmDialog>
     </div>
   );

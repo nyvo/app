@@ -218,13 +218,13 @@ function buildTiles(
 
   // Series + started: prorate the package to the sessions that are still
   // ahead. The per-week package rate is price ÷ total_weeks, mirroring the
-  // SQL in available_ticket_types. At ≤1 session left the package is hidden;
-  // drop-in carries the last session if enabled. Teachers can also opt out
-  // entirely via course.accepts_late_signups.
+  // SQL in available_ticket_types. The package stays available down to the
+  // very last session — drop-in shows alongside it when offered. Teachers
+  // opt out entirely via course.accepts_late_signups.
   if (isSeries && seriesStarted) {
     if (
       course.accepts_late_signups
-      && remainingSessions > 1
+      && remainingSessions > 0
       && course.total_weeks
       && course.total_weeks > 0
       && course.price
@@ -233,7 +233,7 @@ function buildTiles(
       tiles.push({
         id: 'main',
         label: 'Kurspakke',
-        sublabel: `${remainingSessions} uker igjen`,
+        sublabel: `${remainingSessions} ${remainingSessions === 1 ? 'uke' : 'uker'} igjen`,
         amount: perWeek * remainingSessions,
       });
     }

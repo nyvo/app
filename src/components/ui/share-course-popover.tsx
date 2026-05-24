@@ -61,7 +61,8 @@ export function ShareCoursePopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {children || (
-          <Button variant="outline-soft" size="sm">
+          <Button size="sm">
+            <Share2 data-icon="inline-start" />
             Del kurs
           </Button>
         )}

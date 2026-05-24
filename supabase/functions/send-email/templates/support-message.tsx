@@ -7,6 +7,13 @@ export interface SupportMessageProps {
   senderEmail: string
   sellerId?: string
   sellerName?: string
+  courseId?: string
+  courseTitle?: string
+  signupId?: string
+  participantName?: string
+  participantEmail?: string
+  signupStatus?: string
+  paymentStatus?: string
   supportSubject: string
   message: string
 }
@@ -22,6 +29,13 @@ export const SupportMessage = ({
   senderEmail,
   sellerId,
   sellerName,
+  courseId,
+  courseTitle,
+  signupId,
+  participantName,
+  participantEmail,
+  signupStatus,
+  paymentStatus,
   supportSubject,
   message,
 }: SupportMessageProps) => (
@@ -54,7 +68,36 @@ export const SupportMessage = ({
       {sellerId ? (
         <>
           <Text style={styles.detailLabel}>Studio-ID</Text>
-          <Text style={styles.detailValueLast}>{sellerId}</Text>
+          <Text style={courseId ? styles.detailValue : styles.detailValueLast}>{sellerId}</Text>
+        </>
+      ) : null}
+
+      {courseId ? (
+        <>
+          <Text style={styles.detailLabel}>Kurs</Text>
+          <Text style={styles.detailValue}>{courseTitle || 'Ikke oppgitt'}</Text>
+
+          <Text style={styles.detailLabel}>Kurs-ID</Text>
+          <Text style={signupId ? styles.detailValue : styles.detailValueLast}>{courseId}</Text>
+        </>
+      ) : null}
+
+      {signupId ? (
+        <>
+          <Text style={styles.detailLabel}>Påmelding</Text>
+          <Text style={styles.detailValue}>{participantName || 'Ikke oppgitt'}</Text>
+
+          <Text style={styles.detailLabel}>Deltaker e-post</Text>
+          <Text style={styles.detailValue}>{participantEmail || 'Ikke oppgitt'}</Text>
+
+          <Text style={styles.detailLabel}>Status</Text>
+          <Text style={styles.detailValue}>{signupStatus || 'Ikke oppgitt'}</Text>
+
+          <Text style={styles.detailLabel}>Betaling</Text>
+          <Text style={styles.detailValue}>{paymentStatus || 'Ikke oppgitt'}</Text>
+
+          <Text style={styles.detailLabel}>Påmelding-ID</Text>
+          <Text style={styles.detailValueLast}>{signupId}</Text>
         </>
       ) : null}
     </Section>
@@ -69,6 +112,13 @@ SupportMessage.PreviewProps = {
   senderEmail: 'marte@example.com',
   sellerId: '5c7db053-e3ca-4902-8f12-6ded280d5034',
   sellerName: 'Lys Yoga',
+  courseId: '3d642fb2-35ca-4e0f-8106-81fa2f5cc50d',
+  courseTitle: 'Vinyasa Flow',
+  signupId: '8f7b9d44-53f1-4f92-a62f-6ee38a7f5f0a',
+  participantName: 'Ola Nordmann',
+  participantEmail: 'ola@example.com',
+  signupStatus: 'confirmed',
+  paymentStatus: 'paid',
   supportSubject: 'Betaling og utbetaling',
   message: 'Hei, jeg får ikke fullført Dintero-oppsettet. Hva bør jeg gjøre?',
 } satisfies SupportMessageProps

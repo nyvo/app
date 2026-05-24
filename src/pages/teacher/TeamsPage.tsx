@@ -3,7 +3,9 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PageTabs, PageTab } from '@/components/ui/page-tabs';
+import { ExternalLink } from '@/lib/icons';
+import { Card, CardContent } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -26,8 +28,17 @@ import type { Seller, Team } from '@/types/database';
 // on signup. All editing is inline — no modals.
 // ---------------------------------------------------------------------------
 
+type StudioTab = 'studio' | 'addresses' | 'team';
+
+const STUDIO_TABS: { key: StudioTab; label: string }[] = [
+  { key: 'studio', label: 'Studiosiden' },
+  { key: 'addresses', label: 'Adresser' },
+  { key: 'team', label: 'Team' },
+];
+
 const TeamsPage = () => {
   const { currentTeam, currentSeller, refreshSellers } = useAuth();
+  const [activeTab, setActiveTab] = useState<StudioTab>('studio');
 
   const publicUrl = currentTeam?.slug
     ? `${window.location.origin}/${currentTeam.slug}`
@@ -49,6 +60,7 @@ const TeamsPage = () => {
           {publicUrl && (
             <Button asChild size="sm" className="shrink-0">
               <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink data-icon="inline-start" />
                 Vis min side
               </a>
             </Button>
@@ -56,31 +68,37 @@ const TeamsPage = () => {
         </div>
 
         {currentTeam ? (
-          <div className="space-y-6">
-            {/* Studiosiden — inline-editable storefront. Leads the page so the
-                user lands on their public-facing identity first. */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Studiosiden</CardTitle>
-                <CardDescription>Slik ser kundene siden din.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {currentSeller && (
-                  <StudioSidenForm
-                    team={currentTeam}
-                    seller={currentSeller}
-                    onSaved={refreshSellers}
-                  />
-                )}
-              </CardContent>
-            </Card>
+          <>
+            <PageTabs ariaLabel="Studio-seksjoner" className="mb-6">
+              {STUDIO_TABS.map(({ key, label }) => (
+                <PageTab
+                  key={key}
+                  active={activeTab === key}
+                  onClick={() => setActiveTab(key)}
+                >
+                  {label}
+                </PageTab>
+              ))}
+            </PageTabs>
 
-            {/* Adresser — physical addresses, still customer-relevant. */}
-            <LocationsSection />
+            {activeTab === 'studio' && (
+              <Card>
+                <CardContent>
+                  {currentSeller && (
+                    <StudioSidenForm
+                      team={currentTeam}
+                      seller={currentSeller}
+                      onSaved={refreshSellers}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Team — members of the studio (business) or studio you belong to (individual). */}
-            <AffiliationsSection />
-          </div>
+            {activeTab === 'addresses' && <LocationsSection />}
+
+            {activeTab === 'team' && <AffiliationsSection />}
+          </>
         ) : (
           <p className="text-base text-foreground-muted">
             Fant ingen studio. Logg ut og inn igjen, eller kontakt

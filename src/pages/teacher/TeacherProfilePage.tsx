@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -172,138 +172,142 @@ const TeacherProfilePage = () => {
             </h1>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-10">
             {/* Personlig informasjon */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Personlig informasjon</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="grid gap-2">
-                    <label
-                      htmlFor="profile-name"
-                      className="text-base font-medium text-foreground"
-                    >
-                      Navn
-                    </label>
-                    <Input
-                      id="profile-name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
+            <section>
+              <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
+                Personlig informasjon
+              </h2>
+              <Card>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="grid gap-2">
+                      <label
+                        htmlFor="profile-name"
+                        className="text-base font-medium text-foreground"
+                      >
+                        Navn
+                      </label>
+                      <Input
+                        id="profile-name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </div>
 
-                  <div className="grid gap-2">
-                    <label
-                      htmlFor="profile-email"
-                      data-error={(errors.email && touched.email) || undefined}
-                      className="text-base font-medium text-foreground data-[error=true]:text-danger"
-                    >
-                      E-post
-                    </label>
-                    <Input
-                      id="profile-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
-                      onBlur={() => handleBlur('email')}
-                      aria-invalid={!!(errors.email && touched.email) || undefined}
-                      aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
-                    />
-                    {errors.email && touched.email && (
-                      <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
-                    )}
+                    <div className="grid gap-2">
+                      <label
+                        htmlFor="profile-email"
+                        data-error={(errors.email && touched.email) || undefined}
+                        className="text-base font-medium text-foreground data-[error=true]:text-danger"
+                      >
+                        E-post
+                      </label>
+                      <Input
+                        id="profile-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); clearError('email'); }}
+                        onBlur={() => handleBlur('email')}
+                        aria-invalid={!!(errors.email && touched.email) || undefined}
+                        aria-describedby={errors.email && touched.email ? 'profile-email-error' : undefined}
+                      />
+                      {errors.email && touched.email && (
+                        <FieldError id="profile-email-error" className="mt-0">{errors.email}</FieldError>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </section>
 
             {/* Konto og sikkerhet */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Konto og sikkerhet</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="divide-y divide-border">
-                  {/* Logg ut alle enheter */}
-                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div>
-                      <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
-                      <span className="text-base block text-foreground-muted">Logger deg ut overalt.</span>
-                    </div>
-                    <Button
-                      variant="outline-soft"
-                      size="sm"
-                      className="ml-4 shrink-0"
-                      onClick={() => setLogoutAllOpen(true)}
-                    >
-                      Logg ut alle
-                    </Button>
-                    <ConfirmDialog
-                      open={logoutAllOpen}
-                      onOpenChange={setLogoutAllOpen}
-                      ariaLabel="Logg ut alle enheter"
-                      headline="Logg ut fra alle enheter?"
-                      actionLabel="Logg ut alle"
-                      onConfirm={handleLogoutAllDevices}
-                      loading={isLoggingOutAll}
-                      loadingText="Logger ut"
-                    >
-                      <p className="text-base text-foreground-muted">
-                        Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
-                      </p>
-                    </ConfirmDialog>
-                  </div>
-
-                  {/* Slett konto */}
-                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div>
-                      <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
-                      <span className="text-base block text-foreground-muted">All data slettes permanent.</span>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="ml-4 shrink-0"
-                      onClick={() => setDeleteOpen(true)}
-                    >
-                      Slett konto
-                    </Button>
-                    <ConfirmDialog
-                      open={deleteOpen}
-                      onOpenChange={(open) => {
-                        setDeleteOpen(open);
-                        if (!open) setDeleteConfirmText('');
-                      }}
-                      ariaLabel="Slett kontoen din"
-                      headline="Slett kontoen din?"
-                      actionLabel="Slett konto"
-                      onConfirm={handleDeleteAccount}
-                      disabled={deleteConfirmText !== 'SLETT'}
-                      loading={isDeletingAccount}
-                      loadingText="Sletter"
-                    >
-                      <p className="text-base text-foreground-muted">
-                        Alle kurs, påmeldinger og meldinger slettes permanent. Dette kan ikke angres.
-                      </p>
-                      <div className="grid gap-2">
-                        <label htmlFor="delete-confirm" className="text-base text-foreground-muted">
-                          Skriv <span className="font-medium text-foreground">SLETT</span> for å bekrefte
-                        </label>
-                        <Input
-                          id="delete-confirm"
-                          value={deleteConfirmText}
-                          onChange={(e) => setDeleteConfirmText(e.target.value)}
-                          autoComplete="off"
-                        />
+            <section>
+              <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
+                Konto og sikkerhet
+              </h2>
+              <Card>
+                <CardContent>
+                  <div className="divide-y divide-border">
+                    {/* Logg ut alle enheter */}
+                    <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                      <div>
+                        <span className="text-base font-medium block text-foreground">Logg ut alle enheter</span>
+                        <span className="text-base block text-foreground-muted">Logger deg ut overalt.</span>
                       </div>
-                    </ConfirmDialog>
+                      <Button
+                        variant="outline-soft"
+                        size="sm"
+                        className="ml-4 shrink-0"
+                        onClick={() => setLogoutAllOpen(true)}
+                      >
+                        Logg ut alle
+                      </Button>
+                      <ConfirmDialog
+                        open={logoutAllOpen}
+                        onOpenChange={setLogoutAllOpen}
+                        ariaLabel="Logg ut alle enheter"
+                        headline="Logg ut fra alle enheter?"
+                        actionLabel="Logg ut alle"
+                        onConfirm={handleLogoutAllDevices}
+                        loading={isLoggingOutAll}
+                        loadingText="Logger ut"
+                      >
+                        <p className="text-base text-foreground-muted">
+                          Du blir logget ut fra alle nettlesere og enheter, inkludert denne.
+                        </p>
+                      </ConfirmDialog>
+                    </div>
+
+                    {/* Slett konto */}
+                    <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                      <div>
+                        <span className="text-base font-medium block text-foreground">Slett kontoen din</span>
+                        <span className="text-base block text-foreground-muted">All data slettes permanent.</span>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="ml-4 shrink-0"
+                        onClick={() => setDeleteOpen(true)}
+                      >
+                        Slett konto
+                      </Button>
+                      <ConfirmDialog
+                        open={deleteOpen}
+                        onOpenChange={(open) => {
+                          setDeleteOpen(open);
+                          if (!open) setDeleteConfirmText('');
+                        }}
+                        ariaLabel="Slett kontoen din"
+                        headline="Slett kontoen din?"
+                        actionLabel="Slett konto"
+                        onConfirm={handleDeleteAccount}
+                        disabled={deleteConfirmText !== 'SLETT'}
+                        loading={isDeletingAccount}
+                        loadingText="Sletter"
+                      >
+                        <p className="text-base text-foreground-muted">
+                          Alle kurs, påmeldinger og meldinger slettes permanent. Dette kan ikke angres.
+                        </p>
+                        <div className="grid gap-2">
+                          <label htmlFor="delete-confirm" className="text-base text-foreground-muted">
+                            Skriv <span className="font-medium text-foreground">SLETT</span> for å bekrefte
+                          </label>
+                          <Input
+                            id="delete-confirm"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            autoComplete="off"
+                          />
+                        </div>
+                      </ConfirmDialog>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </section>
           </div>
 
             {/* Global Footer Save (Sticky on Mobile, Static on Desktop) */}

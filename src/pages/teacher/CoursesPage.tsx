@@ -8,12 +8,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
-import { CourseListView, CourseListSkeleton, COURSES_PER_PAGE, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
+import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
 import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
-import { ChevronDown } from '@/lib/icons';
+import { PageTabs, PageTab } from '@/components/ui/page-tabs';
+import { Plus } from '@/lib/icons';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn, foldNorwegian } from '@/lib/utils';
+import { foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
@@ -100,7 +101,6 @@ const CoursesPage = () => {
   const [viewTab, setViewTab] = useState<ViewTab>('active');
   const [sortKey, setSortKey] = useState<SortKey>('next');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [visibleCount, setVisibleCount] = useState(COURSES_PER_PAGE);
   const [courses, setCourses] = useState<Course[]>([]);
   const [signupsCounts, setSignupsCounts] = useState<Record<string, number>>({});
   const [nextSessionDates, setNextSessionDates] = useState<Record<string, string>>({});
@@ -252,10 +252,6 @@ const CoursesPage = () => {
 
   const showCoursesEmptyState = !isLoading && courses.length === 0 && !error;
 
-  useEffect(() => {
-    setVisibleCount(COURSES_PER_PAGE);
-  }, [viewTab, searchQuery, sortKey, sortDir]);
-
   // When the user switches tab, reset sort to that tab's most useful default.
   useEffect(() => {
     const { key, dir } = DEFAULT_SORT_FOR_TAB[viewTab];
@@ -274,9 +270,7 @@ const CoursesPage = () => {
     setSortDir(key === 'signups' || key === 'price' ? 'desc' : 'asc');
   }, [sortKey]);
 
-  const visibleRows = filteredRows.slice(0, visibleCount);
-  const hasMoreRows = visibleCount < filteredRows.length;
-  const showLoadMore = !isLoading && !error && filteredRows.length > 0 && hasMoreRows;
+  const visibleRows = filteredRows;
 
   const emptyTitle = 'Ingen kurs her';
   const emptyDescription = viewTab === 'past'
@@ -314,6 +308,7 @@ const CoursesPage = () => {
                   )
                 }
               >
+                <Plus data-icon="inline-start" />
                 Opprett kurs
               </Button>
             )}
@@ -327,29 +322,17 @@ const CoursesPage = () => {
             <>
               {/* Toolbar — underline tabs (matches Timeplan), sort + search inline */}
               <div className="mb-5 flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
-                <nav role="tablist" aria-label="Filtrer kurs" className="flex gap-6">
-                  {(['active', 'past'] as const).map((key) => {
-                    const label = key === 'active' ? 'Aktive' : 'Fullførte';
-                    const isActive = viewTab === key;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        onClick={() => setViewTab(key)}
-                        className={cn(
-                          'inline-flex items-center gap-2 py-3 text-base border-b-2 transition-colors duration-150 outline-none focus-visible:text-foreground',
-                          isActive
-                            ? 'font-medium border-foreground text-foreground'
-                            : 'border-transparent text-foreground-muted hover:text-foreground',
-                        )}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </nav>
+                <PageTabs ariaLabel="Filtrer kurs" className="border-b-0">
+                  {(['active', 'past'] as const).map((key) => (
+                    <PageTab
+                      key={key}
+                      active={viewTab === key}
+                      onClick={() => setViewTab(key)}
+                    >
+                      {key === 'active' ? 'Aktive' : 'Fullførte'}
+                    </PageTab>
+                  ))}
+                </PageTabs>
                 <div className="flex w-full items-center gap-2 pb-2 md:w-auto">
                   <SearchInput
                     value={searchQuery}
@@ -402,25 +385,6 @@ const CoursesPage = () => {
                 />
               )}
 
-              {showLoadMore && (
-                <div className="mt-4 grid grid-cols-3 items-center">
-                  <span className="text-sm text-foreground-muted tabular-nums">
-                    Viser {visibleCount} av {filteredRows.length} kurs
-                  </span>
-                  <div className="flex justify-center">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      aria-label={`Vis flere kurs (${filteredRows.length - visibleCount} igjen)`}
-                      title="Vis flere"
-                      onClick={() => setVisibleCount(prev => prev + COURSES_PER_PAGE)}
-                    >
-                      <ChevronDown />
-                    </Button>
-                  </div>
-                  <div aria-hidden="true" />
-                </div>
-              )}
             </>
           )}
         </div>

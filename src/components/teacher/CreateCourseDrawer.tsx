@@ -45,6 +45,7 @@ interface FormErrors {
   startTime?: string;
   endTime?: string;
   weeks?: string;
+  days?: string;
   location?: string;
   capacity?: string;
   price?: string;
@@ -109,6 +110,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [weeks, setWeeks] = useState('');
+  const [days, setDays] = useState('1');
   const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
@@ -131,6 +133,11 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       if (!weeks) e.weeks = 'Skriv inn antall uker';
       else if (isNaN(w) || w < 2 || w > 50) e.weeks = 'Mellom 2 og 50';
     }
+    if (format === 'single') {
+      const d = parseInt(days, 10);
+      if (!days) e.days = 'Skriv inn antall dager';
+      else if (isNaN(d) || d < 1 || d > 10) e.days = 'Mellom 1 og 10';
+    }
     if (!location.trim()) e.location = 'Velg sted';
     const cap = parseInt(capacity, 10);
     if (!capacity) e.capacity = 'Skriv inn antall plasser';
@@ -141,7 +148,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
     }
     return e;
-  }, [title, startDate, startTime, endTime, format, weeks, location, capacity, price]);
+  }, [title, startDate, startTime, endTime, format, weeks, days, location, capacity, price]);
 
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
@@ -155,6 +162,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
     setStartTime('');
     setEndTime('');
     setWeeks('');
+    setDays('1');
     setLocation('');
     setCapacity('');
     setPrice('');
@@ -175,13 +183,23 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
 
     setIsSubmitting(true);
     try {
-      const dayName = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(startDate);
-      const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      const eventDays = format === 'single' ? Math.max(1, parseInt(days, 10) || 1) : 1;
+      const formatWeekday = (date: Date) => {
+        const name = new Intl.DateTimeFormat('nb-NO', { weekday: 'long' }).format(date);
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      };
+      const startDayName = formatWeekday(startDate);
       const timeRange = `${startTime}–${endTime}`;
-      const timeSchedule =
-        format === 'series'
-          ? `${capitalizedDay}er, ${timeRange}`
-          : `${capitalizedDay}, ${timeRange}`;
+      let timeSchedule: string;
+      if (format === 'series') {
+        timeSchedule = `${startDayName}er, ${timeRange}`;
+      } else if (eventDays > 1) {
+        const lastDate = new Date(startDate);
+        lastDate.setDate(startDate.getDate() + eventDays - 1);
+        timeSchedule = `${startDayName}–${formatWeekday(lastDate)}, ${timeRange}`;
+      } else {
+        timeSchedule = `${startDayName}, ${timeRange}`;
+      }
       const duration = timeToMin(endTime) - timeToMin(startTime);
 
       const dbFormat: CourseFormat = format;
@@ -204,7 +222,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           max_participants: parseInt(capacity, 10),
           status: 'draft' as const,
         },
-        { eventDays: format === 'single' ? 1 : undefined },
+        { eventDays: format === 'single' ? eventDays : undefined },
       );
 
       if (error || !created) {
@@ -303,7 +321,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           {/* Dato */}
           <div>
             <label htmlFor="cc-date" className="text-base font-medium mb-2 block text-foreground">
-              {format === 'single' ? 'Dato' : 'Startdato'}
+              {format === 'series' || (parseInt(days, 10) || 1) > 1 ? 'Startdato' : 'Dato'}
             </label>
             <DatePicker
               id="cc-date"
@@ -316,6 +334,33 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
             />
             {showError('startDate') && <FieldError>{errors.startDate}</FieldError>}
           </div>
+
+          {/* Antall dager — only for single events */}
+          {format === 'single' && (
+            <div>
+              <label htmlFor="cc-days" className="text-base font-medium mb-2 block text-foreground">
+                Antall dager
+              </label>
+              <Input
+                id="cc-days"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="10"
+                value={days}
+                onChange={(e) => setDays(e.target.value)}
+                aria-invalid={showError('days') ? 'true' : undefined}
+                aria-required="true"
+                className={cn(showError('days') && 'border-danger focus-visible:ring-danger')}
+              />
+              {!showError('days') && (parseInt(days, 10) || 1) > 1 && (
+                <p className="mt-2 text-base text-foreground-muted">
+                  Går over {parseInt(days, 10)} sammenhengende dager.
+                </p>
+              )}
+              {showError('days') && <FieldError>{errors.days}</FieldError>}
+            </div>
+          )}
 
           {/* Antall uker — only for series */}
           {format === 'series' && (
