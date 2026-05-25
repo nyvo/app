@@ -108,9 +108,11 @@ Deno.serve(async (req: Request) => {
       updated_at: new Date().toISOString(),
     }
     // Only flip status when this is a fresh cancellation. Refund-only on an
-    // already-cancelled signup keeps the existing status.
+    // already-cancelled signup keeps the existing status and preserves the
+    // original cancelled_at.
     if (!alreadyCancelled) {
       updateData.status = 'cancelled'
+      updateData.cancelled_at = new Date().toISOString()
     }
     if (refundSucceeded) {
       updateData.payment_status = 'refunded'

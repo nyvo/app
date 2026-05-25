@@ -286,7 +286,11 @@ Deno.serve(async (req: Request) => {
         // Persist the Dintero transaction id on the attempt
         await supabase
           .from('payment_attempts')
-          .update({ dintero_transaction_id: transaction.id, status: 'authorized' })
+          .update({
+            dintero_transaction_id: transaction.id,
+            status: 'authorized',
+            payment_product: transaction.payment_product ?? null,
+          })
           .eq('id', attempt.id)
 
         const amountNok = transaction.amount / 100
@@ -326,6 +330,7 @@ Deno.serve(async (req: Request) => {
               dintero_transaction_id: transaction.id,
               dintero_session_id: attempt.dintero_session_id ?? payload.sessionId ?? null,
               dintero_merchant_reference: merchantReference,
+              payment_product: transaction.payment_product ?? null,
               payment_status: 'paid',
               amount_paid: amountNok,
               status: 'confirmed',
@@ -378,6 +383,7 @@ Deno.serve(async (req: Request) => {
           p_dintero_merchant_reference: merchantReference,
           p_course_session_id: attempt.course_session_id,
           p_note: attempt.note ?? null,
+          p_payment_product: transaction.payment_product ?? null,
         })
 
         if (!signupResult || !signupResult.success) {
@@ -479,7 +485,7 @@ Deno.serve(async (req: Request) => {
         // surfacing.
         const { data: signupBefore } = await supabase
           .from('signups')
-          .select('id, seller_id, course_id, participant_name, participant_email, refunded_at')
+          .select('id, seller_id, course_id, participant_name, participant_email, refunded_at, cancelled_at')
           .eq('dintero_transaction_id', transaction.id)
           .maybeSingle()
 
@@ -490,6 +496,10 @@ Deno.serve(async (req: Request) => {
           .update({
             payment_status: 'refunded',
             status: 'cancelled',
+            // App-initiated refund: signup is already cancelled with its
+            // original cancelled_at — preserve it. Dintero-initiated refund
+            // (compliance reversal): no prior cancellation, stamp now.
+            cancelled_at: signupBefore?.cancelled_at ?? new Date().toISOString(),
             refund_amount: refundAmountNok,
             refunded_at: new Date().toISOString(),
           })

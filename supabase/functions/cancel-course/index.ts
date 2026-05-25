@@ -141,6 +141,7 @@ Deno.serve(async (req: Request) => {
           .from('signups')
           .update({
             status: 'course_cancelled',
+            cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', signup.id)
@@ -178,6 +179,7 @@ Deno.serve(async (req: Request) => {
             .from('signups')
             .update({
               status: 'course_cancelled',
+              cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
               payment_status: 'refunded',
               refund_amount: signup.amount_paid || 0,
               refunded_at: new Date().toISOString(),
@@ -203,6 +205,7 @@ Deno.serve(async (req: Request) => {
             .from('signups')
             .update({
               status: 'course_cancelled',
+              cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
               payment_status: 'voided',
               updated_at: new Date().toISOString(),
             })
@@ -225,6 +228,7 @@ Deno.serve(async (req: Request) => {
         .from('signups')
         .update({
           status: 'course_cancelled',
+          cancelled_at: signup.cancelled_at ?? new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', signup.id)

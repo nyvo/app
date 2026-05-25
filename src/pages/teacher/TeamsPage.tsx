@@ -5,7 +5,6 @@ import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { ExternalLink } from '@/lib/icons';
-import { Card, CardContent } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
@@ -43,6 +42,8 @@ const TeamsPage = () => {
   const publicUrl = currentTeam?.slug
     ? `${window.location.origin}/${currentTeam.slug}`
     : null;
+  const collaborationTabLabel =
+    currentSeller?.seller_type === 'business' ? 'Instruktører' : 'Studioside';
 
   return (
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
@@ -76,28 +77,24 @@ const TeamsPage = () => {
                   active={activeTab === key}
                   onClick={() => setActiveTab(key)}
                 >
-                  {label}
+                  {key === 'team' ? collaborationTabLabel : label}
                 </PageTab>
               ))}
             </PageTabs>
 
-            {activeTab === 'studio' && (
-              <Card>
-                <CardContent>
-                  {currentSeller && (
-                    <StudioSidenForm
-                      team={currentTeam}
-                      seller={currentSeller}
-                      onSaved={refreshSellers}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            <div className="max-w-3xl">
+              {activeTab === 'studio' && currentSeller && (
+                <StudioSidenForm
+                  team={currentTeam}
+                  seller={currentSeller}
+                  onSaved={refreshSellers}
+                />
+              )}
 
-            {activeTab === 'addresses' && <LocationsSection />}
+              {activeTab === 'addresses' && <LocationsSection />}
 
-            {activeTab === 'team' && <AffiliationsSection />}
+              {activeTab === 'team' && <AffiliationsSection />}
+            </div>
           </>
         ) : (
           <p className="text-base text-foreground-muted">

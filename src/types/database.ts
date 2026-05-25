@@ -405,6 +405,7 @@ export type Database = {
           participant_email: string
           participant_name: string
           participant_phone: string | null
+          payment_product: string | null
           seller_id: string
           service_fee_nok: number
           status: string
@@ -432,6 +433,7 @@ export type Database = {
           participant_email: string
           participant_name: string
           participant_phone?: string | null
+          payment_product?: string | null
           seller_id: string
           service_fee_nok?: number
           status?: string
@@ -459,6 +461,7 @@ export type Database = {
           participant_email?: string
           participant_name?: string
           participant_phone?: string | null
+          payment_product?: string | null
           seller_id?: string
           service_fee_nok?: number
           status?: string
@@ -710,6 +713,7 @@ export type Database = {
         Row: {
           amount_paid: number | null
           buyer_id: string | null
+          cancelled_at: string | null
           confirmation_sent_at: string | null
           course_id: string
           course_session_id: string | null
@@ -723,6 +727,7 @@ export type Database = {
           participant_email: string
           participant_name: string
           participant_phone: string | null
+          payment_product: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           refund_amount: number | null
           refunded_at: string | null
@@ -737,6 +742,7 @@ export type Database = {
         Insert: {
           amount_paid?: number | null
           buyer_id?: string | null
+          cancelled_at?: string | null
           confirmation_sent_at?: string | null
           course_id: string
           course_session_id?: string | null
@@ -750,6 +756,7 @@ export type Database = {
           participant_email: string
           participant_name: string
           participant_phone?: string | null
+          payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           refund_amount?: number | null
           refunded_at?: string | null
@@ -764,6 +771,7 @@ export type Database = {
         Update: {
           amount_paid?: number | null
           buyer_id?: string | null
+          cancelled_at?: string | null
           confirmation_sent_at?: string | null
           course_id?: string
           course_session_id?: string | null
@@ -777,6 +785,7 @@ export type Database = {
           participant_email?: string
           participant_name?: string
           participant_phone?: string | null
+          payment_product?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           refund_amount?: number | null
           refunded_at?: string | null

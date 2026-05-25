@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -9,9 +9,29 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge, type badgeVariants } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { VariantProps } from 'class-variance-authority';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
 import { formatKroner, cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import {
+  Calendar,
+  CalendarPlus,
+  CreditCard,
+  Mail,
+  Phone,
+  RefreshCw,
+  Ticket,
+  Wallet,
+  XCircle,
+  type LucideIcon,
+} from '@/lib/icons';
 import type { SignupWithProfile } from '@/services/signups';
 import type { PaymentStatus, SignupStatus, TicketAudience } from '@/types/database';
 
@@ -51,16 +71,30 @@ function formatNorwegianDateTime(input: string | null | undefined): string {
   return `${datePart} kl. ${timePart}`;
 }
 
+function formatNorwegianShort(input: string | null | undefined): string {
+  if (!input) return '';
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return '';
+  const datePart = new Intl.DateTimeFormat('nb-NO', {
+    day: 'numeric',
+    month: 'short',
+  }).format(d);
+  const timePart = new Intl.DateTimeFormat('nb-NO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+  return `${datePart}, kl. ${timePart}`;
+}
+
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>['variant']>;
 
-// Signup status — only the signup lifecycle, no payment info.
 function signupBadge(status: SignupStatus): { label: string; variant: BadgeVariant } {
   if (status === 'cancelled') return { label: 'Avbestilt', variant: 'neutral' };
   if (status === 'course_cancelled') return { label: 'Kurs avlyst', variant: 'warning' };
   return { label: 'Påmeldt', variant: 'success' };
 }
 
-// Payment status — only the money state, no signup context.
 function paymentBadge(status: PaymentStatus): { label: string; variant: BadgeVariant } {
   if (status === 'paid') return { label: 'Betalt', variant: 'success' };
   if (status === 'pending') return { label: 'Venter', variant: 'warning' };
@@ -68,16 +102,111 @@ function paymentBadge(status: PaymentStatus): { label: string; variant: BadgeVar
   return { label: 'Refundert', variant: 'neutral' };
 }
 
+// Map Dintero's `payment_product` slug (e.g. `payex.creditcard`, `vipps.vipps`)
+// to a display label. Unknown products fall back to a humanised tail segment
+// so new Dintero offerings don't render as blank.
+function paymentMethodLabel(product: string | null | undefined): string | null {
+  if (!product) return null;
+  const map: Record<string, string> = {
+    'vipps.vipps': 'Vipps',
+    'payex.creditcard': 'Kort',
+    'payex.visa': 'Visa',
+    'payex.mastercard': 'Mastercard',
+    'payex.applepay': 'Apple Pay',
+    'payex.googlepay': 'Google Pay',
+    'payex.swish': 'Swish',
+    'instabank.finance': 'Instabank',
+    'instabank.invoice': 'Instabank faktura',
+    'instabank.installment': 'Instabank delbetaling',
+    'collectorbank.invoice': 'Walley faktura',
+    'collectorbank.partpayment': 'Walley delbetaling',
+  };
+  if (map[product]) return map[product];
+  const tail = product.split('.').pop() ?? product;
+  return tail.charAt(0).toUpperCase() + tail.slice(1);
+}
+
 function ticketLabel(
   kind: SignupWithProfile['ticket_kind_snapshot'],
   audience: SignupWithProfile['ticket_audience_snapshot'],
 ): string {
   if (kind === 'drop_in') return 'Drop-in';
-  // Package — append audience qualifier only when notable.
   if (audience && audience !== 'standard') {
     return `Kursrekke — ${AUDIENCE_LABEL[audience].toLowerCase()}`;
   }
   return 'Kursrekke';
+}
+
+type ActivityEvent = {
+  icon: LucideIcon;
+  label: string;
+  timestamp: string;
+};
+
+function buildActivity(signup: SignupWithProfile): ActivityEvent[] {
+  const events: ActivityEvent[] = [];
+
+  const isPaid =
+    signup.payment_status === 'paid' && !!signup.amount_paid && signup.amount_paid > 0;
+
+  // Dintero embedded checkout creates the signup row *after* capture, so
+  // payment and signup confirmation are atomic. Showing them as separate
+  // events implies a lifecycle that doesn't exist in our model. Collapse
+  // into one truthful finalisation event.
+  //
+  // A signup is "separable" (signup pre-existed payment) only when paid
+  // without a Dintero transaction id — i.e. teacher used "Merk som betalt"
+  // on a row that was pending. Payment-link flows are rare enough that
+  // joining payment_attempts to detect them isn't worth the cost.
+  const paidAtomically = isPaid && !!signup.dintero_transaction_id;
+
+  if (signup.created_at) {
+    events.push({
+      icon: paidAtomically ? CreditCard : CalendarPlus,
+      label: paidAtomically
+        ? 'Betaling mottatt og påmelding bekreftet'
+        : 'Påmelding bekreftet',
+      timestamp: formatNorwegianShort(signup.created_at),
+    });
+  }
+
+  // Separate payment event only when the signup existed before payment —
+  // i.e. manually marked paid (no Dintero txn id). updated_at is the
+  // teacher's action timestamp in that case.
+  if (isPaid && !paidAtomically) {
+    events.push({
+      icon: CreditCard,
+      label: 'Betaling mottatt',
+      timestamp: formatNorwegianShort(signup.updated_at ?? signup.created_at),
+    });
+  }
+
+  if (signup.refunded_at) {
+    events.push({
+      icon: RefreshCw,
+      label: signup.refund_amount
+        ? `Refundert · ${formatKroner(signup.refund_amount)}`
+        : 'Refundert',
+      timestamp: formatNorwegianShort(signup.refunded_at),
+    });
+  }
+
+  if (signup.status === 'cancelled') {
+    events.push({
+      icon: XCircle,
+      label: 'Påmelding avbestilt',
+      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
+    });
+  } else if (signup.status === 'course_cancelled') {
+    events.push({
+      icon: XCircle,
+      label: 'Kurs avlyst',
+      timestamp: formatNorwegianShort(signup.cancelled_at ?? signup.updated_at),
+    });
+  }
+
+  // Newest first reads more naturally for an activity log.
+  return events.reverse();
 }
 
 export function ParticipantDetailDrawer({
@@ -91,10 +220,16 @@ export function ParticipantDetailDrawer({
   const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [loading, setLoading] = useState(false);
 
+  const activity = useMemo(
+    () => (signup ? buildActivity(signup) : []),
+    [signup],
+  );
+
   if (!signup) return null;
 
   const name = signup.participant_name || signup.profile?.name || 'Ukjent';
   const email = signup.participant_email || signup.profile?.email || '';
+  const phone = signup.participant_phone || '';
   const status = signup.status as SignupStatus;
   const paymentStatus = signup.payment_status as PaymentStatus;
   const isCancelled = status === 'cancelled' || status === 'course_cancelled';
@@ -103,13 +238,13 @@ export function ParticipantDetailDrawer({
   const canRefund = isPaid && !!signup.dintero_transaction_id;
   const canMarkResolved = paymentStatus === 'pending' || paymentStatus === 'failed';
 
-  // Expected price: actual amount paid when present, else ticket type list price.
-  // Same logic as the table — keeps display amount stable across states.
   const expectedPrice =
     signup.amount_paid != null ? signup.amount_paid : signup.ticket_type?.price ?? null;
-  // Strike-through only when the money is actually gone (refunded). A cancelled
-  // signup with kept payment is NOT struck — the studio still has that money.
   const priceStrike = paymentStatus === 'refunded';
+  const paymentMethod = paymentMethodLabel(signup.payment_product);
+
+  const signupB = signupBadge(status);
+  const paymentB = paymentBadge(paymentStatus);
 
   const runAction = async (fn: () => Promise<void>) => {
     setLoading(true);
@@ -121,130 +256,214 @@ export function ParticipantDetailDrawer({
     }
   };
 
+  const copyToClipboard = async (value: string, kind: 'e-post' | 'telefonnummer') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${kind === 'e-post' ? 'E-post' : 'Telefonnummer'} kopiert`);
+    } catch {
+      toast.error('Kunne ikke kopiere');
+    }
+  };
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="sm:max-w-[440px] p-0 gap-0">
+        <SheetContent side="right" className="sm:max-w-[440px] p-0 gap-0 bg-background">
+          {/* Header — avatar + identity. Close X is provided by SheetContent. */}
           <SheetHeader className="px-6 py-5 border-b border-border-subtle">
             <SheetTitle className="sr-only">Deltakerdetaljer</SheetTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3 pr-10">
               <UserAvatar name={name} email={email} size="lg" />
-              <div className="min-w-0">
-                <p className="text-lg font-medium tracking-tight text-foreground leading-tight truncate">
+              <div className="min-w-0 pt-0.5">
+                <p className="text-base font-medium tracking-tight text-foreground leading-snug truncate">
                   {name}
                 </p>
-                <p className="text-base text-foreground-muted truncate mt-0.5">{email}</p>
+                {email && (
+                  <p className="text-sm text-foreground-muted truncate mt-0.5">{email}</p>
+                )}
               </div>
             </div>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <dl className="space-y-1">
-              <DetailRow label="Påmeldt" value={formatNorwegianDateTime(signup.created_at)} />
-              <DetailRow
-                label="Billett"
-                value={ticketLabel(signup.ticket_kind_snapshot, signup.ticket_audience_snapshot)}
-              />
-              <DetailRow
-                label="Påmelding"
-                value={
-                  (() => {
-                    const b = signupBadge(status);
-                    return <Badge variant={b.variant} shape="pill" size="sm">{b.label}</Badge>;
-                  })()
-                }
-              />
-              <DetailRow
-                label="Betaling"
-                value={
-                  (() => {
-                    const b = paymentBadge(paymentStatus);
-                    return <Badge variant={b.variant} shape="pill" size="sm">{b.label}</Badge>;
-                  })()
-                }
-              />
-              {expectedPrice != null && (
-                <DetailRow
-                  label="Beløp"
-                  value={
-                    <span
-                      className={cn(
-                        'tabular-nums font-medium',
-                        priceStrike && 'text-foreground-muted line-through decoration-foreground-muted/60',
-                      )}
-                    >
-                      {expectedPrice > 0 ? formatKroner(expectedPrice) : 'Gratis'}
-                    </span>
-                  }
-                />
-              )}
-            </dl>
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+            {/* Status mini-cards */}
+            <div className="grid grid-cols-2 gap-3">
+              <StatusTile label="Påmelding">
+                <Badge variant={signupB.variant} shape="pill" size="sm">{signupB.label}</Badge>
+              </StatusTile>
+              <StatusTile label="Betaling">
+                <Badge variant={paymentB.variant} shape="pill" size="sm">{paymentB.label}</Badge>
+              </StatusTile>
+            </div>
 
-            {signup.note && (
-              <div className="mt-6 pt-5 border-t border-border-subtle">
-                <p className="text-sm text-foreground-muted mb-2">Notat fra deltakeren</p>
-                <div className="rounded-md bg-muted px-3 py-2.5">
-                  <p className="text-base text-foreground whitespace-pre-wrap leading-relaxed">
+            {/* Detail card — sections divided by hairline rules */}
+            <div className="rounded-xl border border-border bg-surface divide-y divide-border-subtle">
+              <Section title="Påmeldingsdetaljer">
+                <DetailRow
+                  icon={Calendar}
+                  label="Påmeldt"
+                  value={formatNorwegianDateTime(signup.created_at)}
+                />
+                <DetailRow
+                  icon={Ticket}
+                  label="Billett"
+                  value={ticketLabel(signup.ticket_kind_snapshot, signup.ticket_audience_snapshot)}
+                />
+              </Section>
+
+              {expectedPrice != null && (
+                <Section title="Betaling">
+                  <DetailRow
+                    icon={Wallet}
+                    label="Beløp"
+                    value={
+                      <span
+                        className={cn(
+                          'tabular-nums font-medium text-foreground',
+                          priceStrike &&
+                            'text-foreground-muted line-through decoration-foreground-muted/60',
+                        )}
+                      >
+                        {expectedPrice > 0 ? formatKroner(expectedPrice) : 'Gratis'}
+                      </span>
+                    }
+                  />
+                  {paymentMethod && (
+                    <DetailRow
+                      icon={CreditCard}
+                      label="Metode"
+                      value={paymentMethod}
+                    />
+                  )}
+                  {signup.refund_amount != null && signup.refund_amount > 0 && (
+                    <DetailRow
+                      icon={RefreshCw}
+                      label="Refundert"
+                      value={
+                        <span className="tabular-nums text-foreground-muted">
+                          {formatKroner(signup.refund_amount)}
+                        </span>
+                      }
+                    />
+                  )}
+                </Section>
+              )}
+
+              {(email || phone) && (
+                <Section title="Kontakt">
+                  {email && <DetailRow icon={Mail} label="E-post" value={email} />}
+                  {phone && <DetailRow icon={Phone} label="Telefon" value={phone} />}
+                </Section>
+              )}
+
+              {signup.note && (
+                <Section title="Notat fra deltakeren">
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                     {signup.note}
                   </p>
-                </div>
+                </Section>
+              )}
+            </div>
+
+            {/* Activity log */}
+            {activity.length > 0 && (
+              <div className="rounded-xl border border-border bg-surface p-5">
+                <h3 className="text-sm font-medium text-foreground mb-4">Aktivitetslogg</h3>
+                <ol className="space-y-3.5">
+                  {activity.map((event, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <span
+                        className="size-7 rounded-full bg-muted text-foreground-muted flex items-center justify-center shrink-0"
+                        aria-hidden="true"
+                      >
+                        <event.icon className="size-3.5" />
+                      </span>
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <p className="text-sm text-foreground leading-tight">{event.label}</p>
+                        <p className="text-xs text-foreground-muted mt-1">{event.timestamp}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
           </div>
 
-          {/* Footer renders when there's anything actionable. A cancelled
-              signup with kept payment is actionable (refund-only). */}
-          {(!isCancelled || canRefund) && (
-            <SheetFooter className="flex-col gap-2 px-6 py-4 border-t border-border-subtle sm:flex-col">
-              {!isCancelled && canMarkResolved && (
-                <Button
-                  size="sm"
-                  className="w-full"
-                  disabled={loading}
-                  onClick={() => setConfirmKind('resolve')}
-                >
-                  Merk som betalt
-                </Button>
-              )}
-              {!isCancelled && canRefund && (
+          {/* Footer — single dropdown trigger */}
+          <SheetFooter className="px-6 py-4 border-t border-border-subtle">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
                   className="w-full"
                   disabled={loading}
-                  onClick={() => setConfirmKind('cancel-with-refund')}
                 >
-                  Avbestill og refunder
+                  Handlinger
                 </Button>
-              )}
-              {isCancelled && canRefund && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  disabled={loading}
-                  onClick={() => setConfirmKind('refund-only')}
-                >
-                  Refunder beløp
-                </Button>
-              )}
-              {!isCancelled && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-danger hover:text-danger"
-                disabled={loading}
-                onClick={() => setConfirmKind('cancel-no-refund')}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                side="top"
+                sideOffset={8}
+                className="w-[var(--radix-dropdown-menu-trigger-width)]"
               >
-                Avbestill påmelding
-              </Button>
-              )}
-            </SheetFooter>
-          )}
+                {email && (
+                  <DropdownMenuItem onSelect={() => copyToClipboard(email, 'e-post')}>
+                    Kopier e-post
+                  </DropdownMenuItem>
+                )}
+                {phone && (
+                  <DropdownMenuItem onSelect={() => copyToClipboard(phone, 'telefonnummer')}>
+                    Kopier telefonnummer
+                  </DropdownMenuItem>
+                )}
+
+                {!isCancelled && canMarkResolved && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setConfirmKind('resolve')}>
+                      Merk som betalt
+                    </DropdownMenuItem>
+                  </>
+                )}
+
+                {!isCancelled && canRefund && (
+                  <>
+                    {!canMarkResolved && <DropdownMenuSeparator />}
+                    <DropdownMenuItem onSelect={() => setConfirmKind('cancel-with-refund')}>
+                      Avbestill og refunder
+                    </DropdownMenuItem>
+                  </>
+                )}
+
+                {isCancelled && canRefund && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setConfirmKind('refund-only')}>
+                      Refunder beløp
+                    </DropdownMenuItem>
+                  </>
+                )}
+
+                {!isCancelled && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setConfirmKind('cancel-no-refund')}
+                    >
+                      Avbestill påmelding
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
 
-      {/* Confirm: cancel without refund */}
       <ConfirmDialog
         open={confirmKind === 'cancel-no-refund'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
@@ -266,7 +485,6 @@ export function ParticipantDetailDrawer({
         }}
       />
 
-      {/* Confirm: cancel + refund (active signup) */}
       <ConfirmDialog
         open={confirmKind === 'cancel-with-refund'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
@@ -286,7 +504,6 @@ export function ParticipantDetailDrawer({
         }}
       />
 
-      {/* Confirm: refund only (already-cancelled signup with kept payment) */}
       <ConfirmDialog
         open={confirmKind === 'refund-only'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
@@ -302,25 +519,19 @@ export function ParticipantDetailDrawer({
         actionLabel="Refunder"
         onConfirm={() => {
           setConfirmKind(null);
-          // Reuse the cancel-enrollment service with refund=true; the edge
-          // function detects the already-cancelled state and processes
-          // refund-only without changing the signup status.
+          // Reuse cancel-enrollment with refund=true; the edge function
+          // detects the already-cancelled state and processes refund-only
+          // without changing the signup status.
           runAction(() => onCancelEnrollment(signup.id, true));
         }}
       />
 
-      {/* Confirm: mark resolved */}
       <ConfirmDialog
         open={confirmKind === 'resolve'}
         onOpenChange={(o) => !o && setConfirmKind(null)}
         ariaLabel="Merk som betalt"
         headline="Merk påmeldingen som betalt?"
-        scope={
-          <ConfirmScopeItem
-            name={name}
-            meta={`${email} · ${courseTitle}`}
-          />
-        }
+        scope={<ConfirmScopeItem name={name} meta={`${email} · ${courseTitle}`} />}
         actionLabel="Merk som betalt"
         onConfirm={() => {
           setConfirmKind(null);
@@ -331,17 +542,46 @@ export function ParticipantDetailDrawer({
   );
 }
 
+function StatusTile({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <h3 className="text-sm font-medium text-foreground">{label}</h3>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="p-5">
+      <h3 className="text-sm font-medium text-foreground mb-3">{title}</h3>
+      <div className="space-y-3">{children}</div>
+    </section>
+  );
+}
+
 function DetailRow({
+  icon: Icon,
   label,
   value,
 }: {
+  icon: LucideIcon;
   label: string;
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2">
-      <dt className="text-base text-foreground-muted">{label}</dt>
-      <dd className="text-base text-foreground text-right capitalize-first">{value}</dd>
+    <div className="flex items-start gap-3">
+      <Icon className="size-4 text-foreground-muted shrink-0 mt-0.5" aria-hidden="true" />
+      <dt className="text-sm text-foreground-muted shrink-0">{label}</dt>
+      <dd className="text-sm text-foreground ml-auto text-right min-w-0 break-words">
+        {value}
+      </dd>
     </div>
   );
 }

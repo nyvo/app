@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { X, Check, MapPin, ChevronRight } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { badgeVariants } from '@/components/ui/badge';
-import { Card, CardAction, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import {
@@ -71,13 +70,15 @@ export function LocationsSection() {
   const visibleLocations = locations.filter((l) => !hiddenIds.has(l.id));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Adresser</CardTitle>
-        <CardDescription>
-          Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
-        </CardDescription>
-        <CardAction>
+    <section className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Adresser</h2>
+          <p className="mt-1 text-sm text-foreground-muted">
+            Steder du bruker ofte, så du kan velge dem raskt når du oppretter kurs.
+          </p>
+        </div>
+        <div className="shrink-0">
           <Button
             variant="secondary"
             size="sm"
@@ -85,18 +86,17 @@ export function LocationsSection() {
           >
             Legg til sted
           </Button>
-        </CardAction>
-      </CardHeader>
+        </div>
+      </div>
+
       {visibleLocations.length > 0 && (
-        <CardContent>
-          <div className="overflow-hidden rounded-lg bg-muted">
-            <ul className="divide-y divide-border">
-              {visibleLocations.map((loc) => (
-                <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
-              ))}
-            </ul>
-          </div>
-        </CardContent>
+        <div className="overflow-hidden rounded-md border border-border bg-surface">
+          <ul className="divide-y divide-border">
+            {visibleLocations.map((loc) => (
+              <LocationRow key={loc.id} location={loc} onEdit={() => openEdit(loc)} />
+            ))}
+          </ul>
+        </div>
       )}
 
       <LocationDrawer
@@ -107,7 +107,7 @@ export function LocationsSection() {
         onSaved={refetch}
         onDelete={handleDelete}
       />
-    </Card>
+    </section>
   );
 }
 

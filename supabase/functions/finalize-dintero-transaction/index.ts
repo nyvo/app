@@ -173,6 +173,7 @@ Deno.serve(async (req: Request) => {
           dintero_transaction_id: transactionId,
           dintero_session_id: attempt.dintero_session_id ?? null,
           dintero_merchant_reference: merchantReference,
+          payment_product: transaction.payment_product ?? null,
           payment_status: 'paid',
           amount_paid: amountNok,
           status: 'confirmed',
@@ -182,7 +183,11 @@ Deno.serve(async (req: Request) => {
 
       await supabase
         .from('payment_attempts')
-        .update({ status: 'captured', dintero_transaction_id: transactionId })
+        .update({
+          status: 'captured',
+          dintero_transaction_id: transactionId,
+          payment_product: transaction.payment_product ?? null,
+        })
         .eq('id', attempt.id)
 
       await deliverBookingConfirmations(supabase, attempt.existing_signup_id, attempt, amountNok)
@@ -214,6 +219,7 @@ Deno.serve(async (req: Request) => {
       p_dintero_merchant_reference: merchantReference,
       p_course_session_id: attempt.course_session_id,
       p_note: attempt.note ?? null,
+      p_payment_product: transaction.payment_product ?? null,
     })
 
     if (!signupResult || !signupResult.success) {
@@ -273,7 +279,11 @@ Deno.serve(async (req: Request) => {
 
     await supabase
       .from('payment_attempts')
-      .update({ status: 'captured', dintero_transaction_id: transactionId })
+      .update({
+        status: 'captured',
+        dintero_transaction_id: transactionId,
+        payment_product: transaction.payment_product ?? null,
+      })
       .eq('id', attempt.id)
 
     await deliverBookingConfirmations(supabase, signupResult.signup_id, attempt, amountNok)

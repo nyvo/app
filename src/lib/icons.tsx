@@ -128,6 +128,7 @@ export {
   Smile,
   Star,
   StickyNote,
+  Ticket,
   Trash2,
   TriangleAlert,
   Undo2,

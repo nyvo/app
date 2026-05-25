@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Check, Copy, ImageIcon, MoreVertical } from '@/lib/icons';
-import { Badge } from '@/components/ui/badge';
+import { Check, Copy, ExternalLink, ImageIcon, MoreVertical, UserPlus } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
@@ -16,7 +14,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { runWithUndo } from '@/lib/undo';
 import { friendlyError } from '@/lib/error-messages';
 import { cn } from '@/lib/utils';
-import { fetchTeamMembers, revokeAffiliation, type TeamMember } from '@/services/affiliations';
+import {
+  fetchTeamAffiliates,
+  revokeAffiliation,
+  type OutgoingAffiliate,
+} from '@/services/affiliations';
 import {
   fetchActiveInviteLink,
   createInviteLink,
@@ -25,18 +27,17 @@ import { supabase } from '@/lib/supabase';
 import type { TeamInviteLink } from '@/types/database';
 
 // ---------------------------------------------------------------------------
-// Team UI — split by seller type.
+// Studio-page display UI — split by seller type.
 //
 // Business / studio (owner side):
-//   - Invite link panel: copyable link + "Lag ny lenke".
-//   - Members table: Eier + Medlems with kebab to Fjern medlem.
+//   - Invite link.
+//   - Instructors whose courses show on this studio page.
 //
 // Individual teacher (member side):
-//   - Active team header: cover + name + URL.
-//   - Same members table read-only.
-//   - "Forlat team" button below the table.
+//   - The studio page their courses show on.
+//   - "Stopp visning" action.
 //
-// Empty state for individuals: "Du har ikke et team enda."
+// Empty state for individuals: courses are not shown on a studio page.
 // ---------------------------------------------------------------------------
 
 export function AffiliationsSection() {
@@ -54,74 +55,92 @@ export function AffiliationsSection() {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Business view — invite link + members table + manage actions
+// Business view — invite link + connected instructors
 // ───────────────────────────────────────────────────────────────────────────
 
 function BusinessView({ teamId }: { teamId: string }) {
-  const [members, setMembers] = useState<TeamMember[] | null>(null);
-  const [loadingMembers, setLoadingMembers] = useState(true);
+  const [affiliates, setAffiliates] = useState<OutgoingAffiliate[] | null>(null);
+  const [loadingAffiliates, setLoadingAffiliates] = useState(true);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   const refresh = useCallback(async () => {
-    setLoadingMembers(true);
-    const { data } = await fetchTeamMembers(teamId);
-    setMembers(data);
-    setLoadingMembers(false);
+    setLoadingAffiliates(true);
+    const { data } = await fetchTeamAffiliates(teamId);
+    setAffiliates(data);
+    setLoadingAffiliates(false);
   }, [teamId]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const handleRevoke = (member: TeamMember) => {
+  const handleRevoke = (affiliate: OutgoingAffiliate) => {
     runWithUndo({
-      message: `${member.name} ble fjernet fra teamet`,
-      hide: () => setHiddenIds((prev) => new Set(prev).add(member.sellerId)),
+      message: `${affiliate.seller.name} vises ikke lenger på studiosiden`,
+      hide: () => setHiddenIds((prev) => new Set(prev).add(affiliate.seller_id)),
       restore: () =>
         setHiddenIds((prev) => {
           const next = new Set(prev);
-          next.delete(member.sellerId);
+          next.delete(affiliate.seller_id);
           return next;
         }),
       commit: async () => {
-        const { error } = await revokeAffiliation({ teamId, sellerId: member.sellerId });
+        const { error } = await revokeAffiliation({ teamId, sellerId: affiliate.seller_id });
         if (!error) await refresh();
         return { error };
       },
       errorOf: (r) => r.error,
-      errorMessage: 'Kunne ikke fjerne medlem',
+      errorMessage: 'Kunne ikke fjerne instruktør',
     });
   };
 
-  const visibleMembers = members?.filter((m) => !hiddenIds.has(m.sellerId)) ?? null;
-  const hasAffiliates = !!visibleMembers?.some((m) => m.role === 'member');
+  const visibleAffiliates =
+    affiliates?.filter((affiliate) =>
+      affiliate.status === 'active' && !hiddenIds.has(affiliate.seller_id)
+    ) ?? null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Team</CardTitle>
-        <CardDescription>
-          Inviter andre instruktører til å vise kursene sine på studiosiden din.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
+    <section className="space-y-6">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">Instruktører</h2>
+        <p className="mt-1 text-sm text-foreground-muted">
+          Legg til instruktører hvis kurs skal vises på studiosiden din.
+        </p>
+      </div>
+
+      <div className="space-y-8">
+        <section>
+          <div className="mb-3">
+            <h3 className="text-sm font-medium text-foreground">Invitasjonslenke</h3>
+            <p className="mt-1 text-sm text-foreground-muted">
+              Send denne til instruktøren.
+            </p>
+          </div>
           <InviteLinkPanel teamId={teamId} />
-          {hasAffiliates && (
-            <MembersTable
-              members={visibleMembers}
-              loading={loadingMembers}
-              kebabFor={(m) => (m.role === 'owner' ? null : (
-                <MemberActionsMenu member={m} onRevoke={() => handleRevoke(m)} />
-              ))}
-            />
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </section>
+
+        <section className="border-t border-border pt-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-medium text-foreground">Instruktører på studiosiden</h3>
+            {visibleAffiliates === null ? (
+              <Skeleton className="h-5 w-16" aria-hidden="true" />
+            ) : (
+              <span className="text-sm text-foreground-muted">
+                {formatInstructorCount(visibleAffiliates.length)}
+              </span>
+            )}
+          </div>
+          <AffiliatesList
+            affiliates={visibleAffiliates}
+            loading={loadingAffiliates}
+            onRevoke={handleRevoke}
+          />
+        </section>
+      </div>
+    </section>
   );
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Individual view — host team header + read-only members table + leave action
+// Individual view — where the teacher's courses are shown
 // ───────────────────────────────────────────────────────────────────────────
 
 interface HostTeam {
@@ -133,14 +152,12 @@ interface HostTeam {
 
 function IndividualView({ sellerId }: { sellerId: string }) {
   const [host, setHost] = useState<HostTeam | null | undefined>(undefined);
-  const [members, setMembers] = useState<TeamMember[] | null>(null);
-  const [loadingMembers, setLoadingMembers] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
   const loadHost = useCallback(async () => {
-    // The individual's "active team" = the team they have an active
-    // affiliation with. With single-team enforcement, this is at most one.
+    // The teacher's active studio connection. With single-team enforcement,
+    // this is at most one.
     const { data, error } = await supabase
       .from('team_affiliations')
       .select('team_id, team:teams!inner(id, slug, name, cover_image_url)')
@@ -157,17 +174,7 @@ function IndividualView({ sellerId }: { sellerId: string }) {
     setHost(t);
   }, [sellerId]);
 
-  const loadMembers = useCallback(async (teamId: string) => {
-    setLoadingMembers(true);
-    const { data } = await fetchTeamMembers(teamId);
-    setMembers(data);
-    setLoadingMembers(false);
-  }, []);
-
   useEffect(() => { void loadHost(); }, [loadHost]);
-  useEffect(() => {
-    if (host?.id) void loadMembers(host.id);
-  }, [host?.id, loadMembers]);
 
   const handleLeave = async () => {
     if (!host) return;
@@ -176,85 +183,99 @@ function IndividualView({ sellerId }: { sellerId: string }) {
     setLeaving(false);
     setConfirmLeave(false);
     if (error) {
-      toast.error(friendlyError(error, 'Kunne ikke forlate teamet.'));
+      toast.error(friendlyError(error, 'Kunne ikke stoppe visning.'));
       return;
     }
-    toast.success('Du har forlatt teamet');
+    toast.success('Kursene dine vises ikke lenger på studioet');
     setHost(null);
-    setMembers(null);
   };
 
+  const hostUrl = host ? `${window.location.origin}/${host.slug}` : null;
+  const hostDisplayUrl = host ? `${window.location.host}/${host.slug}` : null;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Team</CardTitle>
-        <CardDescription>
-          Studioet du er medlem av. Alle kursene dine vises automatisk.
-        </CardDescription>
-        {host && (
-          <CardAction>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setConfirmLeave(true)}
-            >
-              Forlat team
+    <section className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Studioside</h2>
+          <p className="mt-1 text-sm text-foreground-muted">
+            Her ser du om kursene dine vises på en studioside.
+          </p>
+        </div>
+        {host && hostUrl && (
+          <div className="shrink-0">
+            <Button asChild variant="secondary" size="sm">
+              <a href={hostUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink data-icon="inline-start" />
+                Vis studiosiden
+              </a>
             </Button>
-          </CardAction>
+          </div>
         )}
-      </CardHeader>
-      <CardContent>
-        {host === undefined ? (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-10 rounded-md" />
-              <div className="min-w-0 space-y-1.5">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-56 max-w-full" />
-              </div>
+      </div>
+
+      {host === undefined ? (
+        <div className="rounded-md border border-border bg-surface p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-10 rounded-md" />
+            <div className="min-w-0 space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-56 max-w-full" />
             </div>
-            <MembersTableSkeleton />
+            <Skeleton className="ml-auto h-5 w-14 rounded-full" />
           </div>
-        ) : host === null ? (
-          <div className="rounded-md border border-dashed border-border p-8 text-center">
-            <p className="text-base font-medium text-foreground">Du har ikke et team ennå</p>
-            <p className="text-base text-foreground-muted mt-1 max-w-xs mx-auto">
-              Be studioet om en invitasjonslenke, eller åpne lenken du har fått.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Host team header */}
-            <div className="flex items-center gap-3">
+        </div>
+      ) : host === null ? (
+        <div className="rounded-md border border-dashed border-border p-8 text-center">
+          <p className="text-base font-medium text-foreground">Kursene dine vises ikke på en studioside</p>
+          <p className="text-base text-foreground-muted mt-1 max-w-xs mx-auto">
+            Åpne en invitasjonslenke fra et studio for å vise kursene dine der.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-md border border-border bg-surface">
+            <div className="flex items-center gap-3 p-4">
               <HostCover url={host.cover_image_url} />
               <div className="min-w-0">
                 <p className="text-base font-medium text-foreground truncate">{host.name}</p>
-                <p className="text-sm text-foreground-muted truncate">
-                  {window.location.host}/{host.slug}
-                </p>
+                <p className="text-sm text-foreground-muted truncate">{hostDisplayUrl}</p>
               </div>
             </div>
-
-            <MembersTable members={members} loading={loadingMembers} />
-
-            <ConfirmDialog
-              open={confirmLeave}
-              onOpenChange={setConfirmLeave}
-              ariaLabel="Forlat team"
-              headline={`Forlat ${host.name}?`}
-              actionLabel="Forlat team"
-              onConfirm={handleLeave}
-              loading={leaving}
-              loadingText="Forlater"
-            >
-              <p className="text-base text-foreground-muted">
-                Kursene dine forsvinner fra studio-siden. Du kan inviteres på nytt senere.
+            <div className="border-t border-border px-4 py-3">
+              <p className="text-sm text-foreground-muted">
+                Alle aktive kurs vises på denne studiosiden.
               </p>
-            </ConfirmDialog>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          <div className="border-t border-border pt-6">
+            <Button
+              variant="plain"
+              className="text-danger hover:text-danger"
+              onClick={() => setConfirmLeave(true)}
+            >
+              Stopp visning
+            </Button>
+          </div>
+
+          <ConfirmDialog
+            open={confirmLeave}
+            onOpenChange={setConfirmLeave}
+            ariaLabel="Stopp visning"
+            headline={`Stopp visning på ${host.name}?`}
+            actionLabel="Stopp visning"
+            onConfirm={handleLeave}
+            loading={leaving}
+            loadingText="Stopper"
+          >
+            <p className="text-base text-foreground-muted">
+              Kursene dine fjernes fra studiosiden. Du kan koble deg til igjen med en ny invitasjonslenke.
+            </p>
+          </ConfirmDialog>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -274,50 +295,95 @@ function HostCover({ url }: { url: string | null }) {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Members table primitive — reused by both views
+// Instructor list primitive — studio side only
 // ───────────────────────────────────────────────────────────────────────────
 
-function MembersTable({
-  members,
+function AffiliatesList({
+  affiliates,
   loading,
-  kebabFor,
+  onRevoke,
 }: {
-  members: TeamMember[] | null;
+  affiliates: OutgoingAffiliate[] | null;
   loading: boolean;
-  kebabFor?: (m: TeamMember) => React.ReactNode;
+  onRevoke: (affiliate: OutgoingAffiliate) => void;
 }) {
-  if (loading || members === null) {
-    return <MembersTableSkeleton />;
+  if (loading || affiliates === null) {
+    return <AffiliatesListSkeleton />;
   }
-  const hasKebab = !!kebabFor;
-  const gridCols = hasKebab ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]';
+
+  if (affiliates.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-border p-6 text-center">
+        <UserPlus className="mx-auto mb-3 size-5 text-foreground-muted" aria-hidden="true" />
+        <p className="text-base font-medium text-foreground">Ingen instruktører tilknyttet ennå</p>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-foreground-muted">
+          Send invitasjonslenken til en instruktør for å vise kursene deres her.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ul className="rounded-md border border-border bg-surface overflow-hidden">
-      {members.map((m, i) => (
+      {affiliates.map((affiliate, i) => (
         <li
-          key={m.sellerId}
-          className={cn('grid items-center gap-4 px-4 py-3', gridCols, i > 0 && 'border-t border-border')}
-        >
-          <div className="min-w-0">
-            <p className="text-base font-medium text-foreground truncate">{m.name}</p>
-          </div>
-          {m.role === 'owner' ? (
-            <Badge variant="inverted" shape="pill">Eier</Badge>
-          ) : (
-            <Badge variant="neutral" shape="pill">Medlem</Badge>
+          key={affiliate.seller_id}
+          className={cn(
+            'grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3',
+            i > 0 && 'border-t border-border',
           )}
-          {hasKebab && (kebabFor!(m) ?? <span className="w-9" aria-hidden="true" />)}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <InstructorAvatar name={affiliate.seller.name} url={affiliate.seller.logo_url} />
+            <div className="min-w-0">
+              <p className="text-base font-medium text-foreground truncate">{affiliate.seller.name}</p>
+              <p className="text-sm text-foreground-muted truncate">
+                Kurs vises på studiosiden
+              </p>
+            </div>
+          </div>
+          <InstructorActionsMenu onRevoke={() => onRevoke(affiliate)} />
         </li>
       ))}
     </ul>
   );
 }
 
-function MemberActionsMenu({
-  member: _member,
+function InstructorAvatar({ name, url }: { name: string; url: string | null }) {
+  if (url) {
+    return (
+      <div className="size-10 shrink-0 overflow-hidden rounded-full bg-muted">
+        <img src={url} alt="" className="size-full object-cover" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-foreground">
+      {initialsForName(name)}
+    </div>
+  );
+}
+
+function formatInstructorCount(count: number) {
+  return count === 1 ? '1 instruktør' : `${count} instruktører`;
+}
+
+function initialsForName(name: string) {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function InstructorActionsMenu({
   onRevoke,
 }: {
-  member: TeamMember;
   onRevoke: () => void;
 }) {
   return (
@@ -329,7 +395,7 @@ function MemberActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onRevoke}>
-          Fjern medlem
+          Fjern fra studiosiden
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -454,7 +520,7 @@ function InviteLinkPanel({ teamId }: { teamId: string }) {
 // Misc
 // ───────────────────────────────────────────────────────────────────────────
 
-function MembersTableSkeleton() {
+function AffiliatesListSkeleton() {
   return (
     <ul
       className="rounded-md border border-border bg-surface overflow-hidden"
@@ -471,9 +537,12 @@ function MembersTableSkeleton() {
           )}
           aria-hidden="true"
         >
-          <div className="min-w-0 space-y-1.5">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-56 max-w-full" />
+          <div className="flex min-w-0 items-center gap-3">
+            <Skeleton className="size-10 rounded-full" />
+            <div className="min-w-0 space-y-1.5">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-56 max-w-full" />
+            </div>
           </div>
           <Skeleton className="h-5 w-14 rounded-full" />
         </li>
