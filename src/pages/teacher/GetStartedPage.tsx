@@ -2,9 +2,9 @@ import { Link, Navigate } from 'react-router-dom'
 import { Check } from '@/lib/icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons'
-import { motion } from 'framer-motion'
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader'
-import { pageTransition, pageVariants } from '@/lib/motion'
+import { PageShell } from '@/components/teacher/PageShell'
+import { Card } from '@/components/ui/card'
 import { routes } from '@/lib/routes'
 import { useSellerSetupStatus } from '@/hooks/use-seller-setup-status'
 import { cn } from '@/lib/utils'
@@ -22,23 +22,16 @@ export default function GetStartedPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Kom i gang" />
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
-        <motion.div
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-        >
-          <header className="mb-8 flex items-baseline justify-between gap-4">
-            <h1 className="text-2xl font-medium tracking-tight text-foreground">
-              Kom i gang
-            </h1>
-            <p className="text-base text-foreground-muted tabular-nums">
-              {completedCount} av {totalCount} fullført
-            </p>
-          </header>
-
-          <div className="overflow-hidden rounded-lg border border-border">
+      <PageShell
+        width="form"
+        title="Kom i gang"
+        action={
+          <p className="text-base text-foreground-muted tabular-nums">
+            {completedCount} av {totalCount} fullført
+          </p>
+        }
+      >
+        <Card className="overflow-hidden p-0 gap-0">
             {steps.map((step, index) => {
               const isLast = index === steps.length - 1
               const rowClass = cn(
@@ -87,9 +80,8 @@ export default function GetStartedPage() {
                 </button>
               )
             })}
-          </div>
-        </motion.div>
-      </div>
+        </Card>
+      </PageShell>
     </div>
   )
 }

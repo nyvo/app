@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Check } from '@/lib/icons';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import {
@@ -161,17 +160,7 @@ const PaymentsPage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Betalingskonto" />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
-      >
-        <div className="mb-12 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">Betalingskonto</h1>
-        </div>
-
+      <PageShell width="form" title="Betalingskonto">
         <div className="space-y-8">
           {/* ─── State 1: Not started — minimal onboarding form ─── */}
           {!hasApproval && !isConnected && (
@@ -182,32 +171,36 @@ const PaymentsPage = () => {
                   Vi bruker Dintero til å håndtere utbetalinger. Du fullfører oppsettet hos dem.
                 </p>
               </div>
-              <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
-                <div className="grid gap-2">
-                  <label
-                    htmlFor="organizationNumber"
-                    className="text-base font-medium text-foreground"
-                  >
-                    Organisasjonsnummer
-                  </label>
-                  <Input
-                    id="organizationNumber"
-                    inputMode="numeric"
-                    pattern="\d{9}"
-                    placeholder="9 siffer"
-                    value={form.organizationNumber}
-                    onChange={(e) =>
-                      setForm({ ...form, organizationNumber: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="flex items-center justify-end pt-2">
-                  <Button type="submit" loading={submitting} loadingText="Oppretter">
-                    Fortsett til Dintero
-                  </Button>
-                </div>
-              </form>
+              <Card>
+                <CardContent>
+                  <form className="space-y-4" onSubmit={handleSubmitOnboarding}>
+                    <div className="grid gap-2">
+                      <label
+                        htmlFor="organizationNumber"
+                        className="text-base font-medium text-foreground"
+                      >
+                        Organisasjonsnummer
+                      </label>
+                      <Input
+                        id="organizationNumber"
+                        inputMode="numeric"
+                        pattern="\d{9}"
+                        placeholder="9 siffer"
+                        value={form.organizationNumber}
+                        onChange={(e) =>
+                          setForm({ ...form, organizationNumber: e.target.value })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="flex items-center justify-end pt-2">
+                      <Button type="submit" loading={submitting} loadingText="Oppretter">
+                        Fortsett til Dintero
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
             </section>
           )}
 
@@ -284,7 +277,7 @@ const PaymentsPage = () => {
             </section>
           )}
         </div>
-      </motion.div>
+      </PageShell>
     </main>
   );
 };

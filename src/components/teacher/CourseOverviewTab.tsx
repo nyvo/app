@@ -1,11 +1,15 @@
 import { useRef, useState } from 'react';
-import { AlertCircle, Clock } from '@/lib/icons';
+import { Clock } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MappedCourse } from '@/hooks/use-course-detail';
+import {
+  PublishChecklist,
+  type ChecklistItemKey,
+} from '@/components/teacher/PublishChecklist';
 
 interface CourseOverviewTabProps {
   course: MappedCourse;
@@ -21,8 +25,11 @@ interface CourseOverviewTabProps {
   onAcceptsLateSignupsChange: (next: boolean) => void;
   /** Opens the Kursplan modal — used by Kommende/Pågår and Ferdig. */
   onOpenKursplan: () => void;
-  /** Routes to /innstillinger/utbetaling. Used when the blocker banner CTA is clicked. */
+  /** Routes to /innstillinger/utbetaling. Used by the Dintero checklist row. */
   onSetupDinteroClick: () => void;
+  /** Caller decides what each checklist row navigates to (image/description/
+   *  location → Rediger tab; dintero → onSetupDinteroClick). */
+  onJumpToField: (key: ChecklistItemKey) => void;
 }
 
 const WAITING_STATUSES = new Set([
@@ -54,6 +61,7 @@ export function CourseOverviewTab({
   onAcceptsLateSignupsChange,
   onOpenKursplan,
   onSetupDinteroClick,
+  onJumpToField,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
   const status = course.status;
@@ -63,11 +71,6 @@ export function CourseOverviewTab({
     !dinteroOnboardingComplete &&
     dinteroOnboardingStatus !== null &&
     WAITING_STATUSES.has(dinteroOnboardingStatus);
-
-  const isBlockedByDintero =
-    status === 'draft' &&
-    !dinteroOnboardingComplete &&
-    !isWaitingForDintero;
 
   const showTogglesCard = status === 'draft' || status === 'upcoming' || status === 'active';
   const showKursplanCard = isSeries && (status === 'upcoming' || status === 'active');
@@ -87,11 +90,36 @@ export function CourseOverviewTab({
         />
       )}
 
-      {isBlockedByDintero && (
-        <WarningBanner
-          title="Sett opp utbetaling før du publiserer."
-          sub="Kurset kan ikke ta imot påmeldinger før det er koblet til Dintero."
-          action={{ label: 'Sett opp utbetaling', onClick: onSetupDinteroClick }}
+      {status === 'draft' && (
+        <PublishChecklist
+          items={[
+            {
+              key: 'image',
+              title: 'Legg til et bilde',
+              description: 'Anbefalt, men ikke påkrevd for publisering.',
+              done: !!course.imageUrl,
+              required: false,
+            },
+            {
+              key: 'description',
+              title: 'Skriv en kort beskrivelse',
+              description: 'Hva får deltakerne ut av kurset?',
+              done: !!course.description,
+            },
+            {
+              key: 'location',
+              title: 'Velg sted',
+              description: 'Adressen vises på kurssiden og i bekreftelsen.',
+              done: !!course.location,
+            },
+            {
+              key: 'dintero',
+              title: 'Sett opp utbetaling',
+              description: 'Påkrevd for å ta imot påmeldinger.',
+              done: dinteroOnboardingComplete,
+            },
+          ]}
+          onItemClick={onJumpToField}
         />
       )}
 
@@ -145,18 +173,6 @@ interface BannerProps {
   title: string;
   sub: string;
   action?: { label: string; onClick: () => void };
-}
-
-function WarningBanner({ title, sub, action }: BannerProps) {
-  return (
-    <BaseBanner
-      title={title}
-      sub={sub}
-      action={action}
-      tone="warning"
-      icon={<AlertCircle className="size-5" />}
-    />
-  );
 }
 
 function InfoBanner({ title, sub, action }: BannerProps) {

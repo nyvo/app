@@ -12,7 +12,6 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import {
   Select,
   SelectContent,
@@ -21,10 +20,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
-import { LocationCombobox } from '@/components/ui/location-combobox';
 import { SegmentedTabs } from '@/components/teacher/SegmentedTabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocations } from '@/hooks/use-locations';
 import { createCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
@@ -46,7 +43,6 @@ interface FormErrors {
   endTime?: string;
   weeks?: string;
   days?: string;
-  location?: string;
   capacity?: string;
   price?: string;
 }
@@ -67,51 +63,31 @@ function timeToMin(t: string): number {
   return h * 60 + m;
 }
 
-function normalizeTeacherName(value: string): string {
-  return value
-    .trim()
-    .replace(/\s+/g, ' ')
-    .split(' ')
-    .map((part) =>
-      part
-        .split('-')
-        .map((piece) => {
-          const trimmed = piece.trim();
-          if (!trimmed) return '';
-          return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-        })
-        .join('-')
-    )
-    .filter(Boolean)
-    .join(' ');
-}
-
 const ALL_TIME_SLOTS = generateTimeSlots();
 
 /**
  * Quick-create drawer — the minimum viable course. Required fields
- * (type, title, date, time, location, capacity, price) get the teacher to
- * a draft course in under a minute. Description is optional and inline so
- * the teacher can write the storefront copy in the same pass. Cover image
- * and additional ticket tiers still live on the full course page at
- * /courses/:id where the user lands after creation.
+ * (type, title, date, time, capacity, price) get the teacher to a draft
+ * course in under a minute. Description, cover image, instructor, and
+ * location are deferred to the course page at /courses/:id, where the
+ * PublishChecklist surfaces what's still needed before publishing.
  */
 export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerProps) {
   const navigate = useNavigate();
   const { currentSeller } = useAuth();
-  const { locations } = useLocations(currentSeller?.id);
-  const showInstructorField = currentSeller?.seller_type === 'business';
+
+  // Quick-create captures only the saveable-as-draft minimum (type, title,
+  // dates, time, capacity, price). Description, image, instructor, and
+  // location are deferred to the course detail page where the teacher
+  // works against the real shape of the course, not a drawer form.
 
   const [format, setFormat] = useState<FormatType>('single');
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [instructorName, setInstructorName] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [weeks, setWeeks] = useState('');
   const [days, setDays] = useState('1');
-  const [location, setLocation] = useState('');
   const [capacity, setCapacity] = useState('');
   const [price, setPrice] = useState('');
 
@@ -138,7 +114,6 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       if (!days) e.days = 'Skriv inn antall dager';
       else if (isNaN(d) || d < 1 || d > 10) e.days = 'Mellom 1 og 10';
     }
-    if (!location.trim()) e.location = 'Velg sted';
     const cap = parseInt(capacity, 10);
     if (!capacity) e.capacity = 'Skriv inn antall plasser';
     else if (isNaN(cap) || cap < 1) e.capacity = 'Må være minst 1';
@@ -148,7 +123,7 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
       if (isNaN(pri) || pri < 0) e.price = 'Må være 0 eller mer';
     }
     return e;
-  }, [title, startDate, startTime, endTime, format, weeks, days, location, capacity, price]);
+  }, [title, startDate, startTime, endTime, format, weeks, days, capacity, price]);
 
   const isValid = Object.keys(errors).length === 0;
   const showError = (field: keyof FormErrors) => submitAttempted && !!errors[field];
@@ -156,14 +131,11 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   const reset = () => {
     setFormat('single');
     setTitle('');
-    setDescription('');
-    setInstructorName('');
     setStartDate(undefined);
     setStartTime('');
     setEndTime('');
     setWeeks('');
     setDays('1');
-    setLocation('');
     setCapacity('');
     setPrice('');
     setSubmitAttempted(false);
@@ -207,14 +179,16 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
         {
           seller_id: currentSeller.id,
           title: title.trim(),
-          description: description.trim() || null,
-          instructor_name: showInstructorField ? (normalizeTeacherName(instructorName) || null) : null,
+          // Description, image, instructor, location are filled in on the
+          // course detail page after creation — see PublishChecklist.
+          description: null,
+          instructor_name: null,
           format: dbFormat,
           start_date: formatLocalDateKey(startDate),
           time_schedule: timeSchedule,
           duration,
           total_weeks: format === 'series' ? parseInt(weeks, 10) : null,
-          location: location.trim(),
+          location: null,
           price:
             format === 'series'
               ? (parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0)
@@ -254,255 +228,216 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-          {/* Type — Enkeltkurs / Kursserie */}
-          <div>
-            <label className="text-base font-medium mb-2 block text-foreground">
-              Type
-            </label>
-            <SegmentedTabs<FormatType>
-              value={format}
-              onChange={setFormat}
-              tabs={[
-                { key: 'single', label: 'Enkeltkurs' },
-                { key: 'series', label: 'Kursserie' },
-              ]}
-              ariaLabel="Type"
-              stretch
-            />
-          </div>
-
-          {/* Tittel */}
-          <div>
-            <label htmlFor="cc-title" className="text-base font-medium mb-2 block text-foreground">
-              Tittel
-            </label>
-            <Input
-              id="cc-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              aria-invalid={showError('title') ? 'true' : undefined}
-              aria-required="true"
-              className={cn(showError('title') && 'border-danger focus-visible:ring-danger')}
-            />
-            {showError('title') && <FieldError>{errors.title}</FieldError>}
-          </div>
-
-          {/* Beskrivelse — optional, can be edited later on the course page */}
-          <div>
-            <label id="cc-description-label" className="text-base font-medium mb-2 block text-foreground">
-              Beskrivelse
-            </label>
-            <RichTextEditor
-              id="cc-description"
-              aria-labelledby="cc-description-label"
-              value={description}
-              onChange={setDescription}
-            />
-          </div>
-
-          {showInstructorField && (
+        <div className="flex-1 overflow-y-auto px-6">
+          {/* Sections divided by hairline rules; the section headings were
+              dropped in favor of just spacing + a divider — fewer words on
+              screen, same scannable grouping. */}
+          <div className="divide-y divide-border-subtle">
+          <FormSection>
             <div>
-              <label htmlFor="cc-instructor" className="text-base font-medium mb-2 block text-foreground">
-                Instruktør
-              </label>
-              <Input
-                id="cc-instructor"
-                type="text"
-                value={instructorName}
-                onChange={(e) => setInstructorName(e.target.value)}
-                onBlur={() => setInstructorName((value) => normalizeTeacherName(value))}
-                placeholder="Kari Nordmann"
+              <FieldLabel>Type</FieldLabel>
+              <SegmentedTabs<FormatType>
+                value={format}
+                onChange={setFormat}
+                tabs={[
+                  { key: 'single', label: 'Enkeltkurs' },
+                  { key: 'series', label: 'Kursserie' },
+                ]}
+                ariaLabel="Type"
+                stretch
               />
             </div>
-          )}
 
-          {/* Dato */}
-          <div>
-            <label htmlFor="cc-date" className="text-base font-medium mb-2 block text-foreground">
-              {format === 'series' || (parseInt(days, 10) || 1) > 1 ? 'Startdato' : 'Dato'}
-            </label>
-            <DatePicker
-              id="cc-date"
-              value={startDate}
-              onChange={setStartDate}
-              error={!!showError('startDate')}
-              placeholder="Velg dato"
-              fromDate={new Date()}
-              aria-invalid={showError('startDate') ? 'true' : undefined}
-            />
-            {showError('startDate') && <FieldError>{errors.startDate}</FieldError>}
-          </div>
-
-          {/* Antall dager — only for single events */}
-          {format === 'single' && (
             <div>
-              <label htmlFor="cc-days" className="text-base font-medium mb-2 block text-foreground">
-                Antall dager
-              </label>
+              <FieldLabel htmlFor="cc-title">
+                Tittel
+              </FieldLabel>
               <Input
-                id="cc-days"
+                id="cc-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                aria-invalid={showError('title') ? 'true' : undefined}
+                aria-required="true"
+                className={cn(showError('title') && 'border-danger focus-visible:ring-danger')}
+              />
+              {showError('title') && <FieldError>{errors.title}</FieldError>}
+            </div>
+          </FormSection>
+
+          <FormSection>
+            <div>
+              <FieldLabel htmlFor="cc-date">
+                {format === 'series' || (parseInt(days, 10) || 1) > 1 ? 'Startdato' : 'Dato'}
+              </FieldLabel>
+              <DatePicker
+                id="cc-date"
+                value={startDate}
+                onChange={setStartDate}
+                error={!!showError('startDate')}
+                placeholder="Velg dato"
+                fromDate={new Date()}
+                aria-invalid={showError('startDate') ? 'true' : undefined}
+              />
+              {showError('startDate') && <FieldError>{errors.startDate}</FieldError>}
+            </div>
+
+            {format === 'single' && (
+              <div>
+                <FieldLabel htmlFor="cc-days">
+                  Antall dager
+                </FieldLabel>
+                <Input
+                  id="cc-days"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="10"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                  aria-invalid={showError('days') ? 'true' : undefined}
+                  aria-required="true"
+                  className={cn(showError('days') && 'border-danger focus-visible:ring-danger')}
+                />
+                {!showError('days') && (parseInt(days, 10) || 1) > 1 && (
+                  <p className="mt-2 text-base text-foreground-muted">
+                    Går over {parseInt(days, 10)} sammenhengende dager.
+                  </p>
+                )}
+                {showError('days') && <FieldError>{errors.days}</FieldError>}
+              </div>
+            )}
+
+            {format === 'series' && (
+              <div>
+                <FieldLabel htmlFor="cc-weeks">
+                  Antall uker
+                </FieldLabel>
+                <Input
+                  id="cc-weeks"
+                  type="number"
+                  inputMode="numeric"
+                  min="2"
+                  max="50"
+                  value={weeks}
+                  onChange={(e) => setWeeks(e.target.value)}
+                  aria-invalid={showError('weeks') ? 'true' : undefined}
+                  aria-required="true"
+                  className={cn(showError('weeks') && 'border-danger focus-visible:ring-danger')}
+                />
+                {showError('weeks') && <FieldError>{errors.weeks}</FieldError>}
+              </div>
+            )}
+
+            <div>
+              <FieldLabel>Tidspunkt</FieldLabel>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={startTime}
+                  onValueChange={(v) => {
+                    setStartTime(v);
+                    if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('');
+                  }}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      'w-full',
+                      showError('startTime') && 'border-danger focus-visible:ring-danger',
+                    )}
+                    aria-label="Starttid"
+                    aria-invalid={showError('startTime') ? 'true' : undefined}
+                  >
+                    <SelectValue placeholder="Start" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {ALL_TIME_SLOTS.map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span aria-hidden="true" className="shrink-0 text-base font-medium text-foreground-muted">
+                  –
+                </span>
+                <Select value={endTime} onValueChange={setEndTime}>
+                  <SelectTrigger
+                    className={cn(
+                      'w-full',
+                      showError('endTime') && 'border-danger focus-visible:ring-danger',
+                    )}
+                    aria-label="Sluttid"
+                    aria-invalid={showError('endTime') ? 'true' : undefined}
+                  >
+                    <SelectValue placeholder="Slutt" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {ALL_TIME_SLOTS.filter(
+                      (slot) => !startTime || timeToMin(slot) > timeToMin(startTime),
+                    ).map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {showError('startTime') && <FieldError>{errors.startTime}</FieldError>}
+              {!showError('startTime') && showError('endTime') && (
+                <FieldError>{errors.endTime}</FieldError>
+              )}
+            </div>
+          </FormSection>
+
+          <FormSection>
+            <div>
+              <FieldLabel htmlFor="cc-capacity">
+                Antall plasser
+              </FieldLabel>
+              <Input
+                id="cc-capacity"
                 type="number"
                 inputMode="numeric"
                 min="1"
-                max="10"
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-                aria-invalid={showError('days') ? 'true' : undefined}
+                value={capacity}
+                onChange={(e) => setCapacity(e.target.value)}
+                aria-invalid={showError('capacity') ? 'true' : undefined}
                 aria-required="true"
-                className={cn(showError('days') && 'border-danger focus-visible:ring-danger')}
+                className={cn(showError('capacity') && 'border-danger focus-visible:ring-danger')}
               />
-              {!showError('days') && (parseInt(days, 10) || 1) > 1 && (
-                <p className="mt-2 text-base text-foreground-muted">
-                  Går over {parseInt(days, 10)} sammenhengende dager.
-                </p>
-              )}
-              {showError('days') && <FieldError>{errors.days}</FieldError>}
+              {showError('capacity') && <FieldError>{errors.capacity}</FieldError>}
             </div>
-          )}
 
-          {/* Antall uker — only for series */}
-          {format === 'series' && (
             <div>
-              <label htmlFor="cc-weeks" className="text-base font-medium mb-2 block text-foreground">
-                Antall uker
-              </label>
+              <FieldLabel htmlFor="cc-price">
+                {format === 'series' ? 'Pris per gang' : 'Pris'}
+              </FieldLabel>
               <Input
-                id="cc-weeks"
+                id="cc-price"
                 type="number"
                 inputMode="numeric"
-                min="2"
-                max="50"
-                value={weeks}
-                onChange={(e) => setWeeks(e.target.value)}
-                aria-invalid={showError('weeks') ? 'true' : undefined}
+                min="0"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                aria-invalid={showError('price') ? 'true' : undefined}
                 aria-required="true"
-                className={cn(showError('weeks') && 'border-danger focus-visible:ring-danger')}
+                className={cn(showError('price') && 'border-danger focus-visible:ring-danger')}
               />
-              {showError('weeks') && <FieldError>{errors.weeks}</FieldError>}
+              {format === 'series' && price !== '' && weeks !== '' && !showError('price') && !showError('weeks') && (
+                <p className="mt-2 text-base text-foreground-muted">
+                  Totalt {formatKroner((parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0))} for {parseInt(weeks, 10) || 0} uker
+                </p>
+              )}
+              {showError('price') && <FieldError>{errors.price}</FieldError>}
             </div>
-          )}
+          </FormSection>
 
-          {/* Tidspunkt — start + slutt */}
-          <div>
-            <label className="text-base font-medium mb-2 block text-foreground">Tidspunkt</label>
-            <div className="flex items-center gap-2">
-              <Select
-                value={startTime}
-                onValueChange={(v) => {
-                  setStartTime(v);
-                  if (endTime && timeToMin(endTime) <= timeToMin(v)) setEndTime('');
-                }}
-              >
-                <SelectTrigger
-                  className={cn(
-                    'w-full',
-                    showError('startTime') && 'border-danger focus-visible:ring-danger',
-                  )}
-                  aria-label="Starttid"
-                  aria-invalid={showError('startTime') ? 'true' : undefined}
-                >
-                  <SelectValue placeholder="Start" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {ALL_TIME_SLOTS.map((slot) => (
-                    <SelectItem key={slot} value={slot}>
-                      {slot}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span aria-hidden="true" className="shrink-0 text-base font-medium text-foreground-muted">
-                –
-              </span>
-              <Select value={endTime} onValueChange={setEndTime}>
-                <SelectTrigger
-                  className={cn(
-                    'w-full',
-                    showError('endTime') && 'border-danger focus-visible:ring-danger',
-                  )}
-                  aria-label="Sluttid"
-                  aria-invalid={showError('endTime') ? 'true' : undefined}
-                >
-                  <SelectValue placeholder="Slutt" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {ALL_TIME_SLOTS.filter(
-                    (slot) => !startTime || timeToMin(slot) > timeToMin(startTime),
-                  ).map((slot) => (
-                    <SelectItem key={slot} value={slot}>
-                      {slot}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {showError('startTime') && <FieldError>{errors.startTime}</FieldError>}
-            {!showError('startTime') && showError('endTime') && (
-              <FieldError>{errors.endTime}</FieldError>
-            )}
-          </div>
-
-          {/* Sted */}
-          <div>
-            <label className="text-base font-medium mb-2 block text-foreground">Sted</label>
-            <LocationCombobox
-              value={location}
-              onChange={setLocation}
-              locations={locations}
-              placeholder="Velg sted"
-              aria-invalid={showError('location') ? 'true' : undefined}
-              aria-label="Sted"
-            />
-            {showError('location') && <FieldError>{errors.location}</FieldError>}
-          </div>
-
-          {/* Antall plasser */}
-          <div>
-            <label htmlFor="cc-capacity" className="text-base font-medium mb-2 block text-foreground">
-              Antall plasser
-            </label>
-            <Input
-              id="cc-capacity"
-              type="number"
-              inputMode="numeric"
-              min="1"
-              value={capacity}
-              onChange={(e) => setCapacity(e.target.value)}
-              aria-invalid={showError('capacity') ? 'true' : undefined}
-              aria-required="true"
-              className={cn(showError('capacity') && 'border-danger focus-visible:ring-danger')}
-            />
-            {showError('capacity') && <FieldError>{errors.capacity}</FieldError>}
-          </div>
-
-          {/* Pris */}
-          <div>
-            <label htmlFor="cc-price" className="text-base font-medium mb-2 block text-foreground">
-              {format === 'series' ? 'Pris per gang' : 'Pris'}
-            </label>
-            <Input
-              id="cc-price"
-              type="number"
-              inputMode="numeric"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              aria-invalid={showError('price') ? 'true' : undefined}
-              aria-required="true"
-              className={cn(showError('price') && 'border-danger focus-visible:ring-danger')}
-            />
-            {format === 'series' && price !== '' && weeks !== '' && !showError('price') && !showError('weeks') && (
-              <p className="mt-2 text-base text-foreground-muted">
-                Totalt {formatKroner((parseInt(price, 10) || 0) * (parseInt(weeks, 10) || 0))} for {parseInt(weeks, 10) || 0} uker
-              </p>
-            )}
-            {showError('price') && <FieldError>{errors.price}</FieldError>}
           </div>
 
           {submitError && (
-            <Alert variant="error" size="sm">{submitError}</Alert>
+            <Alert variant="error" size="sm" className="mt-6 mb-6">
+              {submitError}
+            </Alert>
           )}
         </div>
 
@@ -522,3 +457,27 @@ export function CreateCourseDrawer({ open, onOpenChange }: CreateCourseDrawerPro
   );
 }
 
+// ── Small layout helpers (drawer-local) ───────────────────────────────
+
+function FormSection({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="py-6 first:pt-6 last:pb-6 space-y-5">{children}</section>
+  );
+}
+
+function FieldLabel({
+  htmlFor,
+  children,
+}: {
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="mb-2 block text-base font-medium text-foreground"
+    >
+      {children}
+    </label>
+  );
+}

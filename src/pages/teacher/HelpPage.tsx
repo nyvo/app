@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { pageTransition, pageVariants } from '@/lib/motion';
 import { sendSupportMessage } from '@/services/support';
 import {
   fetchSupportCourses,
@@ -45,7 +45,14 @@ export default function HelpPage() {
   const [loadingSignups, setLoadingSignups] = useState(false);
 
   const canSubmit = subject.length > 0 && message.trim().length > 0;
-  const showCourseFields = subject === COURSE_SIGNUP_SUBJECT && !!currentSeller?.id;
+  // Only show the course context fields when the subject calls for them AND
+  // the user has something to pick. Drop the empty select if there's nothing.
+  const showCourseFields =
+    subject === COURSE_SIGNUP_SUBJECT &&
+    !!currentSeller?.id &&
+    (loadingCourses || courses.length > 0);
+  const showSignupField =
+    !!courseId && (loadingSignups || signups.length > 0);
 
   useEffect(() => {
     setCourseId('');
@@ -127,21 +134,13 @@ export default function HelpPage() {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Hjelp" />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
+      <PageShell
+        width="form"
+        title="Hjelp"
+        description="Send oss en melding, så hjelper vi deg videre."
       >
-        <div className="mb-12 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">Hjelp</h1>
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground-muted">
-            Send oss en melding, så hjelper vi deg videre.
-          </p>
-        </div>
-
-        <section className="max-w-2xl rounded-lg border border-border p-5">
+        <Card>
+          <CardContent>
           <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="help-subject" className="text-base font-medium text-foreground">
@@ -185,7 +184,7 @@ export default function HelpPage() {
                   </Select>
                 </div>
 
-                {courseId && (
+                {showSignupField && (
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="help-signup" className="text-base font-medium text-foreground">
                       Gjelder påmelding
@@ -228,8 +227,9 @@ export default function HelpPage() {
               </Button>
             </div>
           </form>
-        </section>
-      </motion.div>
+          </CardContent>
+        </Card>
+      </PageShell>
     </main>
   );
 }

@@ -30,7 +30,7 @@ function mapCourseToComponentFormat(
     slug: courseData.slug,
     status: courseData.status,
     date: courseData.time_schedule || '',
-    location: courseData.location || 'Ikke angitt',
+    location: courseData.location,
     enrolled: courseData.signups_count,
     capacity: courseData.max_participants || 0,
     price: priceNumber,

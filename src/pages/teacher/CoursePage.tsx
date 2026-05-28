@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
-import { ChevronRight, FileText, Send } from '@/lib/icons';
+import { ChevronRight, FileText, MoreHorizontal, Send } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog, ConfirmScopeItem } from '@/components/ui/confirm-dialog';
@@ -18,10 +24,10 @@ import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { SendCourseMessageDrawer } from '@/components/teacher/SendCourseMessageDrawer';
 import { ParticipantDetailDrawer } from '@/components/teacher/ParticipantDetailDrawer';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { useCourseDetail } from '@/hooks/use-course-detail';
 import {
   updateCourse,
@@ -98,6 +104,7 @@ const CoursePage = () => {
   // ── Form state (lifted from legacy CourseDrawer.EditMode) ──────────────
   const [settingsTitle, setSettingsTitle] = useState('');
   const [settingsDescription, setSettingsDescription] = useState('');
+  const [settingsLocation, setSettingsLocation] = useState('');
   const [settingsImageUrl, setSettingsImageUrl] = useState<string | null>(null);
   const [settingsImageFile, setSettingsImageFile] = useState<File | null>(null);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
@@ -123,6 +130,7 @@ const CoursePage = () => {
     if (!courseData) return;
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
+    setSettingsLocation(courseData.location || '');
     setSettingsImageUrl(courseData.imageUrl);
     const timeMatch = courseData.timeSchedule.match(/(\d{1,2}:\d{2})/);
     if (timeMatch) setSettingsTime(timeMatch[1]);
@@ -138,6 +146,7 @@ const CoursePage = () => {
     if (!courseData) return false;
     if (settingsTitle !== courseData.title) return true;
     if (settingsDescription !== (courseData.description || '')) return true;
+    if (settingsLocation !== (courseData.location || '')) return true;
     if (settingsImageUrl !== courseData.imageUrl) return true;
     if (settingsImageFile !== null) return true;
     if (imageToDelete !== null) return true;
@@ -155,9 +164,9 @@ const CoursePage = () => {
     // instant-commit, not part of the batched save flow.
     return false;
   }, [
-    courseData, settingsTitle, settingsDescription, settingsImageUrl,
-    settingsImageFile, imageToDelete, maxParticipants, settingsDuration,
-    settingsDate, settingsTime, settingsPrice,
+    courseData, settingsTitle, settingsDescription, settingsLocation,
+    settingsImageUrl, settingsImageFile, imageToDelete, maxParticipants,
+    settingsDuration, settingsDate, settingsTime, settingsPrice,
     settingsDropInPrice,
   ]);
 
@@ -206,6 +215,23 @@ const CoursePage = () => {
     setMessageDrawerOpen(true);
   };
 
+  // Publish readiness — mirrors required PublishChecklist items on the
+  // Oversikt tab. Description and location are client-side UX gates; Dintero is also
+  // enforced by the DB trigger (enforce_course_publish_requires_dintero).
+  const publishReadiness = useMemo(() => {
+    const hasImage = !!courseData?.imageUrl;
+    const hasDescription = !!courseData?.description;
+    const hasLocation = !!courseData?.location;
+    const hasDintero = !!currentSeller?.dintero_onboarding_complete;
+    return {
+      hasImage,
+      hasDescription,
+      hasLocation,
+      hasDintero,
+      ready: hasDescription && hasLocation && hasDintero,
+    };
+  }, [courseData?.imageUrl, courseData?.description, courseData?.location, currentSeller?.dintero_onboarding_complete]);
+
   const handleSave = async () => {
     if (!courseId || !courseData) return;
     setIsSaving(true);
@@ -237,6 +263,7 @@ const CoursePage = () => {
       const updateData = {
         title: settingsTitle.trim(),
         description: settingsDescription.trim() || null,
+        location: settingsLocation.trim() || null,
         max_participants: maxParticipants,
         price: settingsPrice,
         time_schedule: timeSchedule,
@@ -275,6 +302,7 @@ const CoursePage = () => {
               ...prev,
               title: settingsTitle.trim(),
               description: settingsDescription.trim(),
+              location: settingsLocation.trim() || null,
               capacity: maxParticipants,
               price: settingsPrice,
               timeSchedule: timeSchedule || prev.timeSchedule,
@@ -448,6 +476,7 @@ const CoursePage = () => {
     if (!courseData) return;
     setSettingsTitle(courseData.title);
     setSettingsDescription(courseData.description || '');
+    setSettingsLocation(courseData.location || '');
     setSettingsImageUrl(courseData.imageUrl);
     setSettingsImageFile(null);
     setImageToDelete(null);
@@ -500,75 +529,81 @@ const CoursePage = () => {
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title={courseData.title} />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-        className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-24 md:pb-12"
-      >
-        {/* Page header — title + inline status (baseline-aligned). */}
-        <header className="pt-6 lg:pt-12 mb-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-baseline gap-3 flex-wrap">
-              <h1 className="text-2xl font-medium tracking-tight text-foreground">
-                {courseData.title}
-              </h1>
-              {courseData.status === 'cancelled' ? (
-                <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through shrink-0">
-                  Avlyst
-                </span>
-              ) : (
-                <StatusBadge
-                  status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
-                  className="shrink-0"
-                />
-              )}
-            </div>
-            {/* Header action — single primary button per state. Destructive
-                actions (Gjør til utkast / Avlys / Slett) live in the Faresone
-                section on the Rediger tab. Per audience-design memory: keep
-                the header airy, one clear thing to do at a time. */}
-            {courseData.status === 'draft' && (
-              <Button
-                size="sm"
-                onClick={handlePublish}
-                loading={isPublishing}
-                loadingText="Publiserer"
-              >
-                <Send data-icon="inline-start" />
-                Publiser kurs
-              </Button>
-            )}
-            {courseData.status !== 'draft' &&
-              courseData.status !== 'cancelled' &&
-              canShare && (
-                <ShareCoursePopover
-                  courseUrl={courseUrl}
-                  courseTitle={courseData.title}
-                />
-              )}
-          </div>
-        </header>
-
-        {/* Underline tabs — canonical Studio pattern (preview.html lines 1617-1621).
-            -mb-px on each tab so the 2px active border overlaps the parent's 1px
-            border (otherwise the active underline sits stacked below the line).
-            no-scrollbar keeps the line clean when tabs overflow on mobile. */}
-        <PageTabs ariaLabel="Kursseksjoner" className="mb-8">
-          {tabs.map((t) => (
-            <PageTab
-              key={t.key}
-              active={activeTab === t.key}
-              onClick={() => setActiveTab(t.key)}
-              count={t.count}
-              id={`course-tab-trigger-${t.key}`}
-              ariaControls={`course-tab-${t.key}`}
+      <PageShell
+        title={courseData.title}
+        badge={
+          courseData.status === 'cancelled' ? (
+            <span className="inline-flex items-center px-2 h-6 rounded-md text-sm font-medium bg-muted text-foreground-muted line-through">
+              Avlyst
+            </span>
+          ) : (
+            <StatusBadge
+              status={courseData.status as 'draft' | 'active' | 'upcoming' | 'completed'}
+            />
+          )
+        }
+        action={
+          courseData.status === 'draft' ? (
+            <Button
+              size="sm"
+              onClick={handlePublish}
+              loading={isPublishing}
+              loadingText="Publiserer"
+              disabled={!publishReadiness.ready}
+              title={
+                publishReadiness.ready
+                  ? undefined
+                  : 'Fyll ut sjekklisten først'
+              }
             >
-              {t.label}
-            </PageTab>
-          ))}
-        </PageTabs>
+              <Send data-icon="inline-start" />
+              Publiser kurs
+            </Button>
+          ) : canShare ? (
+            <div className="flex items-center gap-2">
+              <ShareCoursePopover
+                courseUrl={courseUrl}
+                courseTitle={courseData.title}
+              />
+              {/* State-change actions (unpublish) live in the kebab —
+                  destructive actions stay in the Rediger tab's Faresone. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Mer"
+                    title="Mer"
+                  >
+                    <MoreHorizontal className="size-4" aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onSelect={handleUnpublish}>
+                    Gjør til utkast
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : null
+        }
+        tabs={
+          <PageTabs ariaLabel="Kursseksjoner">
+            {tabs.map((t) => (
+              <PageTab
+                key={t.key}
+                active={activeTab === t.key}
+                onClick={() => setActiveTab(t.key)}
+                count={t.count}
+                id={`course-tab-trigger-${t.key}`}
+                ariaControls={`course-tab-${t.key}`}
+              >
+                {t.label}
+              </PageTab>
+            ))}
+          </PageTabs>
+        }
+      >
 
         {/* Oversikt panel — at-a-glance state + ops surfaces (publish blocker,
             kursplan section, drop-in/sen-påmelding toggles). See
@@ -592,6 +627,21 @@ const CoursePage = () => {
               onAcceptsLateSignupsChange={handleToggleAcceptsLateSignups}
               onOpenKursplan={() => setSessionsModalOpen(true)}
               onSetupDinteroClick={() => navigate(routes.settingsPayouts)}
+              onJumpToField={(field) => {
+                if (field === 'dintero') {
+                  navigate(routes.settingsPayouts);
+                  return;
+                }
+                setActiveTab('rediger');
+                // Scroll after the tab actually mounts. Section ids live on
+                // CourseSettingsTab (Phase 5: course-edit-{image,description,
+                // location}).
+                requestAnimationFrame(() => {
+                  const el = document.getElementById(`course-edit-${field}`);
+                  if (!el) return;
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
             />
           )}
         </div>
@@ -611,6 +661,8 @@ const CoursePage = () => {
               onTitleChange={setSettingsTitle}
               settingsDescription={settingsDescription}
               onDescriptionChange={setSettingsDescription}
+              settingsLocation={settingsLocation}
+              onLocationChange={setSettingsLocation}
               settingsImageUrl={settingsImageUrl}
               onImageFileChange={(file) => {
                 setSettingsImageFile(file);
@@ -644,7 +696,6 @@ const CoursePage = () => {
               onSave={handleSave}
               onCancel={handleDiscard}
               courseStatus={courseData.status}
-              onRequestUnpublish={handleUnpublish}
               onRequestCancel={() => setShowCancelPreview(true)}
               onRequestDelete={() => setShowDeleteConfirm(true)}
             />
@@ -709,11 +760,19 @@ const CoursePage = () => {
 
                     <div className="rounded-lg border border-border overflow-hidden">
                       {visible.length === 0 ? (
-                      <div className="px-4 py-12 text-center text-base text-foreground-muted">
-                        {sortedParticipants.length === 0
-                          ? 'Deltakere som melder seg på, dukker opp her.'
-                          : 'Ingen påmeldte i dette filteret.'}
-                      </div>
+                      <EmptyState
+                        title={
+                          sortedParticipants.length === 0
+                            ? 'Ingen påmeldte ennå'
+                            : 'Ingen treff'
+                        }
+                        description={
+                          sortedParticipants.length === 0
+                            ? 'Deltakere som melder seg på, dukker opp her.'
+                            : 'Prøv et annet filter.'
+                        }
+                        className="py-12"
+                      />
                     ) : (
                       <div>
                         {/* Column header — anchored at the leading edge so the
@@ -788,7 +847,7 @@ const CoursePage = () => {
             </section>
           )}
         </div>
-      </motion.div>
+      </PageShell>
 
       {currentSeller?.id && (
         <AddParticipantDrawer

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
-import { ImagePlus, User } from '@/lib/icons'
+import { ImagePlus } from '@/lib/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import {
@@ -137,13 +137,6 @@ export function ImageField({
     setDragActive(false)
   }, [])
 
-  const labelBlock = (label || description) ? (
-    <div className="flex flex-col gap-1">
-      {label && <span className="text-base font-medium text-foreground">{label}</span>}
-      {description && <p className="text-sm text-foreground-muted">{description}</p>}
-    </div>
-  ) : null
-
   const hiddenInput = (
     <input
       ref={inputRef}
@@ -181,11 +174,7 @@ export function ImageField({
         </>
       ) : (
         <span className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center text-foreground-muted">
-          {isAvatar ? (
-            <User className="size-8" aria-hidden="true" />
-          ) : (
-            <ImagePlus className="size-6" aria-hidden="true" />
-          )}
+          <ImagePlus className={isAvatar ? 'size-7' : 'size-6'} aria-hidden="true" />
           {!isAvatar && (
             <span className="text-sm font-medium text-foreground">
               {dragActive ? 'Slipp for å laste opp' : emptyLabel ?? uploadLabel}
@@ -196,16 +185,32 @@ export function ImageField({
     </button>
   )
 
-  const actionsBlock = (
-    <>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={openPicker} disabled={isDisabled} loading={loading}>
-          {displayUrl ? changeLabel : uploadLabel}
-        </Button>
-        {displayUrl && onRemove && (
+  // Single layout — Fiken/Linear/Notion pattern:
+  // [optional label] · placeholder-as-trigger · [Bytt bilde · Fjern when filled] · [description]
+  // Same shape for cover (16:10) and avatar (round). The picker shape is the
+  // only thing that differs; the actions and helpers stack below.
+  return (
+    <div className={cn('flex w-full flex-col items-start gap-3', className)}>
+      {label && (
+        <span className="text-base font-medium text-foreground">{label}</span>
+      )}
+      {hiddenInput}
+      {pickerButton}
+      {displayUrl && onRemove && (
+        <div className="flex items-center gap-2 text-sm">
           <Button
             type="button"
-            variant="outline"
+            variant="plain"
+            size="sm"
+            onClick={openPicker}
+            disabled={isDisabled}
+          >
+            {changeLabel}
+          </Button>
+          <span aria-hidden="true" className="text-foreground-disabled">·</span>
+          <Button
+            type="button"
+            variant="plain"
             size="sm"
             onClick={handleRemove}
             disabled={isDisabled}
@@ -213,36 +218,16 @@ export function ImageField({
           >
             {removeLabel}
           </Button>
-        )}
-      </div>
-
+        </div>
+      )}
+      {description && (
+        <p className="text-sm text-foreground-muted">{description}</p>
+      )}
       {displayError && (
         <p role="alert" className="text-sm text-danger">
           {displayError}
         </p>
       )}
-    </>
-  )
-
-  if (isAvatar) {
-    return (
-      <div className={cn('flex items-center gap-4', className)}>
-        {hiddenInput}
-        {pickerButton}
-        <div className="flex min-w-0 flex-col gap-2">
-          {labelBlock}
-          {actionsBlock}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className={cn('flex w-full flex-col gap-3', className)}>
-      {labelBlock}
-      {hiddenInput}
-      {pickerButton}
-      {actionsBlock}
     </div>
   )
 }

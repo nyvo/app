@@ -1,10 +1,30 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CheckCircle2, Info, AlertTriangle, XCircle, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-const Toaster = ({ ...props }: ToasterProps) => {
+const toastActionClassName =
+  "!h-auto !min-h-0 !border-0 !bg-transparent !p-0 !shadow-none " +
+  "!font-inherit !font-medium !text-foreground underline underline-offset-2 " +
+  "hover:!text-foreground-muted"
+
+const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
   return (
     <Sonner
       className="toaster group"
+      toastOptions={{
+        ...toastOptions,
+        classNames: {
+          ...toastOptions?.classNames,
+          actionButton: cn(
+            toastActionClassName,
+            toastOptions?.classNames?.actionButton,
+          ),
+          cancelButton: cn(
+            toastActionClassName,
+            toastOptions?.classNames?.cancelButton,
+          ),
+        },
+      }}
       icons={{
         success: <CheckCircle2 className="size-4" />,
         info: <Info className="size-4" />,

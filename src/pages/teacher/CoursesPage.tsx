@@ -1,18 +1,17 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { CreateCourseDrawer } from '@/components/teacher/CreateCourseDrawer';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { CoursesEmptyState } from '@/components/teacher/CoursesEmptyState';
 import { CourseListView, CourseListSkeleton, type SortKey, type SortDir } from '@/components/teacher/CourseListView';
 import { SearchInput } from '@/components/ui/search-input';
 import { Button } from '@/components/ui/button';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
-import { Plus } from '@/lib/icons';
+import { CalendarPlus } from '@/lib/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
@@ -282,21 +281,12 @@ const CoursesPage = () => {
 
         <MobileTeacherHeader title="Mine kurs" />
 
-        <motion.header
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-          className="shrink-0 mx-auto w-full max-w-7xl px-6 lg:px-8 pt-6 lg:pt-12 pb-0"
-        >
-          <div className="mb-12 flex items-end justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-medium tracking-tight text-foreground">Mine kurs</h1>
-            </div>
-            {!showCoursesEmptyState && (
+        <PageShell
+          title="Mine kurs"
+          action={
+            !showCoursesEmptyState && (
               <Button
                 size="sm"
-                className="shrink-0"
                 onClick={() =>
                   setSearchParams(
                     (prev) => {
@@ -308,20 +298,14 @@ const CoursesPage = () => {
                   )
                 }
               >
-                <Plus data-icon="inline-start" />
+                <CalendarPlus data-icon="inline-start" />
                 Opprett kurs
               </Button>
-            )}
-          </div>
-        </motion.header>
-
-        <div className="flex-1 mx-auto w-full max-w-7xl px-6 lg:px-8 pb-6 lg:pb-8">
-          {showCoursesEmptyState ? (
-            <CoursesEmptyState />
-          ) : (
-            <>
-              {/* Toolbar — underline tabs (matches Timeplan), sort + search inline */}
-              <div className="mb-5 flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
+            )
+          }
+          tabs={
+            !showCoursesEmptyState && (
+              <div className="flex flex-col gap-3 border-b border-border md:flex-row md:items-end md:justify-between">
                 <PageTabs ariaLabel="Filtrer kurs" className="border-b-0">
                   {(['active', 'past'] as const).map((key) => (
                     <PageTab
@@ -343,7 +327,13 @@ const CoursesPage = () => {
                   />
                 </div>
               </div>
-
+            )
+          }
+        >
+          {showCoursesEmptyState ? (
+            <CoursesEmptyState />
+          ) : (
+            <>
               {/* List — each card is its own bordered surface; no outer frame */}
               {isLoading ? (
                 <div role="status" aria-live="polite" aria-label="Laster kurs">
@@ -387,7 +377,7 @@ const CoursesPage = () => {
 
             </>
           )}
-        </div>
+        </PageShell>
         <CreateCourseDrawer
           open={showCreateDrawer}
           onOpenChange={handleCreateOpenChange}

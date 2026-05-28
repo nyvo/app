@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageTabs, PageTab } from '@/components/ui/page-tabs';
 import { ExternalLink } from '@/lib/icons';
 import { FieldError } from '@/components/ui/field-error';
@@ -10,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { ImageField } from '@/components/ui/image-upload';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { LocationsSection } from '@/components/teacher/studio/LocationsSection';
 import { AffiliationsSection } from '@/components/teacher/studio/AffiliationsSection';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,28 +49,21 @@ const TeamsPage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Studio" />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
-      >
-        <div className="mb-12 pt-6 lg:pt-12 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">Studio</h1>
-          {publicUrl && (
-            <Button asChild size="sm" className="shrink-0">
+      <PageShell
+        title="Studio"
+        action={
+          publicUrl && (
+            <Button asChild size="sm">
               <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                 <ExternalLink data-icon="inline-start" />
                 Vis min side
               </a>
             </Button>
-          )}
-        </div>
-
-        {currentTeam ? (
-          <>
-            <PageTabs ariaLabel="Studio-seksjoner" className="mb-6">
+          )
+        }
+        tabs={
+          currentTeam && (
+            <PageTabs ariaLabel="Studio-seksjoner">
               {STUDIO_TABS.map(({ key, label }) => (
                 <PageTab
                   key={key}
@@ -81,8 +74,11 @@ const TeamsPage = () => {
                 </PageTab>
               ))}
             </PageTabs>
-
-            <div className="max-w-3xl">
+          )
+        }
+      >
+        {currentTeam ? (
+          <div className="max-w-3xl">
               {activeTab === 'studio' && currentSeller && (
                 <StudioSidenForm
                   team={currentTeam}
@@ -94,15 +90,14 @@ const TeamsPage = () => {
               {activeTab === 'addresses' && <LocationsSection />}
 
               {activeTab === 'team' && <AffiliationsSection />}
-            </div>
-          </>
+          </div>
         ) : (
           <p className="text-base text-foreground-muted">
             Fant ingen studio. Logg ut og inn igjen, eller kontakt
             brukerstøtte hvis problemet vedvarer.
           </p>
         )}
-      </motion.div>
+      </PageShell>
     </main>
   );
 };
@@ -262,7 +257,8 @@ function StudioSidenForm({
   };
 
   return (
-    <div className="space-y-4">
+    <Card>
+      <CardContent className="space-y-4">
       <div className="grid gap-3">
         <span className="text-base font-medium text-foreground">Profilbilde</span>
         <ImageField
@@ -381,7 +377,8 @@ function StudioSidenForm({
         </div>
         {slugError && <FieldError id="studio-slug-error">{slugError}</FieldError>}
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

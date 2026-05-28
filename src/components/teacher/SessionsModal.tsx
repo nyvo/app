@@ -8,9 +8,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DateBadge } from '@/components/ui/date-badge';
+import { DatePicker } from '@/components/ui/date-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { friendlyError } from '@/lib/error-messages';
 import { rescheduleCourseSession } from '@/services/courses';
@@ -60,6 +67,44 @@ function addMinutes(time: string, minutes: number): string {
   return `${hh}:${mm}`;
 }
 
+// Time slot helpers — mirror CreateCourseDrawer so the picker shape and
+// allowed range stays consistent across create and reschedule flows.
+function generateTimeSlots(startHour = 6, endHour = 23): string[] {
+  const slots: string[] = [];
+  for (let h = startHour; h < endHour; h++) {
+    for (const m of [0, 15, 30, 45]) {
+      slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  slots.push(`${String(endHour).padStart(2, '0')}:00`);
+  return slots;
+}
+
+function timeToMin(t: string): number {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+const TIME_SLOTS = generateTimeSlots();
+
+// Date string <-> Date object — date-only (no TZ shift). The DB stores
+// session_date as YYYY-MM-DD and the API expects the same; we use a Date
+// in component state because that's what DatePicker takes.
+function parseYMD(s: string | null | undefined): Date | undefined {
+  if (!s) return undefined;
+  const [y, m, d] = s.split('-').map(Number);
+  if (!y || !m || !d) return undefined;
+  return new Date(y, m - 1, d);
+}
+
+function formatYMD(d: Date | undefined): string {
+  if (!d) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function SessionsModal({
   open,
   onOpenChange,
@@ -69,7 +114,7 @@ export function SessionsModal({
 }: SessionsModalProps) {
   const [view, setView] = useState<View>('list');
   const [editing, setEditing] = useState<CourseSession | null>(null);
-  const [newDate, setNewDate] = useState('');
+  const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -88,7 +133,7 @@ export function SessionsModal({
 
   function startReschedule(session: CourseSession) {
     setEditing(session);
-    setNewDate(session.session_date);
+    setNewDate(parseYMD(session.session_date));
     setNewStart(shortTime(session.start_time));
     setNewEnd(shortTime(session.end_time));
     setView('reschedule');
@@ -104,7 +149,7 @@ export function SessionsModal({
     setSubmitting(true);
     const { data, error } = await rescheduleCourseSession({
       sessionId: editing.id,
-      newDate,
+      newDate: formatYMD(newDate),
       newStartTime: newStart,
       newEndTime: newEnd || undefined,
     });
@@ -211,49 +256,57 @@ export function SessionsModal({
               >
                 Dato
               </label>
-              <Input
+              <DatePicker
                 id="reschedule-date"
-                type="date"
                 value={newDate}
-                onChange={(e) => setNewDate(e.target.value)}
+                onChange={setNewDate}
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="reschedule-start"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Starter
-                </label>
-                <Input
-                  id="reschedule-start"
-                  type="time"
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Tidspunkt</label>
+              <div className="flex items-center gap-2">
+                <Select
                   value={newStart}
-                  onChange={(e) => {
-                    setNewStart(e.target.value);
-                    // If the user hasn't explicitly set an end time yet,
-                    // keep it in sync with the new start + course duration.
-                    if (!newEnd && defaultDurationMinutes > 0) {
-                      setNewEnd(addMinutes(e.target.value, defaultDurationMinutes));
+                  onValueChange={(next) => {
+                    setNewStart(next);
+                    // Clear end if it's now before/at start; auto-fill with
+                    // start + course duration when end isn't set yet.
+                    if (newEnd && timeToMin(newEnd) <= timeToMin(next)) {
+                      setNewEnd('');
+                    } else if (!newEnd && defaultDurationMinutes > 0) {
+                      setNewEnd(addMinutes(next, defaultDurationMinutes));
                     }
                   }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="reschedule-end"
-                  className="text-sm font-medium text-foreground"
                 >
-                  Slutter
-                </label>
-                <Input
-                  id="reschedule-end"
-                  type="time"
-                  value={newEnd}
-                  onChange={(e) => setNewEnd(e.target.value)}
-                />
+                  <SelectTrigger className="w-full" aria-label="Starter">
+                    <SelectValue placeholder="Start" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {TIME_SLOTS.map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span aria-hidden="true" className="shrink-0 text-sm font-medium text-foreground-muted">
+                  –
+                </span>
+                <Select value={newEnd} onValueChange={setNewEnd}>
+                  <SelectTrigger className="w-full" aria-label="Slutter">
+                    <SelectValue placeholder="Slutt" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {TIME_SLOTS.filter(
+                      (slot) => !newStart || timeToMin(slot) > timeToMin(newStart),
+                    ).map((slot) => (
+                      <SelectItem key={slot} value={slot}>
+                        {slot}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -270,7 +323,7 @@ export function SessionsModal({
                 onClick={submitReschedule}
                 loading={submitting}
                 loadingText="Lagrer"
-                disabled={!newDate || !newStart}
+                disabled={!newDate || !newStart || !newEnd}
               >
                 Lagre
               </Button>

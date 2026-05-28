@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FieldError } from '@/components/ui/field-error';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, typedFrom } from '@/lib/supabase';
 import { isValidEmail, resolveDisplayName } from '@/lib/utils';
@@ -159,20 +158,8 @@ const TeacherProfilePage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
         <MobileTeacherHeader title="Innstillinger" />
 
-        <motion.div
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-          className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
-        >
-          <div className="mb-12 pt-6 lg:pt-12">
-            <h1 className="text-2xl font-medium tracking-tight text-foreground">
-              Innstillinger
-            </h1>
-          </div>
-
-          <div className="space-y-10">
+        <PageShell width="form" title="Innstillinger">
+          <div className="space-y-8">
             {/* Personlig informasjon */}
             <section>
               <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
@@ -326,7 +313,7 @@ const TeacherProfilePage = () => {
               </div>
             )}
 
-        </motion.div>
+        </PageShell>
     </main>
   );
 };

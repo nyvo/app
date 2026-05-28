@@ -2,10 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { Link } from 'react-router-dom';
 import { routes } from '@/lib/routes';
-import { motion } from 'framer-motion';
 import { NotificationsPopover } from '@/components/notifications/NotificationsPopover';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { IncomeChart } from '@/components/teacher/dashboard/IncomeChart';
 import { fetchIncomeSeries, type IncomeRange, type IncomeSeries } from '@/services/income';
 import { DateBadge } from '@/components/ui/date-badge';
@@ -187,18 +186,10 @@ const TeacherDashboard = () => {
     <div className="flex-1 overflow-y-auto bg-background h-full">
       <MobileTeacherHeader title="Oversikt" />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-12">
-        <motion.div
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          transition={pageTransition}
-        >
-          <header className="mb-12 flex items-center justify-between">
-            <h1 className="text-2xl font-medium tracking-tight text-foreground">Oversikt</h1>
-            <NotificationsPopover />
-          </header>
-
+      <PageShell
+        title="Oversikt"
+        action={<NotificationsPopover />}
+      >
           {loadError ? (
             <ErrorState
               title="Kunne ikke laste oversikten"
@@ -206,7 +197,7 @@ const TeacherDashboard = () => {
               onRetry={() => window.location.reload()}
             />
           ) : (
-            <div className="space-y-12">
+            <div className="space-y-8">
               <IncomeChart
                 series={incomeSeries}
                 isLoading={incomeSeries === null}
@@ -220,8 +211,7 @@ const TeacherDashboard = () => {
               </div>
             </div>
           )}
-        </motion.div>
-      </div>
+      </PageShell>
     </div>
   );
 };
@@ -240,7 +230,7 @@ function UpcomingCoursesSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">Neste kurs</h2>
+      <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">Neste kurs</h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">
         {showSkeleton ? (
           <RowsSkeleton variant="course" />
@@ -306,7 +296,7 @@ function RecentSignupsSection({
 
   return (
     <section className="flex flex-col">
-      <h2 className="mb-6 text-xl font-medium tracking-tight text-foreground">
+      <h2 className="mb-6 text-lg font-medium tracking-tight text-foreground">
         Siste påmeldinger
       </h2>
       <div className="flex min-h-56 flex-1 flex-col rounded-xl border border-border bg-background p-3">

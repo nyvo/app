@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Clock, Users } from '@/lib/icons';
-import { pageVariants, pageTransition } from '@/lib/motion';
 import { MobileTeacherHeader } from '@/components/teacher/MobileTeacherHeader';
+import { PageShell } from '@/components/teacher/PageShell';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
@@ -106,6 +105,7 @@ const SchedulePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('active');
+  const [reloadNonce, setReloadNonce] = useState(0);
 
   useEffect(() => {
     if (!currentSeller?.id) return;
@@ -178,7 +178,7 @@ const SchedulePage = () => {
     return () => {
       cancelled = true;
     };
-  }, [currentSeller?.id, rangeFilter]);
+  }, [currentSeller?.id, rangeFilter, reloadNonce]);
 
   // Distinct YYYY-MM keys present in the loaded data, in display order.
   // For active tab: chronological ascending. For past: descending.
@@ -233,46 +233,38 @@ const SchedulePage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Timeplan" />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        transition={pageTransition}
-        className="mx-auto w-full max-w-7xl px-6 pb-24 md:pb-8 lg:px-8"
-      >
-        <div className="mb-12 pt-6 lg:pt-12">
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">Timeplan</h1>
-        </div>
-
-        {/* Underline tabs — active vs past. Course filter as a secondary lens. */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border">
-          <PageTabs ariaLabel="Status" className="border-b-0">
-            {(['active', 'past'] as const).map((key) => (
-              <PageTab
-                key={key}
-                active={rangeFilter === key}
-                onClick={() => setRangeFilter(key)}
-              >
-                {key === 'active' ? 'Aktive' : 'Fullførte'}
-              </PageTab>
-            ))}
-          </PageTabs>
-
-          <Select value={monthFilter} onValueChange={setMonthFilter}>
-            <SelectTrigger className="h-9 w-48 mb-2">
-              <SelectValue placeholder="Alle måneder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle måneder</SelectItem>
-              {monthOptions.map((opt) => (
-                <SelectItem key={opt.key} value={opt.key}>
-                  {opt.label}
-                </SelectItem>
+      <PageShell
+        title="Timeplan"
+        tabs={
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border">
+            <PageTabs ariaLabel="Status" className="border-b-0">
+              {(['active', 'past'] as const).map((key) => (
+                <PageTab
+                  key={key}
+                  active={rangeFilter === key}
+                  onClick={() => setRangeFilter(key)}
+                >
+                  {key === 'active' ? 'Aktive' : 'Fullførte'}
+                </PageTab>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </PageTabs>
 
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="h-9 w-48 mb-2">
+                <SelectValue placeholder="Alle måneder" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle måneder</SelectItem>
+                {monthOptions.map((opt) => (
+                  <SelectItem key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
         {/* Body */}
         {loading ? (
           <div className="space-y-4" role="status" aria-label="Laster">
@@ -288,7 +280,7 @@ const SchedulePage = () => {
           <ErrorState
             title="Noe gikk galt"
             message={error}
-            onRetry={() => setRangeFilter((r) => r)}
+            onRetry={() => setReloadNonce((value) => value + 1)}
           />
         ) : groups.length === 0 ? (
           <EmptyState
@@ -325,7 +317,7 @@ const SchedulePage = () => {
             })}
           </div>
         )}
-      </motion.div>
+      </PageShell>
     </main>
   );
 };
