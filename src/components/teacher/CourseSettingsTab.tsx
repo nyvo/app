@@ -10,7 +10,6 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { LocationCombobox } from '@/components/ui/location-combobox';
 import { useLocations } from '@/hooks/use-locations';
 import { useAuth } from '@/contexts/AuthContext';
-import type { CourseDisplayStatus } from '@/lib/course-status';
 import {
   Select,
   SelectContent,
@@ -70,11 +69,10 @@ interface CourseSettingsTabProps {
 
   // Destructive zone — gated by status. "Gjør til utkast" lives in the page
   // header's kebab menu (state change, not destructive), not here.
-  // `courseStatus` is the PERSISTED workflow status (draft/upcoming/cancelled);
-  // `displayStatus` is the derived lifecycle, used to tell a finished course
-  // apart from a live one (both persist as `upcoming`).
+  // `courseStatus` is the persisted lifecycle (draft/upcoming/active/completed/
+  // cancelled), kept honest by reconcile_course_lifecycle — so a finished
+  // course reads `completed` directly.
   courseStatus: string;
-  displayStatus: CourseDisplayStatus;
   /** True when the course has ANY signup rows (confirmed or cancelled) — i.e.
    *  payment records exist that a hard delete would cascade-destroy. */
   hasSignupRecords: boolean;
@@ -111,7 +109,6 @@ export const CourseSettingsTab = ({
   onSave,
   onCancel,
   courseStatus,
-  displayStatus,
   hasSignupRecords,
   onRequestCancel,
   onRequestDelete,
@@ -415,13 +412,11 @@ export const CourseSettingsTab = ({
           - finished (completed) → Slett only when empty; a finished course with
             participants offers nothing here — Avlys would refund a delivered
             course, and deleting would cascade-destroy retained payment records.
-          - cancelled → just Slett (final cleanup)
-          `isFinished` uses the derived displayStatus because a published course
-          persists as `upcoming` forever. */}
+          - cancelled → just Slett (final cleanup) */}
       {(() => {
         const isDraft = courseStatus === 'draft';
         const isCancelled = courseStatus === 'cancelled';
-        const isFinished = displayStatus === 'completed';
+        const isFinished = courseStatus === 'completed';
         // Live = published and still running (not draft, cancelled, or ended).
         const isLive = !isDraft && !isCancelled && !isFinished;
         const showCancel = isLive;

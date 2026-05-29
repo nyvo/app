@@ -24,7 +24,6 @@ import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourseDetail } from '@/hooks/use-course-detail';
-import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import { publishCourse, unpublishCourse } from '@/services/courses';
 import { friendlyError } from '@/lib/error-messages';
 import { routes } from '@/lib/routes';
@@ -262,12 +261,6 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
       ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
       : '';
   const isMultiDay = sessions.length > 1;
-  const displayStatus = deriveCourseDisplayStatus({
-    status: courseData.status,
-    startDate: courseData.startDate,
-    endDate: courseData.endDate,
-    sessions,
-  });
 
   const whenLine = courseData.timeSchedule
     ? courseData.durationMinutes
@@ -290,7 +283,7 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
     <>
       <DrawerHeader
         title={courseData.title}
-        status={displayStatus}
+        status={courseData.status}
         description={headerDescription}
       />
 
@@ -324,44 +317,50 @@ function ViewMode({ courseId, onClose }: { courseId: string; onClose: () => void
           </div>
         )}
 
-        {/* Action cluster — quick operations only */}
-        <section className="px-6 py-6 flex flex-wrap items-center gap-2 border-b border-border">
-          {courseData.status === 'draft' ? (
-            <Button
-              onClick={handlePublish}
-              loading={isPublishing}
-              loadingText="Publiserer"
-            >
-              Publiser kurs
-            </Button>
-          ) : (
-            <>
-              <ShareCoursePopover
-                courseUrl={courseUrl}
-                courseTitle={courseData.title}
-              />
+        {/* Action cluster — quick operations only. Draft gets Publish; live
+            (upcoming/active) gets share + view + unpublish. A finished or
+            cancelled course is archival, so the cluster is hidden entirely. */}
+        {(courseData.status === 'draft' ||
+          courseData.status === 'upcoming' ||
+          courseData.status === 'active') && (
+          <section className="px-6 py-6 flex flex-wrap items-center gap-2 border-b border-border">
+            {courseData.status === 'draft' ? (
               <Button
-                variant="secondary"
-                onClick={() => courseUrl && window.open(courseUrl, '_blank')}
-                disabled={!courseUrl}
+                onClick={handlePublish}
+                loading={isPublishing}
+                loadingText="Publiserer"
               >
-                Vis side
+                Publiser kurs
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="soft" size="icon" aria-label="Mer">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleUnpublish}>
-                    Gjør til utkast
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          )}
-        </section>
+            ) : (
+              <>
+                <ShareCoursePopover
+                  courseUrl={courseUrl}
+                  courseTitle={courseData.title}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => courseUrl && window.open(courseUrl, '_blank')}
+                  disabled={!courseUrl}
+                >
+                  Vis side
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="soft" size="icon" aria-label="Mer">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleUnpublish}>
+                      Gjør til utkast
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+          </section>
+        )}
 
         {/* Påmeldte — the operational concern */}
         <section className="px-6 py-6 border-b border-border">
@@ -549,18 +548,12 @@ function ScheduleQuickView({
   const confirmedCount = confirmedParticipants.length;
   const visibleParticipants = confirmedParticipants.slice(0, 5);
   const extraCount = Math.max(0, confirmedCount - visibleParticipants.length);
-  const displayStatus = deriveCourseDisplayStatus({
-    status: courseData.status,
-    startDate: courseData.startDate,
-    endDate: courseData.endDate,
-    sessions,
-  });
 
   return (
     <>
       <DrawerHeader
         title={courseData.title}
-        status={displayStatus}
+        status={courseData.status}
         description={headerDescription}
       />
 

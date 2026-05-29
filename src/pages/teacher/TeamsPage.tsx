@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { X } from '@/lib/icons';
+import { ExternalLink, X } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
 import { DirtyFormBar } from '@/components/ui/dirty-form-bar';
 import { FieldError } from '@/components/ui/field-error';
@@ -28,7 +28,19 @@ const TeamsPage = () => {
     <main className="flex-1 min-h-full overflow-y-auto bg-background">
       <MobileTeacherHeader title="Studio" />
 
-      <PageShell title="Studio">
+      <PageShell
+        title="Studio"
+        action={
+          currentTeam?.slug ? (
+            <Button
+              onClick={() => window.open(`/${currentTeam.slug}`, '_blank')}
+            >
+              <ExternalLink className="size-4" />
+              Se siden din
+            </Button>
+          ) : null
+        }
+      >
         {currentTeam && currentSeller ? (
           <StudioPublicSettings
             team={currentTeam}
@@ -37,7 +49,7 @@ const TeamsPage = () => {
           />
         ) : (
           <p className="text-base text-foreground-muted">
-            Fant ingen studio. Logg ut og inn igjen, eller kontakt brukerstøtte hvis problemet vedvarer.
+            Vi fant ikke studioet ditt. Logg ut og inn igjen, eller kontakt brukerstøtte hvis problemet fortsetter.
           </p>
         )}
       </PageShell>
@@ -145,7 +157,7 @@ function StudioPublicSettings({
     }
 
     if (!trimmedSlug) {
-      setSlugError('Skriv inn en adresse.');
+      setSlugError('Skriv inn en nettadresse.');
       blocked = true;
     } else {
       setSlugError(null);
@@ -178,10 +190,10 @@ function StudioPublicSettings({
         const { slug: nextSlug, error } = await renameTeamSlug(team.id, trimmedSlug);
         if (error || !nextSlug) {
           const msg = error?.message ?? '';
-          if (msg.includes('already taken')) setSlugError('Denne adressen er opptatt. Velg en annen.');
-          else if (msg.includes('reserved')) setSlugError('Denne adressen er reservert. Velg en annen.');
+          if (msg.includes('already taken')) setSlugError('Denne nettadressen er opptatt. Velg en annen.');
+          else if (msg.includes('reserved')) setSlugError('Denne nettadressen er reservert. Velg en annen.');
           else if (msg.includes('at least 3')) setSlugError('Bruk minst 3 tegn.');
-          else setSlugError(friendlyError(error, 'Kunne ikke endre adressen.'));
+          else setSlugError(friendlyError(error, 'Kunne ikke endre nettadressen.'));
           return;
         }
         setSlug(nextSlug);
@@ -206,7 +218,7 @@ function StudioPublicSettings({
       }
 
       await onSaved();
-      toast.success('Studio er oppdatert.');
+      toast.success('Studioet er oppdatert.');
     } finally {
       setIsSaving(false);
     }
@@ -240,7 +252,7 @@ function StudioPublicSettings({
     const { error } = await updateSeller(seller.id, { logo_url: null });
     setSavingPhoto(false);
     if (error) {
-      toast.error('Kunne ikke fjerne bildet');
+      toast.error('Kunne ikke fjerne bildet.');
       return;
     }
     setLogoUrl(null);
@@ -300,7 +312,7 @@ function StudioPublicSettings({
 
               <div className="grid gap-2">
                 <label htmlFor="studio-slug" className="text-base font-medium text-foreground">
-                  URL
+                  Nettadresse
                 </label>
                 <InputGroup data-disabled={isSaving || undefined}>
                   <InputGroupAddon align="inline-start">openspot.no/</InputGroupAddon>
@@ -326,7 +338,7 @@ function StudioPublicSettings({
           <section className="border-t border-border pt-8">
             <SectionHeader
               title="Sted og rom"
-              description="Brukes når du lager kurs og når studentene ser hvor de skal møte opp."
+              description="Brukes når du lager kurs og når deltakerne ser hvor de skal møte opp."
             />
 
             <div className="mt-6 space-y-6">
@@ -400,7 +412,7 @@ function StudioPublicSettings({
                       }
                     }}
                     disabled={isSaving || loadingLocations}
-                  placeholder="Sal 1, behandlingsrom, ute..."
+                  placeholder="Sal 1, behandlingsrom, ute…"
                   />
                   <Button
                     type="button"

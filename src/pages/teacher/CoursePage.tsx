@@ -28,7 +28,6 @@ import { PageState } from '@/components/page-state/page-state';
 import { AddParticipantDrawer } from '@/components/teacher/AddParticipantDrawer';
 import { PublishCourseDialog } from '@/components/teacher/PublishCourseDialog';
 import { useCourseDetail } from '@/hooks/use-course-detail';
-import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import {
   updateCourse,
   cancelCourse,
@@ -519,16 +518,6 @@ const CoursePage = () => {
     { key: 'rediger', label: 'Rediger' },
   ];
 
-  // Visual lifecycle for display surfaces (header badge + Oversikt). Prefers
-  // sessions over coarse dates. Persisted `courseData.status` stays the source
-  // of truth for publish/cancel/share gating below.
-  const displayStatus = deriveCourseDisplayStatus({
-    status: courseData.status,
-    startDate: courseData.startDate,
-    endDate: courseData.endDate,
-    sessions,
-  });
-
   // Whether the course has ANY signup rows (confirmed OR cancelled). Cancelled
   // signups still carry payment records under retention, so a finished course
   // is only safe to hard-delete when there are none at all. Treat the
@@ -539,7 +528,11 @@ const CoursePage = () => {
     currentTeam?.slug && courseData.slug
       ? `${window.location.origin}/${currentTeam.slug}/${courseData.slug}`
       : '';
-  const canShare = courseData.status !== 'draft' && courseData.status !== 'cancelled' && courseUrl;
+  // Share + unpublish only make sense while a course is published and live.
+  // A finished (completed) or cancelled course is archival: no share, no
+  // "Gjør til utkast". draft has its own Publish CTA below.
+  const isLive = courseData.status === 'upcoming' || courseData.status === 'active';
+  const canShare = isLive && !!courseUrl;
 
   return (
     <div className="flex-1 overflow-y-auto bg-background h-full">
@@ -553,7 +546,7 @@ const CoursePage = () => {
               Avlyst
             </span>
           ) : (
-            <StatusBadge status={displayStatus} />
+            <StatusBadge status={courseData.status} />
           )
         }
         action={
@@ -579,7 +572,9 @@ const CoursePage = () => {
                 courseTitle={courseData.title}
               />
               {/* State-change actions (unpublish) live in the kebab —
-                  destructive actions stay in the Rediger tab's Faresone. */}
+                  destructive actions stay in the Rediger tab's Faresone. Only
+                  reachable for live courses (canShare gates on upcoming/active),
+                  so a finished course can't be flipped back to a draft. */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -630,7 +625,6 @@ const CoursePage = () => {
           {activeTab === 'oversikt' && (
             <CourseOverviewTab
               course={courseData}
-              displayStatus={displayStatus}
               dinteroOnboardingStatus={currentSeller?.dintero_onboarding_status ?? null}
               dinteroOnboardingComplete={currentSeller?.dintero_onboarding_complete ?? false}
               allowsDropIn={settingsAllowsDropIn}
@@ -710,7 +704,6 @@ const CoursePage = () => {
               onSave={handleSave}
               onCancel={handleDiscard}
               courseStatus={courseData.status}
-              displayStatus={displayStatus}
               hasSignupRecords={hasSignupRecords}
               onRequestCancel={() => setShowCancelPreview(true)}
               onRequestDelete={() => setShowDeleteConfirm(true)}

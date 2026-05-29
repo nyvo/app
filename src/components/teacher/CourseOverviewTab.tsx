@@ -5,7 +5,6 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { MappedCourse } from '@/hooks/use-course-detail';
-import type { CourseDisplayStatus } from '@/lib/course-status';
 import {
   PublishChecklist,
   type ChecklistItemKey,
@@ -13,12 +12,6 @@ import {
 
 interface CourseOverviewTabProps {
   course: MappedCourse;
-  /**
-   * Derived visual lifecycle (upcoming/active/completed), computed by the page
-   * from sessions + dates. Used for at-a-glance state only — `draft`/`cancelled`
-   * pass through unchanged. Never use for permissions or write logic.
-   */
-  displayStatus: CourseDisplayStatus;
   /** Raw Dintero onboarding status (PENDING | WAITING_FOR_DECLARATION |
    *  WAITING_FOR_SIGNATURE | ACTIVE | DECLINED | TERMINATED | null) */
   dinteroOnboardingStatus: string | null;
@@ -57,7 +50,6 @@ function formatNorwegianDate(input: string | null | undefined): string {
 
 export function CourseOverviewTab({
   course,
-  displayStatus,
   dinteroOnboardingStatus,
   dinteroOnboardingComplete,
   allowsDropIn,
@@ -71,10 +63,10 @@ export function CourseOverviewTab({
   onJumpToField,
 }: CourseOverviewTabProps) {
   const isSeries = course.format === 'series';
-  // Lifecycle decisions read the derived display status (so a finished course
-  // reaches the `completed` branch). `draft`/`cancelled` are preserved by the
-  // derivation, so the workflow-gated branches below still behave correctly.
-  const status = displayStatus;
+  // Persisted status is the source of truth — reconcile_course_lifecycle keeps
+  // it honest (upcoming/active/completed), so the lifecycle branches below
+  // (incl. the `completed` end-state) work directly off it.
+  const status = course.status;
 
   const isWaitingForDintero =
     status === 'draft' &&

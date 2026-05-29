@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Copy, Share2 } from '@/lib/icons';
+import { Check, Copy, Send } from '@/lib/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -62,7 +62,7 @@ export function ShareCoursePopover({
       <PopoverTrigger asChild>
         {children || (
           <Button>
-            <Share2 data-icon="inline-start" />
+            <Send data-icon="inline-start" />
             Del kurs
           </Button>
         )}
@@ -95,7 +95,7 @@ export function ShareCoursePopover({
             className="w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm hover:bg-muted transition-colors cursor-pointer"
           >
             <div className="size-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-              <Share2 className="size-4 text-foreground-muted" strokeWidth={1.75} />
+              <Send className="size-4 text-foreground-muted" strokeWidth={1.75} />
             </div>
             <p className="font-medium text-foreground">Del med…</p>
           </button>

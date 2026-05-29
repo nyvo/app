@@ -17,7 +17,6 @@ import { foldNorwegian } from '@/lib/utils';
 import { fetchCourses } from '@/services/courses';
 import type { SessionScheduleRow } from '@/services/courses';
 import type { Course } from '@/types/database';
-import { deriveCourseDisplayStatus } from '@/lib/course-status';
 import { typedFrom } from '@/lib/supabase';
 
 /**
@@ -56,14 +55,7 @@ function mapCourseToRow(
     price: course.price,
     signupsCount,
     maxParticipants: course.max_participants,
-    // Display lifecycle for the list badge (so ended courses read "Fullført").
-    // Sessions aren't loaded per row here, so this falls back to course dates.
-    // Persisted `course.status` still drives the active/past tab filter below.
-    courseStatus: deriveCourseDisplayStatus({
-      status: course.status,
-      startDate: course.start_date,
-      endDate: course.end_date,
-    }),
+    courseStatus: course.status,
     courseStartDate: course.start_date,
     courseEndDate: course.end_date,
     totalWeeks: course.total_weeks,
